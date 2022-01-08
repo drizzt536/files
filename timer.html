@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head lang="en">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="This Website is a stopwatch timer">
+	<meta name="keywords" content="timer, stopwatch, html, css, javascript">
+	 <meta name="author" content="firstname lastname">
+	<title>Stopwatch Timer</title>
+	<style>
+		h1 { text-align: center; }
+		.container { margin: 20px; }
+		p { margin: 1.5px; }
+		body {
+			background-color: rgb(0, 0, 0);
+			color: #ffffff;
+		}
+		
+		.hide {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1 id="title">Timer</h1>
+		<span id="itHasBeen">It has been </span>
+		<span id="showDecades" class="hide"></span>
+		<span id="showYears" class="hide"></span>
+		<span id="showDays" class="hide"></span>
+		<span id="showHours" class="hide"></span>
+		<span id="showMinutes" class="hide"></span>
+		<span id="showSeconds">0 seconds</span>
+	</div>
+	<script>
+		var counter = 1,
+				number = Number(prompt(`number of seconds for timer\ntype "Infinity" for no limit`)),
+				decadesCounter = 0,
+				yearsCounter = 0,
+				daysCounter = 0,
+				hoursCounter = 0,
+				minutesCounter = 0,
+				secondsCounter = 1,
+				$ = e => document.getElementById(e),
+				printMessage = function() {
+					if (counter > number || isNaN(number) === !0) {
+						clearInterval(intervalId);
+						return;
+					} else {
+						secondsCounter >= 60 && (secondsCounter -= 60, minutesCounter++, $("showMinutes").style.display = "inline");
+						minutesCounter >= 60 && (minutesCounter -= 60, hoursCounter++, $("showHours").style.display = "inline");
+						hoursCounter >= 24 && (hoursCounter -= 24, daysCounter++, $("showDays").style.display = "inline");
+						daysCounter >= 365 && (daysCounter -= 365, yearsCounter++, $("showYears").style.display = "inline");
+						yearsCounter >= 10 && (yearsCounter -= 10, decadesCounter++, $("showDecades").style.display = "inline");
+						decadesCounter === 1? $("showDecades").innerHTML = `1 Decade, `:
+						$("showDecades").innerHTML = `${decadesCounter} Decades, `;
+						yearsCounter === 1? $("showYears").innerHTML = `1 Year, `:
+						$("showYears").innerHTML = `${yearsCounter} Years, `;
+						daysCounter === 1? $("showDays").innerHTML = `1 Day, `:
+						$("showDays").innerHTML = `${daysCounter} Days, `;
+						hoursCounter === 1? $("showHours").innerHTML = `1 Hour, `:
+						$("showHours").innerHTML = `${hoursCounter} Hours, `;
+						minutesCounter === 1? $("showMinutes").innerHTML = `1 minute, `:
+						$("showMinutes").innerHTML = `${minutesCounter} minutes, `;
+						secondsCounter === 1? $("showSeconds").innerHTML = `1 second`:
+						$("showSeconds").innerHTML = `${secondsCounter} seconds`;
+						secondsCounter++, counter++;
+					}
+				},
+				intervalId = setInterval(printMessage, 1e3);
+	</script>
+</body>
+</html>
