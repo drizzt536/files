@@ -1,73 +1,69 @@
 <!doctype html>
-<html>
-<head lang="en">
+<html lang="en">
+<head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="This Website is a stopwatch timer">
-	<meta name="keywords" content="timer, stopwatch, html, css, javascript">
-	 <meta name="author" content="firstname lastname">
+	<meta name="description"content="This Website is a stopwatch timer">
+	<meta name="keywords" content="timer,stopwatch">
+	<meta name="author" content="Daniel Janusch">
 	<title>Stopwatch Timer</title>
 	<style>
-		h1 { text-align: center; }
-		.container { margin: 20px; }
-		p { margin: 1.5px; }
+		#title { text-align: center; }
+		.hide { display: none; }
+		.container, #end { margin: 20px; }
+		#startButton { background-color: #B4B4B4; }
 		body {
-			background-color: rgb(0, 0, 0);
-			color: #ffffff;
-		}
-		
-		.hide {
-			display: none;
+			background-color: black;
+			color: #B4B4B4;
 		}
 	</style>
 </head>
 <body>
+  <noscript>Either Javascript is disabled or you browser doesn't support it. Javascript is required to run this application.</noscript>
 	<div class="container">
 		<h1 id="title">Timer</h1>
-		<span id="itHasBeen">It has been </span>
-		<span id="showDecades" class="hide"></span>
-		<span id="showYears" class="hide"></span>
-		<span id="showDays" class="hide"></span>
-		<span id="showHours" class="hide"></span>
-		<span id="showMinutes" class="hide"></span>
-		<span id="showSeconds">0 seconds</span>
+		<button id="startButton">Start Timer</button>
+		<hr id="hr"> <br id="br">
+		<span id="itHasBeen" class="hide">It has been </span>
+		<span id="showDecades" class="hide">0 Decades</span>
+		<span id="showYears" class="hide">0 Years</span>
+		<span id="showDays" class="hide">0 Days</span>
+		<span id="showHours" class="hide">0 Hours</span>
+		<span id="showMinutes" class="hide">0 Minutes</span>
+		<span id="showSeconds" class="hide">0 Seconds</span>
+		<h2 id="end" class="hide">Error</h2>
 	</div>
 	<script>
-		var counter = 1,
-				number = Number(prompt(`number of seconds for timer\ntype "Infinity" for no limit`)),
-				decadesCounter = 0,
-				yearsCounter = 0,
-				daysCounter = 0,
-				hoursCounter = 0,
-				minutesCounter = 0,
-				secondsCounter = 1,
-				$ = e => document.getElementById(e),
-				printMessage = function() {
-					if (counter > number || isNaN(number) === !0) {
-						clearInterval(intervalId);
-						return;
-					} else {
-						secondsCounter >= 60 && (secondsCounter -= 60, minutesCounter++, $("showMinutes").style.display = "inline");
-						minutesCounter >= 60 && (minutesCounter -= 60, hoursCounter++, $("showHours").style.display = "inline");
-						hoursCounter >= 24 && (hoursCounter -= 24, daysCounter++, $("showDays").style.display = "inline");
-						daysCounter >= 365 && (daysCounter -= 365, yearsCounter++, $("showYears").style.display = "inline");
-						yearsCounter >= 10 && (yearsCounter -= 10, decadesCounter++, $("showDecades").style.display = "inline");
-						decadesCounter === 1? $("showDecades").innerHTML = `1 Decade, `:
-						$("showDecades").innerHTML = `${decadesCounter} Decades, `;
-						yearsCounter === 1? $("showYears").innerHTML = `1 Year, `:
-						$("showYears").innerHTML = `${yearsCounter} Years, `;
-						daysCounter === 1? $("showDays").innerHTML = `1 Day, `:
-						$("showDays").innerHTML = `${daysCounter} Days, `;
-						hoursCounter === 1? $("showHours").innerHTML = `1 Hour, `:
-						$("showHours").innerHTML = `${hoursCounter} Hours, `;
-						minutesCounter === 1? $("showMinutes").innerHTML = `1 minute, `:
-						$("showMinutes").innerHTML = `${minutesCounter} minutes, `;
-						secondsCounter === 1? $("showSeconds").innerHTML = `1 second`:
-						$("showSeconds").innerHTML = `${secondsCounter} seconds`;
-						secondsCounter++, counter++;
+		var c = 1, decadesCounter = 0, yearsCounter = 0, daysCounter = 0, hoursCounter = 0, minutesCounter = 0, secondsCounter = 1, 
+			printMessage = function() {
+				if (c === 1) {
+					window.number = Math.abs(Number(prompt(`Number of seconds for timer\nType "Infinity" for no limit`).replace(/^ *| *$/g,"")));
+				} if (isNaN(number) == 1 || number === null || number == 0) {
+						  end.style.display = "block", clearInterval(intervalId); return;
+				} else {
+					secondsCounter >= 60 && (secondsCounter -= 60, minutesCounter++, showMinutes.style.display = "inline");
+					minutesCounter >= 60 && (minutesCounter -= 60, hoursCounter++, showHours.style.display = "inline");
+					hoursCounter >= 24 && (hoursCounter -= 24, daysCounter++, showDays.style.display = "inline");
+					daysCounter >= 365 && (daysCounter -= 365, yearsCounter++, showYears.style.display = "inline");
+					yearsCounter >= 10 && (yearsCounter -= 10, decadesCounter++, showDecades.style.display = "inline");
+					decadesCounter === 1? showDecades.innerHTML = `1 Decade, `: showDecades.innerHTML = `${decadesCounter} Decades, `;
+					yearsCounter === 1? showYears.innerHTML = `1 Year, `: showYears.innerHTML = `${yearsCounter} Years, `;
+					daysCounter === 1? showDays.innerHTML = `1 Day, `: showDays.innerHTML = `${daysCounter} Days, `;
+					hoursCounter === 1? showHours.innerHTML = `1 Hour, `: showHours.innerHTML = `${hoursCounter} Hours, `;
+					minutesCounter === 1? showMinutes.innerHTML = `1 Minute, `: showMinutes.innerHTML = `${minutesCounter} Minutes, `;
+					secondsCounter === 1? showSeconds.innerHTML = `1 Second`: showSeconds.innerHTML = `${secondsCounter} Seconds`;
+					if (number === c) {
+						end.innerHTML = "Done", end.style.display = "block";
+						clearInterval(intervalId); return;
 					}
-				},
-				intervalId = setInterval(printMessage, 1e3);
+					secondsCounter++, c++;
+				}
+		}
+		startButton.addEventListener("click", function() {
+		  window.intervalId = setInterval(printMessage,1e3);
+			br.style.display = "none", startButton.style.display = "none";
+			itHasBeen.style.display = "inline", showSeconds.style.display = "inline";
+		})
 	</script>
 </body>
 </html>
