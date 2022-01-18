@@ -3,98 +3,96 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<meta name="description" content="This Website lets you cheat on ">
-		<meta name="keywords" content="password generator,password,passwrod,pasword,passwords">
-		 <meta name="author" content="firstname lastname">
+		<meta name="description" content="This Website lets you cheat on Human Benchmark Verbal Memory Quiz">
+		<meta name="keywords" content="">
+		<meta name="author" content="Daniel Janusch">
 		<title>Verbal Memory Cheats</title>
 		<style>
-    	div { padding: 10px; }
-    	button { padding: 12px; }
-    	h1 { padding: 0px; }
-    	body { background-color: rgb(160,160,160); }
-    </style>
-  </head>
-  <body>
-    <center>
-      <h1 id="Heading">New/Seen</h1>
-      <div>
-        <button onclick="newWord();">
-          Add Word
-        </button>
-      </div>
-      <div></div>
-      <button onclick="if(words.indexOf(word)!==-1){words.splice(words.indexOf(word),1);}h6();">
-        Delete Latest Word
-      </button>
-      <div></div>
-      <div>
-        <button onclick='if(words[(words.length)-1]===null){words.pop()}words.sort();console.log(words);if(words!==[]&&word!==undefined&&word!==""){console.log("Most recent word = ",word)}h6();'>
-          Log Words
-        </button>
-      </div>
-      <div></div>
-      <div>
-        <button onclick='b=prompt("Word To Delete:");b=words.indexOf(b.toLowerCase());if(b!==-1){words.splice(b,1);}h6();'>
-          Delete Specific Word
-        </button>
-      </div>
+			div { padding: 10px; }
+			button { padding: 12px; }
+			h1 { padding: 0px; }
+			body { background-color: rgb(160,160,160); }
+		</style>
+	</head>
+	<body>
+		<center>
+			<h1 id="Heading">New/Seen</h1>
+			<div>
+				<button onclick="newWord();">Add Word</button>
+			</div>
 			<div></div>
-      <div>
-        <button onclick='a=prompt("Are you sure?");a=a.toLowerCase();if(a==="yes"||a==="y"||a==="1"){if(word!==null){word="";}if(words!==[]){words=[];}document.getElementById("Heading").innerHTML="New/Seen";document.getElementById("words_list").innerHTML="";document.getElementById("latestWord").innerHTML="Latest Word: ";}'>
-          Reset
-        </button>
-      </div>
-    </center>
-    <h3 id="latestWord">Latest Word: </h3>
-    <h3 id="words_list"></h3>
-    <script>
-      var i, c = 0, a, y, q, b, word, words = [];
-      function newWord() {
-        if (c = 0) {
-          word = prompt("word?");
-          if (word !== null && word !== "") {
-            word = word.toLowerCase();
-            words.push(word);
-            document.getElementById("Heading").innerHTML = word.replace(word[0], word[0].toUpperCase()) + ": New"
-          }
-        } else {
-          if (words[(words.length) - 1] === null) {
-            words.pop();
-          }
-          word = prompt("new word?");
-          word = word.toLowerCase();
-          if (word == "") {
-            return;
-          }
-          for (i = 0; i < words.length; i++) {
-            if (words[i] == word) {
-              i = words.length + 100;
-            }
-          }
-          if (i > words.length + 12) {
-            document.getElementById("Heading").innerHTML = word.replace(word[0], word[0].toUpperCase()) + ": Seen";
-          } else if (i > words.length - 5 && i < words.length + 5) {
-            words.push(word);
-            words.sort();
-            document.getElementById("Heading").innerHTML = word.replace(word[0], word[0].toUpperCase()) + ": New";
-          }
-        } 
-        c++, h6();
-      }
-      function h6(){
-        var a = 0;
-        var words2 = "";
-        for (let i = 0; i < words.length; i++) {
-          a += words[i].length;
-          words2 += words[i] + ",";
-          if (a >= 140) {
-           a = 0;
-           words2 += "\n";
-          }
-        }
-        document.getElementById("words_list").innerHTML = words2;
-        document.getElementById("latestWord").innerHTML = `Latest Word: ${word}`;
-      }
-    </script>
-  </body>
+			<button onclick="if(words.indexOf(word)!==-1){words.splice(words.indexOf(word),1);}h6();">
+				Delete Latest Word
+			</button>
+			<div></div>
+			<div>
+				<button onclick='if(words[(words.length)-1]===null){words.pop()}words.sort();console.log(words);if(words!==[]&&word!==undefined&&word!==""){console.log("Most recent word = ",word)}h6();'>
+					Log Words
+				</button>
+			</div>
+			<div></div>
+			<div>
+				<button onclick='b=prompt("Word To Delete:");b=words.indexOf(b.toLowerCase());if(b!==-1){words.splice(b,1);}h6();'>
+					Delete Specific Word
+				</button>
+			</div>
+			<div></div>
+			<div>
+				<button onclick='a=prompt("Are you sure?");a=a.toLowerCase();if(a==="yes"||a==="y"||a==="1"){if(word!==null){word="";}if(words!==[]){words=[];}document.getElementById("Heading").innerHTML="New/Seen";document.getElementById("words_list").innerHTML="";document.getElementById("latestWord").innerHTML="Latest Word: ";}'>
+					Reset
+				</button>
+			</div>
+		</center>
+		<h3 id="latestWord">Latest Word: </h3>
+		<h3 id="words_list"></h3>
+		<script>
+			var i, c = 0, a, y, q, b, word, words = [];
+			function newWord() {
+				if (c === 0) {
+					word = prompt("word?");
+					if (word !== null && word !== "") {
+						word = word.toLowerCase();
+						words.push(word);
+						document.getElementById("Heading").innerHTML = word.replace(word[0], word[0].toUpperCase()) + ": New";
+					}
+				} else {
+					if (words[(words.length) - 1] === null) {
+						words.pop();
+					}
+					word = prompt("new word?");
+					word = word.toLowerCase();
+					if (word == "") {
+						return;
+					}
+					for (i = 0; i < words.length; i++) {
+						if (words[i] == word) {
+							i = words.length + 100;
+						}
+					}
+					if (i > words.length + 12) {
+						document.getElementById("Heading").innerHTML = word.replace(word[0], word[0].toUpperCase()) + ": Seen";
+					} else if (i > words.length - 5 && i < words.length + 5) {
+						words.push(word);
+						words.sort();
+						document.getElementById("Heading").innerHTML = word.replace(word[0], word[0].toUpperCase()) + ": New";
+					}
+				}
+				c++:
+				h6();
+			}
+			function h6(){
+				var a = 0, words2 = "";
+				for (let i = 0; i < words.length; i++) {
+					a += words[i].length;
+					words2 += words[i] + ",";
+					if (a >= 140) {
+						a = 0;
+						words2 += "\n";
+					}
+				}
+				document.getElementById("words_list").innerHTML = words2;
+				document.getElementById("latestWord").innerHTML = `Latest Word: ${word}`;
+			}
+		</script>
+	</body>
 </html>
