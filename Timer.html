@@ -23,7 +23,8 @@
 	<div class="container">
 		<h1 id="title">Timer</h1>
 		<button id="startButton">Start Timer</button>
-		<hr id="hr"> <br id="br">
+		<hr id="hr">
+		<br id="br">
 		<span id="itHasBeen" class="hide">It has been </span>
 		<span id="showDecades" class="hide">0 Decades</span>
 		<span id="showYears" class="hide">0 Years</span>
@@ -34,7 +35,7 @@
 		<h2 id="end" class="hide">Error</h2>
 	</div>
 	<script>
-		var c = 1, decadesCounter = 0, yearsCounter = 0, daysCounter = 0, hoursCounter = 0, minutesCounter = 0, secondsCounter = 1, 
+		var c = 1, decadesCounter = 0, yearsCounter = 0, daysCounter = 0, hoursCounter = 0, minutesCounter = 0, secondsCounter = 1,
 			printMessage = function() {
 				if (c === 1) {
 					window.number = Math.abs(Number(prompt(`Number of seconds for timer\nType "Infinity" for no limit`).replace(/^ *| *$/g,"")));
@@ -60,7 +61,7 @@
 				}
 		}
 		startButton.addEventListener("click", function() {
-		  window.intervalId = setInterval(printMessage,1e3);
+			window.intervalId = setInterval(printMessage,1e3);
 			br.style.display = "none", startButton.style.display = "none";
 			itHasBeen.style.display = "inline", showSeconds.style.display = "inline";
 		});
