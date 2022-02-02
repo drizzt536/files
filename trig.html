@@ -1,1 +1,87 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Trig functions given x, and y coordinates</title><style>input,button,textarea{background:lightgray!important}html{background:black}.wrapper{margin:32px}#text,button{display:block;margin:5px;font-size:26px}input{margin-left:5px;margin-right:5px;font-size:26px}#text{font-size:26px}button{margin-top:15px!important;margin-bottom:15px!important}</style></head><body><div class="wrapper"><input type="text"id="x"placeholder="x coordinate"><input type="text"id="y"placeholder="y coordinate"><button id="submit">submit</button><textarea id="text"></textarea></div><script>submit.addEventListener("click",function(){text.value=trig(x.value*1,y.value*1);text.rows=7;text.cols=30;x.value=y.value=""});String.prototype.r=function(){return this.valueOf().replace(/1/,"").replace(/^0/,"").replace(/0\./g,".")};var trig=(x,y)=>{var r=Math.hypot(x,y),a=Math.sign(x),b=Math.sign(y),sin,cos,tan,csc,sec,cot;sin=`${b}${y*b} / ${r}`.r(),cos=`${a}${x*a} / ${r}`.r(),tan=`${a*b}${y*b} / ${x*a}`.r(),csc=`${b}${r} / ${y*b}`.r(),sec=`${a}${r} / ${x*a}`.r(),cot=`${a*b}${x*a} / ${y*b}`.r();if(x===1)tan=`${a*b}${y*b}`.r(),sec=`${a}${r}`.r();if(y===1)csc=`${b}${r}`.r(),cot=`${a*b}${x*a}`.r();if(r!==parseInt(r)){r=x**2+y**2;sin=`${b}${y*b}√${r} / ${r}`.r().replace(/1√/g, "√"),cos=`${a}${x*a}√${r} / ${r}`.r().replace(/1√/g,"√"),csc=`${b}√${r} / ${y*b}`.r().replace(/1√/g, "√"),sec=`${a}√${r} / ${x*a}`.r().replace(/1√/g,"√");if(x===1)sec=`√${a}${r}`.r();if(y===1)csc=`√${b}${r}`.r();r=`√${r}`}if(a*x===r)cos=a;if(b*y==r)csc=sin=b;if(a*x===b*y)cot=tan=a*b;if(x===0)cot=cos=0;if(y===0)tan=sin=0;if(x===0)sec=tan=undefined;if(y===0)cot=csc=undefined;return`radius: ${r}\nsin: ${sin}\ncos: ${cos}\ntan: ${tan}\ncsc: ${csc}\nsec: ${sec}\ncot: ${cot}`}</script></body></html>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport"content="width=device-width,initial-scale=1">
+    <title>Trig functions given x, and y coordinates</title>
+    <style>
+      input, button, textarea {
+        background: lightgray!important;
+      }
+      html {
+        background: black;
+      }
+      .wrapper {
+        margin: 32px
+      }
+      #text, button {
+        display: block;
+        margin: 5px;
+        font-size: 26px;
+      }
+      input {
+        margin-left: 5px;
+        margin-right: 5px;
+        font-size: 26px
+      }
+      #text {
+        font-size: 26px;
+      }
+      button {
+        margin-top: 15px !important;
+        margin-bottom: 15px !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <input type="text"id="x"placeholder="x coordinate">
+      <input type="text"id="y"placeholder="y coordinate">
+      <button id="submit">submit</button><textarea id="text">
+      </textarea>
+    </div>
+    <script>
+      submit.addEventListener("click",function() {
+        text.value=trig(x.value*1,y.value*1);
+        text.rows=7;
+        text.cols=30;
+        x.value=y.value=""});
+      String.prototype.r=function(){
+        return this.valueOf().replace(/1/,"").replace(/^0/,"").replace(/0\./g,".");
+      };
+      var trig=(x,y)=>{
+        var r=Math.hypot(x,y),
+            a=Math.sign(x),
+            b=Math.sign(y),
+            sin,
+            cos,
+            tan,
+            csc,
+            sec,
+            cot;
+        sin=`${b}${y*b} / ${r}`.r(),
+        cos=`${a}${x*a} / ${r}`.r(),
+        tan=`${a*b}${y*b} / ${x*a}`.r(),
+        csc=`${b}${r} / ${y*b}`.r(),
+        sec=`${a}${r} / ${x*a}`.r(),
+        cot=`${a*b}${x*a} / ${y*b}`.r();
+        if(x===1)tan=`${a*b}${y*b}`.r(),sec=`${a}${r}`.r();
+        if(y===1)csc=`${b}${r}`.r(),cot=`${a*b}${x*a}`.r();
+        if(r!==parseInt(r)){
+          r=x**2+y**2;sin=`${b}${y*b}√${r} / ${r}`.r().replace(/1√/g, "√"),
+        cos=`${a}${x*a}√${r} / ${r}`.r().replace(/1√/g,"√"),
+        csc=`${b}√${r} / ${y*b}`.r().replace(/1√/g, "√"),
+        sec=`${a}√${r} / ${x*a}`.r().replace(/1√/g,"√");
+        if(x===1)sec=`√${a}${r}`.r();
+        if(y===1)csc=`√${b}${r}`.r();r=`√${r}`}
+        if(a*x===r)cos=a;
+        if(b*y==r)csc=sin=b;
+        if(a*x===b*y)cot=tan=a*b;
+        if(x===0)cot=cos=0;
+        if(y===0)tan=sin=0;
+        if(x===0)sec=tan=undefined;
+        if(y===0)cot=csc=undefined;
+        return`radius: ${r}\nsin: ${sin}\ncos: ${cos}\ntan: ${tan}\ncsc: ${csc}\nsec: ${sec}\ncot: ${cot}`}
+    </script>
+  </body>
+</html>
