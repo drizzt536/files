@@ -89,51 +89,50 @@
 	</div>
 	<script type="text/javascript">
 		Object.prototype.ael=addEventListener;
-		//move vars to here
 		var numDecks = 1,
-				tCount = 0,
-				rCount = 0,
-				d = " Diamonds",
-				deck=new Deck(),
-				$ = e => document.getElementById(e),
-				len = e => e.length,
-				updateCounts = () => {
-					deck.deck[0] == null?
-						null:
-						tCount = (
-							(deck.deck[0][0]+deck.deck[0][1])*1<7?
-								++rCount:
-								(deck.deck[0][0]+deck.deck[0][1])*1<10 || deck.deck[0] == "Joker"?
-									rCount:
-									--rCount) / (len(deck.deck) / 52);
-						tCount = rCount / (len(deck.deck) / 52);
-						Object.is(tCount,NaN) && (tCount=0)
-				},
-				toggleCounts=()=>
-					$("countsDiv").style.display == "inline"?
-						$("countsDiv").style.display = "none":
-						$("countsDiv").style.display = "inline",
-				updateScreen=()=>{
-					if(deck.deck[0] != null)$("currentCardText").innerHTML = deck.deck[0];
-					else $("currentCardText").innerHTML = "None";
-					updateCounts();
-					$("decksLeftText").innerHTML = numDecks = `${Math.round(len(deck.deck)/5.2)/10==0?
-							Math.ceil(len(deck.deck)/5.2)/10:
-							Math.round(len(deck.deck)/5.2)/10}`;
-					$("runningCountText").innerHTML = rCount;
-					$("trueCountText").innerHTML = tCount;
-					if(deck.deck[0] == null && len(deck.deck)>0)$("cardsLeftText").innerHTML = len(deck.deck)-1;
-					else $("cardsLeftText").innerHTML = len(deck.deck);
-				},
-				resizeDiv=()=>{
-					if($("main").scrollWidth > 689)
-						return $("title2").style.display = $("hr2").style.display = "none",$("line2Div").style.marginLeft=0;
-					if($("main").scrollWidth >= 344)
-						return $("title2").style.display = $("hr2").style.display = $("line2Div").style.marginLeft = "";
-					$("hr2").style.display = $("title2").style.display = "none";
-					if($("main").scrollWidth < 229) return document.querySelector("hr").style.display = "none";
-					document.querySelector("hr").style.display = "";
-				};
+		tCount = 0,
+		rCount = 0,
+		d = " Diamonds",
+		deck=new Deck(),
+		$ = e => document.getElementById(e),
+		len = e => e.length,
+		updateCounts = () => {
+			deck.deck[0] == null?
+				null:
+				tCount = (
+					(deck.deck[0][0]+deck.deck[0][1])*1<7?
+						++rCount:
+						(deck.deck[0][0]+deck.deck[0][1])*1<10 || deck.deck[0] == "Joker"?
+							rCount:
+							--rCount) / (len(deck.deck) / 52);
+				tCount = rCount / (len(deck.deck) / 52);
+				Object.is(tCount,NaN) && (tCount=0)
+		},
+		toggleCounts=()=>
+			$("countsDiv").style.display == "inline"?
+				$("countsDiv").style.display = "none":
+				$("countsDiv").style.display = "inline",
+		updateScreen=()=>{
+			if(deck.deck[0] != null)$("currentCardText").innerHTML = deck.deck[0];
+			else $("currentCardText").innerHTML = "None";
+			updateCounts();
+			$("decksLeftText").innerHTML = numDecks = `${Math.round(len(deck.deck)/5.2)/10==0?
+					Math.ceil(len(deck.deck)/5.2)/10:
+					Math.round(len(deck.deck)/5.2)/10}`;
+			$("runningCountText").innerHTML = rCount;
+			$("trueCountText").innerHTML = tCount;
+			if(deck.deck[0] == null && len(deck.deck)>0)$("cardsLeftText").innerHTML = len(deck.deck)-1;
+			else $("cardsLeftText").innerHTML = len(deck.deck);
+		},
+		resizeDiv=()=>{
+			if($("main").scrollWidth > 689)
+				return $("title2").style.display = $("hr2").style.display = "none",$("line2Div").style.marginLeft=0;
+			if($("main").scrollWidth >= 344)
+				return $("title2").style.display = $("hr2").style.display = $("line2Div").style.marginLeft = "";
+			$("hr2").style.display = $("title2").style.display = "none";
+			if($("main").scrollWidth < 229) return document.querySelector("hr").style.display = "none";
+			document.querySelector("hr").style.display = "";
+		};
 		class Deck {
 			constructor() {
 				this.deck = [
