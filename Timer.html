@@ -5,20 +5,19 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description"content="This Website is a stopwatch timer">
 	<meta name="keywords" content="timer,stopwatch">
-	<meta name="author" content="Daniel Janusch">
 	<title>Stopwatch Timer</title>
 	<style>
-		#title { text-align: center; }
-		.hide { display: none; }
-		.container, #end { margin: 20px; }
-		#startButton { background-color: #B4B4B4; }
+		#title { text-align: center }
+		.hide { display: none }
+		.container, #end { margin: 20px }
+		#startButton, #resetButton { background-color: #B4B4B4 }
 		body {
 			background-color: black;
 			color: #B4B4B4;
 		}
 	</style>
 </head>
-<body>
+<body dir="ltr">
   <noscript>Either Javascript is disabled or you browser doesn't support it. Javascript is required to run this application.</noscript>
 	<div class="container">
 		<h1 id="title">Timer</h1>
@@ -33,37 +32,51 @@
 		<span id="showMinutes" class="hide">0 Minutes</span>
 		<span id="showSeconds" class="hide">0 Seconds</span>
 		<h2 id="end" class="hide">Error</h2>
+		<br>
+		<button id=resetButton>reset</button>
 	</div>
 	<script>
-		var c = 1, decadesCounter = 0, yearsCounter = 0, daysCounter = 0, hoursCounter = 0, minutesCounter = 0, secondsCounter = 1,
-			printMessage = function() {
-				if (c === 1) {
-					window.number = Math.abs(Number(prompt(`Number of seconds for timer\nType "Infinity" for no limit`).replace(/^ *| *$/g,"")));
-				} if (isNaN(number) == 1 || number === null || number == 0) {
-						  end.style.display = "block", clearInterval(intervalId); return;
-				} else {
-					secondsCounter >= 60 && (secondsCounter -= 60, minutesCounter++, showMinutes.style.display = "inline");
-					minutesCounter >= 60 && (minutesCounter -= 60, hoursCounter++, showHours.style.display = "inline");
-					hoursCounter >= 24 && (hoursCounter -= 24, daysCounter++, showDays.style.display = "inline");
-					daysCounter >= 365 && (daysCounter -= 365, yearsCounter++, showYears.style.display = "inline");
-					yearsCounter >= 10 && (yearsCounter -= 10, decadesCounter++, showDecades.style.display = "inline");
-					decadesCounter === 1? showDecades.innerHTML = `1 Decade, `: showDecades.innerHTML = `${decadesCounter} Decades, `;
-					yearsCounter === 1? showYears.innerHTML = `1 Year, `: showYears.innerHTML = `${yearsCounter} Years, `;
-					daysCounter === 1? showDays.innerHTML = `1 Day, `: showDays.innerHTML = `${daysCounter} Days, `;
-					hoursCounter === 1? showHours.innerHTML = `1 Hour, `: showHours.innerHTML = `${hoursCounter} Hours, `;
-					minutesCounter === 1? showMinutes.innerHTML = `1 Minute, `: showMinutes.innerHTML = `${minutesCounter} Minutes, `;
-					secondsCounter === 1? showSeconds.innerHTML = `1 Second`: showSeconds.innerHTML = `${secondsCounter} Seconds`;
-					if (number === c) {
-						end.innerHTML = "Done", end.style.display = "block";
-						clearInterval(intervalId); return;
-					}
-					secondsCounter++, c++;
+		var c = 1, decadesCounter = 0, yearsCounter = 0, daysCounter = 0, hoursCounter = 0, minutesCounter = 0, secondsCounter = 1, $ = e => document.getElementById(e),
+			printMessage = () => {
+				if(c === 1){
+					this.number = Math.abs(1*prompt('Number of seconds for timer\nType "Infinity" for no limit').replace(/^ *| *$/g, ""))
 				}
-		}
-		startButton.addEventListener("click", function() {
-			window.intervalId = setInterval(printMessage,1e3);
-			br.style.display = "none", startButton.style.display = "none";
-			itHasBeen.style.display = "inline", showSeconds.style.display = "inline";
+				if(isNaN(number) || number === null || number == 0) {
+					$("end").style.display = "block";
+					clearInterval(intervalId);
+					return;
+				}
+				else {
+					secondsCounter > 59 && (secondsCounter -= 60, minutesCounter++, $("showMinutes").style.display = "inline");
+					minutesCounter > 59 && (minutesCounter -= 60, hoursCounter++, $("showHours").style.display = "inline");
+					hoursCounter > 23 && (hoursCounter -= 24, daysCounter++, $("showDays").style.display = "inline");
+					daysCounter > 364 && (daysCounter -= 365, yearsCounter++, $("showYears").style.display = "inline");
+					yearsCounter > 9 && (yearsCounter -= 10, decadesCounter++, $("showDecades").style.display = "inline");
+					decadesCounter === 1 ? $("showDecades").innerHTML = `1 Decade, ` : $("showDecades").innerHTML = `${decadesCounter} Decades, `;
+					yearsCounter === 1 ? $("showYears").innerHTML = `1 Year, `: $ ("showYears").innerHTML = `${yearsCounter} Years, `;
+					daysCounter === 1 ? $("showDays").innerHTML = `1 Day, ` : $("showDays").innerHTML = `${daysCounter} Days, `;
+					hoursCounter === 1 ? $("showHours").innerHTML = `1 Hour, ` : $("showHours").innerHTML =`${hoursCounter} Hours, `;
+					minutesCounter === 1 ? $("showMinutes").innerHTML = `1 Minute, ` : $("showMinutes").innerHTML = `${minutesCounter} Minutes, `;
+					secondsCounter === 1 ? $("showSeconds").innerHTML = `1 Second` : $("showSeconds").innerHTML = `${secondsCounter} Seconds`;
+					if(number === c) {
+						$("end").innerHTML="Done";
+						$("end").style.display="block";
+						clearInterval(intervalId);
+						return
+					}
+					secondsCounter++;
+					c++
+				}
+			}
+		$("startButton").addEventListener("click", () => {
+		  this.intervalId = setInterval(printMessage, 1e3);
+			$("br").style.display = "none";
+			$("startButton").style.display = "none";
+			$("itHasBeen").style.display = "inline";
+			$("showSeconds").style.display = "inline";
+		});
+		$("resetButton").addEventListener("click",()=>{
+			location.reload();
 		});
 	</script>
 </body>
