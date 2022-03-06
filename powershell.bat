@@ -1,4 +1,5 @@
-@echo off&&title powershell
+@echo off
+title powershell
 :cmd
 powershell
 set/p var=Are You Sure You Want To Exit?
