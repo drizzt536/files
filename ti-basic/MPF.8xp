@@ -1,3 +1,4 @@
+AUTO
 (B+D)/2→E
 (C+F)/2→A
 Output(3-O,1,"Midpoint=
@@ -19,3 +20,4 @@ Then
 W-1→W
 End
 Output(4-O,H+W,")
+FRAC
