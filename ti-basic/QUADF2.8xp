@@ -75,7 +75,9 @@ J/X→J
 If M≠0 and B≠0
 Then
 P→Z
-P-real(int(log(M)))+real(int(log(B→P:P→Y:Z→P
+P-real(int(log(M)))+real(int(log(B→P
+P→Y
+Z→P
 End
 Output(7,12,"Ready
 Pause 
@@ -120,9 +122,9 @@ abs(J→J
 End
 If B≠0
 Then
-If real(int(log(B)))≥1
+If 1≤real(int(log(B
 Then
-real(int(log(B)))-1→θ
+-1+real(int(log(B→θ
 If B<0
 Then
 θ+1→θ
