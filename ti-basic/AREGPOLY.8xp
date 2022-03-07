@@ -3,7 +3,7 @@ ClrHome
 Menu("  Select Input  ","Num of Sides",1,"External ∠",2,"Internal ∠",3,"Central ∠",4
 Lbl 1
 Disp "Num of Sides?
-Prompt S
+Input "s=",S
 If S<3 or S≠int(S
 Then
 ClrHome
