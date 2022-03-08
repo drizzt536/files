@@ -3,9 +3,9 @@ ClrHome
 Lbl A
 Menu("  Select Input  ","Linear,Linear",1,"Linear,Quad",2,"Quad,Quad",3,"Ellipse,Linear",4,"Ellipse,Quad",5,"Triples",6,"Next",B
 Lbl B
-Menu("  Select Input  ","x*y,Linear",7,"X*Y,Quad",8,"a^(bx+c) × 2",9,"Back",A
+Menu("  Select Input  ","x*y,Linear",7,"x*y,Quad",8,"a^(bx+c) × 2",9,"Back",A
 Lbl 1
-Menu("  Select Input  ","y=Mx+B",11,"Ax+By=C",12
+Menu("  Select Input  ","y=mx+b",11,"ax+by=c",12
 Lbl 12
 Disp "1: ax+by=c
 Input "a=",A
@@ -43,7 +43,7 @@ If M≠A
 Then
 (C-B)/(M-A→X
 MX+B→Y
-Disp "X₁,Y₁",X,Y
+Disp "(x₁,y₁)",X,Y
 End
 Stop
 Lbl 2
@@ -56,11 +56,11 @@ Disp "2: y=mx+b
 Input "m=",M
 Input "b=",D
 ClrHome
-(M-B+√((B-M)²-4A(C-D)))/A/2→E
-(M-B-√((B-M)²-4A(C-D)))/A/2→G
+(M-B+√((B-M)²-4A(C-D)))/(2A→E
+(M-B-√((B-M)²-4A(C-D)))/(2A→G
 ME+D→F
 MG+D→H
-Disp "X₁,Y₁, X₂,Y₂",E,F,G,H
+Disp "(x₁,y₁),(x₂,y₂)",E,F,G,H
 Stop
 Lbl 3
 Disp "1: y=ax²+bx+c
@@ -77,7 +77,7 @@ ClrHome
 (E-B-√((B-E)²-4(A-D)(C-F)))/(2A-2D→I
 DG²+EG+F→H
 DI²+EI+F→J
-Disp "X₁,Y₁, X₂,Y₂",G,H,I,J
+Disp "(x₁,y₁),(x₂,y₂)",G,H,I,J
 Stop
 Lbl 4
 Disp "a(x-h)²+b(y-k)²"," = r²
@@ -94,14 +94,14 @@ ClrHome
 A+BM²→D
 2BM(C-K)-2AH→E
 B(C-K)²-RR+AH²→F
-(√(E²-4DF)-E)/D/2→G
-(E+√(E²-4DF))/­D/2→I
+(√(E²-4DF)-E)/(2D→G
+(E+√(E²-4DF))/(­2D→I
 MG+C→H
 MI+C→J
-Disp "X₁,Y₁, X₂,Y₂",G,H,I,J
+Disp "(x₁,y₁),(x₂,y₂)",G,H,I,J
 Stop
 Lbl 5
-Disp "a(x-h)²+b(y-k)²","=r²
+Disp "a(x-h)²+b(y-k)²"," = r²
 Input "a=",G
 Input "b=",I
 Input "h=",H
@@ -120,7 +120,8 @@ F→⌊Z(3
 J²I→A
 2JIL→B
 G+I(2J(F-K)+L²→C
-2(IL(F-K)-GH)→D:GH²+I(F-K)²-RR→E
+2(IL(F-K)-GH→D
+GH²+I(F-K)²-RR→E
 prgmQUARTIC2
 ⌊Z(1→A
 ⌊Z(2→B
@@ -131,10 +132,10 @@ AZ²+BZ+C→F
 Aθ²+Bθ+C→G
 ClrList ⌊Z
 ClrHome
-Disp "X₁,Y₁, X₂,Y₂",X,D,Y
+Disp "(x₁,y₁),(x₂,y₂)",X,D,Y
 Pause E
 ClrHome
-Disp "X₃,Y₃, X₄,Y₄",Z,F,θ,G
+Disp "(x₃,y₃),(x₄,y₄)",Z,F,θ,G
 Stop
 Lbl 6
 Disp "1: ax+by+cz=d
@@ -167,7 +168,7 @@ Then
 Else
 (L-IQ-JR)/K→S
 End
-Disp "x,y,z (Q,R,S)",QFrac,RFrac,SFrac
+Disp "(x,y,z) (Q,R,S)",QFrac,RFrac,SFrac
 Stop
 Lbl 7
 ClrHome
@@ -187,7 +188,7 @@ If A≠0 and B=0
 Then
 If M=0 and C=0
 Then
-Disp "All Real Numbers","  Y=0
+Disp "All Real Numbers","  y = 0
 Else
 If M≠0 and C=0
 Then
@@ -199,7 +200,7 @@ Disp "No Solution
 Else
 If M≠0 and C≠0
 Then
-Disp "x,y",­C/MFrac,0
+Disp "(x,y)",­C/MFrac,0
 End
 End
 End
@@ -217,7 +218,7 @@ Goto 71
 Else
 If M=0 and C≠0
 Then
-Disp "X,Y",B/A/CFrac,C
+Disp "(x,y)",B/A/CFrac,C
 Else
 If M≠0 and C≠0
 Then
@@ -227,16 +228,14 @@ End
 End
 End
 End
-Goto 72
+Goto 82
 Lbl 71
-(√((AC²+4MB)A)-C)/M/2→X
-(C+√((AC²+4MB)A))/­M/2→Z
+(√((AC²+4MB)A)-C)/(2M→X
+(C+√((AC²+4MB)A))/(­2M→Z
 MX+C→Y
 MZ+C→θ
 ClrHome
-Disp "x₁,y₁, x₂,y₂",X,Y,Z,θ
-Lbl 72
-Stop
+Disp "(x₁,y₁),(x₂,y₂)",X,Y,Z,θ
 Lbl 8
 Disp "1: axy=b
 Input "a=",A
@@ -256,7 +255,7 @@ If B=0 and A≠0
 Then
 If C=0 and D=0 and E=0
 Then
-Disp "All Real Numbers","  y=0
+Disp "All Real Numbers","  y = 0
 Else
 If C=0 and D=0 and E≠0
 Then
@@ -264,11 +263,11 @@ Disp "No Solution
 Else
 If C=0 and D≠0
 Then
-Disp "x,y",­E/D,0
+Disp "(x,y)",­E/D,0
 Else
 If C≠0
 Then
-Disp "x₁,y₁ x₂,y₂",(­D+√(D²-4CE))/(2C),0,(­D-√(D²-4CE))/(2C),0
+Disp "(x₁,y₁),(x₂,y₂)",(­D+√(D²-4CE))/(2C),0,(­D-√(D²-4CE))/(2C),0
 End
 End
 End
@@ -282,7 +281,7 @@ Disp "No Solution
 Else
 If C=0 and D=0
 Then
-Disp "X₁,Y₁",B/(AE),E
+Disp "(x₁,y₁)",B/(AE),E
 Else
 If A≠0 and C=0
 Then
@@ -290,11 +289,11 @@ Then
 DX+E→Y
 (­AE-√(A²E²+4ADB))/(2AD→Z
 DZ+E→θ
-Disp "X₁,Y₁ X₂,Y₂",X,Y,Z,θ
+Disp "(x₁,y₁),(x₂,y₂)",X,Y,Z,θ
 Else
 If A≠0 and B≠0 and C≠0
 Then
-Disp "X,Y",√(B/AC),C√(B²)/√(A²C²
+Disp "(x,y)",√(B/AC),C√(B²)/√(A²C²
 Else
 If A≠0 and B≠0 and C≠0
 Then
@@ -316,14 +315,15 @@ D→G
 FG→B
 FC→A
 FE→C
-­B/27/A+BC/6/A²-D/2/A→E
-C/A/3-B²/9/A²→F
+­B/27/A+BC/6/A²-D/(2A→E
+C/A/3-B²/(9A²→F
 √(F²+F→G
 √(F+G)+√(F-G)-B/3/A→X
-AX+B→B:BX+C→C
+AX+B→B
+BX+C→C
 √(B²-4AC→G
 (G-B)/(2A→Y
-(B+G)/(-2A→Z
+(B+G)/(­2A→Z
 ⌊Z(1→A
 ⌊Z(2→B
 ⌊Z(3→C
@@ -331,10 +331,10 @@ AX²+BX+C→D
 AY²+BY+C→E
 AZ²+BZ+C→F
 ClrHome
-Disp "x₁,y₁ x₂,y₂",X,D,Y,E
-Pause 
+Disp "(x₁,y₁),(x₂,y₂)",X,D,Y
+Pause E
 ClrHome
-Disp "x₃,y₃",Z,F
+Disp "(x₃,y₃)",Z,F
 Lbl 82
 Stop
 Lbl 9
@@ -359,6 +359,5 @@ End
 Else
 (Fln(D)-Cln(A))/(Bln(A)-Eln(D→X
 A^((CE-FB)/(E-Blog(A,f→Y
-Disp "x,y",X,Y
+Disp "(x,y)",X,Y
 End
-Stop
