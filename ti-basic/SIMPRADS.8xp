@@ -24,7 +24,7 @@ If 1≠abs(R
 Then
 Output(1,1+Ans,"√(
 Ans→B
-R((R>0)-(R<0→C
+abs(R→C
 Output(1,3+B,C
 Disp "
 1+int(log(C→W
