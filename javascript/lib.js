@@ -388,7 +388,7 @@
 						csc:function csc(n) {return 1/this.sin(n)},
 						sec:function sec(n) {return 1/this.cos(n)},
 						cot:function cot(n) {return 1/this.tan(n)},
-						asin:x=>x>1||x<-1?NaN:t.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*(x**(2*n+1))),
+						asin:x=>x>1||x<-1?NaN:this.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*(x**(2*n+1))),
 						acos:function acos(n) {return π/2-this.asin(n)},
 						atan:math.atan,
 						atan2:function atan2(a,b) {return this.atan(a/b)},
