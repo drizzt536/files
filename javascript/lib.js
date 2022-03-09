@@ -250,16 +250,15 @@
 					return factors
 				},
 				this.intLargestFactor = function largestFactor(number) {
-					if(Math.isNaN(number)) return NaN;
+					if(this.isNaN(number)) return NaN;
 					for (var i = number; i >= 0;) {
 						if (number % --i === 0) return i;
 					}
 				},
-				this.synthDiv = function syntheticDivision(list, divisor) {
-					//list is the list of coefficients of the X's in standard form
-					for(var c=list[0]*divisor+list[1], L=[list[0],c], a=list.length-1, i=1;i<a;++i)
-						c=c*divisor+list[i+1], L.push(c);
-					return L;
+				this.synthDiv = function syntheticDivision(coeffs, /*(x=*/divisor) {
+					for (var coeff=coeffs[0]*divisor+coeffs[1], newCoeffs=[coeffs[0],coeff], n=coeffs.length-1, i=1; i<n; i++)
+						coeff = coeff * divisor + coeffs[i + 1], newCoeffs.push(coeff);
+					return newCoeffs
 				},
 				this.PythagoreanTriples = function principlePythagoreanTripleFinder(maxSize=1000) {
 					for (var a = 1, b = 1, c, triples = []; a < maxSize; a++) {
@@ -383,57 +382,59 @@
 				}
 				if(A!=void 0&&A!="default") {
 					this[A] = {
-						sin:function sin(x) {return this.sum(0,25,n=>(-1)**n/t.fact(2*n+1)*(x%(2*π))**(2*n+1))},
-						cos:function cos(x) {return this.sum(0,25,n=>(-1)**n/t.fact(2*n)*(x%(2*π))**(2*n))},
-						tan:function tan(n) {return this[A].sin(n)/this[A].cos(n)},
-						csc:function csc(n) {return 1/this[A].sin(n)},
-						sec:function sec(n) {return 1/this[A].cos(n)},
-						cot:function cot(n) {return 1/this[A].tan(n)},
-						asin:function asin(x) {return x>1||x<-1?NaN:t.sum(0,80,n=>t.fact(2*n)/(4**n*t.fact(n)**2*(2*n+1))*(x**(2*n+1)))},
-						acos:function acos(n) {return π/2-this[A].asin(n)},
+						sin:x=>this.sum(0,25,n=>(-1)**n/this.fact(2*n+1)*(x%(2*π))**(2*n+1)),
+						cos:x=>this.sum(0,25,n=>(-1)**n/this.fact(2*n)*(x%(2*π))**(2*n)),
+						tan:function tan(n) {return this.sin(n)/this.cos(n)},
+						csc:function csc(n) {return 1/this.sin(n)},
+						sec:function sec(n) {return 1/this.cos(n)},
+						cot:function cot(n) {return 1/this.tan(n)},
+						asin:x=>x>1||x<-1?NaN:t.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*(x**(2*n+1))),
+						acos:function acos(n) {return π/2-this.asin(n)},
 						atan:math.atan,
-						atan2:function atan2(a,b) {return this[A].atan(a/b)},
-						acsc:function acsc(n) {return this[A].asin(1/n)},
-						asec:function asec(n) {return this[A].acos(1/n)},
-						acot:function acot(n) {return n==0?π/2:n<0?π+this[A].atan(1/n):this[A].atan(1/n)},
-						sinh:function sinh(x) {return this.sum(0,10,n=>x**(2*n+1)/this.fact(2*n+1))},
-						cosh:function cosh(x) {return this.sum(0,10,n=>x**(2*n)/this.fact(2*n))},
-						tanh:function tanh(n) {return this[A].sinh(n)/this[A].cosh(n)},
-						csch:function csch(n) {return 1/this[A].sinh(n)},
-						sech:function sech(n) {return 1/this[A].cosh(n)},
-						coth:function coth(n) {return 1/this[A].tanh(n)},
-						asinh:function asinh(n) {return this.ln(n+this.sqrt(n**2+1))},
-						acosh:function acosh(n) {return this.ln(n+this.sqrt(n**2-1))},
-						atanh:function atanh(n) {return this.ln((n+1)/(1-n))/2},
-						acsch:function acsch(n) {return this[A].asinh(1/n)},
-						asech:function asech(n) {return this[A].acosh(1/n)},
-						acoth:function acoth(n) {return this[A].atanh(1/n)},
+						atan2:function atan2(a,b) {return this.atan(a/b)},
+						acsc:function acsc(n) {return this.asin(1/n)},
+						asec:function asec(n) {return this.acos(1/n)},
+						acot:function acot(n) {return n==0?π/2:n<0?π+this.atan(1/n):this.atan(1/n)},
+						sinh:x=>this.sum(0,10,n=>x**(2*n+1)/this.fact(2*n+1)),
+						cosh:x=>this.sum(0,10,n=>x**(2*n)/this.fact(2*n)),
+						tanh:function tanh(n) {return this.sinh(n)/this.cosh(n)},
+						csch:function csch(n) {return 1/this.sinh(n)},
+						sech:function sech(n) {return 1/this.cosh(n)},
+						coth:function coth(n) {return 1/this.tanh(n)},
+						asinh:n=>this.ln(n+this.sqrt(n**2+1)),
+						acosh:n=>this.ln(n+this.sqrt(n**2-1)),
+						atanh:n=>this.ln((n+1)/(1-n))/2,
+						acsch:function acsch(n) {return this.asinh(1/n)},
+						asech:function asech(n) {return this.acosh(1/n)},
+						acoth:function acoth(n) {return this.atanh(1/n)},
 						deg: {
 							sin:x=>this.sum(0,25,n=>(-1)**n/this.fact(2*n+1)*((x*π/180)%(2*π))**(2*n+1)),
 							cos:x=>this.sum(0,25,n=>(-1)**n/this.fact(2*n)*((x*π/180)%(2*π))**(2*n)),
-							tan:n=>this[A].deg.sin(n)/this[A].deg.cos(n),
-							csc:n=>1/this[A].deg.sin(n),
-							sec:n=>1/this[A].deg.cos(n),
-							cot:n=>1/this[A].deg.tan(n),
+							tan:function tan(n) {return this.sin(n)/this.cos(n)},
+							csc:function csc(n) {return 1/this.sin(n)},
+							sec:function sec(n) {return 1/this.cos(n)},
+							cot:function cot(n) {return 1/this.tan(n)},
 							asin:x=>x>1||x<-1?NaN:this.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*(x**(2*n+1)))*180/π,
-							acos:n=>90-this[A].deg.asin(n),
+							acos:function acos(n) {return 90-this.asin(n)},
 							atan:n=>this[A].atan(n)*180/π,
-							atan2:(a,b)=>this[A].deg.atan2(a,b)*180/π,
-							acsc:n=>this[A].deg.asin(1/n),
-							asec:n=>this[A].deg.acos(1/n),
-							acot:n=>n==0?90:n<0?180+this[A].deg.atan(1/n):this[A].deg.atan(1/n)
+							atan2:(a,b)=>this[A].atan2(a,b)*180/π,
+							acsc:function acsc(n) {return this.asin(1/n)},
+							asec:function asec(n) {return this.acos(1/n)},
+							acot:function acot(n) {return n==0?90:n<0?180+this.atan(1/n):this.atan(1/n)}
 						}
 					}
 				} else {
-					this.sin = function sin(x) {return this.sum(0,25,n=>(-1)**n/t.fact(2*n+1)*(x%(2*π))**(2*n+1))},
-					this.cos = function cos(x) {return this.sum(0,25,n=>(-1)**n/t.fact(2*n)*(x%(2*π))**(2*n))},
+					this.sin = function sin(x) {return this.sum(0,25,n=>(-1)**n/this.fact(2*n+1)*(x%(2*π))**(2*n+1))},
+					this.cos = function cos(x) {return this.sum(0,25,n=>(-1)**n/this.fact(2*n)*(x%(2*π))**(2*n))},
 					this.tan = function tan(n) {return this.sin(n)/this.cos(n)},
 					this.csc = function csc(n) {return 1/this.sin(n)},
 					this.sec = function sec(n) {return 1/this.cos(n)},
 					this.cot = function cot(n) {return 1/this.tan(n)},
-					this.asin = function asin(x) {return x>1||x<-1?NaN:t.sum(0,80,n=>t.fact(2*n)/(4**n*t.fact(n)**2*(2*n+1))*(x**(2*n+1)))},
+					this.asin = function asin(x) {
+						return x>1||x<-1 ? NaN : this.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*(x**(2*n+1)));
+					},
 					this.acos = function acos(n) {return π/2-this.asin(n)},
-					this.atan=math.atan,
+					this.atan = math.atan,
 					this.atan2 = function atan2(a,b) {return this.atan(a/b)},
 					this.acsc = function acsc(n) {return this.asin(1/n)},
 					this.asec = function asec(n) {return this.acos(1/n)},
@@ -450,20 +451,20 @@
 					this.acsch = function acsch(n) {return this.asinh(1/n)},
 					this.asech = function asech(n) {return this.acosh(1/n)},
 					this.acoth = function acoth(n) {return this.atanh(1/n)},
-					this.degTrig={
-						sin:function sin(x) {return this.sum(0,25,n=>(-1)**n/this.fact(2*n+1)*((x*π/180)%(2*π))**(2*n+1))},
-						cos:function cos(x) {return this.sum(0,25,n=>(-1)**n/this.fact(2*n)*((x*π/180)%(2*π))**(2*n))},
-						tan:function tan(n) {return this.degTrig.sin(n)/this.degTrig.cos(n)},
-						csc:function csc(n) {return 1/this.degTrig.sin(n)},
-						sec:function sec(n) {return 1/this.degTrig.cos(n)},
-						cot:function cot(n) {return 1/this.degTrig.tan(n)},
-						asin:function asin(x) {return x>1||x<-1?NaN:this.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*x**(2*n+1))*180/π},
-						acos:function acos(n) {return 90-this.degTrig.asin(n)},
-						atan:function atan(n) {return this.atan(n)*180/π},
-						atan2:function atan2(a,b) {return athis.atan2(a,b)*180/π},
-						acsc:function acsc(n) {return this.degTrig.asin(1/n)},
-						asec:function asec(n) {return this.degTrig.acos(1/n)},
-						acot:function acot(n) {return n==0?90:n<0?180+this.degTrig.atan(1/n):this.degTrig.atan(1/n)}
+					this.degTrig = {
+						sin: x=> this.sum(0,25,n=>(-1)**n/this.fact(2*n+1)*((x*π/180)%(2*π))**(2*n+1)),
+						cos: x=>this.sum(0,25,n=>(-1)**n/this.fact(2*n)*((x*π/180)%(2*π))**(2*n)),
+						tan: function tan(n) {return this.sin(n)/this.cos(n)},
+						csc: function csc(n) {return 1/this.sin(n)},
+						sec: function sec(n) {return 1/this.cos(n)},
+						cot: function cot(n) {return 1/this.tan(n)},
+						asin: x=>x>1||x<-1?NaN:this.sum(0,80,n=>this.fact(2*n)/(4**n*this.fact(n)**2*(2*n+1))*x**(2*n+1))*180/π,
+						acos: function acos(n) {return 90-this.asin(n)},
+						atan: function atan(n) {return this.atan(n)*180/π},
+						atan2: (a,b)=>this.atan2(a,b)*180/π,
+						acsc: function acsc(n) {return this.asin(1/n)},
+						asec: function asec(n) {return this.acos(1/n)},
+						acot: function acot(n) {return n==0?90:n<0?180+this.atan(1/n):this.atan(1/n)}
 					};
 				}
 			}
@@ -471,29 +472,37 @@
 			gcf(...a) {return this.lmgf("gcf", a)}
 			ln1p(n) {return this.ln(n+1)}
 			sign(n) {return this.sgn(n)}
-			pow(a=1,b=1) {
-				for(var y=1,c=b;!0;){
-					(b&1)!=0&&(y*=a),b>>=1;
-					if(b==0)return(this.nthrt(a,1/(c-~~c))||1)*y;
-					a*=a
+			pow (a=1, b=1) {
+				for (var y = 1, c = b;;){
+					(b & 1) != 0 && (y *= a), b >>= 1;
+					if (b == 0) return (this.nthrt(a, 1 / (c - ~~c)) || 1) * y;
+					a *= a
 				}
 			}
 			mod(a,b) {/*untested*/
-				if(b==0||typeof a!="number"||typeof b!="number")return NaN;
-				if(a>=0&&b>0)while(a-b>=0)a-=b;
-				if(a<0&&b>0)while(a<0)a+=b;
-				if(a>0&&b<0)while(a>0)a+=b;
-				if(a<0&&b<0)while(a-b<0)a-=b;
-				return a;
+				if (b == 0 || this.isNaN(a + b)) return NaN;
+				if (a >= 0 && b > 0)
+					for (;a - b >= 0;)
+						a -= b;
+				if (a < 0 && b > 0)
+					for (;a < 0;)
+						a += b;
+				if (a > 0 && b < 0)
+					for (;a > 0;)
+						a += b;
+				if (a < 0 && b < 0)
+					for (;a - b < 0;)
+						a -= b;
+				return a
 			}
-			exp(n) {return 𝑒**n}
-			sqrt(n) {return n>=0?this.nthrt(n):n==null?0:`0+${this.nthrt(-n)}i`}
-			cbrt(x) {return this.nthrt(x,3)}
+			exp(n) {return 𝑒 ** n}
+			sqrt(n) {return n >= 0 ? this.nthrt(n) : n == null ? 0 : `0+${this.nthrt(-n)}i`}
+			cbrt(x) {return this.nthrt(x, 3)}
 			ifact(n, bigint=false) {
-				if (type(n)!=="number" && type(n)!=="bigint" || n < 0) return NaN;
-				if (n === 0) return bigint===true ? 1n : 1;
-				for (var ans=1n,cur=1n; cur<=n; cur++) ans *= cur;
-				return bigint===true ? ans : Number(ans);
+				if (this.isNaN(Number(n))) return NaN;
+				if (n === 0) return bigint === true ? 1n : 1;
+				for (var ans = 1n, cur = 1n; cur <= n; cur++) ans *= cur;
+				return bigint === true ? ans : Number(ans);
 			}
 			findPrimes(l=100,s=Infinity) {
 				for(var i=3,p=[1,2];len(p)<l&&i<=s;i+=2)i.isPrime()&&p.push(i);
@@ -504,8 +513,8 @@
 	this.Logic = {
 		Logic: class Logic {
 			constructor(A, B, C) {
-				if(A!=void 0){
-					this[A]={
+				if(A != null) {
+					this[A] = {
 						right:function bitwiseRightShift(a,b) {return a>>b},
 						right2:function bitwiseUnsignedRightShift(a,b) {return a>>>b},
 						left:function bitwiseLeftShift(a,b) {return a<<b},
@@ -561,49 +570,57 @@
 						}
 					}
 				}
-				this.not = function not(...a) {return len(a)==1?!a[0]:a.map(b=>!b)},
+				this.not = function not(...a) {return len(a) == 1 ? !a[0] : a.map(b=>!b)},
 				this.nil = function nil(...a) {
-					a=a.flat(Infinity);
-					if(JSON.stringify(a)=="[]")return!1;
-					for(var i=len(a)-1;i>=0;--i)if(a[i]==!0)return!1;
-					return!0
+					a = a.flat(Infinity);
+					if (JSON.stringify(a) === "[]") return !1;
+					for (var i = len(a) - 1; i >= 0; --i)
+						if (a[i] == !0) return !1;
+					return !0
 				},
 				this.or = function or(...a) {
-					a=a.flat(Infinity);
-					if(JSON.stringify(a)=="[]")return!1;
-					for(var i=len(a)-1;i>=0;--i)if(a[i]==!0)return!0;
-					return!1
+					a = a.flat(Infinity);
+					if (JSON.stringify(a) === "[]") return !1;
+					for (var i = len(a) - 1; i >= 0; --i)
+						if (a[i] == !0) return !0;
+					return !1
 				},
 				this.and = function and(...a) {
-					a=a.flat(Infinity);
-					if(JSON.stringify(a)=="[]")return!1;
-					for(var i=len(a)-1;i>=0;--i)if(a[i]==!1)return!1;
-					return!0
+					a = a.flat(Infinity);
+					if (JSON.stringify(a) === "[]") return !1;
+					for (var i = len(a) - 1; i >= 0; --i)
+						if (a[i] == !1) return !1;
+					return !0
 				},
 				this.nor = function nor(...a) {
-					a=a.flat(Infinity);
-					if(JSON.stringify(a)=="[]")return!1;
-					for(var i=len(a)-1;i>=0;--i)if(a[i]==!1)return!0;
-					return!1
+					a = a.flat(Infinity);
+					if (JSON.stringify(a) === "[]") return !1;
+					for (var i = len(a) - 1; i >= 0; --i)
+						if (a[i] == !1) return !0;
+					return !1
 				},
 				this.xor = function xor(...a) {
-					a=a.flat(Infinity);
-					if(JSON.stringify(a)=="[]")return!1;
-					return len(a.filter(b=>b==!0))==len(a)/2
+					a = a.flat(Infinity);
+					if (JSON.stringify(a) === "[]") return !1;
+					return len(a.filter(b => b == !0)) == len(a) / 2
 				},
 				this.isnt = function isnt(...a) {//Logic.isnt() is bugged for NaN and null as it says they are equal. this is due to JSON.stringify(NaN) returning "null".
-					for(var i=len(a)-1;i>0;--i){
-						if(len(a.map(b=>JSON.stringify(b)).filter(b=>b===JSON.stringify(a[0])))!=1)return!1;
-						a.shift()}return!0
+					for (var i = len(a) - 1; i > 0; --i) {
+						if (len(a.map(b => JSON.stringify(b)).filter(b => b === JSON.stringify(a[0]))) != 1) return !1;
+						a.shift()
+					}
+					return !0
 				},
 				this.is = function is(...a) {
-					a=a.map(b=>Object.is(b,NaN)?String(NaN):JSON.stringify(b));
-					a.map(b=>1*!!(b!==a[0]));
-					for(var i=len(a)-1;i>=0;--i)
-						if(a[i]!=a[0]) return!1;
-					return!0;
+					a = a.map(b => Object.is(b, NaN) ? String(NaN) : JSON.stringify(b));
+					a.map(b => 1 * !!(b !== a[0]));
+					for (var i = len(a) - 1; i >= 0; --i)
+						if (a[i] != a[0]) return!1;
+					return !0
 				},
-				this.near = function near(a,b,c=1e-16) {return a>b-c&&a<b+c?!0:!1}
+				this.near = function near(a, b, c=1e-16) {
+					return a > b-c && a < b+c ? !0 : !1
+				}
 			}
 		}
 	};
@@ -611,34 +628,46 @@
 		constructor() {
 			this.head = null;
 			this.size = 0;
-			this.Node = class Node{constructor(data,next=null){this.data=data;this.next=next}};
+			this.Node = class Node {
+				constructor(data, next=null) {
+					this.data = data;
+					this.next = next
+				}
+			};
 		}
 		insertLast(data) {
-			if(this.size==0)return this.insertFirst(data);
+			if (this.size === 0) return this.insertFirst(data);
 			this.size++;
-			for(var current=this.head;current.next;)current=current.next;
-			current.next=new this.Node(data)
+			for (var current = this.head; current.next;)
+				current = current.next;
+			current.next = new this.Node(data)
 		}
 		insertAt(data, index=Infinity) {
-			if(index<0||index>this.size)throw Error(`Index out of range: (index: ${index})`);
-			if(index==0)return this.insertFirst(data);
-			if(index==this.size)return this.insertLast(data);
-			for(var i=0,current=this.head;i+1<index;i++)current=current.next;
+			if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+			if (index == 0) return this.insertFirst(data);
+			if (index == this.size) return this.insertLast(data);
+			for (var i = 0, current = this.head; i + 1 < index; i++)
+				current = current.next;
 			this.size++;
-			current.next=new this.Node(data,current.next)
+			current.next = new this.Node(data, current.next)
 		}
 		getAt(index) {
-			if(index<0||index>this.size)throw Error(`Index out of range: (index: ${index})`);
-			for(var i=0,current=this.head;i<index;i++)current=current.next;
+			if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+			for(var i = 0, current = this.head; i < index; i++)
+				current = current.next;
 			return current
 		}
 		removeAt(index) {
-			if(index<0||index>this.size)throw Error(`Index out of range: (index: ${index})`);
-			for(var i=0,current=this.head;i+1<index;i++)current=current.next;
-			current.next=current.next.next;
+			if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+			for (var i = 0, current = this.head; i + 1 < index; i++)
+				current = current.next;
+			current.next = current.next.next;
 			this.size--
 		}
-		insertFirst(data){this.head=new this.Node(data,this.head),this.size++}
+		insertFirst(data) {
+			this.head = new this.Node(data, this.head);
+			this.size++
+		}
 		reverse() {
 			for (var cur = this.head, prev = null, next; cur;) {
 				next = cur.next;
@@ -648,26 +677,53 @@
 			}
 			this.head = prev || this.head;
 		}
-		toArray() {for(let current=this.head,a=[];current;)a.push(current.data),current=current.next;return a}
-		clear() {this.head=null;this.size=0}
-		type() {return"linkedlist"}
+		toArray() {
+			for (let current = this.head, a = []; current;) {
+				a.push(current.data);
+				current = current.next;
+			}
+			return a
+		}
+		clear() {
+			this.head = null;
+			this.size = 0;
+		}
+		type() {
+			return "linkedlist"
+		}
 	};
 	this.Types = {
-		Boolean:Boolean,
-		Number:Number,
-		String:String,
-		BigInt:BigInt,
-		Function:Function,
-		Array:Array,
-		Object:function Object(e,h=!1) {return type(e)=="object"?e:h==!0?{data:e}:void 0},
-		undefined:function(){},
-		Symbol:function Symbol(e, h=!1) {return type(e)=="symbol"?e:h==!0?Symbol.for(e):void 0}
+		Boolean: Boolean,
+		Number: Number,
+		String: String,
+		BigInt: BigInt,
+		Function: Function,
+		Array: Array,
+		Object: function Object(e, h=!1) {
+			return type(e) === "object" ? e : h == !0 ? {data: e} : void 0
+		},
+		undefined:()=>{},
+		Symbol: function Symbol(e, h=!1) {
+			return type(e) === "symbol" ? e : h == !0 ? Symbol.for(e) : void 0
+		}
 	};
-	Math2.Math.prototype.ComplexNumber=class ComplexNumber{
-		constructor(re=0,im=0) {this.re=re;this.im=im}
-		type() {return"complexnum"}
-		isComplex() {return Logic.is(this.im,0)?!1:!0}
-		toString() {return`${this.re}+${this.im}i`}
+	Math2.Math.prototype.ComplexNumber = class ComplexNumber {
+		constructor(re=0, im=0) {
+			this.re = re;
+			this.im = im;
+		}
+		type() {
+			return "complexnum";
+		}
+		isComplex() {
+			return Logic.is(this.im, 0) ? !1 : !0;
+		}
+		toString() {
+			return `${this.re}+${this.im}i`;
+		}
+		toArray() {
+			return [this.re, this.im];
+		}
 	},
 	Math2.Math.prototype.Math = math,
 	Object.prototype.ael = addEventListener,
@@ -677,18 +733,20 @@
 	Array.prototype.sort.sort = Array.prototype.sort,
 	Array.prototype.shift2 = function shift2(b=1) {
 		let a = this.valueOf();
-		for(var i=0;i<b;i++)a.shift();
+		for (var i = 0; i < b; i++)
+			a.shift();
 		return a
 	},
 	Array.prototype.pop2 = function pop2(b=1) {
-		let a=this.valueOf();
-		for(var i=0;i<b;i++)a.pop();
+		let a = this.valueOf();
+		for (var i = 0; i < b; i++)
+			a.pop();
 		return a
 	},
 	Array.prototype.splice2 = function splice2(a,b,...c) {
-		let d=this.valueOf();
-		d.splice(a,b);
-		return(c.forEach(e=>d.splice(a,0,e))||!0)&&d
+		let d = this.valueOf();
+		d.splice(a, b);
+		return (c.forEach(e => d.splice(a, 0, e)) || !0) && d
 	},
 	Array.prototype.push2 = function push2(e) {
 		var a = this.valueOf();
@@ -701,45 +759,79 @@
 		return a
 	},
 	Array.prototype.toLList = function toLinkedList() {
-		let a=new LinkedList(),b=this.valueOf().reverse();
-		for(let i of b)a.insertFirst(i);
+		let a = new LinkedList(), b = this.valueOf().reverse();
+		for (let i of b)
+			a.insertFirst(i);
 		return a
 	},
-	Array.prototype.removeRepeats = function removeRepeats() {return Array.from(new Set(this.valueOf()))},
+	Array.prototype.removeRepeats = function removeRepeats() {
+		return Array.from(new Set(this.valueOf()))
+	},
 	Array.prototype.remSub = function removeSubArrays() {
-		var a=this.valueOf(),A;
-		while(!a.every(i=>type(i,1)!="arr")){
-			A=[];
-			for(const b of a)A=A.concat(b);
-			a=A
+		var a = this.valueOf(), A;
+	for(;!a.every(i => type(i, 1) !== "arr");) {
+			A = [];
+			for (const b of a)
+				A = A.concat(b);
+			a = A;
 		}
 		return a
 	};
-	(()=>{
-		var sortOld=Array.prototype.sort;
-		Array.prototype.sort = function sort(){
+	(() => {
+		var sortOld = Array.prototype.sort;
+		Array.prototype.sort = function sort() {
 			var list = this.valueOf();
-			if(Math.isNaN(list.join("")))return list.sortOld();
-			for(var output=[];len(list)>0;)output.push(Math.min(list)),list.splice(list.io(Math.min(list)),1);
+			if (Math.isNaN(list.join("")))
+				return list.sortOld();
+			for (var output = []; len(list) > 0;) {
+				output.push(Math.min(list));
+				list.splice(list.io(Math.min(list)), 1);
+			}
 			return output;
 		}
-		Array.prototype.sortOld=sortOld;
+		Array.prototype.sortOld = sortOld;
 	})();
 	String.prototype.io = String.prototype.indexOf,
 	String.prototype.lio = String.prototype.lastIndexOf,
-	String.prototype.toObj = function toObj(a=window) {return this.valueOf().split(/[\.\[\]'"]/).filter(e=>e).forEach(e=>a=a[e])},
-	String.prototype.hasDupesA = function hasDuplicatesAll(){return/(.)\1+/.test(this.valueOf().split("").sort().join(""))},
-	String.prototype.hasDupesL = function hasDuplicateLetters(){return/(\w)\1+/.test(this.valueOf().split("").sort().join(""))},
-	String.prototype.reverse = function reverse() {return this.valueOf().split("").reverse().join("")},
-	String.prototype.strip = function strip() {return this.valueOf().replace(/^ *| *$/g,"")},
-	String.prototype.removeRepeats = function removeRepeats() {return Array.from(new Set(this.valueOf().split(""))).join("")},
+	String.prototype.toObj = function toObj(a=window) {
+		return this.valueOf().split(/[\.\[\]'"]/).filter(e=>e).forEach(e=>a=a[e])
+	},
+	String.prototype.hasDupesA = function hasDuplicatesAll() {
+		return/(.)\1+/.test(this.valueOf().split("").sort().join(""))
+	},
+	String.prototype.hasDupesL = function hasDuplicateLetters() {
+		return/(\w)\1+/.test(this.valueOf().split("").sort().join(""))
+	},
+	String.prototype.reverse = function reverse() {
+		return this.valueOf().split("").reverse().join("")
+	},
+	String.prototype.strip = function strip() {
+		return this.valueOf().replace(/^ *| *$/g,"")
+	},
+	String.prototype.removeRepeats = function removeRepeats() {
+		return Array.from(new Set(this.valueOf().split(""))).join("")
+	},
 	String.prototype.toBinary = function toBinary() {
-		return this.valueOf().split("").map(b=>!Logic.is(int(b),NaN)?!!int(b)*1:!!b*1).join("")
+		return this.valueOf().split("").map(b=>!Logic.is(int(b),NaN) ? !!int(b)*1 : !!b*1).join("")
 	},
 	String.prototype.toFunc = function toFunction(name="anonymous") {
-		var s=this.valueOf();if(s.substring(0,7)=="Symbol("&&s.substring(len(s)-1)==")")throw Error("Can't parse Symbol().");
-		s=(""+s).replace(/^(\s*function\s*\w*\s*\(\s*)/,"");var args=s.substring(0,s.io(")"));
-		return((fn,name)=>(new Function(`return function(call){return function ${name}() { return call (this, arguments) }}`)())(Function.apply.bind(fn)))(new Function(args,s.replace(new RegExp(`^(${(function(){for(var i=0,l=len(args),g="";i<l;i++){if(/[\$\^\(\)\+\*\\\|\[\]\{\}\?\.]/.test(args[i]))g+="\\";g+=args[i]}return g})()}\\)\\s*\\{)`,"g"),"").replace(/\s*;*\s*\}\s*;*\s*/,"")),name)
+		var s = this.valueOf();
+		if (s.substring(0,7) === "Symbol(" && s.substring(len(s)-1) === ")") throw Error("Can't parse Symbol().");
+		s = (""+s).replace(/^(\s*function\s*\w*\s*\(\s*)/,"");
+		var args = s.substring(0, s.io(")"));
+		return (
+			(fn, name) => (new Function(
+				`return function(call){return function ${name}() { return call (this, arguments) }}`
+			)())(Function.apply.bind(fn))
+		)(new Function(args, s.replace(
+			new RegExp(`^(${(function() {
+				for (var i = 0, l = len(args), g = ""; i < l; i++) {
+					/[\$\^\(\)\+\*\\\|\[\]\{\}\?\.]/.test(args[i]) && (g += "\\");
+					g += args[i]
+				}
+				return g
+			})()
+		}\\)\\s*\\{)`,"g"), "").replace(/\s*;*\s*\}\s*;*\s*/, "")), name)
 	},
 	String.prototype.toRegex = function toRegularExpression(flags="") {
 		for(var i=0,a=this.valueOf(),b="",l=len(a);i<l;i++)(/[\$\^\(\)\+\*\\\|\[\]\{\}\?\.]/.test(a[i])&&(b+="\\")||!0)&&(b+=a[i]);
@@ -777,46 +869,46 @@
 })();
 
 function numberToWords(number) {
-	if (typeof number !== "number") throw Error("Expected a number, and found a(n) %s",typeof number);
-	number = ~~number;
+	if (isNaN(Number(number))) throw Error("Expected a number, and found a(n) %s",typeof number);
+	number = ~~Number(number);
 	switch(true) {
 		case number < 0: return `negative ${numberToWords(-number)}`;
-		case number === 0: return "zero";
-		case number === 1: return "one";
-		case number === 2: return "two";
-		case number === 3: return "three";
-		case number === 4: return "four";
-		case number === 5: return "five";
-		case number === 6: return "six";
-		case number === 7: return "seven";
-		case number === 8: return "eight";
-		case number === 9: return "nine";
-		case number === 10: return "ten";
-		case number === 11: return "eleven";
-		case number === 12: return "twelve";
-		case number === 13: return "thirteen";
-		case number === 15: return "fifteen";
-		case number === 18: return "eighteen";
+		case number == 0: return "zero";
+		case number == 1: return "one";
+		case number == 2: return "two";
+		case number == 3: return "three";
+		case number == 4: return "four";
+		case number == 5: return "five";
+		case number == 6: return "six";
+		case number == 7: return "seven";
+		case number == 8: return "eight";
+		case number == 9: return "nine";
+		case number == 10: return "ten";
+		case number == 11: return "eleven";
+		case number == 12: return "twelve";
+		case number == 13: return "thirteen";
+		case number == 15: return "fifteen";
+		case number == 18: return "eighteen";
 		case number < 20: return `${numberToWords(1*(""+number)[1])}teen`;
-		case number === 20: return "twenty";
+		case number == 20: return "twenty";
 		case number < 30: return `twenty-${numberToWords(1*(""+number)[1])}`;
-		case number === 30: return "thirty";
+		case number == 30: return "thirty";
 		case number < 40: return `thirty-${numberToWords(1*(""+number)[1])}`;
-		case number === 40: return "forty";
+		case number == 40: return "forty";
 		case number < 50: return `forty-${numberToWords(1*(""+number)[1])}`;
-		case number === 50: return "fifty";
+		case number == 50: return "fifty";
 		case number < 60: return `fifty-${numberToWords(1*(""+number)[1])}`;
-		case number === 60: return "sixty";
+		case number == 60: return "sixty";
 		case number < 70: return `sixty-${numberToWords(1*(""+number)[1])}`;
-		case number === 70: return "seventy";
+		case number == 70: return "seventy";
 		case number < 80: return `seventy-${numberToWords(1*(""+number)[1])}`;
-		case number === 80: return "eighty";
+		case number == 80: return "eighty";
 		case number < 90: return `eighty-${numberToWords(1*(""+number)[1])}`;
-		case number === 90: return "ninety";
+		case number == 90: return "ninety";
 		case number < 100: return `ninety-${numberToWords(1*(""+number)[1])}`;
-		case number % 100 === 0 && (""+number).length === 3: return `${numberToWords(1*(""+number)[0])} hundred`;
+		case number % 100 === 0 && (""+number).length == 3: return `${numberToWords(1*(""+number)[0])} hundred`;
 		case number < 1_000: return`${numberToWords(1*(""+number)[0])} hundred and ${numberToWords(1*(""+number).substr(1,2))}`;
-		case number % 1_000 === 0 && (""+number).length === 4: return `${numberToWords(1*(""+number)[0])} thousand`;
+		case number % 1_000 === 0 && (""+number).length == 4: return `${numberToWords(1*(""+number)[0])} thousand`;
 		case number < 10_000: return `${numberToWords(1*(""+number)[0])} thousand ${numberToWords(1*(""+number).substr(1,3))}`;
 		default: throw Error(`Number not found. only works in range (-10000, 10000). input: ${number}`);
 	}
@@ -852,8 +944,8 @@ function asciiNumToChar(str) {
 }
 
 function shuffleArray(array) {
-	for (var i = array.length - 1,j,temp; i > 0; i--) {
-		j = floor(Math.random() * (i + 1));
+	for (var i = array.length,j,temp; i > 1; i--) {
+		j = floor(Math.random() * i);
 		temp = array[i];
 		array[i] = array[j];
 		array[j] = temp;
