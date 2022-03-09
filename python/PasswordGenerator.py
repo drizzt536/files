@@ -1,29 +1,16 @@
-allCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
-password = ""
-passwordLength = abs(int(input("Password Length: ")))
-if passwordLength == 0:	passwordLength = 1
-charsToRemove = input("Characters To Remove: ")
-charsToRemove2 = ""
-def a(e):
-	if charsToRemove is e:
-		return(True)
-	else:
-		return(False)
-if charsToRemove != "":
-	i = 0
-	while i < len(charsToRemove):
-		if a("$")or a("^")or a("(")or a(")")or a("+")or a("*")or a("\\")or a("|")or a("[")or a("]")or a("{")or a("}")or a("?")or a(".")is True:
-			charsToRemove2 += "\\"
-		charsToRemove2 += charsToRemove[i]
-		if i + 1 != len(charsToRemove):
-			charsToRemove2 += "|"
-		i += 1
-import re
-newCharacters = re.sub(rf"{charsToRemove2}", "", allCharacters)
-import random
-i = 0
-while i < passwordLength:
-	password += newCharacters[round(random.random() * (len(newCharacters) - 1) )]
-	i += 1
-print("Password:")
-print(password, "\n")
+from sys import exit
+from random import randint
+from re import sub
+chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]}{|;:',.<>/?-_=+ \"\\"
+passLen, charsRem = abs(int(input("Password Length: "))), input("Characters To Remove: ")
+passw = charsRem2 = ""
+if passLen == 0:
+	passLen = 1
+for c in charsRem:
+	charsRem2 += (c in "$^()+*\\|[]}{?." and "\\") + f"{c}|"
+chars = sub(f"{charsRem2[:len(charsRem2)-1]}", "", chars)
+for i in range(passLen):
+	passw += chars[randint(0, len(chars) - 1)]
+print(f"Password:\n{passw}\n")
+input("Press a Enter to continue...")
+exit(0)
