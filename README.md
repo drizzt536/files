@@ -1,2 +1,2 @@
 # Files
-upload of side projects
+Upload of side projects
