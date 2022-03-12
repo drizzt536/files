@@ -158,6 +158,76 @@
 			case 123:return "{";case 124:return "|";case 125:return "}";case 126:return "~";
 			default: return "number not found";
 		}
+	},
+	this.numToWords = function numberToWords(number) {
+		if (isNaN(Number(number))) throw Error(`Expected a number, and found a(n) ${type(number)}`);
+		number = Number(number);
+		var string = `${number}`;
+		switch (true) {
+			case /\./.test(string):
+				var decimals = `${numberToWords(string.substring(0,string.io(".")))} point`;
+				for (var i = string.io(".") + 1; i < len(string); i++)
+					decimals += ` ${numberToWords(string[i])}`;
+				return decimals;
+			case number < 0 || Logic.is(number, -0): return `negative ${numberToWords(-number)}`;
+			case number == 0: return "zero";
+			case number == 1: return "one";
+			case number == 2: return "two";
+			case number == 3: return "three";
+			case number == 4: return "four";
+			case number == 5: return "five";
+			case number == 6: return "six";
+			case number == 7: return "seven";
+			case number == 8: return "eight";
+			case number == 9: return "nine";
+			case number == 10: return "ten";
+			case number == 11: return "eleven";
+			case number == 12: return "twelve";
+			case number == 13: return "thirteen";
+			case number == 15: return "fifteen";
+			case number == 18: return "eighteen";
+			case number < 20: return `${numberToWords(string[1]*1)}teen`;
+			case number == 20: return "twenty";
+			case number < 30: return `twenty-${numberToWords(string[1]*1)}`;
+			case number == 30: return "thirty";
+			case number < 40: return `thirty-${numberToWords(string[1]*1)}`;
+			case number == 40: return "forty";
+			case number < 50: return `forty-${numberToWords(string[1]*1)}`;
+			case number == 50: return "fifty";
+			case number < 60: return `fifty-${numberToWords(string[1]*1)}`;
+			case number == 60: return "sixty";
+			case number < 70: return `sixty-${numberToWords(string[1]*1)}`;
+			case number == 70: return "seventy";
+			case number < 80: return `seventy-${numberToWords(string[1]*1)}`;
+			case number == 80: return "eighty";
+			case number < 90: return `eighty-${numberToWords(string[1]*1)}`;
+			case number == 90: return "ninety";
+			case number < 100: return `ninety-${numberToWords(string[1]*1)}`;
+			case number % 100===0 && len(string)===3: return `${numberToWords(1*string[0])} hundred`;
+			case number < 1e3:
+				return `${numberToWords(string[0]*1)} hundred and ${numberToWords(1*string.substr(1,2))}`;
+			case number % 1e3===0 && len(string)===4: return `${numberToWords(1*string[0])} thousand`;
+			case number < 1e4:
+				return `${numberToWords(1*string[0])} thousand ${numberToWords(1*string.substr(1,3))}`;
+			case number % 1e3===0 && len(string)===5: return `${numberToWords(1*string.substr(0,2))} thousand`;
+			case number < 1e5:
+				return `${numberToWords(1*string.substr(0,2))} thousand ${numberToWords(1*string.substr(2))}`;
+			case number % 1e3===0 && len(string)===6: return `${numberToWords(1*(string).substr(0,3))} thousand`;
+			case number < 1e6:
+				return `${numberToWords(1*string.substr(0,3))} thousand ${numberToWords(1*string.substr(3))}`;
+			case number % 1e6===0 && len(string)===7: return `${numberToWords(1*string[0])} million`;
+			case number < 1e7:
+				return`${numberToWords(1*string[0])} million ${numberToWords(1*string.substr(1))}`;
+			case number % 1e6===0 && len(string)===8: return `${numberToWords(1*string.substr(0,2))} million`;
+			case number < 1e8:
+				return `${numberToWords(1*string.substr(0,2))} million ${numberToWords(1*string.substr(2))}`;
+			default: throw Error(`Invalid Number. function Only works for {x:|x| < 1e+8}\n\t\t\tinput: ${numToStrW_s(number)}`);
+		}
+	},
+	this.numToStrW_s = function numberToStringWithSs(number) {
+		for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++)
+			(i % 3 === 0 && i !== 0) && (str2 += "_"), str2 += str[i];
+		return str2.reverse();
 	};
 	var Math2 = {
 		Math: class Math {
@@ -979,63 +1049,3 @@
 		else if (onConflict.toLowerCase() === "throw") throw `Global Variables Overwritten: ${Conflict_Arr.join(", ")}`;
 	}
 })();
-
-function numberToWords(number) {
-	//console.log(number);
-	if (isNaN(Number(number))) throw Error(`Expected a number, and found a(n) ${type(number)}`);
-	number = Number(number);
-	var string = `${number}`;
-	switch (true) {
-		case /\./.test(string):
-			var a = `${numberToWords(string.substring(0,string.io(".")))} point`;
-			for (var i = string.io(".") + 1; i < len(string); i++) {
-				a += ` ${numberToWords(string[i])}`;
-			}
-			return a;
-		case number < 0 || Logic.is(number, -0): return `negative ${numberToWords(-number)}`;
-		case number == 0: return "zero";
-		case number == 1: return "one";
-		case number == 2: return "two";
-		case number == 3: return "three";
-		case number == 4: return "four";
-		case number == 5: return "five";
-		case number == 6: return "six";
-		case number == 7: return "seven";
-		case number == 8: return "eight";
-		case number == 9: return "nine";
-		case number == 10: return "ten";
-		case number == 11: return "eleven";
-		case number == 12: return "twelve";
-		case number == 13: return "thirteen";
-		case number == 15: return "fifteen";
-		case number == 18: return "eighteen";
-		case number < 20: return `${numberToWords(string[1]*1)}teen`;
-		case number == 20: return "twenty";
-		case number < 30: return `twenty-${numberToWords(string[1]*1)}`;
-		case number == 30: return "thirty";
-		case number < 40: return `thirty-${numberToWords(string[1]*1)}`;
-		case number == 40: return "forty";
-		case number < 50: return `forty-${numberToWords(string[1]*1)}`;
-		case number == 50: return "fifty";
-		case number < 60: return `fifty-${numberToWords(string[1]*1)}`;
-		case number == 60: return "sixty";
-		case number < 70: return `sixty-${numberToWords(string[1]*1)}`;
-		case number == 70: return "seventy";
-		case number < 80: return `seventy-${numberToWords(string[1]*1)}`;
-		case number == 80: return "eighty";
-		case number < 90: return `eighty-${numberToWords(string[1]*1)}`;
-		case number == 90: return "ninety";
-		case number < 100: return `ninety-${numberToWords(string[1]*1)}`;
-		case number % 100===0 && len(string)===3: return `${numberToWords(1*string[0])} hundred`;
-		case number < 1e3: return`${numberToWords(string[0]*1)} hundred and ${numberToWords(1*string.substr(1,2))}`;
-		case number % 1e3===0 && len(string)===4: return `${numberToWords(1*string[0])} thousand`;
-		case number < 1e4: return `${numberToWords(1*string[0])} thousand ${numberToWords(1*string.substr(1,3))}`;
-		case number % 1e3===0 && len(string)===5: return `${numberToWords(1*string.substr(0,2))} thousand`;
-		case number < 1e5: return `${numberToWords(1*string.substr(0,2))} thousand ${numberToWords(1*string.substr(2))}`;
-		case number % 1e3===0 && len(string)===6: return `${numberToWords(1*(string).substr(0,3))} thousand`;
-		case number < 1e6: return `${numberToWords(1*string.substr(0,3))} thousand ${numberToWords(1*string.substr(3))}`;
-		case number % 1e6===0 && len(string)===7: return `${numberToWords(1*string[0])} million`;
-		case number < 1e7:return`${numberToWords(1*string[0])} million ${numberToWords(1*string.substr(1))}`;
-		default: throw Error(`Number not found. Only works for {x:|x| < 1e7} input: ${number}`);
-	}
-}
