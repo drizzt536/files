@@ -1,202 +1,178 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-	<meta name=viewport content="width=device-width,initial-scale=1">
-	<meta charset=utf-8>
-	<meta name=description content="BlackJack card counter">
-	<meta name=keywords content=Blackjack,card,card-counter>
-	<meta name=author content="Daniel Janusch">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="utf-8">
+	<meta name="description" content="BlackJack card counter with multi-deck capabilities">
+	<meta name="keywords" content="Blackjack, card, cardCounter">
 	<title>BlackJack Card Counter</title>
-	<style type=text/css>
-		body {
-			background: #646464;
-		}
-		.center {
-			margin: 0 auto;
-		}
-		.tdiv {
-			margin: 0px 5px 10px 10px !important;
-		}
+	<style type="text/css">
+		body { background: #646464 }
+		.center { margin: 0 auto }
+		.tdiv { margin: 0px 5px 10px 10px !important }
 		.hrb {
 			background: black;
 			border: 0.5px solid black;
 			margin-right: 15px;
 			margin-left: 15px;
-		}
-		.wrapper {
+		} .wrapper {
 			display: flex;
 			justify-content: center;
 			flex-flow: wrap;
 			margin-left: 4px;
 			margin-top: 4px;
-		}
-		button {
+		} button {
 			display: inline-block;
 			padding: 10px 0px 10px 0px;
 			margin-top: 20px !important;
 			width: 100px;
-		}
-		.text {
+		} .text {
 			display: inline-block;
 			margin: 2px 8px 0px 20px;
 		}
 	</style>
 </head>
-<body>
-	<noscript>Javascript is disabled in your browser. Enable it to run this file.</noscript>
-	<div class=wrapper style=justify-content:left!important id=main>
-		<div class=wrapper id=line1Div>
+<body dir="ltr">
+	<noscript>
+		<div>
+			<strong><h3 style="margin-left: 1.2rem;">
+				JavaScript is disabled in your browser. Enable it to run this application.
+			</h3></strong>
+			<hr class="hrb">
+		</div>
+	</noscript>
+	<div class="wrapper" style="justify-content: left/* !important*/;" id="main">
+		<div class="wrapper" id="line1Div">
 			<h1>Card Counter</h1>
-			<hr class=hrb>
+			<hr class="hrb">
 			<div class="center tdiv">
-				<button class=center id=resetButton>Reset</button>
+				<button class="center" id="resetButton">Reset</button>
 			</div>
 			<div class="center tdiv">
-				<button class=center id=shuffleButton>Shuffle Decks</button>
-			</div>
-		</div>
-		<div class=wrapper id=line2Div>
-			<h1 style=color:#646464 id=title2>Card Counter</h1>
-			<hr class=hrb id=hr2>
-			<div class="center tdiv">
-				<button class=center id=discardButton>Discard</button>
-			</div>
-			<div class="center tdiv">
-				<button class=center id=logButton>Log Decks</button>
+				<button class="center" id="shuffleButton">Shuffle Decks</button>
 			</div>
 		</div>
-	</div>
-	<hr style="border: 0.5px solid black; margin: 6px 5px 0px 5px;">
-	<button id=toggleCountsButton style="margin: 0px 0px 0px 20px;">Toggle Counts</button>
-	<div id=textDiv>
-		<br/>
-		<span class=text>Current Card:</span>
-		<span id=currentCardText>None</span>
-		<br/>
-		<span class=text>Decks Left:</span>
-		<span id=decksLeftText>0</span>
-		<br/>
-		<span class=text>Cards Left:</span>
-		<span id=cardsLeftText>54</span>
-		<div style=display:inline id=countsDiv>
-			<br>
-			<span class=text>Running Count:</span>
-			<span id=runningCountText>0</span>
-			<br/>
-			<span class=text>True Count:</span>
-			<span id=trueCountText>0</span>
+		<div class="wrapper" id="line2Div">
+			<h1 style="color: #646464" id="title2">Card Counter</h1>
+			<hr class="hrb" id="hr2">
+			<div class="center tdiv">
+				<button class=center id="discardButton">Discard</button>
+			</div>
+			<div class="center tdiv">
+				<button class="center" id="logButton">Log Decks</button>
+			</div>
 		</div>
 	</div>
+	<hr style="border: .5px solid black; margin: 6px 5px 0px 5px">
+	<button id="toggleCountsButton" style="margin: 0px 0px 0px 20px">Toggle Counts</button>
+	<div id="textDiv">
+		<br />
+		<span class="text">Current Card:</span>
+		<span id="currentCardText">None</span>
+		<br />
+		<span class="text">Decks Left:</span>
+		<span id="decksLeftText">0</span>
+		<br />
+		<span class="text">Cards Left:</span>
+		<span id="cardsLeftText">54</span>
+		<div style="display: inline" id="countsDiv">
+			<br />
+			<span class="text">Running Count:</span>
+			<span id="runningCountText">0</span>
+			<br />
+			<span class="text">True Count:</span>
+			<span id="trueCountText">0</span>
+		</div>
+	</div>
+	<script type="text/javascript" src="../Javascript/lib.js"></script>
 	<script type="text/javascript">
-		Object.prototype.ael=addEventListener;
-		var numDecks = 1,
-		tCount = 0,
-		rCount = 0,
-		d = " Diamonds",
-		deck=new Deck(),
-		$ = e => document.getElementById(e),
-		len = e => e.length,
-		updateCounts = () => {
-			deck.deck[0] == null?
-				null:
-				tCount = (
-					(deck.deck[0][0]+deck.deck[0][1])*1<7?
-						++rCount:
-						(deck.deck[0][0]+deck.deck[0][1])*1<10 || deck.deck[0] == "Joker"?
-							rCount:
-							--rCount) / (len(deck.deck) / 52);
-				tCount = rCount / (len(deck.deck) / 52);
-				Object.is(tCount,NaN) && (tCount=0)
-		},
-		toggleCounts=()=>
-			$("countsDiv").style.display == "inline"?
-				$("countsDiv").style.display = "none":
-				$("countsDiv").style.display = "inline",
-		updateScreen=()=>{
-			if(deck.deck[0] != null)$("currentCardText").innerHTML = deck.deck[0];
-			else $("currentCardText").innerHTML = "None";
-			updateCounts();
-			$("decksLeftText").innerHTML = numDecks = `${Math.round(len(deck.deck)/5.2)/10==0?
-					Math.ceil(len(deck.deck)/5.2)/10:
-					Math.round(len(deck.deck)/5.2)/10}`;
-			$("runningCountText").innerHTML = rCount;
-			$("trueCountText").innerHTML = tCount;
-			if(deck.deck[0] == null && len(deck.deck)>0)$("cardsLeftText").innerHTML = len(deck.deck)-1;
-			else $("cardsLeftText").innerHTML = len(deck.deck);
-		},
-		resizeDiv=()=>{
-			if($("main").scrollWidth > 689)
-				return $("title2").style.display = $("hr2").style.display = "none",$("line2Div").style.marginLeft=0;
-			if($("main").scrollWidth >= 344)
-				return $("title2").style.display = $("hr2").style.display = $("line2Div").style.marginLeft = "";
-			$("hr2").style.display = $("title2").style.display = "none";
-			if($("main").scrollWidth < 229) return document.querySelector("hr").style.display = "none";
-			document.querySelector("hr").style.display = "";
-		};
 		class Deck {
 			constructor() {
-				this.deck = [
-					null,"Joker","Joker","Ace Spades","2 Spades","3 Spades","4 Spades","5 Spades","6 Spades","7 Spades",
-					"8 Spades","9 Spades","10 Spades","Jack Spades","Queen Spades","King Spades",`Ace${d}`,`2${d}`,`3${d}`,
-					`4${d}`,`5${d}`,`6${d}`,`7${d}`,`8${d}`,`9${d}`,`10${d}`,`Jack${d}`,`Queen${d}`,`King${d}`,"King Clubs",
-					"Queen Clubs","Jack Clubs","10 Clubs","9 Clubs","8 Clubs","7 Clubs","6 Clubs","5 Clubs","4 Clubs","3 Clubs",
-					"2 Clubs","Ace Clubs","King Hearts","Queen Hearts","Jack Hearts","10 Hearts","9 Hearts","8 Hearts","7 Hearts",
-					"6 Hearts","5 Hearts","4 Hearts","3 Hearts","2 Hearts","Ace Hearts"
-					];
-					this.discard = [];
+				this.deck = [null,
+					"Ace Spades","2 Spades","3 Spades","4 Spades","5 Spades","6 Spades","7 Spades","8 Spades","9 Spades","10 Spades","Jack Spades","Queen Spades","King Spades",
+					"Ace Diamonds","2 Diamonds","3 Diamonds","4 Diamonds","5 Diamonds","6 Diamonds","7 Diamonds","8 Diamonds","9 Diamonds","10 Diamonds","Jack Diamonds","Queen Diamonds","King Diamonds",
+					"King Clubs","Queen Clubs","Jack Clubs","10 Clubs","9 Clubs","8 Clubs","7 Clubs","6 Clubs","5 Clubs","4 Clubs","3 Clubs","2 Clubs","Ace Clubs",
+					"King Hearts","Queen Hearts","Jack Hearts","10 Hearts","9 Hearts","8 Hearts","7 Hearts","6 Hearts","5 Hearts","4 Hearts","3 Hearts","2 Hearts","Ace Hearts"
+				];
+				this.discard = [];
 			}
 			shuffle() {
-				var rand = e => deck.deck.splice(Math.floor(Math.random()*len(deck.deck)),0,e),
-					num = 1 * prompt("How Many Decks?");
-				(num==0||Object.is(num,NaN)) && (num=1);
+				var num = 1 * prompt("How Many Decks?");
+				(isNaN(num) || num === 0) && (num = 1);
 				this.deck = [];
-				for (let i=0; i < num; ++i)
-					new Deck().deck.join().substr(13).split(",").forEach(i=>rand(i));
-				numDecks=num;
+				for (var i = 0; i < num; i++) {
+					new Deck().deck.join().substr(1).split(",").forEach(card =>
+						this.deck.splice(round(Math.random() * this.deck.length), 0, card));
+				}
+				numDecks = num;
 				this.deck.unshift(null);
-				updateScreen();
-			}
+				updateScreen(this);
+			};
 			discardf() {
 				this.discard.push(this.deck.shift());
-				this.discard[len(this.discard)-1]==null && this.discard.pop();
-				updateScreen();
-			}
-			log(){
-				console.log(this.deck.filter(e=>e!=null));
-				console.log(this.discard);
-			}
-			removeJokers() {
-				this.deck = this.deck.filter(e=>e!="Joker");
-				this.discard = this.discard.filter(e=>e!="Joker");
-				updateScreen();
-			}
+				this.discard[this.discard.length - 1] == null && this.discard.pop();
+				updateScreen(this);
+			};
+			log() {
+				console.log("Deck:%o\nDiscard:%o", this.deck.filter(e=>e), this.discard);
+			};
 		}
-		$("resetButton").ael("click",()=>{
+		var numDecks = 1, tCount = 0, rCount = 0, decks = new Deck(), $sd = (e, disp, act=1) =>
+			act === 1 ? $(e).style.display = disp : $(e).style.display == disp;
+		function updateScreen(variable) {
+			if (variable.deck[0] != null) $("currentCardText").innerHTML = variable.deck[0];
+			else $("currentCardText").innerHTML = "None";
+			if (variable.deck[0]) {
+				var temp = 1 * variable.deck[0]?.substr(0,2);
+				tCount = 52 / variable.deck.length * (
+					temp < 7?
+						++rCount:
+						temp < 10 ? rCount : --rCount
+				)
+			}
+			isNaN(tCount) && (tCount = 0);
+			$("decksLeftText").innerHTML = numDecks = `${(
+				round(variable.deck.length) === 0?
+					ceil(variable.deck.length / 5.2):
+					round(variable.deck.length / 5.2)
+			) / 10}`;
+			$("runningCountText").innerHTML = rCount;
+			$("trueCountText").innerHTML = tCount;
+			if (variable.deck[0] == null && variable.deck.length > 0) $("cardsLeftText").innerHTML = variable.deck.length - 1;
+			else $("cardsLeftText").innerHTML = variable.deck.length;
+			return 0;
+		}
+		function reset(ask=true) {
+			if (ask && prompt("are you sure? ")[0]?.toLowerCase() !== "y") return;
 			numDecks = 1;
-			deck = new Deck();
+			decks = new Deck();
 			tCount = rCount = 0;
-			deck.removeJokers();
-			updateScreen();
+			updateScreen(decks);
 			$("currentCardText").innerHTML = "None";
 			$("decksLeftText").innerHTML = numDecks;
-			$("runningCountText").innerHTML = $("trueCountText").innerHTML = "0";
+			$("runningCountText").innerHTML = $("trueCountText").innerHTML = 0;
+		}
+		$("resetButton").addEventListener("click", reset);
+		$("shuffleButton").addEventListener("click", () => {
+			reset(false);
+			decks.shuffle();
 		});
-		$("shuffleButton").ael("click",()=>{
-			$("resetButton").click();
-			deck.shuffle();
-		});
-		$("discardButton").ael("click",()=>{
-			deck.discardf();
-		});
-		$("logButton").ael("click",()=>{
-			deck.log();
-		});
-		$("toggleCountsButton").ael("click",toggleCounts);
-		document.ael("DOMContentLoaded",()=>{
-			let resizer=new ResizeObserver(resizeDiv);
+		$("discardButton").addEventListener("click", () => decks.discardf());
+		$("logButton").addEventListener("click", () => decks.log());
+		$("toggleCountsButton").addEventListener("click", ()=>
+			$sd("countsDiv", "inline", 2) ? $sd("countsDiv", "none") : $sd("countsDiv", "inline")
+		);
+		function resizeDiv() {
+			if ($("main").scrollWidth > 689) return $sd("title2", $sd("hr2", "none")), $("line2Div").style.marginLeft = 0;
+			if ($("main").scrollWidth > 343) return $sd("title2", $sd("hr2", $("line2Div").style.marginLeft = ""));
+			$sd("hr2", $sd("title2", "none"));
+			if ($("main").scrollWidth < 229) return $qs("hr").style.display = "none";
+			$qs("hr").style.display = "";
+		}
+		document.addEventListener("DOMContentLoaded", () => {
+			let resizer = new ResizeObserver(resizeDiv);
 			resizer.observe($("main"));
 		});
-		deck.removeJokers();
 	</script>
 </body>
 </html>
