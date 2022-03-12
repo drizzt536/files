@@ -1,17 +1,18 @@
 ((onConflict, MathVar, alertForMath) => {"use strict";
 	onConflict = "debug", MathVar = true, alertForMath = false;
 	(()=>{const onConflict_Options = ["log","throw","return","warn","debug","info","assert","alert","None"];})();
-		var Conflict_Arr = ["len","π",Symbol.for("<0x200b>"),"nSub","reverseLList","type","round","floor","ceil","int","double","str","Logic","LinkedList","convertType","Types","numToAccountingStr","firstDayOfYear"];
+		var Conflict_Arr = ["$qs","len","π","𝑒",Symbol.for("<0x200b>"),Symbol.for("<0x08>"),"nSub","reverseLList","convertType","firstDayOfYear","type","round","floor","ceil","int","str","numToAccountingStr","range","asciiToChar","numToWords","numToStrW_s","Logic","LinkedList","Types"];
 		//var notActive = [];
 		Conflict_Arr = Conflict_Arr.map(e=>[window[e] == null, e]).filter(e=>e[0] === !1).map(e=>e[1]);
 		(MathVar === !0 && alertForMath === !0) && Conflict_Arr.push("Math");
 	const math = Math;
 	this.$ ??= function $(e) {return document.getElementById(e)};
-	this.$qs = function $q(e,b=1) {return b === 1 ? document.querySelector(e) : document.querySelectorAll(e)}
+	this.$qs = function $qs(e, b=1) {return b === 1 ? document.querySelector(e) : document.querySelectorAll(e)}
 	this.len = function length(e) {return e.length};
 	this.π = 3.141592653589793;
 	this.𝑒 = 2.718281828459045;
 	this[Symbol.for("<0x200b>")] = "​";
+	this[Symbol.for("<0x08>")] = "";
 	this.nSub = function substituteNInBigIntegers(a, n=1) {return type(a) === "bigint" ? Number(a) * n : a};
 	this.revArr ??= function reverseArray(a) {
 		for (var l = 0, L = len(a), r = L - 1, t; l < r; ++l, --r)
@@ -19,11 +20,12 @@
 		return a;
 	};
 	this.revLList = function reverseLinkedList(list) {
-		for (let cur = list.head, prev = null, next; current;)
-			next = cur.next,
-			cur.next = prev,
-			prev = cur,
+		for (let cur = list.head, prev = null, next; current;) {
+			next = cur.next;
+			cur.next = prev;
+			prev = cur;
 			cur = next;
+		}
 		list.head = prev || list.head;
 		return list;
 	};
@@ -458,7 +460,7 @@
 					return (a = a.flat(Infinity)).map(b => b % 2 === 0 ? "even" : "odd");
 				};
 				if (B != null) {
-					this[B] = {/*out of date*/
+					this[B] = {
 						fround: "returns the nearest 32-bit single precision float representation of a number.",
 						imul: "returns the result of the C-like 32-bit multiplication of the two parameters.",
 						random: "returns a random number in the range (0,1]",
@@ -479,18 +481,29 @@
 						nthrt: "Takes 2 paramaters (x, n).  returns x**(1/n).  the root defaults to 2.",
 						complex: "Creates a complex number",
 						mad: "Stands for mean absolute deviation.  takes any amount of arguments, either directly or in one or many array(s).  gets the mean of the arguments.  then finds the mean of the absolute deviation from the mean.",
-						isNaN: "Similar to isNaN(). takes one paramater.  if it can be coerced to be a number, it returns false.  the difference is that it returns false for bigints instead of throwing an error.",
-						isAN: "Takes one argument.  returns the opposite of Math.isNaN()",
 						mean: "Takes any amount of arguments, either directly or in one or many array(s).  adds up the arguments, and divides by the number of arguments present. and returns the answer.",
 						median: "Takes any amount of arguments, either directly or in one or many array(s).  it removes items from the end and beginning until there are either one or two elements remaining. if there is one, it returns it.  if there are two, it returns the average of them.",
 						isPrime: "Takes 1 input, and returns true if it is prime, false if it is composite.",
 						lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the paramaters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
 						linReg: "Takes 3 paramates. finds the line of best fit (y = mx + b), given the x and y coordinates as arrays. 1: x-coordinates.  2: y-coordinates.  3: if this is \"obj\", then it returns an object, otherwise it returns it as a string",
-						pascalTri: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
+						pascal: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
 						fib: "Stands for fibonacci. returns the fibonacci sequence number of the inputed index.  If floats are inputed, then it will effectively return fib(ceil(input)).  Currently negative indexes are not implemented.  fib(0) returns 0, fib(1) returns 1, fib(2) returns 1, fib(3) returns 2, etc.",
+						factorIntAll: "Takes 1 argument. 1: a number. finds all integer factors of said number",
+						intLargestFactor: "Takes 1 argument. 1: a number. returns the largest factor of said number",
+						synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant",
+						PythagoreanTriples: "Takes one argument. 1: max size. finds all principle pythagorean triples such that a**2 + b**2 = c**2, a < max size, and b < max size, and a, b, and c are all integers.",
+						add: "Takes any amount of arguments, either directly or in one or many array(s).  adds all of the arguments together and returns the answer.",
 						nCr: "Stands for n Choose r. takes 2 arguments.",
 						nPr: "Stands for n Permute r. takes 2 arguments.",
-						add: "Takes any amount of arguments, either directly or in one or many array(s).  adds all of the arguments together and returns the answer.",
+						isNaN: "Similar to isNaN(). takes one paramater.  if it can be coerced to be a number, it returns false.  the difference is that it returns false for bigints instead of throwing an error.",
+						isAN: "Takes one argument.  returns the opposite of Math.isNaN()",
+						copySign: "takes 2 arguments. 1: number to keep the value of (x). 2: number to keep the sign of (y). returns |x|sign(y)",
+						degrees: "Takes 1 argument. 1: angle in radians. converts radians to degrees",
+						dist: "Takes 4 arguments: (x1, y1, x2, y2). retrns the distance between the two points",
+						erf: "Takes one numeric argument \"z\". returns 2/√(π)*∫(0, z, 𝑒^-(t^2))dt. In mathematics, it is called the \"Gauss error function\"",
+						erfc: "Takes 1 numeric argument \"z\". return 1 - erf(z).",
+						isClose: "Takes 3 arguments. 1: number a. 2: number b.  3: number c. if a third argument is not provided, it will be set to 1e-16.  returns true if number a is in range c of number b, otherwise it returns false.",
+						radians: "Takes 1 argument. 1: angle in degrees. converts degrees to radians",
 						parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
 						trig: {
 							sin: "1 argument. returns sin(angle), using the taylor series definition of sin. (radians)",
@@ -534,11 +547,13 @@
 								acot: "1 argument. if the argument is loosely equal to zero, returns 90.  if the argument is less than zero, returns 180 + atan(arg), otherwise it returns atan(arg)."
 							}
 						},
+						lcm: "returns the least common multiple of a list of numbers",
+						gcf: "retirns the greatest common factor of a list of numbers",
 						ln1p: "Takes one argument.  returns ln(1+arg). the same as original Math.log1p",
 						sign: "Alternate spelling for sgn",
 						pow: "Takes two arguments (a,b).  similar to a**b.",
 						mod: "Takes two arguments (a,b).  similar to a%b.",
-						exp: "Takes one argument (n).  returns 𝑒**n",
+						exp: "Takes one argument (n, x=Math.E).  returns x ** n",
 						gcd: "Alternate spelling of gcf",
 						sqrt: "Takes one argument. returns nthrt(arg)",
 						cbrt: "Takes one argument.  returns the cube root of the argument.",
@@ -664,7 +679,8 @@
 					for (;a - b < 0;) a -= b;
 				return a;
 			}
-			exp(n) {return 𝑒 ** n}
+			exp(n, x=𝑒) {return x ** n}
+			gcd(...a) {return this.lmgf("gcd", a)}
 			sqrt(n) {return n >= 0 ? this.nthrt(n) : n == null ? 0 : `0+${this.nthrt(-n)}i`}
 			cbrt(x) {return this.nthrt(x, 3)}
 			ifact(n, bigint=false) {
@@ -953,7 +969,7 @@
 	Array.prototype.slc = Array().splice,
 	Array.prototype.remSub = function removeSubArrays() {
 		var a = this.valueOf(), A;
-	for (; !a.every(i => type(i, 1) !== "arr");) {
+		for (; !a.every(i => type(i, 1) !== "arr");) {
 			A = [];
 			for (const b of a) A = A.concat(b);
 			a = A;
