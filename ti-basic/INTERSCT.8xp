@@ -3,7 +3,7 @@ ClrHome
 Lbl A
 Menu("  Select Input  ","Linear,Linear",1,"Linear,Quad",2,"Quad,Quad",3,"Ellipse,Linear",4,"Ellipse,Quad",5,"Triples",6,"Next",B
 Lbl B
-Menu("  Select Input  ","x*y,Linear",7,"x*y,Quad",8,"a^(bx+c) × 2",9,"Back",A
+Menu("  Select Input  ","xy, Linear",7,"xy, Quad",8,"a^(bx+c) × 2",9,"Back",A
 Lbl 1
 Menu("  Select Input  ","y=mx+b",11,"ax+by=c",12
 Lbl 12
@@ -43,7 +43,7 @@ If M≠A
 Then
 (C-B)/(M-A→X
 MX+B→Y
-Disp "(x₁,y₁)",X,Y
+Disp "(x,y)",X,Y
 End
 Stop
 Lbl 2
@@ -168,7 +168,7 @@ Then
 Else
 (L-IQ-JR)/K→S
 End
-Disp "(x,y,z) (Q,R,S)",QFrac,RFrac,SFrac
+Disp "(x,y,z) (Q,R,S)",Q,R,S
 Stop
 Lbl 7
 ClrHome
@@ -200,7 +200,7 @@ Disp "No Solution
 Else
 If M≠0 and C≠0
 Then
-Disp "(x,y)",­C/MFrac,0
+Disp "(x,y)",­C/M,0
 End
 End
 End
@@ -218,7 +218,7 @@ Goto 71
 Else
 If M=0 and C≠0
 Then
-Disp "(x,y)",B/A/CFrac,C
+Disp "(x,y)",B/A/C,C
 Else
 If M≠0 and C≠0
 Then
@@ -228,7 +228,7 @@ End
 End
 End
 End
-Goto 82
+Goto 72
 Lbl 71
 (√((AC²+4MB)A)-C)/(2M→X
 (C+√((AC²+4MB)A))/(­2M→Z
@@ -236,6 +236,8 @@ MX+C→Y
 MZ+C→θ
 ClrHome
 Disp "(x₁,y₁),(x₂,y₂)",X,Y,Z,θ
+Lbl 72
+Stop
 Lbl 8
 Disp "1: axy=b
 Input "a=",A
@@ -293,7 +295,7 @@ Disp "(x₁,y₁),(x₂,y₂)",X,Y,Z,θ
 Else
 If A≠0 and B≠0 and C≠0
 Then
-Disp "(x,y)",√(B/AC),C√(B²)/√(A²C²
+Disp "(x,y)",√(B/AC),√(B²C/A
 Else
 If A≠0 and B≠0 and C≠0
 Then
@@ -318,7 +320,7 @@ FE→C
 ­B/27/A+BC/6/A²-D/(2A→E
 C/A/3-B²/(9A²→F
 √(F²+F→G
-√(F+G)+√(F-G)-B/3/A→X
+√(F+G)+√(F-G)-B/(3A→X
 AX+B→B
 BX+C→C
 √(B²-4AC→G
@@ -339,10 +341,12 @@ Lbl 82
 Stop
 Lbl 9
 ClrHome
-Disp "y = a^(bx+c)=","y = d^(ex+f)
+Disp "1: y = a^(bx+c)
 Input "a=",A
 Input "b=",B
 Input "c=",C
+ClrHome
+Disp "2: y = d^(ex+f)
 Input "d=",D
 Input "e=",E
 Input "f=",F
@@ -352,12 +356,11 @@ Then
 If A^C=F^H
 Then
 A^C→Y
-Disp "x,y","All Real",Y
+Disp "(x,y)","All Real",Y
 Else
 Disp "No Solution
 End
 Else
 (Fln(D)-Cln(A))/(Bln(A)-Eln(D→X
-A^((CE-FB)/(E-Blog(A,f→Y
+A^((CE-FB)/(E-Blog(A,F→Y
 Disp "(x,y)",X,Y
-End
