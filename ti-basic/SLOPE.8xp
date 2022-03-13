@@ -11,7 +11,7 @@ Disp "Slope =","
 Output(2,8,"Undefined
 Else
 (D-Y)/(C-X→M
-Disp "Slope,M =",MFrac
+Disp "Slope (M) =",M
 End
 Y-MX→B
-Disp "Y-Int (B) =",BFrac,"
+Disp "Y-Int (B) =",B,"
