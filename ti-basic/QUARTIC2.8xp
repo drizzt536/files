@@ -10,7 +10,7 @@ Then
 (­B/(4A)-√(­C/(2A)-√(C²/(4A²)-E/A→X
 Goto θ
 Else
-If 1=not(Q
+If not(Q
 Then
 (­B/(4A)+√(­P/2+√(P²/4-R→θ
 (­B/(4A)+√(­P/2-√(P²/4-R→Z
@@ -26,19 +26,19 @@ P/2→I
 (­I-√((L+O)/2)-√((L-O)/2))/3→S
 (­I+(1+√(­3))/2√((L+O)/2)+(1-√(­3))/2√((L-O)/2))/3→T
 (­I+(1-√(­3))/2√((L+O)/2)+(1+√(­3))/2√((L-O)/2))/3→U
-If 0≠imag(T
+If imag(T
 Then
 √(T→V
 √(U→W
 Goto P
 Else
-If 0≠real(S
+If real(S
 Then
 √(T→V
 √(U→W
 Goto P
 Else
-If 0≠real(T
+If real(T
 Then
 √(S→V
 √(U→W
