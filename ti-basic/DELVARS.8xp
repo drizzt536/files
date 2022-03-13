@@ -25,3 +25,13 @@ DelVar W
 DelVar X
 DelVar Y
 DelVar Z
+DelVar Str1
+DelVar Str2
+DelVar Str3
+DelVar Str4
+DelVar Str5
+DelVar Str6
+DelVar Str7
+DelVar Str8
+DelVar Str9
+DelVar Str0
