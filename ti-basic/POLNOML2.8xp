@@ -43,9 +43,7 @@ End
 2→B
 Lbl A2
 If B≥N/B
-Then
 Goto B2
-Else
 If N/B=int(N/B
 Then
 augment(⌊P,{B→⌊P
@@ -53,7 +51,6 @@ augment({N/B},⌊P→⌊P
 End
 B+1→B
 Goto A2
-End
 Lbl B2
 If B²=N
 Then
@@ -67,8 +64,8 @@ If 0=L₁(dim(L₁
 Then
 augment({0},L₂→L₂
 End
-While dim(⌊P)-A>0
-While dim(⌊Q)-B>0
+While A<dim(⌊P
+While B<dim(⌊Q
 ⌊P(dim(⌊P)-A)/⌊Q(dim(⌊Q)-B→C
 If 0=sum(L₂=C
 Then
@@ -86,7 +83,7 @@ Disp "Ans=
 {0→L₄
 dim(L₁)-2→B
 While A<dim(L₂
-L₂(A)→X
+L₂(A→X
 L₁(1)X+L₁(2→C
 {L₁(1),C→L₃
 For(D,1,B
