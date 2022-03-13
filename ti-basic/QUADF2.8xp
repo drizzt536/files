@@ -13,10 +13,10 @@ B²-4AC→D
 (­B+√(D))/(2A→N
 (­B-√(D))/(2A→R
 ClrHome
-Disp "",NFrac
+Disp "",N
 If N≠R
 Then
-Disp RFrac
+Disp R
 Output(1,1,"N,R   X=
 Else
 1→S
@@ -25,7 +25,7 @@ End
 Output(4-S,2,"D=
 Output(4-S,4,D
 D→H
-If √(D)=int(√(D
+If not(fPart(√(D
 Then
 Output(5-S,2,"A=
 Output(5-S,4,A
@@ -41,13 +41,11 @@ B→V
 prgmSCRNLEN
 3+W→E
 1→G
-2→I
-While I²≤abs(D
-While not(fPart(D/I²
-D/I²→D
-GI→G
+For(I,2,√(abs(D)),1+(I>2
+While not(fPart(D/I^2
+D/I^2→D
+GI→A
 End
-I+1+(I>2→I
 End
 1+int(log(G→F
 If D<0
@@ -58,7 +56,7 @@ D→V
 prgmSCRNLEN
 2A→J
 G→O
-If B=0
+If not(B
 Then
 P+1→P
 End
@@ -72,7 +70,7 @@ gcd(gcd(abs(B),abs(G)),abs(J→X
 B/X→B
 G/X→G
 J/X→J
-If M≠0 and B≠0
+If M and B
 Then
 P→Z
 P-real(int(log(M)))+real(int(log(B→P
@@ -82,7 +80,7 @@ End
 Output(7,12,"Ready
 Pause 
 ClrHome
-If B≠0
+If B
 Then
 Output(1,1,B
 B→V
@@ -100,7 +98,9 @@ Output(1,E-P-Q,G
 Else
 O→V
 prgmSCRNLEN
+
 E-W→E
+
 End
 G→V
 E→K
@@ -124,7 +124,7 @@ If B≠0
 Then
 If 1≤real(int(log(B
 Then
--1+real(int(log(B→θ
+­1+real(int(log(B→θ
 If B<0
 Then
 θ+1→θ
