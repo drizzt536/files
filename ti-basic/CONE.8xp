@@ -3,5 +3,8 @@ ClrHome
 Input "Radius=",R
 Input "Height=",H
 ClrHome
-Disp "Volume=",πR²H/3,"Surface Area=",Rπ(R+√(R²+H²)),"Lateral Area=
-Pause πR√(R²+H²
+πRRH/3→V
+πR√(RR+HH→L
+πRR+L→S
+Disp "Volume=",V,"Surface Area=",S,"Lateral Area=
+Pause L
