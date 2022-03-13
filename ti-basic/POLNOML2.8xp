@@ -3,7 +3,7 @@ ClrHome
 Disp "{ Terms }
 Input "L₁=",L₁
 abs(L₁(1→N
-If N≠0 and N≠1
+If N and N≠1
 Then
 {1,N→⌊Q
 Else
@@ -15,7 +15,7 @@ If B≥N/B
 Then
 Goto B1
 Else
-If N/B=int(N/B
+If not(fPart(N/B
 Then
 augment(⌊Q,{B→⌊Q
 augment({N/B},⌊Q→⌊Q
@@ -30,11 +30,11 @@ augment(⌊Q,{B→⌊Q
 End
 SortD(⌊Q
 DelVar A
-While 0=L₁(dim(L₁)-A
+While not(L₁(dim(L₁)-A
 A+1→A
 End
 abs(L₁(dim(L₁)-A→N
-If N≠0 and N≠1
+If N and N≠1
 Then
 {1,N→⌊P
 Else
@@ -44,7 +44,7 @@ End
 Lbl A2
 If B≥N/B
 Goto B2
-If N/B=int(N/B
+If not(fPart(N/B
 Then
 augment(⌊P,{B→⌊P
 augment({N/B},⌊P→⌊P
@@ -60,7 +60,7 @@ SortD(⌊P
 DelVar A
 1→B
 {1,­1→L₂
-If 0=L₁(dim(L₁
+If not(L₁(dim(L₁
 Then
 augment({0},L₂→L₂
 End
@@ -113,7 +113,7 @@ Lbl D
 ClrHome
 Disp "Ans=
 SortA(L₄
-If dim(L₄)=1 and L₄(1)=0 and 0≠L₁(dim(L₁
+If dim(L₄)=1 and L₄(1)=0 and L₁(dim(L₁
 Then
 Disp "No Roots Found
 End
