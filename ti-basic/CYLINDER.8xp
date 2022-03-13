@@ -2,7 +2,11 @@ ClrHome
 Input "radius=",R
 Input "height=",H
 ClrHome
-Disp "Base Area=",πRR,"Lateral Area=
-Pause 2πRH
+πRR→B
+2πRH→L
+BH→V
+2(B+L→A
+Disp "Base Ar, B=",B,"Lat. Area, L=
+Pause L
 ClrHome
-Disp "Surf. A=",2πR(R+H),"Vol.=",πRRH
+Disp "Surf A, A=",A,"Vol ,V=",V
