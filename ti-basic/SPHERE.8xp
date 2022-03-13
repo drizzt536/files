@@ -22,4 +22,6 @@ Input "Area=",A
 √(A/π→R
 ClrHome
 Lbl 9
-Disp "Surface Area =",4πR²,"Volume =",4πR/3
+4πRR→S
+SR/3→V
+Disp "Surface Area =",S,"Volume =",V
