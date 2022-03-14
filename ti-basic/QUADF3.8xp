@@ -1,4 +1,5 @@
-"Prompt User for the Coefficients"
+"Do Some Setup"
+	"Prompt User for the Coefficients"
 	a+b
 	Float
 	ClrHome
@@ -17,7 +18,7 @@
 	A/X→A
 	B/X→B
 	C/X→C
-	
+
 	"Display the Decimal Answer"
 	B²-4AC→D
 	B→M
