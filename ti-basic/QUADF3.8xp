@@ -1,38 +1,38 @@
-"Do Some Setup"
+"Do some setup stuff"
 	"Prompt User for the Coefficients"
-	a+b
-	Float
-	ClrHome
-	Disp "ax²+bx+c
-	Prompt A,B,C
+		a+b
+		Float
+		ClrHome
+		Disp "ax²+bx+c
+		Prompt A,B,C
 
 	"Remove Fractional Part from Coefficients"
-	2→I
-	While fPart(A) or fPart(B) or fPart(C
-		AI→A
-		BI→B
-		CI→C
-		I+1→I
-	End
-	gcd(abs(A),gcd(abs(B),abs(C→X
-	A/X→A
-	B/X→B
-	C/X→C
+		2→I
+		While fPart(A) or fPart(B) or fPart(C
+			AI→A
+			BI→B
+			CI→C
+			I+1→I
+		End
+		gcd(abs(A),gcd(abs(B),abs(C→X
+		A/X→A
+		B/X→B
+		C/X→C
 
 	"Display the Decimal Answer"
-	B²-4AC→D
-	B→M
-	­B→B
-	.5/A(B+√(D→N
-	.5/A(B-√(D→R
-	ClrHome
-	Disp "",N
-	N=R
-	If not(Ans
-		Disp R
-	Output(1-Ans,1,"X   (N,R) =
-	Output(4-Ans,2,"D=
-	Output(4-Ans,4,D
+		B²-4AC→D
+		B→M
+		­B→B
+		.5/A(B+√(D→N
+		.5/A(B-√(D→R
+		ClrHome
+		Disp "",N
+		N=R
+		If not(Ans
+			Disp R
+		Output(1-Ans,1,"X   (N,R) =
+		Output(4-Ans,2,"D=
+		Output(4-Ans,4,D
 
 
 "Discriminant is perfect square:"
