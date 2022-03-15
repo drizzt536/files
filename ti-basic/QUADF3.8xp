@@ -1,13 +1,10 @@
-"Prompt User for the Coefficients"
 a+b
 Float
 ClrHome
 Disp "ax²+bx+c
 Prompt A,B,C
-
-"Remove Fractional Part from Coefficients"
 2→I
-While fPart(A) or fPart(B) or fPart(C
+While fPart(A)+fPart(B)+fPart(C
 AI→A
 BI→B
 CI→C
@@ -17,8 +14,6 @@ gcd(abs(A),gcd(abs(B),abs(C→X
 A/X→A
 B/X→B
 C/X→C
-
-"Display the Decimal Answer"
 B²-4AC→D
 B→M
 ­B→B
@@ -42,33 +37,31 @@ Output(6,4,B
 Output(7,4,C
 Return
 End
-
 D→H
 2A→J
 1→G
-
-"Simplify Radical"
 2→I
 While I²≤abs(D
 While not(fPart(D/I²
 D/I²→D
-AI→A
+GI→G
 End
 I+1+(I>2→I
 End
-
-"Simplify Fractions"
+If D<0
+Then
+G→G
+abs(D→D
+End
 If B<0 and J<0
 Then
 abs(B→B
 abs(J→J
 End
-gcd(abs(B),gcd(G,abs(J→X
+gcd(abs(B),gcd(abs(G),abs(J→X
 B/X→B
 G/X→G
 J/X→J
-
-"Output Answer"
 Output(7,12,"Ready
 Pause 
 ClrHome
@@ -76,15 +69,15 @@ Disp "","
 Output(1,1,B
 B→V
 prgmSCRNLEN
-G→V
-W+(B≠0
+Ans+1-(B=0
 Output(1,Ans,"+-
-2+Ans→E
+Ans+2→E
 Output(1,E,G
+G→V
 prgmSCRNLEN
-E+Ans
+E+Ans-(real(G)=1 and not(imag(G
 Output(1,Ans,"√
-Output(1,1+Ans,D
+Output(1,1+Ans,abs(D
 2+(B<0)+real(int(log(B
 If J≠1
 Then
