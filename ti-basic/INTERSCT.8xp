@@ -295,7 +295,7 @@ Disp "(x₁,y₁),(x₂,y₂)",X,Y,Z,θ
 Else
 If A≠0 and B≠0 and C≠0
 Then
-Disp "(x,y)",√(B/AC),√(B²C/A
+Disp "(x,y)",√(B/A/C),√(B²C/A
 Else
 If A≠0 and B≠0 and C≠0
 Then
