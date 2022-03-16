@@ -38,3 +38,8 @@ def hash_cracker_v4(inputHash, debug=False, hashfunction=hashlib.sha256):
 		for i in range(len(List)):
 			List += list(map(lambda x: List[0] + chars[chars.index(x)], chars))
 			List.pop(0)
+
+def num_combos(length, form=sum):
+	chars = input("Characters: ")
+	c = chars == "default" and 96 or len(set(chars))
+	return form(map(lambda x: c**(x+1), list(range(length))))
