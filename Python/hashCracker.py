@@ -26,7 +26,7 @@ def hash_cracker_v4(inputHash, debug=False, hashfunction=hashlib.sha256):
 		return "Result (empty string):"
 	# Repeat until a match is found.
 	while True:
-		# Check if the original text is already known
+		# Check if the original text is already known.
 		for s in List:
 			hasher = hashfunction()
 			hasher.update(s)
