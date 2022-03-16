@@ -7,6 +7,7 @@ int get_int(char str[]);
 int char_to_int(char str);
 int str_to_int(char *str);
 
+// basically realloc but without realloc
 int main(int argc, char *argv[])
 {
 	if (argc < 3)
@@ -15,7 +16,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	const int LIST_SIZE = str_to_int(argv[1]);
-	int *list = malloc(LIST_SIZE * sizeof(int)); // add array to heap
+	int *list = malloc(LIST_SIZE * sizeof(int));
 	if (list == NULL)
 	{
 		printf("Error: Out of Memory. size requested: %i\n", LIST_SIZE);
@@ -38,17 +39,13 @@ int main(int argc, char *argv[])
 	{
 		printf("New Array:\n");
 		for (int i = 0; i < NEW_LIST_SIZE; ++i)
-		{
 			tmp[i] = list[i];
-		}
 	}
 	else
 	{
 		printf("New Elements:\n");
 		for (int i = 0; i < LIST_SIZE; ++i)
-		{
 			tmp[i] = list[i];
-		}
 		for (int i = LIST_SIZE; i < NEW_LIST_SIZE; ++i)
 		{
 			printf("Integer %i: ", i + 1);
@@ -60,9 +57,7 @@ int main(int argc, char *argv[])
 	printf("Output: [");
 	int i = 0;
 	for (; i < NEW_LIST_SIZE - 1; ++i)
-	{
 		printf("%i, ", list[i]);
-	}
 	printf("%i]\n", list[i]);
 	free(list);
 	return 0;
@@ -72,10 +67,7 @@ int str_to_int(char *str)
 {
 	for (int i = 0, n = strlen(str); i < n; ++i)
 	{
-		if (char_to_int(str[i]) < 0)
-		{
-			return -1;
-		}
+		if (char_to_int(str[i]) < 0) return -1;
 	}
 	return atoi(str);
 }
@@ -83,7 +75,7 @@ int str_to_int(char *str)
 int get_int(char str[])
 {
 	int i;
-	printf("%s",str);
+	printf("%s", str);
 	scanf("%i", &i);
 	return i;
 }
