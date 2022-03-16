@@ -1,19 +1,15 @@
 ClrHome
 Lbl 1
 Input "^",A
-If A≠int(A
+If fPart(A
 Then
 ClrHome
 Goto 1
 End
-If A=0
-Then
+If not(A
 Goto 3
-End
 If A<0
-Then
 Goto 2
-End
 1+int(log(A→X
 While A>3
 While A-4*10^X≥0
