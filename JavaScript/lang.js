@@ -109,7 +109,7 @@ var interpretProgram = str => compileProgram(str)();
 function compileToHex(input) {
 	function charToAscii(str) {
 		switch (str) {
-			case"\0": return 0;case "\t": return 9;case "\n":return 10;case "\r": return 13;
+			case"\0": return "00";case "\t": return "09";case "\n":return "0a";case "\r": return "0d";
 			case " ": return 32;case "!": return 33;case '"': return 34;
 			case "#": return 35;case "$": return 36;case "%": return 37;case "&": return 38;
 			case "'": return 39;case "(": return 40;case ")": return 41;case "*": return 42;
@@ -141,6 +141,7 @@ function compileToHex(input) {
 }
 
 /*
+
 Hello World Programs:
 interpretProgram(`\\sJavascript( var i = 2; \n console.log("Hello World"); \n return 3; \\eJavascript)`;)
 
