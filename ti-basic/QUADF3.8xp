@@ -28,15 +28,7 @@ Output(1-Ans,1,"X   (N,R) =
 Output(4-Ans,2,"D=
 Output(4-Ans,4,D
 If √(D)=int(√(D
-Then
-Output(5,2,"A=
-Output(6,2,"B=
-Output(7,2,"C=
-Output(5,4,A
-Output(6,4,B
-Output(7,4,C
-Return
-End
+Goto E
 D→H
 2A→J
 1→G
@@ -85,10 +77,11 @@ Output(2,Ans,"
 Output(2,1+Ans,J
 End
 Output(4,2,"D=
+Output(4,4,H
+Lbl E
 Output(5,2,"A=
 Output(6,2,"B=
 Output(7,2,"C=
-Output(4,4,H
 Output(5,4,A
 Output(6,4,M
 Output(7,4,C
