@@ -1,4 +1,4 @@
-// This file reqiures ../lib.js
+// This file reqiures ./lib.js
 
 
 var Intrinsics = (()=>{
