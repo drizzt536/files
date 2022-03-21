@@ -1,18 +1,47 @@
-((onConflict, MathVar, alertForMath) => {"use strict";
+console.assert(!((onConflict, MathVar, alertForMath) => {"use strict";
 	onConflict = "debug", MathVar = true, alertForMath = false;
 	(()=>{const onConflict_Options = ["log","throw","return","warn","debug","info","assert","alert","None"];})();
-		var Conflict_Arr = ["$qs","len","π","𝑒",Symbol.for("<0x200b>"),Symbol.for("<0x08>"),"nSub","reverseLList","convertType","firstDayOfYear","type","round","floor","ceil","int","str","numToAccountingStr","range","asciiToChar","numToWords","numToStrW_s","Logic","LinkedList","Types"];
-		//var notActive = [];
-		Conflict_Arr = Conflict_Arr.map(e=>[window[e] == null, e]).filter(e=>e[0] === !1).map(e=>e[1]);
-		(MathVar === !0 && alertForMath === !0) && Conflict_Arr.push("Math");
+		const LIBRARY_FUNCTIONS = ["$qs","len","π","𝑒",Symbol.for("<0x200b>"),Symbol.for("<0x08>"),"json","copy","assert","help","dir","nSub","reverseLList","convertType","firstDayOfYear","type","round","floor","ceil","int","str","numToAccountingStr","range","asciiToChar","charToAscii","numToWords","numToStrW_s","Logic","LinkedList","Types"]
+		, NOT_ACTIVE_ARR = ["$","revArr","timeThrow"].map(e=>[this[e]!=null,e]).filter(e=>e[0]).map(e=>e[1])
+		, CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e]==null,e]).filter(e=>!e[0]).map(e=>e[1]);
+		(MathVar === !0 && alertForMath === !0) && CONFLICT_ARR.push("Math");
 	const math = Math;
 	this.$ ??= function $(e) {return document.getElementById(e)};
-	this.$qs = function $qs(e, b=1) {return b === 1 ? document.querySelector(e) : document.querySelectorAll(e)}
-	this.len = function length(e) {return e.length};
+	this.$qs = function $qs(e, b=null) {return b ? document.querySelector(e) : document.querySelectorAll(e)};
+	this.len = function length(e) {return e?.length};
 	this.π = 3.141592653589793;
 	this.𝑒 = 2.718281828459045;
 	this[Symbol.for("<0x200b>")] = "​";
 	this[Symbol.for("<0x08>")] = "";
+	this.json = JSON;
+	this.copy = function copy(object) {return json.parse(json.stringify(object))};
+	this.assert = function(condition, message="No Message Given", loc="") {
+		if (!condition) throw `failed assertion at ${loc===""?"No Location Given":loc}: ${message}`;
+		return 0;
+	};
+	this.help = function help(str) {
+		try { eval(str) }
+		catch (e) {
+			// str is a keyword
+			if (/SyntaxError: Unexpected token '.+'/.test(`${e}`)) {
+				open(`https://developer.mozilla.org/en-US/search?q=${/'(.+)'/.exec(`${e}`)[1]}`, "_blank");
+				return "Keyword";
+			}
+			// str is a keyword like 'function' or 'new'
+			if (`${e}` === "SyntaxError: Unexpected end of input") {
+				open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
+				return "Keyword";
+			}
+		}
+		try {
+			if (`${new Function(`return ${str}`)()}`.includes(/\(\) { \[native code\] }/))
+				open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
+			return `Function: arguments -> ${`${new Function(`return ${str}`)()}`.remove(/\s*{(.|\s)*|\s*=>(.|\s)*|function\s*\w*/g).substr(1).pop2().start("None")}`;
+		} catch { return "Variable not found" }
+	};
+	this.dir = function currentDirectory(loc=new Error().stack) {
+		return `${loc}`.substr(13).remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g)
+	};
 	this.nSub = function substituteNInBigIntegers(a, n=1) {return type(a) === "bigint" ? Number(a) * n : a};
 	this.revArr ??= function reverseArray(a) {
 		for (var l = 0, L = len(a), r = L - 1, t; l < r; ++l, --r)
@@ -67,7 +96,7 @@
 		}
 	};
 	this.firstDayOfYear = function findWeekDayNameOfFirstDayOfYear(Year, form="number") {
-		if(type(form) !== "string")
+		if(type(form, 1) !== "str")
 			throw Error(`Invalid input for second paramater: ${form}. Expected a string but found a(n) ${type(form)}`);
 		var a = (1 + --Year % 4 * 5 + Year % 100 * 4 + Year % 400 * 6) % 7;
 		form = form.toLowerCase(), Year = ~~Year;
@@ -92,7 +121,7 @@
 				Error(`Invalid output form: ${form}. try "number" or "string"`)
 	};
 	this.type = function type(a, b) {
-		return b == null || typeof a !== "number" && typeof a !== "object" && typeof a !== "function"?
+		return b == null || typeof a !== "number" && typeof a !== "object" && typeof a !== "function" && typeof a !== "string" && typeof a !== "boolean"?
 			typeof a:
 			typeof a === "number"?
 				isNaN(a)?
@@ -101,20 +130,26 @@
 						"inf":
 						"num":
 				typeof a === "object"?
-					`${a?.test}` === 'function test() { [native code] }'?
-						"regex":
-						a === null?
-							"null":
-							`${a?.type}`.replace(/\s|;/g, "") === 'type(){return"linkedlist"}'?
-								"linkedlist":
-								`${a?.type}`.replace(/\s|;/g, "") === 'type(){return"complexnum"}'?
-									"complexnum":
-									JSON.stringify(a)[0] === "["?
-										"arr":
-										"obj":
-					/^class /.test(a+"")?
-						"class":
-						"func"
+					false?
+						"nodelist":
+						`${a?.test}` === 'function test() { [native code] }'?
+							"regex":
+							a === null?
+								"null":
+								`${a?.type}`.remove(/\s|;/g) === 'type(){return"linkedlist"}'?
+									"linkedlist":
+									`${a?.type}`.remove(/\s|;/g) === 'type(){return"complexnum"}'?
+										"complexnum":
+										json.stringify(a).startsWith("[")?
+											"arr":
+											"obj":
+					typeof a === "string"?
+						"str":
+						typeof a === "boolean"?
+							"bool":
+						/^class /.test(a+"")?
+							"class":
+							"func"
 	};
 	this.timeThrow ??= function timeThrow(message="Error Message Here.", run=false){
 		let a = new Date().getHours();
@@ -126,39 +161,69 @@
 	this.floor = function floor(n) {return type(n, 1) !== "num" ? n : ~~n-(n<0&&n%1!=0?1:0)};
 	this.ceil = function ceil(n) {return type(n, 1) !== "num" ? n : ~~n+(n>0&&n%1!=0?1:0)};
 	this.int = parseInt;
-	this.str = function String(a, b) {return b < 36 && b > 1 ? a.toString(int(b)) : a+""};
+	this.str = function String(a, b) {return b < 36 && b >= 2 ? a.toString(int(b)) : a+""};
+	this.list = Array.from;
 	this.numToAccStr = function numberToAccountingString(n) {return n<0 ? `(${-n})` : n+""};
 	this.range = function range(start, stop, step=1) {
 		stop == null && (stop = start - 1, start = 0);
 		return Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
 	},
 	this.asciiToChar = function asciiNumToChar(num) {
-		switch (num) {
-			case 0:  return"\0";case 32: return " ";case 33: return "!";case 34: return '"';
-			case 35: return "#";case 36: return "$";case 37: return "%";case 38: return "&";
-			case 39: return "'";case 40: return "(";case 41: return ")";case 42: return "*";
-			case 43: return "+";case 44: return ",";case 45: return "-";case 46: return ".";
-			case 47: return "/";case 48: return "0";case 49: return "1";case 50: return "2";
-			case 51: return "3";case 52: return "4";case 53: return "5";case 54: return "6";
-			case 55: return "7";case 56: return "8";case 57: return "9";case 58: return ":";
-			case 59: return ";";case 60: return "<";case 61: return "=";case 62: return ">";
-			case 63: return "?";case 64: return "@";case 65: return "A";case 66: return "B";
-			case 67: return "C";case 68: return "D";case 69: return "E";case 70: return "F";
-			case 71: return "G";case 72: return "H";case 73: return "I";case 74: return "J";
-			case 75: return "K";case 76: return "L";case 77: return "M";case 78: return "N";
-			case 79: return "O";case 80: return "P";case 81: return "Q";case 82: return "R";
-			case 83: return "S";case 84: return "T";case 85: return "U";case 86: return "V";
-			case 87: return "W";case 88: return "X";case 89: return "Y";case 90: return "Z";
-			case 91: return "[";case 92: return"\\";case 93: return "]";case 94: return "^";
-			case 95: return "_";case 96: return "`";case 97: return "a";case 98: return "b";
-			case 99: return "c";case 100:return "d";case 101:return "e";case 102:return "f";
-			case 103:return "g";case 104:return "h";case 105:return "i";case 106:return "j";
-			case 107:return "k";case 108:return "l";case 109:return "m";case 110:return "n";
-			case 111:return "o";case 112:return "p";case 113:return "q";case 114:return "r";
-			case 115:return "s";case 116:return "t";case 117:return "u";case 118:return "v";
-			case 119:return "w";case 120:return "x";case 121:return "y";case 122:return "z";
-			case 123:return "{";case 124:return "|";case 125:return "}";case 126:return "~";
-			default: return "number not found";
+		switch (num) {// change back to original.
+			case 0  : return"\0"; case 9  : return"\t"; case 10 : return"\n"; case 13 : return"\r";
+			case 32 : return " "; case 33 : return "!"; case 34 : return '"'; case 35 : return "#";
+			case 36 : return "$"; case 37 : return "%"; case 38 : return "&"; case 39 : return "'";
+			case 40 : return "("; case 41 : return ")"; case 42 : return "*"; case 43 : return "+";
+			case 44 : return ","; case 45 : return "-"; case 46 : return "."; case 47 : return "/";
+			case 48 : return "0"; case 49 : return "1"; case 50 : return "2"; case 51 : return "3";
+			case 52 : return "4"; case 53 : return "5"; case 54 : return "6"; case 55 : return "7";
+			case 56 : return "8"; case 57 : return "9"; case 58 : return ":"; case 59 : return ";";
+			case 60 : return "<"; case 61 : return "="; case 62 : return ">"; case 63 : return "?";
+			case 64 : return "@"; case 65 : return "A"; case 66 : return "B"; case 67 : return "C";
+			case 68 : return "D"; case 69 : return "E"; case 70 : return "F"; case 71 : return "G";
+			case 72 : return "H"; case 73 : return "I"; case 74 : return "J"; case 75 : return "K";
+			case 76 : return "L"; case 77 : return "M"; case 78 : return "N"; case 79 : return "O";
+			case 80 : return "P"; case 81 : return "Q"; case 82 : return "R"; case 83 : return "S";
+			case 84 : return "T"; case 85 : return "U"; case 86 : return "V"; case 87 : return "W";
+			case 88 : return "X"; case 89 : return "Y"; case 90 : return "Z"; case 91 : return "[";
+			case 92 : return"\\"; case 93 : return "]"; case 94 : return "^"; case 95 : return "_"; 
+			case 96 : return "`"; case 97 : return "a"; case 98 : return "b"; case 99 : return "c";
+			case 100: return "d"; case 101: return "e"; case 102: return "f"; case 103: return "g";
+			case 104: return "h"; case 105: return "i"; case 106: return "j"; case 107: return "k";
+			case 108: return "l"; case 109: return "m"; case 110: return "n"; case 111: return "o";
+			case 112: return "p"; case 113: return "q"; case 114: return "r"; case 115: return "s";
+			case 116: return "t"; case 117: return "u"; case 118: return "v"; case 119: return "w";
+			case 120: return "x"; case 121: return "y"; case 122: return "z"; case 123: return "{";
+			case 124: return "|"; case 125: return "}"; case 126: return "~"; default: return null;
+		}
+	},
+	this.charToAscii = function charToAscii(str) {
+		switch (str) {
+			case"\0": return 0  ; case"\t": return 9  ; case"\n": return 10 ; case"\r": return 13 ;
+			case " ": return 32 ; case "!": return 33 ; case '"': return 34 ; case "#": return 35 ;
+			case "$": return 36 ; case "%": return 37 ; case "&": return 38 ; case "'": return 39 ;
+			case "(": return 40 ; case ")": return 41 ; case "*": return 42 ; case "+": return 43 ;
+			case ",": return 44 ; case "-": return 45 ; case ".": return 46 ; case "/": return 47 ;
+			case "0": return 48 ; case "1": return 49 ; case "2": return 50 ; case "3": return 51 ;
+			case "4": return 52 ; case "5": return 53 ; case "6": return 54 ; case "7": return 55 ;
+			case "8": return 56 ; case "9": return 57 ; case ":": return 58 ; case ";": return 59 ;
+			case "<": return 60 ; case "=": return 61 ; case ">": return 62 ; case "?": return 63 ;
+			case "@": return 64 ; case "A": return 65 ; case "B": return 66 ; case "C": return 67 ;
+			case "D": return 68 ; case "E": return 69 ; case "F": return 70 ; case "G": return 71 ;
+			case "H": return 72 ; case "I": return 73 ; case "J": return 74 ; case "K": return 75 ;
+			case "L": return 76 ; case "M": return 77 ; case "N": return 78 ; case "O": return 79 ;
+			case "P": return 80 ; case "Q": return 81 ; case "R": return 82 ; case "S": return 83 ;
+			case "T": return 84 ; case "U": return 85 ; case "V": return 86 ; case "W": return 87 ;
+			case "X": return 88 ; case "Y": return 89 ; case "Z": return 90 ; case "[": return 91 ;
+			case"\\": return 92 ; case "]": return 93 ; case "^": return 94 ; case "_": return 95 ;
+			case "`": return 96 ; case "a": return 97 ; case "b": return 98 ; case "c": return 99 ;
+			case "d": return 100; case "e": return 101; case "f": return 102; case "g": return 103;
+			case "h": return 104; case "i": return 105; case "j": return 106; case "k": return 107;
+			case "l": return 108; case "m": return 109; case "n": return 110; case "o": return 111;
+			case "p": return 112; case "q": return 113; case "r": return 114; case "s": return 115;
+			case "t": return 116; case "u": return 117; case "v": return 118; case "w": return 119;
+			case "x": return 120; case "y": return 121; case "z": return 122; case "{": return 123;
+			case "|": return 124; case "}": return 125; case "~": return 126; default: return null;
 		}
 	},
 	this.numToWords = function numberToWords(number) {
@@ -223,10 +288,10 @@
 			case number % 1e6===0 && len(string)===8: return `${numberToWords(1*string.substr(0,2))} million`;
 			case number < 1e8:
 				return `${numberToWords(1*string.substr(0,2))} million ${numberToWords(1*string.substr(2))}`;
-			default: throw Error(`Invalid Number. function Only works for {x:|x| < 1e+8}\n\t\t\tinput: ${numToStrW_s(number)}`);
+			default: throw Error(`Invalid Number. function Only works for {x:|x| < 1e8}\n\t\t\tinput: ${numToStrW_s(number)}`);
 		}
 	},
-	this.numToStrW_s = function numberToStringWithSs(number) {
+	this.numToStrW_s = function numberToStringWith_s(number) {
 		for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++)
 			(i % 3 === 0 && i !== 0) && (str2 += "_"), str2 += str[i];
 		return str2.reverse();
@@ -245,14 +310,14 @@
 					if (n < 0 || n > 2**31-1) return 0;
 					n = n.toString(2);
 					for (;len(n) < 32; n = `0${n}`);
-					return len(n.replace(/1.*/, ""))
+					return len(n.remove(/1.*/))
 				},
 				this.fact = function floatFactorial(n, bigint=false, acy=1e3) {
 					if (~~n===n) return this.ifact(n, bigint);
 					if (type(n = this.int(0, acy, x=>x**n/𝑒**x, .1), 1) === "inf") return NaN;
 					return n;
 				},
-				this.sgn = function sign(n) {return type(n, 1) !== "num" ? NaN : n==0 ? n : n<0 ? -1 : 1},
+				this.sgn = function sign(n) {return type(n, 1) !== "num" ? NaN : n == 0 ? n : n<0 ? -1 : 1},
 				this.abs = function abs(n) {return this.sgn(n)*n},
 				this.sum = function summation(n, l, s=n=>n, r=1) {
 					for (var t = 0; n <= l; n += r)
@@ -275,7 +340,7 @@
 					return a;
 				},
 				this.hypot = function hypotenuse(...n) {
-					n = n.flat(Infinity);
+					n = n.flatten();
 					for (var a = 0, i = 0; i < len(n); i++)
 						a += n[i]**2;
 					return a**.5;
@@ -299,13 +364,13 @@
 					return e;
 				},
 				this.max = function max(...n) {
-					n = n.flat(Infinity);
+					n = n.flatten();
 					let m = n[0];
 					for (let i of n) m = i > m ? i : m;
 					return m;
 				},
 				this.min = function min(...n) {
-					n = n.flat(Infinity);
+					n = n.flatten();
 					let m = n[0];
 					for (let i of n) m = i < m ? i : m;
 					return m;
@@ -321,18 +386,18 @@
 				},
 				this.complex = function complexNumber(a,b) {return new this.ComplexNumber(a,b)},
 				this.mad = function meanAbsoluteDeviation(...a) {
-					var m, l = this.mean(a = a.flat(Infinity));
+					var m, l = this.mean(a = a.flatten());
 					a.forEach(b => m += this.abs(b-l));
 					return m / len(a);
 				},
 				this.mean = function mean(...a) {
-					a = a.flat(Infinity);
+					a = a.flatten();
 					var l = 0;
 					a.forEach(b => l += b);
 					return l / len(a);
 				},
 				this.median = function median(...a) {
-					a = a.flat(Infinity).sort();
+					a = a.flatten().sort();
 					for (; len(a) > 2;)
 						a.pop(), a.shift();
 					return len(a) == 1 ? a[0] : a.slc(0,2) / 2
@@ -341,7 +406,7 @@
 					return type(n) !== "number" && type(n) !== "bigint" ? false : n.isPrime();
 				},
 				this.lmgf = function leastCommonMultipleGreatestCommonFactor(t,...a) {
-					a = a.flat(Infinity).map(b => int(b) * (b<0 ? -1 : 1));
+					a = a.flatten().map(b => int(b) * (b<0 ? -1 : 1));
 					for (let c, i = t[0] === "l" ? this.max(a) : this.min(a); ; t[0] === "l" ? ++i : --i ) {
 						for (let j = len(a) - 1; j >= 0; --j) {
 							if (t[0] === "l" ? i % a[j] : a[j] % i) {
@@ -355,8 +420,9 @@
 					throw Error("unreachable");
 				},
 				this.linReg = function linearRegression(x1, y1, Return="obj") {
-					x1 = [x1].flat(Infinity);
-					y1 = [y1].flat(Infinity);
+					x1 = [x1].flatten();
+					y1 = [y1].flatten();
+					const dim = list => len(list) - 1;
 					if (len(x1) === 0) throw Error("No elements given for first paramater");
 					if (len(y1) === 0) throw Error("No elements given for second paramater");
 					if (isNaN(x1.join("")*1)) throw Error(`array of numbers req. for first paramater. Inputs: ${x1}`);
@@ -375,9 +441,9 @@
 					}
 					var m = (
 						len(x1) * this.sum(0, len(x1)-1, n=>x1[n]*y1[n]) -
-						this.sum(0, len(x1)-1, n=>x1[n]) * this.sum(0, len(y1)-1, n=>y1[n])
-					)/(len(x1) * this.sum(0, len(x1)-1, n=>x1[n]**2) - this.sum(0, len(x1)-1, n=>x1[n])**2),
-					b = (this.sum(0, len(x1)-1, n=>y1[n]) - m * this.sum(0, len(x1)-1, n=>x1[n])) / len(x1);
+						this.sum(0, dim(x1), n=>x1[n]) * this.sum(0, dim(y1), n=>y1[n])
+					)/(len(x1) * this.sum(0, dim(x1), n=>x1[n]**2) - this.sum(0, dim(x1), n=>x1[n])**2),
+					b = (this.sum(0, dim(x1), n=>y1[n]) - m * this.sum(0, dim(x1), n=>x1[n])) / len(x1);
 					if (Return === "obj") return {m: m, b: b};
 					return `y = ${m}x + ${b}`;
 				},
@@ -387,7 +453,7 @@
 					if ("all" !== col) col = convertType(col, "number", "return");
 					if (type(col, 1) !== "num" && col !== "all")
 						throw Error(`Number or String "all" Required for second paramater. Input:${col}`);
-					if (col !== "all") return this.nCr(row, col-1);
+					if (col?.toLowerCase() !== "all") return this.nCr(row, col-1);
 					for (var i = 0, arr = []; i <= row;) arr.push(this.nCr(row, i++));
 					return arr;
 				},
@@ -403,7 +469,7 @@
 					if (number.isPrime()) return number;
 					for (var i = 2; i <= number; ++i)
 						if (number % i === 0)
-							primeFactors = primeFactors.push2(factorIntPrime(i)).flat(Infinity),
+							primeFactors = primeFactors.push2(factorIntPrime(i)).flatten(),
 							number /= i,
 							i = 1;
 					return primeFactors;
@@ -427,6 +493,58 @@
 					}
 					return newCoeffs;
 				},
+				this.polynomial = function polynomialRealRationalSolutions(L1) {
+					return "unfinished";
+					const dim = list => len(list) - 1;
+					var L2, A = 0, B = 1-1, C, L4, X, L3, L5;
+					// store factors of L1[0] into LQ
+					// store factors of L1[len(L1)-1] into LP
+					// continue at line 65
+					L2 = [1, 1];
+					if (L1[dim(L1)] === 0) {
+						L2.unshift(0);
+					}
+					while (dim(LP) - A > 0) {
+						while (dim(LQ) - B > 0) {
+							C = LP[dim(LP) - A] / LQ(dim(LQ) - B);
+							if (L2.every(e => e === 0)) {
+								L2.push(C);
+								L2.push(-C);
+							}
+							B++;
+						}
+						A++;
+						B = 0;
+					}
+					A = 1-1;
+					L4 = [0];
+					B = dim(L2) - 2;
+					while (A < dim(L2)) {
+						X = L2[A];
+						C = L1[1-1]*X + L1[2-1];
+						L3 = [L1[1-1], C];
+						for (var D = 1-1; D < B; D++) {
+							C = C*X + L1[D + 2];
+							L3.push(C);
+						}
+						if (L3[dim(L3)] < 1e-10 && L3[dim(L3)] > 1e-10) {
+							L4.push(L2[A]);
+						}
+						A++
+					}
+					if (1 === dim(L4)) {
+						//Goto D;
+					}
+					B = dim(L4);
+				},
+				this.areaRegPoly = function areaOfRegularPolygon() {
+					return "unfinished";
+				},
+				this.simpRad  =function simpRads(R) {
+					for (var A = 1, i = 2, N = Math.sqrt(Math.abs(R)); i < N; i += 1 + (i > 2))
+						for (;!(R % i**2);) R /= i**2, A *= i;
+					return `${A}${R < 0 ? "i" : ""}√${Math.abs(R)}`.remove(/^1|√1$/);
+				}
 				this.PythagoreanTriples = function principlePythagoreanTripleFinder(maxSize=1000) {
 					for (var a = 1, b = 1, c, triples = []; a < maxSize; a++) {
 						for (b = 1; b < maxSize; b++) {
@@ -437,7 +555,7 @@
 					return triples;
 				},
 				this.add = function add(...a) {
-					a = a.flat(Infinity);
+					a = a.flatten();
 					for (var i = len(a) - 1, t = 0; i >= 0; --i)
 						t += a[i];
 					return t;
@@ -456,8 +574,7 @@
 				this.isClose = function isClose(a, b, c=1e-16) {return a > b - c && a < b + c ? !0 : !1},
 				this.radians = function convertDegreesToRadians(n) {return n * 180 / π},
 				this.parity = function parity(...a) {
-					if (len(a) === 1) return a[0] % 2 === 0 ? "even" : "odd";
-					return (a = a.flat(Infinity)).map(b => b % 2 === 0 ? "even" : "odd");
+					return len(a)-1  ?  a.flatten().map(b=>b%2 ? "odd" : "even")  :  a[0]%2 ? "odd" : "even";
 				};
 				if (B != null) {
 					this[B] = {
@@ -706,11 +823,11 @@
 						left:function bitwiseLeftShift(a,b) {return a << b},
 						or:function bitwiseOr(a,b) {return this.xor([a,b], [1,2])},
 						and:function bitwiseAnd(...a) {return type(a[0], 1) !== "arr" ? this.xor(a, len(a)) : this.xor(a[0], len(a[0]))},
-						not:function bitwiseNot(...a) {return (a = a.flat(Infinity)) && len(a) == 1 ? ~a[0] : a.map(b => ~b)},
-						nil:function bitwiseNil(...b) {return (b = b.flat(Infinity)) && this.xor(b, [0])},
+						not:function bitwiseNot(...a) {return (a = a.flatten()) && len(a) == 1 ? ~a[0] : a.map(b => ~b)},
+						nil:function bitwiseNil(...b) {return (b = b.flatten()) && this.xor(b, [0])},
 						xor:function BitwiseXor(a,n=[1]) {
-							if (isNaN((a = [a].flat(Infinity)).join("") * 1)) throw Error("numbers req. for 1st array");
-							if (isNaN((n = [n].flat(Infinity)).join("") * 1)) throw Error("numbers req. for 2nd paramater");
+							if (isNaN((a = [a].flatten()).join("") * 1)) throw Error("numbers req. for 1st array");
+							if (isNaN((n = [n].flatten()).join("") * 1)) throw Error("numbers req. for 2nd paramater");
 							for (var i = len(n) - 1, n1, c, t, j, l; i >= 0; --i)
 								(n[i] = Math.abs(~~n[i])) > len(a) && (n[i] = len(a));
 							n = n.sort() && (n[0] == n[len(n) - 1] ? [n[0], n[0]] : [n[0], n[len(n) - 1]]);
@@ -774,47 +891,47 @@
 				}
 				this.not = function not(...a) {return len(a) == 1 ? !a[0] : a.map(b=>!b)},
 				this.nil = function nil(...a) {
-					a = a.flat(Infinity);
-					if (JSON.stringify(a) === "[]") return !1;
+					a = a.flatten();
+					if (json.stringify(a) === "[]") return !1;
 					for (var i = len(a) - 1; i >= 0; --i)
 						if (a[i] == !0) return !1;
 					return !0;
 				},
 				this.or = function or(...a) {
-					a = a.flat(Infinity);
-					if (JSON.stringify(a) === "[]") return !1;
+					a = a.flatten();
+					if (json.stringify(a) === "[]") return !1;
 					for (var i = len(a) - 1; i >= 0; --i)
 						if (a[i] == !0) return !0;
 					return !1;
 				},
 				this.and = function and(...a) {
-					a = a.flat(Infinity);
-					if (JSON.stringify(a) === "[]") return !1;
+					a = a.flatten();
+					if (json.stringify(a) === "[]") return !1;
 					for (var i = len(a) - 1; i >= 0; --i)
 						if (a[i] == !1) return !1;
 					return !0;
 				},
 				this.nor = function nor(...a) {
-					a = a.flat(Infinity);
-					if (JSON.stringify(a) === "[]") return !1;
+					a = a.flatten();
+					if (json.stringify(a) === "[]") return !1;
 					for (var i = len(a) - 1; i >= 0; --i)
 						if (a[i] == !1) return !0;
 					return !1;
 				},
 				this.xor = function xor(...a) {
-					a = a.flat(Infinity);
-					if (JSON.stringify(a) === "[]") return !1;
+					a = a.flatten();
+					if (json.stringify(a) === "[]") return !1;
 					return len(a.filter(b => b == !0)) == len(a) / 2
 				},
 				this.isnt = function isnt(...a) {//Logic.isnt() is bugged for NaN and null as it says they are equal. this is due to JSON.stringify(NaN) returning "null".
 					for (var i = len(a) - 1; i > 0; --i) {
-						if (len(a.map(b => JSON.stringify(b)).filter(b => b === JSON.stringify(a[0]))) != 1) return !1;
+						if (len(a.map(b => json.stringify(b)).filter(b => b === json.stringify(a[0]))) != 1) return !1;
 						a.shift();
 					}
 					return !0;
 				},
 				this.is = function is(...a) {
-					a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : JSON.stringify(b));
+					a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
 					for (var i = len(a) - 1; i >= 0; --i) if (a[i] != a[0]) return !1;
 					return !0;
 				},
@@ -907,6 +1024,10 @@
 			return type(e) === "symbol" ? e : h == !0 ? Symbol.for(e) : void 0
 		}
 	};
+	function lastElement() { // not a global function
+		var a = this.valueOf();
+		return a[len(a)-1];
+	};
 	Math2.Math.prototype.ComplexNumber = class ComplexNumber {
 		constructor(re=0, im=0) {
 			this.re = re;
@@ -926,36 +1047,62 @@
 		}
 	},
 	Math2.Math.prototype.Math = math,
-	Object.prototype.ael = addEventListener,
-	Object.prototype.rel = removeEventListener,
+	HTMLElement.prototype.ael = HTMLElement.prototype.addEventListener,
+	HTMLElement.prototype.rel = HTMLElement.prototype.removeEventListener,
+	NodeList.prototype.last = lastElement,
+	HTMLCollection.prototype.last = lastElement,
+	RegExp.prototype.in = RegExp.prototype.test,
+	RegExp.prototype.toRegex = function toRegex() { return this.valueOf() },
 	Array.prototype.io = Array.prototype.indexOf,
 	Array.prototype.lio = Array.prototype.lastIndexOf,
 	Array.prototype.sort.sort = Array.prototype.sort,
+	Array.prototype.for = function forEachReturn(func, ret) {
+		var a = this.valueOf();
+		a.forEach(func);
+		return ret;
+	},
 	Array.prototype.shift2 = function shift2(b=1) {
 		let a = this.valueOf();
-		for (var i = 0; i < b; i++)
-			a.shift();
-		return a;
+		for (var i = 0; i++ < b; a.shift());
+			return a;
 	},
 	Array.prototype.pop2 = function pop2(b=1) {
 		let a = this.valueOf();
-		for (var i = 0; i < b; i++)
+		for (var i = 0; i++ < b;)
 			a.pop();
 		return a;
 	},
 	Array.prototype.splice2 = function splice2(a,b,...c) {
-		let d = this.valueOf();
+		var d = this.valueOf(), i = 0;
 		d.splice(a, b);
-		return (c.forEach(e => d.splice(a, 0, e)) || !0) && d;
+		return c.flatten().for(e => d.splice(a + i++, 0, e), d);
 	},
-	Array.prototype.push2 = function push2(e) {
-		var a = this.valueOf();
-		a.push(e);
+	Array.prototype.push2 = function push2(e, ...i) {// finish implementing pushing multiple values for other methods
+		let a = this.valueOf(), j, n;
+		i = [i].flatten();
+		if (e === void 0)
+			for (j = 0, n = len(i); j < n; j++)
+				if (type(i[j], 1) === "num")
+					a.push(a[i[j]]);
+		else {
+			if (Array(`${e}`.trim().remove(/(function)?\s*\w*\s*=?\s*\((.|\s)*\)\s*(=>)?\s*{?\s*(return\s*)?/)).dup().mod([0,1],[e=>len(e)<13,e=>/void \d+|undefined/.test(e)]).reduce((t,e)=>t+e)===2)a.push(void 0);
+			else a.push(e);
+			for (j = 0, n = len(i); j < n; j++) a.push(i[j]);
+		}
 		return a;
 	},
-	Array.prototype.unshift2 = function unshift2(e) {
-		var a = this.valueOf();
-		a.unshift(e);
+	Array.prototype.unshift2 = function unshift2(e, ...i) {
+		let a = this.valueOf(), j, n;
+		i = [i].flatten();
+		if (e === void 0)
+			for (j = 0, n = len(i); j < n; j++)
+				if (type(i[j], 1) === "num")
+					a.unshift(a[i[j]]);
+		else {
+			if (Array(`${e}`.trim().remove(/(function)?\s*\w*\s*=?\s*\((.|\s)*\)\s*(=>)?\s*{?\s*(return\s*)?/)).dup().mod([0,1],[e=>len(e)<13,e=>/void \d+|undefined/.in(e)]).reduce((t,e)=>t+e)===2)a.unshift(void 0);
+			else a.unshift(e);
+			for (j = 0, n = len(i); j < n; j++) a.unshift(i[j]);
+		}
 		return a;
 	},
 	Array.prototype.toLList = function toLinkedList() {
@@ -963,19 +1110,71 @@
 		for (let i of b) a.insertFirst(i);
 		return a;
 	},
-	Array.prototype.removeRepeats = function removeRepeats() {
-		return Array.from(new Set(this.valueOf()));
-	},
-	Array.prototype.slc = Array().splice,
-	Array.prototype.remSub = function removeSubArrays() {
-		var a = this.valueOf(), A;
-		for (; !a.every(i => type(i, 1) !== "arr");) {
-			A = [];
-			for (const b of a) A = A.concat(b);
-			a = A;
-		}
+	Array.prototype.mod = function modify(index, func) {
+		index = [index].flatten();
+		let a = this.valueOf(), n = len(index);
+		if (type(func, 1) === "arr") func = func.flatten();
+		else func = [].len(n).fill(func);
+		func = func.extend(len(index) - len(func), e=>e);
+		for (var i = 0; i < n; i++) a[index[i]] = func[i](a[index[i]]);
 		return a;
-	};
+	},
+	Array.prototype.remrep = function removeRepeats() {return Array.from(new Set(this.valueOf()))},
+	Array.prototype.slc = function slice(start=0, end=Infinity) {
+		for (var a = this.valueOf(), b = [], i = 0, n = len(a); i < n && i <= end; ++i)
+			i >= start && b.push(a[i]);
+		return b;
+	},
+	Array.prototype.swap = function swap(i1=0, i2=1) {
+		var a = this.valueOf(), b = a[i1];
+		a[i1] = a[i2], a[i2] = b;
+		return a;
+	},
+	Array.prototype.rotr3 = function rotate3itemsRight(i1=0, i2=1, i3=2) {
+		var a = this.valueOf(), b = a[i1];
+		a[i1] = a[i3], a[i3] = a[i2], a[i2] = b;
+		return a;
+	},
+	Array.prototype.dupf = function duplicateToFirst(num=1, i=0) {return this.valueOf().dup(num, 0, i)},
+	Array.prototype.dup = function duplicate(num=1, from=null, newindex=Infinity) {
+		// by default duplicates the last element in the array
+		var a = this.valueOf();
+		for (var b = a[from === null ? len(a)-1 : from], j = 0; j++ < num;) a.splice(newindex, 0, b);
+		return a;
+	},
+	Array.prototype.rotr = function rotateRight(num=1) {
+		var a = this.valueOf();
+		for (const i of range(num % len(a))) a.unshift(a.pop());
+		return a;
+	},
+	Array.prototype.rotl = function rotateRight(num=1) {
+		var a = this.valueOf();
+		for (const i of range(num % len(a))) a.push(a.shift());
+		return a;
+	},
+	Array.prototype.rotl3 = function rotate3itemsLeft(i1=0, i2=1, i3=2) {
+		var a = this.valueOf(), b = a[i1];
+		a[i1] = a[i2], a[i2] = a[i3], a[i3] = b;
+		return a;
+	},
+	Array.prototype.len = function length(num) {
+		var a = this.valueOf();
+		a.length = num > 0 ? num : 0;
+		return a;
+	},
+	Array.prototype.extend = function extend(length, filler, form="new") {
+		var a = this.valueOf();
+		if (form === "new") return a.concat([].len(length).fill(filler));
+		else if (form === "total") {
+			if (length <= len(a)) return a;
+			else return a.concat([].len(length).fill(filler));
+		} else return a;
+	},
+	Array.prototype.last = lastElement,
+	Array.prototype.startsW = function startsWith(item) {return this.valueOf()[0] === item},
+	Array.prototype.endsW = function endsWith(item) {return this.valueOf().last() === item},
+	Array.prototype.rev = [].reverse,
+	Array.prototype.flatten = function flatten() {return this.valueOf().flat(Infinity)},
 	(() => {
 		var sortOld = Array.prototype.sort;
 		Array.prototype.sort = function sort() {
@@ -984,15 +1183,15 @@
 			for (var output = []; len(list) > 0;) {
 				output.push(Math.min(list));
 				list.splice(list.io(Math.min(list)), 1);
-			}
-			return output;
-		}
+			} return output;
+		};
 		Array.prototype.sortOld = sortOld;
 	})();
 	String.prototype.io = String.prototype.indexOf,
 	String.prototype.lio = String.prototype.lastIndexOf,
+	String.prototype.endsW = "".endsWith,
 	String.prototype.toObj = function toObj(a=window) {
-		return this.valueOf().split(/[\.\[\]'"]/).filter(e=>e).forEach(e=>a=a[e]);
+		return this.valueOf().split(/[.[\]'"]/).filter(e=>e).forEach(e=>a=a[e]);
 	},
 	String.prototype.hasDupesA = function hasDuplicatesAll() {
 		return/(.)\1+/.test(this.valueOf().split("").sort().join(""));
@@ -1000,19 +1199,15 @@
 	String.prototype.hasDupesL = function hasDuplicateLetters() {
 		return/(\w)\1+/.test(this.valueOf().split("").sort().join(""));
 	},
-	String.prototype.reverse = function reverse() {
-		return this.valueOf().split("").reverse().join("");
-	},
-	String.prototype.strip = function strip() {
-		return this.valueOf().replace(/^ *| *$/g,"");
-	},
+	String.prototype.reverse = function reverse() {return this.valueOf().split("").reverse().join("")},
+	String.prototype.remove = function(arg) {return this.valueOf().replace(arg,"")},
 	String.prototype.removeRepeats = function removeRepeats() {
 		return Array.from(new Set(this.valueOf().split(""))).join("");
 	},
-	String.prototype.toBinary = function toBinary() {
-		return this.valueOf().split("").map(b=>!isNaN(int(b)) ? 1*!!int(b) : 1*!!b).join("")
-	},
-	String.prototype.toFunc = function toFunction(name="anonymous") {
+	// String.prototype.toBinary = function toBinary() {
+	// 	return this.valueOf().split("").map(b=>!isNaN(int(b)) ? 1*!!int(b) : 1*!!b).join("")
+	// },
+	String.prototype.toFunc = function toNamedFunction(name="anonymous") {
 		var s = this.valueOf();
 		if (s.substring(0,7) === "Symbol(" && s.substring(len(s) - 1) === ")") throw Error("Can't parse Symbol().");
 		s = (""+s).replace(/^(\s*function\s*\w*\s*\(\s*)/,"");
@@ -1022,19 +1217,40 @@
 				`return function(call){return function ${name}() { return call (this, arguments) }}`
 			)())(Function.apply.bind(fn))
 		)(new Function(args, s.replace(
-			new RegExp(`^(${(function() {
-				for (var i = 0, l = len(args), g = ""; i < l; i++) {
-					/[\$\^\(\)\+\*\\\|\[\]\{\}\?\.]/.test(args[i]) && (g += "\\");
-					g += args[i];
-				}
+			new RegExp(`^(${(z=>{
+				for (var i=0, l=len(z), g=""; i<l; ++i) g += (/[$^()+*|[\]{}?.]/.test(z[i]) && "\\") + z[i];
 				return g;
-			})()
-		}\\)\\s*\\{)`,"g"), "").replace(/\s*;*\s*\}\s*;*\s*/, "")), name);
+		})(args)}\\)\\s*\\{)`,"g"), "").replace(/\s*;*\s*}\s*;*\s*/, "")), name);
 	},
-	String.prototype.toRegex = function toRegularExpression(flags="") {
-		for (var i = 0, a = this.valueOf(), b = "", l = len(a); i < l; i++)
-			(/[\$\^\(\)\+\*\\\|\[\]\{\}\?\.]/.test(a[i]) && (b += "\\") || !0) && (b += a[i]);
-		return new RegExp(b, flags);
+	String.prototype.toFun = function toNamelessFunction() {
+		return((...a)=>()=>a[0](this,a))(Function.apply.bind(new Function(this.valueOf())));
+	}
+	String.prototype.toRegex = function toRegularExpression(f="", form="escaped") {
+		var a = this.valueOf();
+		if (form === "escaped")
+			for (var i = 0, b = "", l = len(a); i < l; i++) b += /[$^()+*\\|[\]{}?.]/.in(a[i]) ? `\\${a[i]}` : a[i];
+		else return new RegExp(a, f);
+		return new RegExp(b, f);
+	},
+	String.prototype.toNumber = function toNumber() {return 1*this.valueOf()},
+	String.prototype.toBigInt = function toBigInt() {
+		var a = this.valueOf();
+		try { return BigInt(a) } catch { throw `TypeError: Cannot convert input to BigInt. input: '${a}'` }
+	},
+	String.prototype.pop2 = function pop2() {
+		var s = this.valueOf();
+		return s.substring(0, s.length-1);
+	},
+	String.prototype.unescape = function unescape() {
+		return this.valueOf().split("").map(e=>e=="\n"?"\\n":e=="\t"?"\\t":e=="\f"?"\\f":e=="\r"?"\\r":e=="\v"?"\\v":e=="\b"?"\\b":e).join("")
+	},
+	String.prototype.includes = function(input) {
+		return input.toRegex().in(this.valueOf());
+	},
+	String.prototype.start = function start(start) {
+		var a = this.valueOf();
+		if (a !== "") return a;
+		return `${start}`;
 	},
 	Number.prototype.isPrime = function isPrime() {
 		var n = ~~this.valueOf();
@@ -1044,24 +1260,45 @@
 			if (n % i === 0) return !1;
 		return !0;
 	},
+	Number.prototype.shl = function(num) {return this.valueOf() << Number(num)},
+	Number.prototype.shr = function shr(num) {return this.valueOf() >> Number(num)},
+	Number.prototype.shr2 = function(num) {return this.valueOf() >>> Number(num)},
+	BigInt.prototype.shl = function(num) {return this.valueOf() << BigInt(num)},
+	BigInt.prototype.shr = function shr(num) {return this.valueOf() >> BigInt(num)},
+	BigInt.prototype.shr2 = function(num) {return this.valueOf() >>> BigInt(num)},
 	BigInt.prototype.isPrime = function isPrime() {
 		var n = this.valueOf();
 		if (n === 2n) return !0;
-		if (n < 2n || n % 2n === 0n) return !1;
+		if (n < 2n || !(n % 2n)) return !1;
 		for (var i = 3n, a = n / 3n; i <= a; i += 2n)
-			if (n % i === 0n) return !1;
+			if (!(n%i)) return !1;
 		return !0;
 	};
 	if (MathVar === true) this.Math = new Math2.Math("trig"/*,"help"*/);
 	this.Logic = new Logic.Logic("bit"/*,"eq","help"*/);
-	if (Conflict_Arr.length > 0) {
-		if (onConflict.toLowerCase() === "assert") console.assert(!1, "Global Variables Overwritten:%o",Conflict_Arr);
-		else if (onConflict.toLowerCase() === "debug") console.debug("Global Variables Overwritten:%o",Conflict_Arr);
-		else if (onConflict.toLowerCase() === "info") console.info("Global VariablesOoverwritten:%o",Conflict_Arr);
-		else if (onConflict.toLowerCase() === "warn") console.warn("Global Variables Overwritten:%o",Conflict_Arr);
-		else if (onConflict.toLowerCase() === "log") console.log("Global Variables Overwritten:%o",Conflict_Arr);
-		else if (onConflict.toLowerCase() === "alert") alert(`Global Variables Overwritten: ${Conflict_Arr.join(", ")}`);
-		else if (onConflict.toLowerCase() === "return") return `Global Variables Overwritten: ${Conflict_Arr.join(", ")}`;
-		else if (onConflict.toLowerCase() === "throw") throw `Global Variables Overwritten: ${Conflict_Arr.join(", ")}`;
+	var exit = false;
+	if (CONFLICT_ARR.length) {
+		if (onConflict.toLowerCase() === "assert") console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR);
+		else if (onConflict.toLowerCase() === "debug") console.debug("Global Variables Overwritten: %o", CONFLICT_ARR);
+		else if (onConflict.toLowerCase() === "info") console.info("Global Variables Overwritten: %o", CONFLICT_ARR);
+		else if (onConflict.toLowerCase() === "warn") console.warn("Global Variables Overwritten: %o", CONFLICT_ARR);
+		else if (onConflict.toLowerCase() === "log") console.log("Global Variables Overwritten: %o", CONFLICT_ARR);
+		else if (onConflict.toLowerCase() === "alert") alert(`Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`);
+		else if (onConflict.toLowerCase() === "return") return `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
+		else if (onConflict.toLowerCase() === "throw") throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
+		exit = true;
 	}
-})();
+	if (NOT_ACTIVE_ARR.length) {
+		if (onConflict.toLowerCase() === "assert") console.assert(!1, "Not Active Global Variables: %o", NOT_ACTIVE_ARR);
+		else if (onConflict.toLowerCase() === "debug") console.debug("Not Active Global Variables: %o", NOT_ACTIVE_ARR);
+		else if (onConflict.toLowerCase() === "info") console.info("Not Active Global Variables: %o", NOT_ACTIVE_ARR);
+		else if (onConflict.toLowerCase() === "warn") console.warn("Not Active Global Variables: %o", NOT_ACTIVE_ARR);
+		else if (onConflict.toLowerCase() === "log") console.log("Not Active Global Variables: %o", NOT_ACTIVE_ARR);
+		else if (onConflict.toLowerCase() === "alert") alert(`Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`);
+		else if (onConflict.toLowerCase() === "return") return `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
+		else if (onConflict.toLowerCase() === "throw") throw `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
+		exit = true;
+	}
+	if (exit) return 1;
+	return 0;
+})(), `Library Function exited prematurely at ${document.currentScript.src} with non-zero exit code`);
