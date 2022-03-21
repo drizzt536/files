@@ -1,7 +1,5 @@
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
+#include <stdio.h>f
 
 int get_int(char str[]);
 int char_to_int(char str);
