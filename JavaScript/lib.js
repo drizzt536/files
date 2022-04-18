@@ -1,21 +1,27 @@
-// TODO: fix Object.prototype.tofar() for Arguments
-((onConflict, MathVar, alertForMath, alertUnused) => {"use strict";
+// TODO: Fix Object.prototype.tofar() for 'Arguments' objects and html elements
+// TODO: Fix Math.fact and Math.ifact for negative numbers
+((onConflict, alertForMath, alertUnused, LOG_DEFAULT_BASE) => {"use strict";
 	{// Customization
 		const onConflict_Options = ["log", "throw", "return", "warn", "debug", "info", "assert", "alert", "None"];
 		// if something not in the options is used, it will act as if "None" was chosen instead
-
 		onConflict = "debug";
-		MathVar = true;
 		alertForMath = false;
 		alertUnused = false;
+		LOG_DEFAULT_BASE = 10;
 	}
-	const LIBRARY_FUNCTIONS = ["$qs","isIterable","isArr","len","π","𝑒",Symbol.for("<0x200b>"),Symbol.for("<0x08>"),"json","rand","constr","copy","assert","help","dir","nSub","reverseLList","convertType","firstDayOfYear","type","round","floor","ceil","int","str","numToAccountingStr","range","asciiToChar","charToAscii","numToWords","numToStrW_s","Logic","LinkedList","Types"],
+	const LIBRARY_FUNCTIONS = [
+		"infinity","$qs","isIterable","isArr","len","π","𝑒",Symbol.for("<0x200b>"),Symbol.for("<0x08>"),
+		"json","rand","constr","copy","assert","help","dir","nSub","reverseLList","convertType",
+		"firstDayOfYear","type","round","floor","ceil","int","str","numToAccountingStr","range",
+		"asciiToChar","charToAscii","numToWords","numToStrW_s","Logic","LinkedList","Types"
+	],
 		NOT_ACTIVE_ARR = ["$","revArr","timeThrow","quine"].map(e=>[this[e] != null, e]).filter(e=>e[0]).map(e=>e[1]),
 		CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1]);
-		(MathVar === true && alertForMath === true) && CONFLICT_ARR.push("Math");
+		alertForMath === true && CONFLICT_ARR.push("Math");
 	let math = Math;
 	{// Variables
-		this.$ ??= function $(e) {return document.getElementById(e)};
+		this.infinity = Infinity;
+		this.$ ??= function $(e) { return document.getElementById(e) };
 		this.$qs = function $qs(element, one=false) {
 			return one ? document.querySelector(element) : document.querySelectorAll(element);
 		};
@@ -23,11 +29,11 @@
 			try { for (const i of arg) break } catch { return !1 } return !0;
 		};
 		this.isArr = arr => typeof arr == "object" && isIterable(arr) && constr(arr) !== "Set";
-		this.len = function length(e) {return e?.length};
+		this.len = e => e?.length;
 		this.π = 3.141592653589793;
 		this.𝑒 = 2.718281828459045;
-		this[Symbol.for("<0x200b>")] = "​";
-		this[Symbol.for("<0x08>")] = "";
+		this[Symbol.for("<0x200b>")] = "​"; // zero width space
+		this[Symbol.for("<0x08>")] = ""; // \b
 		this.json = JSON;
 		this.rand = Math.random;
 		this.constr = function constructorName(input) {
@@ -39,7 +45,7 @@
 		};
 		this.copy = function copyObject(object) { return json.parse(json.stringify(object)) };
 		this.assert = function assert(condition, message="false") {
-			return condition ? 0 : Errors("Failed Assertion", message);
+			return !condition && Errors("Failed Assertion", message);
 		};
 		// TODO: Fix help function.  help("Math.int") is broken
 		this.help = function help(str) {
@@ -130,11 +136,11 @@
 			if (type(form, 1) !== "str")
 				throw Error(`Invalid input for second paramater: ${form}. Expected a string but found a(n) ${type(form)}`);
 			var ans = (1 + --year % 4 * 5 + year % 100 * 4 + year % 400 * 6) % 7;
-			form = form.toLowerCase(), year = ~~year;
+			form = form.toLowerCase(), year = int(year);
 			return form === "number"?
 				ans:
 				form[0] === "s"?
-					ans === 0?
+					!ans?
 						"Sunday":
 						ans === 1?
 							"Monday":
@@ -190,11 +196,31 @@
 			type(run, 1) === "func" && run();
 		};
 		this.quine ??= function quine() { return $=$$=>`$=${$},$($)` };
-		this.round = function round(n) {return type(n, 1) !== "num" ? n : n%1*(n<0?-1:1)<.5 ? ~~n : ~~n+(n<0?-1:1)};
-		this.floor = function floor(n) {return type(n, 1) !== "num" ? n : ~~n-(n<0&&n%1!=0?1:0)};
-		this.ceil = function ceil(n) {return type(n, 1) !== "num" ? n : ~~n+(n>0&&n%1!=0?1:0)};
+		this.round = function round(n) {
+			return type(n) === "number" ?
+				parseDec(n) * (n<0?-1:1) < .5 ?
+					int(n) :
+					int(n) + (n<0?-1:1) :
+				NaN;
+		};
+		this.parseDec = Number.parseDec = function parseDec(n) {
+			n = Number(n);
+			if (isNaN(n)) return NaN;
+			if (n.isInt()) return 0;
+			return Number( `${n}`.slc(".") );
+		};
+		this.floor = function floor(n) {
+			return type(n) === "number" ?
+				int(n) - (n<0 && parseDec(n) ? 1 : 0) :
+				NaN;
+		};
+		this.ceil = function ceil(n) {
+			return type(n) === "number" ?
+				int(n) + (n>0 && parseDec(n) ? 1 : 0) :
+				NaN;
+		};
 		this.int = parseInt;
-		this.str = function String(a, b) {return b < 36 && b >= 2 ? a.toString(int(b)) : a+""};
+		this.str = function String(a, b) {return b <= 36 && b >= 2 ? a.toString(int(b)) : a+""};
 		this.list = Array.from;
 		this.numToAccStr = function numberToAccountingString(n) {return n<0 ? `(${-n})` : n+""};
 		this.range = function range(start, stop, step=1) {
@@ -443,15 +469,25 @@
 	}
 	// TODO: Refactor methods so they work with complex numbers
 	const Math2 = {
-		// TODO: Add back original functions
+		// TODO: Add back original functions to Math.
+		// For the following Math classes, 'n' and 'x' both denote any arbitrary real number,
+		// And 'z' refers to any arbitrary complex number.
+		// For the remainder of the file, 'a' and 'b' refer to any arbitrary input to a function.
+		bMath: class BigIntMath {
+			constructor(help) {
+				help === "default" && (help = true);
+
+				if (help) this.help = {
+					null: null
+				};
+			}
+			method() {}
+		},
 		rMath: class RealMath {
-			// for the following 2 classes, 'n' and 'x' both denote any arbitrary real number
-			// although n tends to represent an integer, but doesn't have to.
-			// for the remainder of the file, 'a' and 'b' refer to any arbitrary input to a function.
+			// TODO: Change the errors to return 'NaN' instead starting at sin
 			constructor(degTrig, help) {
 				degTrig === "default" && (degTrig = true);
 				help === "default" && (help = true);
-
 				const π = 3.141592653589793,
 					  𝑒 = 2.718281828459045,
 					  ϕ = 1.618033988749895,
@@ -462,190 +498,317 @@
 				this.phi = this.PHI = this.ϕ = ϕ;
 				this.e   = this.E   = this.𝑒 = 𝑒;
 				this.ec  = this.γ   =          γ;
-				this.pi  = this.PI/*= this.π*/ = π;
-				this.omega   = 0.5671432904097838;// https://en.wikipedia.org/wiki/Omega_constant
+				this.pi  = this.PI  =          π;
+				this.foias = this.α =          α;
+				this.omega   = 0.5671432904097838; // https://en.wikipedia.org/wiki/Omega_constant
+
 				this.LN2     = 0.6931471805599453;
-				this.LN10    = 2.302585092994045;
+				this.LN10    = 2.302585092994045 ;
+				this.ln10    = 2.3025850929940456;
 				this.LOG2E   = 1.4426950408889634;
 				this.LOG10E  = 0.4342944819032518;
 				this.SQRT1_2 = 0.7071067811865476;
 				this.SQRT2   = 1.4142135623730951;
+				// TODO: Update Math.help
+				if (help) this.help = {
+					null: "If a value is null, then you could just directly check what the function does.",
+					trig: {
+						sin: "1 argument. returns sin(angle), using the taylor series definition of sin. (radians)",
+						cos: "1 argument. returns cos(angle), using the taylor series definition of cos. (radians)",
+						tan: "1 argument. returns sin(angle) / cos(angle) (radians)",
+						csc: "1 argument. returns 1 / sin(angle) (radians)",
+						sec: "1 argument. returns 1 / cos(angle) (radians)",
+						cot: "1 argument. returns 1 / tan(angle (radians)",
+						asin: "1 argument. returns asin(argument) using the taylor series definition of arcsin. (radians)",
+						acos: "1 argument. returns π/2 - arcsine(argument) (radians)",
+						atan: "returns the original Math.atan(argument) because the taylor function was too inaccurate.",
+						atan2: "Takes 2 numeric arguments (x, and y) and 1 boolean argument, and returns atan2(x, y) in radians. If the third argument is true, the arguments of the function will be reversed, being atan2(y, x) instead, but this argument is defaulted to false. see 'https://bit.ly/3j5X03W' or 'https://bit.ly/3DzmCQq' for a better explanation.",
+						acsc: "1 argument. returns asin(1/arg) (radians)",
+						asec: "1 argument. returns acos(1/arg) (radians)",
+						acot: "1 argument. if the argument == 0, returns π/2.  if the argument is less than zero, returns π + arctangent(1/argument). otherwise, returns atan(1/argument).  (radians)",
+						excst: null,
+						exset: null,
+						vcs: null,
+						cvs: null,
+						acvs: null,
+						ccvs: null,
+						accvs: null,
+						crd: null,
+						acrd: null,
+						ccrd: null,
+						accrd: null,
+						exsec: null,
+						aexsec: null,
+						excsc: null,
+						aexcsc: null,
+						vers: null,
+						avers: null,
+						verc: null,
+						averc: null,
+						cvers: null,
+						acvers: null,
+						cverc: null,
+						acverc: null,
+						hvers: null,
+						ahvers: null,
+						hverc: null,
+						ahverc: null,
+						hcvers: null,
+						ahcvers: null,
+						hcverc: null,
+						ahcverc: null,
+						sinh: "1 argument. returns sinh(angle) using the taylor series definition of sinh.",
+						cosh: "1 argument. returns cosh(angle) using the taylor series definition of cosh",
+						tanh: "1 argument. returns sinh(angle) / cosh(angle)",
+						csch: "1 argument. returns 1 / sinh(angle)",
+						sech: "1 argument. returns 1 / cosh(angle)",
+						coth: "1 argument. returns 1 / tanh(angle)",
+						asinh: "1 argument. returns ln(x + √(x**2 + 1))",
+						acosh: "1 argument. returns ln(x + √(x**2 - 1))",
+						atanh: "the same as the original Math.atanh.",
+						acsch: "1 argument. returns asinh(1/arg)",
+						asech: "1 argument. returns acosh(1/arg)",
+						acoth: "1 argument. returns atanh(1/arg)",
+						excsth: null,
+						exseth: null,
+						vcsh: null,
+						cvsh: null,
+						acvsh: null,
+						ccvsh: null,
+						accvsh: null,
+						crdh: null,
+						acrdh: null,
+						ccrdh: null,
+						accrdh: null,
+						exsech: null,
+						aexsech: null,
+						aexcsch: null,
+						versh: null,
+						aversh: null,
+						verch: null,
+						averch: null,
+						cversh: null,
+						acversh: null,
+						cverch: null,
+						acverch: null,
+						hversh: null,
+						ahversh: null,
+						hverch: null,
+						ahverch: null,
+						hcversh: null,
+						ahcversh: null,
+						hcverch: null,
+						ahcverch: null,
+						deg: {
+							sin: "1 argument. returns sin(angle°), using the taylor series definition of sin.",
+							cos: "1 argument. returns cos(angle°), using the taylor series definition of cos.",
+							tan: "1 argument. returns sin(angle°) / cos(angle°)",
+							csc: "1 argument. returns 1 / sin(angle°)",
+							sec: "1 argument. returns 1 / cos(angle°)",
+							cot: "1 argument. returns 1 / tan(angle°)",
+							asin: "1 argument. returns arcsine(argument) using the taylor series definition of arcsine.",
+							acos: "1 argument. returns 90 - asin(argument)",
+							atan: "1 argument. returns 180/π atan(argument)",
+							atan2: "Takes 2 numeric arguments (x, and y) and 1 boolean argument, and returns atan2(x, y) in degrees. If the third argument is true, the arguments of the function will be reversed, being atan2(y, x) instead, but this argument is defaulted to false. see 'https://bit.ly/3j5X03W' or 'https://bit.ly/3DzmCQq' for a better explanation.",
+							acsc: "1 argument. returns asin(1/arg)",
+							asec: "1 argument. returns acos(1/arg)",
+							acot: "1 argument. if the argument is loosely equal to zero, returns 90.  if the argument is less than zero, returns 180 + atan(arg), otherwise it returns atan(arg).",
+							excst: "1 argument. returns sqrt( exsec^2(x) +  cot^2(x) ) in degrees",
+							exset: "1 argument. returns sqrt( exsec^2(x) +  tan^2(x) ) in degrees",
+							vcs: "1 argument. returns sqrt( vercosin^2(x) +  sin^2(x) ) in degrees",
+							cvs: "1 argument. returns sqrt( 1 +  sin^2(x) ) in degrees",
+							acvs: "1 argument. returns asin( x^2 - 1 ) with an input in degrees",
+							ccvs: "1 argument. returns sqrt( 1 +  cos^2(x) ) in degrees",
+							accvs: "1 argument. returns acos( x^2 - 1 ) with an input in degrees",
+							crd: "1 argument. returns sin(x/2) in degrees",
+							acrd: "1 argument. returns 2asin(x/2) with an input in degrees",
+							ccrd: "1 argument. returns cos(x/2) in degrees",
+							accrd: "1 argument. returns ( π-4asin(x/2) ) / 2 in degrees",
+							exsec: "1 argument. returns secx - 1 in degrees",
+							aexsec: "1 argument. returns asec(x + 1) with an input in degrees",
+							excsc: "1 argument. returns cscx - 1 in degrees",
+							aexcsc: "1 argument. returns acsc(x + 1) with an input in degrees",
+							vers: "1 argument. returns 1 - cosx in degrees",
+							avers: "1 argument. returns acos(x + 1) with an input in degrees",
+							verc: "1 argument. returns 1 + cosx in degrees",
+							averc: "1 argument. returns acos(x - 1) with an input in degrees",
+							cvers: "1 argument. returns 1 - sinx in degrees",
+							acvers: "1 argument. returns asin(1 - x) with an input in degrees",
+							cverc: "1 argument. returns 1 + sinx in degrees",
+							acverc: "1 argument. returns asin(x - 1) with an input in degrees",
+							hvers: "1 argument. returns versx / 2 in degrees",
+							ahvers: "1 argument. returns acos(1 - 2x) with an input in degrees",
+							hverc: "1 argument. returns vercx / 2 in degrees",
+							ahverc: "1 argument. returns acos(2x - 1) with an input in degrees",
+							hcvers: "1 argument. returns cversx / 2 in degrees",
+							ahcvers: "1 argument. returns asin(1 - 2x) in degrees",
+							hcverc: "1 argument. returns cversx / 2 in degrees",
+							ahcverc: "1 argument. returns asin(2x - 1) with an input in degrees",
 
-				if (help != null) {
-					this.help = {
-						fround: "returns the nearest 32-bit single precision float representation of a number.",
-						random: "returns a random number in the range [0,1)",
-						imul: "returns the result of the C-like 32-bit multiplication of the two parameters.",
-						trig: {
-							sin: "1 argument. returns sin(angle), using the taylor series definition of sin. (radians)",
-							cos: "1 argument. returns cos(angle), using the taylor series definition of cos. (radians)",
-							tan: "1 argument. returns sin(angle) / cos(angle) (radians)",
-							csc: "1 argument. returns 1 / sin(angle) (radians)",
-							sec: "1 argument. returns 1 / cos(angle) (radians)",
-							cot: "1 argument. returns 1 / tan(angle (radians)",
-							asin: "1 argument. returns asin(argument) using the taylor series definition of arcsin. (radians)",
-							acos: "1 argument. returns π/2 - arcsine(argument) (radians)",
-							atan: "returns the original Math.atan(argument) because the taylor function was too inaccurate.",
-							atan2: "Takes 2 numeric arguments (x, and y) and 1 boolean argument, and returns atan2(x, y) in radians. If the third argument is true, the arguments of the function will be reversed, being atan2(y, x) instead, but this argument is defaulted to false. see 'https://bit.ly/3j5X03W' or 'https://bit.ly/3DzmCQq' for a better explanation.",
-							acsc: "1 argument. returns asin(1/arg) (radians)",
-							asec: "1 argument. returns acos(1/arg) (radians)",
-							acot: "1 argument. if the argument == 0, returns π/2.  if the argument is less than zero, returns π + arctangent(1/argument). otherwise, returns atan(1/argument).  (radians)",
-							sinh: "1 argument. returns sinh(angle) using the taylor series definition of sinh.",
-							cosh: "1 argument. returns cosh(angle) using the taylor series definition of cosh",
-							tanh: "1 argument. returns sinh(angle) / cosh(angle)",
-							csch: "1 argument. returns 1 / sinh(angle)",
-							sech: "1 argument. returns 1 / cosh(angle)",
-							coth: "1 argument. returns 1 / tanh(angle)",
-							asinh: "1 argument. returns ln(x + √(x**2 + 1))",
-							acosh: "1 argument. returns ln(x + √(x**2 - 1))",
-							atanh: "the same as the original Math.atanh.",
-							acsch: "1 argument. returns asinh(1/arg)",
-							asech: "1 argument. returns acosh(1/arg)",
-							acoth: "1 argument. returns atanh(1/arg)",
-							deg: {
-								sin: "1 argument. returns sin(angle°), using the taylor series definition of sin.",
-								cos: "1 argument. returns cos(angle°), using the taylor series definition of cos.",
-								tan: "1 argument. returns sin(angle°) / cos(angle°)",
-								csc: "1 argument. returns 1 / sin(angle°)",
-								sec: "1 argument. returns 1 / cos(angle°)",
-								cot: "1 argument. returns 1 / tan(angle°)",
-								asin: "1 argument. returns arcsine(argument) using the taylor series definition of arcsine.",
-								acos: "1 argument. returns 90 - asin(argument)",
-								atan: "1 argument. returns 180/π atan(argument)",
-								atan2: "Takes 2 numeric arguments (x, and y) and 1 boolean argument, and returns atan2(x, y) in degrees. If the third argument is true, the arguments of the function will be reversed, being atan2(y, x) instead, but this argument is defaulted to false. see 'https://bit.ly/3j5X03W' or 'https://bit.ly/3DzmCQq' for a better explanation.",
-								acsc: "1 argument. returns asin(1/arg)",
-								asec: "1 argument. returns acos(1/arg)",
-								acot: "1 argument. if the argument is loosely equal to zero, returns 90.  if the argument is less than zero, returns 180 + atan(arg), otherwise it returns atan(arg)."
-							}
-						},
-						clbz: "takes one parameter.  same as original Math.clz32. stands for count leading binary zeros",
-						fact: "takes one parameter.  returns the factorial of a number. Also works for floats.",
-						sgn: "takes one parameter.  returns the sign of a number.  If input is NaN, returns NaN.  If  input == 0, returns the input.  If the input is positive, returns 1.  If the input is negative, returns -1.",
-						abs: "takes one parameter.  returns sign(input) * input, which always returns a positive number or zero.",
-						sum: "stands for summation.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to sum each time, in the form of a function that takes in one parameter. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
-						prod: "stands for product operator.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to multiply by each time, in the form of a function with an input and output. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
-						gamma: "stands for gamma function. gamma(x) = factorial(x-1).  Takes three parameters.  1: the number to take the gamma function of.  2: accuracy of the function (default is 1000). 3: rest parameter that does nothing.  if the number is an integer returns ifact(n-1). else, it does the integral from 0 to a, of x**(n-1)/𝑒**x.  if this is Infinity, return NaN, otherwise, it returns the answer.",
-						int: "stands for integral.  Takes 4 arguments.  1: starting value (inclusive).  2: ending value (exclusive).  3: what you are taking the integral of, in the form of a function with an input, and an output.  4: rectangle size, or in other words, the accuracy, where smaller is more accurate.  the accuracy is defaulted to 0.001, and it is defaulted to taking the integral of y=x.",
-						hypot: "Stands for hypotenuse.  Takes in any amount of parameters, either directly or in one or many array(s).  for each argument, adds the square to the total.  then takes the square root of the total.",
-						log: "Takes 2 parameters.  1: number you are taking the logarithm of.  2: base of the logarithm. eg: log(3,6) = log₆(3). the base is defaulted to 10.",
-						ln: "Takes 1 parameter, and returns the natural logarithm of the number.  the same as the original Math.log. returns log(input, 𝑒).",
-						max: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the largest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
-						min: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the smallest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
-						nthrt: "Takes 2 parameters (x, n).  returns x**(1/n).  the root defaults to 2.",
-						mean: "Takes any amount of arguments, either directly or in one or many array(s).  adds up the arguments, and divides by the number of arguments present. and returns the answer.",
-						median: "Takes any amount of arguments, either directly or in one or many array(s).  it removes items from the end and beginning until there are either one or two elements remaining. if there is one, it returns it.  if there are two, it returns the average of them.",
-						mad: "Stands for mean absolute deviation.  takes any amount of arguments, either directly or in one or many array(s).  gets the mean of the arguments.  then finds the mean of the absolute deviation from the mean.",
-						isPrime: "Takes 1 input, and returns true if it is prime, false if it is composite.",
-						lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the parameters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
-						linReg: "Takes 3 paramates. finds the line of best fit (y = mx + b), given the x and y coordinates as arrays. 1: x-coordinates.  2: y-coordinates.  3: if this is \"obj\", then it returns an object, otherwise it returns it as a string",
-						pascal: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
-						fib: "Stands for fibonacci. returns the fibonacci sequence number of the inputed index.  If floats are inputed, then it will effectively return fib(ceil(input)).  Currently negative indexes are not implemented.  fib(0) returns 0, fib(1) returns 1, fib(2) returns 1, fib(3) returns 2, etc.",
-						primeFactorInt: "Takes 1 numberic argument, and returns a list of the prime factors",
-						findFactors: "Takes 1 integer argument and finds all integer factors of said integer.",
-						iMaxFactor: "Takes 1 integer argument and returns the largest factor of said integer",
-						synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant",
-						simpRad: "Takes 1 integer argument (number under radical) and returns, as a string, the radical in simplified form",
-						PythagTriple: "Takes one argument. 1: max size. finds all principle pythagorean triples such that a**2 + b**2 = c**2, a < max size, and b < max size, and a, b, and c are all integers.",
-						add: "Takes any amount of arguments, either directly or in one or many array(s).  adds all of the arguments together and returns the answer.",
-						trunc: "Takes any amount of parameters, either directly or in one or many array(s).  If there is only one input, it will truncate it, and return it, otherwise, it will return an array of truncated values.",
-						complex: "Creates a complex number",
-						nCr: "Stands for n Choose r. takes 2 arguments. same as python's math.comb()",
-						nPr: "Stands for n Permute r. takes 2 arguments.",
-						copySign: "takes 2 arguments. 1: number to keep the value of (x). 2: number to keep the sign of (y). returns |x|sign(y)",
-						degrees: "Takes 1 argument. 1: angle in radians. converts radians to degrees",
-						radians: "Takes 1 argument. 1: angle in degrees. converts degrees to radians",
-						isNaN: "Similar to isNaN(). takes one parameter.  if it can be coerced to be a number, it returns false.  the difference is that it returns false for bigints instead of throwing an error.",
-						isAN: "Takes one argument.  returns the opposite of Math.isNaN()",
-						dist: "Takes 4 arguments: (x1, y1, x2, y2). retrns the distance between the two points",
-						erf: "Takes one numeric argument \"z\". returns 2/√π ∫(0, z, 1/𝑒^t^2)dt. In mathematics, it is called the \"Gauss error function\"",
-						erfc: "Takes 1 numeric argument \"z\". return 1 - erf(z).",
-						isClose: "Takes 3 arguments. 1: number a. 2: number b.  3: number c. if a third argument is not provided, it will be set to Number.EPSILON (2^-52).  returns true if number a is in range c of number b, otherwise it returns false.",
-						parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
-						lcm: "returns the least common multiple of a list of numbers",
-						gcf: "retirns the greatest common factor of a list of numbers",
-						gcd: "Alternate spelling of gcf",
-						ln1p: "Takes one argument.  returns ln(1+arg). the same as original Math.log1p",
-						sign: "Alternate spelling for sgn",
-						round: "returns round(argument)",
-						ceil: "returns ceil(argument)",
-						floor: "returns floor(argument)",
-						pow: "Takes two arguments (a,b).  similar to a**b.",
-						mod: "Takes two arguments (a,b).  similar to a%b.",
-						exp: "Takes one argument (n, x=Math.E).  returns x ** n",
-						sqrt: "Takes one argument. returns nthrt(arg)",
-						cbrt: "Takes one argument.  returns the cube root of the argument.",
-						ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
-						findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers"
-					}
-				}
-				if (degTrig != null) {
-					this.deg = {
-						sin: x => {
-							if (type(x) !== "number") throw TypeError("Math.deg.sin() requires a numeric argument");
-							return this.sum(0, 25, n => (-1)**n / this.fact(2*n+1) * ((x*π/180) % (2*π))**(2*n+1));
-						},
-						cos: x => {
-							if (type(x) !== "number") throw TypeError("Math.deg.cos() requires a numeric argument");
-							return this.sum(0, 25, n => (-1)**n / this.fact(2*n) * ((x*π/180) % (2*π))**(2*n));
-						},
-						tan: x => {
-							if (type(x) !== "number") throw TypeError("Math.deg.tan() requires a numeric argument");
-							return this.deg.sin(x) / this.deg.cos(x);
-						},
-						csc: x => {
-							if (type(x) !== "number") throw TypeError("Math.deg.csc() requires a numeric argument");
-							return 1 / this.deg.sin(x);
-						},
-						sec: x => {
-							if (type(x) !== "number") throw TypeError("Math.deg.sec() requires a numeric argument");
-							return 1 / this.deg.cos(x);
-						},
-						cot: x => {
-							if (type(x) !== "number") throw TypeError("Math.deg.cot() requires a numeric argument");
-							return 1 / this.deg.tan(x);
-						},
-						asin: θ => {
-							if (type(θ) !== "number") throw TypeError("Math.deg.asin() requires a numeric argument");
-							return θ > 1 || θ < -1 ? NaN :
-								this.sum(0, 80, n => this.fact(2*n) /
-									(4**n*this.fact(n)**2 * (2*n+1)) * θ**(2*n+1)
-								)*180/π;
-						},
-						acos: θ => {
-							if (type(θ) !== "number") throw TypeError("Math.deg.acos() requires a numeric argument");
-							return 90 - this.deg.asin(θ);
-						},
-						atan: θ => {
-							if (type(θ) !== "number") throw TypeError("Math.deg.atan() requires a numeric argument");
-							return this.atan(θ) * 180/π;
-						},
-						atan2: (x, y, flipArgs=false) => {
-							if (type(x) !== "number") throw TypeError("Math.deg.atan2() requires a numeric first argument");
-							if (type(y) !== "number") throw TypeError("Math.deg.atan2() requires a numeric second argument");
-							return (flipArgs ? 
-								this.atan2(y, x) :
-								this.atan2(x, y)
-							) * 180/π
-						},
-						acsc: θ => {
-							if (type(θ) !== "number") throw TypeError("Math.deg.acsc() requires a numeric argument");
-							return this.deg.asin(1/θ);
-						},
-						asec: θ => {
-							if (type(θ) !== "number") throw TypeError("Math.deg.asec() requires a numeric argument");
-							return this.deg.acos(1/θ);
-						},
-						acot: θ => {
-							if (type(θ) !== "number") throw TypeError("Math.deg.acot() requires a numeric argument");
-							return !θ ? 90 : this.deg.atan(1/θ) + 180*(θ < 0);
 						}
-					};
-				}
+					},
+					Ω: "Takes 2 arguments.  1: number (x).  2: accuracy. returns Ω where Ωx^Ω = 1",
+					ζ: "1 argument. riemann zeta function. summation from 1 to infinity of 1/n^x, where x is the input to the function",
+					P: "takes any amount of arguments either in an array, multiple arrays, or directly.  can only use number arguments. returns the set of all subsets of the inputed sets.  if any of the arcuments is \"strict\" then it will return a strict subset (the set itself is not included).",
+					expm1: "1 argument. returns e^x - 1",
+					log2: "1 argument. base 2 logarithm",
+					log10: "1 argument. base 10 logarithm",
+					log1p: "1 argument. returns ln(1 + x)",
+					clz32: "takes one parameter.  same as original Math.clz32. stands for count leading binary zeros",
+					clbz: "takes one parameter.  same as original Math.clz32. stands for count leading binary zeros",
+					fact: "takes one parameter.  returns the factorial of a number. Also works for floats.",
+					sgn: "takes one parameter.  returns the sign of a number.  If input is NaN, returns NaN.  If  input == 0, returns the input.  If the input is positive, returns 1.  If the input is negative, returns -1.",
+					abs: "takes one parameter.  returns sign(input) * input, which always returns a positive number or zero.",
+					sum: "stands for summation.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to sum each time, in the form of a function that takes in one parameter. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
+					infsum: "Takes 3 arguments. 1: start.  2: function.  3: increment.  start is defaulted to 0, function is defaulted to n=>1/n, and the increment is defaulted to 1.  Stands for infinite summation.  Will only return an answer if it converges, otherwise it will kepp calculating eternally",
+					prod: "stands for product operator.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to multiply by each time, in the form of a function with an input and output. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
+					gamma: "stands for gamma function. gamma(x) = factorial(x-1).  Takes three parameters.  1: the number to take the gamma function of.  2: accuracy of the function (default is 1000). 3: rest parameter that does nothing.  if the number is an integer returns ifact(n-1). else, it does the integral from 0 to a, of x**(n-1)/𝑒**x.  if this is Infinity, return NaN, otherwise, it returns the answer.",
+					igammal: null,
+					igammau: null,
+					_: "Takes 1 argument. returns 1 / argument",
+					int: "stands for integral.  Takes 4 arguments.  1: starting value (inclusive).  2: ending value (exclusive).  3: what you are taking the integral of, in the form of a function with an input, and an output.  4: rectangle size, or in other words, the accuracy, where smaller is more accurate.  the accuracy is defaulted to 0.001, and it is defaulted to taking the integral of y=x.",
+					hypot: "Stands for hypotenuse.  Takes in any amount of parameters, either directly or in one or many array(s).  for each argument, adds the square to the total.  then takes the square root of the total.",
+					log: "Takes 2 parameters.  1: number you are taking the logarithm of.  2: base of the logarithm. eg: log(3,6) = log₆(3). the base is defaulted to 10.",
+					logbase: null,
+					ln: "Takes 1 parameter, and returns the natural logarithm of the number.  the same as the original Math.log. returns log(input, 𝑒).",
+					max: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the largest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
+					min: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the smallest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
+					nthrt: "Takes 2 parameters (x, n).  returns x**(1/n).  the root defaults to 2.",
+					mean: "Takes any amount of arguments, either directly or in one or many array(s).  adds up the arguments, and divides by the number of arguments present. and returns the answer.",
+					median: "Takes any amount of arguments, either directly or in one or many array(s).  it removes items from the end and beginning until there are either one or two elements remaining. if there is one, it returns it.  if there are two, it returns the average of them.",
+					mad: "Stands for mean absolute deviation.  takes any amount of arguments, either directly or in one or many array(s).  gets the mean of the arguments.  then finds the mean of the absolute deviation from the mean.",
+					isPrime: "Takes 1 input, and returns true if it is prime, false if it is composite.",
+					lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the parameters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
+					linReg: "Takes 3 paramates. finds the line of best fit (y = mx + b), given the x and y coordinates as arrays. 1: x-coordinates.  2: y-coordinates.  3: if this is \"obj\", then it returns an object, otherwise it returns it as a string",
+					pascal: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
+					fib: "Stands for fibonacci. returns the fibonacci sequence number of the inputed index.  If floats are inputed, then it will effectively return fib(ceil(input)).  Currently negative indexes are not implemented.  fib(0) returns 0, fib(1) returns 1, fib(2) returns 1, fib(3) returns 2, etc.",
+					primeFactorInt: "Takes 1 numberic argument, and returns a list of the prime factors",
+					findFactors: "Takes 1 integer argument and finds all integer factors of said integer.",
+					iMaxFactor: "Takes 1 integer argument and returns the largest factor of said integer",
+					synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant",
+					simpRad: "Takes 1 integer argument (number under radical) and returns, as a string, the radical in simplified form",
+					PythagTriple: "Takes one argument. 1: max size. finds all principle pythagorean triples such that a**2 + b**2 = c**2, a < max size, and b < max size, and a, b, and c are all integers.",
+					add: "Takes any amount of arguments, either directly or in one or many array(s).  adds all of the arguments together and returns the answer.",
+					sub: null,
+					mul: null,
+					div: null,
+					parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
+					nCr: "Stands for n Choose r. takes 2 arguments. same as python's math.comb()",
+					nPr: "Stands for n Permute r. takes 2 arguments.",
+					isClose: "Takes 3 arguments. 1: number a. 2: number b.  3: number c. if a third argument is not provided, it will be set to Number.EPSILON (2^-52).  returns true if number a is in range c of number b, otherwise it returns false.",
+					complex: "Creates a complex number",
+					erf: "Takes one numeric argument \"z\". returns 2/√π ∫(0, z, 1/𝑒^t^2)dt. In mathematics, it is called the \"Gauss error function\"",
+					erfc: "Takes 1 numeric argument \"z\". return 1 - erf(z).",
+					dist: "Takes 4 arguments: (x1, y1, x2, y2). retrns the distance between the two points",
+					copySign: "takes 2 arguments. 1: number to keep the value of (x). 2: number to keep the sign of (y). returns |x|sign(y)",
+					trunc: "Takes any amount of parameters, either directly or in one or many array(s).  If there is only one input, it will truncate it, and return it, otherwise, it will return an array of truncated values.",
+					isNaN: "Similar to isNaN(). takes one parameter.  if it can be coerced to be a number, it returns false.  the difference is that it returns false for bigints instead of throwing an error.",
+					isAN: "Takes one argument.  returns the opposite of Math.isNaN()",
+					imul: "returns the result of the C-like 32-bit multiplication of the two parameters.",
+					lcm: "returns the least common multiple of a list of numbers",
+					gcf: "retirns the greatest common factor of a list of numbers",
+					gcd: "Alternate spelling of gcf",
+					fround: "returns the nearest 32-bit single precision float representation of a number.",
+					sqrt: "Takes one argument. returns nthrt(arg)",
+					cbrt: "Takes one argument.  returns the cube root of the argument.",
+					degrees: "Takes 1 argument. 1: angle in radians. converts radians to degrees",
+					radians: "Takes 1 argument. 1: angle in degrees. converts degrees to radians",
+					ln1p: "Takes one argument.  returns ln(1+arg). the same as original Math.log1p",
+					sign: "Alternate spelling for sgn",
+					exp: "Takes one argument (n, x=Math.E).  returns x ** n",
+					round: "returns round(argument)",
+					floor: "returns floor(argument)",
+					ceil: "returns ceil(argument)",
+					random: "returns a random number in the range [0,1)",
+					pow: "Takes two arguments (a,b).  similar to a**b.",
+					mod: "Takes two arguments (a,b).  similar to a%b.",
+					ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
+					findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers",
+					li: null,
+					li2: null,
+					Li: null,
+					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. tetration",
+					hyper0: "Takes 1 argument and returns 1 + the argument",
+					hyper1: "Takes 2 numeric arguments and returns the sum of the arguments",
+					hyper2: "Takes 2 numeric arguments and returns the product of the arguments",
+					hyper3: "Takes 2 numeric arguments and returns the first argument to the power of the second argument",
+					hyper4: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. tetration",
+					Si: null,
+					si: null,
+					Cin: null,
+					Ci: null,
+					Shi: null,
+					Chi: null,
+					tanhc: null,
+					sinhc: null,
+					Tanc: "takes 1 numeric argument (x) and returns tan(x) / x using radians",
+					Coshc: null,
+					H: "Takes 1 argument. Heaveside step function. returns 1 if it is a non-zero positive number, and 0 otherwise.",
+					// W: null,
+				};
+				if (degTrig) this.deg = {
+					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n+1) * ((θ*π/180) % (2*π))**(2*n+1)),
+					cos: θ => isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n) * ((θ*π/180) % (2*π))**(2*n)),
+					tan: θ => isNaN( θ = Number(θ) ) ? θ : this.deg.sin(θ) / this.deg.cos(θ),
+					csc: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.sin(θ),
+					sec: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.cos(θ),
+					cot: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.tan(θ),
+					asin: x => isNaN( x = Number(x) ) ? x :
+						x > 1 || x < -1 ? NaN :
+							this.sum(0, 80, n => this.fact(2*n) /
+								(4**n*this.fact(n)**2 * (2*n+1)) * x**(2*n+1)
+							) * 180/π,
+					acos: x => isNaN( x = Number(x) ) ? x : 90 - this.deg.asin(x),
+					atan: x => isNaN( x = Number(x) ) ? x : this.atan(x) * 180/π,
+					atan2: (x, y, flipArgs=false) =>
+						isNaN( x = Number(x) ) || isNaN( y = Number(y) ) ? NaN : (
+							flipArgs ? this.atan2(y, x) : this.atan2(x, y)
+						) * 180/π,
+					acsc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1/x),
+					asec: x => isNaN( x = Number(x) ) ? x : this.deg.acos(1/x),
+					acot: x => isNaN( x = Number(x) ) ? x : !x ? 90 : this.deg.atan(1/x) + 180*(x < 0),
+					excst: x => isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.cot(x)), // sqrt(exsec^2 + cot^2)
+					// aexcst: x => Error("not implemented"),
+					exset: x => isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.tan(x)), // sqrt(exsec^2 + tan^2)
+					// aexset: x => Error("not implemented"),
+					vcs: x => isNaN( x = Number(x) ) ? x : this.hypot(this.deg.verc(x), this.deg.sin(x)), // sqrt(vercos^2 + sin^2)
+					// avcs: x => Error("not implemented"),
+					cvs: x => isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.sin(x)), // sqrt(1 + sin^2)
+					acvs: x => isNaN( x = Number(x) ) ? x : this.deg.asin(x**2 - 1), // asin(x^2 - 1)
+					ccvs: x => isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.cos(x)), // sqrt(1 + cos^2)
+					accvs: x => isNaN( x = Number(x) ) ? x : this.deg.acos(x**2 - 1), // acos(x^2 - 1)
+					crd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.sin(x / 2), // chord
+					acrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.asin(x / 2), // arc-chord
+					ccrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.cos(x / 2), // co-chord
+					accrd: x => isNaN( x = Number(x) ) ? x : (π - 4*this.deg.asin(x / 2)) / 2, // arc-co-chord
+					exsec: x => isNaN( x = Number(x) ) ? x : this.deg.sec(x) - 1, // external-secant
+					aexsec: x => isNaN( x = Number(x) ) ? x : this.deg.asec(x + 1), // arc-exsecant
+					excsc: x => isNaN( x = Number(x) ) ? x : this.deg.csc(x) - 1, // external-cosecant
+					aexcsc: x => isNaN( x = Number(x) ) ? x : this.deg.acsc(x + 1), // arc-ex-cosecant
+					vers: x => isNaN( x = Number(x) ) ? x : 1 - this.deg.cos(x), // versine
+					avers: x => isNaN( x = Number(x) ) ? x : this.deg.acos(x + 1), // arc-versine
+					verc: x => isNaN( x = Number(x) ) ? x : 1 + this.deg.cos(x), // vercosine
+					averc: x => isNaN( x = Number(x) ) ? x : this.deg.acos(x - 1), // arc-vercosine
+					cvers: x => isNaN( x = Number(x) ) ? x : 1 - this.deg.sin(x), // coversine
+					acvers: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1 - x), // arc-coversine
+					cverc: x => isNaN( x = Number(x) ) ? x : 1 + this.deg.sin(x), // covercosine
+					acverc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(x - 1), // arc-covercosine
+					hvers: x => isNaN( x = Number(x) ) ? x : this.deg.vers(x) / 2, // haversine
+					ahvers: x => isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x), // arc-haversine
+					hverc: x => isNaN( x = Number(x) ) ? x : this.deg.verc(x) / 2, // havercosine
+					ahverc: x => isNaN( x = Number(x) ) ? x : this.deg.acos(2*x - 1), // arc-havercosine
+					hcvers: x => isNaN( x = Number(x) ) ? x : this.deg.cvers(x) / 2, // hacoversine
+					ahcvers: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1 - 2*x), // arc-hacoversine
+					hcverc: x => isNaN( x = Number(x) ) ? x : this.deg.cverc(x) / 2, // hacovercosine
+					ahcverc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(2*x - 1), // arc-hacovercosine
+				};
 			}
 			Ω(x=Math.e, i=10000) {
 				// Ω(x) * x^Ω(x) ≈ 1
-				// approximate because some inputs oscilate between outputs such as Ω(349)
+				// approximate because some inputs oscilate between outputs, such as Ω(349)
 				// i cannot default to Infinity due to this oscilation
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( i = Number(i) )) return NaN;
 				var ans = x, prev;
 				if (x < 142) {
 					while ( i --> 0 ) {
@@ -663,21 +826,31 @@
 				}
 				return ans;
 			}
-			π(x) {
-				// prime counting function
-				throw Error("not implemented");
+			ζ(s, acy=1000) {
+				if (s === Infinity) return 1;
+				if (s === 0) return -.5;
+				if (s === 1) return Infinity;
+				return isNaN( s = Number(s) ) ||
+					s <= 1 ||
+					isNaN( acy = Number(acy) ) ?
+						NaN :
+						this.sum(1, acy, n => n**-s);
 			}
-			P(...set) { // power set, set of all subsets (non-strict)
-				return arguments;
+			/*π(x) {// prime counting function
+				;
+				throw Error("not implemented");
+			}*/
+			P(...set) {
+				// power set, set of all subsets
 				set = set.flatten();
 				var strict = false;
 				if (set.incl("strict")) {
 					set.remove("strict");
 					strict = true;
 				}
-				if (set.hasDupes()) throw Error("P() cannot have duplicate arguments");
+				if ( set.hasDupes() ) throw Error("Math.P() cannot have duplicate arguments");
 				set = set.map( e => [e] );
-				if (isNaN(set.join(""))) throw TypeError("P() can only have numeric arguments");
+				if ( set.isNaN() ) throw TypeError("Math.P() can only have numeric arguments");
 				function subP(set) {
 					return set.map(
 						e => {
@@ -696,138 +869,168 @@
 					out = out.concat(set);
 					set = subP(set);
 				} while (json.stringify(set) !== "[]");
-				strict && out.pop();
+				(strict && len(out) > 1) && out.pop();
 				return out;
 			}
 			expm1(x) { return 𝑒 ** x - 1 }
-			log2(x) { return this.logbase(2, x) }
+			log2(x)  { return this.logbase(2, x) }
 			log10(x) { return this.logbase(10, x) }
 			log1p(x) { return this.ln1p(x) }
 			clz32(n) { return this.clbz(n) }
 			clbz(n) {
-				if (type(n) !== "number") throw TypeError("clbz() requires a numeric argument");
-				if (type(n, 1) !== "num") return NaN;
-				if (n < 0 || n > 2**31-1) return 0;
+				if (isNaN( n = Number(n) )) return NaN;
+				if (n < 0 || n > 2_147_483_647) return 0; // 2^31 - 1
 				n = n.toString(2);
-				for (;len(n) < 32; n = `0${n}`);
-				return len(n.remove(/1.*/))
+				while ( len(n) < 32 ) n = `0${n}`;
+				return len( n.remove(/1.*/) );
 			}
-			fact(n, bigint=false, acy=1e3) {
-				if (type(n) !== "number") throw TypeError("fact() requires a numeric first argument");
-				if (type(acy) !== "number") throw TypeError("fact() requires a numeric third argument");
-				if (~~n === n) return this.ifact(n, bigint);
-				if (type(n = this.int(0, acy, x=>x**n/𝑒**x, .1), 1) === "inf") return NaN;
-				return n;
+			fact(n, acy=1e3, inc=.1) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
+				if ( n.isInt() ) return this.ifact(n);
+				var ans = this.int(0, acy, x=>x**n/𝑒**x, inc);
+				return type(ans, 1) === "inf" ? NaN : ans;
 			}
-			sgn(n) {
-				if (type(n) !== "number") throw TypeError("sgn() requires a numeric argument");
-				return type(n) !== "number" ? NaN : n == 0 ? n : n<0 ? -1 : 1;
-			}
-			abs(n) {
-				if (type(n) !== "number") throw TypeError("abs() requires a numeric argument");
-				return this.sgn(n) * n;
-			}
-			sum(n, last, func=n=>n, inc=1) {
-				if (type(n) !== "number") throw TypeError("sum() requires a numeric first argument");
-				if (type(last) !== "number") throw TypeError("sum() requires a numeric second argument");
-				if (type(func, 1) !== "func") throw TypeError("sum() requires a function third argument");
-				if (type(inc) !== "number") throw TypeError("sum() requires a numeric fourth argument");
-				for (var total = 0; n <= last; n += inc)
-					total += func(n);
+			sgn(n) { return isNaN( n = Number(n) ) ? NaN : !n ? n : n<0 ? -1 : 1 }
+			abs(n) { return isNaN( n = Number(n) ) ? NaN : this.sgn(n) * n }
+			sum(n, last, fn=n=>n, inc=1) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( last = Number(last) )) return NaN;
+				if (type(fn, 1) !== "func") throw TypeError("Math.sum() requires a function third argument");
+				if (isNaN( inc = Number(inc) )) return NaN;
+				var total = 0;
+				if (last === Infinity) {
+					for (var prev; n <= last; n += inc) {
+						if (total === prev) break;
+						prev = total;
+						total += fn(n);
+					}
+				} else for (; n <= last; n += inc)
+					total += fn(n);
 				return total;
 			}
-			prod(n, last, func=n=>n, inc=1) {
-				if (type(n) !== "number") throw TypeError("prod() requires a numeric first argument");
-				if (type(last) !== "number") throw TypeError("prod() requires a numeric second argument");
-				if (type(func, 1) !== "func") throw TypeError("prod() requires a function third argument");
-				if (type(inc) !== "number") throw TypeError("prod() requires a numeric fourth argument");
+			infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) {
+				if (isNaN( start = Number(start) )) return NaN;
+				if (type(fn, 1) !== "func") throw TypeError("Math.infsum() requires a function second argument");
+				if (isNaN( inc = Number(inc) )) return NaN;
+				return this.sum(start, Infinity, fn, inc);
+			}
+			prod(n, last, fn=n=>n, inc=1) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( last = Number(last) )) return NaN;
+				if (type(fn, 1) !== "func") throw TypeError("Math.prod() requires a function third argument");
+				if (isNaN( inc = Number(inc) )) return NaN;
 				for (var total = 1; n <= last; n += inc)
-					total *= func(n);
+					total *= fn(n);
 				return total;
 			}
-			gamma(n, acy=1e3) {
-				if (type(n) !== "number") throw TypeError("gamma() requires a numeric first argument");
-				if (type(n) !== "number") throw TypeError("gamma() requires a numeric second argument");
-				if (~~n === n) return this.ifact(n-1);
-				if (type(n = this.int(0, acy, x=>x**(n-1)/𝑒**x, .1), 1) === "inf") return NaN;
-				return n;
+			gamma(n, acy=1e3, inc=.1) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(0, acy, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
 			}
-			igammal(n) {
-				if (type(n) !== "number") throw TypeError("igammal() requires a numeric argument");
-				if (~~n === n) return this.ifact(n-1);
-				if (type(n = this.int(0, n, x=>x**(n-1)/𝑒**x, .1), 1) === "inf") return NaN;
-				return n;
+			// igamma(n) {}
+			igammal(n, inc=.1) {
+				// lower incomplete gamma function
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
 			}
-			int(x/*start*/, end, func=x=>x, inc=.001) {
-				// Start and End are included.
-				if (type(x) !== "number") throw TypeError("int() requires a numeric first argument");
-				if (type(end) !== "number") throw TypeError("int() requires a numeric second argument");
-				if (type(func, 1) !== "func") throw TypeError("int() requires a function third argument");
-				if (type(inc) !== "number") throw TypeError("int() requires a numeric fourth argument");
+			igammau(n, acy=1000, inc=.1) {
+				// upper incomplete gamma function
+				if (isNaN( n = Number(n) )) return NaN;
+				if (n.isInt()) return this.ifact(n-1);
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
+			}
+			_(n) { return isNaN( n = Number(n) ) ? NaN : 1 / n }
+			int(x/*start*/, end, fn=x=>x, inc=.001) {
+				// start and end are included.
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( end = Number(end) )) return NaN;
+				if (type(fn, 1) !== "func") throw TypeError("Math.int() requires a function third argument");
+				if (isNaN( inc = Number(inc) )) return NaN;
 				let ans = 0;
 				if (end > x)
 					for (; x <= end; x += inc)
-						ans += (func(x) + func(x + inc)) / 2 * inc;
-				else if (x > end) return -this.int(end, x, func, inc);
+						ans += (fn(x) + fn(x + inc)) / 2 * inc;
+				else if (x > end) return -this.int(end, x, fn, inc);
 				return ans;
 			}
 			hypot(...ns) {
-				ns = ns.flatten();
-				if (isNaN(ns.join(""))) throw TypeError("hypot() requires numeric arguments or array(s) of numbers");
+				ns = ns.flatten().map(e => Number(e));
+				if ( ns.isNaN() ) return NaN;
 				for (var a = 0, i = 0, n = len(ns); i < n; i++)
 					a += ns[i]**2;
 				return a**.5;
 			}
-			log(n, base=10, acy=50) {
-				if (type(n) !== "number") throw TypeError("log() requires a numeric first argument");
-				if (type(base) !== "number") throw TypeError("log() requires a numeric second argument");
-				if (type(acy) !== "number") throw TypeError("log() requires a numeric third argument");
-				if (base <= 0 || n <= 0 || base === 1 || type(n, 1) !== "num") return NaN;
+			log(n, base, acy=50) {
+				base = base == null ? LOG_DEFAULT_BASE : base;
+				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( base = Number(base) )) return NaN;
+				if (isNaN( acy = Number(acy) )) acy = 50;
+				if (base === Infinity) return n === Infinity ? NaN : 0;
+				if (base <= 0 || n <= 0 || base === 1 || isNaN(n)) return NaN;
+				if (n === Infinity) return Infinity;
 				if (base === n) return 1;
 				if (n === 1) return 0;
-				for (var pow = 1, closestInt = !0, tmp, frac = 1, i = 0; closestInt;)
-					(tmp = this.abs(n - base**pow)) > this.abs(n - base**(pow + 1))?
-						++pow:
-						tmp > this.abs(n - base**(pow - 1))?
-							--pow:
-							closestInt = !1;
-				for (;i < acy; ++i)
-					(tmp = this.abs(n - base**pow)) > this.abs(n-base**(pow+(frac /= 2)))?
-						pow += frac:
-						tmp > this.abs(n - base**(pow - frac)) && (pow -= frac);
+				for (var pow = 1, notClosestInt = !0, tmp, frac = 1, i = acy; notClosestInt ;) {
+					tmp = this.abs(n - base ** pow);
+					tmp > this.abs(n - base ** (pow + 1)) ?
+						++pow :
+						tmp > this.abs(n - base ** (pow - 1)) ?
+							--pow :
+							notClosestInt = !1;
+				}
+				while ( i --> 0 ) {
+					tmp = this.abs( n - base ** pow );
+					tmp > this.abs( n - base ** (pow + (frac /= 2)) ) ?
+						pow += frac :
+						tmp > this.abs( n - base ** (pow - frac) ) && (pow -= frac);
+				}
 				return pow;
 			}
-			logbase(base, n, accuracy=50) {
-				if (type(base) !== "number") throw TypeError("logbase() requires a numeric first argument");
-				if (type(n) !== "number") throw TypeError("log() requires a numeric first argument");
-				if (type(accuracy) !== "number") throw TypeError("logbase() requires a numeric third argument");
-				return this.log( n, base, accuracy );
+			logbase(base, n, acy=50) {
+				return isNaN( base = Number(base) ) ||
+				isNaN( n = Number(n) ) ||
+				isNaN( acy = Number(acy) ) ?
+					NaN :
+					this.log( n, base, acy );
 			}
-			ln(n, acy=50) {
-				if (type(n) !== "number") throw TypeError("ln() requires a numeric argument");
-				return this.log(n, 𝑒, acy);
-			}
+			ln(n, acy=50) { return isNaN( n = Number(n) ) || isNaN( acy = Number(acy) ) ? NaN : this.log( n, 𝑒, acy ) }
 			max(...ns) {
 				ns = ns.flatten();
-				if (isNaN(ns.join(""))) throw TypeError("max() requires numeric arguments or array(s) of numbers");
+				if ( ns.isNaN() ) return NaN;
 				let max = ns[0];
 				for (let i of ns) max = i > max ? i : max;
 				return max;
 			}
 			min(...ns) {
 				ns = ns.flatten();
-				if (isNaN(ns.join(""))) throw TypeError("min() requires numeric arguments or array(s) of numbers");
-
+				if ( ns.isNaN() ) return NaN;
 				let min = ns[0];
 				for (let i of ns) min = i < min ? i : min;
 				return min;
 			}
-			nthrt(x, rt=2) {
-				if (this.isNaN(x) || this.isNaN(rt)) throw TypeError("nthrt() expects two number arguments");
+			nthrt(x, rt=2, acy=100) {
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( rt = Number(rt) )) return NaN;
 				if (rt < 0) return x**rt;
 				if (!rt || !(rt % 2) && x < 0) return NaN;
 				if (!x) return 0;
-				for (var pow, cur = x, i = 0; pow !== cur && i < 100; i++) {
+				if (isNaN( acy = Number(acy) )) return NaN;
+				for (var pow, cur = x, i = 0; pow !== cur && i < acy; i++) {
 					pow = cur;
 					cur = ((rt - 1) * pow**rt + x) / (rt * pow**(rt - 1));
 				}
@@ -835,31 +1038,28 @@
 			}
 			mean(...ns) {
 				ns = ns.flatten();
-				if (isNaN(ns.join(""))) throw TypeError("mean() requires numeric arguments or array(s) of numbers");
-				return ns.reduce((total, n) => total + n, 0) / len(ns);
+				if ( ns.isNaN() ) return NaN;
+				return ns.reduce( (total, n) => total + n, 0 ) / len(ns);
 			}
 			median(...ns) {
-				if (isNaN(ns.join(""))) throw TypeError("median() requires numeric arguments or array(s) of numbers");
+				if ( ns.isNaN() ) return NaN;
 				for (ns = ns.flatten().sort(); len(ns) > 2;)
 					ns.pop2().shift();
 				return len(ns) === 1 ? ns[0] : (ns[0] + ns[1]) / 2
 			}
 			mad(...ns) {
 				ns = ns.flatten();
-				if (isNaN(ns.join(""))) throw TypeError("mad() requires numeric arguments or array(s) of numbers");
+				if ( ns.isNaN() ) return NaN;
 				const MEAN = this.mean(ns);
 				return ns.reduce((absDev, n) => absDev + this.abs(n - MEAN), 0) / len(ns);
 			}
-			isPrime(n) {
-				if (type(n) !== "number" && type(n) !== "bigint")
-					throw TypeError("Math.isPrime() requires a numeric argument");
-				return n.isPrime();
-			}
+			isPrime(n) { return this.isNaN(n) ? NaN : n.isPrime() }
 			lmgf(t="lcm", ...a) {
 				// least commond multiple and greatest common factor
 				a = a.flatten();
-				if (isNaN(a.join(""))) throw TypeError("lmgf() requires numeric arguments or array(s) of numbers after the first argument");
-				a = a.map(b => int(b) * (b<0 ? -1 : 1));
+				type(t) !== "string" && (t = "lcm");
+				if ( ns.isNaN() ) return NaN;
+				a = a.map(b => this.abs( int(b) ));
 				for (let c, i = t[0] === "l" ? this.max(a) : this.min(a); ; t[0] === "l" ? i++ : i-- ) {
 					for (let j = len(a) - 1; j >= 0; --j) {
 						if (t[0] === "l" ? i % a[j] : a[j] % i) {
@@ -874,10 +1074,10 @@
 			linReg(xs, ys, Return="obj") {
 				xs = xs.tofar();
 				ys = ys.tofar();
-				if (!len(xs)) throw Error("No elements given for first parameter");
-				if (!len(ys)) throw Error("No elements given for second parameter");
-				if (isNaN(xs.join(""))) throw TypeError(`array of numbers req. for first parameter. Inputs: ${xs}`);
-				if (isNaN(ys.join(""))) throw TypeError(`array of numbers req. for second parameter. Inputs: ${ys}`);
+				if (!len(xs)) throw Error("No elements given for first parameter of Math.linReg()");
+				if (!len(ys)) throw Error("No elements given for second parameter of Math.linReg()");
+				if ( xs.isNaN() ) throw TypeError(`array of numbers req. for first parameter of Math.linReg(). Inputs: ${xs}`);
+				if ( ys.isNaN() ) throw TypeError(`array of numbers req. for second parameter of Math.linReg(). Inputs: ${ys}`);
 				if (len(xs) === 1 || len(ys) === 1) {
 					return Return === "obj" ? {
 						m: ys[0] / xs[0],
@@ -899,285 +1099,260 @@
 				return `y = ${m}x + ${b}`;
 			}
 			pascal(row, col) {
-				if (null == (row = convertType(row, "number", "return"))) throw TypeError(`Number Required for first parameter.`);
-				if ("all" !== col) col = convertType(col, "number", "return");
-				if (type(col, 1) !== "num" && col !== "all")
-					throw TypeError(`Number or String "all" Required for second parameter. Input:${col}`);
-
-				if (col?.toLowerCase() !== "all") return this.nCr(row-1, col-1);
-				for (var i = 0, arr = []; i <= row - 1;) arr.push(this.nCr(row-1, i++));
+				if (isNaN( row = Number(row) )) return NaN;
+				if (col !== "all") col = Number(all);
+				if (type(col, 1) !== "num" && col !== "all") return NaN;
+				row--;
+				if (col?.lower() !== "all") return this.nCr(row, col-1);
+				for (var i = 0, arr = []; i <= row ;)
+					arr.push( this.nCr(row, i++) );
 				return arr;
 			}
-			fib(index, bigint=false) {
-				if (type(index) !== "number") throw TypeError("fib() requires a numeric first argument");
-				if (index > 1475 && !bigint) return Infinity;
+			fib(index) {
+				if (isNaN( index = Number(index) )) return NaN;
+				if (index > 1475) return Infinity;
 				for (var j = 0, s = [0n, 1n]; j < index; ++j)
 					s.push(s[1] + s.shift());
-				return bigint ?
-					index > 2 ? s[1] : s[0] :
-					index > 2 ? Number(s[1]) : Number(s[0]);
+				return index > 2 ? Number(s[1]) : Number(s[0]);
 			}
-			primeFactorInt(number) {
-				if (type(number) !== "number") return NaN;
-				if (number.isPrime()) return number;
-				for (var i = 2, primeFactors = []; i <= number; ++i) {
-					if (!(number % i)) {
+			primeFactorInt(n) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isPrime() ) return n;
+				for (var i = 2, primeFactors = []; i <= n; ++i) {
+					if (!(n % i)) {
 						primeFactors = primeFactors.push2(this.primeFactorInt(i)).flatten();
-						number /= i;
+						n /= i;
 						i = 1;
 					}
 				}
 				return primeFactors;
 			}
-			findFactors(number) {
-				if (type(number) !== "number") throw TypeError("findFactors() requires a numeric argument");
-				for (var i = 2, factors = [1, number], n = Math.sqrt(number); i <= n; i++) {
-					if (!(number % i)) factors.push(i, number / i);
+			findFactors(n) {
+				if (isNaN( n = Number(n) )) return NaN;
+				for (var i = 2, factors = [1, n], n = this.sqrt(n); i <= n; i++) {
+					if (!(n % i)) factors.push(i, n / i);
 				}
 				return factors;
 			}
-			iMaxFactor(number) {
-				if (this.isNaN(number)) return NaN;
-				for (var i = number; i >= 0;) {
-					if (!(number % --i)) return i;
-				}
+			iMaxFactor(n) {
+				if (isNaN( n = Number(n) )) return NaN;
+				for (var i = n;;)
+					if (!(n % --i)) return i;
 			}
 			synthDiv(coeffs, /*x+*/divisor, includeRemainder=true, remainderType="string") {
-				if (type(coeffs, 1) !== "arr") throw TypeError("synthDiv() requires a array first argument");
-				if (type(divisor) !== "number") throw TypeError("synthDiv() requires a numeric second argument");
-				if (type(remainderType) !== "string") throw TypeError("synthDiv() requires a string fourth argument");
+				if (type(coeffs, 1) !== "arr") throw TypeError("Math.synthDiv() requires a array first argument");
+				if (type(remainderType) !== "string") throw TypeError("Math.synthDiv() requires a string fourth argument");
+				if (isNaN( divisor = Number(divisor) )) return NaN;
 				for (var coeff = coeffs[0], coeffs2 = [coeffs[0]], n = len(coeffs), i = 1; i < n; i++) {
 					coeff = coeff * divisor + coeffs[i];
 					coeffs2.push(coeff);
 				}
-				coeffs = ["string", "str"].incl(remainderType.toLowerCase()) ?
+				coeffs = ["string", "str"].incl(remainderType.lower()) ?
 					coeffs2.mod(len(coeffs2)-1, e => this.isClose(e, 0, 1e-11) ?
-						0 : `${e}/${divisor < 0 ? `(x-${-divisor})` : `(x+${divisor})`}`) :
+						0 :
+						`${e}/${divisor < 0 ?
+							`(x-${-divisor})` :
+							`(x+${divisor})`}`) :
 					coeffs2;
 				return includeRemainder ? coeffs : coeffs.pop2();
 			}
 			simpRad(rad) {
-				if (type(rad) !== "number") throw TypeError("simpRad() requires a numeric argument");
-				for (var factor = 1, i = 2, sqrt = this.sqrt(this.abs(rad)); i < sqrt; i += 1 + (i > 2))
-					for (;!(rad % i**2);)
-						rad /= i*i, factor *= i;
+				if (isNaN( rad = Number(rad) )) return NaN;
+				for (var factor = 1, i = 2, sqrt = this.sqrt(this.abs(rad)); i <= sqrt; i += 1 + (i > 2))
+					while ( !(rad % (i*i)) ) {
+						rad /= i*i;
+						factor *= i;
+					}
 				return `${factor}${rad < 0 ? "i" : ""}√${this.abs(rad)}`.remove(/^1|√1$/);
 			}
 			PythagTriple(maxSize=1000) {
-				if (type(maxSize) !== "number") maxSize = 1000;
-				for (var a = 1, b = 1, c, triples = []; a < maxSize; a++)
-					for (b = 1, c = Math.hypot(a, b); b < maxSize; b++)
-						if (c === ~~c && !len(triples.filter(e => !(c%e[2] && (a%e[0] && b%e[1] || a%e[1] && b%e[0])))))
+				if (type(maxSize, 1) !== "num") maxSize = 1000;
+				for (var a = 1, b = 1, c, triples = []; a < maxSize; a++) {
+					for (b = 1, c = Math.hypot(a, b); b < maxSize; b++) {
+						if (c.isInt() && !len(triples.filter(e => !(c%e[2] && (a%e[0] && b%e[1] || a%e[1] && b%e[0]))))) {
 							triples.push([a, b, c]);
+						}
+					}
+				}
 				return triples;
 			}
 			add(...ns) {
 				ns = ns.flatten();
-				if (isNaN(ns.join(""))) throw TypeError("add() requires numeric arguments or array(s) of numbers");
-				for (var i = len(ns), t = 0; i --> 0;)
-					t += ns[i];
-				return t;
+				if ( ns.isNaN() ) return NaN;
+				for (var i = len(ns), out = 0; i --> 0 ;)
+					out += ns[i];
+				return out;
+			}
+			sub(...ns) {
+				ns = ns.flatten();
+				if ( ns.isNaN() ) return NaN;
+				for (var i = len(ns), out = ns[0]; i --> 1 ;)
+					out -= ns[i];
+				return out;
+			}
+			mul(...ns) {
+				ns = ns.flatten();
+				if ( ns.isNaN() ) return NaN;
+				for (var i = len(ns), out = ns.pop(); i --> 0 ;)
+					out *= ns[i];
+				return out;
+			}
+			div(...ns) {
+				ns = ns.flatten();
+				if ( ns.isNaN() ) return NaN;
+				for (var i = len(ns), out = ns[0]; i --> 1 ;)
+					out /= ns[i];
+				return out;
 			}
 			parity(...ns) {
-				if (isNaN(ns.join(""))) throw TypeError("parity() requires numeric arguments or array(s) of numbers");
-
 				ns = ns.flatten();
+				if ( ns.isNaN() ) return NaN;
 				return len(ns)-1 ?
-					ns.map(b => b%2?"odd":"even") :
-					ns[0]%2?"odd":"even";
+					ns.map(b => b%2 ? "odd" : "even") :
+					ns[0]%2 ? "odd" : "even";
 			}
-			nCr(n, k, big=false) {
-				if (type(n) !== "number") throw TypeError("nCr() requires a numeric first argument");
-				if (type(k) !== "number") throw TypeError("nCr() requires a numeric second argument");
-				return this.fact(n, big) / (this.fact(k, big) * this.fact(n-k, big));
-			}
+			nCr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.nPr(n, k) / this.fact(k) }
+			nPr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.fact(n) / this.fact(n-k) }
 			isClose(n1, n2, range=Number.EPSILON) {
-				if (type(n1) !== "number") throw TypeError("isClose() requires a numeric first argument");
-				if (type(n2) !== "number") throw TypeError("isClose() requires a numeric second argument");
-				if (type(range) !== "number") throw TypeError("isClose() requires a numeric third argument");
-				return n1 > n2 - range && n1 < n2 + range ? !0 : !1;
+				return isNaN( n1 = Number(n1) ) ||
+					isNaN( n2 = Number(n2) ) ||
+					isNaN( range = Number(range) ) ?
+						NaN :
+						n1 > n2 - range && n1 < n2 + range;
 			}
-			complex(re, im) {
-				return type(re, 1) !== "complex" ?
-					re :
-					(type(re) + type(im) === "numbernumber") && new this.ComplexNumber(re, im);
+			complex(re=0, im=0) {
+				if (type(re, 1) === "complex") return re;
+				if (isArr(re)) {
+					im = re[1];
+					re = re[0];
+				}
+				if (this.isNaN(re) || this.isNaN(im))
+					throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
+
+				if (type(re) === "bigint" && type(im) === "bigint" ) {
+					throw Error("not implemented");
+					return new this.ComplexNumber(re, im);
+				}
+				if (type(re) === "number" && type(im) === "number" )
+					return new this.ComplexNumber(re, im);
+				throw TypeError(`Invalid types for Math.complex() arguments: ${re}, ${im}`);
 			}
-			nPr(n, k, big=false) {
-				if (type(n) !== "number") throw TypeError("nPr() requires a numeric first argument");
-				if (type(k) !== "number") throw TypeError("nPr() requires a numeric second argument");
-				return this.fact(n, big) / this.fact(n-k, big);
-			}
-			erf(z) {
-				if (type(z) !== "number") throw TypeError("erf() requires a numeric argument");
-				return 1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
-			}
-			erfc(z) {
-				if (type(z) !== "number") throw TypeError("erfc() requires a numeric argument");
-				return 1 - this.erf(z);
-			}
-			// erfi is too (literally) complex
+			erf(z)    { return isNaN( z = Number(z) ) ? NaN : 1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2)   }
+			erfc(z)   { return isNaN( z = Number(z) ) ? NaN : 1 - this.erf(z)                                         }
+			// erfi
 			dist(x1, y1, x2, y2) {
-				if (type(x1) !== "number") throw TypeError("dist() requires a numeric first argument");
-				if (type(y1) !== "number") throw TypeError("dist() requires a numeric second argument");
-				if (type(x2) !== "number") throw TypeError("dist() requires a numeric third argument");
-				if (type(y2) !== "number") throw TypeError("dist() requires a numeric fourth argument");
+				if (isNaN( x1 = Number(x1) )) return NaN;
+				if (isNaN( y1 = Number(y1) )) return NaN;
+				if (isNaN( x2 = Number(x2) )) return NaN;
+				if (isNaN( y2 = Number(y2) )) return NaN;
 				return this.hypot(x2-x1, y2-y1);
 			}
 			// TODO: Add Math.dist2()
-			copysign(a, b) {
-				if (type(a) !== "number") throw TypeError("copysign() requires a numeric first argument");
-				if (type(b) !== "number") throw TypeError("copysign() requires a numeric second argument");
-				return this.abs(a) * this.sgn(b);
-			}
-			trunc(n) { return type(n, 1) !== "num" ? n : ~~n }
-			isNaN(e) { return isNaN(Number(e)) ? !0 : !1 }
-			isAN(e) { return !this.isNaN(e) }
-			imul(a, b) {
-				if (type(a) !== "number") throw TypeError("imul() requires a numeric first argument");
-				if (type(b) !== "number") throw TypeError("imul() requires a numeric second argument");
-				return this.Math.imul(a, b);
-			}
-			lcm(...ns) {
-				if (isNaN(ns.join(""))) throw TypeError("lcm() requires numeric arguments or array(s) of numbers");
-				return this.lmgf("lcm", ns);
-			}
-			gcf(...ns) {
-				if (isNaN(ns.join(""))) throw TypeError("gcf() requires numeric arguments or array(s) of numbers");
-				return this.lmgf("gcf", ns);
-			}
-			gcd(...ns) {
-				if (isNaN(ns.join(""))) throw TypeError("gcd() requires numeric arguments or array(s) of numbers");
-				return this.lmgf("gcd", ns);
-			}
-			fround(n) {
-				if (type(n) !== "number") throw TypeError("fround() requires a numeric argument");
-				return this.Math.fround(n);
-			}
-			sqrt(n) {
-				if (type(n) !== "number") throw TypeError("sqrt() requires a numeric argument");
-				return this.nthrt(n/*, 2*/);
-			}
-			cbrt(n) {
-				if (type(n) !== "number") throw TypeError("cbrt() requires a numeric argument");
-				return this.nthrt(n, 3);
-			}
-			degrees(n) {
-				if (type(n) !== "number") throw TypeError("degrees() requires a numeric argument");
-				return n * π / 180;
-			}
-			radians(n) {
-				if (type(n) !== "number") throw TypeError("radians() requires a numeric argument");
-				return n * 180 / π;
-			}
-			ln1p(n) {
-				if (type(n) !== "number") throw TypeError("ln1p() requires a numeric argument");
-				return this.ln(n + 1);
-			}
-			sign(n) {
-				if (type(n) !== "number") throw TypeError("sign() requires a numeric argument");
-				return this.sgn(n);
-			}
-			exp(n, x=𝑒) {
-				if (type(n) !== "number") throw TypeError("exp() requires a numeric first argument");
-				if (type(x) !== "number") throw TypeError("exp() requires a numeric second argument");
-				return x ** n;
-			}
-			round(n) { return round(n) }
-			floor(n) { return floor(n) }
-			ceil(n) { return ceil(n) }
-			random() { return rand() }
-			pow (a=1, b=1) {
-				if (type(a) !== "number") throw TypeError("pow() requires a numeric first argument");
-				if (type(b) !== "number") throw TypeError("pow() requires a numeric second argument");
-				for (var y = 1, c = b;; a **= 2) {
+			copysign(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.abs(a) * this.sgn(b) }
+			trunc(n)    { return isNaN( n = Number(n) ) ? NaN : int(n)                                                 }
+			isNaN(e)    { return isNaN( Number(e) )                                                                    }
+			isAN(e)     { return !this.isNaN(e)                                                                        }
+			imul(a, b)  { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.Math.imul(a, b)         }
+			lcm(...ns)  { return ns.isNaN() ? NaN : this.lmgf("lcm", ns)                                               }
+			gcf(...ns)  { return ns.isNaN() ? NaN : this.lmgf("gcf", ns)                                               }
+			gcd(...ns)  { return ns.isNaN() ? NaN : this.lmgf("gcd", ns)                                               }
+			fround(n)   { return isNaN( n = Number(n) ) ? NaN : this.Math.fround(n)                                    }
+			sqrt(n)     { return isNaN( n = Number(n) ) ? NaN : this.nthrt(n, 2)                                       }
+			cbrt(n)     { return isNaN( n = Number(n) ) ? NaN : this.nthrt(n, 3)                                       }
+			degrees(n)  { return isNaN( n = Number(n) ) ? NaN : n * 180 / π                                            }
+			radians(n)  { return isNaN( n = Number(n) ) ? NaN : n * π / 180                                            }
+			ln1p(n)     { return isNaN( n = Number(n) ) ? NaN : this.ln(n + 1)                                         }
+			sign(n)     { return isNaN( n = Number(n) ) ? NaN : this.sgn(n)                                            }
+			exp(n, x=𝑒) { return  isNaN( n = Number(n) ) || isNaN( x = Number(x) ) ? NaN : x ** n                      }
+			round(n)    { return isNaN( n = Number(n) ) ? NaN : round(n)                                               }
+			floor(n)    { return isNaN( n = Number(n) ) ? NaN : floor(n)                                               }
+			ceil(n)     { return isNaN( n = Number(n) ) ? NaN : ceil(n)                                                }
+			random()    { return rand()                                                                                }
+			pow(a=1, b=1) {
+				if (isNaN( a = Number(a) )) return NaN;
+				if (isNaN( b = Number(b) )) return NaN;
+				for (var y = 1, c = b ;; a *= a) {
 					b & 1 && (y *= a);
 					b >>= 1;
-					if (!b) return (this.nthrt(a, 1 / (c - ~~c)) || 1) * y;
+					if (!b) return (this.nthrt(a, 1 / parseDec(c)) || 1) * y;
 				}
 			}
 			mod(a, b) {// TODO: Test Math.mod function
-				if (type(a) !== "number") throw TypeError("mod() requires a numeric first argument");
-				if (type(b) !== "number") throw TypeError("mod() requires a numeric second argument");
-				if (!b || this.isNaN(a + b)) return NaN;
-				if (a >= 0 && b > 0) {
-					for (; a - b >= 0 ;)
-						a -= b;
-				} else if (a < 0 && b > 0) {
-					for (; a < 0 ;) a += b;
-				} else if (a >/*>=?*/ 0 && b < 0) {
-					for (; a > 0 ;) a += b;
-				} else if (a < 0 && b < 0) {
-					for (; a - b < 0 ;)
-						a -= b;
-				}
+				if (isNaN( a = Number(a) )) return NaN;
+				if (isNaN( b = Number(b) )) return NaN;
+				if (!b) return NaN;
+				if (a >= 0 && b > 0) for (; a - b >= 0 ;) a -= b;
+				else if (a < 0 && b > 0) for (; a < 0 ;) a += b;
+				else if (a > 0 && b < 0) for (; a > 0 ;) a += b;
+				else if (a < 0 && b < 0) for (; a - b < 0 ;) a -= b;
 				return a;
 			}
-			ifact(n, bigint=false) {
-				if (type(n) !== "number") throw TypeError("ifact() requires a numeric argument");
-				if (this.isNaN(n)) return NaN;
-				if (!n) return bigint ? 1n : 1;
-				for (var ans = 1n, cur = 1n; cur <= n; cur++)
+			ifact(n) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if (!n) return 1;
+				for (var ans = 1, cur = 1; cur <= n; cur++)
 					ans *= cur;
-				return bigint ? ans : Number(ans);
+				return ans;
 			}
 			findPrimes(l=100, s=Infinity) {
-				if (type(l) !== "number") throw TypeError("findPrimes() requires a numeric first argument");
-				if (type(s) !== "number") throw TypeError("findPrimes() requires a numeric second argument");
+				if (isNaN( l = Number(l) )) return NaN;
+				if (isNaN( s = Number(s) )) return NaN;
 				for (var i = 3, primes = [1, 2]; len(primes) < l && i <= s; i += 2)
 					i.isPrime() && primes.push(i);
 				return primes;
 			}
 			li(x, inc=.001) {
-				if (type(x) !== "number") throw TypeError("li() requires a numeric first argument");
-				if (type(inc) !== "number") throw TypeError("li() requires a numeric second argument");
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
 				if (x < 0) return NaN;
 
 				return x === Infinity || !x ?
 					x :
-					x === 1 ?
-						-Infinity :
-						x.inRange(0, 1, false) ?
-							/** for x in range (0, 1)
-							 * Wolfram Alpha: Integrate[1/lnt,{t,0,x}]
-							 *  / x   dt
-							 *  |   ------
-							 *  / 0  ln t
-							**/
-							this.int(1e-20, x, x => 1/this.ln(x), inc) :
-							/** for x in range [1, ∞)
-							 * Wolfram Alpha: li(2)+Integrate[1/lnt,{t,2,x}]
-							 *          / x   dt
-							 *  li(2) + |   ------
-							 *          / 2  ln t
-							**/
-							1.045163780117493 + this.int(2, x, t => 1/this.ln(t), inc);
+					x.inRange(0, 1, false) ?
+						/** for x in range (0, 1)
+						 * Wolfram Alpha: Integrate[1/lnt,{t,0,x}]
+						 *  / x   dt
+						 *  |   ------
+						 *  / 0  ln t
+						**/
+						this.int(1e-20, x, x => 1/this.ln(x), inc) :
+						/** for x in range [1, ∞)
+						 * Wolfram Alpha: li(2)+Integrate[1/lnt,{t,2,x}]
+						 *          / x   dt
+						 *  li(2) + |   ------
+						 *          / 2  ln t
+						**/
+						1.045163780117493 + this.int(2, x, t => 1/this.ln(t), inc);
 			}
-			Li(x, inc=.001) {
-				if (type(x) !== "number") throw TypeError("offset li function requires a numeric first argument");
-				if (type(inc) !== "number") throw TypeError("offset li function requires a numeric second argument");
-				return this.li(x, inc) - 1.045163780117493;
+			li2(x, acy=1000) {
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (x < 0) return NaN;
+
+				const f = x => this.γ + this.ln(this.ln(x)) + this.sqrt(x) * 
+					this.sum(1, acy, n=>((-1)**(n-1) * this.ln(x)**n) / (this.fact(n) * 2**(n-1)) * 
+						this.sum(0, floor( (n-1) / 2), k=>1/(2*k+1), 1), 1);
+				var ans = f(x);
+				while (isNaN(ans)) {
+					acy /= 2;
+					ans = f(x);
+				}
+				return ans;
 			}
-			tetrate(a, n, {Switch=false, number=false}={}) {
-				a = BigInt(a);
-				n = BigInt(n);
-				return this.hyper4(a, n, {
-					Switch: Switch,
-					number: number
-				});
-			}
-			hyper0(n) { return n + 1 }
-			hyper1(a, n) { return a + n }
-			hyper2(a, n) { return a * n }
-			hyper3(a, n) { return a ** n }
+			Li(x, inc=.001) { return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ? NaN : this.li(x, inc) - 1.045163780117493 }
+			tetrate(a, n, {Switch=false, number=false}={}) { return this.hyper4(a, n, { Switch: Switch, number: number }) }
+			hyper0(n) { return isNaN( n = Number(n) ) ? NaN : n + 1 }
+			hyper1(a, n) { return isNaN( a = Number(a) ) || isNaN( n = Number(n) ) ? NaN : a + n }
+			hyper2(a, n) { return isNaN( a = Number(a) ) || isNaN( n = Number(n) ) ? NaN : a * n }
+			hyper3(a, n) { return isNaN( n = Number(n) ) || isNaN( n = Number(n) ) ? NaN : a ** n }
 			hyper4(a, n, {Switch=false, number=false}={}) {
-				// a ↑↑ n = a^^n = a^a^a n times
-				// ⁿa
+				// a ↑↑ n = a^^n = a^a^a n times = ⁿa
+				if (this.isNaN( n = BigInt(n) )) return NaN;
+				if (this.isNaN( n = BigInt(n) )) return NaN;
 				if (Switch) return this.hyper4(n, a, {
 					Switch: false,
 					number: number
 				});
-				a = BigInt(a);
-				n = BigInt(n);
 				const A = a;
 				while ( n --> 1 )
 					a = A ** a;
@@ -1189,118 +1364,128 @@
 				throw Error("not implemented");
 			}*/
 			// TODO: Implement polylogarithms
-			sin(x) {
-				if (type(x) !== "number") throw TypeError("sin() requires a numeric argument");
-				return this.sum(0, 25, n=>(-1)**n / this.fact(2*n+1)*(x%(2*π))**(2*n+1));
-			}
-			cos(x) {
-				if (type(x) !== "number") throw TypeError("cos() requires a numeric argument");
-				return this.sum(0, 25, n=>(-1)**n / this.fact(2*n)*(x%(2*π))**(2*n));
-			}
-			tan(x) {
-				if (type(x) !== "number") throw TypeError("tan() requires a numeric argument");
-				return this.sin(x) / this.cos(x);
-			}
-			csc(x) {
-				if (type(x) !== "number") throw TypeError("csc() requires a numeric argument");
-				return 1 / this.sin(x);
-			}
-			sec(x) {
-				if (type(x) !== "number") throw TypeError("sec() requires a numeric argument");
-				return 1 / this.cos(x);
-			}
-			cot(x) {
-				if (type(x) !== "number") throw TypeError("cot() requires a numeric argument");
-				return 1 / this.tan(x);
-			}
-			asin(θ) {
-				if (type(θ) !== "number") throw TypeError("asin() requires a numeric argument");
-				return θ > 1 || θ < -1 ?
-					NaN :
-					this.sum(0, 80, n=>this.fact(2*n) / (4**n*this.fact(n)**2 * (2*n+1))*(θ**(2*n+1)));
-			}
-			acos(θ) {
-				if (type(θ) !== "number") throw TypeError("acos() requires a numeric argument");
-				return π/2 - this.asin(θ);
-			}
-			atan(θ) {
-				if (type(θ) !== "number") throw TypeError("atan() requires a numeric argument");
-				return this.Math.atan(θ);
-			}
+			sin(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n+1)*(θ%(2*π))**(2*n+1)) } // sine
+			cos(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n)*(θ%(2*π))**(2*n))     } // cosine
+			tan(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sin(θ) / this.cos(θ)                                         } // tangent
+			csc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sin(θ)                                                   } // cosecant
+			sec(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cos(θ)                                                   } // secant
+			cot(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.tan(θ)                                                   } // cotangent
+			asin(x) {
+				return isNaN( x = Number(x) ) ||
+					x > 1 ||
+					x < -1 ?
+						NaN :
+						this.sum(0, 80, n=>this.fact(2*n) /
+							(4**n*this.fact(n)**2 * (2*n+1))*(θ**(2*n+1)));
+			} // arc-sine
+			acos(x) { return isNaN( x = Number(x) ) ? z : π/2 - this.asin(x) } // arc-cosine
+			atan(x) { return isNaN( x = Number(x) ) ? z : this.Math.atan(x)  } // arc-tangent
 			atan2(x, y, flipArgs=false) {
-				if (type(x) !== "number") throw TypeError("atan2() requires a numeric argument");
-				if (flipArgs) {
-					let tmp = x;
-					x = y;
-					y = tmp;
-				}
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( y = Number(y) )) return NaN;
+				if (flipArgs) return this.atan2(y, x, false);
 				const output = this.atan(y / x);
 				return x > 0 ?
 					output :
 					!x ?
 						this.sgn(y)**2 / this.sgn(y) * π/2 :
 						y >= 0 ? output + π : output - π;
-			}
-			acsc(θ) {
-				if (type(θ) !== "number") throw TypeError("acsc() requires a numeric argument");
-				return this.asin(1/θ);
-			}
-			asec(θ) {
-				if (type(θ) !== "number") throw TypeError("asec() requires a numeric argument");
-				return this.acos(1/θ);
-			}
-			acot(θ) {
-				if (type(θ) !== "number") throw TypeError("acot() requires a numeric argument");
-				return !θ ? π/2 : θ < 0 ? π + this.atan(1/θ) : this.atan(1/θ);
-			}
-			sinh(x) {
-				if (type(x) !== "number") throw TypeError("sinh() requires a numeric argument");
-				return (𝑒**x - 𝑒**-x) / 2 ;
-			}
-			cosh(x) {
-				if (type(x) !== "number") throw TypeError("cosh() requires a numeric argument");
-				return (𝑒**x + 𝑒**-x) / 2 ;
-			}
-			tanh(x) {
-				if (type(x) !== "number") throw TypeError("tanh() requires a numeric argument");
-				return this.sinh(x) / this.cosh(x);
-			}
-			csch(x) {
-				if (type(x) !== "number") throw TypeError("csch() requires a numeric argument");
-				return 1 / this.sinh(x);
-			}
-			sech(x) {
-				if (type(x) !== "number") throw TypeError("sech() requires a numeric argument");
-				return 1 / this.cosh(x);
-			}
-			coth(x) {
-				if (type(x) !== "number") throw TypeError("coth() requires a numeric argument");
-				return 1 / this.tanh(x);
-			}
-			asinh(θ) {
-				if (type(θ) !== "number") throw TypeError("asinh() requires a numeric argument");
-				return this.ln( θ + this.sqrt(θ**2+1) );
-			}
-			acosh(θ) {
-				if (type(θ) !== "number") throw TypeError("acosh() requires a numeric argument");
-				return this.ln( θ + this.sqrt(θ**2-1) );
-			}
-			atanh(θ) {
-				if (type(θ) !== "number") throw TypeError("atanh() requires a numeric argument");
-				return this.ln( (θ+1) / (1-θ) ) / 2;
-			}
-			acsch(θ) {
-				if (type(θ) !== "number") throw TypeError("acsch() requires a numeric argument");
-				return this.asinh(1/θ);
-			}
-			asech(θ) {
-				if (type(θ) !== "number") throw TypeError("asech() requires a numeric argument");
-				return this.acosh(1/θ);
-			}
-			acoth(θ) {
-				if (type(θ) !== "number") throw TypeError("acoth() requires a numeric argument");
-				return this.atanh(1/θ);
-			}
+			} // arc-tangent 2
+			acsc(x)    { return isNaN( x = Number(x) ) ? x : this.asin(1/x)                         } // arc-cosecant
+			asec(x)    { return isNaN( x = Number(x) ) ? x : this.acos(1/x)                         } // arc-secant
+			acot(x)    { return isNaN( x = Number(x) ) ? x : !x ? π/2 : this.atan(1/x) + π*(x < 0)  } // arc-cotangent
+			excst(x)   { return isNaN( x = Number(x) ) ? x : this.hypot(this.exsec(x), this.cot(x)) } // sqrt(exsec^2 + cot^2)
+			// aexcst(x)  { throw Error("not implemented")                                          }
+			exset(x)   { return isNaN( x = Number(x) ) ? x : this.hypot(this.exsec(x), this.tan(x)) } // sqrt(exsec^2 + tan^2)
+			// aexset(x)  { throw Error("not implemented")                                          }
+			vcs(x)     { return isNaN( x = Number(x) ) ? x : this.hypot(this.verc(x), this.sin(x))  } // sqrt(vercos^2 + sin^2)
+			// avcs(x)    { throw Error("not implemented")                                          }
+			cvs(x)     { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.sin(x) ) } // sqrt(1 + sin^2)
+			acvs(x)    { return isNaN( x = Number(x) ) ? x : this.asin(x**2 - 1)          } // asin(x^2 - 1)
+			ccvs(x)    { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.cos(x) ) } // sqrt(1 + cos^2)
+			accvs(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x**2 - 1)          } // acos(x^2 - 1)
+			crd(x)     { return isNaN( x = Number(x) ) ? x : 2 * this.sin(x / 2)          } // chord
+			acrd(x)    { return isNaN( x = Number(x) ) ? x : 2 * this.asin(x / 2)         } // arc-chord
+			ccrd(x)    { return isNaN( x = Number(x) ) ? x : 2 * this.cos(x / 2)          } // co-chord
+			accrd(x)   { return isNaN( x = Number(x) ) ? x : π/2 - 2*this.asin(x / 2)     } // arc-co-chord
+			exsec(x)   { return isNaN( x = Number(x) ) ? x : this.sec(x) - 1              } // external-secant
+			aexsec(x)  { return isNaN( x = Number(x) ) ? x : this.asec(x + 1)             } // arc-exsecant
+			excsc(x)   { return isNaN( x = Number(x) ) ? x : this.csc(x) - 1              } // external-cosecant
+			aexcsc(x)  { return isNaN( x = Number(x) ) ? x : this.acsc(x + 1)             } // arc-ex-cosecant
+			vers(x)    { return isNaN( x = Number(x) ) ? x : 1 - this.cos(x)              } // versine
+			avers(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x + 1)             } // arc-versine
+			verc(x)    { return isNaN( x = Number(x) ) ? x : 1 + this.cos(x)              } // vercosine
+			averc(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x - 1)             } // arc-vercosine
+			cvers(x)   { return isNaN( x = Number(x) ) ? x : 1 - this.sin(x)              } // coversine
+			acvers(x)  { return isNaN( x = Number(x) ) ? x : this.asin(1 - x)             } // arc-coversine
+			cverc(x)   { return isNaN( x = Number(x) ) ? x : 1 + this.sin(x)              } // covercosine
+			acverc(x)  { return isNaN( x = Number(x) ) ? x : this.asin(x - 1)             } // arc-covercosine
+			hvers(x)   { return isNaN( x = Number(x) ) ? x : this.vers(x) / 2             } // haversine
+			ahvers(x)  { return isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x)           } // arc-haversine
+			hverc(x)   { return isNaN( x = Number(x) ) ? x : this.verc(x) / 2             } // havercosine
+			ahverc(x)  { return isNaN( x = Number(x) ) ? x : this.acos(2*x - 1)           } // arc-havercosine
+			hcvers(x)  { return isNaN( x = Number(x) ) ? x : this.cvers(x) / 2            } // hacoversine
+			ahcvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x)           } // arc-hacoversine
+			hcverc(x)  { return isNaN( x = Number(x) ) ? x : this.cverc(x) / 2            } // hacovercosine
+			ahcverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1)           } // arc-hacovercosine
+			sinh(θ)    { return isNaN( θ = Number(θ) ) ? θ : (𝑒**θ - 𝑒**-θ) / 2                       } // hyperbolic sine
+			cosh(θ)    { return isNaN( θ = Number(θ) ) ? θ : (𝑒**θ + 𝑒**-θ) / 2                       } // hyperbolic cosine
+			tanh(θ)    { return isNaN( θ = Number(θ) ) ? θ : this.sinh(θ) / this.cosh(θ)              } // hyperbolic tangent
+			csch(θ)    { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sinh(θ)                         } // hyperbolic cosecant
+			sech(θ)    { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cosh(θ)                         } // hyperbolic secant
+			coth(θ)    { return isNaN( θ = Number(θ) ) ? θ : 1 / this.tanh(θ)                         } // hyperbolic cotangent
+			asinh(x)   { return isNaN( x = Number(x) ) ? x : this.ln( x + this.sqrt(x**2+1) )         } // hyperbolic arc-sine
+			acosh(x)   { return isNaN( x = Number(x) ) ? x : this.ln( x + this.sqrt(x**2-1) )         } // hyperbolic arc-cosine
+			atanh(x)   { return isNaN( x = Number(x) ) ? x : this.ln( (x+1) / (1-x) ) / 2             } // hyperbolic arc-tangent
+			acsch(x)   { return isNaN( x = Number(x) ) ? x : this.asinh(1/x)                          } // hyperbolic arc-cosecant
+			asech(x)   { return isNaN( x = Number(x) ) ? x : this.acosh(1/x)                          } // hyperbolic arc-secant
+			acoth(x)   { return isNaN( x = Number(x) ) ? x : this.atanh(1/x)                          } // hyperbolic arc-cotangent
+			excsth(x)  { return isNaN( x = Number(x) ) ? x : this.hypot(this.coth(x), this.exsech(x)) } // sqrt(csch^2 + tanh^2)
+			exseth(x)  { return isNaN( x = Number(x) ) ? x : this.hypot(this.exsech(x), this.tanh(x)) } // sqrt(exsech^2 + tanh^2)
+			// aexseth(x) { throw Error("not implemented")                                            }
+			vcsh(x)    { return isNaN( x = Number(x) ) ? x : this.hypot(this.verch(x), this.sinh(x))  } // sqrt(vercosh^2 + sinh^2)
+			//avcsh(x) { throw Error("not implemented")                                               }
+			cvsh(x)    { return isNaN( x = Number(x) ) ? x : this.hypot(1, this.sinh(x)) } // sqrt(1 + sinh^2)
+			acvsh(x)   { return isNaN( x = Number(x) ) ? x : this.asinh(x**2 - 1)        } // asinh(x^2 - 1)
+			ccvsh(x)   { return isNaN( x = Number(x) ) ? x : this.hypot(1, this.cosh(x)) } // sqrt(1 + cosh^2)
+			accvsh(x)  { return isNaN( x = Number(x) ) ? x : this.acosh(x**2 - 1)        } // acosh(x^2 - 1)
+			crdh(x)    { return isNaN( x = Number(x) ) ? x : 2*this.sinh(x / 2)          } // hyperbolic chord
+			acrdh(x)   { return isNaN( x = Number(x) ) ? x : 2*this.asinh(x / 2)         } // hyperbolic arc-chord
+			ccrdh(x)   { return isNaN( x = Number(x) ) ? x : 2*this.cosh(x / 2)          } // hyperbolic co-chord
+			accrdh(x)  { return isNaN( x = Number(x) ) ? x : π/2 - 2*this.asinh(x / 2)   } // hyperbolic arc-co-chord
+			exsech(x)  { return isNaN( x = Number(x) ) ? x : this.sech(x) - 1            } // hyperbolic external-secant
+			aexsech(x) { return isNaN( x = Number(x) ) ? x : this.asech(x + 1)           } // hyperbolic arc-exsecant
+			excsch(x)  { return isNaN( x = Number(x) ) ? x : this.csch(x) - 1            } // hyperbolic external-cosecant
+			aexcsch(x) { return isNaN( x = Number(x) ) ? x : this.acsch(x + 1)           } // hyperbolic arc-ex-cosecant
+			versh(x)   { return isNaN( x = Number(x) ) ? x : 1 - this.cosh(x)            } // hyperbolic versine
+			aversh(x)  { return isNaN( x = Number(x) ) ? x : this.acosh(x + 1)           } // hyperbolic arc-versine
+			verch(x)   { return isNaN( x = Number(x) ) ? x : 1 + this.cosh(x)            } // hyperbolic vercosine
+			averch(x)  { return isNaN( x = Number(x) ) ? x : this.acosh(x - 1)           } // hyperbolic arc-vercosine
+			cversh(x)  { return isNaN( x = Number(x) ) ? x : 1 - this.sinh(x)            } // hyperbolic coversine
+			acversh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - x)           } // hyperbolic arc-coversine
+			cverch(x)  { return isNaN( x = Number(x) ) ? x : 1 + this.sinh(x)            } // hyperbolic covercosine
+			acverch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(x - 1)           } // hyperbolic- arc-covercosine
+			hversh(x)  { return isNaN( x = Number(x) ) ? x : this.versh(x) / 2           } // hyperbolic haversine
+			ahversh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(1 - 2*x)         } // hyperbolic arc-haversine
+			hverch(x)  { return isNaN( x = Number(x) ) ? x : this.verch(x) / 2           } // hyperbolic havercosine
+			ahverch(x) { return isNaN( x = Number(x) ) ? x : this.acosh(2*x - 1)         } // hyperbolic arc-havercosine
+			hcversh(x) { return isNaN( x = Number(x) ) ? x : this.cversh(x) / 2          } // hyperbolic hacoversine
+			ahcversh(x){ return isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x)         } // hyperbolic arc-hacoversine
+			hcverch(x) { return isNaN( x = Number(x) ) ? x : this.cverch(x) / 2          } // hyperbolic hacovercosine
+			ahcverch(x){ return isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1)         } // hyperbolic arc-hacovercosine
+
+			Si(x, inc=.001) { return this.int(0, x, t => this.sin(t)/t, inc) }
+			si(x, inc=.001) { this.Si(x) - π/2 }
+			Cin(x, inc=.001) { return this.int(0, x, t => (1-this.cos(t))/t, inc) }
+			Ci(x, inc=.001) { return γ + this.ln(x) - this.Cin(x, inc) }
+			Shi(x, inc=.001) { return this.int(0, x, t => this.sinh(t)/t, inc) }
+			Chi(x, inc=.001) { return γ + this.ln(x) + this.int(0, x, t => (this.cosh(t) - 1) / t, inc) }
+			tanhc(z)   { return this.tanh(z) / z }
+			sinhc(z)   { return this.sinh(z) / z }
+			Tanc(z)    { return this.tan (z) / z }
+			Coshc(z)   { return this.cosh(z) / z }
+
+			H(x) { /* Heaveside step function */ return Number(x > 0) }
 			W(x) {// TODO: Implement Lambert W function
 				// Lambert W function
 				if (type(x) !== "number") throw TypeError("Lambert W function requires a numeric argument");
@@ -1324,6 +1509,7 @@
 				this.ec  = this.γ   =          γ;
 				this.pi  = this.PI  = this.π = π;
 				this.foias = this.α = α;
+				this.omega = 0.5671432904097838; // https://en.wikipedia.org/wiki/Omega_constant
 				this.lnNeg1 = this.new(0, π);
 				this.lni = this.new(0, π/2);
 				this.i = this.new(0, 1);
@@ -1337,8 +1523,24 @@
 					};
 				}
 			}
-			new(re=0, im=0) { return type(re, 1) === "complex" ? re : new this.ComplexNumber(re, im) }
-			complex(re, im) { return this.new(re, im) }
+			new(re=0, im=0) {
+				if (type(re, 1) === "complex") return re;
+				if (isArr(re)) {
+					im = re[1];
+					re = re[0];
+				}
+				if (Math.isNaN(re) || Math.isNaN(im))
+					throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
+
+				if (type(re) === "bigint" && type(im) === "bigint" ) {
+					throw Error("not implemented");
+					return new this.ComplexNumber(re, im);
+				}
+				if (type(re) === "number" && type(im) === "number" )
+					return new this.ComplexNumber(re, im);
+				throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
+			}
+			complex(re=0, im=0) { return this.new(re, im) }
 			add(...zs) {
 				zs = zs.flatten().map(e =>
 					type(e) === "number" ? this.new(e, 0) : e
@@ -1408,38 +1610,44 @@
 				type(z) === "number" && (z = this.new(z, 0));
 				return this.new(round(z.re), round(z.im));
 			}
-			arg(z, form="radians") {
+			arg(z, n=0, form="radians") {
 				if (type(z, 1) !== "complex") throw TypeError("Invalid type for Complex.arg()");
 				return form === "degrees" || form === "deg" || form === "degree" ?
-					Math.deg.atan2(z.re, z.im) :
-					Math.atan2(z.re, z.im);
+					Math.deg.atan2(z.re, z.im) + 2*π*int(n) :
+					Math.atan2(z.re, z.im) + 2*π*int(n);
 			}
-			ln(z) {
-				if (type(z) === "number") return this.new( Math.ln(z), 0 );
+			ln(z, n=0) {
+				if (type(z) === "number") {
+					return z < 0 ?
+						this.new( Math.ln(-z), π ) :
+						!z ?
+							NaN :
+							this.new( Math.ln(z), 0 );
+				}
 				return this.new(
 					Math.ln( this.abs(z) ),
-					this.arg(z)
+					this.arg(z, int(n))
 				);
 				// ln(0 + bi) = ln|b| + isgn(b)π/2
 				// ln(a + bi) = ln(sqrt(a^2 + b^2)) + i arg(a + bi)
 			}
-			log(z, base=null) {
+			log(z, base=null, n=0) {
 				type(z) === "number" && (z = this.new(z, 0));
 				type(base) === "number" && (base = this.new(base, 0));
-				if (base === null) return this.ln(z);
-				if (type(z, 1) !== "complex") throw TypeError("Incorrect first argument");
-				if (type(base, 1) !== "complex") throw TypeError("Incorrect second argument");
-				return this.ln(z).div( this.ln(base) );
+				if (base === null) return this.ln(z, n);
+				if (type(z, 1) !== "complex") throw TypeError("Invalid first argument");
+				if (type(base, 1) !== "complex") throw TypeError("Invalid second argument");
+				return this.ln(z, n).div( this.ln(base, n) );
 				// log_(a+bi)(c+di) = ln(c+di) / ln(a+bi)
 			}
-			logbase(base, z) {
+			logbase(base, z, n=0) {
 				type(base) === "number" && (base = this.new(base, 0));
 				type(z) === "number" && (z = this.new(z, 0));
 				if (type(base, 1) !== "complex") throw TypeError("Incorrect first argument");
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect second argument");
-				return this.log( z, base );
+				return this.log( z, base, n );
 			}
-			pow(z1, z2) {
+			pow(z1, z2, n=0) {
 				type(z1) === "number" && (z1 = this.new(z1, 0));
 				type(z2) === "number" && (z2 = this.new(z2, 0));
 
@@ -1451,8 +1659,8 @@
 				if (type(z1, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument 1");
 				if (type(z2, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument 2");
 
-				const r = (z1.re**2 + z1.im**2) ** (z2.re / 2)  /  Math.e ** ( z2.im*this.arg(z1) ),
-					θ = z2.re*this.arg(z1) + z2.im*Math.ln(Math.sqrt(z1.re**2 + z1.im**2))
+				const r = (z1.re**2 + z1.im**2) ** (z2.re / 2)  /  Math.e ** ( z2.im*this.arg(z1, n) ),
+					θ = z2.re*this.arg(z1, n) + z2.im*Math.ln(this.abs(z1))
 				//re^iθ = rcosθ + risinθ
 				return this.new(r*Math.cos(θ), r*Math.sin(θ))
 			}
@@ -1477,7 +1685,7 @@
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
 				return this.sgn(z);
 			}
-			nthrt(z, rt=2) {
+			nthrt(z, rt=2, n=0) {
 				// no longer broken for z ∧ rt ∈ ℝ
 				type(z) === "number" && (z = this.new(z, 0));
 				type(rt) === "number" && (rt = this.new(rt, 0));
@@ -1490,7 +1698,7 @@
 				if (type(rt) !== "number") throw TypeError("Incorrect type for first argument");
 
 				return this.exp(
-					this.new( 0, this.arg(z) / rt )
+					this.new( 0, this.arg(z, n) / rt )
 				).mul(
 					Math.nthrt( this.abs(z), rt )
 				);
@@ -1521,13 +1729,19 @@
 					Math.isClose(z1.re, z2,re, range) &&
 					Math.isClose(z1.im, z2,im, range);
 			}
-			sum(n, last, func=n=>n, inc=1) {
-				if (type(n) !== "number") throw TypeError("sum() requires a numeric first argument");
-				if (type(last) !== "number") throw TypeError("sum() requires a numeric second argument");
+			sum(n, last, func=z=>z, inc=1) {
+				type(n) === "number" && (n = this.new(n, 0));
+				type(last) === "number" && (last = this.new(last, 0));
+				type(inc) === "number" && (inc = this.new(inc, 0));
+				const complet = (a, b) => !a.im && !b.im ? a.re <= b.re : this.abs(a) <= this.abs(b);
+				
+				if (type(n, 1) !== "complex") throw TypeError("sum() requires a complex first argument");
+				if (type(last, 1) !== "complex") throw TypeError("sum() requires a complex second argument");
 				if (type(func, 1) !== "func") throw TypeError("sum() requires a function third argument");
-				if (type(inc) !== "number") throw TypeError("sum() requires a numeric fourth argument");
-				for (var total = this.new(0, 0); n <= last; n += inc)
-					total.add(func(this.new(n)), 0);
+				if (type(inc, 1) !== "complex") throw TypeError("sum() requires a complex fourth argument");
+				
+				for ( var total = this.new(0, 0) ; complet(n, last) ; n.add(inc, 0) )
+					total.add( func(n, 0), 0 );
 				return total;
 			}
 		}
@@ -1559,8 +1773,8 @@
 						// fix range
 						const min = Math.min(range), max = Math.max(range);
 						range = [
-							min < 0 ? 0 : ~~min,
-							max > len(ns) - 1 ? len(ns) - 1 : ~~max
+							min < 0 ? 0 : int(min),
+							max > len(ns) - 1 ? len(ns) - 1 : int(max)
 						];
 
 						ns = ns.map(b => b.toString(2));
@@ -1859,7 +2073,7 @@
 				return "complex";
 			}
 			isComplex() {
-				return this.im ? !0 : !1;
+				return !!this.im;
 			}
 			toPolar(doubleStar=false) {
 				return `${cMath.abs(this)}e${doubleStar ? "**" : "^"}(${this.arg()}i)`;
@@ -1984,17 +2198,17 @@
 			}
 			frac(New=true) {
 				if (New) return new this.constructor(
-					this.re % 1,
-					this.im % 1
+					parseDec(this.re),
+					parseDec(this.im)
 				);
-				this.re %= 1;
-				this.im %= 1;
+				this.re = parseDec(this.re);
+				this.im = parseDec(this.im);
 				return this;
 			}
 			pow(num, New=true) {
-				type(num) === "number" && (num = this.new(num, 0));
+				type(num) === "number" && (num = new this.constructor(num, 0));
 
-				if (!this.im && !num.im) return this.new(this.re ** num.re, 0);
+				if (!this.im && !num.im) return new this.constructor(this.re ** num.re, 0);
 				if (type(num, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument");
 
 				const r = (this.re**2+this.im**2) ** (num.re/2) / Math.e ** (num.im*this.arg(this)),
@@ -2020,7 +2234,7 @@
 		Math2.rMath.prototype.Math = math,
 		NodeList.prototype.last = lastElement,
 		HTMLCollection.prototype.last = lastElement,
-		Object.prototype.tofar = function toFlatArray() {// fix for HTMLScriptElements
+		Object.prototype.tofar = function toFlatArray() {// fix for HTML\w+Element
 			var val = this.valueOf();
 			if (["number", "string", "symbol", "boolean", "bigint", "function"].incl(type(val)) || val == null || val?.constructor == 'function Object() { [native code] }')
 				return [this.valueOf()].flatten();
@@ -2039,7 +2253,7 @@
 		RegExp.prototype.toRegex = function toRegex() { return this.valueOf() },
 		Array.prototype.io = [].indexOf,
 		Array.prototype.lio = [].lastIndexOf,
-		Array.prototype.sort.sort = [].sort,
+		// Array.prototype.sort.sort = [].sort,
 		Array.prototype.incl = [].includes,
 		Array.prototype.for = function forEachReturn(func, ret) {
 			let a = this.valueOf();
@@ -2214,8 +2428,8 @@
 		Array.prototype.startsW = function startsWith(item) {return this.valueOf()[0] === item},
 		Array.prototype.endsW = function endsWith(item) {return this.valueOf().last() === item},
 		Array.prototype.rev = [].reverse,
-		Array.prototype.flatten = function flatten() {return this.valueOf().flat(Infinity)},
-		Array.prototype.sortOld = Array.prototype.sort;
+		Array.prototype.flatten = function flatten() { return this.valueOf().flat(Infinity) },
+		Array.prototype.sortOld = [].sort;
 		Array.prototype.sort = function sort() {
 			var list = this.valueOf();
 			if (Math.isNaN(list.join(""))) return list.sortOld();
@@ -2231,8 +2445,17 @@
 					arr2.splice(round(rand() * len(arr2)), 0, arr.pop());
 			return arr2;
 		},
+		Array.prototype.isNaN = function isNaN(strict=false) {
+			const fn = strict ? window.isNaN : Math.isNaN;
+			for (const value of this) {
+				if (fn(value)) return true;
+			}
+			return false;
+		}
 		String.prototype.slc = function slc(start=0, end=Infinity) {
-			return list(this.valueOf()).slc(start, end).join("");
+			var a = this.valueOf();
+			if (type(start) === "string") return a.substr(a.io(start));
+			return Array.from(a).slc(start, end).join("");
 		},
 		String.prototype.io = "".indexOf,
 		String.prototype.lio = "".lastIndexOf,
@@ -2241,7 +2464,7 @@
 		String.prototype.upper = "".toUpperCase,
 		String.prototype.lower = "".toLowerCase,
 		String.prototype.toObj = function toObj(obj=window) {
-			this.valueOf().split(/[.[\]'"]/).filter(e=>e).for(e=>obj=obj[e]);
+			this.valueOf().split(/[.[\]'"]/).filter(e=>e).for(e => obj=obj[e]);
 			return obj;
 		},
 		String.prototype.hasDupesA = function hasDuplicatesAll() {
@@ -2321,7 +2544,7 @@
 				Number(this.valueOf()).inRange(n1, n2, include);
 		}
 		Number.prototype.isPrime = function isPrime() {// can probably be optimized
-			var n = ~~this.valueOf();
+			var n = int(this.valueOf());
 			if (n === 2) return !0;
 			if (n < 2 || !(n % 2)) return !1;
 			for (var i = 3, a = n / 3; i <= a; i += 2) {
@@ -2342,6 +2565,13 @@
 			var n = this.valueOf();
 			return n === int(n);
 		},
+		Number.prototype.add = function add(arg) { return this.valueOf() + Number(arg) },
+		Number.prototype.sub = function sub(arg) { return this.valueOf() - Number(arg) },
+		Number.prototype.mul = function mul(arg) { return this.valueOf() * Number(arg) },
+		Number.prototype.div = function div(arg) { return this.valueOf() / Number(arg) },
+		Number.prototype.mod = function mod(arg) { return this.valueOf() % Number(arg) },
+		Number.prototype.pow = function pow(arg) { return this.valueOf() ** Number(arg) },
+		// NOTE: max BigInt is 2^1,073,741,823 but could be changed in later specifications
 		BigInt.prototype.shl = function(num) {return this.valueOf() << BigInt(num)},
 		BigInt.prototype.shr = function shr(num) {return this.valueOf() >> BigInt(num)},
 		BigInt.prototype.shr2 = function(num) {return this.valueOf() >>> BigInt(num)},
@@ -2353,7 +2583,6 @@
 				if (!(n % i)) return !1;
 			return !0;
 		},
-		Number.prototype.add = function add(arg) { return this.valueOf() + Number(arg) },
 		BigInt.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
 			n2 == null && (n2 = n1);
 			var a = this.valueOf();
@@ -2361,9 +2590,23 @@
 				a >= n1 && a <= n2 :
 				a > n1 && a < n2;
 		},
-		BigInt.prototype.add = function add(arg) { return this.valueOf() + BigInt(arg) };
+		BigInt.prototype.toExponential = function toExponential(maxDigits=16, form=String) {
+			var a = `${this.valueOf()}`;
+			maxDigits < 0 && (maxDigits = 0);
+			var decimal = maxDigits && len(a) > 1 && a.substr(1)*1 ? "." : "";
+			var rest = a.substr(1, maxDigits);
+			rest = 1 * rest ? rest : "";
+			if (["string", "str", "s", String].incl(form))      return `${a[0]}${decimal}${rest}e+${len(a) - 1}`;
+			else if (["number", "num", "n", Number].incl(form)) return 1 * `${a[0]}.${a.substr(1, 50)}e+${len(a) - 1}`;
+		},
+		BigInt.prototype.add = function add(arg) { return this.valueOf() + BigInt(arg) },
+		BigInt.prototype.sub = function sub(arg) { return this.valueOf() - BigInt(arg) },
+		BigInt.prototype.mul = function mul(arg) { return this.valueOf() * BigInt(arg) },
+		BigInt.prototype.div = function div(arg) { return this.valueOf() / BigInt(arg) },
+		BigInt.prototype.mod = function mod(arg) { return this.valueOf() % BigInt(arg) },
+		BigInt.prototype.pow = function pow(arg) { return this.valueOf() ** BigInt(arg) };
 	}
-	
+
 	{//bad text encoders
 		function num_encoder(numstr, warn=false) {
 			const ODD = len(numstr) % 2;
@@ -2463,15 +2706,13 @@
 			"1234567890a";
 		}
 	}
-	(MathVar === true) && (
-	this.Math  = new Math2.rMath("default", "default"));
+
+	this.Math  = new Math2.rMath("default", "default");
 	this.cMath = new Math2.cMath("default", "default");
-	
 	Math2.rMath.prototype.cMath = cMath;
 	Math2.cMath.prototype.rMath = Math;
-	
 	this.Logic = new Logic("default", "default", "default");
-	
+
 	{// Error Handling
 		let exit_1 = false;
 		onConflict = onConflict.lower();
@@ -2505,15 +2746,20 @@
 	}
 })();
 
-function dQuery(e, type, prev) {
-	assert(typeof e === "string" || typeof e === "object" || e == null || isArr(e), "function requires a string, an object, or undefined argument");
+function dQuery(e, typ, prev) {
+	assert(
+		typeof e === "string" ||
+		typeof e === "object" ||
+		e == null ||
+		isArr(e),
+		"function requires a string, an object, or undefined argument"
+	);
 	var func = arguments.callee;
 	class dQuery extends Array {
-		constructor(value=[], type="", prev=document) {
-			super();
-			for (const e of value)
-				this.push(e);
-			this.type = type;
+		constructor(values=[], typ="", prev=document) {
+			if (json.stringify(values) === "[]") super();
+			else super(values);
+			this.type = typ;
 			this.prev = prev;
 		}
 		// TODO: Add css handling
@@ -2547,39 +2793,76 @@ function dQuery(e, type, prev) {
 		}
 
 		html(texts=null, ...indexes) {
-			return texts !== null?
-				this.set("innerHTML", texts, indexes) :
-				this.get("innerHTML");
+			return texts == null?
+				this.get("innerHTML") :
+				this.set("innerHTML", texts, indexes);
 		}
 		ohtml(texts=null, ...indexes) {
-			return texts !== null?
-				this.set("outerHTML", texts, indexes) :
-				this.get("outerHTML");
+			return texts === null?
+				this.get("outerHTML") :
+				this.set("outerHTML", texts, indexes);
 		}
 		val(texts=null, ...indexes) {
-			return texts !== null?
-				this.set("value", texts, indexes) :
-				this.get("value");
+			return texts === null?
+				this.get("value") :
+				this.set("value", texts, indexes);
 		}
 		id(names=null, ...indexes) {
-			return names !== null?
+			return names === null?
 				this.set("id", names, indexes) :
 				this.get("id");
 		}
 		class(names=null, ...indexes) {
-			return names !== null?
-				this.set("className", names, indexes) :
-				this.get("className");
+			return names === null?
+				this.get("className") :
+				this.set("className", names, indexes);
 		}
 		// hide() {}
 		// show() {}
 
 		// TODO: Fix css
-		css(name) {
-			throw Error("broken, come back later");
+		css(keys) {
+			//throw Error("dQuery.css() is broken");
+			if (keys == null) return null;
+			
+			type(keys, 1) !== "arr" && (keys = keys.tofar());
+			if (this[0] == null || keys == null) return null;
+			keys = keys.filter( e => type(e, 1) === "str" && isNaN(e) ).map(name => {
+				const MATCH = /-([a-zA-Z])/.exec(name);
+				name = MATCH == null ?
+					name :
+					name?.replace( MATCH[0], MATCH[1].upper() );
+				return name;
+			});
+			// TODO: Make it set instead of get, and get if keys is undefined
+			let obj = this.map((e, index) => {
+				e = [e].len( len(keys) ).fill(e);
+				for (var i = 0, n = len(e); i < n ;)
+					e[i] = e[i].style[ keys[i++] ];
+				return e;
+			});
+			delete obj.prev;
+			delete obj.type;
+			return obj.tofar();
+
+			/* dQuery.set():
+				if (this[0] == null || keys == null || newVals == null) return null;
+
+				!len(indexes) && (indexes = [0]);
+				indexes = indexes.tofar();
+				newVals = newVals.tofar();
+				keys = keys.tofar();
+				if (len(newVals) === 1) newVals = newVals.len(len(indexes)).fill(newVals[0]);
+				if (len(keys) === 1) keys = keys.len(len(indexes)).fill(keys[0]);
+
+				for (var i = 0, n = len(indexes); i < n; i++)
+					this[i][keys[i]] = newVals[i];
+
+				return this;
+			*/
 			// essentially 'get' but for css
 			const MATCH = /-([a-zA-Z])/.exec(name);
-			name = MATCH == null ? name : name?.replace(MATCH[0], MATCH[1].toUpperCase());
+			name = MATCH == null ? name : name?.replace(MATCH[0], MATCH[1].upper());
 			return this.value == null ? null :
 				/class|querySelectorAll/.in(this.type) ?
 					name == null ? this.value?.style : this.value?.map(e => e.style[name]) :
@@ -2633,11 +2916,11 @@ function dQuery(e, type, prev) {
 		}*/
 	}
 	if (typeof e?.constructor === "function" && constr(e) === "dQuery") return e;
-	if (isArr(e)) return new dQuery(e, type || "", prev || document);
-	if (e === "*") return new dQuery(document.querySelectorAll("*"), "querySelectorAll");
-	if (e == null || e === "") return new dQuery();
+	if (isArr(e)) return new dQuery(e, typ || "", prev || document).flat();
+	if (e === "*") return new dQuery(document.querySelectorAll("*"), "querySelectorAll").flat();
+	if (e == null || e === "") return new dQuery().flat();
 
-	let value, end = true,
+	let values, end = true,
 		str = ` ${e}`.splitn(/(?=\.|#)|(?<=\.|#)/, 2).map(e => e.trim()).filter(e => e);
 
 	if (len(str) > 3 || !len(str)) throw Error(`invalid input: \`${e}\``);
@@ -2645,37 +2928,36 @@ function dQuery(e, type, prev) {
 	switch (str[0]) {
 		case "#":
 			// TODO fix Object.tofar() for HTMLScriptElements
-			value = [document.getElementById(str[1])];
-			type = "id";    break;
+			values = [document.getElementById(str[1])];
+			typ = "id";    break;
 		case ".":
-			value = list(document.getElementsByClassName(str[1]));
-			type = "class"; break;
+			values = list(document.getElementsByClassName(str[1]));
+			typ = "class"; break;
 		default: // query selector and (id=all or class=all)
 			end = false;
-			value = list(document.querySelectorAll(str[0]));
-			type = "querySelectorAll";
+			values = list(document.querySelectorAll(str[0]));
+			typ = "querySelectorAll";
 	}
 
-	if (end || len(str) === 1) return new dQuery(value, type);
+	if (end || len(str) === 1) return new dQuery(values, typ).flat();
 	
 	// some input like "tagname." with no class
 	if (len(str) === 2) throw Error(`Invalid input: ${e}`);
 
 	switch (str[1]) {
 		case "#":
-			value = list(value).filter(e => e.id === str[2]);
+			values = list(values).filter(e => e.id === str[2]);
 			break;
 		case ".":
-			value = list(value).filter(e => e.className === str[2]);
+			values = list(values).filter(e => e.className === str[2]);
 			break;
 		default: throw Error("Unreachable");
 	}
 
-	return new dQuery(value, type);
+	return new dQuery(values, typ).flat();
 }
 
 !this.$ && (this.$ = dQuery);
-
 /**                                                   *
  * |x| = x sgnx                                       *
  * sgn x = x/|x|                                      *
