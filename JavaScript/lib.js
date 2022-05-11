@@ -1,25 +1,43 @@
+#!/usr/bin/env js
 // TODO: Fix Object.prototype.tofar() for 'Arguments' objects and html elements
 // TODO: Fix Math.fact and Math.ifact for negative numbers
-((onConflict, alertForMath, alertUnused, LOG_DEFAULT_BASE) => {"use strict";
+// TODO: Fix Math.pow(). Math.pow(2, 2.5) is broken and returns 8
+((ON_CONFLICT, alertForMath, alertUnused, LOG_DEFAULT_BASE) => {"use strict";
 	{// Customization
-		const onConflict_Options = ["log", "throw", "return", "warn", "debug", "info", "assert", "alert", "None"];
+		const onConflict_Options = [
+			"log",
+			"throw", "trw",
+			"return", "ret",
+			"error", "err",
+			"warn", "wrn",
+			"debug", "dbg",
+			"info", "ifo",
+			"assert", "ast",
+			"alert", "alt",
+			"None",
+		];
 		// if something not in the options is used, it will act as if "None" was chosen instead
-		onConflict = "debug";
+		ON_CONFLICT = "debug";
 		alertForMath = false;
 		alertUnused = false;
 		LOG_DEFAULT_BASE = 10;
 	}
 	const LIBRARY_FUNCTIONS = [
-		"infinity","$qs","isIterable","isArr","len","π","𝑒",Symbol.for("<0x200b>"),Symbol.for("<0x08>"),
-		"json","rand","constr","copy","assert","help","dir","nSub","reverseLList","convertType",
-		"firstDayOfYear","type","round","floor","ceil","int","str","numToAccountingStr","range",
-		"asciiToChar","charToAscii","numToWords","numToStrW_s","Logic","LinkedList","Types"
-	],
-		NOT_ACTIVE_ARR = ["$","revArr","timeThrow","quine"].map(e=>[this[e] != null, e]).filter(e=>e[0]).map(e=>e[1]),
+		"infinity","$qs","isIterable","isArr","sizeof","len","dim","π","𝑒",Symbol.for("<0x200b>"),
+		Symbol.for("<0x08>"),"json","rand","randInt","randint","complex","constr","copy","assert","help",
+		"dir","nSub","reverseLList","convertType","findDayOfWeek","type","round","parseDec","fpart","floor",
+		"ceil","int","str","numToAccStr","range","asciiToChar","charToAscii","numToWords","numToStrW_s",
+		"Errors","strMul","LinkedList","Types","numStrNorm","cMath","Logic"
+		],
+		NOT_ACTIVE_ARR = ["$","revArr","timeThrow","quine"].map(
+			e => [this[e] != null, e]
+		).filter( e => e[0] ).map( e => e[1] ),
 		CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1]);
 		alertForMath === true && CONFLICT_ARR.push("Math");
-	let math = Math;
+		let math = Math;
 	{// Variables
+		const alphabet = "abcdefghijklmnopqrstuvwxyz",
+			numbers = "0123456789";
 		this.infinity = Infinity;
 		this.$ ??= function $(e) { return document.getElementById(e) };
 		this.$qs = function $qs(element, one=false) {
@@ -28,16 +46,33 @@
 		this.isIterable = function isIterable(arg) {
 			try { for (const i of arg) break } catch { return !1 } return !0;
 		};
-		this.isArr = arr => typeof arr == "object" && isIterable(arr) && constr(arr) !== "Set";
+		this.isArr = arr => type(arr) === "object" && isIterable(arr) && constr(arr) === "Array";
+		this.sizeof = function sizeof(obj) {
+			if (obj === undefined) return undefined;
+			var length = len(obj);
+			if (length) return length;
+			if (constr(obj) === "Object") return len( Object.keys(obj) );
+			console.log("Type Error with 'sizeof' function. input: %o", obj);
+			// console.log is required because of '%o' so you can see actually see the object.
+			throw TypeError(`Invalid argument for sizeof(). requires an object, array, or string.`);
+		};
 		this.len = e => e?.length;
+		this.dim = (e, n=1) => e?.length - n;
 		this.π = 3.141592653589793;
 		this.𝑒 = 2.718281828459045;
 		this[Symbol.for("<0x200b>")] = "​"; // zero width space
 		this[Symbol.for("<0x08>")] = ""; // \b
 		this.json = JSON;
 		this.rand = Math.random;
-		this.constr = function constructorName(input) {
+		this.randint = this.randInt = function randomInt(min=0, max=1) {
+			if ( isNaN(min) || isNaN(max) ) return round( rand() );
+			min < 0 && min--;
+			return round( rand() * Math.abs(min - max) + min );
+		};
+		this.complex = (re=0, im=0) => cMath.new(re, im);
+		this.constr = function constructorName(input, name=true) {
 			if (input == null) return input;
+			if (name) return input?.constructor?.name;
 			const output = `${input.constructor}`.remove(/\s*\{(.|\s)*|class\s*|function\s*|\(\)/g).remove(/\s(.|\s)*/g);
 			return output === "(" ?
 				input.constructor.name :
@@ -132,61 +167,101 @@
 					throw Error(`Invalid Type: ${Type}`);
 			}
 		};
-		this.firstDayOfYear = function findWeekDayNameOfFirstDayOfYear(year, form="number") {
-			if (type(form, 1) !== "str")
-				throw Error(`Invalid input for second paramater: ${form}. Expected a string but found a(n) ${type(form)}`);
-			var ans = (1 + --year % 4 * 5 + year % 100 * 4 + year % 400 * 6) % 7;
-			form = form.toLowerCase(), year = int(year);
-			return form === "number"?
-				ans:
-				form[0] === "s"?
-					!ans?
-						"Sunday":
-						ans === 1?
-							"Monday":
-							ans === 2?
-								"Tuesday":
-								ans === 3?
-									"Wednesday":
-									ans === 4?
-										"Thursday":
-										ans === 5?
-											"Friday":
-											ans === 6?
-												"Saturday":
-												Error(`Invalid Input: (year: ${year+1}). output: ${ans}.`):
-					Error(`Invalid output form: ${form}. try "number" or "string"`)
+		this.findDayOfWeek = function findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=true) {
+			// dd-mm-yyyy makes more sense in the current context. 
+			if (isNaN( day = Number(day) ) || !isFinite(day))
+				throw TypeError(`argument 1 either isn't finite or isn't a number`);
+			if (isNaN( month = Number(month) ) || !isFinite(month))
+				throw TypeError(`argument 2 either isn't finite or isn't a number`);
+			if (isNaN( year = Number(year) ) || !isFinite(year))
+				throw TypeError(`argument 3 either isn't finite or isn't a number`);
+			if (type(order) !== "string" ) throw TypeError(`argument 5 isn't a string`);
+			if (order !== "dd/mm/yyyy") {
+				order = order.lower().split(/\/|-/);
+				const tmp = [day, month, year],
+					used = [false, false, false];
+				for (var i = 0; i < 3; i++) {
+					switch (order[i]) {
+						case "dd":
+							if (used[0]) throw Error("Invalid input for argument 5");
+							used[0] = true;
+							day = tmp[i];
+							break;
+						case "mm":
+							if (used[1]) throw Error("Invalid input for argument 5");
+							used[1] = true;
+							month = tmp[i];
+							break;
+						case "yyyy":
+							if (used[2]) throw Error("Invalid input for argument 5");
+							used[2] = true;
+							year = tmp[i];
+							break;
+						default: throw Error("Invalid input for argument 5");
+					}
+				}
+			}
+			day += !day - 1;
+			month += !month - 1;
+			const LEAP = !(year % 4);
+			// 'days' is the number of days in the month
+			// 'offset' is the offset from the beginning of the year to the beginning of the month in days
+			const Months = [
+				{ days: 31,        offset: 0   },
+				{ days: 28 + LEAP, offset: 31  },
+				{ days: 31, offset: 59  + LEAP },
+				{ days: 30, offset: 90  + LEAP },
+				{ days: 31, offset: 120 + LEAP },
+				{ days: 30, offset: 151 + LEAP },
+				{ days: 31, offset: 181 + LEAP },
+				{ days: 31, offset: 212 + LEAP },
+				{ days: 30, offset: 243 + LEAP },
+				{ days: 31, offset: 273 + LEAP },
+				{ days: 30, offset: 304 + LEAP },
+				{ days: 31, offset: 334 + LEAP }
+			];
+			for (; day > Months[month % 12].days; month++)
+				day -= Months[month % 12].days;
+			let ans = (1 + (year += floor(month / 12) - 1) % 4 * 5 +
+				year % 100 * 4 + year % 400 * 6 + day +
+				Months[month % 12].offset
+			) % 7;
+			return str ?
+				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
+				ans;
 		};
 		this.type = function type(a, b) {
 			// TODO: add nodelist to function
-			return b == null || typeof a === "bigint" || typeof a === "symbol" || a === undefined?
-				typeof a:
-				typeof a === "number"?
-					isNaN(a)?
-						"nan":
-						isNaN(a-a)?
-							"inf":
-							"num":
-					typeof a === "object"?
-						false?
-							"nodelist":
-							`${a?.test}` === 'function test() { [native code] }'?
-								"regex":
-								a === null?
-									"null":
-									`${a?.type}`.remove(/\s|;/g) === 'type(){return"linkedlist"}'?
-										"linkedlist":
-										`${a?.type}`.remove(/\s|;/g) === 'type(){return"complex"}'?
-											"complex":
-											isArr(a)?
-												"arr":
-												"obj":
-						typeof a === "string"?
-							"str":
-							typeof a === "boolean"?
-								"bool":
-							/^class /.test(a+"")?
-								"class":
+			return b == null || typeof a === "bigint" || typeof a === "symbol" || a === undefined ?
+				typeof a :
+				typeof a === "number" ?
+					isNaN(a) ?
+						"nan" :
+						isNaN(a - a) ?
+							"inf" :
+							"num" :
+					typeof a === "object" ?
+						`${a.constructor}` === 'function NodeList() { [native code] }' ?
+							"nodelist" :
+							`${a?.test}` === 'function test() { [native code] }' ?
+								"regex" :
+								a === null ?
+									"null" :
+									/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a?.type}`.remove(/\s|;/g)) ?
+										"linkedlist" :
+										/^type\(\){return("|'|`)complex\1}$/.test(`${a?.type}`.remove(/\s|;/g)) ?
+											"complex" :
+											/^type\(\){return("|'|`)fraction\1}$/.test(`${a?.type}`.remove(/\s|;/g)) ?
+												"fraction" :
+												isArr(a) ?
+													"arr" :
+													"obj" :
+						typeof a === "string" ?
+							"str" :
+							typeof a === "boolean" ?
+								"bool" :
+							/^class /.test(a+"") ?
+								"class" :
 								"func"
 		};
 		this.timeThrow ??= function timeThrow(message="Error Message Here.", run=false) {
@@ -203,11 +278,10 @@
 					int(n) + (n<0?-1:1) :
 				NaN;
 		};
-		this.parseDec = Number.parseDec = function parseDec(n) {
-			n = Number(n);
-			if (isNaN(n)) return NaN;
-			if (n.isInt()) return 0;
-			return Number( `${n}`.slc(".") );
+		this.parseDec = this.fpart = Number.parseDec = function fPart(n, number=true) {
+			if ( isNaN(n) ) return NaN;
+			if ( n.isInt() ) return 0;
+			return number ? Number( `${n}`.slc(".") ) : `0${`${n}`.slc(".")}`;
 		};
 		this.floor = function floor(n) {
 			return type(n) === "number" ?
@@ -220,18 +294,28 @@
 				NaN;
 		};
 		this.int = parseInt;
-		this.str = function String(a, b) {return b <= 36 && b >= 2 ? a.toString(int(b)) : a+""};
+		this.str = function String(a, b) { return b <= 36 && b >= 2 ? a.toString(int(b)) : a+"" };
 		this.list = Array.from;
-		this.numToAccStr = function numberToAccountingString(n) {return n<0 ? `(${-n})` : n+""};
+		this.numToAccStr = function numberToAccountingString(n) { return n<0 ? `(${-n})` : n+"" };
 		this.range = function range(start, stop, step=1) {
 			// this function is mostly from the offical JavaScript documentation with small changes
 			stop == null && (stop = start - 1, start = 0);
-			return list({ length: (stop - start) / step + 1}, (_, i) => start + i * step);
+			return Array.from({ length: (stop - start) / step + 1}, (_, i) => start + i * step);
 		};
 		this.asciiToChar = function asciiNumToChar(number) {
 			switch (number) {
-				case 0  : return"\0"; case 9  : return"\t"; case 10 : return"\n"; case 13 : return"\r";
-				case 32 : return " "; case 33 : return "!"; case 34 : return '"'; case 35 : return "#";
+				case 0  : return"\x00"; case 1  : return"\x01"; case 2  : return"\x02";
+				case 3  : return"\x03"; case 4  : return"\x04"; case 5  : return"\x05";
+				case 6  : return"\x06"; case 7  : return"\x07"; case 8  : return"\b"  ;
+				case 9  : return"\t"  ; case 10 : return"\n"  ; case 11 : return"\x0b";
+				case 12 : return"\x0c"; case 13 : return"\r"  ; case 14 : return"\x0E";
+				case 15 : return"\x0F"; case 16 : return"\x10"; case 17 : return"\x11";
+				case 18 : return"\x12"; case 19 : return"\x13"; case 20 : return"\x14";
+				case 21 : return"\x15"; case 22 : return"\x16"; case 23 : return"\x17";
+				case 24 : return"\x18"; case 25 : return"\x19"; case 26 : return"\x1A";
+				case 27 : return"\x1B";	case 28 : return"\x1C";	case 29 : return"\x1D";
+				case 30 : return"\x1E"; case 31 : return"\x1F"; case 32 : return " ";
+				case 33 : return "!"; case 34 : return '"'; case 35 : return "#";
 				case 36 : return "$"; case 37 : return "%"; case 38 : return "&"; case 39 : return "'";
 				case 40 : return "("; case 41 : return ")"; case 42 : return "*"; case 43 : return "+";
 				case 44 : return ","; case 45 : return "-"; case 46 : return "."; case 47 : return "/";
@@ -254,12 +338,22 @@
 				case 112: return "p"; case 113: return "q"; case 114: return "r"; case 115: return "s";
 				case 116: return "t"; case 117: return "u"; case 118: return "v"; case 119: return "w";
 				case 120: return "x"; case 121: return "y"; case 122: return "z"; case 123: return "{";
-				case 124: return "|"; case 125: return "}"; case 126: return "~"; default: return null;
+				case 124: return "|"; case 125: return "}"; case 126: return "~"; default: throw Error(number);
 			}
 		};
 		this.charToAscii = function charToAscii(str) {
 			switch (str) {
-				case"\0": return 0  ; case"\t": return 9  ; case"\n": return 10 ; case"\r": return 13 ;
+				case "\x00" : return 0 ; case "\x01" : return 1 ; case "\x02" : return 2 ;
+				case "\x03" : return 3 ; case "\x04" : return 4 ; case "\x05" : return 5 ;
+				case "\x06" : return 6 ; case "\x07" : return 7 ; case "\b"   : return 8 ;
+				case "\t"   : return 9 ; case "\n"   : return 10; case "\x0b" : return 11;
+				case "\x0c" : return 12; case "\r"   : return 13; case "\x0E" : return 14;
+				case "\x0F" : return 15; case "\x10" : return 16; case "\x11" : return 17;
+				case "\x12" : return 18; case "\x13" : return 19; case "\x14" : return 20;
+				case "\x15" : return 21; case "\x16" : return 22; case "\x17" : return 23;
+				case "\x18" : return 24; case "\x19" : return 25; case "\x1A" : return 26;
+				case "\x1B" : return 27; case "\x1C" : return 28; case "\x1D" : return 29;
+				case "\x1E" : return 30; case "\x1F" : return 31;
 				case " ": return 32 ; case "!": return 33 ; case '"': return 34 ; case "#": return 35 ;
 				case "$": return 36 ; case "%": return 37 ; case "&": return 38 ; case "'": return 39 ;
 				case "(": return 40 ; case ")": return 41 ; case "*": return 42 ; case "+": return 43 ;
@@ -283,29 +377,8 @@
 				case "p": return 112; case "q": return 113; case "r": return 114; case "s": return 115;
 				case "t": return 116; case "u": return 117; case "v": return 118; case "w": return 119;
 				case "x": return 120; case "y": return 121; case "z": return 122; case "{": return 123;
-				case "|": return 124; case "}": return 125; case "~": return 126; default: return null;
+				case "|": return 124; case "}": return 125; case "~": return 126; default: throw Error(str);
 			}
-		};
-		this.qwerty_encoder = function qwerty_encoder(key, typ="encode") {
-			// /(?<shift>[01])(?<row>[1-5])(?<col>\d\d)/
-			// ignore side keys, and special keys
-			const obj = {
-				"`": "0101", "~": "1101", "1": "0102", "!": "1103", "2": "0103", "@": "1104", "3": "0104",
-				"#": "1105", "4": "0105", "$": "1106", "5": "0106", "%": "1107", "6": "0107", "^": "1108",
-				"7": "0108", "&": "1109", "8": "0109", "*": "1110", "9": "0110", "(": "1111", "0": "0111",
-				")": "1112", "-": "0112", "_": "1113", "=": "0113", "+": "1114","\b": "0114","\t": "0201",
-				"q": "0202", "Q": "1202", "w": "0203", "W": "1203", "e": "0204", "E": "1204", "r": "0205",
-				"R": "1205", "t": "0206", "T": "1206", "y": "0207", "Y": "1207", "u": "0208", "U": "1208",
-				"i": "0209", "I": "1209", "o": "0210", "O": "1210", "p": "0211", "P": "1211", "[": "0212",
-				"{": "1212", "]": "0213", "}": "1213","\\": "0214", "|": "1214", "a": "0302", "A": "1302",
-				"s": "0303", "S": "1303", "d": "0304", "D": "1304", "f": "0305", "F": "1305", "g": "0306",
-				"G": "1306", "h": "0307", "H": "1307", "j": "0308", "J": "1308", "k": "0309", "K": "1309",
-				"l": "0310", "L": "1310", ";": "0311", ":": "1311", "'": "0312","\"": "1312", "z": "0402",
-				"Z": "1402", "x": "0403", "X": "1403", "c": "0404", "C": "1404", "v": "0405", "V": "1405",
-				"b": "0406", "B": "1406", "n": "0407", "N": "1407", "m": "0408", "M": "1408", ",": "0409",
-				"<": "1409", ".": "0410", ">": "1410", "/": "0411", "?": "1411", " ": "054",
-			}
-			return typ === "encode" || typ === "encoder" ? obj[key] : Object.keyof(obj, key);
 		};
 		this.numToWords = function numberToWords(number) {
 			if (Math.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
@@ -313,11 +386,11 @@
 			var string = `${number}`;
 			switch (true) {
 				case /\./.test(string):
-					var decimals = `${numberToWords(string.substring(0,string.io(".")))} point`;
+					var decimals = `${numberToWords(string.substring(0, string.io(".")))} point`;
 					for (var i = string.io(".") + 1; i < len(string); i++)
 						decimals += ` ${numberToWords(string[i])}`;
 					return decimals;
-				case number < 0 || Logic.is(number, -0): return `negative ${numberToWords(-number)}`;
+				case number < 0 || Object.is(number, -0): return `negative ${numberToWords(-number)}`;
 				case number == 0: return "zero";
 				case number == 1: return "one";
 				case number == 2: return "two";
@@ -369,7 +442,7 @@
 				case number % 1e6===0 && len(string)===8: return `${numberToWords(1*string.substr(0,2))} million`;
 				case number < 1e8:
 					return `${numberToWords(1*string.substr(0,2))} million ${numberToWords(1*string.substr(2))}`;
-				default: throw Error(`Invalid Number. function Only works for {x:|x| < 1e8}\n\t\t\tinput: ${numToStrW_s(number)}`);
+				default: throw Error(`Invalid Number. function Only works for {x:|x| < 1e8}\n\t\tinput: ${numToStrW_s(number)}`);
 			}
 		};
 		this.numToStrW_s = function numberToStringWith_s(number) {
@@ -380,11 +453,16 @@
 			return str2.reverse();
 		};
 		this.Errors = function customErrors(name="Error", text="") {
-			throw Error(text).stack.replace("Error", `${name}`).remove(/ {4}at.*\n/);
+			Error.prototype.name = `${name}`;
+			throw Error(text).stack.remove(/ {4}at(.|\s)*\n/);
+		};
+		this.strMul = function stringMultiplication(s1="", num=1) {
+			if (isNaN(num) || type(s1, 1) !== "str") return "";
+			for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
+			return s2;
 		};
 		this.LinkedList = class LinkedList {
-			constructor() {
-				this.head = null;
+			constructor(head) {
 				this.size = 0;
 				this.Node = class Node {
 					constructor(value, next=null) {
@@ -392,6 +470,8 @@
 						this.next = next;
 					}
 				};
+				if (head === undefined) this.head = null;
+				else this.head = new this.Node(head);
 			}
 			insertLast(value) {
 				if (!this.size) return this.insertFirst(value);
@@ -400,7 +480,7 @@
 					current = current.next;
 				current.next = new this.Node(value)
 			}
-			insertAt(value, index=Infinity) {
+			insertAt(value, index=0) {
 				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
 				if (!index) return this.insertFirst(value);
 				if (index === this.size) return this.insertLast(value);
@@ -409,7 +489,7 @@
 				this.size++;
 				current.next = new this.Node(value, current.next)
 			}
-			getAt(index) {
+			getAt(index=0) {
 				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
 				for (var i = 0, current = this.head; i < index; i++)
 					current = current.next;
@@ -457,19 +537,31 @@
 			BigInt: BigInt,
 			Function: Function,
 			Array: Array,
-			Object: function Object(input, h=!1) {
-				return type(input) === "object" ? input : h == !0 ? {data: input} : void 0
+			Object(input, handle=!1) {
+				return type(input) === "object" ? input : handle == !0 ? {data: input} : void 0
 			},
 			undefined: ()=>{},
-			Symbol: function Symbol(input, h=!1) {
-				return type(input) === "symbol" ? input : h == !0 ? Symbol.for(input) : void 0
+			Symbol(input, handle=!1) {
+				return type(input) === "symbol" ? input : handle == !0 ? Symbol.for(input) : void 0
 			}
+		};
+		this.numStrNorm = function NormalizeNumberString(snum="0.0") {
+			if (isNaN(snum) || !isFinite(snum)) return NaN;
+			snum = snum.toString();
+			if (Math.eq.seq(snum, "0.0")) return "0.0";
+			!snum.incl(".") && (snum += ".0");
+			if (snum[0] === "-") while (snum[1] === "0" && snum[2] !== ".") snum = `-${snum.substr(2)}`;
+			else while (snum[0] === "0" && snum[1] !== ".") snum = snum.substr(1);
+			while (snum[dim(snum)] === "0" && snum[dim(snum, 2)] !== ".") snum = snum.substr(0, dim(snum));
+			return snum + (snum.endsW(".") ? "0" : "");
 		};
 		Number.EPSILON == null && (Number.EPSILON = 2**-52);
 	}
-	// TODO: Refactor methods so they work with complex numbers
-	const Math2 = {
-		// TODO: Add back original functions to Math.
+	for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+		for (j = 10; j --> 0 ;)
+			multable[i][j] = i * j;
+		
+	const MathObjects = {
 		// For the following Math classes, 'n' and 'x' both denote any arbitrary real number,
 		// And 'z' refers to any arbitrary complex number.
 		// For the remainder of the file, 'a' and 'b' refer to any arbitrary input to a function.
@@ -482,12 +574,45 @@
 				};
 			}
 			method() {}
-		},
-		rMath: class RealMath {
-			// TODO: Change the errors to return 'NaN' instead starting at sin
-			constructor(degTrig, help) {
+		}, aMath: class AllMath {
+			constructor() {
+
+			}
+		}, fMath: class fractionalMath {
+			constructor(help) {
+				help === "default" && (help = true);
+
+			}
+			// do something about non-numbers and 0 denominators
+			fraction(numerator=0, denominator=0) { return new this.Fraction(numerator, denominator) }
+			new     (numerator=0, denominator=0) { return new this.Fraction(numerator, denominator) }
+			simplify(fraction) {
+				if (!["number", "bigint", "string"].incl(type(fraction)) || this.rMath.isNaN(fraction))
+					return NaN;
+				if (type(fraction, 1) !== "fraction") fraction = this.new(fraction, 1);
+				var gcd = this.rMath.gcd(fraction.numer, fraction.denom);
+				var tmp = this.div(fraction.numer, gcd);
+				["number", "string", "bigint"][type(fraction.numer)]
+				if (type(fraction.numer) === "number") {
+					;
+				} else if (type(fraction.numer) === "bigint") {
+					;
+				} else if (type(fraction.numer) === "string") {
+					;
+				}
+				if (type(fraction.denom) === "number") {
+					;
+				} else if (type(fraction.denom) === "bigint") {
+					;
+				} else if (type(fraction.denom) === "string") {
+					;
+				}
+			}
+		}, rMath: class RealMath {
+			constructor(degTrig, help, comparatives) {
 				degTrig === "default" && (degTrig = true);
 				help === "default" && (help = true);
+				comparatives === "default" && (comparatives = true);
 				const π = 3.141592653589793,
 					  𝑒 = 2.718281828459045,
 					  ϕ = 1.618033988749895,
@@ -495,20 +620,18 @@
 					  Ω = .5671432904097838, // Ωe^Ω = 1
 					  α = 1.187452351126501; // https://en.wikipedia.org/wiki/Foias_constant
 
-				this.phi = this.PHI = this.ϕ = ϕ;
-				this.e   = this.E   = this.𝑒 = 𝑒;
-				this.ec  = this.γ   =          γ;
-				this.pi  = this.PI  =          π;
-				this.foias = this.α =          α;
-				this.omega   = 0.5671432904097838; // https://en.wikipedia.org/wiki/Omega_constant
+				this.phi   = this.PHI = this.ϕ = ϕ; this.e     = this.E   = this.𝑒 = 𝑒;
+				this.ec    = this.γ   =          γ; this.pi    = this.PI  =          π;
+				this.foias = this.α   =          α; this.tau   = this.TAU =        2*π;
+				this.omega   = 0.5671432904097838 ; this.LN2     = 0.6931471805599453 ;
+				this.ln2     = .69314718055994531 ; this.LN10    = 2.3025850929940450 ;
+				this.ln10    = 2.3025850929940456 ; this.LOG2E   = 1.4426950408889634 ;
+				this.log2e   = 1.4426950408889634 ; this.LOG10E  = 0.4342944819032518 ;
+				this.loge    = .43429448190325183 ; this.SQRT1_2 = 0.7071067811865476 ;
+				this.sqrt1_2 = .70710678118654752 ; this.SQRT2   = 1.4142135623730951 ;
+				this.sqrt2   = 1.4142135623730951 ; this.logpi10 = 2.0114658675880609 ;
+				this.dtor = .01745329251994329576 ; this.rtod = 57.295779513082320876 ;
 
-				this.LN2     = 0.6931471805599453;
-				this.LN10    = 2.302585092994045 ;
-				this.ln10    = 2.3025850929940456;
-				this.LOG2E   = 1.4426950408889634;
-				this.LOG10E  = 0.4342944819032518;
-				this.SQRT1_2 = 0.7071067811865476;
-				this.SQRT2   = 1.4142135623730951;
 				// TODO: Update Math.help
 				if (help) this.help = {
 					null: "If a value is null, then you could just directly check what the function does.",
@@ -526,37 +649,37 @@
 						acsc: "1 argument. returns asin(1/arg) (radians)",
 						asec: "1 argument. returns acos(1/arg) (radians)",
 						acot: "1 argument. if the argument == 0, returns π/2.  if the argument is less than zero, returns π + arctangent(1/argument). otherwise, returns atan(1/argument).  (radians)",
-						excst: null,
-						exset: null,
-						vcs: null,
-						cvs: null,
-						acvs: null,
-						ccvs: null,
-						accvs: null,
-						crd: null,
-						acrd: null,
-						ccrd: null,
-						accrd: null,
-						exsec: null,
-						aexsec: null,
-						excsc: null,
-						aexcsc: null,
-						vers: null,
-						avers: null,
-						verc: null,
-						averc: null,
-						cvers: null,
-						acvers: null,
-						cverc: null,
-						acverc: null,
-						hvers: null,
-						ahvers: null,
-						hverc: null,
-						ahverc: null,
-						hcvers: null,
-						ahcvers: null,
-						hcverc: null,
-						ahcverc: null,
+						excst: "1 argument. returns √( exsec^2(x) +  cot^2(x) ) in radians",
+						exset: "1 argument. returns √( exsec^2(x) +  tan^2(x) ) in radians",
+						vcs: "1 argument. returns √( vercosin^2(x) +  sin^2(x) ) in radians",
+						cvs: "1 argument. returns √( 1 +  sin^2(x) ) in radians",
+						acvs: "1 argument. returns asin( x^2 - 1 ) with an input in radians",
+						ccvs: "1 argument. returns √( 1 +  cos^2(x) ) in radians",
+						accvs: "1 argument. returns acos( x^2 - 1 ) with an input in radians",
+						crd: "1 argument. returns sin(x/2) in radians",
+						acrd: "1 argument. returns 2asin(x/2) with an input in radians",
+						ccrd: "1 argument. returns cos(x/2) in radians",
+						accrd: "1 argument. returns π/2 - acrdx in radians",
+						exsec: "1 argument. returns secx - 1 in radians",
+						aexsec: "1 argument. returns asec(x + 1) with an input in radians",
+						excsc: "1 argument. returns cscx - 1 in radians",
+						aexcsc: "1 argument. returns acsc(x + 1) with an input in radians",
+						vers: "1 argument. returns 1 - cosx in radians",
+						avers: "1 argument. returns acos(x + 1) with an input in radians",
+						verc: "1 argument. returns 1 + cosx in radians",
+						averc: "1 argument. returns acos(x - 1) with an input in radians",
+						cvers: "1 argument. returns 1 - sinx in radians",
+						acvers: "1 argument. returns asin(1 - x) with an input in radians",
+						cverc: "1 argument. returns 1 + sinx in radians",
+						acverc: "1 argument. returns asin(x - 1) with an input in radians",
+						hvers: "1 argument. returns versx / 2 in radians",
+						ahvers: "1 argument. returns acos(1 - 2x) with an input in radians",
+						hverc: "1 argument. returns vercx / 2 in radians",
+						ahverc: "1 argument. returns acos(2x - 1) with an input in radians",
+						hcvers: "1 argument. returns cversx / 2 in radians",
+						ahcvers: "1 argument. returns asin(1 - 2x) in radians",
+						hcverc: "1 argument. returns cversx / 2 in radians",
+						ahcverc: "1 argument. returns asin(2x - 1) with an input in radians",
 						sinh: "1 argument. returns sinh(angle) using the taylor series definition of sinh.",
 						cosh: "1 argument. returns cosh(angle) using the taylor series definition of cosh",
 						tanh: "1 argument. returns sinh(angle) / cosh(angle)",
@@ -569,36 +692,37 @@
 						acsch: "1 argument. returns asinh(1/arg)",
 						asech: "1 argument. returns acosh(1/arg)",
 						acoth: "1 argument. returns atanh(1/arg)",
-						excsth: null,
-						exseth: null,
-						vcsh: null,
-						cvsh: null,
-						acvsh: null,
-						ccvsh: null,
-						accvsh: null,
-						crdh: null,
-						acrdh: null,
-						ccrdh: null,
-						accrdh: null,
-						exsech: null,
-						aexsech: null,
-						aexcsch: null,
-						versh: null,
-						aversh: null,
-						verch: null,
-						averch: null,
-						cversh: null,
-						acversh: null,
-						cverch: null,
-						acverch: null,
-						hversh: null,
-						ahversh: null,
-						hverch: null,
-						ahverch: null,
-						hcversh: null,
-						ahcversh: null,
-						hcverch: null,
-						ahcverch: null,
+						excsth: "1 argument. returns √( exsech^2(x) +  coth^2(x) )",
+						exseth: "1 argument. returns √( exsech^2(x) +  tanh^2(x) )",
+						vcsh: "1 argument. returns √( vercosinh^2(x) +  sinh^2(x) )",
+						cvsh: "1 argument. returns √( 1 +  sinh^2(x) )",
+						acvsh: "1 argument. returns asinh( x^2 - 1 )",
+						ccvsh: "1 argument. returns √( 1 +  cosh^2(x) )",
+						accvsh: "1 argument. returns acosh( x^2 - 1 )",
+						crdh: "1 argument. returns sinh(x/2)",
+						acrdh: "1 argument. returns 2asinh(x/2)",
+						ccrdh: "1 argument. returns cosh(x/2)",
+						accrdh: "1 argument. returns π/2 - acrdhx",
+						exsech: "1 argument. returns sechx - 1",
+						aexsech: "1 argument. returns asech(x + 1)",
+						excsch: "1 argument. returns cschx - 1",
+						aexcsch: "1 argument. returns acsch(x + 1)",
+						versh: "1 argument. returns 1 - coshx",
+						aversh: "1 argument. returns acosh(x + 1)",
+						verch: "1 argument. returns 1 + coshx",
+						averch: "1 argument. returns acosh(x - 1)",
+						cversh: "1 argument. returns 1 - sinhx",
+						acversh: "1 argument. returns asinh(1 - x)",
+						cverch: "1 argument. returns 1 + sinhx",
+						acverch: "1 argument. returns asinh(x - 1)",
+						hversh: "1 argument. returns vershx / 2",
+						ahversh: "1 argument. returns acosh(1 - 2x)",
+						hverch: "1 argument. returns verchx / 2",
+						ahverch: "1 argument. returns acosh(2x - 1)",
+						hcversh: "1 argument. returns cvershx / 2",
+						ahcversh: "1 argument. returns asinh(1 - 2x)",
+						hcverch: "1 argument. returns cvershx / 2",
+						ahcverch: "1 argument. returns asinh(2x - 1)",
 						deg: {
 							sin: "1 argument. returns sin(angle°), using the taylor series definition of sin.",
 							cos: "1 argument. returns cos(angle°), using the taylor series definition of cos.",
@@ -613,17 +737,17 @@
 							acsc: "1 argument. returns asin(1/arg)",
 							asec: "1 argument. returns acos(1/arg)",
 							acot: "1 argument. if the argument is loosely equal to zero, returns 90.  if the argument is less than zero, returns 180 + atan(arg), otherwise it returns atan(arg).",
-							excst: "1 argument. returns sqrt( exsec^2(x) +  cot^2(x) ) in degrees",
-							exset: "1 argument. returns sqrt( exsec^2(x) +  tan^2(x) ) in degrees",
-							vcs: "1 argument. returns sqrt( vercosin^2(x) +  sin^2(x) ) in degrees",
-							cvs: "1 argument. returns sqrt( 1 +  sin^2(x) ) in degrees",
+							excst: "1 argument. returns √( exsec^2(x) +  cot^2(x) ) in degrees",
+							exset: "1 argument. returns √( exsec^2(x) +  tan^2(x) ) in degrees",
+							vcs: "1 argument. returns √( vercosin^2(x) +  sin^2(x) ) in degrees",
+							cvs: "1 argument. returns √( 1 +  sin^2(x) ) in degrees",
 							acvs: "1 argument. returns asin( x^2 - 1 ) with an input in degrees",
-							ccvs: "1 argument. returns sqrt( 1 +  cos^2(x) ) in degrees",
+							ccvs: "1 argument. returns √( 1 +  cos^2(x) ) in degrees",
 							accvs: "1 argument. returns acos( x^2 - 1 ) with an input in degrees",
 							crd: "1 argument. returns sin(x/2) in degrees",
 							acrd: "1 argument. returns 2asin(x/2) with an input in degrees",
 							ccrd: "1 argument. returns cos(x/2) in degrees",
-							accrd: "1 argument. returns ( π-4asin(x/2) ) / 2 in degrees",
+							accrd: "1 argument. returns π/2 - acrdx in degrees",
 							exsec: "1 argument. returns secx - 1 in degrees",
 							aexsec: "1 argument. returns asec(x + 1) with an input in degrees",
 							excsc: "1 argument. returns cscx - 1 in degrees",
@@ -643,8 +767,7 @@
 							hcvers: "1 argument. returns cversx / 2 in degrees",
 							ahcvers: "1 argument. returns asin(1 - 2x) in degrees",
 							hcverc: "1 argument. returns cversx / 2 in degrees",
-							ahcverc: "1 argument. returns asin(2x - 1) with an input in degrees",
-
+							ahcverc: "1 argument. returns asin(2x - 1) with an input in degrees"
 						}
 					},
 					Ω: "Takes 2 arguments.  1: number (x).  2: accuracy. returns Ω where Ωx^Ω = 1",
@@ -666,10 +789,11 @@
 					igammal: null,
 					igammau: null,
 					_: "Takes 1 argument. returns 1 / argument",
+					inverse: "Takes 1 argument. returns 1 / argument",
 					int: "stands for integral.  Takes 4 arguments.  1: starting value (inclusive).  2: ending value (exclusive).  3: what you are taking the integral of, in the form of a function with an input, and an output.  4: rectangle size, or in other words, the accuracy, where smaller is more accurate.  the accuracy is defaulted to 0.001, and it is defaulted to taking the integral of y=x.",
 					hypot: "Stands for hypotenuse.  Takes in any amount of parameters, either directly or in one or many array(s).  for each argument, adds the square to the total.  then takes the square root of the total.",
-					log: "Takes 2 parameters.  1: number you are taking the logarithm of.  2: base of the logarithm. eg: log(3,6) = log₆(3). the base is defaulted to 10.",
-					logbase: null,
+					log: "Takes 3 parameters.  1: number you are taking the logarithm of.  2: base of the logarithm. eg: log(3,6) = log₆(3).  3: number of iterations. the base is defaulted to 10.  The number of iterations is defaulted to 50",
+					logbase: "Takes 3 parameters (base, number, number of iterations), returns log(number, base, iterations).  the first parameters flipped. The number of iterations is defaulted to 50",
 					ln: "Takes 1 parameter, and returns the natural logarithm of the number.  the same as the original Math.log. returns log(input, 𝑒).",
 					max: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the largest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
 					min: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the smallest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
@@ -688,10 +812,10 @@
 					synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant",
 					simpRad: "Takes 1 integer argument (number under radical) and returns, as a string, the radical in simplified form",
 					PythagTriple: "Takes one argument. 1: max size. finds all principle pythagorean triples such that a**2 + b**2 = c**2, a < max size, and b < max size, and a, b, and c are all integers.",
-					add: "Takes any amount of arguments, either directly or in one or many array(s).  adds all of the arguments together and returns the answer.",
+					add: "Takes 4 arguments.  1: a number (a).  2: a number (b).  3:boolean, true returns a number, false returns a string.  4:number, decimal precision. returns a + b with no floating point arithmetic errors. if number is false, it returns a string with the precision of the last argument. a and b default to 0. if precsion is not a number, it becomes infinity.",
 					sub: null,
 					mul: null,
-					div: null,
+					div: "Takes 4 arguments.  1:number, numerator.  2:number, denominator.  3:boolean, true returns a number, false returns a string.  4:number, decimal precision.  returns the numerator divided by the denominator with no floating point errors.  numerator defaults to 0, and denominator defaults to 1",
 					parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
 					nCr: "Stands for n Choose r. takes 2 arguments. same as python's math.comb()",
 					nPr: "Stands for n Permute r. takes 2 arguments.",
@@ -724,31 +848,31 @@
 					mod: "Takes two arguments (a,b).  similar to a%b.",
 					ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
 					findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers",
-					li: null,
-					li2: null,
+					// TODO: Fix li() and li2() documentation
+					li: "logarithmic integral version 1",
+					li2: "logarithmic integral version 2",
 					Li: null,
-					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. tetration",
+					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information",
 					hyper0: "Takes 1 argument and returns 1 + the argument",
 					hyper1: "Takes 2 numeric arguments and returns the sum of the arguments",
 					hyper2: "Takes 2 numeric arguments and returns the product of the arguments",
 					hyper3: "Takes 2 numeric arguments and returns the first argument to the power of the second argument",
-					hyper4: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. tetration",
+					hyper4: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information",
 					Si: null,
 					si: null,
 					Cin: null,
 					Ci: null,
 					Shi: null,
 					Chi: null,
-					tanhc: null,
-					sinhc: null,
-					Tanc: "takes 1 numeric argument (x) and returns tan(x) / x using radians",
-					Coshc: null,
+					tanhc: "Takes 1 numeric argument (z) and returns tanh(z) / z",
+					sinhc: "Takes 1 numeric argument (z) and returns sinh(z) / z",
+					Tanc : "Takes 1 numeric argument (x) and returns tan(x) / x using radians",
+					Coshc: "Takes 1 numeric argument (z) and returns cosh(z) / z",
 					H: "Takes 1 argument. Heaveside step function. returns 1 if it is a non-zero positive number, and 0 otherwise.",
 					// W: null,
-				};
-				if (degTrig) this.deg = {
-					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n+1) * ((θ*π/180) % (2*π))**(2*n+1)),
-					cos: θ => isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n) * ((θ*π/180) % (2*π))**(2*n)),
+				}; if (degTrig) this.deg = {
+					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sin(θ*π/180),
+					cos: θ => isNaN( θ = Number(θ) ) ? θ : this.cos(θ*π/180),
 					tan: θ => isNaN( θ = Number(θ) ) ? θ : this.deg.sin(θ) / this.deg.cos(θ),
 					csc: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.sin(θ),
 					sec: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.cos(θ),
@@ -780,7 +904,7 @@
 					crd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.sin(x / 2), // chord
 					acrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.asin(x / 2), // arc-chord
 					ccrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.cos(x / 2), // co-chord
-					accrd: x => isNaN( x = Number(x) ) ? x : (π - 4*this.deg.asin(x / 2)) / 2, // arc-co-chord
+					accrd: x => isNaN( x = Number(x) ) ? x : π/2 - this.deg.acrd(x), // arc-co-chord
 					exsec: x => isNaN( x = Number(x) ) ? x : this.deg.sec(x) - 1, // external-secant
 					aexsec: x => isNaN( x = Number(x) ) ? x : this.deg.asec(x + 1), // arc-exsecant
 					excsc: x => isNaN( x = Number(x) ) ? x : this.deg.csc(x) - 1, // external-cosecant
@@ -801,6 +925,134 @@
 					ahcvers: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1 - 2*x), // arc-hacoversine
 					hcverc: x => isNaN( x = Number(x) ) ? x : this.deg.cverc(x) / 2, // hacovercosine
 					ahcverc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(2*x - 1), // arc-hacovercosine
+				}; if (comparatives) this.eq = {
+					gt(a="0.0", b="0.0") {// >
+						if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+						a = a.toString(); !a.incl(".") && ( a += ".0" );
+						b = b.toString(); !b.incl(".") && ( b += ".0" );
+
+						for (var a_index = 0 ;;) {
+							if (a[a_index] === "0") {
+								a_index++;
+								continue;
+							}
+							if (a[a_index] == null) a_index = Infinity;
+							break;
+						} for (var b_index = 0 ;;) {
+							if (b[b_index] === "0") {
+								b_index++;
+								continue;
+							}
+							if (b[b_index] == null) b_index = Infinity;
+							break;
+						} if ( a.io(".") - a_index > b.io(".") - b_index ) return true;
+
+						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
+						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
+						for (var i = 0, n = len(a); i < n; i++) {
+							if (a[i] === ".") continue;
+							if (1*a[i] > 1*b[i]) return true;
+							if (1*a[i] < 1*b[i]) return false;
+						}
+						return false;
+					},
+					ge(a="0.0", b="0.0") {/* >= */ return this.gt(a, b) || this.seq(a, b) },
+					lt(a="0.0", b="0.0") {// <
+						if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+						a = a.toString(); !a.incl(".") && ( a += ".0" );
+						b = b.toString(); !b.incl(".") && ( b += ".0" );
+
+						for (var a_index = 0 ;;) {
+							if (a[a_index] === "0") {
+								a_index++;
+								continue;
+							}
+							if (a[a_index] == null) a_index = Infinity;
+							break;
+						} for (var b_index = 0 ;;) {
+							if (b[b_index] === "0") {
+								b_index++;
+								continue;
+							}
+							if (b[b_index] == null) b_index = Infinity;
+							break;
+						} if ( a.io(".") - a_index < b.io(".") - b_index ) return true;
+
+						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
+						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
+						for (var i = 0, n = len(a); i < n; i++) {
+							if (a[i] === ".") continue;
+							if (1*a[i] < 1*b[i]) return true;
+							if (1*a[i] > 1*b[i]) return false;
+						}
+						return false;
+					},
+					le(a="0.0", b="0.0") {/* <= */ return this.lt(a, b) || this.seq(a, b) },
+					leq(a=0, b=0) { // loose equal to. regular decimal place number
+						return Number(a) === Number(b);
+					},
+					seq(a="0.0", b="0.0") {// strict equal to. infinite decimal places
+						if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+						a = a.toString(); !a.incl(".") && ( a += ".0" );
+						b = b.toString(); !b.incl(".") && ( b += ".0" );
+
+						for (var a_index = 0 ;;) {
+							if (a[a_index] === "0") {
+								a_index++;
+								continue;
+							}
+							if (a[a_index] == null) a_index = Infinity;
+							break;
+						} for (var b_index = 0 ;;) {
+							if (b[b_index] === "0") {
+								b_index++;
+								continue;
+							}
+							if (b[b_index] == null) b_index = Infinity;
+							break;
+						}
+						if ( a.io(".") - a_index !== b.io(".") - b_index ) return false;
+
+						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
+						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
+						for (var i = 0, n = len(a); i < n; i++) {
+							if (a[i] === ".") continue;
+							if (1*a[i] !== 1*b[i]) return false;
+						}
+						return true;
+					},
+					lneq(a=0, b=0) {// loose not equal to. normal number of decimal places
+						return Number(a) !== Number(b);
+					},
+					sneq(a="0.0", b="0.0") {// strict not equal to. infinity decimal places
+						if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+						a = a.toString(); !a.incl(".") && ( a += ".0" );
+						b = b.toString(); !b.incl(".") && ( b += ".0" );
+
+						for (var a_index = 0 ;;) {
+							if (a[a_index] === "0") {
+								a_index++;
+								continue;
+							}
+							if (a[a_index] == null) a_index = Infinity;
+							break;
+						} for (var b_index = 0 ;;) {
+							if (b[b_index] === "0") {
+								b_index++;
+								continue;
+							}
+							if (b[b_index] == null) b_index = Infinity;
+							break;
+						} if ( a.io(".") - a_index > b.io(".") - b_index ) return true;
+
+						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
+						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
+						for (var i = 0, n = len(a); i < n; i++) {
+							if (a[i] === ".") continue;
+							if (1*a[i] !== 1*b[i]) return true;
+						}
+						return false;
+					},
 				};
 			}
 			Ω(x=Math.e, i=10000) {
@@ -836,10 +1088,24 @@
 						NaN :
 						this.sum(1, acy, n => n**-s);
 			}
-			/*π(x) {// prime counting function
-				;
-				throw Error("not implemented");
-			}*/
+			Rzeta(s, acy=1000) { return this.ζ(s, acy) }
+			Hzeta(s, a, acy=1000) {
+				// Hurwitz zeta function
+			}
+			π(x, form=1) {
+				if (isNaN( x = round(Number(x)) )) return NaN;
+				if (x < 2) return 0;
+				if (x === Infinity) return x;
+				if (form === 1) {
+					for (var i = x + 1, total = 0; i --> 1 ;)
+						total += i.isPrime();
+					return total;
+				}
+				if (form === 2) return this.li(x);
+				if (form === 3) return x / this.log(x);
+				return NaN;
+			}
+			primeCount(x, form=1) { return this.π(x, form) }
 			P(...set) {
 				// power set, set of all subsets
 				set = set.flatten();
@@ -892,6 +1158,7 @@
 				var ans = this.int(0, acy, x=>x**n/𝑒**x, inc);
 				return type(ans, 1) === "inf" ? NaN : ans;
 			}
+			factorial(n) { return this.fact(n) }
 			sgn(n) { return isNaN( n = Number(n) ) ? NaN : !n ? n : n<0 ? -1 : 1 }
 			abs(n) { return isNaN( n = Number(n) ) ? NaN : this.sgn(n) * n }
 			sum(n, last, fn=n=>n, inc=1) {
@@ -947,7 +1214,7 @@
 			igammau(n, acy=1000, inc=.1) {
 				// upper incomplete gamma function
 				if (isNaN( n = Number(n) )) return NaN;
-				if (n.isInt()) return this.ifact(n-1);
+				if ( n.isInt() ) return this.ifact(n-1);
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				n--;
@@ -955,6 +1222,7 @@
 				return type(ans, 1) === "inf" ? NaN : n;
 			}
 			_(n) { return isNaN( n = Number(n) ) ? NaN : 1 / n }
+			inverse(n) { return isNaN( n = Number(n) ) ? NaN : 1 / n }
 			int(x/*start*/, end, fn=x=>x, inc=.001) {
 				// start and end are included.
 				if (isNaN( x = Number(x) )) return NaN;
@@ -1008,7 +1276,11 @@
 					NaN :
 					this.log( n, base, acy );
 			}
-			ln(n, acy=50) { return isNaN( n = Number(n) ) || isNaN( acy = Number(acy) ) ? NaN : this.log( n, 𝑒, acy ) }
+			ln(n, acy=50) {
+				return isNaN( n = Number(n) ) ||
+					isNaN( acy = Number(acy) ) ?
+					NaN : this.log( n, 𝑒, acy );
+			}
 			max(...ns) {
 				ns = ns.flatten();
 				if ( ns.isNaN() ) return NaN;
@@ -1022,19 +1294,6 @@
 				let min = ns[0];
 				for (let i of ns) min = i < min ? i : min;
 				return min;
-			}
-			nthrt(x, rt=2, acy=100) {
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( rt = Number(rt) )) return NaN;
-				if (rt < 0) return x**rt;
-				if (!rt || !(rt % 2) && x < 0) return NaN;
-				if (!x) return 0;
-				if (isNaN( acy = Number(acy) )) return NaN;
-				for (var pow, cur = x, i = 0; pow !== cur && i < acy; i++) {
-					pow = cur;
-					cur = ((rt - 1) * pow**rt + x) / (rt * pow**(rt - 1));
-				}
-				return cur;
 			}
 			mean(...ns) {
 				ns = ns.flatten();
@@ -1054,15 +1313,15 @@
 				return ns.reduce((absDev, n) => absDev + this.abs(n - MEAN), 0) / len(ns);
 			}
 			isPrime(n) { return this.isNaN(n) ? NaN : n.isPrime() }
-			lmgf(t="lcm", ...a) {
+			lmgf(t="lcm", ...ns) {
 				// least commond multiple and greatest common factor
-				a = a.flatten();
+				ns = ns.flatten();
 				type(t) !== "string" && (t = "lcm");
 				if ( ns.isNaN() ) return NaN;
-				a = a.map(b => this.abs( int(b) ));
-				for (let c, i = t[0] === "l" ? this.max(a) : this.min(a); ; t[0] === "l" ? i++ : i-- ) {
-					for (let j = len(a) - 1; j >= 0; --j) {
-						if (t[0] === "l" ? i % a[j] : a[j] % i) {
+				ns = ns.map(b => this.abs( int(b) ));
+				for (let c, i = t[0] === "l" ? this.max(ns) : this.min(ns); ; t[0] === "l" ? i++ : i-- ) {
+					for (let j = len(ns) - 1; j >= 0; --j) {
+						if (t[0] === "l" ? i % ns[j] : ns[j] % i) {
 							c = !1;
 							break;
 						}
@@ -1099,6 +1358,7 @@
 				return `y = ${m}x + ${b}`;
 			}
 			pascal(row, col) {
+				// pascal's triangle, Sierpiński triangle
 				if (isNaN( row = Number(row) )) return NaN;
 				if (col !== "all") col = Number(all);
 				if (type(col, 1) !== "num" && col !== "all") return NaN;
@@ -1176,33 +1436,183 @@
 				}
 				return triples;
 			}
-			add(...ns) {
-				ns = ns.flatten();
-				if ( ns.isNaN() ) return NaN;
-				for (var i = len(ns), out = 0; i --> 0 ;)
-					out += ns[i];
-				return out;
+			neg(num=0, number=false) {
+				return number ?
+					-num :
+					num.startsW("-") ?
+						num.substr(1) :
+						`-${num}`;
 			}
-			sub(...ns) {
-				ns = ns.flatten();
-				if ( ns.isNaN() ) return NaN;
-				for (var i = len(ns), out = ns[0]; i --> 1 ;)
-					out -= ns[i];
-				return out;
+			ssgn(snum="0.0") {// string sign
+				return snum[0] === "-" ?
+					1 :
+					this.eq.seq(snum, 0) ?
+						0 :
+						-1;
 			}
-			mul(...ns) {
-				ns = ns.flatten();
-				if ( ns.isNaN() ) return NaN;
-				for (var i = len(ns), out = ns.pop(); i --> 0 ;)
-					out *= ns[i];
-				return out;
+			sabs(snum="0.0") {// string absolute value
+				return snum.startsW("-") ?
+					snum.substr(1) :
+					snum;
 			}
-			div(...ns) {
-				ns = ns.flatten();
-				if ( ns.isNaN() ) return NaN;
-				for (var i = len(ns), out = ns[0]; i --> 1 ;)
-					out /= ns[i];
-				return out;
+			add(a="0.0", b="0.0", number=true, precision=Infinity) {
+				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
+				if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+				if ( isNaN(precision) ) precision = Infinity;
+				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
+				if (a.startsW("-") && b.startsW("-"))
+					return this.neg(this.add(a.substr(1), b.substr(1), number, precision) , number);
+				if (a.startsW("-")  && !b.startsW("-")) return this.sub(b, a.substr(1), number, precision);
+				if (!a.startsW("-") &&  b.startsW("-")) return this.sub(a, b.substr(1), number, precision);
+				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", len(b) - len(a));
+				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", len(a) - len(b));
+				a = a.split("."); b = b.split(".");
+
+				let c = [
+					[ a[0], b[0] ],
+					[ a[1], b[1] ],
+				].map(
+					e => e.map( f => f.split("") )
+				).map(
+					o => o[0].map( (e, i) => 1*e + 1*o[1][i] )
+				);
+				for (var i = 2; i --> 0 ;) {
+					for (var j = len(c[i]), tmp; j --> 0 ;) {
+						tmp = floor( c[i][j] / 10 );
+						c[i][j] -= 10*tmp;
+						if (tmp) {
+							if (j) c[i][j-1] += tmp;
+							else i === 1 ? c[0][len(c[0]) - 1] += tmp : c[i].unshift(tmp);
+						}
+					}
+				}
+				c = c.map( e => e.join("")).join(".").remove(/\.0+$/);
+				if (number) return Number(c);
+				return c.io(".") < 0 ?
+					c :
+					c.substr(
+						0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
+					).remove(/\.0+$/);
+			}
+			sub(a="0.0", b="0.0", number=true, precision=Infinity) {
+				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
+				if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+				if ( isNaN(precision) ) precision = Infinity;
+				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
+				if (!a.startsW("-") && b.startsW("-")) return this.add(a, b.substr(1), number, precision);
+				if (a.startsW("-") && b.startsW("-")) return this.sub(b.substr(1), a, number, precision);
+				if (a.startsW("-") && !b.startsW("-"))
+					return this.neg( this.add(a.substr(1), b, number, precision) , number);
+				if (this.eq.gt(b, a)) return this.neg( this.sub(b, a, number, precision) , number );
+				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", len(b) - len(a));
+				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", len(a) - len(b));
+				a = a.split("."); b = b.split(".");
+
+				let c = [
+					[ a[0], b[0] ],
+					[ a[1], b[1] ],
+				].map(
+					e => e.map( f => f.split("") )
+				).map(
+					o => o[0].map( (e, i) => 1*e - 1*o[1][i] )
+				), neg = c[0][0] < 0;
+				for (var i = 2, j, tmp; i --> 0 ;) { // c[1] then c[0]
+				for (j = len( c[i] ) ; j --> 0 ;) { // for each element in c[i]
+						tmp = this.abs( floor(c[i][j] / 10) );
+						while (c[i][j] < 0) {
+							i + j && (c[i][j] += 10);
+							if (j) c[i][j-1] -= tmp;
+							else if (i === 1) c[0][len(c[0]) - 1] -= tmp;
+							else throw Error(`Broken. End value shouldn't be negative.`);
+						}
+					}
+				}
+				c = c.map(e=>e.join("")).join(".");
+				return number ?
+					Number(c) :
+					c.io(".") < 0 ?
+						c :
+						c.substr(
+							0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
+						).remove(/\.0+$/);
+			}
+			mul(a="0.0", b="0.0", number=true, precision=Infinity) {
+				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
+				if (this.isNaN(a) || this.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
+				const sign = this.ssgn(a) === this.ssgn(b) ? "1.0" : "-1.0";
+				a = this.sabs(a); b = this.sabs(b);
+				if (this.eq.seq(a, "0.0") && this.eq.seq(b, "0.0")) return number ? 0 : "0.0";
+
+				a = a.remove(/0+$/g); b = b.remove(/0+$/g);
+				var dec = len(a) - a.io(".") + len(b) - b.io(".") - 2;
+				a = a.remove("."); b = b.remove(".");
+				for (var i = len(b), arr = [], carryover, tmp, str, j; i --> 0 ;) {
+					for (j = len(a), str = "", carryover = 0; j --> 0 ;) {
+						tmp = (multable[ b[i] ][ a[j] ] + carryover).toString();
+						carryover = dim(tmp) ? Number(tmp[0]) : 0;
+						tmp = Number( tmp[dim(tmp)] );
+						str = tmp + str;
+						!j && carryover && (str = carryover + str);
+					}
+					arr.push(str);
+				}
+				for (var i = len(arr); i --> 0 ;) arr[i] += strMul("0", i);
+				for (var total = "0.0", i = len(arr); i --> 0 ;) total = this.add(arr[i], total, false, precision);
+				total = total.substr(0, len(total) - dec) + "." + total.substr(len(total) - dec);
+				return sign === "-1.0" ?
+					this.neg( total , number ) :
+					number ? Number(total) : total;
+			}
+			// TODO: Make sure the calls to sub and mul are correct. also finish
+			div(num="0.0", denom="1.0", number=true, precision=18) {
+				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
+				if (Math.isNaN(num) || Math.isNaN(denom) || !isFinite(num) || !isFinite(denom)) return NaN;
+				isNaN(precision) && (precision = 18);
+				if (denom == 0) return num == 0 ? NaN : Infinity;
+				if (num == 0) return 0;
+				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
+				const sign = this.ssgn(num) === this.ssgn(denom) ? "1.0" : "-1.0";
+				num = this.sabs(num); denom = this.sabs(denom);
+				while ( this.eq.sneq(fpart(num, false), 0) || this.eq.sneq(fpart(denom, false), 0) ) {
+					num   = this.mul(num, "10.0", false, precision);
+					denom = this.mul(num, "10.0", false, precision);
+				}
+				debugger;
+				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom, false, precision);
+				let tmp1=num,  tmp2=denom,  tmp3,  ans="0.0";
+				debugger;
+				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2, false, precision), "0.0")) {
+					tmp1 = tmp3;
+					ans = this.add(ans, "1.0", false, precision);
+				}
+				var ansString = `${ans}`, remainder = this.mul(
+					this.sub(num, this.mul(ans, denom, false, precision), false, precision),
+					"10.0", false, precision
+				);
+				remainder && (ansString += ".");
+				for (var i = 0, j; this.eq.sneq(remainder, "0.0") && i++ < precision ;) {
+					for (j = 9; this.eq.lt(this.sub(remainder, table[j], false, precision), "0.0") ;) j--;
+					remainder = this.mul(
+						this.sub(remainder, table[j], false, precision),
+						"10.0", false, precision
+					);
+					ansString += `${j}`;
+				}
+				return this.mul(sign, ansString, number, precision);
+			}
+			// TODO: Test Math.mod function
+			mod(a, n=1, d=0) {
+				// a mod_d n
+				if (isNaN( a = Number(a) )) return NaN;
+				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( d = Number(d) )) return NaN;
+				if (!n) return NaN;
+				if (a >= 0 && n > 0) for (; a - n >= 0 ;) a -= n;
+				else if (a < 0 && n > 0) for (; a < 0 ;) a += n;
+				else if (a > 0 && n < 0) for (; a > 0 ;) a += n;
+				else if (a < 0 && n < 0) for (; a - n < 0 ;) a -= n;
+				return a + d;
 			}
 			parity(...ns) {
 				ns = ns.flatten();
@@ -1211,8 +1621,19 @@
 					ns.map(b => b%2 ? "odd" : "even") :
 					ns[0]%2 ? "odd" : "even";
 			}
-			nCr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.nPr(n, k) / this.fact(k) }
-			nPr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.fact(n) / this.fact(n-k) }
+			nCr(n, k) {
+				return isNaN( n = Number(n) ) ||
+					isNaN( k = Number(k) ) ?
+					NaN :
+					this.nPr(n, k) / this.fact(k);
+			}
+			comb(m, k) { return this.nCr(n, k) }
+			nPr(n, k) {
+				return isNaN( n = Number(n) ) ||
+					isNaN( k = Number(k) ) ?
+					NaN :
+					this.fact(n) / this.fact(n - k);
+			}
 			isClose(n1, n2, range=Number.EPSILON) {
 				return isNaN( n1 = Number(n1) ) ||
 					isNaN( n2 = Number(n2) ) ||
@@ -1237,8 +1658,12 @@
 					return new this.ComplexNumber(re, im);
 				throw TypeError(`Invalid types for Math.complex() arguments: ${re}, ${im}`);
 			}
-			erf(z)    { return isNaN( z = Number(z) ) ? NaN : 1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2)   }
-			erfc(z)   { return isNaN( z = Number(z) ) ? NaN : 1 - this.erf(z)                                         }
+			erf(z)  {
+				return isNaN( z = Number(z) ) ?
+					NaN :
+					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
+			}
+			erfc(z) { return isNaN( z = Number(z) ) ? NaN : 1 - this.erf(z) }
 			// erfi
 			dist(x1, y1, x2, y2) {
 				if (isNaN( x1 = Number(x1) )) return NaN;
@@ -1247,45 +1672,71 @@
 				if (isNaN( y2 = Number(y2) )) return NaN;
 				return this.hypot(x2-x1, y2-y1);
 			}
-			// TODO: Add Math.dist2()
-			copysign(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.abs(a) * this.sgn(b) }
-			trunc(n)    { return isNaN( n = Number(n) ) ? NaN : int(n)                                                 }
-			isNaN(e)    { return isNaN( Number(e) )                                                                    }
-			isAN(e)     { return !this.isNaN(e)                                                                        }
-			imul(a, b)  { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.Math.imul(a, b)         }
-			lcm(...ns)  { return ns.isNaN() ? NaN : this.lmgf("lcm", ns)                                               }
-			gcf(...ns)  { return ns.isNaN() ? NaN : this.lmgf("gcf", ns)                                               }
-			gcd(...ns)  { return ns.isNaN() ? NaN : this.lmgf("gcd", ns)                                               }
-			fround(n)   { return isNaN( n = Number(n) ) ? NaN : this.Math.fround(n)                                    }
-			sqrt(n)     { return isNaN( n = Number(n) ) ? NaN : this.nthrt(n, 2)                                       }
-			cbrt(n)     { return isNaN( n = Number(n) ) ? NaN : this.nthrt(n, 3)                                       }
-			degrees(n)  { return isNaN( n = Number(n) ) ? NaN : n * 180 / π                                            }
-			radians(n)  { return isNaN( n = Number(n) ) ? NaN : n * π / 180                                            }
-			ln1p(n)     { return isNaN( n = Number(n) ) ? NaN : this.ln(n + 1)                                         }
-			sign(n)     { return isNaN( n = Number(n) ) ? NaN : this.sgn(n)                                            }
-			exp(n, x=𝑒) { return  isNaN( n = Number(n) ) || isNaN( x = Number(x) ) ? NaN : x ** n                      }
-			round(n)    { return isNaN( n = Number(n) ) ? NaN : round(n)                                               }
-			floor(n)    { return isNaN( n = Number(n) ) ? NaN : floor(n)                                               }
-			ceil(n)     { return isNaN( n = Number(n) ) ? NaN : ceil(n)                                                }
-			random()    { return rand()                                                                                }
+			dist2(x_0, y_0, a, b, c) {
+				// minimum distance from a line to a point
+				if (isNaN( x_0 = Number(x_0) )) return NaN;
+				if (isNaN( y_0 = Number(y_0) )) return NaN;
+				if (isNaN( a = Number(a) )) return NaN;
+				if (isNaN( b = Number(b) )) return NaN;
+				if (isNaN( c = Number(c) )) return NaN;
+				return this.abs(a*x_0 + b*y_0 + c) / this.hypot(a, b);
+			}
+			copysign(a, b) {
+				return isNaN( a = Number(a) ) ||
+					isNaN( b = Number(b) ) ?
+					NaN : this.abs(a) * this.sgn(b);
+			}
+			trunc(n)   { return isNaN( n = Number(n) ) ? NaN : int(n) }
+			isNaN(e)   { return isNaN( Number(e) ) }
+			isAN(e)    { return !this.isNaN(e) }
+			imul(a, b) {
+				return isNaN( a = Number(a) ) ||
+					isNaN( b = Number(b) ) ?
+						NaN :
+						this.Math.imul(a, b);
+			}
+			lcm(...ns) { return ns.isNaN() ? NaN : this.lmgf("lcm", ns) }
+			gcf(...ns) { return ns.isNaN() ? NaN : this.lmgf("gcf", ns) }
+			gcd(...ns) { return ns.isNaN() ? NaN : this.lmgf("gcd", ns) }
+			fround(n)  { return isNaN( n = Number(n) ) ? n : this.Math.fround(n) }
+			sqrt(n)    { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2) }
+			cbrt(n)    { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3) }
+			ln1p(n)    { return isNaN( n = Number(n) ) ? n : this.ln(n + 1) }
+			degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod }
+			radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor }
+			sign(n)    { return isNaN( n = Number(n) ) ? n : this.sgn(n) }
+			exp(n, x)  {
+				return isNaN( n = Number(n) ) ||
+					isNaN( x = Number(x) ) ?
+					NaN :
+					(x == null ? 𝑒 : x) ** n;
+			}
+			round(n)   { return isNaN( n = Number(n) ) ? n : round(n) }
+			floor(n)   { return isNaN( n = Number(n) ) ? n : floor(n) }
+			ceil(n)    { return isNaN( n = Number(n) ) ? n : ceil (n) }
+			random()   { return rand() }
+			// TODO: Make pow and nthrt faster
 			pow(a=1, b=1) {
 				if (isNaN( a = Number(a) )) return NaN;
 				if (isNaN( b = Number(b) )) return NaN;
-				for (var y = 1, c = b ;; a *= a) {
+				for (var y = 1, c = b, d = a ; true ; a *= a) {
 					b & 1 && (y *= a);
 					b >>= 1;
-					if (!b) return (this.nthrt(a, 1 / parseDec(c)) || 1) * y;
+					if (b === 0) return (this.nthrt(d, 1 / parseDec(c)) || 1) * y;
 				}
 			}
-			mod(a, b) {// TODO: Test Math.mod function
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( b = Number(b) )) return NaN;
-				if (!b) return NaN;
-				if (a >= 0 && b > 0) for (; a - b >= 0 ;) a -= b;
-				else if (a < 0 && b > 0) for (; a < 0 ;) a += b;
-				else if (a > 0 && b < 0) for (; a > 0 ;) a += b;
-				else if (a < 0 && b < 0) for (; a - b < 0 ;) a -= b;
-				return a;
+			nthrt(x, rt=2, acy=100) {
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( rt = Number(rt) )) return NaN;
+				if (rt < 0) return this.pow(x, rt);
+				if (!rt || !(rt % 2) && x < 0) return NaN;
+				if (!x) return 0;
+				if (isNaN( acy = Number(acy) )) return NaN;
+				for (var pow, cur = x, i = 0; pow !== cur && i < acy; i++) {
+					pow = cur;
+					cur = ((rt - 1) * pow**rt + x) / (rt * pow**(rt - 1));
+				}
+				return cur;
 			}
 			ifact(n) {
 				if (isNaN( n = Number(n) )) return NaN;
@@ -1301,10 +1752,16 @@
 					i.isPrime() && primes.push(i);
 				return primes;
 			}
-			li(x, inc=.001) {
+			// TODO: turn li() and li2() into 1 function
+			li(x, inc=.001, fast=false) {
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				if (x < 0) return NaN;
+				if (fast) {
+					// not 100% accurate, but with large values,
+					// it is so much faster that the inaccuracy doesn't matter
+					return this.π(x);
+				}
 
 				return x === Infinity || !x ?
 					x :
@@ -1339,14 +1796,24 @@
 				}
 				return ans;
 			}
-			Li(x, inc=.001) { return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ? NaN : this.li(x, inc) - 1.045163780117493 }
-			tetrate(a, n, {Switch=false, number=false}={}) { return this.hyper4(a, n, { Switch: Switch, number: number }) }
-			hyper0(n) { return isNaN( n = Number(n) ) ? NaN : n + 1 }
-			hyper1(a, n) { return isNaN( a = Number(a) ) || isNaN( n = Number(n) ) ? NaN : a + n }
-			hyper2(a, n) { return isNaN( a = Number(a) ) || isNaN( n = Number(n) ) ? NaN : a * n }
-			hyper3(a, n) { return isNaN( n = Number(n) ) || isNaN( n = Number(n) ) ? NaN : a ** n }
+			Li(x, inc=.001) {
+				return isNaN( x = Number(x) ) ||
+					isNaN( inc = Number(inc) ) ?
+					NaN :
+					this.li(x, inc) - 1.045163780117493;
+			}
+			tetrate(a, n, {Switch=false, number=false}={}) {
+				return this.hyper4(a, n, {
+					Switch: Switch,
+					number: number
+				});
+			}
+			hyper0(n)    { return isNaN(n) ? NaN : this.add(n, 1) }
+			hyper1(a, n) { return isNaN(a) || isNaN(n) ? NaN : this.add(a, n) }
+			hyper2(a, n) { return isNaN(a) || isNaN(n) ? NaN : this.mul(a, n) }
+			hyper3(a, n) { return isNaN(a) || isNaN(n) ? NaN : a ** n }
 			hyper4(a, n, {Switch=false, number=false}={}) {
-				// a ↑↑ n = a^^n = a^a^a n times = ⁿa
+				// a ↑↑ n = a^^n = a^a^a n times = ⁿa = a ↑² n
 				if (this.isNaN( n = BigInt(n) )) return NaN;
 				if (this.isNaN( n = BigInt(n) )) return NaN;
 				if (Switch) return this.hyper4(n, a, {
@@ -1363,20 +1830,29 @@
 				//a ↑ⁿ b
 				throw Error("not implemented");
 			}*/
-			// TODO: Implement polylogarithms
-			sin(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n+1)*(θ%(2*π))**(2*n+1)) } // sine
-			cos(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n)*(θ%(2*π))**(2*n))     } // cosine
-			tan(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sin(θ) / this.cos(θ)                                         } // tangent
-			csc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sin(θ)                                                   } // cosecant
-			sec(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cos(θ)                                                   } // secant
-			cot(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.tan(θ)                                                   } // cotangent
+			sin(θ) {
+				return isNaN( θ = Number(θ) ) ?
+					θ :
+					this.sum(0, 25, n=>(-1)**n /
+						this.fact(2*n+1)*(θ%(2*π))**(2*n+1)
+					);
+			} // sine
+			cos(θ) {
+				return isNaN( θ = Number(θ) ) ?
+					θ :
+					this.sum(0, 25, n=>(-1)**n /
+						this.fact(2*n)*(θ%(2*π))**(2*n)
+					);
+			} // cosine
+			tan(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sin(θ) / this.cos(θ) } // tangent
+			csc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sin(θ)           } // cosecant
+			sec(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cos(θ)           } // secant
+			cot(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.tan(θ)           } // cotangent
 			asin(x) {
-				return isNaN( x = Number(x) ) ||
-					x > 1 ||
-					x < -1 ?
-						NaN :
-						this.sum(0, 80, n=>this.fact(2*n) /
-							(4**n*this.fact(n)**2 * (2*n+1))*(θ**(2*n+1)));
+				return isNaN( x = Number(x) ) || x > 1 || x < -1 ?
+					NaN :
+					this.sum(0, 80, n=>this.fact(2*n) /
+						(4**n*this.fact(n)**2 * (2*n+1))*(θ**(2*n+1)));
 			} // arc-sine
 			acos(x) { return isNaN( x = Number(x) ) ? z : π/2 - this.asin(x) } // arc-cosine
 			atan(x) { return isNaN( x = Number(x) ) ? z : this.Math.atan(x)  } // arc-tangent
@@ -1400,34 +1876,34 @@
 			// aexset(x)  { throw Error("not implemented")                                          }
 			vcs(x)     { return isNaN( x = Number(x) ) ? x : this.hypot(this.verc(x), this.sin(x))  } // sqrt(vercos^2 + sin^2)
 			// avcs(x)    { throw Error("not implemented")                                          }
-			cvs(x)     { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.sin(x) ) } // sqrt(1 + sin^2)
-			acvs(x)    { return isNaN( x = Number(x) ) ? x : this.asin(x**2 - 1)          } // asin(x^2 - 1)
-			ccvs(x)    { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.cos(x) ) } // sqrt(1 + cos^2)
-			accvs(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x**2 - 1)          } // acos(x^2 - 1)
-			crd(x)     { return isNaN( x = Number(x) ) ? x : 2 * this.sin(x / 2)          } // chord
-			acrd(x)    { return isNaN( x = Number(x) ) ? x : 2 * this.asin(x / 2)         } // arc-chord
-			ccrd(x)    { return isNaN( x = Number(x) ) ? x : 2 * this.cos(x / 2)          } // co-chord
-			accrd(x)   { return isNaN( x = Number(x) ) ? x : π/2 - 2*this.asin(x / 2)     } // arc-co-chord
-			exsec(x)   { return isNaN( x = Number(x) ) ? x : this.sec(x) - 1              } // external-secant
-			aexsec(x)  { return isNaN( x = Number(x) ) ? x : this.asec(x + 1)             } // arc-exsecant
-			excsc(x)   { return isNaN( x = Number(x) ) ? x : this.csc(x) - 1              } // external-cosecant
-			aexcsc(x)  { return isNaN( x = Number(x) ) ? x : this.acsc(x + 1)             } // arc-ex-cosecant
-			vers(x)    { return isNaN( x = Number(x) ) ? x : 1 - this.cos(x)              } // versine
-			avers(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x + 1)             } // arc-versine
-			verc(x)    { return isNaN( x = Number(x) ) ? x : 1 + this.cos(x)              } // vercosine
-			averc(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x - 1)             } // arc-vercosine
-			cvers(x)   { return isNaN( x = Number(x) ) ? x : 1 - this.sin(x)              } // coversine
-			acvers(x)  { return isNaN( x = Number(x) ) ? x : this.asin(1 - x)             } // arc-coversine
-			cverc(x)   { return isNaN( x = Number(x) ) ? x : 1 + this.sin(x)              } // covercosine
-			acverc(x)  { return isNaN( x = Number(x) ) ? x : this.asin(x - 1)             } // arc-covercosine
-			hvers(x)   { return isNaN( x = Number(x) ) ? x : this.vers(x) / 2             } // haversine
-			ahvers(x)  { return isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x)           } // arc-haversine
-			hverc(x)   { return isNaN( x = Number(x) ) ? x : this.verc(x) / 2             } // havercosine
-			ahverc(x)  { return isNaN( x = Number(x) ) ? x : this.acos(2*x - 1)           } // arc-havercosine
-			hcvers(x)  { return isNaN( x = Number(x) ) ? x : this.cvers(x) / 2            } // hacoversine
-			ahcvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x)           } // arc-hacoversine
-			hcverc(x)  { return isNaN( x = Number(x) ) ? x : this.cverc(x) / 2            } // hacovercosine
-			ahcverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1)           } // arc-hacovercosine
+			cvs(x)     { return isNaN( x = Number(x) ) ? x : this.hypot(1, this.sin(x)) } // sqrt(1 + sin^2)
+			acvs(x)    { return isNaN( x = Number(x) ) ? x : this.asin(x**2 - 1)        } // asin(x^2 - 1)
+			ccvs(x)    { return isNaN( x = Number(x) ) ? x : this.hypot(1, this.cos(x)) } // sqrt(1 + cos^2)
+			accvs(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x**2 - 1)        } // acos(x^2 - 1)
+			crd(x)     { return isNaN( x = Number(x) ) ? x : 2 * this.sin(x / 2)        } // chord
+			acrd(x)    { return isNaN( x = Number(x) ) ? x : 2 * this.asin(x / 2)       } // arc-chord
+			ccrd(x)    { return isNaN( x = Number(x) ) ? x : 2 * this.cos(x / 2)        } // co-chord
+			accrd(x)   { return isNaN( x = Number(x) ) ? x : π/2 - this.acrd(x)         } // arc-co-chord
+			exsec(x)   { return isNaN( x = Number(x) ) ? x : this.sec(x) - 1            } // external-secant
+			aexsec(x)  { return isNaN( x = Number(x) ) ? x : this.asec(x + 1)           } // arc-exsecant
+			excsc(x)   { return isNaN( x = Number(x) ) ? x : this.csc(x) - 1            } // external-cosecant
+			aexcsc(x)  { return isNaN( x = Number(x) ) ? x : this.acsc(x + 1)           } // arc-ex-cosecant
+			vers(x)    { return isNaN( x = Number(x) ) ? x : 1 - this.cos(x)            } // versine
+			avers(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x + 1)           } // arc-versine
+			verc(x)    { return isNaN( x = Number(x) ) ? x : 1 + this.cos(x)            } // vercosine
+			averc(x)   { return isNaN( x = Number(x) ) ? x : this.acos(x - 1)           } // arc-vercosine
+			cvers(x)   { return isNaN( x = Number(x) ) ? x : 1 - this.sin(x)            } // coversine
+			acvers(x)  { return isNaN( x = Number(x) ) ? x : this.asin(1 - x)           } // arc-coversine
+			cverc(x)   { return isNaN( x = Number(x) ) ? x : 1 + this.sin(x)            } // covercosine
+			acverc(x)  { return isNaN( x = Number(x) ) ? x : this.asin(x - 1)           } // arc-covercosine
+			hvers(x)   { return isNaN( x = Number(x) ) ? x : this.vers(x) / 2           } // haversine
+			ahvers(x)  { return isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x)         } // arc-haversine
+			hverc(x)   { return isNaN( x = Number(x) ) ? x : this.verc(x) / 2           } // havercosine
+			ahverc(x)  { return isNaN( x = Number(x) ) ? x : this.acos(2*x - 1)         } // arc-havercosine
+			hcvers(x)  { return isNaN( x = Number(x) ) ? x : this.cvers(x) / 2          } // hacoversine
+			ahcvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x)         } // arc-hacoversine
+			hcverc(x)  { return isNaN( x = Number(x) ) ? x : this.cverc(x) / 2          } // hacovercosine
+			ahcverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1)         } // arc-hacovercosine
 			sinh(θ)    { return isNaN( θ = Number(θ) ) ? θ : (𝑒**θ - 𝑒**-θ) / 2                       } // hyperbolic sine
 			cosh(θ)    { return isNaN( θ = Number(θ) ) ? θ : (𝑒**θ + 𝑒**-θ) / 2                       } // hyperbolic cosine
 			tanh(θ)    { return isNaN( θ = Number(θ) ) ? θ : this.sinh(θ) / this.cosh(θ)              } // hyperbolic tangent
@@ -1473,7 +1949,7 @@
 			ahcversh(x){ return isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x)         } // hyperbolic arc-hacoversine
 			hcverch(x) { return isNaN( x = Number(x) ) ? x : this.cverch(x) / 2          } // hyperbolic hacovercosine
 			ahcverch(x){ return isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1)         } // hyperbolic arc-hacovercosine
-
+			// TODO: make these return false if the input isnt a number
 			Si(x, inc=.001) { return this.int(0, x, t => this.sin(t)/t, inc) }
 			si(x, inc=.001) { this.Si(x) - π/2 }
 			Cin(x, inc=.001) { return this.int(0, x, t => (1-this.cos(t))/t, inc) }
@@ -1484,44 +1960,169 @@
 			sinhc(z)   { return this.sinh(z) / z }
 			Tanc(z)    { return this.tan (z) / z }
 			Coshc(z)   { return this.cosh(z) / z }
-
-			H(x) { /* Heaveside step function */ return Number(x > 0) }
-			W(x) {// TODO: Implement Lambert W function
-				// Lambert W function
-				if (type(x) !== "number") throw TypeError("Lambert W function requires a numeric argument");
+			H(x, form=1) {
+				// Heaveside step function
+				// Heaveside theta function
+				if (form === 1) return ( 1 + this.sgn(x) ) / 2
+				return Number(x > 0);
+			}
+			// TODO: Implement Lambert W function
+			W(x) {
+				// Lambert W function, product log
+				if (isNaN( x = Number(x) )) return NaN;
 				if (x < -1 / this.e) return NaN;
 			}
-		},
-		cMath: class ComplexMath {
+			deriv(f=x=>2*x+1, x=1, range=Number.EPSILON) {
+				if (!( f(x) || f(x + range) )) return 0;
+				let numerator = f(x + range) - f(x);
+				while ( !numerator ) {
+					range *= 2;
+					numerator = f(x + range) - f(x);
+				}
+				return numerator / range;
+			}
+			// TODO: Finish
+			tanLine(f=x=>x, x=1, ret=Object, range=Number.EPSILON) {
+				if (!( f(x) || f(x + range) )) {
+					var m = 0;
+				} else {
+					let numerator = f(x + range) - f(x);
+					while ( !numerator ) {
+						range *= 2;
+						numerator = f(x + range) - f(x);
+					}
+					m = numerator / range;
+				}
+				const b = f(x) - x*m;
+				type(ret, 1) === "str" && (ret = ret.lower());
+				if ( [Object, "o", "obj", "object"].incl(ret) ) return {
+					m: m,
+					b: b
+				}
+				else if ( [String, "s", "str", "string"].incl(ret) )
+					return `${ m ? `${m}x` : "" }${ b<0 ? `${b}` : b ? `+${b}` : "" }`.start("0").remove(/1(?=x)/g);
+			}
+			gd(x, inc=.001) {
+				// gudermannian function
+				if (isNaN( x = Number(x) )) return NaN;
+				return this.int(0, x, t=>this.sech(t), inc)
+			}
+			lam(x, inc=.001) {
+				// inverse gudermannian function
+				// Lambertian function
+				if (isNaN( x = Number(x) )) return NaN;
+				if (x <= -π/2 || x >= π/2) return NaN;
+				return this.int(0, x, t=>this.sec(t), inc);
+			}
+			bin(x) {
+				if (isNaN( x = Number(x) )) return NaN;
+				return `0b${x.toString(2)}`;
+			}
+			oct(x) {
+				if (isNaN( x = Number(x) )) return NaN;
+				return `0o${x.toString(8)}`;
+			}
+			hex(x) {
+				if (isNaN( x = Number(x) )) return NaN;
+				return `0x${x.toString(16)}`;
+			}
+			timesTable(start=0, end=9) {
+				for (var i = ++end, j, table = []; i --> start ;)
+				for (j = end, table[i] = []; j --> start ;)
+					table[i][j] = i * j;
+				return table;
+			}
+			// avogadro: 6.02214076e+23
+			// bohrMagneton: 9.2740100783e-24
+			// bohrRadius: 5.29177210903e-11
+			// boltzmann: 1.380649e-23
+			// classicalElectronRadius: 2.8179403262e-15
+			// deuteronMass: 3.3435830926e-27
+			// efimovFactor: 22.7
+			// electronMass: 9.1093837015e-31
+			// electronicConstant: 8.8541878128e-12
+			// faraday: 96485.33212331001
+			// fermiCoupling: 454379605398214.1
+			// fineStructure: 0.0072973525693
+			// firstRadiation: 3.7417718521927573e-16
+			// gasConstant: 8.31446261815324
+			// gravity: 9.80665 (varies from place to place)
+			// inverseConductanceQuantum: 12906.403729652257
+			// klitzing: 25812.807459304513
+			// loschmidt: 2.686780111798444e+25
+			// magneticConstant: 0.00000125663706212
+			// magneticFluxQuantum: 2.0678338484619295e-15
+			// molarMass: 0.00099999999965
+			// molarMassC12: 0.0119999999958
+			// molarPlanckConstant: 3.990312712893431e-10
+			// molarVolume: 0.022413969545014137
+			// neutronMass: 1.6749271613e-27
+			// nuclearMagneton: 5.0507837461e-27
+			// planckCharge: 1.87554603778e-18
+			// planckConstant: 6.62607015e-34
+			// planckLength: 1.616255e-35
+			// planckMass: 2.176435e-8
+			// planckTemperature: 1.416785e+32
+			// planckTime: 5.391245e-44
+			// reducedPlanckConstant: 1.0545718176461565e-34
+			// rydberg: 10973731.56816
+			// sackurTetrode: -1.16487052358
+			// secondRadiation: 0.014387768775039337
+			// speedOfLight: 299792458
+			// stefanBoltzmann: 5.67037441918443e-8
+			// weakMixingAngle: 0.2229
+			
+
+			// bell numbers
+			// pell numbers
+			// temperature convertor
+			// polylogarithms
+			// mode
+			// Beta function
+			// herons formula
+			// co-prime
+			// geometry
+			// law of sines
+			// law of cosines
+			// law of tangents
+			// law of cotangents
+			// Bernoulli numbers
+			// K-function
+			// divisor counter
+			// vector dot product
+			// vector cross product
+			// fraction
+			// setUnion
+			// setIntersection
+			// isSubset
+			// isSuperset
+			// isSameSet
+			// catalan
+			// determinant
+			// cumulative sum of list
+			// cube
+			// line intersection
+			// scalar operations
+			// eigs
+			// fix (round towards zero)
+			// matrix identity thing
+			// inverse of matrix
+			// Kullback-Leibler (KL) divergence  between two distributions.
+			// kronecker product of 2 matrices or vectors.
+			// nthrts
+			// compare, compareText, coulomb, expm, gasConstant, norm
+		}, cMath: class ComplexMath {
 			constructor(degTrig, help) {
 				degTrig === "default" && (degTrig = true);
 				help === "default" && (help = true);
 
-				const π = 3.141592653589793,
-					  𝑒 = 2.718281828459045,
-					  ϕ = 1.618033988749895,
-					  γ = .5772156649015329,
-					  Ω = .5671432904097838, // Ωe^Ω = 1
-					  α = 1.187452351126501; // https://en.wikipedia.org/wiki/Foias_constant
-
-				this.phi = this.PHI = this.ϕ = ϕ;
-				this.e   = this.E   = this.𝑒 = 𝑒;
-				this.ec  = this.γ   =          γ;
-				this.pi  = this.PI  = this.π = π;
-				this.foias = this.α = α;
-				this.omega = 0.5671432904097838; // https://en.wikipedia.org/wiki/Omega_constant
 				this.lnNeg1 = this.new(0, π);
-				this.lni = this.new(0, π/2);
-				this.i = this.new(0, 1);
+				this.lni    = this.new(0, π/2);
+				this.i      = this.new(0, 1);
 
-				if (degTrig != null) {
-					this.deg = {
-					};
-				}
-				if (help != null) {
-					this.help = {
-					};
-				}
+				if (degTrig) this.deg = {
+				}; if (help) this.help = {
+				};
 			}
 			new(re=0, im=0) {
 				if (type(re, 1) === "complex") return re;
@@ -1744,12 +2345,20 @@
 					total.add( func(n, 0), 0 );
 				return total;
 			}
-		}
+			conjugate(z) {
+				if (type(z, 1) !== "complex") throw TypeError("conjugate() requires a complex argument");
+				return this.new(z.re, -z.im);
+			}
+			inverse(z) {
+				if (type(z, 1) !== "complex") throw TypeError("conjugate() requires a complex argument");
+				return this.new(1/z.re, 1/z.im);
+			}
+		},
 	}, Logic = class Logic {
 		constructor(bitwise, comparatives, help) {
 			bitwise === "default" && (bitwise = "bit");
 			comparatives === "default" && (comparatives = null);
-			help === "default" && (name = "help");
+			help === "default" && (help = "help");
 
 			if (bitwise != null) {
 				// TODO: Add the other logic gates to bitwise
@@ -1824,7 +2433,7 @@
 					sneq: (a, b) => a !== b,
 				}
 			}
-			if (help != null) {// help
+			if (help != null) {
 				// TODO: finish Logic help text
 				this[help] = {
 					not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
@@ -2063,180 +2672,16 @@
 			return A[len(A) - 1];
 		};
 		this.jQuery && (jQuery.prototype.for = [].for);
-		Math2.rMath.prototype.ComplexNumber = Math2.cMath.prototype.ComplexNumber = class Complex {
-			// TODO: Add customization so the functions don't always modify the state
-			constructor(re=0, im=0) {
-				this.re = re;
-				this.im = im;
-			}
-			type() {
-				return "complex";
-			}
-			isComplex() {
-				return !!this.im;
-			}
-			toPolar(doubleStar=false) {
-				return `${cMath.abs(this)}e${doubleStar ? "**" : "^"}(${this.arg()}i)`;
-			}
-			toString( {polar=false, char="i", parens=true}={} ) {
-				char = char[0] || "i";
-				return polar ?
-					`${cMath.abs(this)}e^${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}`.remove(
-						new RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
-					).start("1").replace(/^0.*/, "0").replace(/0\./g, ".") :
-					this.re ? // rectangular
-						this.im ?
-							this.im > 0 ?
-								`${this.re}+${this.im ===  1 ? ""  : this.im}${char}` :
-								`${this.re}${ this.im === -1 ? "-" : this.im}${char}` :
-							`${this.re}` :
-						this.im ?
-							this.im > 0 ?
-								`${this.im ===  1  ? ""  : this.im}${char}` :
-								`${this.im === -1  ? "-" : this.im}${char}` :
-							"0";
-			}
-			toArr() {
-				return [this.re, this.im];
-			}
-			toLList() {
-				return this.toArr().toLList();
-			}
-			toRegObj() { // because for...of doesn't work with class objects
-				return {
-					re: this.re,
-					im: this.im
-				}
-			}
-			arg(form="radians") {
-				return form === "degrees" || form === "deg" || form === "degree" ?
-					Math.deg.atan2(this.re, this.im) :
-					Math.atan2(this.re, this.im);
-			}
-			add(num, New=true) {
-				assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-				type(num) === "number" && (num = new this.constructor(num, 0));
-				if (New) return new this.constructor(
-					this.re + num.re,
-					this.im + num.im
-				);
-				this.re += num.re;
-				this.im += num.im;
-				return this;
-			}
-			sub(num, New=true) {
-				assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-				type(num) === "number" && (num = new this.constructor(num, 0));
-				if (New) return new this.constructor(
-					this.re - num.re,
-					this.im - num.im
-				);
-				this.re -= num.re;
-				this.im -= num.im;
-				return this;
-			}
-			mul(num, New=true) {
-				assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-				type(num) === "number" && (num = new this.constructor(num, 0));
-				if (New) return new this.constructor(
-					this.re*num.re - this.im*num.im,
-					this.re*num.im + this.im*num.re
-				);
-				const tmp = this.re;
-				this.re = tmp*num.re - this.im*num.im;
-				this.im = tmp*num.im + this.im*num.re;
-				return this;
-			}
-			div(num, New=true) {
-				assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-				type(num) === "number" && (num = new this.constructor(num, 0));
-				if (New) return new this.constructor(
-					(this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2),
-					(this.im*num.re - this.re*num.im) / (num.re**2 + num.im**2)
-				);
-				const tmp = this.re;
-				this.re = (this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2);
-				this.im = (this.im*num.re - tmp*num.im) / (num.re**2 + num.im**2);
-				return this;
-			}
-			/*mod(n1, n2) {
-				return this.sub(
-					n1,
-					this.mul(
-						n2,
-						this.ceil( this.div(n1, n2) )
-					)
-				);
-				// n1 - n2*floor(n1/n2)?
-			}*/
-			floor(New=true) {
-				if (New) return new this.constructor(
-					floor(this.re),
-					floor(this.im)
-				);
-				this.re = floor(this.re);
-				this.im = floor(this.im);
-				return this;
-			}
-			ceil(New=true) {
-				if (New) return new this.constructor(
-					ceil(this.re),
-					ceil(this.im)
-				);
-				this.re = ceil(this.re);
-				this.im = ceil(this.im);
-				return this;
-			}
-			round(New=true) {
-				if (New) return new this.constructor(
-					round(this.re),
-					round(this.im)
-				);
-				this.re = round(this.re);
-				this.im = round(this.im);
-				return this;
-			}
-			frac(New=true) {
-				if (New) return new this.constructor(
-					parseDec(this.re),
-					parseDec(this.im)
-				);
-				this.re = parseDec(this.re);
-				this.im = parseDec(this.im);
-				return this;
-			}
-			pow(num, New=true) {
-				type(num) === "number" && (num = new this.constructor(num, 0));
-
-				if (!this.im && !num.im) return new this.constructor(this.re ** num.re, 0);
-				if (type(num, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument");
-
-				const r = (this.re**2+this.im**2) ** (num.re/2) / Math.e ** (num.im*this.arg(this)),
-					θ = num.re*this.arg(this) + num.im*Math.ln(Math.sqrt(this.re**2 + this.im**2))
-				if (New) return new this.constructor(
-					r * Math.cos(θ),
-					r * Math.sin(θ)
-				);
-				this.re = r * Math.cos(θ);
-				this.im = r * Math.sin(θ);
-				return this;
-			}
-			exp(New=true) {
-				const r = Math.e ** this.re;
-				if (New) return new this.constructor(
-					r * Math.cos(this.im),
-					r * Math.sin(this.im)
-				);
-				this.re = r * Math.cos(this.im);
-				this.im = r * Math.sin(this.im);
-			}
-		};
-		Math2.rMath.prototype.Math = math,
+		
 		NodeList.prototype.last = lastElement,
 		HTMLCollection.prototype.last = lastElement,
 		Object.prototype.tofar = function toFlatArray() {// fix for HTML\w+Element
 			var val = this.valueOf();
-			if (["number", "string", "symbol", "boolean", "bigint", "function"].incl(type(val)) || val == null || val?.constructor == 'function Object() { [native code] }')
+			if (
+				["number", "string", "symbol", "boolean", "bigint", "function"].incl(type(val)) ||
+				val == null ||
+				val?.constructor == 'function Object() { [native code] }'
+			)
 				return [this.valueOf()].flatten();
 			return list(this.valueOf()).flatten();
 		},
@@ -2251,14 +2696,12 @@
 		HTMLElement.prototype.rel = HTMLElement.prototype.removeEventListener,
 		RegExp.prototype.in = RegExp.prototype.test,
 		RegExp.prototype.toRegex = function toRegex() { return this.valueOf() },
+		// maximum, array length 5/8/2022: 4_294_967_295
 		Array.prototype.io = [].indexOf,
 		Array.prototype.lio = [].lastIndexOf,
-		// Array.prototype.sort.sort = [].sort,
 		Array.prototype.incl = [].includes,
 		Array.prototype.for = function forEachReturn(func, ret) {
-			let a = this.valueOf();
-			for (var i = 0, n = len(a); i < n; i++)
-				func(a[i], i);
+			for (var a = this.valueOf(), i = 0, n = len(a); i < n ;) func(a[i], i++, a);
 			return ret;
 		},
 		Array.prototype.shift2 = function shift2(num=1) {
@@ -2318,7 +2761,8 @@
 		},
 		Array.prototype.remove = function remove(e) {
 			var a = this.valueOf();
-			return a.splice2(a.io(e), 1);
+			a.incl(e) && a.splice(a.io(e), 1);
+			return a;
 		},
 		Array.prototype.removeAll = function removeAll(e) {
 			var a = this.valueOf();
@@ -2344,16 +2788,19 @@
 			return a;
 		},
 		Array.prototype.remrep = function removeRepeats() {
-			return list(new Set(this.valueOf()));
+			return Array.from(new Set(this.valueOf()));
+		},
+		Array.prototype.rand = function random() {
+			var a = this.valueOf();
+			return a[ randint(0, dim(a)) ];
 		},
 		Array.prototype.slc = function slice(start=0, end=Infinity) {
-			for (var a = this.valueOf(), b = [], i = 0, n = len(a); i < n && i <= end; ++i) {
-				i >= start && b.push(a[i]);
-			}
+			for (var a = this.valueOf(), b = [], i = 0, n = len(a); i < n && i <= end; i++)
+				i >= start && b.push( a[i] );
 			return b;
 		},
 		Array.prototype.print = function print() {
-			var a = this.valueOf();
+			let a = this.valueOf();
 			console.log(a);
 			return a;
 		},
@@ -2362,6 +2809,12 @@
 			A[i1] = A[i2];
 			A[i2] = B;
 			return A;
+		},
+		Array.prototype.smap = function setMap(f=(e, i, a)=>e) {
+			// array.smap also counts empty indexes as existing unlike array.map.
+			for (var arr = this.valueOf(), i = len(arr); i --> 0 ;)
+				arr[i] = f(arr[i], i, arr);
+			return arr;
 		},
 		Array.prototype.rotr3 = function rotate3itemsRight(i1=0, i2=1, i3=2) {
 			const A = this.valueOf(), TMP = A[i1];
@@ -2410,7 +2863,7 @@
 			a[i3] = b;
 			return a;
 		},
-		Array.prototype.len = function length(num) {
+		Array.prototype.len = function setLength(num) {
 			var a = this.valueOf();
 			a.length = num > 0 ? num : 0;
 			return a;
@@ -2454,14 +2907,32 @@
 		}
 		String.prototype.slc = function slc(start=0, end=Infinity) {
 			var a = this.valueOf();
-			if (type(start) === "string") return a.substr(a.io(start));
+			if (type(start) === "string") {
+				if (a.io(start) === -1) return a;
+				return a.substr(a.io(start));
+			}
 			return Array.from(a).slc(start, end).join("");
 		},
+		String.prototype.tag = function tag(tagName="") {
+			var a = this.valueOf();
+			if (type(tag, 1) !== "str" || tag === "") return a;
+			return `<${tagName}>${a}</${tagName}>`;
+		},
+		String.prototype.rand = function random() { return Array.prototype.rand.call(this.valueOf()) },
 		String.prototype.io = "".indexOf,
 		String.prototype.lio = "".lastIndexOf,
 		String.prototype.startsW = "".startsWith,
 		String.prototype.endsW = "".endsWith,
-		String.prototype.upper = "".toUpperCase,
+		String.prototype.upper = function upper(start=0, length=Infinity, end=-1) {
+			var a = this.valueOf(), str = "";
+			if (!isFinite(length) || isNaN(length)) return a.toUpperCase();
+			if (end !== -1)
+				return a.substring(0, start) + a.substring(start, end).toUpperCase() + a.substring(end);
+
+			return a.substr(0, start) +
+				a.substr(start, length).toUpperCase() +
+				a.substr(start + length);
+		},
 		String.prototype.lower = "".toLowerCase,
 		String.prototype.toObj = function toObj(obj=window) {
 			this.valueOf().split(/[.[\]'"]/).filter(e=>e).for(e => obj=obj[e]);
@@ -2476,10 +2947,10 @@
 		String.prototype.reverse = function reverse() {return this.valueOf().split("").reverse().join("")},
 		String.prototype.remove = function(arg) {return this.valueOf().replace(arg,"")},
 		String.prototype.remrep = function removeRepeats() {
-			return list(new Set(this.valueOf().split(""))).join("");
+			return Array.from(new Set(this.valueOf().split(""))).join("");
 		},
 		String.prototype.each = function putArgBetweenEachCharacter(arg="") {
-			return list(this.valueOf()).join(`${arg}`);
+			return Array.from(this.valueOf()).join(`${arg}`);
 		},
 		String.prototype.toFunc = function toNamedFunction(name="anonymous") {
 			var s = this.valueOf();
@@ -2525,24 +2996,33 @@
 		String.prototype.includes = function(input) {return input.toRegex().in(this.valueOf())},
 		String.prototype.incl  = "".includes,
 		String.prototype.start = function start(start="") { // if the string is empty it becomes the argument
-			var a = this.valueOf();
-			return a ? a : `${start}`;
+			return this.valueOf() || `${start}`;
 		},
 		String.prototype.begin = function begin(text="") { // basically Array.unshift2
 			return `${text}${this.valueOf()}`;
 		},
-		String.prototype.splitn = function splitNTimes(input, times=1) {
+		String.prototype.splitn = function splitNTimes(input, times=1, joinUsingInput=true, customJoiner="") {
+			var joiner = joinUsingInput ? input : customJoiner;
 			assert(type(input, 1) === "regex" || type(input, 1) === "str", "function requires a regular expression or a string");
 			for (var i = 0, arr = this.valueOf().split(input), arr2 = [], n = len(arr); i < n && i < times; i++)
 				arr2.push(arr.shift());
-			if (len(arr)) arr2.push(arr.join(""));
+			if (len(arr)) arr2.push(arr.join(joiner));
 			return arr2;
 		},
 		String.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
 			return isNaN(this.valueOf()) ?
 				false :
 				Number(this.valueOf()).inRange(n1, n2, include);
-		}
+		},
+		String.prototype.isInt = function isInt() {
+			var a = this.valueOf();
+			if ( isNaN(a) ) return false;
+			a = a.slc(".");
+			if (a.io(".") === -1) return true;
+			for (var i = len(a); i --> 1 ;)
+				if (a[i] !== "0") return false;
+			return true;
+		},
 		Number.prototype.isPrime = function isPrime() {// can probably be optimized
 			var n = int(this.valueOf());
 			if (n === 2) return !0;
@@ -2565,12 +3045,12 @@
 			var n = this.valueOf();
 			return n === int(n);
 		},
-		Number.prototype.add = function add(arg) { return this.valueOf() + Number(arg) },
-		Number.prototype.sub = function sub(arg) { return this.valueOf() - Number(arg) },
-		Number.prototype.mul = function mul(arg) { return this.valueOf() * Number(arg) },
-		Number.prototype.div = function div(arg) { return this.valueOf() / Number(arg) },
-		Number.prototype.mod = function mod(arg) { return this.valueOf() % Number(arg) },
-		Number.prototype.pow = function pow(arg) { return this.valueOf() ** Number(arg) },
+		Number.prototype.add = function add(arg) { return this +  Number(arg) },
+		Number.prototype.sub = function sub(arg) { return this -  Number(arg) },
+		Number.prototype.mul = function mul(arg) { return this *  Number(arg) },
+		Number.prototype.div = function div(arg) { return this /  Number(arg) },
+		Number.prototype.mod = function mod(arg) { return this %  Number(arg) },
+		Number.prototype.pow = function pow(arg) { return this ** Number(arg) },
 		// NOTE: max BigInt is 2^1,073,741,823 but could be changed in later specifications
 		BigInt.prototype.shl = function(num) {return this.valueOf() << BigInt(num)},
 		BigInt.prototype.shr = function shr(num) {return this.valueOf() >> BigInt(num)},
@@ -2599,14 +3079,13 @@
 			if (["string", "str", "s", String].incl(form))      return `${a[0]}${decimal}${rest}e+${len(a) - 1}`;
 			else if (["number", "num", "n", Number].incl(form)) return 1 * `${a[0]}.${a.substr(1, 50)}e+${len(a) - 1}`;
 		},
-		BigInt.prototype.add = function add(arg) { return this.valueOf() + BigInt(arg) },
-		BigInt.prototype.sub = function sub(arg) { return this.valueOf() - BigInt(arg) },
-		BigInt.prototype.mul = function mul(arg) { return this.valueOf() * BigInt(arg) },
-		BigInt.prototype.div = function div(arg) { return this.valueOf() / BigInt(arg) },
-		BigInt.prototype.mod = function mod(arg) { return this.valueOf() % BigInt(arg) },
-		BigInt.prototype.pow = function pow(arg) { return this.valueOf() ** BigInt(arg) };
+		BigInt.prototype.add = function add(arg) { return this +  BigInt(arg) },
+		BigInt.prototype.sub = function sub(arg) { return this -  BigInt(arg) },
+		BigInt.prototype.mul = function mul(arg) { return this *  BigInt(arg) },
+		BigInt.prototype.div = function div(arg) { return this /  BigInt(arg) },
+		BigInt.prototype.mod = function mod(arg) { return this %  BigInt(arg) },
+		BigInt.prototype.pow = function pow(arg) { return this ** BigInt(arg) };
 	}
-
 	{//bad text encoders
 		function num_encoder(numstr, warn=false) {
 			const ODD = len(numstr) % 2;
@@ -2650,7 +3129,7 @@
 				"l": "0310", "L": "1310", ";": "0311", ":": "1311", "'": "0312","\"": "1312", "z": "0402",
 				"Z": "1402", "x": "0403", "X": "1403", "c": "0404", "C": "1404", "v": "0405", "V": "1405",
 				"b": "0406", "B": "1406", "n": "0407", "N": "1407", "m": "0408", "M": "1408", ",": "0409",
-				"<": "1409", ".": "0410", ">": "1410", "/": "0411", "?": "1411", " ": "054",
+				"<": "1409", ".": "0410", ">": "1410", "/": "0411", "?": "1411", " ": "0504",
 			}
 			return type === "encode" || type === "encoder" ? obj[key] : Object.keyof(obj, key);
 		} // dvorak encoder?
@@ -2687,6 +3166,20 @@
 			return str2;
 		}
 
+		function random_encoder(input="") {
+			return input.split(" ").map(
+				e => alphabet.rand() + e + alphabet.rand()
+			).join(" ");
+		}
+
+		function shift_encoder(s1="", shifts=[1], mod=127) {
+			if (type(shifts, 1) !== "arr" && isNaN(shifts)) shifts = 1;
+			shifts = shifts.tofar().len(len(s1));
+			for (var i = 0, n = len(s1), s2 = "", tmp; i < n; i++)
+				s2 += asciiToChar(Math.mod( charToAscii(s1[i]) + (shifts[i] == null ? 1 : shifts[i]), mod ));
+			return s2;
+		}
+
 		() => {
 			const arr = [
 				"аa", "ΑA", "ϲc", "𝗁h", "հh", "іi", "ϳj", "јj",
@@ -2706,38 +3199,237 @@
 			"1234567890a";
 		}
 	}
+	MathObjects.rMath.prototype.Math = math;
+	MathObjects.rMath.prototype.ComplexNumber = MathObjects.cMath.prototype.ComplexNumber = class Complex {
+		// TODO: Add customization so the functions don't always modify the state
+		constructor(re=0, im=0) {
+			this.re = re;
+			this.im = im;
+		}
+		type() {
+			return "complex";
+		}
+		isComplex() {
+			return !!this.im;
+		}
+		toPolar(doubleStar=false) {
+			return `${cMath.abs(this)}e${doubleStar ? "**" : "^"}(${this.arg()}i)`;
+		}
+		toString( {polar=false, char="i", parens=true}={} ) {
+			char = char[0] || "i";
+			return polar ?
+				`${cMath.abs(this)}e^${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}`.remove(
+					new RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
+				).start("1").replace(/^0.*/, "0").replace(/0\./g, ".") :
+				this.re ? // rectangular
+					this.im ?
+						this.im > 0 ?
+							`${this.re}+${this.im ===  1 ? ""  : this.im}${char}` :
+							`${this.re}${ this.im === -1 ? "-" : this.im}${char}` :
+						`${this.re}` :
+					this.im ?
+						this.im > 0 ?
+							`${this.im ===  1  ? ""  : this.im}${char}` :
+							`${this.im === -1  ? "-" : this.im}${char}` :
+						"0";
+		}
+		toArr() {
+			return [this.re, this.im];
+		}
+		toLList() {
+			return this.toArr().toLList();
+		}
+		toRegObj() { // because for...of doesn't work with class objects
+			return {
+				re: this.re,
+				im: this.im
+			}
+		}
+		arg(form="radians") {
+			return form === "degrees" || form === "deg" || form === "degree" ?
+				Math.deg.atan2(this.re, this.im) :
+				Math.atan2(this.re, this.im);
+		}
+		add(num, New=true) {
+			assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
+			type(num) === "number" && (num = new this.constructor(num, 0));
+			if (New) return new this.constructor(
+				this.re + num.re,
+				this.im + num.im
+			);
+			this.re += num.re;
+			this.im += num.im;
+			return this;
+		}
+		sub(num, New=true) {
+			assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
+			type(num) === "number" && (num = new this.constructor(num, 0));
+			if (New) return new this.constructor(
+				this.re - num.re,
+				this.im - num.im
+			);
+			this.re -= num.re;
+			this.im -= num.im;
+			return this;
+		}
+		mul(num, New=true) {
+			assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
+			type(num) === "number" && (num = new this.constructor(num, 0));
+			if (New) return new this.constructor(
+				this.re*num.re - this.im*num.im,
+				this.re*num.im + this.im*num.re
+			);
+			const tmp = this.re;
+			this.re = tmp*num.re - this.im*num.im;
+			this.im = tmp*num.im + this.im*num.re;
+			return this;
+		}
+		div(num, New=true) {
+			assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
+			type(num) === "number" && (num = new this.constructor(num, 0));
+			if (New) return new this.constructor(
+				(this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2),
+				(this.im*num.re - this.re*num.im) / (num.re**2 + num.im**2)
+			);
+			const tmp = this.re;
+			this.re = (this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2);
+			this.im = (this.im*num.re - tmp*num.im) / (num.re**2 + num.im**2);
+			return this;
+		}
+		/*mod(n1, n2) {
+			return this.sub(
+				n1,
+				this.mul(
+					n2,
+					this.ceil( this.div(n1, n2) )
+				)
+			);
+			// n1 - n2*floor(n1/n2)?
+		}*/
+		floor(New=true) {
+			if (New) return new this.constructor(
+				floor(this.re),
+				floor(this.im)
+			);
+			this.re = floor(this.re);
+			this.im = floor(this.im);
+			return this;
+		}
+		ceil(New=true) {
+			if (New) return new this.constructor(
+				ceil(this.re),
+				ceil(this.im)
+			);
+			this.re = ceil(this.re);
+			this.im = ceil(this.im);
+			return this;
+		}
+		round(New=true) {
+			if (New) return new this.constructor(
+				round(this.re),
+				round(this.im)
+			);
+			this.re = round(this.re);
+			this.im = round(this.im);
+			return this;
+		}
+		frac(New=true) {
+			if (New) return new this.constructor(
+				parseDec(this.re),
+				parseDec(this.im)
+			);
+			this.re = parseDec(this.re);
+			this.im = parseDec(this.im);
+			return this;
+		}
+		pow(num, New=true) {
+			type(num) === "number" && (num = new this.constructor(num, 0));
 
-	this.Math  = new Math2.rMath("default", "default");
-	this.cMath = new Math2.cMath("default", "default");
-	Math2.rMath.prototype.cMath = cMath;
-	Math2.cMath.prototype.rMath = Math;
+			if (!this.im && !num.im) return new this.constructor(this.re ** num.re, 0);
+			if (type(num, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument");
+
+			const r = (this.re**2+this.im**2) ** (num.re/2) / Math.e ** (num.im*this.arg(this)),
+				θ = num.re*this.arg(this) + num.im*Math.ln(Math.sqrt(this.re**2 + this.im**2))
+			if (New) return new this.constructor(
+				r * Math.cos(θ),
+				r * Math.sin(θ)
+			);
+			this.re = r * Math.cos(θ);
+			this.im = r * Math.sin(θ);
+			return this;
+		}
+		exp(New=true) {
+			const r = Math.e ** this.re;
+			if (New) return new this.constructor(
+				r * Math.cos(this.im),
+				r * Math.sin(this.im)
+			);
+			this.re = r * Math.cos(this.im);
+			this.im = r * Math.sin(this.im);
+		}
+	}; MathObjects.fMath.prototype.Fraction = class Fraction {
+		constructor(numerator=1, denominator=1) {
+			 this.numer = numerator;
+			 this.denom = denominator;
+		}
+		type() {
+			return "fraction";
+		}
+	};
+	this.Math  = new MathObjects.rMath("default", "default", "default");
+	this.cMath = new MathObjects.cMath("default", "default");
+	this.fMath = new MathObjects.fMath();
+
+	MathObjects.rMath.prototype.cMath = cMath;
+	MathObjects.rMath.prototype.fMath = fMath;
+
+	MathObjects.cMath.prototype.rMath = Math;
+	MathObjects.cMath.prototype.fMath = fMath;
+
+	MathObjects.fMath.prototype.rMath = Math;
+	MathObjects.fMath.prototype.cMath = cMath;
 	this.Logic = new Logic("default", "default", "default");
-
 	{// Error Handling
 		let exit_1 = false;
-		onConflict = onConflict.lower();
+		ON_CONFLICT = ON_CONFLICT.lower();
 		if (len(CONFLICT_ARR)) {
-			switch (onConflict) {
+			switch (ON_CONFLICT) {
+				case "ast":
 				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "dbg":
 				case "debug": console.debug("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "ifo":
 				case "info": console.info("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "wrn":
 				case "warn": console.warn("Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "log": console.log("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "alt":
 				case "alert": alert(`Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`); break;
+				case "ret":
 				case "return": return `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
+				case "trw":
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 			}
 			exit_1 = true;
 		}
 		if (len(NOT_ACTIVE_ARR) && alertUnused === true) {
-			switch (onConflict) {
+			switch (ON_CONFLICT) {
+				case "ast":
 				case "assert": console.assert(!1, "Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
+				case "err":
+				case "error": console.error("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
+				case "dbg":
 				case "debug": console.debug("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
+				case "ifo":
 				case "info": console.info("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
+				case "wrn":
 				case "warn": console.warn("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
 				case "log": console.log("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
+				case "alt":
 				case "alert": alert(`Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`); break;
+				case "ret":
 				case "return": return `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
+				case "trw":
 				case "throw": throw `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
 			}
 			exit_1 = true;
@@ -2747,18 +3439,13 @@
 })();
 
 function dQuery(e, typ, prev) {
-	assert(
-		typeof e === "string" ||
-		typeof e === "object" ||
-		e == null ||
-		isArr(e),
+	assert( typeof e === "string" || typeof e === "object" || e == null || isArr(e),
 		"function requires a string, an object, or undefined argument"
 	);
 	var func = arguments.callee;
 	class dQuery extends Array {
 		constructor(values=[], typ="", prev=document) {
-			if (json.stringify(values) === "[]") super();
-			else super(values);
+			len(values) ? super(values) : super();
 			this.type = typ;
 			this.prev = prev;
 		}
@@ -2879,8 +3566,9 @@ function dQuery(e, typ, prev) {
 				return this;
 			} else return obj.for(e => this.push(e), this);
 		}
-		copy(dQueryObj=this) {
-			return new this.constructor(list(dQueryObj), dQueryObj.type, dQueryObj.prev);
+		copy(dQueryObj) {
+			dQueryObj == null && (dQueryObj = this);
+			return new this.constructor(Array.from(dQueryObj), dQueryObj.type, dQueryObj.prev);
 		}
 		// regular array methods
 		push(...HTML_Elements) {
@@ -2896,7 +3584,7 @@ function dQuery(e, typ, prev) {
 		}
 		shift(num=1) {
 			Array.prototype.shift2.call(this, num);
-			return this
+			return this;
 		}
 		unshift(...HTML_Elements) {
 			for (const obj of HTML_Elements.flatten()) {
@@ -2931,11 +3619,11 @@ function dQuery(e, typ, prev) {
 			values = [document.getElementById(str[1])];
 			typ = "id";    break;
 		case ".":
-			values = list(document.getElementsByClassName(str[1]));
+			values = Array.from(document.getElementsByClassName(str[1]));
 			typ = "class"; break;
 		default: // query selector and (id=all or class=all)
 			end = false;
-			values = list(document.querySelectorAll(str[0]));
+			values = Array.from(document.querySelectorAll(str[0]));
 			typ = "querySelectorAll";
 	}
 
@@ -2946,10 +3634,10 @@ function dQuery(e, typ, prev) {
 
 	switch (str[1]) {
 		case "#":
-			values = list(values).filter(e => e.id === str[2]);
+			values = Array.from(values).filter(e => e.id === str[2]);
 			break;
 		case ".":
-			values = list(values).filter(e => e.className === str[2]);
+			values = Array.from(values).filter(e => e.className === str[2]);
 			break;
 		default: throw Error("Unreachable");
 	}
@@ -2964,19 +3652,42 @@ function dQuery(e, typ, prev) {
  * lcm(a, b) = |ab| / gcd(a, b)                       *
  * gcd(a, b) = |ab| / lcm(a, b)                       *
  * sgn x = x/( x(x/( x(x/( x(x/( ... ) ) ) ) ) ) ) )  *
- *                                                    *
- ******************************************************
- *
- * function generateTruths(length=1, ...names) {
- * 	var names = names.flatten(), truths = (()=>{
- * 		for(var i=0,arr=[],tmp;len(i.toString(2))<=length;i++){
- * 			for(tmp=i.toString(2);len(tmp)<length;)tmp=tmp.begin(0);
- * 			arr.push(tmp.split("").map(e=>!e.replace(/1/g,"").replace(/0/g,"1")));
- * 		}
- * 		return arr.reverse();
- * 	})(), arr = [];
- * 	for (const name of names) arr.push2(name).push( copy(truths).map(e=>e.push2(Logic[name](e))) );
- * 	return arr;
- * }
- * generateTruths(4, "xor", "xor2");
+ * (function fixCodeHS( progress, points, badges, days, streak, moduleIndex, name, avatar, returnUserData ) {
+ for(var i=5,A=$(".module-info").toArray(),S=$(".user-stat").toArray();i-->0;)arguments[i]=arguments[i].toString();A[0].click(),A[0].click();const fix=()=>{const f="finalized",s="submitted",o={icon:f,challenge:f,quiz:f,"chs-badge":f,video:f,connection:f,example:f,"lesson-status":f,exercise:s,"free-response":s};$(".unopened").toArray().concat($(`.not-${s}`).toArray()).forEach((e,i,a)=>a[i].className=e.className.replace(/unopened|not-submitted/g,o[e.className.split(/ +/)[0]]));$(".bg-slate").toArray().filter(e=>e.className.trim()=="bg-slate").forEach((e,i,a)=>{a[i].style.width="100%";a[i].className=e.className.replace(/progressBar/g,"bg-slate")});$(".percent-box").toArray().forEach((e,i,a)=>{a[i].innerHTML=e.innerHTML.replace(/\d+%/g,"100%");a[i].className=e.className.replace(/percent-\d+/g,"percent-100")})};for(let m of A)m.click(),fix();points!="def"&&(S[1].children[1].innerHTML=points);badges!="def"&&(S[2].children[1].innerHTML=badges);days!="def"&&(S[3].children[1].innerHTML=days);streak!="def"&&(S[4].children[1].innerHTML=streak);moduleIndex!="def"&&A[moduleIndex].click();if(name!="def")$(".nav-user-name-text")[0].innerHTML=name;if(avatar!="def")$(".nav-user-name-text")[0].innerHTML=avatar;if(progress!="def"){const p=Array.from($(".user-stat")[0].children[0].children);p[1].innerHTML=`${progress}%`;p[2].children[0].children[0].style.width=`${progress}%`}clear();return returnUserData?userData:!0
+ })(100, "def", "def", "def", "def", "def", "def", "def", false);
 **/
+
+// code to fix the string numbers. can probably go into a function
+// if (Math.isNaN(a) || Math.isNaN(b) || !isFinite(a) || !isFinite(b)) return NaN;
+// a = a.toString(); !a.incl(".") && ( a += ".0" );
+// b = b.toString(); !b.incl(".") && ( b += ".0" );
+// b = strMul( "0", a.io(".") - b.io(".") ) + b;
+// a = strMul( "0", b.io(".") - a.io(".") ) + a;
+// b += strMul( "0", len(a) - len(b) );
+// a += strMul( "0", len(b) - len(a) );
+
+/*good codehs images:
+	https://codehs.com/identicon/image/000000000000000000000000000
+	https://codehs.com/identicon/image/%5E
+	https://codehs.com/identicon/image/%7D
+	https://codehs.com/identicon/image/1g
+	https://codehs.com/identicon/image/1k
+	https://codehs.com/identicon/image/1s
+	https://codehs.com/identicon/image/1P
+	https://codehs.com/identicon/image/1R
+	https://codehs.com/identicon/image/1Z
+	https://codehs.com/identicon/image/1$
+	https://codehs.com/identicon/image/1%5E
+	https://codehs.com/identicon/image/2G
+	https://codehs.com/identicon/image/2#, https://codehs.com/identicon/image/2?
+	https://codehs.com/identicon/image/2(
+	https://codehs.com/identicon/image/3h
+	https://codehs.com/identicon/image/3u
+	https://codehs.com/identicon/image/3H
+	https://codehs.com/identicon/image/3L
+	https://codehs.com/identicon/image/3$
+	https://codehs.com/identicon/image/44
+	https://codehs.com/identicon/image/46
+	https://codehs.com/identicon/image/4&
+	https://codehs.com/identicon/image/5H
+*/
