@@ -1,5 +1,4 @@
 #!/usr/bin/env js
-// TODO: Fix rMath.set() for 1 argument
 void (() => { "use strict";
 	{  // Customization
 
@@ -9,7 +8,7 @@ void (() => { "use strict";
 			"inf", "assert", "ast", "alert" , "alt", "None" ,
 		];
 		// if something not in the options is used, it will act as if "None" was chosen instead
-
+		// the default is probably true unless otherwise specified
 		var
 		ALERT_FINISHED = false,
 		ON_CONFLICT = "dbg",
@@ -17,14 +16,15 @@ void (() => { "use strict";
 		Alert_Conflict_OverWritten_Functions = true,
 		Alert_Conflict_Unused_Functions = false, // "??=" is used instead of "=" to create these functions.
 		Output_Math_Variable = "Math",
-		MATH_LOG_DEFAULT_BASE = 10, // for rMath.log and rMath.logbase
+		MATH_LOG_DEFAULT_BASE = 10, // for rMath.log. ln is for e. log is for 10.
 		MATH_DEFAULT_END_TEMPERATURE_SYSTEM = "celcius", // for rMath.tempConv
-		// math arguments should be booleans or "default". The default value is true.
 		aMath_Help_Argument = "default",
 		bMath_Help_Argument = "default",
+		bMath_DegTrig_Argument = "default",
 		cMath_DegTrig_Argument = "default",
 		cMath_Help_Argument = "default",
 		fMath_Help_Argument = "default",
+		fMath_DegTrig_Argument = "default",
 		sMath_Help_Argument = "default",
 		sMath_Comparatives_Argument = "default",
 		rMath_DegTrig_Argument = "default",
@@ -34,6 +34,9 @@ void (() => { "use strict";
 		Logic_BitWise_Argument = "default",
 		Logic_Comparatives_Argument = "default",
 		Logic_Help_Argument = "default",
+		KeyLogger_Exit_Argument = "default",
+		KeyLogger_Debug_Argument = "default",
+		KeyLogger_Alert_Unused_Argument = "default", // false
 		π = 3.141592653589793,
 		pi = π,
 		𝑒 = 2.718281828459045,
@@ -91,8 +94,8 @@ void (() => { "use strict";
 			if (length != null) return length;
 			if (constr(obj) === "Object") return len( Object.keys(obj) );
 			return 0;
-		}; this.len = e => e.length;
-		this.dim = (e, n=1) => e.length - n;
+		}; this.len = e => e?.length;
+		this.dim = (e, n=1) => e?.length - n;
 		this.π = 3.141592653589793;
 		this.𝑒 = 2.718281828459045;
 		this[Symbol.for("<0x200b>")] = "​"; // zero width space
@@ -106,12 +109,12 @@ void (() => { "use strict";
 		}; this.complex = (re=0, im=0) => cMath.new(re, im);
 		this.constr = function constructorName(input, name=true) {
 			if (input == null) return input;
-			if (name) return input?.constructor.name;
-			const output = `${input.constructor}`.
+			if (name) return input?.constructor?.name;
+			const output = `${input?.constructor}`.
 				remove(/\s*\{(.|\s)*|class\s*|function\s*|\(\)/g).
 					remove(/\s(.|\s)*/g);
 			return output === "(" ?
-				input.constructor.name :
+				input?.constructor?.name :
 				output;
 		}; this.copy = object => json.parse(json.stringify(object));
 		this.assert = function assert(condition, message="false") {
@@ -263,7 +266,6 @@ void (() => { "use strict";
 				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
 				ans;
 		}; this.type = function type(a, b) {
-			// TODO: add nodelist to function
 			return b == null || typeof a === "bigint" || typeof a === "symbol" || a === undefined ?
 				typeof a :
 				typeof a === "number" ?
@@ -306,6 +308,7 @@ void (() => { "use strict";
 			return {
 				fn_1: '$=$=>`$=${$},$($)`,$($)',
 				fn_2: '$=$=>`$=${$};$($)`;$($)',
+				funny: "/*Jarvis, execute the following code.*/\nconsole.log(void(++([{}+([][[{}]])][(![]+[this])[+[]]]+[[]])[[$]+([NaN])]+{}, 0b10101100-0xF1+[void([{}])], [[({}),,0o0,null,],]+{}, $=$=>`$=${$},$($)`,$($))),(0);",
 				instructions: "copy the string contents to the console."
 			};
 		}; this.round = function round(n) {
@@ -511,13 +514,35 @@ void (() => { "use strict";
 				snum = snum.substr(0, dim(snum));
 			return snum + (snum.endsW(".") ? "0" : "");
 		}; this.ipart = Number.parseInt;
+		(function key_logger_v2(exit=true, debug=true, alert_unused=false) {
+			exit === "default" && (exit = true);
+			debug === "default" && (debug = true);
+			alert_unused === "default" && (alert_unused = false);
+			// f[1-12], backspace, alt, shift, ctrl, esc, tab, caps,...
+			// and special keys right of enter are not detected
+			// shift + ` will be detected as ~ which makes sense.
+			if (exit) return debug ?
+				alert_unused ?
+					console.log("keylogger exited without starting") :
+					1 :
+				1;
+			if (window[Symbol.for("keys")] !== void 0) {
+				debug && console.log("window[Symbol.for('keys')] is already defined.\nkeylogger start failed");
+				return;
+			}
+			window[Symbol.for("keys")] = "";
+			document.body.ael('keypress', e => {
+				window[Symbol.for("keys.")] += e.key;
+				debug && console.log(`keypress detected: ${e.key}\nkey variable: window[Symbol.for('keys')]\nkeys: ${window[Symbol.for('keys')]}`);
+			});
+			debug && console.log("keylogger started");
+		})(KeyLogger_Exit_Argument, KeyLogger_Debug_Argument, KeyLogger_Alert_Unused_Argument);
 		this.passwordGenerator = function passwordGenerator(
 			length=18,
 			charsToRemove=undefined,
 			chars=characters
 		) {
-			if (isNaN( length = Number(length))) return false;
-			if (length < 0) return false;
+			if (isNaN( length = Number(length)) || length < 0) return false;
 			length = int(length);
 			if (type(charsToRemove, 1) === "arr")
 			if (charsToRemove.every( e => type(e) === "string" )) charsToRemove = charsToRemove.join("");
@@ -932,7 +957,10 @@ void (() => { "use strict";
 					// Probably not constant time lookup.
 					constructor(...args) {
 						args = args.flatten().filter(e => type(e) === "number");
-						super(...args.sort());
+						if (len(args) === 1) {
+							super(...args.concat([null]));
+							this.pop();
+						} else super(...args.sort());
 					}
 					add(number=0) {
 						if (type(number) !== "number") return false;
@@ -1225,9 +1253,8 @@ void (() => { "use strict";
 					mod: "Takes two arguments (a,b).  similar to a%b.",
 					ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
 					findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers",
-					// TODO: Fix li() and li2() documentation
-					li: "logarithmic integral version 1",
-					li2: "logarithmic integral version 2",
+					// TODO: Fix li() documentation
+					li: "3 arguments. 1: number to take li of. 2: increment or accuracy depending on the form. 3: form number. form 1 uses an integral. form 2 uses a summation. form 3 does π(x) because it is asymptotic to it. form 3 is the fastest",
 					Li: null,
 					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information",
 					hyper0: "Takes 1 argument and returns 1 + the argument",
@@ -2200,11 +2227,11 @@ void (() => { "use strict";
 			} isAN(e) {
 				// is a number
 				return !this.isNaN(e);
-			} isNNaN(e) {
-				// is not not a number
-				return this.isAN(e);
 			} isaN(e) {
 				// is a number
+				return this.isAN(e);
+			} isNNaN(e) {
+				// is not not a number
 				return this.isAN(e);
 			} imul(a, b) {
 				return isNaN( a = Number(a) ) ||
@@ -3050,6 +3077,7 @@ void (() => { "use strict";
 							set1.union( set2, false ) :
 							set2.union( set1, false );
 			} piApprox(max=1) {
+				throw Error("Not Implemented");
 				const C = '42698670.666333395817712889160659608273320884002509082800838007178852605157457594216301799911455668601345737167494080411392292736181266728193136882170582563460066798766483460795735983552333985484854583276247377491250754585032578219745675991212400392015323321276835446296485837355697306012123458758049143216640427423547978510448221162836911053807235838159872646304853335987865686269706977445355835599133539678641902312391523829877481108898664622249006021331236404750043178521385802944662855665612876640849908660806684778002991357625433646133139055099023131780968145833996701200122389012154421724362284068629329420050521419015939092569907194340029444433951848629766397465505895098872676970688044372715257280235227382872383401509275515634457705197803145721985414408323372552767448562562388318221196367736544745016258054251434084686038802841060911418502815704983841331432095161566844429229281236234645670268734321517159131712143438348676514584576378735574108814073595022482261786305917060682396330756892805473449402143277237931963516369435685352365092484541942462092883877763497113840189835579188041015469199214591024464903812082236674251398135427633950703414918564398535902451835963329225993094620996776194600147027518785996432474421327664632559849828968208314238939908213288668864505307989237416790602042952155002363560107213852002818389447886529373647927435261622722659693610242183125434324402807272654881841337046021962005588671753995076464157748420706705788081555586601814528305826561147446525072540899979985469021440538232652735986871049579313454125256756946817498547980109520705620147393364518915878961023099880380883220356686938001604251001097944277105210370465860016431253036935588532610954757711019149238441320499873270033926280773104106978137183054470529244857536182559624515180184010151683243473408729742661899059223630893035500823027679849232721173165309525717280482325139339840211758636278297842552703166603606422904201823794913202045464937402255689393016703066065957563645962943734140254955172545497921577727315867693791497225501164635912351343416452812552266016504250267265';
 				const M = q => sMath.div(
 						sMath.ifact( sMath.mul(6, q) ),
@@ -3084,7 +3112,6 @@ void (() => { "use strict";
 			// isSameSet
 			// catalan
 			// determinant
-			// cumulative sum of list
 			// line intersection
 			// scalar operations
 			// eigs
@@ -3104,15 +3131,18 @@ void (() => { "use strict";
 			rMath_Comparatives_Argument,
 			rMath_Constants_Argument
 		); this.bMath = new (class BigIntRealMath {
-			constructor(help="default") {
+			constructor(help="default", degTrig="default") {
 				help === "default" && (help = true);
+				degTrig === "default" && (degTrig = true);
 
 				if (help) this.help = {
+				}; if (degTrig) this.deg = {
 				};
 			}
-			method() {}
-		})(bMath_Help_Argument);
-		this.cMath = new (class ComplexMath {
+		})(
+			bMath_Help_Argument,
+			bMath_DegTrig_Argument
+		); this.cMath = new (class ComplexMath {
 			constructor(degTrig="default", help="default") {
 				degTrig === "default" && (degTrig = true);
 				help === "default" && (help = true);
@@ -3525,8 +3555,9 @@ void (() => { "use strict";
 			cMath_DegTrig_Argument,
 			cMath_Help_Argument
 		); this.fMath = new (class fractionalRealMath {
-			constructor(help="default") {
+			constructor(help="default", degTrig="default") {
 				help === "default" && (help = true);
+				degTrig === "default" && (degTrig = true);
 				this.Fraction = class Fraction {
 					constructor(numerator=1, denominator=1) {
 						 this.numer = numerator;
@@ -3539,12 +3570,17 @@ void (() => { "use strict";
 				this.one = this.new(1, 1);
 
 				if (help) this.help = {
+				}; if (degTrig) this.deg = {
 				};
 			}
 			// do something about non-numbers and 0 denominators
-			fraction(numerator=0, denominator=0) { return new this.Fraction(numerator, denominator) }
-			new(numerator=0, denominator=0) { return new this.Fraction(numerator, denominator) }
-			simplify(fraction) {
+			fraction(numerator=0, denominator=0) {
+				return new this.Fraction(numerator, denominator);
+				;
+			} new(numerator=0, denominator=0) {
+				return new this.Fraction(numerator, denominator);
+				;
+			} simplify(fraction) {
 				["number", "bigint", "string"].incl(type(fraction)) && (fraction = this.new(fraction, 1));
 				if (type(fraction, 1) !== "fraction") return NaN;
 				if (!["number", "bigint", "string"].incl(type(fraction.numer)) || rMath.isNaN(fraction.numer)) return NaN;
@@ -3554,10 +3590,14 @@ void (() => { "use strict";
 				fraction.numer = window[type(fraction.numer).upper(1)](rMath.div(fraction.numer, gcd));
 				fraction.denom = window[type(fraction.denom).upper(1)](rMath.div(fraction.denom, gcd));
 				return fraction;
+			} simp(fraction) {
+				return this.simplify(fraction);
+				;
 			}
-			simp(frac) { return this.simplify(frac) }
-		})(fMath_Help_Argument);
-		this.aMath = new (class AllMath {
+		})(
+			fMath_Help_Argument,
+			fMath_DegTrig_Argument
+		); this.aMath = new (class AllMath {
 			// aMath will call the correct function based upon the input
 			constructor(help="default") {
 				help === "default" && (help = true);
@@ -3566,8 +3606,10 @@ void (() => { "use strict";
 				if (help) this.help = {
 				};
 			}
-		})(aMath_Help_Argument);
-		this.MathObjects = {
+		})(
+			aMath_Help_Argument
+			,
+		); this.MathObjects = {
 			aMath: aMath, bMath: bMath, cMath: cMath,
 			fMath: fMath, sMath: sMath, rMath: rMath,
 		}; this.Logic = new (class Logic {
