@@ -28,7 +28,7 @@ class Complex():
 		else:
 			raise TypeError("invalid input to Complex() class")
 	# Not always accurate within 1e-9 for a+bi ∧ c+di ∈ ℝ
-	# Also, python can't do 0^complex(num, num) or 0^-x because it's an ass programming language.
+	# Also, python can't do 0^complex(num, num) or 0^-x because it's a bad programming language.
 	def pow(self, num):
 		if type(num) is complex:
 			num = type(self)(num.real, num.imag)
