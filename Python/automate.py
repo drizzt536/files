@@ -28,13 +28,13 @@ def setmouseposition(x:int=0, y:int=0):
 def movemouse(relX:int=0, relY:int=0):
     MouseController().move(relX, relY)
 
-def click(button=Button.left, times:int=1):
+def click(button:object=Button.left, times:int=1):
     MouseController().click(button, times)
 
 def scroll(rtl:int=0, dtu:int=0):
     MouseController().scroll(rtl, dtu)
 
-def pressmouse(button=Button.left):
+def pressmouse(button:object=Button.left):
     buttons.append(button)
     MouseController().press(button)
 
@@ -43,21 +43,21 @@ def releasemouse():
 
 # Keyboard automation
 
-def keydown(key):
+def keydown(key:object):
     keys.append(key)
     KeyboardController().press(key)
 
 def keyup():
     KeyboardController().release( keys.pop() )
 
-def keypress(key, delay:float=0):
+def keypress(key:object, delay:float=0):
     keydown(key)
     if delay > 0:
         from time import sleep
         sleep(delay)
     keyup()
 
-def typekeys(keys=[], delay:float=0):
+def typekeys(keys:object=[], delay:float=0):
     for key in keys:
         keypress(key, delay)
 
