@@ -63,6 +63,6 @@ def typekeys(keys=[], delay:float=0):
 
 def keycombo(keys:list=[], delay:float=0):
     for key in keys:
-        keydown(key, delay)
+        keydown(key)
     for key in keys:
         keyup()
