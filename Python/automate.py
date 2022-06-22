@@ -1,9 +1,13 @@
 from pynput.keyboard import Key, Controller as KeyboardController
 from pynput.mouse import Button, Controller as MouseController
+# C:\Users\[user]\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages
 
+# variables
 
 buttons = []
 keys = []
+functions = ('getbuttonspressed', 'getkeyspressed', 'getmouseposition', 'setmouseposition', 'movemouse', 'click', 'scroll', 'pressmouse', 'releasemouse', 'keydown', 'keyup', 'keypress', 'typekeys', 'keycombo', 'test', 'KeyboardController', 'MouseController')
+variables = ('buttons', 'keys', 'Button', 'Key', 'functions', 'variables')
 
 # getters
 
