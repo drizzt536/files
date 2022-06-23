@@ -16,6 +16,13 @@ getbuttonspressed = lambda: buttons
 getkeyspressed = lambda: keys
 getmouseposition = lambda: MouseController().position
 
+def get_monitor_dimensions():
+    mouseposition = getmouseposition()
+    setmouseposition(1e6, 1e6)
+    x, y = getmouseposition()
+    setmouseposition(*mouseposition)
+    return { "width": x+1, "height": y+1, "isPrimary": True }
+
 # Mouse automation
 
 def setmouseposition(x:int=0, y:int=0):
@@ -83,4 +90,3 @@ def release_keys():
 def release_all():
     releasekeys()
     releasebuttons()
-
