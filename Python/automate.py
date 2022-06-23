@@ -6,19 +6,15 @@ from pynput.mouse import Button, Controller as MouseController
 
 buttons = []
 keys = []
-functions = ('getbuttonspressed', 'getkeyspressed', 'getmouseposition', 'setmouseposition', 'movemouse', 'click', 'scroll', 'pressmouse', 'releasemouse', 'keydown', 'keyup', 'keypress', 'typekeys', 'keycombo', 'test', 'KeyboardController', 'MouseController')
-variables = ('buttons', 'keys', 'Button', 'Key', 'functions', 'variables')
+functions = ('getbuttonspressed', 'getkeyspressed', 'getmouseposition', 'setmouseposition', 'movemouse', 'click', 'scroll', 'mousedown', 'mouseup', 'releasebuttons', 'keydown', 'keyup', 'keypress', 'typekeys', 'keycombo', 'alt_tab', 'release_keys', 'release_all', 'KeyboardController', 'MouseController')
+variables = ('buttons', 'keys', 'Button', 'Key', 'functions', 'variables', 'winKey (Key.cmd)')
+winKey = Key.cmd
 
 # getters
 
-def getbuttonspressed():
-    return buttons
-
-def getkeyspressed():
-    return keys
-
-def getmouseposition():
-    return MouseController().position
+getbuttonspressed = lambda: buttons
+getkeyspressed = lambda: keys
+getmouseposition = lambda: MouseController().position
 
 # Mouse automation
 
@@ -34,12 +30,16 @@ def click(button:object=Button.left, times:int=1):
 def scroll(rtl:int=0, dtu:int=0):
     MouseController().scroll(rtl, dtu)
 
-def pressmouse(button:object=Button.left):
+def mousedown(button:object=Button.left):
     buttons.append(button)
     MouseController().press(button)
 
-def releasemouse():
+def mouseup():
     MouseController().release( buttons.pop() )
+
+def releasebuttons():
+    while buttons:
+        mouseup()
 
 # Keyboard automation
 
@@ -52,17 +52,39 @@ def keyup():
 
 def keypress(key:object, delay:float=0):
     keydown(key)
-    if delay > 0:
-        from time import sleep
-        sleep(delay)
+    from time import sleep
+    sleep(delay)
     keyup()
 
-def typekeys(keys:object=[], delay:float=0):
+def typekeys(keys:object=None, delay:float=0):
+    if keys is None:
+        keys = []
     for key in keys:
         keypress(key, delay)
 
-def keycombo(keys:list=[], delay:float=0):
+def keycombo(keys:list=None, delay:float=0):
+    if keys is None:
+        keys = []
     for key in keys:
         keydown(key)
     for key in keys:
         keyup()
+
+def alt_tab(times:int=1):
+    if times < 1:
+        return
+    times = int(times)
+    keydown(Key.alt)
+    for i in range(times):
+        keydown(Key.tab)
+    for i in range(times + 1):
+        keyup()
+
+def release_keys():
+    while keys:
+        keyup()
+
+def release_all():
+    releasekeys()
+    releasebuttons()
+
