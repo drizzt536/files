@@ -71,14 +71,10 @@ def keycombo(keys:list=None, delay:float=0):
         keyup()
 
 def alt_tab(times:int=1):
-    if times < 1:
-        return
-    times = int(times)
     keydown(Key.alt)
-    for i in range(times):
-        keydown(Key.tab)
-    for i in range(times + 1):
-        keyup()
+    for i in range(int(times)):
+        keypress(Key.tab, 0.01)
+    keyup()
 
 def release_keys():
     while keys:
