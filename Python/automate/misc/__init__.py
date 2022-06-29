@@ -1,79 +1,103 @@
+# miscellaneous variables
+
+import _string as string # smallest standard module I could find
+Module = type(string)
+string = str
+NoneType = type(None) # useless
+true = True
+false = False
+ellipsis = type(...) # type(Ellipsis)
+NotImplementedType = type(NotImplemented)
+generator = type(0 for i in []) # useless
+function = type(lambda x: x)
+array = list
+dict_keys = type(int.__dict__.keys()) # useless
+dict_values = type(int.__dict__.values()) # useless
+dict_items = type(int.__dict__.items()) # useless
+variables = (
+    "Module",
+    "string",
+    "NoneType",
+    "true",
+    "false",
+    "ellipsis",
+    "NotImplementedType",
+    "generator",
+    "function",
+    "array",
+    "dict_keys",
+    "dict_values",
+    "dict_items",
+    "variables",
+    "functions"
+); functions = (
+    "monitors",
+    "view (view module)",
+    "read",
+    "cmp",
+    "ccmp",
+)
+
 # miscellaneous functions
 
-def getmonitors() -> tuple:
-    # basically stolen from the "screeninfo" library, but only works in windows now.
-    # it is slightly upgraded (kind of) as there is much less useless garbage everywhere for no reason.
-    def enumeratemonitors():
-        def callback(monitor, dc, rect, data):
-            class MONITORINFOEXW(ctypes.Structure):
-                _fields_ = [
-                    ("cbSize", ctypes.wintypes.DWORD),
-                    ("rcMonitor", ctypes.wintypes.RECT),
-                    ("rcWork", ctypes.wintypes.RECT),
-                    ("dwFlags", ctypes.wintypes.DWORD),
-                    ("szDevice", ctypes.wintypes.WCHAR * 32),
-                ]
-            info = MONITORINFOEXW()
-            info.cbSize = 104
-            if ctypes.windll.user32.GetMonitorInfoW(monitor, ctypes.byref(info)):
-                name = info.szDevice
-            else:
-                name = None
-            h_size = ctypes.windll.gdi32.GetDeviceCaps(dc, 4)
-            v_size = ctypes.windll.gdi32.GetDeviceCaps(dc, 6)
-            rct = rect.contents
-            monitors.append({
-                "x": rct.left,
-                "y": rct.top,
-                "width": rct.right - rct.left,
-                "height": rct.bottom - rct.top,
-                "width_mm": h_size,
-                "height_mm": v_size,
-                "name": name,
-                "is_primary": not (rct.left or rct.top)
-            })
-            return 1
-        import ctypes, ctypes.wintypes
-        monitors = []
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        ctypes.windll.user32.EnumDisplayMonitors(
-            0,
-            None,
-            ctypes.WINFUNCTYPE(
-                ctypes.c_int,
-                ctypes.c_ulong,
-                ctypes.c_ulong,
-                ctypes.POINTER(ctypes.wintypes.RECT),
-                ctypes.c_double,
-            )(callback),
-            0
-        )
-        yield from monitors
-    return tuple( enumeratemonitors() )
+def monitors() -> list[object, ...]:
+    from ctypes.wintypes import RECT as rect
+    from ctypes import (
+        c_int as cint, c_ulong as ul, POINTER as ptr,
+        c_double as dbl, WINFUNCTYPE as cfun, windll
+    )
+    lst = []
+    windll.user32.EnumDisplayMonitors(0, 0, cfun(cint, ul, ul, ptr(rect), dbl)(
+        lambda monitor, dc, rect, data: (rct := rect.contents) and lst.append({
+            'top': rct.top,
+            'left': rct.left,
+            'width': rct.right - rct.left,
+            'height': rct.bottom - rct.top,
+        }) or 1
+    ), 0)
+    return lst
 
-def view_module(module, form:int=1) -> object:
-    import _string # smallest standard module I could find. 2 functions, no inner modules
-    global Module
-    Module = type(_string)
-    try:
-        if not isinstance(module, Module):
-            0/0
-        module = module.__dict__
-    except Exception:
-        raise TypeError("1st input is not a module")
+def view(module: Module, form: int | float=1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | bool:
+    if not isinstance(module, Module):
+        return false
+    module = module.__dict__
     if form == 1: return tuple(module)
     elif form == 2: return list(module)
     elif form == 3: return set(module)
     elif form == 4: return module.keys()
 
+def read(file_location: str | int) -> str:
+    if file_location == 0:
+        raise Exception("automate.misc.read() cannot read from standard input")
+    try:
+        with open(file_location, "r") as file:
+            return file.read()
+    except (FileNotFoundError, PermissionError, TypeError, OSError) as e:
+        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is (probably. I'm not 100% sure it is always) a folder\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid\n")
+        raise e
 
-# variables
+def cmp(num1: float | int = 0, num2: float | int = 0) -> int:
+    if not isinstance(num1, float | int) or not isinstance(num2, float | int):
+        raise TypeError("automate.misc.cmp() requires an int or float input type")
+    return -1 if num1 < num2 else int(num1 != num2)
 
-NoneType = type(None)
-true = True
-false = False
-NoneType = type(None)
-ellipsis = type(...)
-NotImplementedType = type(NotImplemented)
-generator = type(0 for i in []) # useless
-function = type(lambda x: x) # useless
+def ccmp(comp1: complex | float | int = 0, comp2: complex | float | int = 0) -> tuple[int, int]:
+    if not isinstance(comp1,complex|float|int) or not isinstance(comp2, complex | float | int):
+        raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
+    comp1, comp2 = complex(comp1), complex(comp2)
+    return (cmp(comp1.real, comp2.real), cmp(comp1.imag, comp2.imag))
+
+if __name__ == '__main__':
+    print("__name__ == '__main__'\n\nvariables:")
+    print(
+        "",
+        *variables,
+        **{"sep": "\n * ", "end": 3*"\n"}
+    )
+    print("functions:")
+    print(
+        "",
+        *functions,
+        **{"sep": "\n * ", "end": 3*"\n"}
+    )
+    input("Press Enter to exit...\n")
