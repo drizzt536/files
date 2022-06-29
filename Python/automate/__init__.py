@@ -11,7 +11,6 @@ from pynput.keyboard import (
     Listener as MouseListener,
     Events as MouseEvents
 )
-from . import misc
 """
 pynput: https://pypi.org/project/pynput/
 file location:
@@ -22,10 +21,50 @@ C:/Users/[user]/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.10_qbz5
 
 buttons = []
 keys = []
-functions = ('KeyboardController', 'KeyboardListener', 'KeyboardEvents', 'HotKey', 'GlobalHotKeys', 'MouseController', 'MouseListener', 'MouseEvents', 'getbuttonspressed', 'getkeyspressed', 'getmouseposition', 'getmonitor', 'setmouseposition', 'movemouse', 'click', 'scroll', 'mousedown', 'mouseup', 'releasebuttons', 'keydown', 'keyup', 'keypress', 'typekeys', 'keycombo', 'alt_tab', 'releasekeys', 'release_all', 'volumeup', 'volumedown', 'pauseplay', 'togglemute', 'nextmedia', 'prevmedia')
-variables = ('buttons', 'keys', 'Button', 'Key', 'functions', 'variables', 'winkey (Key.cmd)', 'fkeys')
-winkey = Key.winkey = Key.cmd
-fkeys = (
+variables = (
+    'buttons',
+    'keys',
+    'Button',
+    'Key',
+    'variables',
+    'functions',
+    'fkeys',
+    'winkey (Key.cmd)',
+    "misc (module)",
+); functions = (
+    'KeyboardController',
+    'KeyboardListener',
+    'KeyboardEvents',
+    'HotKey',
+    'GlobalHotKeys',
+    'MouseController',
+    'MouseListener',
+    'MouseEvents',
+    'getbuttonspressed',
+    'getkeyspressed',
+    'getmouseposition',
+    'setmouseposition',
+    'movemouse',
+    'click',
+    'scroll',
+    'mousedown',
+    'mouseup',
+    'releasebuttons',
+    'keydown',
+    'keyup',
+    'keypress',
+    'typekeys',
+    'keycombo',
+    'alt_tab',
+    'releasekeys',
+    'release_all',
+    'volumeup',
+    'volumedown',
+    'pauseplay',
+    'togglemute',
+    'nextmedia',
+    'prevmedia'
+); fkeys = (
     None,
     Key.f1, Key.f2, Key.f3,
     Key.f4, Key.f5, Key.f6,
@@ -35,7 +74,7 @@ fkeys = (
     Key.f16, Key.f17, Key.f18,
     Key.f19, Key.f20, Key.f21,
     Key.f22, Key.f23, Key.f24,
-)
+); winkey = Key.winkey = Key.cmd
 
 Key.a = "a"; Key.A = "A"; Key.b = "b"; Key.B = "B"
 Key.c = "c"; Key.C = "C"; Key.d = "d"; Key.D = "D"
@@ -54,42 +93,41 @@ Key.shft = Key.shift
 
 # getters
 
-def getbuttonspressed() -> list:
+def getbuttonspressed() -> list[Key, ...]:
     return buttons
 
-def getkeyspressed() -> list:
+def getkeyspressed() -> list[Key, ...]:
     return keys
 
-def getmouseposition() -> tuple:
-    return MouseController().position
-
-def getmonitor() -> dict:
-    mouseposition = getmouseposition()
-    setmouseposition(1e6, 1e6)
-    x, y = getmouseposition()
-    setmouseposition(*mouseposition)
-    return { "width": x+1, "height": y+1, "isPrimary": True }
+def getmouseposition() -> tuple[int, int]:
+    return MouseController()\
+    .position
 
 # Mouse automation
 
 def setmouseposition(x:int=0, y:int=0) -> None:
-    MouseController().position = (x, y)
+    MouseController()\
+    .position = (x, y)
 
 def movemouse(relX:int=0, relY:int=0) -> None:
-    MouseController().move(relX, relY)
+    MouseController()\
+    .move(relX, relY)
 
 def click(button:object=Button.left, times:int=1) -> None:
-    MouseController().click(button, times)
+    MouseController()\
+    .click(button, times)
 
 def scroll(rtl:int=0, dtu:int=0) -> None:
-    MouseController().scroll(rtl, dtu)
+    MouseController()\
+    .scroll(rtl, dtu)
 
 def mousedown(button:object=Button.left) -> None:
     buttons.append(button)
     MouseController().press(button)
 
 def mouseup() -> None:
-    MouseController().release( buttons.pop() )
+    MouseController()\
+    .release( buttons.pop() )
 
 def releasebuttons() -> None:
     while buttons:
@@ -103,7 +141,8 @@ def keydown(key:object=None) -> None:
     KeyboardController().press(key)
 
 def keyup() -> None:
-    KeyboardController().release( keys.pop() )
+    KeyboardController()\
+    .release( keys.pop() )
 
 def keypress(key:object=None, delay:float=0) -> None:
     if key is None: return
@@ -124,7 +163,7 @@ def keycombo(keys:list=None, delay:float=0) -> None:
     for key in keys:
         keyup()
 
-def alt_tab(times:int=1) -> None:
+def alttab(times:int=1) -> None:
     keydown(Key.alt)
     for i in range(int(times)):
         keypress(Key.tab, 0.01)
@@ -149,13 +188,38 @@ def volumedown(times:int=1) -> None:
         keypress(Key.media_volume_down)
 
 def pauseplay() -> None:
-    keypress(Key.media_play_pause)
+    keypress(
+        Key.media_play_pause
+    )
 
 def togglemute() -> None:
-    keypress(Key.media_volume_mute)
+    keypress(
+        Key.media_volume_mute
+    )
 
 def nextmedia() -> None:
-    keypress(Key.media_next)
+    keypress(
+        Key.media_next
+    )
 
 def prevmedia() -> None:
-    keypress(Key.media_previous)
+    keypress(
+        Key.media_previous
+    )
+
+if __name__ == '__main__':
+    print("__name__ == '__main__'\n\nvariables:")
+    print(
+        "",
+        *variables,
+        **{"sep": "\n   * ", "end": 3*"\n"}
+    )
+    print("functions:")
+    print(
+        "",
+        *functions,
+        **{"sep": "\n   * ", "end": 3*"\n"}
+    )
+    input("Press Enter to exit...\n")
+
+from . import misc
