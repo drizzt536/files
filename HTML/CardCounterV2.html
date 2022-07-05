@@ -41,7 +41,7 @@
 			<hr class="hrb">
 		</div>
 	</noscript>
-	<div class="wrapper" style="justify-content: left/* !important*/;" id="main">
+	<div class="wrapper" style="justify-content: left;" id="main">
 		<div class="wrapper" id="line1Div">
 			<h1>Card Counter</h1>
 			<hr class="hrb">
@@ -99,51 +99,47 @@
 			shuffle() {
 				var num = 1 * prompt("How Many Decks?");
 				(isNaN(num) || num === 0) && (num = 1);
-				this.deck = [];
-				for (var i = 0; i < num; i++) {
-					new Deck().deck.join().substr(1).split(",").forEach(card =>
-						this.deck.splice(round(Math.random() * this.deck.length), 0, card));
-				}
+				this.deck.clear();
+				while (num --> 0) this.deck.insrands(...new Deck().deck.slc(1));
 				numDecks = num;
 				this.deck.unshift(null);
 				updateScreen(this);
-			};
+			}
 			discardf() {
 				this.discard.push(this.deck.shift());
-				this.discard[this.discard.length - 1] == null && this.discard.pop();
+				this.discard.last() == null && this.discard.pop();
 				updateScreen(this);
-			};
+			}
 			log() {
 				console.log("Deck:%o\nDiscard:%o", this.deck.filter(e=>e), this.discard);
-			};
+			}
 		}
-		var numDecks = 1, tCount = 0, rCount = 0, decks = new Deck(), $sd = (e, disp, act=1) =>
-			act === 1 ? $(e).style.display = disp : $(e).style.display == disp;
+		var numDecks = 1,
+			tCount = 0,
+			rCount = 0,
+			decks = new Deck(),
+			$ = e => document.getElementById(e),
+			$sd = (e, disp, act=1) => act === 1 ? $(e).style.display = disp : $(e).style.display == disp;
 		function updateScreen(variable) {
-			if (variable.deck[0] != null) $("currentCardText").innerHTML = variable.deck[0];
-			else $("currentCardText").innerHTML = "None";
+			$("currentCardText").innerHTML = variable.deck[0] || "None";
 			if (variable.deck[0]) {
-				var temp = 1 * variable.deck[0]?.substr(0,2);
+				let temp = 1 * variable.deck[0].substr(0, 2);
 				tCount = 52 / variable.deck.length * (
-					temp < 7?
-						++rCount:
+					temp < 7 ?
+						++rCount :
 						temp < 10 ? rCount : --rCount
 				)
 			}
 			isNaN(tCount) && (tCount = 0);
 			$("decksLeftText").innerHTML = numDecks = `${(
-				round(variable.deck.length) === 0?
-					ceil(variable.deck.length / 5.2):
-					round(variable.deck.length / 5.2)
+				round(len(variable.deck) / 5.2) || ceil(len(variable.deck) / 5.2)
 			) / 10}`;
 			$("runningCountText").innerHTML = rCount;
 			$("trueCountText").innerHTML = tCount;
-			if (variable.deck[0] == null && variable.deck.length > 0) $("cardsLeftText").innerHTML = variable.deck.length - 1;
-			else $("cardsLeftText").innerHTML = variable.deck.length;
-			return 0;
+			$("cardsLeftText").innerHTML = !variable.deck[0] && len(variable.deck) ? dim(variable.deck) : len(variable.deck);
 		}
 		function reset(ask=true) {
-			if (ask && prompt("are you sure? ")[0]?.toLowerCase() !== "y") return;
+			if (ask && prompt("are you sure? ")[0].lower() !== ["y"]) return;
 			numDecks = 1;
 			decks = new Deck();
 			tCount = rCount = 0;
@@ -152,24 +148,24 @@
 			$("decksLeftText").innerHTML = numDecks;
 			$("runningCountText").innerHTML = $("trueCountText").innerHTML = 0;
 		}
-		$("resetButton").addEventListener("click", reset);
-		$("shuffleButton").addEventListener("click", () => {
+		$("resetButton").ael("click", reset);
+		$("shuffleButton").ael("click", () => {
 			reset(false);
 			decks.shuffle();
 		});
-		$("discardButton").addEventListener("click", () => decks.discardf());
-		$("logButton").addEventListener("click", () => decks.log());
-		$("toggleCountsButton").addEventListener("click", ()=>
+		$("discardButton").ael("click", () => decks.discardf());
+		$("logButton").ael("click", () => decks.log());
+		$("toggleCountsButton").ael("click", ()=>
 			$sd("countsDiv", "inline", 2) ? $sd("countsDiv", "none") : $sd("countsDiv", "inline")
 		);
 		function resizeDiv() {
 			if ($("main").scrollWidth > 689) return $sd("title2", $sd("hr2", "none")), $("line2Div").style.marginLeft = 0;
 			if ($("main").scrollWidth > 343) return $sd("title2", $sd("hr2", $("line2Div").style.marginLeft = ""));
 			$sd("hr2", $sd("title2", "none"));
-			if ($("main").scrollWidth < 229) return $qs("hr").style.display = "none";
+			if ($("main").scrollWidth < 229) return $qs("hr", true).style.display = "none";
 			$qs("hr").style.display = "";
 		}
-		document.addEventListener("DOMContentLoaded", () => {
+		document.ael("DOMContentLoaded", () => {
 			let resizer = new ResizeObserver(resizeDiv);
 			resizer.observe($("main"));
 		});
