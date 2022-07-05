@@ -1,73 +1,168 @@
 #!/usr/bin/env js
 void (() => { "use strict";
-	{  // Customization
+	// Don't change from arrow function to regular function or "this" will break
+	{// Customization
 
 		const onConflict_Options = [
 			"log", "throw" , "trw", "return", "ret", "error",
 			"err", "warn"  , "wrn", "debug" , "dbg", "info" ,
 			"inf", "assert", "ast", "alert" , "alt", "None" ,
 		];
-		// if something not in the options is used, it will act as if "None" was chosen instead
-		// the default is probably true unless otherwise specified
+
+		/**
+		 * If something not in the options is used for ON_CONFLICT, excluding "default",
+		 * "None" will be chosen instead.
+		 * The defaults are the boolean value true, unless otherwise noted on the same line.
+		 * All alerts happen using console.log except for conflict stuff.
+		**/
+
 		var
-		ALERT_FINISHED = false,
-		ON_CONFLICT = "dbg",
-		Alert_Conflict_For_Math = false,
-		Alert_Conflict_OverWritten_Functions = true,
-		Alert_Conflict_Unused_Functions = false, // "??=" is used instead of "=" to create these functions.
-		Output_Math_Variable = "Math",
-		MATH_LOG_DEFAULT_BASE = 10, // for rMath.log. ln is for e. log is for 10.
-		MATH_DEFAULT_END_TEMPERATURE_SYSTEM = "celcius", // for rMath.tempConv
-		aMath_Help_Argument = "default",
-		bMath_Help_Argument = "default",
-		bMath_DegTrig_Argument = "default",
-		cMath_DegTrig_Argument = "default",
-		cMath_Help_Argument = "default",
-		fMath_Help_Argument = "default",
-		fMath_DegTrig_Argument = "default",
-		sMath_Help_Argument = "default",
-		sMath_Comparatives_Argument = "default",
-		rMath_DegTrig_Argument = "default",
-		rMath_Help_Argument = "default",
-		rMath_Comparatives_Argument = "default",
-		rMath_Constants_Argument = "default",
-		Logic_BitWise_Argument = "default",
-		Logic_Comparatives_Argument = "default",
-		Logic_Help_Argument = "default",
-		KeyLogger_Exit_Argument = "default",
-		KeyLogger_Debug_Argument = "default",
-		KeyLogger_Alert_Unused_Argument = "default", // false
-		π = 3.141592653589793,
-		pi = π,
-		𝑒 = 2.718281828459045,
-		e = 𝑒, 
-		ϕ = 1.618033988749895, // -2 sin 666°
-		phi = ϕ,
-		γ = .5772156649015329,
-		emc = γ,
-		Ω = .5671432904097838, // Ωe^Ω = 1
-		omega = Ω,
-		α = 1.187452351126501, // https://en.wikipedia.org/wiki/Foias_constant
-		𝜏 = 6.283185307179586,
-		tau = 𝜏;
+		ALERT_LIBRARY_LOAD_FINISHED   = "default" // false
+		, ON_CONFLICT                 = "default" // "debug"
+		, Alert_Conflict_For_Math     = "default" // false
+		, Alert_Conflict_OverWritten  = "default"
+		, Alert_Conflict_Unused       = "default" // false. ??= is used instead of = to create the functions
+		, Output_Math_Variable        = "default" // "Math"
+		, GetEventListeners_Variable  = "default" // void 0
+		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log
+		, MATH_DEFAULT_END_SYSTEM     = "default" // for rMath.tempConv
+		, aMath_Help_Argument         = "default"
+		, bMath_Help_Argument         = "default"
+		, bMath_DegTrig_Argument      = "default"
+		, cMath_DegTrig_Argument      = "default"
+		, cMath_Help_Argument         = "default"
+		, fMath_Help_Argument         = "default"
+		, fMath_DegTrig_Argument      = "default"
+		, sMath_Help_Argument         = "default"
+		, sMath_Comparatives_Argument = "default"
+		, rMath_DegTrig_Argument      = "default"
+		, rMath_Help_Argument         = "default"
+		, rMath_Comparatives_Argument = "default"
+		, rMath_Constants_Argument    = "default"
+		, Logic_BitWise_Argument      = "default"
+		, Logic_Comparatives_Argument = "default"
+		, Logic_Help_Argument         = "default"
+		, Run_KeyLogger               = "default" // false
+		, KeyLogger_Debug_Argument    = "default" // false
+		, KeyLogger_Alert_Start_Stop  = "default"
+		, KeyLogger_Alert_Unused      = "default" // false
+		, KeyLogger_Variable_Argument = "default" // Symbol.for('keys')
+		, KeyLogger_Copy_Obj_Argument = "default"
+		, KeyLogger_Type_Argument     = "default" // "keydown"
+		, Clr_LocalStorage_On_Start   = "default"
+		, Clr_SessionStorage_On_Start = "default"
+		// -----------------------------------------------------------
+		//                          constants
+		// -----------------------------------------------------------
+		, π      = 3.141592653589793
+		, 𝜏      = 6.283185307179586
+		, 𝑒      = 2.718281828459045
+		, ϕ      = 1.618033988749895 // -2 sin 666°
+		, α      = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
+		, γ      = .5772156649015329
+		, Ω      = .5671432904097838 // Ωe^Ω = 1
+		, pi     = π
+		, tau    = 𝜏
+		, e      = 𝑒
+		, phi    = ϕ
+		, foia   = α
+		, emc    = γ // Euler-Mascheroni Constant
+		, omega  = Ω
+		;
+		ALERT_LIBRARY_LOAD_FINISHED === "default" && (ALERT_LIBRARY_LOAD_FINISHED = false );
+		Alert_Conflict_For_Math     === "default" && (Alert_Conflict_For_Math     = false );
+		Alert_Conflict_Unused       === "default" && (Alert_Conflict_Unused       = false );
+		Output_Math_Variable        === "default" && (Output_Math_Variable        = "Math");
+		MATH_LOG_DEFAULT_BASE       === "default" && (MATH_LOG_DEFAULT_BASE       = 10    );
+		MATH_DEFAULT_END_SYSTEM     === "default" && (MATH_DEFAULT_END_SYSTEM     = "c"   ); // celcius
+		KeyLogger_Alert_Start_Stop  === "default" && (KeyLogger_Alert_Start_Stop  = false );
+		Run_KeyLogger               === "default" && (Run_KeyLogger               = false );
+		GetEventListeners_Variable  === "default" && (GetEventListeners_Variable  = void 0);
+		Clr_LocalStorage_On_Start   && localStorage.clear();
+		Clr_SessionStorage_On_Start && sessionStorage.clear();
+		// clear cookies and caches
+	} {// upgraded event listeners
+		let _ael = window.addEventListener
+		, _rel = window.removeEventListener
+		, listeners = [];
+
+		function addEventListener(Type, listener=null, options={
+			capture  : false,
+			passive  : false,
+			once     : false,
+			type     : arguments[0],
+			listener : arguments[1] }) {
+
+			typeof options === "boolean" && (options = {
+				capture: options,
+				passive: false,
+				once: false,
+				type: Type,
+				listener: listener
+			});
+			_ael.call(this, Type, listener, options);
+			listeners.push({
+				object   : this,
+				capture  : options.capture,
+				passive  : options.passive,
+				once     : options.once,
+				type     : options.type,
+				listener : options.listener
+			});
+		} function removeEventListener(Type, listener=null, options={
+			capture  : false,
+			passive  : false,
+			once     : false,
+			type     : arguments[0],
+			listener : arguments[1] }) {
+
+			typeof options === "boolean" && (options = {
+				capture: options,
+				passive: false,
+				once: false,
+				type: Type,
+				listener: listener
+			});
+			_rel.call(this, Type, listener, options);
+			for (var i = listeners.length; i --> 0 ;) {
+				if (listeners[i].capture  === options.capture  &&
+					listeners[i].passive  === options.passive  &&
+					listeners[i].once     === options.once     &&
+					listeners[i].type     === options.type     &&
+					listeners[i].listener === options.listener
+				) listeners.splice(i, 1);
+			}
+		} function getEventListeners() {
+			// gets all event listeners for all objects. see EventTarget.getMyEventListeners, EventTarget.gml
+			return listeners;
+		} function getMyEventListeners() {
+			// gets all event listeners on the current EventTarget object the function is called from
+			return listeners.filter(e => e.object === this);
+		}
+
+		EventTarget.prototype.ael = EventTarget.prototype.addEventListener    = addEventListener;
+		EventTarget.prototype.rel = EventTarget.prototype.removeEventListener = removeEventListener;
+		EventTarget.prototype.gel = EventTarget.prototype.getEventListeners   = getEventListeners;
+		EventTarget.prototype.gml = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
+		GetEventListeners_Variable !== void 0 && (this[GetEventListeners_Variable] = getEventListeners);
 	} {// Conflict and Library Functions
-		var LIBRARY_FUNCTIONS = [
-			"infinity","$qs","isIterable","isArr","sizeof","len","dim","π","𝑒",Symbol.for("<0x200b>"),
+		var
+		LIBRARY_FUNCTIONS = [
+			"infinity","$qs","isIterable","isArr","sizeof","len","dim","abs","π","𝑒",Symbol.for("<0x200b>"),
 			Symbol.for("<0x08>"),"json","rand","randInt","randint","complex","constr","copy","assert","help",
 			"dir","nSub","reverseLList","findDayOfWeek","type","round","parseDec","fpart","floor",
 			"ceil","int","str","numToAccStr","range","numToWords","numToStrW_s",
 			"Errors","strMul","LinkedList","Types","numStrNorm","ipart","aMath","bMath","cMath","fMath",
-			"sMath","rMath","Logic"
-		]
-		, NOT_ACTIVE_ARR = ["$","revArr","timeThrow","quine","convertType"].map(
-				e => [ this[e] != null , e ]
+			"sMath","rMath","Logic", GetEventListeners_Variable
+		], NOT_ACTIVE_ARR = ["$","revArr","timeThrow","quine","convertType"].map(
+				e => [ this[e] != null, e ]
 			).filter( e => e[0] ).map( e => e[1] )
 		, CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1]);
 		
 		this[Output_Math_Variable] !== void 0 && (
 			Output_Math_Variable === "Math" ?
 				Alert_Conflict_For_Math === true :
-				Output_Math_Variable === undefined ?
+				Output_Math_Variable === void 0 ?
 					false :
 					true
 		) && CONFLICT_ARR.push(Output_Math_Variable);
@@ -87,7 +182,7 @@ void (() => { "use strict";
 			try { for (const i of arg) break }
 			catch { return !1 }
 			return !0;
-		}; this.isArr = arr => type(arr) === "object" && isIterable(arr) && constr(arr) === "Array";
+		}; this.isArr = Array.isArray;
 		this.sizeof = function sizeof(obj) {
 			if (obj == null) return 0;
 			var length = len(obj);
@@ -96,16 +191,21 @@ void (() => { "use strict";
 			return 0;
 		}; this.len = e => e?.length;
 		this.dim = (e, n=1) => e?.length - n;
+		this.abs = Math.abs;
 		this.π = 3.141592653589793;
 		this.𝑒 = 2.718281828459045;
 		this[Symbol.for("<0x200b>")] = "​"; // zero width space
 		this[Symbol.for("<0x08>")] = ""; // \b
 		this.json = JSON;
 		this.rand = Math.random;
-		this.randint = this.randInt = function randomInt(min=0, max=1) {
-			if ( isNaN(min) || isNaN(max) ) return round( rand() );
+		this.randint = this.randInt = function randomInt(min=1, max=null) {
+			if (max == null) {
+				max = min;
+				min = 0;
+			}
+			if (type(min) !== "number" || type(max) !== "number") return round( rand() );
 			min < 0 && min--;
-			return round( rand() * Math.abs(min - max) + min );
+			return round( rand() * abs(min - max) + min );
 		}; this.complex = (re=0, im=0) => cMath.new(re, im);
 		this.constr = function constructorName(input, name=true) {
 			if (input == null) return input;
@@ -116,7 +216,7 @@ void (() => { "use strict";
 			return output === "(" ?
 				input?.constructor?.name :
 				output;
-		}; this.copy = object => json.parse(json.stringify(object));
+		}; this.copy = obj => json.parse(json.stringify(obj));
 		this.assert = function assert(condition, message="false") {
 			return !condition &&
 				Errors("Failed Assertion", message);
@@ -145,6 +245,7 @@ void (() => { "use strict";
 			} catch {}
 			try { return "Value: " + new Function(`return ${str}`)() } catch { return "Variable not Found" }	
 		}; this.dir = function currentDirectory(loc=new Error().stack) {
+			// sometimes doesn't work
 			return `${loc}`
 				.substr(13)
 				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
@@ -308,7 +409,7 @@ void (() => { "use strict";
 			return {
 				fn_1: '$=$=>`$=${$},$($)`,$($)',
 				fn_2: '$=$=>`$=${$};$($)`;$($)',
-				funny: "/*Jarvis, execute the following code.*/\nconsole.log(void(++([{}+([][[{}]])][(![]+[this])[+[]]]+[[]])[[$]+([NaN])]+{}, 0b10101100-0xF1+[void([{}])], [[({}),,0o0,null,],]+{}, $=$=>`$=${$},$($)`,$($))),(0);",
+				funny: "// Jarvis, execute the following code.\nconsole.log(void(++([{}+([][[{}]])][(![]+[this])[+[]]]+[[]])[[$]+([NaN])]+{}, 0b10101100-0xF1+[void([{}])], [[({}),,0o0,null,],]+{}, $=$=>`$=${$},$($)`,$($))),(0);",
 				instructions: "copy the string contents to the console."
 			};
 		}; this.round = function round(n) {
@@ -514,30 +615,106 @@ void (() => { "use strict";
 				snum = snum.substr(0, dim(snum));
 			return snum + (snum.endsW(".") ? "0" : "");
 		}; this.ipart = Number.parseInt;
-		(function key_logger_v2(exit=true, debug=true, alert_unused=false) {
-			exit === "default" && (exit = true);
-			debug === "default" && (debug = true);
-			alert_unused === "default" && (alert_unused = false);
-			// f[1-12], backspace, alt, shift, ctrl, esc, tab, caps,...
-			// and special keys right of enter are not detected
-			// shift + ` will be detected as ~ which makes sense.
-			if (exit) return debug ?
-				alert_unused ?
-					console.log("keylogger exited without starting") :
-					1 :
-				1;
-			if (window[Symbol.for("keys")] !== void 0) {
-				debug && console.log("window[Symbol.for('keys')] is already defined.\nkeylogger start failed");
-				return;
-			}
-			window[Symbol.for("keys")] = "";
-			document.body.ael('keypress', e => {
-				window[Symbol.for("keys.")] += e.key;
-				debug && console.log(`keypress detected: ${e.key}\nkey variable: window[Symbol.for('keys')]\nkeys: ${window[Symbol.for('keys')]}`);
-			});
-			debug && console.log("keylogger started");
-		})(KeyLogger_Exit_Argument, KeyLogger_Debug_Argument, KeyLogger_Alert_Unused_Argument);
-		this.passwordGenerator = function passwordGenerator(
+		if (Run_KeyLogger) {
+			let debug     = KeyLogger_Debug_Argument === "default" ?
+				false :
+				KeyLogger_Debug_Argument
+			, variable    = KeyLogger_Variable_Argument === "default" ?
+				Symbol.for('keys') :
+				KeyLogger_Variable_Argument
+			, copy_object = KeyLogger_Copy_Obj_Argument === "default" ?
+				true :
+				KeyLogger_Copy_Obj_Argument
+			, type        = KeyLogger_Type_Argument === "default" ?
+				"keydown" :
+				KeyLogger_Type_Argument;
+			const handler = e => {
+				window[variable] += e.key;
+				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
+				copy_object && (window.keypressObj = e);
+			}; this.stopKeylogger = function stopKeylogger() {
+				var alert =  KeyLogger_Alert_Start_Stop || KeyLogger_Debug_Argument
+				, type = KeyLogger_Debug_Argument;
+				type === "default" && (type = "keydown");
+				alert && console.log("keylogger manually terminated.");
+				document.body.removeEventListener(type, handler);
+				return true;
+			}; (function key_logger_v3() {
+				if (window[variable] !== void 0) return debug &&
+					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
+				window[variable] = "";
+				document.body.addEventListener(type, handler);
+				(debug || KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${KeyLogger_Debug_Argument}${KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${KeyLogger_Copy_Obj_Argument}${KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${KeyLogger_Type_Argument}${KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
+			})();
+		} else if (KeyLogger_Alert_Unused) console.log("keylogger launch failed due to library settings");
+		this.simulateKeypress = function simulateKeypress({
+			key = "",
+			code = "",
+			ctrl = false,
+			alt = false,
+			shift = false,
+			ctrlKey = undefined,
+			altKey = undefined,
+			shiftKey = undefined,
+			type = "keypress",
+			view = window,
+			isTrusted = true,
+			path = [],
+			bubbles = true,
+			cancelable = true,
+			cancelBubble = false,
+			which = null,
+			charCode = null,
+			composed = null,
+			currentTarget = null,
+			defaultPrevented = null,
+			detail = null,
+			eventPhase = null,
+			isComposing = null,
+			keyCode = null,
+			location = null,
+			metaKey = null,
+			repeat = null,
+			returnValue = null,
+			sourceCapabilities = null,
+			srcElement = null,
+			target = null,
+			timeStamp = null,
+		}={}) {
+			return document.body.dispatchEvent(
+				new KeyboardEvent({
+					isTrusted            : isTrusted // sets to false anyway
+					, key                : key
+					, code               : code
+					, ctrlKey            : ctrlKey  === void 0 ? ctrl  : ctrlKey
+					, altKey             : altKey   === void 0 ? alt   : altKey
+					, shiftKey           : shiftKey === void 0 ? shift : shiftKey
+					, view               : view
+					, which              : which
+					, bubbles            : bubbles
+					, cancelBubble       : cancelBubble
+					, cancelable         : cancelable
+					, charCode           : charCode
+					, composed           : composed
+					, currentTarget      : currentTarget
+					, defaultPrevented   : defaultPrevented
+					, detail             : detail
+					, eventPhase         : eventPhase
+					, isComposing        : isComposing
+					, keyCode            : keyCode
+					, location           : location
+					, metaKey            : metaKey
+					, path               : path
+					, repeat             : repeat
+					, returnValue        : returnValue
+					, sourceCapabilities : sourceCapabilities
+					, srcElement         : srcElement
+					, target             : target
+					, timeStamp          : timeStamp
+					, type               : type
+				})
+			);
+		}; this.passwordGenerator = function passwordGenerator(
 			length=18,
 			charsToRemove=undefined,
 			chars=characters
@@ -570,7 +747,7 @@ void (() => { "use strict";
 		for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				divtable[i][j] = i / j;
-	} {// Math and Logic Variables
+	} {// math and logic Variables
 		this.sMath = new (class stringRealMath {
 			constructor(help="default", comparatives="default") {
 				help === "default" && (help = true);
@@ -763,7 +940,7 @@ void (() => { "use strict";
 				}
 				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
 				return c.incl(".") ? c : `${c}.0`;
-			} sub(a="0.0", b="0.0", precision=Infinity) {
+			} sub(a="0.0", b="0.0") {
 				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
@@ -839,13 +1016,15 @@ void (() => { "use strict";
 				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
-				while (this.eq.sneq(this.fpart(num), 0)) {
+				while (this.eq.sneq(fpart(num, false), 0)) {
 					num = this.mul(num, 10);
 					denom = this.mul(num, 10);
-				} while (this.eq.sneq(this.fpart(denom), 0)) {
+				} while (this.eq.sneq(fpart(denom, false), 0)) {
 					num = this.mul(num, 10);
 					denom = this.mul(num, 10);
 				}
+				// return this.idiv(num, denom); // extra checks for the same cases.
+
 				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
 				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2), 0)) {
@@ -853,8 +1032,8 @@ void (() => { "use strict";
 					ans++;
 				}
 				var ansString = `${ans}`;
-				if (precision < 1) return `${ansString}.0`;
-				var remainder = this.mul( this.sub(num, this.mul(ans, denom)), 10 );
+				if (precision === 0) return `${ansString}.0`;
+				var remainder = this.mul( 10, this.sub(num, this.mul(ans, denom)) );
 				if (this.eq.sneq(remainder, 0)) ansString += ".";
 				for (var i = 0, j; this.eq.sneq(remainder, 0) && i++ < precision ;) {
 					for (j = 9; this.eq.lt(this.sub(remainder, table[j]), 0) ;) j--;
@@ -862,7 +1041,8 @@ void (() => { "use strict";
 					ansString += `${j}`;
 				}
 				ansString.io(".") < 0 && (ansString += ".0");
-				return sign === -1 ? `-${ansString}` : ansString;
+				ansString = sign === -1 ? `-${ansString}` : ansString;
+				return ansString;
 			} idiv(num="0.0", denom="1.0", precision=18) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
 				if ( this.eq.seq(denom, 0) )
@@ -977,7 +1157,7 @@ void (() => { "use strict";
 						;
 						return this.incl(number);
 					}
-					check() {
+					check() { // checks to make sure everything is a number and non-repeating
 						// fix in case the user used push or unshift instead of add.
 						// because that defeats the purpose
 						for (var i = len(this); i --> 0 ;)
@@ -1029,7 +1209,7 @@ void (() => { "use strict";
 				this.sqrt1_2 = .70710678118654752 ; this.SQRT2   = 1.4142135623730951;
 				this.sqrt2   = 1.4142135623730951 ; this.logpi10 = 2.0114658675880609;
 				this.dtor = .01745329251994329576 ; this.rtod = 57.295779513082320876;
-				this.sqrt5 = 2.23606797749979; this.π_2 = 1.5707963267948966;
+				this.sqrt5 = 2.23606797749979; this.π_2 = 1.5707963267948966; // Math.π_2 == Math.π/2 but faster
 				this.Math = Math;
 				/*
 					G = 6.67m³/(10¹¹ kg s²)
@@ -1039,8 +1219,8 @@ void (() => { "use strict";
 					ℵƒ∂𝜕ℶℕℝℚℙℤℍℂ∅∁∈∉∋∌∖∩∪⊂⊃⊄⊅⊆⊇⊈⊉⊊⊋⊍⊎⋐⋑⋒⋓⋔⋲⋳⋴⋵⋶⋷⋹⋺⋻⋼⋽⋾
 				*/// TODO: Update rMath.help
 				if (help) this.help = {
-					null: "If a value is null, then you could just directly check what the function does.",
-					trig: {
+					null: "If a value is null or missing, then you should just directly check what the function does.",
+					trig: { // update trig
 						sin: "1 argument. returns sin(angle), using the taylor series definition of sin. (radians)",
 						cos: "1 argument. returns cos(angle), using the taylor series definition of cos. (radians)",
 						tan: "1 argument. returns sin(angle) / cos(angle) (radians)",
@@ -1174,17 +1354,24 @@ void (() => { "use strict";
 							hcverc: "1 argument. returns cversx / 2 in degrees",
 							ahcverc: "1 argument. returns asin(2x - 1) with an input in degrees"
 						}
-					},
-					Ω: "Takes 2 arguments.  1: number (x).  2: accuracy. returns Ω where Ωx^Ω = 1",
-					ζ: "1 argument. riemann zeta function. summation from 1 to infinity of 1/n^x, where x is the input to the function",
-					P: "takes any amount of arguments either in an array, multiple arrays, or directly.  can only use number arguments. returns the set of all subsets of the inputed sets.  if any of the arcuments is \"strict\" then it will return a strict subset (the set itself is not included).",
-					expm1: "1 argument. returns e^x - 1",
+					}, Ω: "Takes 2 arguments.  1: number (x=e).  2: (accuracy=1e4). returns Ω where Ωx^Ω = 1. see omega constant",
+					ζ: "3 arguments. 1: input (s). 2: other input (a). 3: accuracy=1000 returns the hurwitz zeta function of s,a. summation from 0 to accuracy of (n+a)^-s. see Rzeta, Hzeta",
+					Rzeta: "3 arguments. 1: input (s). 2: accuracy=1000. 3: other input (a) returns the hurwitz zeta function of s,a. summation from 0 to accuracy of (n+a)^-s. see ζ, Hzeta",
+					Hzeta: "3 arguments. hurwitz zeta function. same function as ζ. see ζ, Rzeta",
+					π: "2 arguments. 1: Number (x). 2: Natuarl Number (form). form 1 uses iteration. form 2 use li(x). form 3 uses x/lnx. for the constant, use pi, for pi/2 use π_2 see primeCount.",
+					primeCount: "2 arguments. same as π function",
+					P: "takes any amount of arguments either in an array, multiple arrays, or directly.  can only use number arguments. returns the set of all subsets of the inputed sets.  if any of the arguments is \"strict\" then it will return a strict subset (the set itself is not included).",
+					expm: "2 arguments. 1: Number (x). 2: Number (n). returns e^x - n. see expm1",
+					expm1: "1 argument. returns e^x - 1. see expm",
 					log2: "1 argument. base 2 logarithm",
 					log10: "1 argument. base 10 logarithm",
+					logpi: "1 argument. base π logarithm",
 					log1p: "1 argument. returns ln(1 + x)",
 					clz32: "takes one parameter.  same as original Math.clz32. count leading zeros 32 [bit]",
 					clbz: "takes one parameter.  same as original Math.clz32. stands for count leading binary zeros",
 					fact: "takes one parameter.  returns the factorial of a number. Also works for floats.",
+					factorial: "1 numeric argument (x). returns x!. see fact and ifact",
+					// start here
 					sgn: "takes one parameter.  returns the sign of a number.  If input is NaN, returns NaN.  If  input == 0, returns the input.  If the input is positive, returns 1.  If the input is negative, returns -1.",
 					abs: "takes one parameter.  returns sign(input) * input, which always returns a positive number or zero.",
 					sum: "stands for summation.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to sum each time, in the form of a function that takes in one parameter. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
@@ -1202,60 +1389,79 @@ void (() => { "use strict";
 					ln: "Takes 1 parameter, and returns the natural logarithm of the number.  the same as the original Math.log. returns log(input, 𝑒).",
 					max: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the largest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
 					min: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the smallest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
-					nthrt: "Takes 2 parameters (x, n).  returns x**(1/n).  the root defaults to 2.",
 					mean: "Takes any amount of arguments, either directly or in one or many array(s).  adds up the arguments, and divides by the number of arguments present. and returns the answer.",
 					median: "Takes any amount of arguments, either directly or in one or many array(s).  it removes items from the end and beginning until there are either one or two elements remaining. if there is one, it returns it.  if there are two, it returns the average of them.",
+					mode: null,
 					mad: "Stands for mean absolute deviation.  takes any amount of arguments, either directly or in one or many array(s).  gets the mean of the arguments.  then finds the mean of the absolute deviation from the mean.",
 					isPrime: "Takes 1 input, and returns true if it is prime, false if it is composite.",
 					lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the parameters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
 					linReg: "Takes 3 paramates. finds the line of best fit (y = mx + b), given the x and y coordinates as arrays. 1: x-coordinates.  2: y-coordinates.  3: if this is \"obj\", then it returns an object, otherwise it returns it as a string",
 					pascal: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
 					fib: "Stands for fibonacci. returns the fibonacci sequence number of the inputed index.  If floats are inputed, then it will effectively return fib(ceil(input)).  Currently negative indexes are not implemented.  fib(0) returns 0, fib(1) returns 1, fib(2) returns 1, fib(3) returns 2, etc.",
+					fibonacci: null,
+					lucas: null,
 					primeFactorInt: "Takes 1 numberic argument, and returns a list of the prime factors",
 					findFactors: "Takes 1 integer argument and finds all integer factors of said integer.",
 					iMaxFactor: "Takes 1 integer argument and returns the largest factor of said integer",
 					synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant",
 					simpRad: "Takes 1 integer argument (number under radical) and returns, as a string, the radical in simplified form",
 					PythagTriple: "Takes one argument. 1: max size. finds all principle pythagorean triples such that a**2 + b**2 = c**2, a < max size, and b < max size, and a, b, and c are all integers.",
+					iPythagorean: null,
+					neg: null,
+					ssgn: null,
+					ssign: null,
+					sabs: null,
 					add: "Takes 4 arguments.  1: a number (a).  2: a number (b).  3:boolean, true returns a number, false returns a string.  4:number, decimal precision. returns a + b with no floating point arithmetic errors. if number is false, it returns a string with the precision of the last argument. a and b default to 0. if precsion is not a number, it becomes infinity.",
 					sub: null,
 					mul: null,
 					div: "Takes 4 arguments.  1:number, numerator.  2:number, denominator.  3:boolean, true returns a number, false returns a string.  4:number, decimal precision.  returns the numerator divided by the denominator with no floating point errors.  numerator defaults to 0, and denominator defaults to 1",
+					mod2: null,
+					mod: "Takes two arguments (a,b).  similar to a%b.",
 					parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
 					nCr: "Stands for n Choose r. takes 2 arguments. same as python's math.comb()",
+					comb: null,
 					nPr: "Stands for n Permute r. takes 2 arguments.",
+					perm: null,
 					isClose: "Takes 3 arguments. 1: number a. 2: number b.  3: number c. if a third argument is not provided, it will be set to Number.EPSILON (2^-52).  returns true if number a is in range c of number b, otherwise it returns false.",
 					complex: "Creates a complex number",
 					erf: "Takes one numeric argument \"z\". returns 2/√π ∫(0, z, 1/𝑒^t^2)dt. In mathematics, it is called the \"Gauss error function\"",
 					erfc: "Takes 1 numeric argument \"z\". return 1 - erf(z).",
 					dist: "Takes 4 arguments: (x1, y1, x2, y2). retrns the distance between the two points",
+					dist2: null,
 					copySign: "takes 2 arguments. 1: number to keep the value of (x). 2: number to keep the sign of (y). returns |x|sign(y)",
 					trunc: "Takes any amount of parameters, either directly or in one or many array(s).  If there is only one input, it will truncate it, and return it, otherwise, it will return an array of truncated values.",
 					isNaN: "Similar to isNaN(). takes one parameter.  if it can be coerced to be a number, it returns false.  the difference is that it returns false for bigints instead of throwing an error.",
-					isAN: "Takes one argument.  returns the opposite of rMath.isNaN()",
+					isAN: "Takes one argument.  returns the opposite of rMath.isNaN. see isaN, isNNaN",
+					isaN: "Takes one argument.  returns the opposite of rMath.isNaN. see isAN, isNNaN",
+					isNNaN: "Takes one argument.  is not not a number. returns the opposite of rMath.isNaN. see isAN, isaN",
 					imul: "returns the result of the C-like 32-bit multiplication of the two parameters.",
-					lcm: "returns the least common multiple of a list of numbers",
-					gcf: "retirns the greatest common factor of a list of numbers",
-					gcd: "Alternate spelling of gcf",
+					lcm: "returns the least common multiple of a list of numbers. see lmgf",
+					gcf: "returns the greatest common factor of a list of numbers. see lmgf, gcd",
+					gcd: "see gcf, lmgf",
 					fround: "returns the nearest 32-bit single precision float representation of a number.",
 					sqrt: "Takes one argument. returns nthrt(arg)",
 					cbrt: "Takes one argument.  returns the cube root of the argument.",
+					lnnp: null,
+					ln1p: "Takes one argument.  returns ln(1+arg). see log1p",
 					degrees: "Takes 1 argument. 1: angle in radians. converts radians to degrees",
 					radians: "Takes 1 argument. 1: angle in degrees. converts degrees to radians",
-					ln1p: "Takes one argument.  returns ln(1+arg). the same as original Math.log1p",
 					sign: "Alternate spelling for sgn",
 					exp: "Takes two arguments (n, x=Math.E).  returns x^n",
 					round: "returns round(argument)",
 					floor: "returns floor(argument)",
 					ceil: "returns ceil(argument)",
+					rand: "0 arguments. returns window.rand(), which is the original Math.random",
 					random: "returns a random number in the range [0,1)",
 					pow: "Takes two arguments (a,b).  similar to a**b.",
-					mod: "Takes two arguments (a,b).  similar to a%b.",
+					nthrt: "Takes 2 parameters (x, n).  returns x**(1/n).  the root defaults to 2.",
+					square: "1 argument (x). returns x^2. see pow, cube, hyper3",
+					cube: null,
 					ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
 					findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers",
 					// TODO: Fix li() documentation
 					li: "3 arguments. 1: number to take li of. 2: increment or accuracy depending on the form. 3: form number. form 1 uses an integral. form 2 uses a summation. form 3 does π(x) because it is asymptotic to it. form 3 is the fastest",
 					Li: null,
+					Ei: null,
 					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information",
 					hyper0: "Takes 1 argument and returns 1 + the argument",
 					hyper1: "Takes 2 numeric arguments and returns the sum of the arguments",
@@ -1270,10 +1476,28 @@ void (() => { "use strict";
 					Chi: null,
 					tanhc: "Takes 1 numeric argument (z) and returns tanh(z) / z",
 					sinhc: "Takes 1 numeric argument (z) and returns sinh(z) / z",
-					Tanc : "Takes 1 numeric argument (x) and returns tan(x) / x using radians",
+					Tanc : "Takes 1 numeric argument (x) and returns tanx / x using radians",
 					Coshc: "Takes 1 numeric argument (z) and returns cosh(z) / z",
-					H: "Takes 1 argument. Heaveside step function. returns 1 if it is a non-zero positive number, and 0 otherwise.",
-					// W: null,
+					H: null,
+					W: null,
+					deriv: null,
+					tanLine: null,
+					gd: null,
+					lam: null,
+					base10Conv: null,
+					bin: null,
+					oct: null,
+					hex: null,
+					timesTable: null,
+					cosNxSimplify: null,
+					heron: null,
+					tempConv: null,
+					coprime: null,
+					ncoprime: null,
+					cumsum: null,
+					set: null,
+					setUnion: null,
+					piApprox: null,
 				}; if (degTrig) this.deg = {
 					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sin(θ*π/180),
 					cos: θ => isNaN( θ = Number(θ) ) ? θ : this.cos(θ*π/180),
@@ -1520,6 +1744,11 @@ void (() => { "use strict";
 					this.speedOfLight = this.c = 299792458;
 					this.stefanBoltzmann = 5.67037441918443e-8;
 					this.weakMixingAngle = 0.2229;
+					this.solarConstants = {
+						Earth: 1380,
+						Venus: 2613,
+						Mars: 589,
+					};
 				};
 			} Ω(x=Math.E, i=10_000) {
 				// Ω(x) * x^Ω(x) ≈ 1
@@ -2992,7 +3221,7 @@ void (() => { "use strict";
 				if (/^cos\d+x$/.test(str)) str = `cos(${str.match(/\d+/)[0]}x)`;
 
 				for (var tmp; /\(\d+x\)/.test(str) ;) {
-				    str = str.replace(/\(-?1x\)/g, "(x)");
+					str = str.replace(/\(-?1x\)/g, "(x)");
 					str = str.replace(/cos\(-?0x\)/g, "1");
 					tmp = /cos\((\d+)x\)/.exec(str);
 					if (tmp[1])str = str.replace(/cos\((\d+)x\)/, `[2cosxcos(${tmp[1]*1-1}x)-cos(${tmp[1]*1-2}x)]`);
@@ -3006,26 +3235,26 @@ void (() => { "use strict";
 				if (isNaN( c = Number(c) )) return NaN;
 				const s = (a + b + c) / 2;
 				return this.sqrt(s * (s-a) * (s-b) * (s-c));
-			} tempConv(value=0, startSystem="fahrenheit", endSystem=void 0) {
+			} tempConv(value=0, startSystem="f", endSystem) {
 				// temperature converter
 				if (this.isNaN(value)) return NaN;
 				if (type(startSystem) !== "string") return NaN;
-				if (type(endSystem) !== "string") return NaN;
-				endSystem === void 0 && (endSystem = MATH_DEFAULT_END_TEMPERATURE_SYSTEM);
-				startSystem.lower() === "celcius"       && (startSystem = "c");
-				startSystem.lower() === "fahrenheit"    && (startSystem = "f");
-				startSystem.lower() === "kelvin"        && (startSystem = "k");
-				/ra(nkine)?/i.test(startSystem.lower()) && (startSystem = "r");
-				endSystem  .lower() === "celcius"       && (endSystem   = "c");
-				endSystem  .lower() === "fahrenheit"    && (endSystem   = "f");
-				endSystem  .lower() === "kelvin"        && (endSystem   = "k");
-				/ra(nkine)?/i.test(endSystem  .lower()) && (endSystem   = "r");
+				if (type(endSystem) !== "string" && endSystem != null) return NaN;
+				endSystem == null && (endSystem = MATH_DEFAULT_END_SYSTEM);
+				startSystem.lower() === "celcius"     && (startSystem = "c");
+				startSystem.lower() === "fahrenheit"  && (startSystem = "f");
+				startSystem.lower() === "kelvin"      && (startSystem = "k");
+				/ra(nkine)?/i.in(startSystem.lower()) && (startSystem = "r");
+				endSystem  .lower() === "celcius"     && (  endSystem = "c");
+				endSystem  .lower() === "fahrenheit"  && (  endSystem = "f");
+				endSystem  .lower() === "kelvin"      && (  endSystem = "k");
+				/ra(nkine)?/i.in(  endSystem.lower()) && (  endSystem = "r");
 				startSystem = startSystem.lower(); endSystem = endSystem.lower();
 				if (startSystem === endSystem) return value;
 				if (startSystem === "c") {
 					switch (endSystem) {
 						case "f": return 1.8*value + 32;
-						case "k": return x + 273.15;
+						case "k": return value + 273.15;
 						case "r": return 1.8*value + 491.67;
 						default: throw Error("Invalid 3rd Input to function");
 					}
@@ -3284,7 +3513,7 @@ void (() => { "use strict";
 						if (!this.im && !num.im) return new this.constructor(this.re ** num.re, 0);
 						if (type(num, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument");
 
-						const r = (this.re**2+this.im**2) ** (num.re/2) / Math.E ** ( num.im*this.arg(this) ),
+						const r = (this.re**2+this.im**2) ** (num.re/2) / rMath.e ** ( num.im*this.arg(this) ),
 							θ = num.re*this.arg(this) + num.im*rMath.ln( rMath.hypot(this.re, this.im) )
 						if (New) return new this.constructor(
 							r * rMath.cos(θ),
@@ -3295,7 +3524,7 @@ void (() => { "use strict";
 						return this;
 					}
 					exp(New=true) {
-						const r = Math.E ** this.re;
+						const r = rMath.e ** this.re;
 						if (New) return new this.constructor(
 							r * rMath.cos(this.im),
 							r * rMath.sin(this.im)
@@ -3453,14 +3682,14 @@ void (() => { "use strict";
 				if (type(z1, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument 1");
 				if (type(z2, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument 2");
 
-				const r = (z1.re**2 + z1.im**2) ** (z2.re / 2)  /  Math.E ** ( z2.im*this.arg(z1, n) ),
+				const r = (z1.re**2 + z1.im**2) ** (z2.re / 2)  /  rMath.e ** ( z2.im*this.arg(z1, n) ),
 					θ = z2.re*this.arg(z1, n) + z2.im*rMath.ln(this.abs(z1))
 				//re^iθ = rcosθ + risinθ
 				return this.new(r*rMath.cos(θ), r*rMath.sin(θ));
 			}
 			exp(z) {
 				type(z) === "number" && (z = this.new(z, 0));
-				const r = Math.E ** z.re;
+				const r = rMath.e ** z.re;
 				return this.new(r * rMath.cos(z.im), r * rMath.sin(z.im))
 			}
 			abs(z) {
@@ -3942,63 +4171,61 @@ void (() => { "use strict";
 	} {// Prototypes
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
-		function lastElement() {
-			const A = this.valueOf();
-			return A[len(A) - 1];
-		}; this.jQuery && (jQuery.prototype.for = Array.prototype.for);
+		function lastElement() { return this[dim(this)] } // can't be an arrow function because of "this"
 		NodeList.prototype.last = lastElement
 		,  HTMLCollection.prototype.last = lastElement
 		,  Object.prototype.tofar = function toFlatArray() {
 			// TODO: Fix for 'Arguments' objects and HTML elements
-			var val = this.valueOf();
+			var val = this;
 			if (
 				["number", "string", "symbol", "boolean", "bigint", "function"].incl(type(val)) ||
 				val == null ||
 				val?.constructor == 'function Object() { [native code] }'
 			)
 				return [this.valueOf()].flatten();
-			return list(this.valueOf()).flatten();
+			return Array.from(this.valueOf()).flatten();
 		}, Object.copy = copy
 		,  Object.keyof = function keyof(obj, value) {
-			for (const key of Object.keys(obj)) {
+			for (const key of Object.keys(obj))
 				if (obj[key] === value) return key;
-			}
 			return null;
-		}, HTMLElement.prototype.ael = HTMLElement.prototype.addEventListener
-		,  HTMLElement.prototype.rel = HTMLElement.prototype.removeEventListener
-		,  RegExp.prototype.in = RegExp.prototype.test
+		},  RegExp.prototype.in = RegExp.prototype?.test
 		,  RegExp.prototype.toRegex = function toRegex() {
-			return this.
-				valueOf();
+			return this;
 		}, RegExp.prototype.all = function all(str="") {
-			var a = `${this.valueOf()}`;
+			var a = `${this}`;
 			return RegExp(`^${a.substr(1, dim(a, 2))}$`).test(str);
-		}, Array.prototype.io = Array.prototype.indexOf
+		},  Array.prototype.any = Array.prototype.some
+		, Array.prototype.append = Array.prototype.push
+		, Array.prototype.io = Array.prototype.indexOf
 		,  Array.prototype.rev = Array.prototype.reverse
 		,  Array.prototype.lio = Array.prototype.lastIndexOf
 		,  Array.prototype.incl = Array.prototype.includes
 		,  Array.prototype.last = lastElement
 		,  Array.prototype.sortOld = Array.prototype.sort
-		,  Array.prototype.for = function forEachReturn(func, ret) {
-			for (var a = this.valueOf(), i = 0, n = len(a); i < n ;) func(a[i], i++, a);
+		,  Array.prototype.for = function forEachReturn(f=(e, i, a)=>e, ret) {
+			// don't change order from ltr to rtl
+			for (var a = this, i = 0, n = len(a); i < n ;)
+				f(a[i], i++, a);
 			return ret;
 		}, Array.prototype.shift2 = function shift2(num=1) {
-			let a = this.valueOf();
-			for (var i = 0; i++ < num;)
-				[].shift.call(a);
-			return a;
+			while ( num --> 0 ) this.shift();
+			return this;
+		}, Array.prototype.union = function union(array) {
+			array.constructor.name === "NodeList" && (array = Array.from(array));
+			for (var arr = this.concat(array), i = len(arr); i --> 0 ;)
+				this[i] = arr[i];
+			return this;
 		}, Array.prototype.pop2 = function pop2(num=1) {
-			let a = this.valueOf();
-			for (var i = 0; i++ < num;)
-				[].pop.call(a);
-			return a;
+			while ( num --> 0 ) this.pop();
+			return this;
 		}, Array.prototype.splice2 = function splice2(a, b, ...c) {
-			var d = this.valueOf();
+			var d = this;
 			d.splice(a, b);
 			return c.flatten().for((e, i) => d.splice(a + i, 0, e), d);
 		}, Array.prototype.push2 = function push2(e, ...i) {
 			// TODO: Finish implementing pushing multiple values for other methods
-			let a = this.valueOf(), j, n;
+			let a = this, j, n;
 			i = i.tofar();
 			if (e === void 0) {
 				for (j = 0, n = len(i); j < n; j++) {
@@ -4013,7 +4240,7 @@ void (() => { "use strict";
 			}
 			return a;
 		}, Array.prototype.unshift2 = function unshift2(e, ...i) {
-			let a = this.valueOf(), j, n;
+			let a = this, j, n;
 			i = i.tofar();
 			if (e === void 0) {
 				for (j = 0, n = len(i); j < n; j++) {
@@ -4028,26 +4255,25 @@ void (() => { "use strict";
 			}
 			return a;
 		}, Array.prototype.toLList = function toLinkedList() {
-			let a = new LinkedList(), b = this.valueOf().reverse();
-			for (let i of b) a.insertFirst(i);
+			if (window.LinkedList == null) throw Error("window.LinkedList == null");
+			let a = new window.LinkedList();
+			for (const i of this.rev()) a.insertFirst(i);
 			return a;
 		}, Array.prototype.remove = function remove(e) {
-			var a = this.valueOf();
+			var a = this;
 			a.incl(e) && a.splice(a.io(e), 1);
 			return a;
 		}, Array.prototype.removeAll = function removeAll(e) {
-			var a = this.valueOf();
-			while ( a.incl(e) )
-				a.splice( a.io(e), 1 );
+			var a = this;
+			while (a.incl(e)) a.splice(a.io(e), 1);
 			return a;
 		}, Array.prototype.hasDupes = function hasDuplicates() {
-			for (var a = copy(this.valueOf()), i = len(a); i --> 0 ;) {
+			for (var a = copy(this), i = len(a); i --> 0 ;)
 				if (a.incl(a.pop())) return true;
-			}
 			return false;
 		}, Array.prototype.mod = function modify(indexes, func) {
 			indexes = indexes.tofar();
-			let a = this.valueOf(), n = len(indexes);
+			let a = this, n = len(indexes);
 			if (type(func, 1) === "arr") func = func.flatten();
 			else func = [].len(n).fill(func);
 			func = func.extend(len(indexes) - len(func), e => e);
@@ -4056,104 +4282,106 @@ void (() => { "use strict";
 				a[indexes[i]] = func[i](a[indexes[i]], indexes[i]);
 			return a;
 		}, Array.prototype.remrep = function removeRepeats() {
-			return Array.from(
-				new Set( this.valueOf() )
-			);
+			return Array.from(new Set(this));
+			// probably changes the order of the array
 		}, Array.prototype.rand = function random() {
-			var a = this.valueOf();
+			var a = this;
 			return a[ randint(0, dim(a)) ];
-		}, Array.prototype.slc = function slice(start=0, end=Infinity) {
-			for (var a = this.valueOf(), b = [], i = 0, n = len(a); i < n && i <= end; i++)
+		}, Array.prototype.insrand = function insertRandomLocation(thing) {
+			this.splice(randint(len(this)), 0, thing);
+			return this;
+		}, Array.prototype.insrands = function insertThingsRandomLocation(...things) {
+			for (const thing of things) this.insrand(thing);
+			return this;
+		}
+		, Array.prototype.slc = function slice(start=0, end=Infinity) {
+			for (var a = this, b = [], i = 0, n = len(a); i < n && i <= end; i++)
 				i >= start && b.push( a[i] );
 			return b;
-		}, Array.prototype.print = function print() {
-			let a = this.valueOf();
-			console.log(a);
-			return a;
+		}, Array.prototype.print = function print(fn=console.log) {
+			fn(this);
+			return this;
+		}, Array.prototype.printEach = function printEach(fn=console.log) {
+			for (const e of this) fn(e);
+			return this;
 		}, Array.prototype.swap = function swap(i1=0, i2=1) {
-			const A = this.valueOf(), B = A[i1];
+			const A = this, B = A[i1];
 			A[i1] = A[i2];
 			A[i2] = B;
 			return A;
-		}, Array.prototype.smap = function setMap(f=(e, i, a)=>e) {
+		}, Array.prototype.smap = function setMap(f=(e, i)=>e) {
 			// array.smap also counts empty indexes as existing unlike array.map.
-			for (var arr = this.valueOf(), i = len(arr); i --> 0 ;)
+			for (var arr = this, i = len(arr); i --> 0 ;)
 				arr[i] = f(arr[i], i, arr);
 			return arr;
+		}, Array.prototype.sfilter = function setFilter(f=(e, i)=>e) {
+			for (var i = len(this); i --> 0 ;) !f(this[i]) && this.splice(i, 1);
+			return this;
+		}, Array.prototype.mapf = function setMapThenFilter(f1=(e, i, a)=>e, f2=(e, i, a)=>e) {
+			return this.map(f1).filter(f2);
+		}, Array.prototype.smapf = function setMapThenFilter(f1=(e, i, a)=>e, f2=(e, i, a)=>e) {
+			return this.smap(f1).sfilter(f2);
 		}, Array.prototype.rotr3 = function rotate3itemsRight(i1=0, i2=1, i3=2) {
-			const A = this.valueOf(), TMP = A[i1];
+			const A = this, TMP = A[i1];
 			A[i1] = A[i3];
 			A[i3] = A[i2];
 			A[i2] = TMP;
 			return A;
 		}, Array.prototype.dupf = function duplicateFromFirst(num=1, newindex=0) {
-			return this.valueOf().dup(
-				num, 0, newindex
-			);
+			return this.dup(num, 0, newindex);
 		}, Array.prototype.duptf = function duplicateToFirst(num=1, index=0) {
-			return this.valueOf().dup(
-				num, index, 0
-			);
+			return this.dup(num, index, 0);
 		}, Array.prototype.dupl = function duplicateFromLast(num=1, newindex=0) {
-			var a = this.valueOf();
-			return a.dup(num, len(a)-1, newindex);
+			return this.dup(num, dim(this), newindex);
 		}, Array.prototype.duptl = function duplicateToLast(num=1, index=0) {
-			var a = this.valueOf();
-			return a.dup(num, index, len(a)-1);
+			return this.dup(num, index, dim(this));
 		}, Array.prototype.dup = function duplicate(num=1, from=null, newindex=Infinity) {
 			// by default duplicates the last element in the array
-			var a = this.valueOf();
-			for (var b = a[from === null ? len(a)-1 : from], j = 0; j++ < num;)
+			var a = this;
+			for (var b = a[from === null ? dim(a) : from], j = 0; j++ < num ;)
 				a.splice(newindex, 0, b);
 			return a;
 		}, Array.prototype.rotr = function rotateRight(num=1) {
-			var a = this.valueOf();
-			for (num %= len(a); num --> 0;)
-				a.unshift(a.pop());
-			return a;
+			for (num %= len(this); num --> 0;)
+				this.unshift(this.pop());
+			return this;
 		}, Array.prototype.rotl = function rotateRight(num=1) {
-			var a = this.valueOf();
-			for (num %= len(a); num --> 0;)
-				a.push(a.shift());
-			return a;
+			for (num %= len(this); num --> 0;)
+				this.push(this.shift());
+			return this;
 		}, Array.prototype.rotl3 = function rotate3itemsLeft(i1=0, i2=1, i3=2) {
-			var a = this.valueOf(), b = a[i1];
+			var a = this, b = a[i1];
 			a[i1] = a[i2];
 			a[i2] = a[i3];
 			a[i3] = b;
 			return a;
 		}, Array.prototype.len = function setLength(num) {
-			var a = this.valueOf();
-			a.length = num > 0 ? num : 0;
-			return a;
+			this.length = Math.max(num, 0);
+			return this;
 		}, Array.prototype.extend = function extend(length, filler, form="new") {
-			var a = this.valueOf();
-			if (form === "new") return a.concat([].len(length).fill(filler));
+			if (form === "new") return this.concat(Array(length).fill(filler));
 			else if (form === "total") {
-				if (length <= len(a)) return a;
-				else return a.concat([].len(length).fill(filler));
+				if (length <= len(this)) return this;
+				else return this.concat(Array(length).fill(filler));
 			}
-			else return a;
-		}, Array.prototype.startsW = function startsWith(item) {
-			return this.valueOf()[0] ===
-			item;
-		}, Array.prototype.endsW = function endsWith(item) {
-			return this.valueOf().last() ===
-				item;
+			/*else */return a;
+		}, Array.prototype.sW = Array.prototype.startsW = function startsWith(item) {
+			return this[0] === item;
+		}, Array.prototype.eW = Array.prototype.endsW = Array.prototype.endsWith = function endsWith(item) {
+			return this.last() === item;
 		}, Array.prototype.flatten = function flatten() {
-			return this.valueOf().flat(
-				Infinity
-			);
+			return this.flat(Infinity);
 		}, Array.prototype.sort = function sort() {
-			var list = this.valueOf();
+			var list = this;
 			if (rMath.isNaN(list.join(""))) return list.sortOld();
-			for (var output = []; len(list) > 0;) {
+			for (var output = []; len(list) > 0 ;) {
 				output.push(rMath.min(list));
 				list.splice(list.io(rMath.min(list)), 1);
-			} return output;
+			}
+			return output;
 		}, Array.prototype.shuffle = function shuffle(times=1) {
-			var arr = this.valueOf();
-			for (var i = 0; i < times; i++)
+			var arr = this;
+			for (var i = times; i --> 0 ;)
 				for (var j = 0, n = len(arr), arr2 = []; j < n; j++)
 					arr2.splice(round(rand() * len(arr2)), 0, arr.pop());
 			return arr2;
@@ -4163,16 +4391,22 @@ void (() => { "use strict";
 				if (fn(val)) return !0;
 			return !1;
 		}, Array.prototype.clear = function clear() {
-			this.valueOf()
-				.length = 0;
+			this.length = 0;
+			return this;
 		}, String.prototype.io = String.prototype.indexOf
 		,  String.prototype.lio = String.prototype.lastIndexOf
-		,  String.prototype.startsW = String.prototype.startsWith
-		,  String.prototype.endsW = String.prototype.endsWith
 		,  String.prototype.strip = String.prototype.trim
 		,  String.prototype.lstrip = String.prototype.trimLeft
 		,  String.prototype.rstrip = String.prototype.trimRight
-		,  String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=true) {
+		,  String.prototype.sW = String.prototype.startsW = String.prototype.startsWith
+		,  String.prototype.eW = String.prototype.endsW = String.prototype.endsWith
+		, String.prototype.sL = String.prototype.startsL = String.prototype.startsLike =
+		function startsLike(strOrArr="", position=0) {
+			if (!["str", "arr"].incl(type(strOrArr, 1))) return false;
+			if (type(strOrArr) === "string") {
+
+			}
+		},  String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=true) {
 			var a = this.valueOf();
 			if (type(start) === "string") start = a.io(start);
 			if (type(end) === "string") end = a.io(end);
@@ -4245,7 +4479,7 @@ void (() => { "use strict";
 				)())(Function.apply.bind(fn))
 			)(new Function(args, s.replace(
 				new RegExp(`^(${(z=>{
-					for (var i=0, l=len(z), g=""; i<l; ++i) g += (/[$^()+*|[\]{}?.]/.test(z[i]) && "\\") + z[i];
+					for (var i=len(z), g=""; i --> 0 ;) g += (/[$^()+*|[\]{}?.]/.in(z[i]) && "\\") + z[i];
 					return g;
 			})(args)}\\)\\s*\\{)`,"g"), "").replace(/\s*;*\s*}\s*;*\s*/, "")), name);
 		}, String.prototype.toFun = function toNamelessFunction() {
@@ -4413,7 +4647,7 @@ void (() => { "use strict";
 		}, BigInt.prototype.pow = function pow(arg) {
 			return this **
 				BigInt(arg);
-		};
+		}; this.jQuery && (jQuery.prototype.for = Array.prototype.for);
 	} {// bad text encoders
 		function asciiToChar(number) {
 			switch (number) {
@@ -4589,9 +4823,11 @@ void (() => { "use strict";
 		}
 	} {// Error Handling
 		let exit1 = false;
-		ON_CONFLICT = ON_CONFLICT.lower();
+		try { ON_CONFLICT = ON_CONFLICT.lower() }
+		catch { ON_CONFLICT = "None" }
+		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
 		if (len(CONFLICT_ARR)) {
-			switch (ON_CONFLICT && Alert_Conflict_OverWritten_Functions) {
+			switch (ON_CONFLICT && Alert_Conflict_OverWritten) {
 				case "ast":
 				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "dbg":
@@ -4609,7 +4845,7 @@ void (() => { "use strict";
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 			}
 			exit1 = true;
-		} if (len(NOT_ACTIVE_ARR) && Alert_Conflict_Unused_Functions) {
+		} if (len(NOT_ACTIVE_ARR) && Alert_Conflict_Unused) {
 			switch (ON_CONFLICT) {
 				case "ast":
 				case "assert": console.assert(!1, "Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
@@ -4632,22 +4868,20 @@ void (() => { "use strict";
 			exit1 = true;
 		}
 		if (exit1) return 1;
-		ALERT_FINISHED && console.log("lib.js loaded");
+		ALERT_LIBRARY_LOAD_FINISHED && console.log("lib.js loaded");
 		return 0;
 	}
-})(); function dQuery(e, typ, prev) {
-	// some dQuery things also support jQquery things
-	assert( typeof e === "string" || typeof e === "object" || e == null || isArr(e),
+})(); function dQueryFn(e, typ, previous) {
+	// can't go inside the 'main' function because it uses arguments.callee, which is disallowed in strict mode
+	assert( typeof e === "string" || e == null || isArr(e),
 		"function requires a string, an object, or undefined argument"
 	);
-	// arguments.callee is used here because I want the function and class to have the same name
-	// and I need to use the function inside the class.
-	var func = arguments.callee;
 	class dQuery extends Array {
-		constructor(values=[], typ="", prev=document) {
+		constructor(values=[], typ="", previous=document, selector="") {
 			super(...Array.from(values));
 			this.type = typ;
-			this.prev = prev;
+			this.previous = previous;
+			this.selector = selector;
 		}
 		// TODO: Add css handling
 		// TODO: Add event handling
@@ -4670,7 +4904,6 @@ void (() => { "use strict";
 
 			return this;
 		}
-
 		get(...keys) {
 			// ex: get("innerHTML")
 			// to get css values, use .css() method
@@ -4678,7 +4911,6 @@ void (() => { "use strict";
 			if (len(keys) === 1) return this.map(e => e[keys[0]]);
 			return this.map((e, i) => e[key[i]]);
 		}
-
 		html(texts=null, ...indexes) {
 			return texts == null?
 				this.get("innerHTML") :
@@ -4696,8 +4928,8 @@ void (() => { "use strict";
 		}
 		id(names=null, ...indexes) {
 			return names === null?
-				this.set("id", names, indexes) :
-				this.get("id");
+				this.get("id") :
+				this.set("id", names, indexes);
 		}
 		class(names=null, ...indexes) {
 			return names === null?
@@ -4760,22 +4992,21 @@ void (() => { "use strict";
 
 			if (constr(obj) !== "dQuery" && obj?.constructor?.name !== "jQuery")
 				throw Error("dQuery.extend() requires a dQuery or jQuery object");
-			// dQuery is already easier to use than jQuery. 2 lines of code? ridiculous, and deplorable
+			// dQuery is already easier to use than jQuery. 2 lines of code? ridiculous and deplorable (joke)
 			if (obj?.constructor?.name === "jQuery") {
 				obj.each((i, e) => this.push(e));
 				return this;
 			} else return obj.for(e => this.push(e), this);
 		}
-		copy(dQueryObj) {
+		copy(dQueryObj) { // TODO: Update
 			dQueryObj == null && (dQueryObj = this);
-			return new this.constructor(Array.from(dQueryObj), dQueryObj.type, dQueryObj.prev);
+			return new this.constructor(Array.from(dQueryObj), dQueryObj.type, dQueryObj.previous);
 		}
 		// regular array methods
 		push(...HTML_Elements) {
-			for (const obj of HTML_Elements.flatten()) {
+			for (const obj of HTML_Elements.flatten())
 				if (/^\[object HTML\w*Element\]$/.in(obj.toString()))
 					Array.prototype.push.call(this, obj);
-			}
 			return this;
 		}
 		pop(num=1) {
@@ -4799,17 +5030,19 @@ void (() => { "use strict";
 
 			return obj;
 		}
-		/*slc(start=0, end=Infinity) {
-
-		}*/
 	}
-	if (typeof e?.constructor === "function" && constr(e) === "dQuery") return e;
-	if (isArr(e)) return new dQuery(e, typ || "", prev || document).flat();
-	if (e === "*") return new dQuery(document.querySelectorAll("*"), "querySelectorAll").flat();
+	if (`${e?.constructor}` == dQuery) return e;
+	if (isArr(e)) {
+		var arr = [];
+		for (var i = len(e); i --> 0 ;)
+			arr[i] = dQueryFn(e[i]);
+		return arr;
+	}
+	if (e === "*") return new dQuery(document.querySelectorAll("*"), "querySelectorAll", "*").flat();
 	if (e == null || e === "") return new dQuery().flat();
 
 	let values, end = true,
-		str = ` ${e}`.splitn(/(?=\.|#)|(?<=\.|#)/, 2).map(e => e.trim()).filter(e => e);
+		str = ` ${e}`.splitn(/(?=\.|#)|(?<=\.|#)/, 2).map(f => f.trim()).filter(f => f);
 
 	if (len(str) > 3 || !len(str)) throw Error(`invalid input: \`${e}\``);
 
@@ -4817,17 +5050,19 @@ void (() => { "use strict";
 		case "#":
 			// TODO fix Object.tofar() for HTMLScriptElements
 			values = [document.getElementById(str[1])];
-			typ = "id";    break;
+			typ = "id";
+			break;
 		case ".":
 			values = Array.from(document.getElementsByClassName(str[1]));
-			typ = "class"; break;
+			typ = "class";
+			break;
 		default: // query selector and (id=all or class=all)
 			end = false;
 			values = Array.from(document.querySelectorAll(str[0]));
 			typ = "querySelectorAll";
 	}
 
-	if (end || len(str) === 1) return new dQuery(values, typ).flat();
+	if (end || len(str) === 1) return new dQuery(values, typ, previous || document, e).flat();
 	
 	// some input like "tagname." with no class
 	if (len(str) === 2) throw Error(`Invalid input: ${e}`);
@@ -4842,13 +5077,10 @@ void (() => { "use strict";
 		default: throw Error("Unreachable");
 	}
 
-	return new dQuery(values, typ).flat();
-} this.$ ??= dQuery; /**
- * (function fixCodeHS( progress, points, badges, days, streak, moduleIndex, name, avatar, returnUserData ) {
- for(var i=5,A=$(".module-info").toArray(),S=$(".user-stat").toArray();i-->0;)arguments[i]=arguments[i].toString();A[0].click(),A[0].click();const fix=()=>{const f="finalized",s="submitted",o={icon:f,challenge:f,quiz:f,"chs-badge":f,video:f,connection:f,example:f,"lesson-status":f,exercise:s,"free-response":s};$(".unopened").toArray().concat($(`.not-${s}`).toArray()).forEach((e,i,a)=>a[i].className=e.className.replace(/unopened|not-submitted/g,o[e.className.split(/ +/)[0]]));$(".bg-slate").toArray().filter(e=>e.className.trim()=="bg-slate").forEach((e,i,a)=>{a[i].style.width="100%";a[i].className=e.className.replace(/progressBar/g,"bg-slate")});$(".percent-box").toArray().forEach((e,i,a)=>{a[i].innerHTML=e.innerHTML.replace(/\d+%/g,"100%");a[i].className=e.className.replace(/percent-\d+/g,"percent-100")})};for(let m of A)m.click(),fix();points!="def"&&(S[1].children[1].innerHTML=points);badges!="def"&&(S[2].children[1].innerHTML=badges);days!="def"&&(S[3].children[1].innerHTML=days);streak!="def"&&(S[4].children[1].innerHTML=streak);moduleIndex!="def"&&A[moduleIndex].click();if(name!="def")$(".nav-user-name-text")[0].innerHTML=name;if(avatar!="def")$(".nav-user-name-text")[0].innerHTML=avatar;if(progress!="def"){const p=Array.from($(".user-stat")[0].children[0].children);p[1].innerHTML=`${progress}%`;p[2].children[0].children[0].style.width=`${progress}%`}clear();return returnUserData?userData:!0
- })(100, "def", "def", "def", "def", "def", "def", "def", false);
-
-	good codehs images:
+	return new dQuery(values, typ, previous || document, e).flat();
+} this.$ ??= dQueryFn; /**
+ !function(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
+ good codehs images:
 	https://codehs.com/identicon/image/%7D
 	https://codehs.com/identicon/image/1g
 	https://codehs.com/identicon/image/1P
@@ -4879,4 +5111,13 @@ void (() => { "use strict";
 	1.4 + 0.7
 	0.1 + 0.2
 	1 + 0.3333333333333333
-*/
+*/void function get_events(getevents = window.getEventListeners) {
+	/** NOTES:
+	 * gets event listeners for all document objects (including the <!DOCTYPE html> thing),
+	 * document, window, and all variables directly on the window object
+	 * Only works in chrome dev tools becuase that is where getEventListeners() is from
+	**/var objs = [window, document].concat(Object.keys(window));
+	document.firstChild.constructor.name === "DocumentType" && objs.push(document.firstChild);
+	objs.union(document.querySelectorAll("*"));
+	return objs.map(e => getevents(e)).filter(e => sizeof(e));
+}
