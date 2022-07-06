@@ -8,7 +8,7 @@ true = True
 false = False
 ellipsis = type(...) # type(Ellipsis)
 NotImplementedType = type(NotImplemented)
-generator = type(0 for i in []) # useless
+generator = type(i for i in []) # useless
 function = type(lambda x: x)
 array = list
 dict_keys = type(int.__dict__.keys()) # useless
@@ -57,23 +57,35 @@ def monitors() -> list[object, ...]:
     ), 0)
     return lst
 
-def view(module: Module, form: int | float=1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | bool:
-    if not isinstance(module, Module):
-        return false
+def view(module: Module, form: int = 1)-> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
+    if not isinstance(module, Module): return
     module = module.__dict__
     if form == 1: return tuple(module)
     elif form == 2: return list(module)
     elif form == 3: return set(module)
     elif form == 4: return module.keys()
 
-def read(file_location: str | int) -> str:
-    if file_location == 0:
+from io import UnsupportedOperation as ccmp # so it doesn't stay in the module forever
+def read(file_loc: str | int) -> str:
+    if file_loc == 0:
         raise Exception("automate.misc.read() cannot read from standard input")
     try:
-        with open(file_location, "r") as file:
+        with open (file_loc, "r") as file:
             return file.read()
-    except (FileNotFoundError, PermissionError, TypeError, OSError) as e:
-        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is (probably. I'm not 100% sure it is always) a folder\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid\n")
+    except (FileNotFoundError, PermissionError, TypeError, OSError, ccmp) as e:
+        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure it is always that reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n")
+        raise e
+
+def write(file_loc: str | int, text: str = "", form: str = "a") -> None:
+    if file_loc in {0, 1}:
+        raise Exception("automate.misc.write() cannot write to stdin or stdout")
+    if form not in {"a", "w", "write", "append"}:
+        form = "a"
+    try:
+        with open(file_loc, form[0]) as file:
+            file.write(text)
+    except (FileNotFoundError, PermissionError, TypeError, OSError, ccmp) as e:
+        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure it is always that reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n")
         raise e
 
 def cmp(num1: float | int = 0, num2: float | int = 0) -> int:
@@ -82,13 +94,15 @@ def cmp(num1: float | int = 0, num2: float | int = 0) -> int:
     return -1 if num1 < num2 else int(num1 != num2)
 
 def ccmp(comp1: complex | float | int = 0, comp2: complex | float | int = 0) -> tuple[int, int]:
-    if not isinstance(comp1,complex|float|int) or not isinstance(comp2, complex | float | int):
+    if not isinstance(comp1, complex | float | int) or not isinstance(comp2, complex | float | int):
         raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
     comp1, comp2 = complex(comp1), complex(comp2)
     return (cmp(comp1.real, comp2.real), cmp(comp1.imag, comp2.imag))
 
+isntinstance = lambda a, b: not isinstance(a, b)
+
 if __name__ == '__main__':
-    print("__name__ == '__main__'\n\nvariables:")
+    print("__name__ == '__main__'\nautomate.misc\n\nvariables:")
     print(
         "",
         *variables,
