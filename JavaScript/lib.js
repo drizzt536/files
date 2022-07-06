@@ -1,6 +1,6 @@
 #!/usr/bin/env js
 void (() => { "use strict";
-	// Don't change from arrow function to regular function or "this" will break
+	// Don't change from arrow function to regular function or "this" will no longer refer to the window
 	{// Customization
 
 		const onConflict_Options = [
@@ -12,18 +12,17 @@ void (() => { "use strict";
 		/**
 		 * If something not in the options is used for ON_CONFLICT, excluding "default",
 		 * "None" will be chosen instead.
-		 * The defaults are the boolean value true, unless otherwise noted on the same line.
+		 * The defaults are the boolean value true, unless otherwise noted on the same line in a comment
 		 * All alerts happen using console.log except for conflict stuff.
 		**/
 
 		var
-		ALERT_LIBRARY_LOAD_FINISHED   = "default" // false
+		Alert_Library_Load_Finished   = "default" // false
 		, ON_CONFLICT                 = "default" // "debug"
 		, Alert_Conflict_For_Math     = "default" // false
 		, Alert_Conflict_OverWritten  = "default"
 		, Alert_Conflict_Unused       = "default" // false. ??= is used instead of = to create the functions
 		, Output_Math_Variable        = "default" // "Math"
-		, GetEventListeners_Variable  = "default" // void 0
 		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log
 		, MATH_DEFAULT_END_SYSTEM     = "default" // for rMath.tempConv
 		, aMath_Help_Argument         = "default"
@@ -49,8 +48,8 @@ void (() => { "use strict";
 		, KeyLogger_Variable_Argument = "default" // Symbol.for('keys')
 		, KeyLogger_Copy_Obj_Argument = "default"
 		, KeyLogger_Type_Argument     = "default" // "keydown"
-		, Clr_LocalStorage_On_Start   = "default"
-		, Clr_SessionStorage_On_Start = "default"
+		, Clear_LocalStorage          = "default" // false
+		, Clear_SessionStorage        = "default" // false
 		// -----------------------------------------------------------
 		//                          constants
 		// -----------------------------------------------------------
@@ -69,22 +68,14 @@ void (() => { "use strict";
 		, emc    = γ // Euler-Mascheroni Constant
 		, omega  = Ω
 		;
-		ALERT_LIBRARY_LOAD_FINISHED === "default" && (ALERT_LIBRARY_LOAD_FINISHED = false );
-		Alert_Conflict_For_Math     === "default" && (Alert_Conflict_For_Math     = false );
-		Alert_Conflict_Unused       === "default" && (Alert_Conflict_Unused       = false );
-		Output_Math_Variable        === "default" && (Output_Math_Variable        = "Math");
-		MATH_LOG_DEFAULT_BASE       === "default" && (MATH_LOG_DEFAULT_BASE       = 10    );
-		MATH_DEFAULT_END_SYSTEM     === "default" && (MATH_DEFAULT_END_SYSTEM     = "c"   ); // celcius
-		KeyLogger_Alert_Start_Stop  === "default" && (KeyLogger_Alert_Start_Stop  = false );
-		Run_KeyLogger               === "default" && (Run_KeyLogger               = false );
-		GetEventListeners_Variable  === "default" && (GetEventListeners_Variable  = void 0);
-		Clr_LocalStorage_On_Start   && localStorage.clear();
-		Clr_SessionStorage_On_Start && sessionStorage.clear();
+		Clear_LocalStorage   && Clear_LocalStorage   !== "default" && localStorage  .clear();
+		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
 		// clear cookies and caches
-	} {// upgraded event listeners
-		let _ael = window.addEventListener
-		, _rel = window.removeEventListener
-		, listeners = [];
+	} {// Event and Document things
+		let _ael = this.addEventListener
+		, _rel = this.removeEventListener
+		, listeners = []
+		, _click = HTMLElement.prototype.click;
 
 		function addEventListener(Type, listener=null, options={
 			capture  : false,
@@ -133,32 +124,40 @@ void (() => { "use strict";
 				) listeners.splice(i, 1);
 			}
 		} function getEventListeners() {
-			// gets all event listeners for all objects. see EventTarget.getMyEventListeners, EventTarget.gml
+			// gets all event listeners for all objects.
 			return listeners;
 		} function getMyEventListeners() {
 			// gets all event listeners on the current EventTarget object the function is called from
 			return listeners.filter(e => e.object === this);
+		} function click(times=1) {
+			if ( isNaN(times = Number(times)) ) times = 1;
+			while (times --> 0) _click.call(this);
 		}
 
 		EventTarget.prototype.ael = EventTarget.prototype.addEventListener    = addEventListener;
 		EventTarget.prototype.rel = EventTarget.prototype.removeEventListener = removeEventListener;
 		EventTarget.prototype.gel = EventTarget.prototype.getEventListeners   = getEventListeners;
 		EventTarget.prototype.gml = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
-		GetEventListeners_Variable !== void 0 && (this[GetEventListeners_Variable] = getEventListeners);
+		HTMLElement.prototype.click = click;
+		Document.prototype.click = function click(times=1) { document.head.click(times) }
+		document.doctype && (document.all.doctype = document.doctype);
 	} {// Conflict and Library Functions
 		var
 		LIBRARY_FUNCTIONS = [
-			"infinity","$qs","isIterable","isArr","sizeof","len","dim","abs","π","𝑒",Symbol.for("<0x200b>"),
-			Symbol.for("<0x08>"),"json","rand","randInt","randint","complex","constr","copy","assert","help",
-			"dir","nSub","reverseLList","findDayOfWeek","type","round","parseDec","fpart","floor",
-			"ceil","int","str","numToAccStr","range","numToWords","numToStrW_s",
-			"Errors","strMul","LinkedList","Types","numStrNorm","ipart","aMath","bMath","cMath","fMath",
-			"sMath","rMath","Logic", GetEventListeners_Variable
-		], NOT_ACTIVE_ARR = ["$","revArr","timeThrow","quine","convertType"].map(
+			"infinity","isIterable","isArr","sizeof","len","dim","abs","π","𝑒",Symbol.for("<0x200b>"),
+			Symbol.for("<0x08>"),"json","rand","randint","randInt","complex","constr","copy","assert","help",
+			"dir","nSub","revLList","findDayOfWeek","type","round","parseDec","fpart","floor","ceil","int",
+			"str","list","numToAccStr","range","numToWords","numToStrW_s","Errors","strMul","LinkedList",
+			"Types","numStrNorm","ipart","stopKeylogger","simulateKeypress","passwordGenerator",
+			"getAllDocumentObjects","dQuery","getEventListeners","getMyEventListeners","ael","rel","gel",
+			"gml","sMath","rMath","bMath","cMath","fMath","aMath","MathObjects","Logic"
+		], NOT_ACTIVE_ARR = ["revArr","timeThrow","convertType","quine"].map(
 				e => [ this[e] != null, e ]
 			).filter( e => e[0] ).map( e => e[1] )
-		, CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1]);
-		
+		, CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1])
+		;
+		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = false );
+		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math");
 		this[Output_Math_Variable] !== void 0 && (
 			Output_Math_Variable === "Math" ?
 				Alert_Conflict_For_Math === true :
@@ -174,12 +173,8 @@ void (() => { "use strict";
 			base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
 			characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\";
 		this.infinity = Infinity;
-		this.$qs = function $qs(element, one=false) {
-			return one ?
-				document.querySelector(element) :
-				document.querySelectorAll(element);
-		}; this.isIterable = function isIterable(arg) {
-			try { for (const i of arg) break }
+		this.isIterable = function isIterable(arg) {
+			try { for (let e of arg) break }
 			catch { return !1 }
 			return !0;
 		}; this.isArr = Array.isArray;
@@ -221,15 +216,16 @@ void (() => { "use strict";
 			return !condition &&
 				Errors("Failed Assertion", message);
 		}; this.help = function help(str) {
-			// TODO: Fix help function.  help("rMath.int") is broken
+			// eval doesn't matter here because this function is for developer use only
+			// TODO: Fix this function.  help("rMath.int") is broken
 			try { eval(str) }
 			catch (err) {
-				// str is a keyword
-				if (/SyntaxError: Unexpected token '.+'/.test(`${err}`)) {
+				// str is a keyword like 'if', 'throw', etc.
+				if (/SyntaxError: Unexpected token '.+'/.in(`${err}`)) {
 					open(`https://developer.mozilla.org/en-US/search?q=${/'(.+)'/.exec(`${err}`)[1]}`, "_blank");
 					return "Keyword";
 				}
-				// str is a keyword like 'function' or 'new'
+				// str is a keyword like 'function', 'new', etc.
 				if (`${err}` === "SyntaxError: Unexpected end of input") {
 					open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
 					return "Keyword";
@@ -237,7 +233,7 @@ void (() => { "use strict";
 			} try {
 				var func = eval(str);
 				if (type(func) === "function") {
-					if (`${func}`.includes(/\(\) { \[native code\] }/))
+					if (`${func}`.incl(/\(\) { \[native code\] }/))
 						// () was added below without testing
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
 					return `Function: arguments -> ${`${func}`.replace(/\s+/g, " ").remove(/\s*{.*|\s*=>.*|function\s*[^(]*/g).remove(/^\(|\)$/g).start("(None)").replace(/,(?!\s)/g, ", ")}`;
@@ -304,7 +300,7 @@ void (() => { "use strict";
 					if (fail !== "throw") return;
 					throw Error(`Invalid Type: ${Type}`);
 			}
-		}; this.findDayOfWeek = function findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=true) {
+		}; this.findDayOfWeek = function findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0){
 			// dd-mm-yyyy makes more sense in the current context. 
 			if (isNaN( day = Number(day) ) || !isFinite(day))
 				throw TypeError(`argument 1 either isn't finite or isn't a number`);
@@ -366,8 +362,8 @@ void (() => { "use strict";
 			return str ?
 				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
 				ans;
-		}; this.type = function type(a, b) {
-			return b == null || typeof a === "bigint" || typeof a === "symbol" || a === undefined ?
+		}; this.type = function type(a, specific=!1) {
+			return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
 				typeof a :
 				typeof a === "number" ?
 					isNaN(a) ?
@@ -376,7 +372,7 @@ void (() => { "use strict";
 							"inf" :
 							"num" :
 					typeof a === "object" ?
-						`${a.constructor}` === 'function NodeList() { [native code] }' ?
+						constr(a) === 'NodeList' ?
 							"nodelist" :
 							`${a.test}` === 'function test() { [native code] }' ?
 								"regex" :
@@ -409,7 +405,7 @@ void (() => { "use strict";
 			return {
 				fn_1: '$=$=>`$=${$},$($)`,$($)',
 				fn_2: '$=$=>`$=${$};$($)`;$($)',
-				funny: "// Jarvis, execute the following code.\nconsole.log(void(++([{}+([][[{}]])][(![]+[this])[+[]]]+[[]])[[$]+([NaN])]+{}, 0b10101100-0xF1+[void([{}])], [[({}),,0o0,null,],]+{}, $=$=>`$=${$},$($)`,$($))),(0);",
+				funny: "// Jarvis, execute the following code.\nconsole.log(void(++([{}+([][[{}]])][(![]+[this])[+[]]]+[[]])[[$]+([NaN])]+{},0b10101100-0xF1+[void([{}])],[[({}),,0o0,null,],]+{},$=$=>`$=${$},$($)`,$($))),(0);",
 				instructions: "copy the string contents to the console."
 			};
 		}; this.round = function round(n) {
@@ -528,34 +524,33 @@ void (() => { "use strict";
 						this.next = next;
 					}
 				};
-				if (head === undefined) this.head = null;
-				else this.head = new this.Node(head);
+				this.head = head == null ? null : new this.Node(head);
 			}
 			insertLast(value) {
 				if (!this.size) return this.insertFirst(value);
 				this.size++;
-				for (var current = this.head; current.next;)
+				for (var current = this.head; current.next ;)
 					current = current.next;
-				current.next = new this.Node(value)
+				current.next = new this.Node(value);
 			}
 			insertAt(value, index=0) {
 				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
 				if (!index) return this.insertFirst(value);
 				if (index === this.size) return this.insertLast(value);
-				for (var i = 0, current = this.head; i + 1 < index; i++)
+				for (var current = this.head; index --> 0 ;)
 					current = current.next;
 				this.size++;
 				current.next = new this.Node(value, current.next)
 			}
 			getAt(index=0) {
 				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
-				for (var i = 0, current = this.head; i < index; i++)
+				for (var current = this.head; index --> 0 ;)
 					current = current.next;
 				return current;
 			}
 			removeAt(index) {
 				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
-				for (var i = 0, current = this.head; i + 1 < index; i++)
+				for (var current = this.head; index --> 1 ;)
 					current = current.next;
 				current.next = current.next.next;
 				this.size--;
@@ -565,7 +560,7 @@ void (() => { "use strict";
 				this.size++;
 			}
 			reverse() {
-				for (var cur = this.head, prev = null, next; cur;) {
+				for (var cur = this.head, prev = null, next; cur ;) {
 					next = cur.next;
 					cur.next = prev;
 					prev = cur;
@@ -574,7 +569,7 @@ void (() => { "use strict";
 				this.head = prev || this.head;
 			}
 			toArray() {
-				for (let current = this.head, a = []; current;) {
+				for (let current = this.head, a = []; current ;) {
 					a.push(current.value);
 					current = current.next;
 				}
@@ -615,7 +610,7 @@ void (() => { "use strict";
 				snum = snum.substr(0, dim(snum));
 			return snum + (snum.endsW(".") ? "0" : "");
 		}; this.ipart = Number.parseInt;
-		if (Run_KeyLogger) {
+		if (Run_KeyLogger === "default" ? false : Run_KeyLogger) {
 			let debug     = KeyLogger_Debug_Argument === "default" ?
 				false :
 				KeyLogger_Debug_Argument
@@ -643,10 +638,11 @@ void (() => { "use strict";
 				if (window[variable] !== void 0) return debug &&
 					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
 				window[variable] = "";
-				document.body.addEventListener(type, handler);
+				document.body.ael(type, handler);
 				(debug || KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${KeyLogger_Debug_Argument}${KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${KeyLogger_Copy_Obj_Argument}${KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${KeyLogger_Type_Argument}${KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
 			})();
-		} else if (KeyLogger_Alert_Unused) console.log("keylogger launch failed due to library settings");
+		} else if (KeyLogger_Alert_Unused && KeyLogger_Alert_Unused !== "default")
+			console.log("keylogger launch failed due to library settings");
 		this.simulateKeypress = function simulateKeypress({
 			key = "",
 			code = "",
@@ -735,7 +731,36 @@ void (() => { "use strict";
 			for (var i = length, password = ""; i --> 0 ;) password += chars.rand();
 			return password;
 		}; Number.EPSILON == null && (Number.EPSILON = 2**-52);
-		for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+		this.getAllDocumentObjects = function getAllDocumentObjects() {
+			var objs = [document];
+			document.doctype && objs.push(document.doctype);
+			objs.union(document.all);
+			return objs;
+		}; this.dQuery = function dQuery(selector="*", {doctype=true, one=false}={}) {
+			if (constr(selector) === "dQuery") return selector;
+			if (type(selector) !== "string") throw TypeError("dQuery() requires a string or dQuery object for the first argument");
+			try {
+				var values = Array.from(document.querySelectorAll(selector));
+				doctype && document.doctype && values.unshift(document.doctype);
+			} catch { throw Error(`Invalid selector (in single quotes): '${selector}'`) }
+			return one ?
+			values[0] :
+			new (class dQuery extends Array {
+				constructor(values, selector, previous) {
+					values === void 0 ?
+						super() :
+						isIterable(values) ?
+							super(...values) :
+							super(values);
+					if (values !== document) {
+						this.previous = constr(previous) === "dQuery" ?
+							previous :
+							new dQuery(document);
+					}
+					selector !== void 0 && (this.selector = selector);
+				}
+			})(values, selector, void 0);
+		}; for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				multable[i][j] = i * j;
 		for (var i = 10, j, addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
@@ -748,6 +773,8 @@ void (() => { "use strict";
 			for (j = 10; j --> 0 ;)
 				divtable[i][j] = i / j;
 	} {// math and logic Variables
+		MATH_LOG_DEFAULT_BASE   === "default" && (MATH_LOG_DEFAULT_BASE   = 10 );
+		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
 		this.sMath = new (class stringRealMath {
 			constructor(help="default", comparatives="default") {
 				help === "default" && (help = true);
@@ -973,7 +1000,7 @@ void (() => { "use strict";
 					}
 				}
 				c = c.map( e => e.join("") ).join(".");
-				return c.imcl(".") ? c : `${c}.0`;
+				return c.incl(".") ? c : `${c}.0`;
 			} mul(a="0.0", b="0.0") {
 				// TODO: Might still be broken
 				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
@@ -4180,7 +4207,7 @@ void (() => { "use strict";
 			if (
 				["number", "string", "symbol", "boolean", "bigint", "function"].incl(type(val)) ||
 				val == null ||
-				val?.constructor == 'function Object() { [native code] }'
+				constr(val) === 'Object'
 			)
 				return [this.valueOf()].flatten();
 			return Array.from(this.valueOf()).flatten();
@@ -4194,7 +4221,7 @@ void (() => { "use strict";
 			return this;
 		}, RegExp.prototype.all = function all(str="") {
 			var a = `${this}`;
-			return RegExp(`^${a.substr(1, dim(a, 2))}$`).test(str);
+			return RegExp(`^(${a.substr(1, dim(a, 2))})$`, "").in(str);
 		},  Array.prototype.any = Array.prototype.some
 		, Array.prototype.append = Array.prototype.push
 		, Array.prototype.io = Array.prototype.indexOf
@@ -4203,7 +4230,15 @@ void (() => { "use strict";
 		,  Array.prototype.incl = Array.prototype.includes
 		,  Array.prototype.last = lastElement
 		,  Array.prototype.sortOld = Array.prototype.sort
-		,  Array.prototype.for = function forEachReturn(f=(e, i, a)=>e, ret) {
+		, Array.prototype.some = function some(fn) {
+			// "some" implies that it has to be plural. use any for any. some != any
+			var num = 0;
+			for (var i = len(this); i --> 0 ;) {
+				num += Boolean(fn(this))
+				if (num > 1) return true;
+			}
+			return false;
+		},  Array.prototype.for = function forEachReturn(f=(e, i, a)=>e, ret) {
 			// don't change order from ltr to rtl
 			for (var a = this, i = 0, n = len(a); i < n ;)
 				f(a[i], i++, a);
@@ -4212,7 +4247,8 @@ void (() => { "use strict";
 			while ( num --> 0 ) this.shift();
 			return this;
 		}, Array.prototype.union = function union(array) {
-			array.constructor.name === "NodeList" && (array = Array.from(array));
+			["NodeList", "HTMLAllCollection", "HTMLCollection"] .incl(array.constructor.name) &&
+				(array = Array.from(array));
 			for (var arr = this.concat(array), i = len(arr); i --> 0 ;)
 				this[i] = arr[i];
 			return this;
@@ -4401,7 +4437,7 @@ void (() => { "use strict";
 		,  String.prototype.sW = String.prototype.startsW = String.prototype.startsWith
 		,  String.prototype.eW = String.prototype.endsW = String.prototype.endsWith
 		, String.prototype.sL = String.prototype.startsL = String.prototype.startsLike =
-		function startsLike(strOrArr="", position=0) {
+		function startsLike(strOrArr="", position=0) { // TODO: Finish
 			if (!["str", "arr"].incl(type(strOrArr, 1))) return false;
 			if (type(strOrArr) === "string") {
 
@@ -4647,7 +4683,7 @@ void (() => { "use strict";
 		}, BigInt.prototype.pow = function pow(arg) {
 			return this **
 				BigInt(arg);
-		}; this.jQuery && (jQuery.prototype.for = Array.prototype.for);
+		};
 	} {// bad text encoders
 		function asciiToChar(number) {
 			switch (number) {
@@ -4825,7 +4861,8 @@ void (() => { "use strict";
 		let exit1 = false;
 		try { ON_CONFLICT = ON_CONFLICT.lower() }
 		catch { ON_CONFLICT = "None" }
-		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
+		Alert_Conflict_Unused === "default" && (Alert_Conflict_Unused = false);
+		ON_CONFLICT           === "default" && (ON_CONFLICT           = "dbg");
 		if (len(CONFLICT_ARR)) {
 			switch (ON_CONFLICT && Alert_Conflict_OverWritten) {
 				case "ast":
@@ -4868,224 +4905,17 @@ void (() => { "use strict";
 			exit1 = true;
 		}
 		if (exit1) return 1;
-		ALERT_LIBRARY_LOAD_FINISHED && console.log("lib.js loaded");
+		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && console.log("lib.js loaded");
 		return 0;
 	}
-})(); function dQueryFn(e, typ, previous) {
-	// can't go inside the 'main' function because it uses arguments.callee, which is disallowed in strict mode
-	assert( typeof e === "string" || e == null || isArr(e),
-		"function requires a string, an object, or undefined argument"
-	);
-	class dQuery extends Array {
-		constructor(values=[], typ="", previous=document, selector="") {
-			super(...Array.from(values));
-			this.type = typ;
-			this.previous = previous;
-			this.selector = selector;
-		}
-		// TODO: Add css handling
-		// TODO: Add event handling
-		// TODO: Add hasClass, addClass, removeClass, and hasId functions
-		// TODO: Add replace function
+})();
 
-		set(keys, newVals, ...indexes) {
-			// ex: set("innerHTML", "Hello World", 0);
-			if (this[0] == null || keys == null || newVals == null) return null;
-
-			!len(indexes) && (indexes = [0]);
-			indexes = indexes.tofar();
-			newVals = newVals.tofar();
-			keys = keys.tofar();
-			if (len(newVals) === 1) newVals = newVals.len(len(indexes)).fill(newVals[0]);
-			if (len(keys) === 1) keys = keys.len(len(indexes)).fill(keys[0]);
-
-			for (var i = 0, n = len(indexes); i < n; i++)
-				this[i][keys[i]] = newVals[i];
-
-			return this;
-		}
-		get(...keys) {
-			// ex: get("innerHTML")
-			// to get css values, use .css() method
-			
-			if (len(keys) === 1) return this.map(e => e[keys[0]]);
-			return this.map((e, i) => e[key[i]]);
-		}
-		html(texts=null, ...indexes) {
-			return texts == null?
-				this.get("innerHTML") :
-				this.set("innerHTML", texts, indexes);
-		}
-		ohtml(texts=null, ...indexes) {
-			return texts === null?
-				this.get("outerHTML") :
-				this.set("outerHTML", texts, indexes);
-		}
-		val(texts=null, ...indexes) {
-			return texts === null?
-				this.get("value") :
-				this.set("value", texts, indexes);
-		}
-		id(names=null, ...indexes) {
-			return names === null?
-				this.get("id") :
-				this.set("id", names, indexes);
-		}
-		class(names=null, ...indexes) {
-			return names === null?
-				this.get("className") :
-				this.set("className", names, indexes);
-		}
-		// hide() {}
-		// show() {}
-
-		// TODO: Fix css
-		css(keys) {
-			//throw Error("dQuery.css() is broken");
-			if (keys == null) return null;
-			
-			type(keys, 1) !== "arr" && (keys = keys.tofar());
-			if (this[0] == null || keys == null) return null;
-			keys = keys.filter( e => type(e, 1) === "str" && isNaN(e) ).map(name => {
-				const MATCH = /-([a-zA-Z])/.exec(name);
-				name = MATCH == null ?
-					name :
-					name?.replace( MATCH[0], MATCH[1].upper() );
-				return name;
-			});
-			// TODO: Make it set instead of get, and get if keys is undefined
-			let obj = this.map((e, index) => {
-				e = [e].len( len(keys) ).fill(e);
-				for (var i = 0, n = len(e); i < n ;)
-					e[i] = e[i].style[ keys[i++] ];
-				return e;
-			});
-			delete obj.prev;
-			delete obj.type;
-			return obj.tofar();
-
-			/* dQuery.set():
-				if (this[0] == null || keys == null || newVals == null) return null;
-
-				!len(indexes) && (indexes = [0]);
-				indexes = indexes.tofar();
-				newVals = newVals.tofar();
-				keys = keys.tofar();
-				if (len(newVals) === 1) newVals = newVals.len(len(indexes)).fill(newVals[0]);
-				if (len(keys) === 1) keys = keys.len(len(indexes)).fill(keys[0]);
-
-				for (var i = 0, n = len(indexes); i < n; i++)
-					this[i][keys[i]] = newVals[i];
-
-				return this;
-			*/
-			// essentially 'get' but for css
-			const MATCH = /-([a-zA-Z])/.exec(name);
-			name = MATCH == null ? name : name?.replace(MATCH[0], MATCH[1].upper());
-			return this.value == null ? null :
-				/class|querySelectorAll/.in(this.type) ?
-					name == null ? this.value?.style : this.value?.map(e => e.style[name]) :
-					name == null ? this.value?.style : this.value.style[name];
-		}
-		extend(obj) {
-			this.prev = this.copy();
-
-			if (constr(obj) !== "dQuery" && obj?.constructor?.name !== "jQuery")
-				throw Error("dQuery.extend() requires a dQuery or jQuery object");
-			// dQuery is already easier to use than jQuery. 2 lines of code? ridiculous and deplorable (joke)
-			if (obj?.constructor?.name === "jQuery") {
-				obj.each((i, e) => this.push(e));
-				return this;
-			} else return obj.for(e => this.push(e), this);
-		}
-		copy(dQueryObj) { // TODO: Update
-			dQueryObj == null && (dQueryObj = this);
-			return new this.constructor(Array.from(dQueryObj), dQueryObj.type, dQueryObj.previous);
-		}
-		// regular array methods
-		push(...HTML_Elements) {
-			for (const obj of HTML_Elements.flatten())
-				if (/^\[object HTML\w*Element\]$/.in(obj.toString()))
-					Array.prototype.push.call(this, obj);
-			return this;
-		}
-		pop(num=1) {
-			Array.prototype.pop2.call(this, num);
-			return this;
-		}
-		shift(num=1) {
-			Array.prototype.shift2.call(this, num);
-			return this;
-		}
-		unshift(...HTML_Elements) {
-			for (const obj of HTML_Elements.flatten()) {
-				if (/^\[object HTML\w*Element\]$/.in(obj.toString()))
-					Array.prototype.unshift.call(this, obj);
-			}
-			return this;
-		}
-		map(fn=e=>e) {
-			for (var obj = this.copy(), index = 0, n = len(obj); index < n; index++)
-				obj[index] = fn(obj[index], index, this);
-
-			return obj;
-		}
-	}
-	if (`${e?.constructor}` == dQuery) return e;
-	if (isArr(e)) {
-		var arr = [];
-		for (var i = len(e); i --> 0 ;)
-			arr[i] = dQueryFn(e[i]);
-		return arr;
-	}
-	if (e === "*") return new dQuery(document.querySelectorAll("*"), "querySelectorAll", "*").flat();
-	if (e == null || e === "") return new dQuery().flat();
-
-	let values, end = true,
-		str = ` ${e}`.splitn(/(?=\.|#)|(?<=\.|#)/, 2).map(f => f.trim()).filter(f => f);
-
-	if (len(str) > 3 || !len(str)) throw Error(`invalid input: \`${e}\``);
-
-	switch (str[0]) {
-		case "#":
-			// TODO fix Object.tofar() for HTMLScriptElements
-			values = [document.getElementById(str[1])];
-			typ = "id";
-			break;
-		case ".":
-			values = Array.from(document.getElementsByClassName(str[1]));
-			typ = "class";
-			break;
-		default: // query selector and (id=all or class=all)
-			end = false;
-			values = Array.from(document.querySelectorAll(str[0]));
-			typ = "querySelectorAll";
-	}
-
-	if (end || len(str) === 1) return new dQuery(values, typ, previous || document, e).flat();
-	
-	// some input like "tagname." with no class
-	if (len(str) === 2) throw Error(`Invalid input: ${e}`);
-
-	switch (str[1]) {
-		case "#":
-			values = Array.from(values).filter(e => e.id === str[2]);
-			break;
-		case ".":
-			values = Array.from(values).filter(e => e.className === str[2]);
-			break;
-		default: throw Error("Unreachable");
-	}
-
-	return new dQuery(values, typ, previous || document, e).flat();
-} this.$ ??= dQueryFn; /**
+/**
  !function(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
  good codehs images:
 	https://codehs.com/identicon/image/%7D
-	https://codehs.com/identicon/image/1g
 	https://codehs.com/identicon/image/1P
 	https://codehs.com/identicon/image/1$
-	https://codehs.com/identicon/image/2G
 	https://codehs.com/identicon/image/2(
 	https://codehs.com/identicon/image/3h
 	https://codehs.com/identicon/image/3H
@@ -5102,6 +4932,8 @@ void (() => { "use strict";
 	https://codehs.com/identicon/image/6v
 	https://codehs.com/identicon/image/6F
 
+	last looked at: 7R
+
 
 	1.7320508075688773
 	9999999999999999
@@ -5111,13 +4943,4 @@ void (() => { "use strict";
 	1.4 + 0.7
 	0.1 + 0.2
 	1 + 0.3333333333333333
-*/void function get_events(getevents = window.getEventListeners) {
-	/** NOTES:
-	 * gets event listeners for all document objects (including the <!DOCTYPE html> thing),
-	 * document, window, and all variables directly on the window object
-	 * Only works in chrome dev tools becuase that is where getEventListeners() is from
-	**/var objs = [window, document].concat(Object.keys(window));
-	document.firstChild.constructor.name === "DocumentType" && objs.push(document.firstChild);
-	objs.union(document.querySelectorAll("*"));
-	return objs.map(e => getevents(e)).filter(e => sizeof(e));
-}
+*/
