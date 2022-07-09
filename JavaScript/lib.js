@@ -1,6 +1,5 @@
 #!/usr/bin/env js
-void (() => { "use strict";
-	// Don't change from arrow function to regular function or "this" will no longer refer to the window
+void (() => { "use strict"; // Don't change from arrow function to regular function or "this" will no longer refer to the window
 	{// Customization
 
 		const onConflict_Options = [
@@ -72,8 +71,8 @@ void (() => { "use strict";
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
 		// clear cookies and caches
 	} {// Event and Document things
-		let _ael = this.addEventListener
-		, _rel = this.removeEventListener
+		let _ael = EventTarget.prototype.addEventListener
+		, _rel = EventTarget.prototype.removeEventListener
 		, listeners = []
 		, _click = HTMLElement.prototype.click;
 
@@ -149,7 +148,7 @@ void (() => { "use strict";
 			"dir","nSub","revLList","findDayOfWeek","type","round","parseDec","fpart","floor","ceil","int",
 			"str","list","numToAccStr","range","numToWords","numToStrW_s","Errors","strMul","LinkedList",
 			"Types","numStrNorm","ipart","stopKeylogger","simulateKeypress","passwordGenerator",
-			"getAllDocumentObjects","dQuery","getEventListeners","getMyEventListeners","ael","rel","gel",
+			"getAllDocumentObjects","dQuery","getArguments","createElement","getEventListeners","getMyEventListeners","ael","rel","gel",
 			"gml","sMath","rMath","bMath","cMath","fMath","aMath","MathObjects","Logic"
 		], NOT_ACTIVE_ARR = ["revArr","timeThrow","convertType","quine"].map(
 				e => [ this[e] != null, e ]
@@ -216,30 +215,29 @@ void (() => { "use strict";
 			return !condition &&
 				Errors("Failed Assertion", message);
 		}; this.help = function help(str) {
-			// eval doesn't matter here because this function is for developer use only
-			// TODO: Fix this function.  help("rMath.int") is broken
+			// eval doesn't matter here because this function is for developer use only.
 			try { eval(str) }
 			catch (err) {
-				// str is a keyword like 'if', 'throw', etc.
 				if (/SyntaxError: Unexpected token '.+'/.in(`${err}`)) {
 					open(`https://developer.mozilla.org/en-US/search?q=${/'(.+)'/.exec(`${err}`)[1]}`, "_blank");
 					return "Keyword";
 				}
-				// str is a keyword like 'function', 'new', etc.
 				if (`${err}` === "SyntaxError: Unexpected end of input") {
 					open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
 					return "Keyword";
 				}
 			} try {
-				var func = eval(str);
-				if (type(func) === "function") {
-					if (`${func}`.incl(/\(\) { \[native code\] }/))
-						// () was added below without testing
+				var fn = eval(str);
+				if (type(fn) === "function") {
+					if (`${fn}`.incl(/\(\) { \[native code\] }/)) {
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
-					return `Function: arguments -> ${`${func}`.replace(/\s+/g, " ").remove(/\s*{.*|\s*=>.*|function\s*[^(]*/g).remove(/^\(|\)$/g).start("(None)").replace(/,(?!\s)/g, ", ")}`;
+						return "native function. arguments can't be retrieved";
+					}
+					return `Function: arguments = ${getArguments(fn)}`;
 				}
 			} catch {}
-			try { return "Value: " + new Function(`return ${str}`)() } catch { return "Variable not Found" }	
+			try { return "Variable: value = " + Function(`return ${str}`)() }
+			catch { return "Variable not Found" }	
 		}; this.dir = function currentDirectory(loc=new Error().stack) {
 			// sometimes doesn't work
 			return `${loc}`
@@ -510,7 +508,7 @@ void (() => { "use strict";
 			return str2.reverse();
 		}; this.Errors = function customErrors(name="Error", text="") {
 			Error.prototype.name = `${name}`;
-			throw Error(text).stack.remove(/ {4}at(.|\s)*\n/);
+			throw new Error(text).stack.remove(/ {4}at(.|\s)*\n/);
 		}; this.strMul = function stringMultiplication(s1="", num=1) {
 			if (isNaN(num) || type(s1, 1) !== "str") return "";
 			for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
@@ -711,9 +709,9 @@ void (() => { "use strict";
 				})
 			);
 		}; this.passwordGenerator = function passwordGenerator(
-			length=18,
-			charsToRemove=undefined,
-			chars=characters
+			length = 18,
+			charsToRemove = void 0,
+			chars = characters
 		) {
 			if (isNaN( length = Number(length)) || length < 0) return false;
 			length = int(length);
@@ -736,7 +734,7 @@ void (() => { "use strict";
 			document.doctype && objs.push(document.doctype);
 			objs.union(document.all);
 			return objs;
-		}; this.dQuery = function dQuery(selector="*", {doctype=true, one=false}={}) {
+		}; this.dQuery = function dQuery(selector="*", {doctype=true, one=false, oneIndex=0}={}) {
 			if (constr(selector) === "dQuery") return selector;
 			if (type(selector) !== "string") throw TypeError("dQuery() requires a string or dQuery object for the first argument");
 			try {
@@ -744,7 +742,7 @@ void (() => { "use strict";
 				doctype && document.doctype && values.unshift(document.doctype);
 			} catch { throw Error(`Invalid selector (in single quotes): '${selector}'`) }
 			return one ?
-			values[0] :
+			values[oneIndex] :
 			new (class dQuery extends Array {
 				constructor(values, selector, previous) {
 					values === void 0 ?
@@ -760,6 +758,50 @@ void (() => { "use strict";
 					selector !== void 0 && (this.selector = selector);
 				}
 			})(values, selector, void 0);
+		}; this.getArguments = function getArguments(fn) {
+			// works for all functions
+			if (type(fn) !== "function") return false;
+			fn += ""; // fn = fn.toString()
+			if (fn.incl("{ [native code] }")) return "native function. can't get arguments";
+			if (fn.sW("class")) return a.slc(0, "{", 0, -1).trim();
+			if (/^\s*function/.in(fn) && /^\s*\(/.in(fn)) return fn.match(/^\w+/)[0];
+			for (var i = 0, fn = fn.slc("("), n = len(fn), count = 0; i < n; i++) {
+				if (fn[i] === "(") count++;
+				else if (fn[i] === ")") count--;
+				if (!count) break;
+			}
+			return fn.substr(0, i + 1);
+		}; this.Image = (() => {
+			// the function can still be used the same as before
+			var _Image = this.Image;
+			return function Image(width, height, options={}) {
+				var image = new _Image(width, height);
+				for (const e of Object.keys(options)) image[e] = options[e];
+				return image;
+			};
+		})(); this.createElement = function createElement(element="p", options={}, options2={}) {
+			var element = document.createElement(element, options2);
+			var object;
+			for (const e of Object.keys(options)) {
+				if (e === "children") {
+					type(options[e], 1) === "arr" ?
+						options[e].forEach(c => element.appendChild(c)) :
+						element.appendChild(options[e]);
+				} else if (e === "onClick") { // not onclick
+					type(options[e]) === "function" ?
+						element.ael("click", options[e]) :
+						element.ael("click", ...options[e]);
+				} else if (e === "object") {
+					object =
+						options[e];
+				} else if (e === "style") {
+					for (const stl of Object.keys(options[e])) {
+						element.style[stl] = options[e][stl];
+					}
+				} else element[e] = options[e];
+			}
+			object !== void 0 && (object.appendChild(element));
+			return element;
 		}; for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				multable[i][j] = i * j;
@@ -3332,19 +3374,12 @@ void (() => { "use strict";
 						len(set1) >= len(set2) ?
 							set1.union( set2, false ) :
 							set2.union( set1, false );
-			} piApprox(max=1) {
-				throw Error("Not Implemented");
-				const C = '42698670.666333395817712889160659608273320884002509082800838007178852605157457594216301799911455668601345737167494080411392292736181266728193136882170582563460066798766483460795735983552333985484854583276247377491250754585032578219745675991212400392015323321276835446296485837355697306012123458758049143216640427423547978510448221162836911053807235838159872646304853335987865686269706977445355835599133539678641902312391523829877481108898664622249006021331236404750043178521385802944662855665612876640849908660806684778002991357625433646133139055099023131780968145833996701200122389012154421724362284068629329420050521419015939092569907194340029444433951848629766397465505895098872676970688044372715257280235227382872383401509275515634457705197803145721985414408323372552767448562562388318221196367736544745016258054251434084686038802841060911418502815704983841331432095161566844429229281236234645670268734321517159131712143438348676514584576378735574108814073595022482261786305917060682396330756892805473449402143277237931963516369435685352365092484541942462092883877763497113840189835579188041015469199214591024464903812082236674251398135427633950703414918564398535902451835963329225993094620996776194600147027518785996432474421327664632559849828968208314238939908213288668864505307989237416790602042952155002363560107213852002818389447886529373647927435261622722659693610242183125434324402807272654881841337046021962005588671753995076464157748420706705788081555586601814528305826561147446525072540899979985469021440538232652735986871049579313454125256756946817498547980109520705620147393364518915878961023099880380883220356686938001604251001097944277105210370465860016431253036935588532610954757711019149238441320499873270033926280773104106978137183054470529244857536182559624515180184010151683243473408729742661899059223630893035500823027679849232721173165309525717280482325139339840211758636278297842552703166603606422904201823794913202045464937402255689393016703066065957563645962943734140254955172545497921577727315867693791497225501164635912351343416452812552266016504250267265';
-				const M = q => sMath.div(
-						sMath.ifact( sMath.mul(6, q) ),
-						sMath.mul(
-							sMath.ifact( sMath.mul(3, q) ),
-							sMath.cube( sMath.ifact(q) )
-						)
-					);
-				const L = q => sMath.add( sMath.mul("545140134", q), "13591409" );
-				const X = q => sMath.ipow("-262537412640768000", q);
-			}
+			} harmonic(n=1) { return this.sum(
+				1,
+				parseInt( Number(n) ),
+				n => this.div(1, n, !0, 18)
+			)}
+			// piApprox
 			// simplify sin(nx)
 			// simplify tan(nx)
 			// bell numbers
@@ -3380,7 +3415,6 @@ void (() => { "use strict";
 			// compareText
 			// coulomb
 			// electrical things
-			// norm
 		})(
 			rMath_DegTrig_Argument,
 			rMath_Help_Argument,
@@ -4908,39 +4942,9 @@ void (() => { "use strict";
 		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && console.log("lib.js loaded");
 		return 0;
 	}
-})();
-
-/**
+})();/**
  !function(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
- good codehs images:
-	https://codehs.com/identicon/image/%7D
-	https://codehs.com/identicon/image/1P
-	https://codehs.com/identicon/image/1$
-	https://codehs.com/identicon/image/2(
-	https://codehs.com/identicon/image/3h
-	https://codehs.com/identicon/image/3H
-	https://codehs.com/identicon/image/3L
-	https://codehs.com/identicon/image/44
-	https://codehs.com/identicon/image/5H
-	https://codehs.com/identicon/image/5K
-	https://codehs.com/identicon/image/5O
-	https://codehs.com/identicon/image/5P
-	https://codehs.com/identicon/image/65
-	https://codehs.com/identicon/image/6h
-	https://codehs.com/identicon/image/6o
-	https://codehs.com/identicon/image/6t
-	https://codehs.com/identicon/image/6v
-	https://codehs.com/identicon/image/6F
-
-	last looked at: 7R
-
-
-	1.7320508075688773
-	9999999999999999
-	1 ** Infinity
-	2.8 - 1
-	(0.3).toPrecision(100)
-	1.4 + 0.7
-	0.1 + 0.2
-	1 + 0.3333333333333333
+ https://codehs.com/identicon/image/
+ 1P 1$ 2( 3h 3H 3L 44 5H 5K 5O 5P 65 6h 6o 6t 6v 6F
+ last seen: 7R
 */
