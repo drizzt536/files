@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-void (() => { "use strict"; // Don't change from arrow function to regular function or "this" will no longer refer to the window
+void (() => { "use strict";
 	{// Customization
 
 		const onConflict_Options = [
@@ -22,6 +22,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 		, Alert_Conflict_OverWritten  = "default"
 		, Alert_Conflict_Unused       = "default" // false. ??= is used instead of = to create the functions
 		, Output_Math_Variable        = "default" // "Math"
+		, Input_Math_Variable         = "default" // "rMath"
 		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log
 		, MATH_DEFAULT_END_SYSTEM     = "default" // for rMath.tempConv
 		, aMath_Help_Argument         = "default"
@@ -84,11 +85,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			listener : arguments[1] }) {
 
 			typeof options === "boolean" && (options = {
-				capture: options,
-				passive: false,
-				once: false,
-				type: Type,
-				listener: listener
+				capture  : options,
+				passive  : false,
+				once     : false,
+				type     : Type,
+				listener : listener
 			});
 			_ael.call(this, Type, listener, options);
 			listeners.push({
@@ -107,11 +108,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			listener : arguments[1] }) {
 
 			typeof options === "boolean" && (options = {
-				capture: options,
-				passive: false,
-				once: false,
-				type: Type,
-				listener: listener
+				capture  : options,
+				passive  : false,
+				once     : false,
+				type     : Type,
+				listener : listener
 			});
 			_rel.call(this, Type, listener, options);
 			for (var i = listeners.length; i --> 0 ;) {
@@ -155,14 +156,14 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			).filter( e => e[0] ).map( e => e[1] )
 		, CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1])
 		;
-		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = false );
-		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math");
+		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
+		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
+		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
 		this[Output_Math_Variable] !== void 0 && (
 			Output_Math_Variable === "Math" ?
-				Alert_Conflict_For_Math === true :
+				Alert_Conflict_For_Math === !0 :
 				Output_Math_Variable === void 0 ?
-					false :
-					true
+					!1 : !0
 		) && CONFLICT_ARR.push(Output_Math_Variable);
 	} {// Variables
 		var alphabetL = "abcdefghijklmnopqrstuvwxyz",
@@ -200,20 +201,14 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			if (type(min) !== "number" || type(max) !== "number") return round( rand() );
 			min < 0 && min--;
 			return round( rand() * abs(min - max) + min );
-		}; this.complex = (re=0, im=0) => cMath.new(re, im);
+		}; this.complex = (re=0, im=0) => cMath?.new?.(re, im);
 		this.constr = function constructorName(input, name=true) {
-			if (input == null) return input;
-			if (name) return input?.constructor?.name;
-			const output = `${input?.constructor}`.
-				remove(/\s*\{(.|\s)*|class\s*|function\s*|\(\)/g).
-					remove(/\s(.|\s)*/g);
-			return output === "(" ?
-				input?.constructor?.name :
-				output;
-		}; this.copy = obj => json.parse(json.stringify(obj));
+			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
+			return input?.constructor?.name;
+		}; this.copy = obj => json?.parse?.( json?.stringify?.(obj) );
 		this.assert = function assert(condition, message="false") {
 			return !condition &&
-				Errors("Failed Assertion", message);
+				Errors?.("Failed Assertion", message);
 		}; this.help = function help(str) {
 			// eval doesn't matter here because this function is for developer use only.
 			try { eval(str) }
@@ -233,7 +228,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
 						return "native function. arguments can't be retrieved";
 					}
-					return `Function: arguments = ${getArguments(fn)}`;
+					return `Function: arguments = ${getArguments?.(fn)}`;
 				}
 			} catch {}
 			try { return "Variable: value = " + Function(`return ${str}`)() }
@@ -248,19 +243,12 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				Number(num) * n :
 				num;
 		}; this.revArr ??= function reverseArray(array) {
-			for (var left = 0, length = len(array), right = length - 1, tmp; left < right; left++, right--) {
-				tmp = array[left];
-				array[left] = array[right];
-				array[right] = tmp;
-			}
+			for (var left = 0, length = len(array), right = length - 1, tmp; left < right; left++, right--)
+				[tmp, array[left], array[right]] = [array[left], array[right], tmp];
 			return array;
 		}; this.revLList = function reverseLinkedList(list) {
-			for (let cur = list.head, prev = null, next; current;) {
-				next = cur.next;
-				cur.next = prev;
-				prev = cur;
-				cur = next;
-			}
+			for (let cur = list.head, prev = null, next; current ;) 
+				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
 			list.head = prev || list.head;
 			return list;
 		}; this.convertType ??= function convertType(input, Type, fail="throw", handle=!1) {
@@ -268,7 +256,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			if (type(input) == Type) return input;
 			switch (Type) {
 				case "string": return `${input}`;
-				case "boolean": return !!(input);
+				case "boolean": return !!input;
 				case "undefined": return;
 				case "number":
 					input = Number(input);
@@ -310,23 +298,20 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			if (order !== "dd/mm/yyyy") {
 				order = order.lower().split(/\/|-/);
 				const tmp = [day, month, year],
-					used = [false, false, false];
+					used = [!1, !1, !1];
 				for (var i = 0; i < 3; i++) {
 					switch (order[i]) {
 						case "dd":
 							if (used[0]) throw Error("Invalid input for argument 5");
-							used[0] = true;
-							day = tmp[i];
+							[used[0], day] = [!0, tmp[i]];
 							break;
 						case "mm":
 							if (used[1]) throw Error("Invalid input for argument 5");
-							used[1] = true;
-							month = tmp[i];
+							[used[1], month] = [!0, tmp[i]];
 							break;
 						case "yyyy":
 							if (used[2]) throw Error("Invalid input for argument 5");
-							used[2] = true;
-							year = tmp[i];
+							[used[2], year] = [!0, tmp[i]];
 							break;
 						default: throw Error("Invalid input for argument 5");
 					}
@@ -376,13 +361,13 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 								"regex" :
 								a === null ?
 									"null" :
-									/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.type}`.remove(/\s|;/g)) ?
+									/^type\(\){return("|'|`)linkedlist\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
 										"linkedlist" :
-										/^type\(\){return("|'|`)complex\1}$/.test(`${a.type}`.remove(/\s|;/g)) ?
+										/^type\(\){return("|'|`)complex\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
 											"complex" :
-											/^type\(\){return("|'|`)fraction\1}$/.test(`${a.type}`.remove(/\s|;/g)) ?
+											/^type\(\){return("|'|`)fraction\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
 												"fraction" :
-												/^type\(\){return("|'|`)set\1}$/.test(`${a.type}`.remove(/\s|;/g)) ?
+												/^type\(\){return("|'|`)set\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
 													"set" :
 													isArr(a) ?
 														"arr" :
@@ -391,13 +376,13 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							"str" :
 							typeof a === "boolean" ?
 								"bool" :
-							/^class /.test(a+"") ?
+							/^class /.in(a+"") ?
 								"class" :
 								"func"
 		}; this.timeThrow ??= function timeThrow(message="Error Message Here.", run=false) {
 			let date = new Date().getHours();
 			if (date > 22 || date < 4) throw Error("Go to Sleep.");
-			if (run === false) throw Error(`${message}`);
+			if (run === !1) throw Error(`${message}`);
 			type(run, 1) === "func" && run();
 		}; this.quine ??= function quine() {
 			return {
@@ -436,12 +421,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			stop == null && (stop = start - 1, start = 0);
 			return Array.from({ length: (stop - start) / step + 1}, (_, i) => start + i * step);
 		}; this.numToWords = function numberToWords(number) {
-			// numToWords("2001") is "broken".
 			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
 			var string = number.toString().remove(/\.$/);
 			number = Number(number);
-			switch (true) {
-				case /\./.test(string):
+			switch (!0) {
+				case /\./.in(string):
 					var decimals = `${numberToWords(string.substring(0, string.io(".")))} point`;
 					for (var i = string.io(".") + 1; i < len(string); i++)
 						decimals += ` ${numberToWords(string[i])}`;
@@ -481,7 +465,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				case string == 90: return "ninety";
 				case string < 100: return `ninety-${numberToWords(string[1])}`;
 				case string % 100===0 && len(string)===3: return `${numberToWords(string[0])} hundred`;
-				case string < 1e3:return `${numberToWords(string[0])} hundred and ${numberToWords(string.substr(1,2))}`;
+				case string < 1e3: return `${numberToWords(string[0])} hundred and ${numberToWords(string.substr(1,2))}`;
 				case string % 1e3===0 && len(string)===4: return `${numberToWords(string[0])} thousand`;
 				case string < 1e4: return `${numberToWords(string[0])} thousand ${numberToWords(string.substr(1,3))}`;
 				case string % 1e3===0 && len(string)===5: return `${numberToWords(string.substr(0,2))} thousand`;
@@ -558,12 +542,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				this.size++;
 			}
 			reverse() {
-				for (var cur = this.head, prev = null, next; cur ;) {
-					next = cur.next;
-					cur.next = prev;
-					prev = cur;
-					cur = next;
-				}
+				for (var cur = this.head, prev = null, next; cur ;)
+					[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
 				this.head = prev || this.head;
 			}
 			toArray() {
@@ -588,9 +568,9 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			Function: Function,
 			Array: Array,
 			Object(input, handle=!1) {
-				return type(input) === "object" ? input : handle == !0 ? {data: input} : void 0
+				return type(input) === "object" ? input : handle == !0 ? { data: input } : void 0
 			},
-			undefined: ()=>{},
+			undefined: () => {},
 			Symbol(input, handle=!1) {
 				return type(input) === "symbol" ? input : handle == !0 ? Symbol.for(input) : void 0
 			}
@@ -608,15 +588,15 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				snum = snum.substr(0, dim(snum));
 			return snum + (snum.endsW(".") ? "0" : "");
 		}; this.ipart = Number.parseInt;
-		if (Run_KeyLogger === "default" ? false : Run_KeyLogger) {
+		if (Run_KeyLogger === "default" ? !1 : Run_KeyLogger) {
 			let debug     = KeyLogger_Debug_Argument === "default" ?
-				false :
+				!1 :
 				KeyLogger_Debug_Argument
 			, variable    = KeyLogger_Variable_Argument === "default" ?
 				Symbol.for('keys') :
 				KeyLogger_Variable_Argument
 			, copy_object = KeyLogger_Copy_Obj_Argument === "default" ?
-				true :
+				!0 :
 				KeyLogger_Copy_Obj_Argument
 			, type        = KeyLogger_Type_Argument === "default" ?
 				"keydown" :
@@ -631,7 +611,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				type === "default" && (type = "keydown");
 				alert && console.log("keylogger manually terminated.");
 				document.body.removeEventListener(type, handler);
-				return true;
+				return !0;
 			}; (function key_logger_v3() {
 				if (window[variable] !== void 0) return debug &&
 					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
@@ -713,16 +693,16 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			charsToRemove = void 0,
 			chars = characters
 		) {
-			if (isNaN( length = Number(length)) || length < 0) return false;
+			if (isNaN( length = Number(length)) || length < 0) return !1;
 			length = int(length);
 			if (type(charsToRemove, 1) === "arr")
 			if (charsToRemove.every( e => type(e) === "string" )) charsToRemove = charsToRemove.join("");
-			else return false;
+			else return !1;
 			else if (
 				type(charsToRemove) !== "string" &&
 				charsToRemove !== void 0 &&
 				charsToRemove !== null
-			) return false;
+			) return !1;
 			if (chars === characters && charsToRemove !== void 0 && charsToRemove !== null)
 				for (const char in charsToRemove)
 					chars = chars.remove(char);
@@ -760,7 +740,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			})(values, selector, void 0);
 		}; this.getArguments = function getArguments(fn) {
 			// works for all functions
-			if (type(fn) !== "function") return false;
+			if (type(fn) !== "function") return !1;
 			fn += ""; // fn = fn.toString()
 			if (fn.incl("{ [native code] }")) return "native function. can't get arguments";
 			if (fn.sW("class")) return a.slc(0, "{", 0, -1).trim();
@@ -819,8 +799,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
 		this.sMath = new (class stringRealMath {
 			constructor(help="default", comparatives="default") {
-				help === "default" && (help = true);
-				comparatives === "default" && (comparatives = true);
+				help === "default" && (help = !0);
+				comparatives === "default" && (comparatives = !0);
 				if (help) this.help = {
 					add: "3 arguments. (string number or number, string number or number, precision). addition",
 					sub: "3 arguments. (string number or number, string number or number, precision). subtraction",
@@ -838,11 +818,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return true;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return false;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
 							a = a.substr(1); b = b.substr(1);
-							if (this.seq(a, b)) return false;
+							if (this.seq(a, b)) return !1;
 							return !this.gt(a, b);
 						}
 						for (var a_index = 0 ;;) {
@@ -859,16 +839,16 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							}
 							if (b[b_index] == null) b_index = Infinity;
 							break;
-						} if ( a.io(".") - a_index > b.io(".") - b_index ) return true;
+						} if ( a.io(".") - a_index > b.io(".") - b_index ) return !0;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] > 1*b[i]) return true;
-							if (1*a[i] < 1*b[i]) return false;
+							if (1*a[i] > 1*b[i]) return !0;
+							if (1*a[i] < 1*b[i]) return !1;
 						}
-						return false;
+						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
 						return this.gt(a, b) ||
 							this.seq(a, b);
@@ -876,11 +856,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return false;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return true;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
 							a = a.substr(1); b = b.substr(1);
-							if (this.seq(a, b)) return false;
+							if (this.seq(a, b)) return !1;
 							return !this.lt(a, b);
 						}
 
@@ -898,23 +878,23 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							}
 							if (b[b_index] == null) b_index = Infinity;
 							break;
-						} if ( a.io(".") - a_index < b.io(".") - b_index ) return true;
+						} if ( a.io(".") - a_index < b.io(".") - b_index ) return !0;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] < 1*b[i]) return true;
-							if (1*a[i] > 1*b[i]) return false;
+							if (1*a[i] < 1*b[i]) return !0;
+							if (1*a[i] > 1*b[i]) return !1;
 						}
-						return false;
+						return !1;
 					}, le(a="0.0", b="0.0") {/* <= */ return this.lt(a, b) || this.seq(a, b) },
 					seq(a="0.0", b="0.0") {// strict equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return false;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return false;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
 							return this.seq( a.substr(1), b.substr(1) );
 
@@ -933,21 +913,21 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							if (b[b_index] == null) b_index = Infinity;
 							break;
 						}
-						if ( a.io(".") - a_index !== b.io(".") - b_index ) return false;
+						if ( a.io(".") - a_index !== b.io(".") - b_index ) return !1;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return false;
+							if (1*a[i] !== 1*b[i]) return !1;
 						}
-						return true;
+						return !0;
 					}, sneq(a="0.0", b="0.0") {// strict not equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return true;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return true;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
 							return this.sneq( a.substr(1), b.substr(1) );
 
@@ -966,15 +946,15 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							}
 							if (b[b_index] == null) b_index = Infinity;
 							break;
-						} if ( a.io(".") - a_index > b.io(".") - b_index ) return true;
+						} if ( a.io(".") - a_index > b.io(".") - b_index ) return !0;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return true;
+							if (1*a[i] !== 1*b[i]) return !0;
 						}
-						return false;
+						return !1;
 					},
 				};
 			} add(a="0.0", b="0.0") {
@@ -1044,7 +1024,6 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				c = c.map( e => e.join("") ).join(".");
 				return c.incl(".") ? c : `${c}.0`;
 			} mul(a="0.0", b="0.0") {
-				// TODO: Might still be broken
 				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
@@ -1085,10 +1064,10 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
-				while (this.eq.sneq(fpart(num, false), 0)) {
+				while (this.eq.sneq(fpart(num, !1), 0)) {
 					num = this.mul(num, 10);
 					denom = this.mul(num, 10);
-				} while (this.eq.sneq(fpart(denom, false), 0)) {
+				} while (this.eq.sneq(fpart(denom, !1), 0)) {
 					num = this.mul(num, 10);
 					denom = this.mul(num, 10);
 				}
@@ -1198,10 +1177,10 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			sMath_Comparatives_Argument,
 		); this.rMath = new (class RealMath {
 			constructor(degTrig="default", help="default", comparatives="default", constants="default") {
-				degTrig === "default" && (degTrig = true);
-				help         === "default" && (help = true);
-				comparatives === "default" && (comparatives = true);
-				constants    === "default" && (constants = true);
+				degTrig === "default" && (degTrig = !0);
+				help         === "default" && (help = !0);
+				comparatives === "default" && (comparatives = !0);
+				constants    === "default" && (constants = !0);
 				this.Set = class RealSet extends Array {
 					// Probably not constant time lookup.
 					constructor(...args) {
@@ -1212,11 +1191,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						} else super(...args.sort());
 					}
 					add(number=0) {
-						if (type(number) !== "number") return false;
-						for (const n of this) if (n === number) return false;
+						if (type(number) !== "number") return !1;
+						for (const n of this) if (n === number) return !1;
 						this.push(number);
 						this.sort();
-						return true;
+						return !0;
 					}
 					delete(number=0) {
 						;
@@ -1259,10 +1238,10 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 					}
 					sort(type="A") {
 						try { return this[`sort${type[0].upper()}`] }
-						catch { return false }
+						catch { return !1 }
 					}
 					union(set, New=true) {
-						if (type(set, 1) !== "set") return false;
+						if (type(set, 1) !== "set") return !1;
 						return "Not finished";
 					}
 				};
@@ -1627,11 +1606,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return true;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return false;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
 							a = a.substr(1); b = b.substr(1);
-							if (this.seq(a, b)) return false;
+							if (this.seq(a, b)) return !1;
 							return !this.gt(a, b);
 						}
 						for (var a_index = 0 ;;) {
@@ -1648,16 +1627,16 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							}
 							if (b[b_index] == null) b_index = Infinity;
 							break;
-						} if ( a.io(".") - a_index > b.io(".") - b_index ) return true;
+						} if ( a.io(".") - a_index > b.io(".") - b_index ) return !0;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] > 1*b[i]) return true;
-							if (1*a[i] < 1*b[i]) return false;
+							if (1*a[i] > 1*b[i]) return !0;
+							if (1*a[i] < 1*b[i]) return !1;
 						}
-						return false;
+						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
 						return this.gt(a, b) ||
 							this.seq(a, b);
@@ -1665,11 +1644,11 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return false;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return true;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
 							a = a.substr(1); b = b.substr(1);
-							if (this.seq(a, b)) return false;
+							if (this.seq(a, b)) return !1;
 							return !this.lt(a, b);
 						}
 
@@ -1687,16 +1666,16 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							}
 							if (b[b_index] == null) b_index = Infinity;
 							break;
-						} if ( a.io(".") - a_index < b.io(".") - b_index ) return true;
+						} if ( a.io(".") - a_index < b.io(".") - b_index ) return !0;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] < 1*b[i]) return true;
-							if (1*a[i] > 1*b[i]) return false;
+							if (1*a[i] < 1*b[i]) return !0;
+							if (1*a[i] > 1*b[i]) return !1;
 						}
-						return false;
+						return !1;
 					}, le(a="0.0", b="0.0") {/* <= */
 						return this.lt(a, b) ||
 							this.seq(a, b);
@@ -1707,8 +1686,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return false;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return false;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
 							return this.seq( a.substr(1), b.substr(1) );
 
@@ -1727,15 +1706,15 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							if (b[b_index] == null) b_index = Infinity;
 							break;
 						}
-						if ( a.io(".") - a_index !== b.io(".") - b_index ) return false;
+						if ( a.io(".") - a_index !== b.io(".") - b_index ) return !1;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return false;
+							if (1*a[i] !== 1*b[i]) return !1;
 						}
-						return true;
+						return !0;
 					}, lneq(a=0, b=0) {// loose not equal to. normal number of decimal places
 						return Number(a) !==
 							Number(b);
@@ -1743,8 +1722,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return true;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return true;
+						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
+						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
 							return this.sneq( a.substr(1), b.substr(1) );
 
@@ -1763,60 +1742,60 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 							}
 							if (b[b_index] == null) b_index = Infinity;
 							break;
-						} if ( a.io(".") - a_index > b.io(".") - b_index ) return true;
+						} if ( a.io(".") - a_index > b.io(".") - b_index ) return !0;
 
 						a = strMul( "0", b.io(".") - a.io(".") ) + a + strMul( "0", len(b) - len(a) );
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return true;
+							if (1*a[i] !== 1*b[i]) return !0;
 						}
-						return false;
+						return !1;
 					},
 				}; if (constants) {
-					this.ɡ = this.gravity = 9.80665;
-					this.avogadro = 6.02214076e+23;
-					this.bohrMagneton = 9.2740100783e-24;
-					this.bohrRadius = 5.29177210903e-11;
-					this.boltzmann = 1.380649e-23;
-					this.classicalElectronRadius = 2.8179403262e-15;
-					this.deuteronMass = 3.3435830926e-27;
-					this.efimovFactor = 22.7;
-					this.electronMass = 9.1093837015e-31;
-					this.electronicConstant = 8.8541878128e-12;
-					this.faraday = 96485.33212331001;
-					this.fermiCoupling = 454379605398214.1;
-					this.fineStructure = 0.0072973525693;
-					this.firstRadiation = 3.7417718521927573e-16;
-					this.gasConstant = 8.31446261815324;
+					this.ɡ = this.gravity = 9.80665                    ;
+					this.avogadro = 6.02214076e+23                     ;
+					this.bohrMagneton = 9.2740100783e-24               ;
+					this.bohrRadius = 5.29177210903e-11                ;
+					this.boltzmann = 1.380649e-23                      ;
+					this.classicalElectronRadius = 2.8179403262e-15    ;
+					this.deuteronMass = 3.3435830926e-27               ;
+					this.efimovFactor = 22.7                           ;
+					this.electronMass = 9.1093837015e-31               ;
+					this.electronicConstant = 8.8541878128e-12         ;
+					this.faraday = 96485.33212331001                   ;
+					this.fermiCoupling = 454379605398214.1             ;
+					this.fineStructure = 0.0072973525693               ;
+					this.firstRadiation = 3.7417718521927573e-16       ;
+					this.gasConstant = 8.31446261815324                ;
 					this.inverseConductanceQuantum = 12906.403729652257;
-					this.klitzing = 25812.807459304513;
-					this.loschmidt = 2.686780111798444e+25;
-					this.magneticConstant = 0.00000125663706212;
-					this.magneticFluxQuantum = 2.0678338484619295e-15;
-					this.molarMass = 0.00099999999965;
-					this.molarMassC12 = 0.0119999999958;
-					this.molarPlanckConstant = 3.990312712893431e-10;
-					this.molarVolume = 0.022413969545014137;
-					this.neutronMass = 1.6749271613e-27;
-					this.nuclearMagneton = 5.0507837461e-27;
-					this.planckCharge = 1.87554603778e-18;
-					this.planckConstant = 6.62607015e-34;
-					this.planckLength = 1.616255e-35;
-					this.planckMass = 2.176435e-8;
-					this.planckTemperature = 1.416785e+32;
-					this.planckTime = 5.391245e-44;
+					this.klitzing = 25812.807459304513                 ;
+					this.loschmidt = 2.686780111798444e+25             ;
+					this.magneticConstant = 0.00000125663706212        ;
+					this.magneticFluxQuantum = 2.0678338484619295e-15  ;
+					this.molarMass = 0.00099999999965                  ;
+					this.molarMassC12 = 0.0119999999958                ;
+					this.molarPlanckConstant = 3.990312712893431e-10   ;
+					this.molarVolume = 0.022413969545014137            ;
+					this.neutronMass = 1.6749271613e-27                ;
+					this.nuclearMagneton = 5.0507837461e-27            ;
+					this.planckCharge = 1.87554603778e-18              ;
+					this.planckConstant = 6.62607015e-34               ;
+					this.planckLength = 1.616255e-35                   ;
+					this.planckMass = 2.176435e-8                      ;
+					this.planckTemperature = 1.416785e+32              ;
+					this.planckTime = 5.391245e-44                     ;
 					this.reducedPlanckConstant = 1.0545718176461565e-34;
-					this.rydberg = 10973731.56816;
-					this.sackurTetrode = -1.16487052358;
-					this.secondRadiation = 0.014387768775039337;
-					this.speedOfLight = this.c = 299792458;
-					this.stefanBoltzmann = 5.67037441918443e-8;
-					this.weakMixingAngle = 0.2229;
+					this.rydberg = 10973731.56816                      ;
+					this.sackurTetrode = -1.16487052358                ;
+					this.secondRadiation = 0.014387768775039337        ;
+					this.speedOfLight = this.c = 299792458             ;
+					this.stefanBoltzmann = 5.67037441918443e-8         ;
+					this.weakMixingAngle = 0.2229                      ;
 					this.solarConstants = {
 						Earth: 1380,
 						Venus: 2613,
-						Mars: 589,
+						Mars : 589
 					};
 				};
 			} Ω(x=Math.E, i=10_000) {
@@ -1875,10 +1854,10 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			} P(...set) {
 				// power set, set of all subsets
 				set = set.flatten();
-				var strict = false;
+				var strict = !1;
 				if (set.incl("strict")) {
 					set.remove("strict");
-					strict = true;
+					strict = !0;
 				}
 				if ( set.hasDupes() ) throw Error("rMath.P() cannot have duplicate arguments");
 				set = set.map( e => [e] );
@@ -1931,7 +1910,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				while ( len(n) < 32 ) n = `0${n}`;
 				return len( n.remove(/1.*/) );
 			} fact(n, acy=1e3, inc=.1) {
-				// TODO: Fix for negative numbers
+				// TODO: Fix for negative non-integer numbers
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
@@ -2237,9 +2216,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 									e => c%e[2] && ( a%e[0] && b%e[1] || a%e[1] && b%e[0] )
 								)
 							)
-						) {
-							triples.push([a, b, c]);
-						}
+						) triples.push([a, b, c]);
 					}
 				}
 				return triples;
@@ -2360,7 +2337,6 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
 					);
 			} mul(a="0.0", b="0.0", number=true, precision=Infinity) {
-				// TODO: Might still be broken
 				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
 				if (this.isNaN(a) || this.isNaN(b)) return NaN;
 				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
@@ -2385,7 +2361,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				}
 				for (var i = len(arr); i --> 0 ;) arr[i] += strMul("0", i);
 				for (var total = "0.0", i = len(arr); i --> 0 ;)
-					total = this.add(arr[i], total, false, precision)
+					total = this.add(arr[i], total, !1, precision)
 						.remove(/\.0+$/);
 				total = (total.substr(0, len(total) - dec) + "." + total.substr(len(total) - dec)).replace(/\.$/, ".0");
 				return sign === -1 ?
@@ -2407,31 +2383,31 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
 				const sign = this.ssgn(num) * this.ssgn(denom);
 				num = this.sabs(num); denom = this.sabs(denom);
-				while (this.eq.sneq(fpart(num, false), 0)) {
-					num = this.mul(num, 10, false);
-					denom = this.mul(num, 10, false);
-				} while (this.eq.sneq(fpart(denom, false), 0)) {
-					num = this.mul(num, 10, false);
-					denom = this.mul(num, 10, false);
+				while (this.eq.sneq(fpart(num, !1), 0)) {
+					num = this.mul(num, 10, !1);
+					denom = this.mul(num, 10, !1);
+				} while (this.eq.sneq(fpart(denom, !1), 0)) {
+					num = this.mul(num, 10, !1);
+					denom = this.mul(num, 10, !1);
 				}
-				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom, false);
+				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom, !1);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
-				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2, false), 0)) {
+				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2, !1), 0)) {
 					tmp1 = tmp3;
 					ans++;
 				}
 				var ansString = `${ans}`;
 				if (precision === 0) return `${ansString}.0`;
 				var remainder = this.mul(
-					this.sub(num, this.mul(ans, denom, false), false),
-					"10.0", false
+					this.sub(num, this.mul(ans, denom, !1), !1),
+					"10.0", !1
 				);
 				if (this.eq.sneq(remainder, 0)) ansString += ".";
 				for (var i = 0, j; this.eq.sneq(remainder, 0) && i++ < precision ;) {
-					for (j = 9; this.eq.lt(this.sub(remainder, table[j], false), 0) ;) j--;
+					for (j = 9; this.eq.lt(this.sub(remainder, table[j], !1), 0) ;) j--;
 					remainder = this.mul(
-						this.sub(remainder, table[j], false),
-						"10.0", false
+						this.sub(remainder, table[j], !1),
+						"10.0", !1
 					);
 					ansString += `${j}`;
 				}
@@ -2529,7 +2505,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				// is a number
 				return this.isAN(e);
 			} isNNaN(e) {
-				// is not not a number
+				// is not not a number. isaN, isAN
 				return this.isAN(e);
 			} imul(a, b) {
 				return isNaN( a = Number(a) ) ||
@@ -2631,9 +2607,9 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				if (isNaN( n = Number(n) )) return NaN;
 				return n ** 3;
 			} ifact(n) {
-				// TODO: Fix for negative numbers
 				if (isNaN( n = Number(n) )) return NaN;
 				if (!n) return 1;
+				if (n < 0) return NaN;
 				for (var ans = 1, cur = 1; cur <= n; cur++)
 					ans *= cur;
 				return ans;
@@ -2707,7 +2683,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				if (this.isNaN( n = BigInt(n) )) return NaN;
 				if (this.isNaN( n = BigInt(n) )) return NaN;
 				if (Switch) return this.hyper4(n, a, {
-					Switch: false,
+					Switch: !1,
 					number: number
 				});
 				const A = a;
@@ -2759,7 +2735,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			} atan2(x, y, flipArgs=false) {
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( y = Number(y) )) return NaN;
-				if (flipArgs) return this.atan2(y, x, false);
+				if (flipArgs) return this.atan2(y, x, !1);
 				const output = this.atan(y / x);
 				return x > 0 ?
 					output :
@@ -3157,6 +3133,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				// Lambert W function, product log
 				if (isNaN( x = Number(x) )) return NaN;
 				if (x < -1 / e) return NaN;
+				throw Error("Not Implemented");
 			} deriv(f=x=>2*x+1, x=1, dx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
@@ -3287,9 +3264,9 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			} cosNxSimplify(str="cos(x)") {
 				typeof str === "number" && !(str % 1) && (str = `cos(${str}x)`);
 				if (typeof str !== "string") return "";
-				if (/^cos\d+x$/.test(str)) str = `cos(${str.match(/\d+/)[0]}x)`;
+				if (/^cos\d+x$/.in(str)) str = `cos(${str.match(/\d+/)[0]}x)`;
 
-				for (var tmp; /\(\d+x\)/.test(str) ;) {
+				for (var tmp; /\(\d+x\)/.in(str) ;) {
 					str = str.replace(/\(-?1x\)/g, "(x)");
 					str = str.replace(/cos\(-?0x\)/g, "1");
 					tmp = /cos\((\d+)x\)/.exec(str);
@@ -3367,18 +3344,28 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			} setUnion(set1, set2) {
 				return type(set1, 1) !== "set" ?
 					type(set2, 1) !== "set" ?
-						false :
+						!1 :
 						set2 :
 					type(set2, 1) !== "set" ?
 						set1 :
 						len(set1) >= len(set2) ?
-							set1.union( set2, false ) :
-							set2.union( set1, false );
+							set1.union( set2, !1 ) :
+							set2.union( set1, !1 );
 			} harmonic(n=1) { return this.sum(
 				1,
 				parseInt( Number(n) ),
 				n => this.div(1, n, !0, 18)
-			)}
+			)} fraction(num=0, denom=0) {
+				return fMath?.new?.(num, denom);
+				;
+			} complex(re=0, im=0) {
+				return cMath?.new?.(re, im);
+				;
+			} bigint(value=0) {
+				try { return BigInt(value) } catch { return NaN }
+			} number(value=0) {
+				try { return Number(value) } catch { return NaN }
+			}
 			// piApprox
 			// simplify sin(nx)
 			// simplify tan(nx)
@@ -3411,7 +3398,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			// inverse of matrix
 			// Kullback-Leibler (KL) divergence  between two distributions.
 			// kronecker product of 2 matrices or vectors.
-			// nthrts
+			// nthrts // probably for aMath or cMath
 			// compareText
 			// coulomb
 			// electrical things
@@ -3422,20 +3409,31 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			rMath_Constants_Argument
 		); this.bMath = new (class BigIntRealMath {
 			constructor(help="default", degTrig="default") {
-				help === "default" && (help = true);
-				degTrig === "default" && (degTrig = true);
+				help === "default" && (help = !0);
+				degTrig === "default" && (degTrig = !0);
 
 				if (help) this.help = {
 				}; if (degTrig) this.deg = {
 				};
+			}
+			add(a, b) {
+				return a + b
+			} sub(a, b) {
+				return a - b
+			} mul(a, b) {
+				return a * b
+			} div(a, b) {
+				return a / b
+			} pow(a, b) {
+				return a ** b
 			}
 		})(
 			bMath_Help_Argument,
 			bMath_DegTrig_Argument
 		); this.cMath = new (class ComplexMath {
 			constructor(degTrig="default", help="default") {
-				degTrig === "default" && (degTrig = true);
-				help === "default" && (help = true);
+				degTrig === "default" && (degTrig = !0);
+				help === "default" && (help = !0);
 				this.ComplexNumber = class Complex {
 					// TODO: Add customization so the functions don't always modify the state
 					constructor(re=0, im=0) {
@@ -3482,7 +3480,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						}
 					}
 					arg(form="radians") {
-						return form === "degrees" || form === "deg" || form === "degree" ?
+						return ["d", "deg", "degree", "degrees"].incl(form) ?
 							rMath.deg.atan2(this.re, this.im) :
 							rMath.atan2(this.re, this.im);
 					}
@@ -3621,53 +3619,29 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
 			}
 			complex(re=0, im=0) { return this.new(re, im) }
-			add(...zs) {
-				zs = zs.flatten().map(e =>
-					type(e) === "number" ? this.new(e, 0) : e
-				).filter(e => type(e, 1) === "complex");
-				let re = 0, im = 0;
-				for (const z of zs) {
-					re += z.re;
-					im += z.im;
-				}
-				return this.new(re, im);
+			add(a, b) {
+				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
+					throw TypeError("cMath.add requires complex arguments");
+				return this.new(a.re + b.re, a.im + b.im);
 			}
-			sub(...zs) {
-				zs = zs.flatten().map(e =>
-					type(e) === "number" ? this.new(e, 0) : e
-				).filter(e => type(e, 1) === "complex");
-				let re = zs[0].re, im = zs[0].im;
-				zs = zs.slc(1);
-				for (const z of zs) {
-					re -= z.re;
-					im -= z.im;
-				}
-				return this.new(re, im);
+			sub(a, b) {
+				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
+					throw TypeError("cMath.add requires complex arguments");
+				return this.new(a.re + b.re, a.im + b.im);
 			}
-			mul(...zs)  {
-				zs = zs.flatten().map(e =>
-					type(e) === "number" ? this.new(e, 0) : e
-				).filter(e => type(e, 1) === "complex");
+			mul(a, b)  {
+				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
+					throw TypeError("cMath.add requires complex arguments");
+				return this.new(a.re*b.re - a.im*b.im, a.re*b.im + b.re*a.im);
+			}
+			div(a, b) {
+				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
+					throw TypeError("cMath.add requires complex arguments");
 
-				for (var i = len(zs), n1, n2 = zs.pop(); i --> 1 ;) {
-					n1 = zs.pop();
-					n2 = this.new(n1.re*n2.re - n1.im*n2.im, n1.re*n2.im + n2.re*n1.im);
-				}
-				return n2;
-			}
-			div(...zs) {
-				zs = zs.flatten().map(e =>
-					type(e) === "number" ? this.new(e, 0) : e
-				).filter(e => type(e, 1) === "complex");
-
-				for (var i = len(zs), n1, n2 = zs.pop(); i --> 1;) {
-					n1 = zs.pop();
-					n2 = this.new(
-						(n1.re*n2.re + n1.im*n2.im) / (n2.re**2 + n2.im**2),
-						(n1.im*n2.re - n1.re*n2.im) / (n2.re**2 + n2.im**2)
-					);
-				}
-				return n2;
+				return this.new(
+					(a.re*b.re + a.im*b.im) / (b.re**2 + b.im**2),
+					(a.im*b.re - a.re*b.im) / (b.re**2 + b.im**2)
+				);
 			}
 			floor(z) {
 				type(z) === "number" && (z = this.new(z, 0));
@@ -3713,7 +3687,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 					this.arg(z, int(n))
 				);
 				// ln(0 + bi) = ln|b| + isgn(b)π/2
-				// ln(a + bi) = ln(sqrt(a^2 + b^2)) + i arg(a + bi)
+				// ln(z) = ln|z| + Arg(z)i
 			}
 			log(z, base=null, n=0) {
 				type(z) === "number" && (z = this.new(z, 0));
@@ -3722,7 +3696,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				if (type(z, 1) !== "complex") throw TypeError("Invalid first argument");
 				if (type(base, 1) !== "complex") throw TypeError("Invalid second argument");
 				return this.ln(z, n).div( this.ln(base, n) );
-				// log_(a+bi)(c+di) = ln(c+di) / ln(a+bi)
+				// log_{a+bi}(c+di) = ln(c+di) / ln(a+bi)
 			}
 			logbase(base, z, n=0) {
 				type(base) === "number" && (base = this.new(base, 0));
@@ -3817,6 +3791,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				type(n) === "number" && (n = this.new(n, 0));
 				type(last) === "number" && (last = this.new(last, 0));
 				type(inc) === "number" && (inc = this.new(inc, 0));
+				// complex less than or equal to
 				const complet = (a, b) => !a.im && !b.im ? a.re <= b.re : this.abs(a) <= this.abs(b);
 				
 				if (type(n, 1) !== "complex") throw TypeError("sum() requires a complex first argument");
@@ -3837,17 +3812,19 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				return this.new(1/z.re, 1/z.im);
 			}
 			isPrime(z) {
+				// TODO: Start
 				if (type(z, 1) === "num") z = this.new(z, 0);
 				if (type(z, 1) !== "complex") throw TypeError("cMath.isPrime() requires a complex argument");
-
+				throw Error("Not Implemented");
 			}
 		})(
 			cMath_DegTrig_Argument,
 			cMath_Help_Argument
 		); this.fMath = new (class fractionalRealMath {
+			// TODO: Make the functions convert numbers into fractions if they are inputed instead
 			constructor(help="default", degTrig="default") {
-				help === "default" && (help = true);
-				degTrig === "default" && (degTrig = true);
+				help === "default" && (help = !0);
+				degTrig === "default" && (degTrig = !0);
 				this.Fraction = class Fraction {
 					constructor(numerator=1, denominator=1) {
 						 this.numer = numerator;
@@ -3883,6 +3860,18 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			} simp(fraction) {
 				return this.simplify(fraction);
 				;
+			} add(a, b) {
+				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
+				return this.simp(this.new(a.numer*b.denom + b.numer*a.denom, a.denom*b.denom));
+			} sub(a, b) {
+				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
+				return this.simp(this.new(a.numer*b.denom - b.numer*a.denom, a.denom*b.denom));
+			} mul(a, b) {
+				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
+				return this.simp(this.new(a.numer*b.numer, a.denom*b.denom));
+			} div(a, b) {
+				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
+				return this.simp(this.new(a.numer*b.denom, a.denom*b.numer));
 			}
 		})(
 			fMath_Help_Argument,
@@ -3890,18 +3879,41 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 		); this.aMath = new (class AllMath {
 			// aMath will call the correct function based upon the input
 			constructor(help="default") {
-				help === "default" && (help = true);
+				help === "default" && (help = !0);
 				// constants
 
 				if (help) this.help = {
 				};
 			}
+			add(a, b) {
+				return this.call("all", a, b);
+			}
+			call(fname) {
+				var args = Array.from(arguments).slc(1), typ = type(args[0], 1);
+				if ( args.any(e => type(e, 1) !== typ) )
+					throw Error("arguments to aMath.add() must be of the same type");
+
+				var fns = {
+					num      : rMath,
+					bigint   : bMath,
+					str      : sMath,
+					complex  : cMath,
+					fraction : fMath,
+				}, fn = fns?.[type(a, 1)][fname];
+				if (fn) return fn.apply( fns[type(a, 1)], args );
+				// just using fn() makes "this" inside the function undefined.
+				throw Error("invalid arguments or function doesn't exist");
+			}
 		})(
 			aMath_Help_Argument
 			,
 		); this.MathObjects = {
-			aMath: aMath, bMath: bMath, cMath: cMath,
-			fMath: fMath, sMath: sMath, rMath: rMath,
+			aMath : aMath,
+			bMath : bMath,
+			cMath : cMath,
+			fMath : fMath,
+			sMath : sMath,
+			rMath : rMath,
 		}; this.Logic = new (class Logic {
 			constructor(bitwise, comparatives, help) {
 				bitwise === "default" && (bitwise = "bit");
@@ -3926,24 +3938,20 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						xor: (ns, range=[1]) => {
 							if (isNaN( (ns = ns.tofar()).join("") )) throw TypeError("numbers req. for 1st parameter");
 							if (isNaN( (range = range.tofar()).join("") )) throw TypeError("numbers req. for 2nd parameter");
-
 							// fix range
 							const min = rMath.min(range), max = rMath.max(range);
 							range = [
 								min < 0 ? 0 : int(min),
 								max > len(ns) - 1 ? len(ns) - 1 : int(max)
 							];
-
 							ns = ns.map(b => b.toString(2));
-
 							const maxlen = rMath.max( ns.map(b => len(b)) );
-
 							// normalize the string lengths
 							ns.for((e, i) => {
-								for (; len(e) < maxlen ;) e = `0${e}`;
+								while (len(e) < maxlen)
+									e = `0${e}`;
 								ns[i] = e;
 							});
-
 							// get the totals per bit, and store into 'bits'
 							for (var str_i = 0, arr_i = 0, bits = "", total, output = "";
 								str_i < maxlen;
@@ -3961,7 +3969,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 						},
 
 						nxor: function xnor(a, b) {
-							return this.not(
+							return this.not(// TODO: Figure out what this is supposed to be for
 
 							);
 						},
@@ -4042,11 +4050,10 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				// | F | T |   F   |
 				// | F | F |   F   |
 				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]") 
+				if (json?.stringify?.(a = a?.flatten?.()) === "[]") 
 					return !1;
-				for (var i = len(a) - 1; i >= 0; --i) {
+				for (var i = len(a); i --> 0 ;)
 					if (a[i] == !1) return !1;
-				}
 				return !0;
 			}
 			nand(...a) {// not (p and q)
@@ -4070,9 +4077,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				// | F | F |   F   |
 				// +---+---+-------+
 				if (json.stringify(a = a.flatten()) === "[]") return !1;
-				for (var i = len(a) - 1; i >= 0; --i) {
+				for (var i = len(a); i --> 0 ;)
 					if (a[i] == !0) return !0;
-				}
 				return !1;
 			}
 			nor(...a) {// not (p or q)
@@ -4110,7 +4116,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				// +---+---+-------+
 				if (json.stringify(a = a.flatten()) === "[]")
 					return !1;
-				return len(a.filter(b => b == true)) == len(a) % 2 > 0
+				return len(a.filter(b => b == !0)) == len(a) % 2 > 0
 			}
 			nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
 				// +---+---+----------+
@@ -4196,9 +4202,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			}
 			is(...a) {// Object.is() but more than 2 inputs
 				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
-				for (var i = len(a) - 1; i >= 0; --i) {
+				for (var i = len(a); i --> 0 ;)
 					if (a[i] !== a[0]) return !1;
-				}
 				return !0;
 			}
 			isnt(...a) {// !Object.is() but more than 2 inputs and broken
@@ -4228,7 +4233,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			sMath.aMath = aMath; sMath.bMath = bMath; sMath.cMath = cMath; sMath.fMath = fMath;
 			sMath.sMath = sMath; sMath.rMath = rMath; rMath.aMath = aMath; rMath.bMath = bMath;
 			rMath.cMath = cMath; rMath.fMath = fMath; rMath.sMath = sMath; rMath.rMath = rMath;
-		this[Output_Math_Variable] = rMath;
+		this[Output_Math_Variable] = this[Input_Math_Variable];
 	} {// Prototypes
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
@@ -4269,9 +4274,9 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			var num = 0;
 			for (var i = len(this); i --> 0 ;) {
 				num += Boolean(fn(this))
-				if (num > 1) return true;
+				if (num > 1) return !0;
 			}
-			return false;
+			return !1;
 		},  Array.prototype.for = function forEachReturn(f=(e, i, a)=>e, ret) {
 			// don't change order from ltr to rtl
 			for (var a = this, i = 0, n = len(a); i < n ;)
@@ -4281,7 +4286,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			while ( num --> 0 ) this.shift();
 			return this;
 		}, Array.prototype.union = function union(array) {
-			["NodeList", "HTMLAllCollection", "HTMLCollection"] .incl(array.constructor.name) &&
+			["NodeList", "HTMLAllCollection", "HTMLCollection"].incl(constr(array)) &&
 				(array = Array.from(array));
 			for (var arr = this.concat(array), i = len(arr); i --> 0 ;)
 				this[i] = arr[i];
@@ -4298,9 +4303,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			let a = this, j, n;
 			i = i.tofar();
 			if (e === void 0) {
-				for (j = 0, n = len(i); j < n; j++) {
+				for (j = 0, n = len(i); j < n; j++)
 					if (type(i[j], 1) === "num") a.push(a[i[j]]);
-				}
 			}
 			else {
 				if (/\S+=>{}/.in(`${e}`) && type(e, 1) === "func") a.push(void 0);
@@ -4313,9 +4317,9 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			let a = this, j, n;
 			i = i.tofar();
 			if (e === void 0) {
-				for (j = 0, n = len(i); j < n; j++) {
-					if (type(i[j], 1) === "num") a.unshift(a[i[j]]);
-				}
+				for (j = 0, n = len(i); j < n; j++)
+					if (type(i[j], 1) === "num")
+						a.unshift(a[i[j]]);
 			}
 			else {
 				if (/\S+=>{}/.in(`${e}`) && type(e, 1) === "func") a.unshift(void 0);
@@ -4339,8 +4343,8 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			return a;
 		}, Array.prototype.hasDupes = function hasDuplicates() {
 			for (var a = copy(this), i = len(a); i --> 0 ;)
-				if (a.incl(a.pop())) return true;
-			return false;
+				if (a.incl(a.pop())) return !0;
+			return !1;
 		}, Array.prototype.mod = function modify(indexes, func) {
 			indexes = indexes.tofar();
 			let a = this, n = len(indexes);
@@ -4472,7 +4476,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 		,  String.prototype.eW = String.prototype.endsW = String.prototype.endsWith
 		, String.prototype.sL = String.prototype.startsL = String.prototype.startsLike =
 		function startsLike(strOrArr="", position=0) { // TODO: Finish
-			if (!["str", "arr"].incl(type(strOrArr, 1))) return false;
+			if (!["str", "arr"].incl(type(strOrArr, 1))) return !1;
 			if (type(strOrArr) === "string") {
 
 			}
@@ -4613,19 +4617,18 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			return arr2;
 		}, String.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
 			return isNaN(this.valueOf()) ?
-				false :
+				!1 :
 				Number(this.valueOf()).inRange(n1, n2, include);
 		}, String.prototype.isInt = function isInt() {
 			var a = this.valueOf();
-			if ( isNaN(a) ) return false;
+			if ( isNaN(a) ) return !1;
 			a = a.slc(".");
-			if (a.io(".") === -1) return true;
+			if (a.io(".") === -1) return !0;
 			for (var i = len(a); i --> 1 ;)
-				if (a[i] !== "0") return false;
-			return true;
+				if (a[i] !== "0") return !1;
+			return !0;
 		}, String.prototype.exists = function exists() {
-			return this !=
-				"";
+			return this != "";
 		}, Number.prototype.isPrime = function isPrime() {// can probably be optimized
 			var n = int(this.valueOf());
 			if (n === 2) return !0;
@@ -4652,32 +4655,23 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			var n = this.valueOf();
 			return n === int(n);
 		}, Number.prototype.add = function add(arg) {
-			return this +
-				Number(arg);
+			return this + Number(arg);
 		}, Number.prototype.sub = function sub(arg) {
-			return this -
-				Number(arg);
+			return this - Number(arg);
 		}, Number.prototype.mul = function mul(arg) {
-			return this *
-				Number(arg);
+			return this * Number(arg);
 		}, Number.prototype.div = function div(arg) {
-			return this /
-				Number(arg);
+			return this / Number(arg);
 		}, Number.prototype.mod = function mod(arg) {
-			return this %
-				Number(arg);
+			return this % Number(arg);
 		}, Number.prototype.pow = function pow(arg) {
-			return this **
-				Number(arg);
+			return this ** Number(arg);
 		}, BigInt.prototype.shl = function shl(num) {
-			return this.valueOf() <<
-				BigInt(num);
+			return this.valueOf() << BigInt(num);
 		}, BigInt.prototype.shr = function shr(num) {
-			return this.valueOf() >>
-				BigInt(num);
+			return this.valueOf() >> BigInt(num);
 		}, BigInt.prototype.shr2 = function shr2(num) {
-			return this.valueOf() >>>
-			BigInt(num);
+			return this.valueOf() >>> BigInt(num);
 		}, BigInt.prototype.isPrime = function isPrime() {
 			var n = this.valueOf();
 			if (n === 2n) return !0;
@@ -4692,31 +4686,34 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				a >= n1 && a <= n2 :
 				a > n1 && a < n2;
 		}, BigInt.prototype.toExponential = function toExponential(maxDigits=16, form=String) {
-			var a = `${this.valueOf()}`;
+			var a = `${this}`;
 			maxDigits < 0 && (maxDigits = 0);
 			var decimal = maxDigits && len(a) > 1 && a.substr(1)*1 ? "." : "";
 			var rest = a.substr(1, maxDigits);
 			rest = 1 * rest ? rest : "";
-			if (["string", "str", "s", String].incl(form))      return `${a[0]}${decimal}${rest}e+${len(a) - 1}`;
-			else if (["number", "num", "n", Number].incl(form)) return 1 * `${a[0]}.${a.substr(1, 50)}e+${len(a) - 1}`;
+			if (["string", "str", "s", String].incl(form?.lower?.() || form))
+				return `${a[0]}${decimal}${rest}e+${dim(a)}`;
+			else if (["number", "num", "n", Number].incl(form?.lower?.() || form))
+				return 1 * `${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
+			else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
 		}, BigInt.prototype.add = function add(arg) {
-			return this +
-				BigInt(arg);
+			return this + BigInt(arg);
+			//
 		}, BigInt.prototype.sub = function sub(arg) {
-			return this -
-				BigInt(arg);
+			return this - BigInt(arg);
+			//
 		}, BigInt.prototype.mul = function mul(arg) {
-			return this *
-				BigInt(arg);
+			return this * BigInt(arg);
+			//
 		}, BigInt.prototype.div = function div(arg) {
-			return this /
-				BigInt(arg);
+			return this / BigInt(arg);
+			//
 		}, BigInt.prototype.mod = function mod(arg) {
-			return this %
-				BigInt(arg);
+			return this % BigInt(arg);
+			//
 		}, BigInt.prototype.pow = function pow(arg) {
-			return this **
-				BigInt(arg);
+			return this ** BigInt(arg);
+			//
 		};
 	} {// bad text encoders
 		function asciiToChar(number) {
@@ -4884,18 +4881,18 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 			check = s => s[0] === s[1],
 			checks = a => {
 				for (var i = 0, n = len(a); i < n; i++)
-					if (check(a[i])) return [false, i , a[i]];
-				return true;
+					if (check(a[i])) return [!1, i , a[i]];
+				return !0;
 			}
 			// base 11 but replace the stuff with these:
 			"յͿΡЈ𝗉pJРрPȷ";
 			"1234567890a";
 		}
 	} {// Error Handling
-		let exit1 = false;
+		let exit1 = !1;
 		try { ON_CONFLICT = ON_CONFLICT.lower() }
 		catch { ON_CONFLICT = "None" }
-		Alert_Conflict_Unused === "default" && (Alert_Conflict_Unused = false);
+		Alert_Conflict_Unused === "default" && (Alert_Conflict_Unused = !1);
 		ON_CONFLICT           === "default" && (ON_CONFLICT           = "dbg");
 		if (len(CONFLICT_ARR)) {
 			switch (ON_CONFLICT && Alert_Conflict_OverWritten) {
@@ -4915,7 +4912,7 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				case "trw":
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 			}
-			exit1 = true;
+			exit1 = !0;
 		} if (len(NOT_ACTIVE_ARR) && Alert_Conflict_Unused) {
 			switch (ON_CONFLICT) {
 				case "ast":
@@ -4936,15 +4933,15 @@ void (() => { "use strict"; // Don't change from arrow function to regular funct
 				case "trw":
 				case "throw": throw `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
 			}
-			exit1 = true;
+			exit1 = !0;
 		}
 		if (exit1) return 1;
 		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && console.log("lib.js loaded");
 		return 0;
-	}
-})();/**
- !function(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
- https://codehs.com/identicon/image/
- 1P 1$ 2( 3h 3H 3L 44 5H 5K 5O 5P 65 6h 6o 6t 6v 6F
- last seen: 7R
-*/
+	}/**
+		!function codehs(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
+		https://codehs.com/identicon/image/
+		1P 1$ 2( 3h 3H 3L 44 5H 5K 5O 5P 65 6h 6o 6t 6v 6F
+		last seen: 7R
+	*/
+})();
