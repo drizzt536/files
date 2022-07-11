@@ -102,42 +102,34 @@ def getkeyspressed() -> list[Key, ...]:
     return keys
 
 def getmouseposition() -> tuple[int, int]:
-    return MouseController()\
-    .position
+    return MouseController().position
 
 # Mouse automation
 
 def setmouseposition(x: float | int = 0, y: float | int = 0) -> None:
-    MouseController()\
-    .position = (x, y)
+    MouseController().position = (x, y)
 
 def movemouse(relX: float | int = 0, relY: float | int = 0) -> None:
-    MouseController()\
-    .move(relX, relY)
+    MouseController().move(relX, relY)
 
 def click(button: object = Button.left, times: int = 1) -> None:
-    MouseController()\
-    .click(button, times)
+    MouseController().click(button, times)
 
 def scroll(ltr: float | int = 0, dtu: float | int = 0) -> None:
-    MouseController()\
-    .scroll(rtl, dtu)
+    MouseController().scroll(rtl, dtu)
 
 def vscroll(dtu: float | int = 0) -> None: # vertical scroll
-    MouseController()\
-    .scroll(0, dtu)
+    MouseController().scroll(0, dtu)
 
 def hscroll(ltr: float | int = 0) -> None: # horizontal scroll
-    MouseController()\
-    .scroll(ltr, 0)
+    MouseController().scroll(ltr, 0)
 
 def mousedown(button: object = Button.left) -> None:
     buttons.append(button)
     MouseController().press(button)
 
 def mouseup() -> None: # release most recent mouse button
-    MouseController()\
-    .release( buttons.pop() )
+    MouseController().release( buttons.pop() )
 
 def releasebuttons() -> None:
     while buttons:
@@ -151,8 +143,7 @@ def keydown(key: object = None) -> None:
     KeyboardController().press(key)
 
 def keyup() -> None: # release most recent key
-    KeyboardController()\
-    .release( keys.pop() )
+    KeyboardController().release( keys.pop() )
 
 def keypress(key: object = None, delay: float | int = 0) -> None:
     if key is None: return
@@ -183,7 +174,7 @@ def releasekeys() -> None:
     while keys:
         keyup()
 
-def release_all() -> None:
+def releaseall() -> None:
     releasekeys()
     releasebuttons()
 
@@ -198,24 +189,16 @@ def volumedown(times: int = 1) -> None:
         keypress(Key.media_volume_down)
 
 def pauseplay() -> None:
-    keypress(
-        Key.media_play_pause
-    )
+    keypress(Key.media_play_pause)
 
 def togglemute() -> None:
-    keypress(
-        Key.media_volume_mute
-    )
+    keypress(Key.media_volume_mute)
 
 def nextmedia() -> None:
-    keypress(
-        Key.media_next
-    )
+    keypress(Key.media_next)
 
 def prevmedia() -> None:
-    keypress(
-        Key.media_previous
-    )
+    keypress(Key.media_previous)
 
 if __name__ == '__main__':
     print("__name__ == '__main__'\nautomate\n\nvariables:")
