@@ -9,11 +9,11 @@ false = False
 ellipsis = type(...) # type(Ellipsis)
 NotImplementedType = type(NotImplemented)
 generator = type(i for i in []) # useless
-function = type(lambda x: x)
+function = type(lambda: 1)
 array = list
-dict_keys = type(int.__dict__.keys()) # useless
-dict_values = type(int.__dict__.values()) # useless
-dict_items = type(int.__dict__.items()) # useless
+dict_keys = type({}.keys()) # useless
+dict_values = type({}.values()) # useless
+dict_items = type({}.items()) # useless
 variables = (
     "Module",
     "string",
@@ -39,53 +39,97 @@ variables = (
     "cmp",
     "ccmp",
     "isntinstance",
-    "random"
+    "random",
+    "addressOf",
+    "nameOf",
 )
 
 # miscellaneous functions
 
-def monitors() -> list[object, ...]:
-    from ctypes.wintypes import RECT as rect
+def monitors() -> list[dict["top", "left", "width", "height"], ...]:
+    """
+        None  ->  list[ dict["top", "left", "width", "height"], ... ]
+        
+        returns a list of all connected monitors.
+    """
+    from ctypes.wintypes import RECT
     from ctypes import (
         c_int as cint, c_ulong as ul, POINTER as ptr,
-        c_double as dbl, WINFUNCTYPE as cfun, windll
+        c_double as dbl, WINFUNCTYPE as cfn, windll
     )
     lst = []
-    windll.user32.EnumDisplayMonitors(0, 0, cfun(cint, ul, ul, ptr(rect), dbl)(
+    windll.user32.EnumDisplayMonitors(0, 0, cfn(cint, ul, ul, ptr(RECT), dbl)(
         lambda monitor, dc, rect, data: (rct := rect.contents) and lst.append({
-            'top': rct.top,
-            'left': rct.left,
-            'width': rct.right - rct.left,
-            'height': rct.bottom - rct.top,
+            'top'    : rct.top,
+            'left'   : rct.left,
+            'width'  : rct.right - rct.left,
+            'height' : rct.bottom - rct.top,
         }) or 1
     ), 0)
     return lst
 
 def view(module: Module, form: int = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
+    """
+        Module, int=1  ->  (tuple | list | set)[str, ...] | dict_keys | None
+
+        function for viewing module contents.
+        the first argument is the module, and the second argument is the form
+        forms:
+            0. returns module.__dict__
+            1. returns tuple(module.__dict__)
+            2. returns list(module.__dict__)
+            3. returns set(module.__dict__)
+            4. returns module.__dict__.keys()
+            5. reads the file at module.__file__ and returns the file contents.
+    """
     if not isinstance(module, Module): raise TypeError("automate.misc.view() can only view modules")
     mod = module.__dict__
-    if form == 1: return tuple(mod)
+    if   form == 0: return mod
+    elif form == 1: return tuple(mod)
     elif form == 2: return list(mod)
     elif form == 3: return set(mod)
     elif form == 4: return mod.keys()
     elif form == 5:
         try:
-            return read(module.__file__)
-        except AttributeError:
-            raise Exception("module doesn't have __file__ as an attribute")
-        except FileNotFoundError:
-            raise Exception("module __file__ attribute is incorrect")
+            return read(mod["__file__"])
+        except (AttributeError, KeyError):
+            raise Exception("module's __file__ attribute is not present")
 
 from io import UnsupportedOperation
+
 def read(file_loc: str | int) -> str:
+    """
+        str | int  ->  str
+
+        function for reading from files.
+        takes 1 argument, file path.
+        reads and returns the contents of the file
+    """
     try:
-        with open (file_loc, "r") as file:
+        with open(file_loc, "r") as file:
             return file.read()
     except (FileNotFoundError, PermissionError, TypeError, OSError, UnsupportedOperation) as e:
         print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure it is always that reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n")
         raise e
 
 def write(file_loc: str | int, text: str = "", form: str = "a") -> None:
+    """
+        str | int, str="", str="a"  ->  None
+
+        function for writing to files.
+        takes 3 arguments:
+            1. file path
+            2. text to write to the file 
+            3. form
+                options:
+                    append
+                    write
+                    a
+                    w
+                append adds to the file
+                write deletes everything and adds the text to the blank new file
+        returns None
+    """
     if form not in {"a", "w", "write", "append"}:
         form = "a"
     try:
@@ -97,29 +141,55 @@ def write(file_loc: str | int, text: str = "", form: str = "a") -> None:
 
 del UnsupportedOperation
 
-def clear(file_loc: str | int) -> bool: # true if success, false if fail
+def clear(file_loc: str | int) -> bool:
+    """
+        str | int  ->  bool
+
+        takes one argument, the file path.  
+        clears the content of the file.
+        returns true on success and false on fail
+    """
     try:
          with open(file_loc, 'w') as file:
             file.write("")
     except Exception:
-        return False
-    return True
+        return false
+    return true
 
 def cmp(num1: float | int = 0, num2: float | int = 0) -> int:
-    if not isinstance(num1, float | int) or not isinstance(num2, float | int):
-        raise TypeError("automate.misc.cmp() requires an int or float input type")
-    return -1 if num1 < num2 else int(num1 != num2)
+    """
+        float | int=0, float | int=0  ->  int[-1, 0, 1]
+
+        function for comparing floats or integers
+        returns -1 if num1 < num2
+        returns 0 if num1 == num2
+        returns 1 if num1 > num2
+    """
+    if isinstance(num1, float | int) and isinstance(num2, float | int):
+        return num1 < num2 and -1 or int(num1 != num2)
+    raise TypeError("automate.misc.cmp() requires an int or float input type")
 
 def ccmp(comp1: complex | float | int = 0, comp2: complex | float | int = 0) -> tuple[int, int]:
-    if not isinstance(comp1, complex | float | int) or not isinstance(comp2, complex | float | int):
-        raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
-    comp1, comp2 = complex(comp1), complex(comp2)
-    return (cmp(comp1.real, comp2.real), cmp(comp1.imag, comp2.imag))
+    """
+        complex | float | int=0, complex | float | int=0  ->  tuple[ int[-1,0,1], int[-1,0,1] ]
 
-isntinstance = lambda a, b: not isinstance(a, b)
+        returns a tuple of two integers
+        the first integer compares the real parts and the second integer compares the imaginary parts
+    """
+    if isinstance(comp1, complex | float | int) and isinstance(comp2, complex | float | int):
+        comp1, comp2 = complex(comp1), complex(comp2)
+        return (cmp(comp1.real, comp2.real), cmp(comp1.imag, comp2.imag))
+    raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
 
-def random(return_int=False, /) -> float | int:
-    """returns any random float (or int, depending on the argument) from -∞ to ∞
+def isntinstance(a, b) -> bool:
+    """returns not isinstance(a, b)"""
+    return not isinstance(a, b)
+
+def random(return_int: bool = False, /) -> float | int:
+    """
+        bool  ->  float | int
+
+        returns any random float (or int, depending on the argument) from -∞ to ∞
         more likely to return numbers closer to zero
         2^-(1 + int(log|x|)) probability that ~|x| will get returned based on its magnitude
     """
@@ -133,8 +203,34 @@ def random(return_int=False, /) -> float | int:
             string += str(randint(0, 9))
             if randint(0, 1):
                 break
-    ans = float(string) * (randint(0, 1) and -1 or 1)
+    ans = float(string) * (randint(0, 1) or -1)
     return int(ans) if return_int else ans
+
+def addressOf(fn: function) -> str:
+    """
+        function  ->  str
+
+        function for getting the address of functions
+        takes 1 function argument and returns, as a string, the address
+    """
+    # function cannot be a base class, thus "isinstance" is not required here
+    if type(fn) is type(lambda: 1):
+        from re import sub
+        return sub("(.* ){3}", "", str(fn))[:-1]
+    raise TypeError("automate.misc.addressOf() requires a function input")
+
+def nameOf(fn: function) -> str:
+    """
+        function  ->  str
+
+        function for getting the name of functions
+        takes 1 function argument and returns, as a string, the name
+    """
+    # function cannot be a base class, thus "isinstance" is not required here
+    if type(fn) is type(lambda: 1):
+        from re import sub
+        return sub("(<function )| .*", "", str(fn))
+    raise TypeError("automate.misc.nameOf() requires a function input")
 
 if __name__ == '__main__':
     print("__name__ == '__main__'\nautomate.misc\n\nvariables:")
