@@ -74,7 +74,7 @@ def monitors() -> list[dict["top", "left", "width", "height"], ...]:
     ), 0)
     return lst
 
-def view(module: Module, form: int = 1, /) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
+def view(module: Module, form: int = 1, /, *, form_6_dst = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
     """
         Module, int=1  ->  (tuple | list | set)[str, ...] | dict_keys | None
 
@@ -87,8 +87,9 @@ def view(module: Module, form: int = 1, /) -> tuple[str, ...] | list[str, ...] |
             3. returns set(module.__dict__)
             4. returns module.__dict__.keys()
             5. reads the file at module.__file__ and returns the file contents.
-            6. does the following: for s in list(module.__dict__): print(s)
-            else: returns inputed module
+            6. reads the file at module.__file__ and copies to form_6_dst via shutil.copyfile. returns form_6_dst
+            7. does the following: for s in list(module.__dict__): print(s)
+            else: directlty returns inputed module
     """
     if isntinstance(module, Module): raise TypeError("automate.misc.view() can only view modules")
     mod = module.__dict__
@@ -101,15 +102,17 @@ def view(module: Module, form: int = 1, /) -> tuple[str, ...] | list[str, ...] |
         try:
             return read(mod["__file__"])
         except (AttributeError, KeyError):
-            raise Exception("module's __file__ attribute is not present")
+            raise Exception("module's __file__ attribute is not present for automate.misc.view()")
     elif form == 6:
+        from shutil import copyfile
+        copyfile(mod["__file__"], form_6_dst) # should raise errors on its own, but if not, whatever
+        return form_6_dst
+    elif form == 7:
         print("\n")
         for s in tuple(module.__dict__):
             print(s)
-        print()
+        print("\n")
     else: return module
-
-from io import UnsupportedOperation
 
 def read(file_loc: str | int, /) -> str:
     """
@@ -119,11 +122,12 @@ def read(file_loc: str | int, /) -> str:
         takes 1 argument, file path.
         reads and returns the contents of the file
     """
+    from io import UnsupportedOperation
     try:
         with open(file_loc, "r") as file:
             return file.read()
     except (FileNotFoundError, PermissionError, TypeError, OSError, UnsupportedOperation) as e:
-        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure it is always that reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n")
+        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure that is always the reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n * ValueError - idk\n")
         raise e
 
 def write(file_loc: str | int, text: str = "", form: str = "a", /) -> None:
@@ -144,16 +148,15 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /) -> None:
                 write deletes everything and adds the text to the blank new file
         returns None
     """
+    from io import UnsupportedOperation
     if form not in {"a", "w", "write", "append"}:
         form = "a"
     try:
         with open(file_loc, form[0]) as file:
             file.write(text)
     except (FileNotFoundError, PermissionError, TypeError, OSError, UnsupportedOperation) as e:
-        print("\nautomate.misc.write() failed to write to the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure it is always that reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n")
+        print("\nautomate.misc.write() failed to write to the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure that is always the reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n * ValueError - idk\n")
         raise e
-
-del UnsupportedOperation
 
 def clear(file_loc: str | int, /) -> bool:
     """
