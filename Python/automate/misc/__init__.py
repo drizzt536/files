@@ -14,6 +14,8 @@ array = list
 dict_keys = type({}.keys()) # useless
 dict_values = type({}.values()) # useless
 dict_items = type({}.items()) # useless
+realnum = float | int
+number = realnum | complex
 variables = (
     "Module",
     "string",
@@ -28,6 +30,8 @@ variables = (
     "dict_keys",
     "dict_values",
     "dict_items",
+    "realnum (float | int)",
+    "number (float | int | complex)",
     "variables",
     "functions"
 ); functions = (
@@ -40,8 +44,10 @@ variables = (
     "ccmp",
     "isntinstance",
     "random",
+    "crandom (complex random)",
     "addressOf",
     "nameOf",
+    "tuplify_complex"
 )
 
 # miscellaneous functions
@@ -68,7 +74,7 @@ def monitors() -> list[dict["top", "left", "width", "height"], ...]:
     ), 0)
     return lst
 
-def view(module: Module, form: int = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
+def view(module: Module, form: int = 1, /) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
     """
         Module, int=1  ->  (tuple | list | set)[str, ...] | dict_keys | None
 
@@ -81,8 +87,10 @@ def view(module: Module, form: int = 1) -> tuple[str, ...] | list[str, ...] | se
             3. returns set(module.__dict__)
             4. returns module.__dict__.keys()
             5. reads the file at module.__file__ and returns the file contents.
+            6. does the following: for s in list(module.__dict__): print(s)
+            else: returns inputed module
     """
-    if not isinstance(module, Module): raise TypeError("automate.misc.view() can only view modules")
+    if isntinstance(module, Module): raise TypeError("automate.misc.view() can only view modules")
     mod = module.__dict__
     if   form == 0: return mod
     elif form == 1: return tuple(mod)
@@ -94,10 +102,16 @@ def view(module: Module, form: int = 1) -> tuple[str, ...] | list[str, ...] | se
             return read(mod["__file__"])
         except (AttributeError, KeyError):
             raise Exception("module's __file__ attribute is not present")
+    elif form == 6:
+        print("\n")
+        for s in tuple(module.__dict__):
+            print(s)
+        print()
+    else: return module
 
 from io import UnsupportedOperation
 
-def read(file_loc: str | int) -> str:
+def read(file_loc: str | int, /) -> str:
     """
         str | int  ->  str
 
@@ -112,7 +126,7 @@ def read(file_loc: str | int) -> str:
         print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure it is always that reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n")
         raise e
 
-def write(file_loc: str | int, text: str = "", form: str = "a") -> None:
+def write(file_loc: str | int, text: str = "", form: str = "a", /) -> None:
     """
         str | int, str="", str="a"  ->  None
 
@@ -141,7 +155,7 @@ def write(file_loc: str | int, text: str = "", form: str = "a") -> None:
 
 del UnsupportedOperation
 
-def clear(file_loc: str | int) -> bool:
+def clear(file_loc: str | int, /) -> bool:
     """
         str | int  ->  bool
 
@@ -156,7 +170,7 @@ def clear(file_loc: str | int) -> bool:
         return false
     return true
 
-def cmp(num1: float | int = 0, num2: float | int = 0) -> int:
+def cmp(num1: realnum = 0, num2: realnum = 0, /) -> int:
     """
         float | int=0, float | int=0  ->  int[-1, 0, 1]
 
@@ -169,7 +183,7 @@ def cmp(num1: float | int = 0, num2: float | int = 0) -> int:
         return num1 < num2 and -1 or int(num1 != num2)
     raise TypeError("automate.misc.cmp() requires an int or float input type")
 
-def ccmp(comp1: complex | float | int = 0, comp2: complex | float | int = 0) -> tuple[int, int]:
+def ccmp(comp1: number = 0, comp2: number = 0, /) -> tuple[int, int]:
     """
         complex | float | int=0, complex | float | int=0  ->  tuple[ int[-1,0,1], int[-1,0,1] ]
 
@@ -181,15 +195,15 @@ def ccmp(comp1: complex | float | int = 0, comp2: complex | float | int = 0) -> 
         return (cmp(comp1.real, comp2.real), cmp(comp1.imag, comp2.imag))
     raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
 
-def isntinstance(a, b) -> bool:
-    """returns not isinstance(a, b)"""
+def isntinstance(a, b: type(realnum) | type, /) -> bool:
+    """return not isinstance(arg1, arg2)"""
     return not isinstance(a, b)
 
-def random(return_int: bool = False, /) -> float | int:
+def random(return_int: bool = False, /) -> realnum:
     """
         bool  ->  float | int
 
-        returns any random float (or int, depending on the argument) from -∞ to ∞
+        returns any random float (or int, depending on the argument) in (-∞, ∞)
         more likely to return numbers closer to zero
         2^-(1 + int(log|x|)) probability that ~|x| will get returned based on its magnitude
     """
@@ -206,7 +220,17 @@ def random(return_int: bool = False, /) -> float | int:
     ans = float(string) * (randint(0, 1) or -1)
     return int(ans) if return_int else ans
 
-def addressOf(fn: function) -> str:
+def crandom(return_int: bool = False, /) -> complex:
+    """
+        bool  -> complex
+
+        returns any complex number where both the real
+        and complex parts can be in (-∞, ∞)
+        more likely to return numbers closer to zero.
+    """
+    return complex(random(return_int), random(return_int))
+
+def addressOf(fn: function, form: type = int, /) -> str | int:
     """
         function  ->  str
 
@@ -216,10 +240,14 @@ def addressOf(fn: function) -> str:
     # function cannot be a base class, thus "isinstance" is not required here
     if type(fn) is type(lambda: 1):
         from re import sub
-        return sub("(.* ){3}", "", str(fn))[:-1]
+        ans = sub("(.* ){3}", "", str(fn))[:-1]
+        if form is str:
+            return ans
+        elif form is int:
+            return int(ans, 16)
     raise TypeError("automate.misc.addressOf() requires a function input")
 
-def nameOf(fn: function) -> str:
+def nameOf(fn: function, /) -> str:
     """
         function  ->  str
 
@@ -231,6 +259,13 @@ def nameOf(fn: function) -> str:
         from re import sub
         return sub("(<function )| .*", "", str(fn))
     raise TypeError("automate.misc.nameOf() requires a function input")
+
+def tuplify_complex(number: complex = complex(), /) -> tuple[float, float]:
+    """
+        returns any complex number in the form of a tuple.
+        returns (input.real, input.imag)
+    """
+    return (number.real, number.imag)
 
 if __name__ == '__main__':
     print("__name__ == '__main__'\nautomate.misc\n\nvariables:")
