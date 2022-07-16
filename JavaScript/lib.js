@@ -50,6 +50,7 @@ void (() => { "use strict";
 		, KeyLogger_Type_Argument     = "default" // "keydown"
 		, Clear_LocalStorage          = "default" // false
 		, Clear_SessionStorage        = "default" // false
+		, Creepily_Watch_Every_Action = "default" // false
 		// -----------------------------------------------------------
 		//                          constants
 		// -----------------------------------------------------------
@@ -72,10 +73,34 @@ void (() => { "use strict";
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
 		// clear cookies and caches
 	} {// Event and Document things
+		this.dict = (function create_dict() { // so different dicts are instances of the same thing
+			// So I can add prototype methods and not have it on literally every object in existance
+			var Dictionary = class dict extends Object {
+				constructor(dict) {
+					super();
+					for (const e of Object.keys(dict))
+						this[e] = dict[e];
+				} keys()            { return Object.keys(this)              }
+				values()            { return Object.values(this)            }
+				entries()           { return Object.entries(this)           }
+				freeze()            { return Object.freeze(this)            }
+				isFrozen()          { return Object.isFrozen(this)          }
+				isExtensible()      { return Object.isExtensible(this)      }
+				preventExtensions() { return Object.preventExtensions(this) }
+				seal()              { return Object.seal(this)              }
+				isSealed()          { return Object.isSealed(this)          }
+				size()              { return len(Object.keys(this))         }
+			}
+			function dict(obj={}) { return new Dictionary(obj) }
+			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
+			return dict;
+		})();
 		let _ael = EventTarget.prototype.addEventListener
 		, _rel = EventTarget.prototype.removeEventListener
-		, listeners = []
+		, listeners = dict()
 		, _click = HTMLElement.prototype.click;
+		EventTarget.prototype._ael = _ael;
+		EventTarget.prototype._rel = _rel;
 
 		function addEventListener(Type, listener=null, options={
 			capture  : false,
@@ -92,7 +117,8 @@ void (() => { "use strict";
 				listener : listener
 			});
 			_ael.call(this, Type, listener, options);
-			listeners.push({
+			if (listeners[Type] === void 0) listeners[Type] = [];
+			listeners[Type].push({
 				object   : this,
 				capture  : options.capture,
 				passive  : options.passive,
@@ -115,32 +141,90 @@ void (() => { "use strict";
 				listener : listener
 			});
 			_rel.call(this, Type, listener, options);
-			for (var i = listeners.length; i --> 0 ;) {
-				if (listeners[i].capture  === options.capture  &&
-					listeners[i].passive  === options.passive  &&
-					listeners[i].once     === options.once     &&
-					listeners[i].type     === options.type     &&
-					listeners[i].listener === options.listener
-				) listeners.splice(i, 1);
+			for (var i = listeners[Type]?.length; i --> 0 ;) {
+				if (listeners[Type][i].capture  === options.capture  &&
+					listeners[Type][i].passive  === options.passive  &&
+					listeners[Type][i].once     === options.once     &&
+					listeners[Type][i].type     === options.type     &&
+					listeners[Type][i].listener === options.listener
+				) listeners[Type].splice(i, 1);
 			}
 		} function getEventListeners() {
 			// gets all event listeners for all objects.
 			return listeners;
 		} function getMyEventListeners() {
 			// gets all event listeners on the current EventTarget object the function is called from
-			return listeners.filter(e => e.object === this);
+			return dict(Object.fromEntries(
+				listeners.entries().map( e => {
+					const value = e[1].filter(e => e.object === (this || window));
+					return len(value) ? [e[0], value] : [];
+				}).filter(e => len(e))
+			));
 		} function click(times=1) {
 			if ( isNaN(times = Number(times)) ) times = 1;
 			while (times --> 0) _click.call(this);
 		}
 
-		EventTarget.prototype.ael = EventTarget.prototype.addEventListener    = addEventListener;
-		EventTarget.prototype.rel = EventTarget.prototype.removeEventListener = removeEventListener;
-		EventTarget.prototype.gel = EventTarget.prototype.getEventListeners   = getEventListeners;
-		EventTarget.prototype.gml = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
+		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener;
+		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener;
+		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners;
+		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
 		HTMLElement.prototype.click = click;
 		Document.prototype.click = function click(times=1) { document.head.click(times) }
 		document.doctype && (document.all.doctype = document.doctype);
+
+		if (Creepily_Watch_Every_Action && Creepily_Watch_Every_Action !== "default") {
+			let log = console.log;
+			document.ael("click"            , e => { log(e.type); this[e.type] = e });
+			document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
+			document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
+			document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
+			document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
+			document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
+			document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
+			document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
+			document.ael("drag"             , e => { log(e.type); this[e.type] = e });
+			document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
+			document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
+			document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
+			document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
+			document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
+			document.ael("drop"             , e => { log(e.type); this[e.type] = e });
+			document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
+			document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
+			document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
+			document.ael("copy"             , e => { log(e.type); this[e.type] = e });
+			document.ael("paste"            , e => { log(e.type); this[e.type] = e });
+			document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
+			document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
+			document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
+			document.ael("input"            , e => { log(e.type); this[e.type] = e });
+			document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
+			document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
+			document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
+			document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
+			document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
+			document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
+			document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
+			document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
+			this    .ael("load"             , e => { log(e.type); this[e.type] = e });
+			this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
+			this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
+			this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
+		}
 	} {// Conflict and Library Functions
 		var
 		LIBRARY_FUNCTIONS = [
@@ -243,8 +327,8 @@ void (() => { "use strict";
 				Number(num) * n :
 				num;
 		}; this.revArr ??= function reverseArray(array) {
-			for (var left = 0, length = len(array), right = length - 1, tmp; left < right; left++, right--)
-				[tmp, array[left], array[right]] = [array[left], array[right], tmp];
+			for (var left = 0, right = dim(array), tmp; left < right;)
+				[tmp, array[left], array[right]] = [array[left++], array[right--], tmp];
 			return array;
 		}; this.revLList = function reverseLinkedList(list) {
 			for (let cur = list.head, prev = null, next; current ;) 
@@ -403,11 +487,11 @@ void (() => { "use strict";
 			return number ? Number( `${n}`.slc(".") ) : `0${`${n}`.slc(".")}`;
 		}; this.floor = function floor(n) {
 			return type(n) === "number" ?
-				int(n) - (n<0 && fpart(n) ? 1 : 0) :
+				int(n) - (n<0 && fpart(n)) :
 				NaN;
 		}; this.ceil = function ceil(n) {
 			return type(n) === "number" ?
-				int(n) + (n>0 && fpart(n) ? 1 : 0) :
+				int(n) + (n>0 && fpart(n)) :
 				NaN;
 		}; this.int = Number.parseInt;
 		this.str = function String(a, b) {
@@ -416,11 +500,12 @@ void (() => { "use strict";
 				a + "";
 		}; this.list = Array.from;
 		this.numToAccStr = function numberToAccountingString(n) { return n<0 ? `(${-n})` : n+"" };
-		this.range = function range(start, stop, step=1) {
-			// this function is mostly from the offical JavaScript documentation with small changes
-			stop == null && (stop = start - 1, start = 0);
-			return Array.from({ length: (stop - start) / step + 1}, (_, i) => start + i * step);
-		}; this.numToWords = function numberToWords(number) {
+		this.range = function* range(start, stop, step=1) {
+			stop == null ? [stop, start] = [start, 0] : stop++;
+			for (var i = start; i < stop; i += step) yield i;
+		}; this.numToWords = function numberToWords(number, fancyInfinity=true) {
+			if (abs(number) === Infinity) return `${number<0?"negative ":""}${fancyInfinity?"apeirogintillion":"infinity"}`;
+			// TODO: Update to use a loop or something to expand to as close to infinity as possible
 			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
 			var string = number.toString().remove(/\.$/);
 			number = Number(number);
@@ -688,6 +773,13 @@ void (() => { "use strict";
 					, type               : type
 				})
 			);
+		}; /*this.simulateMouseclick = */function simulateMouseClick({
+			a = undefined
+		}={}) {
+			; // MouseEvent   : mouseup, mousedown, mouseover, mouseleave, mousemove
+			; // PointerEvent : click, contextmenu
+			; // WheelEvent   : scroll
+			; // DragEvent
 		}; this.passwordGenerator = function passwordGenerator(
 			length = 18,
 			charsToRemove = void 0,
@@ -771,16 +863,30 @@ void (() => { "use strict";
 					type(options[e]) === "function" ?
 						element.ael("click", options[e]) :
 						element.ael("click", ...options[e]);
+				} else if (e === "on") {
+					e.listener ??= e.handler;
+					element.ael( e.type, e.listener, {
+						capture : e.capture ,
+						passive : e.passive ,
+						once    : e.once    ,
+					});
 				} else if (e === "object") {
 					object =
 						options[e];
 				} else if (e === "style") {
-					for (const stl of Object.keys(options[e])) {
+					for (const stl of Object.keys(options[e]))
 						element.style[stl] = options[e][stl];
-					}
 				} else element[e] = options[e];
 			}
 			object !== void 0 && (object.appendChild(element));
+			return element;
+		}; this.css = function css(text="", options={}) {
+			options.innerHTML ??= text;
+			var append = options.append;
+			delete options.append;
+			options.type ??= "text/css";
+			var element = createElement("style", options);
+			if (append) document.head.appendChild(element);
 			return element;
 		}; for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
@@ -4291,7 +4397,10 @@ void (() => { "use strict";
 			for (var arr = this.concat(array), i = len(arr); i --> 0 ;)
 				this[i] = arr[i];
 			return this;
-		}, Array.prototype.pop2 = function pop2(num=1) {
+		}
+		// TODO: Add Array.prototype.fconcat. basically a mixture between concat and unshift
+		// TODO: Add Array.prototype.funion. basically a mixture between union and unshift
+		, Array.prototype.pop2 = function pop2(num=1) {
 			while ( num --> 0 ) this.pop();
 			return this;
 		}, Array.prototype.splice2 = function splice2(a, b, ...c) {
@@ -4938,10 +5047,18 @@ void (() => { "use strict";
 		if (exit1) return 1;
 		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && console.log("lib.js loaded");
 		return 0;
-	}/**
-		!function codehs(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
-		https://codehs.com/identicon/image/
-		1P 1$ 2( 3h 3H 3L 44 5H 5K 5O 5P 65 6h 6o 6t 6v 6F
-		last seen: 7R
-	*/
+	} {// Comments
+		/**
+			!function codehs(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
+			https://codehs.com/identicon/image/
+			1P 1$ 2( 3h 3H 3L 44 5H 5K 5O 5P 65 6h 6o 6t 6v 6F
+			last seen: 7R
+		*/
+		// ×: atob(10)
+		// ß: atob(30)
+		// ç: atob(60)
+		// ÷: atob(90)
+		// ½: atob(170)[1]
+		// Í: atob(180)[1]
+	}
 })();
