@@ -72,173 +72,21 @@ void (() => { "use strict";
 		Clear_LocalStorage   && Clear_LocalStorage   !== "default" && localStorage  .clear();
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
 		// clear cookies and caches
-	} {// Event and Document things
-		this.dict = (function create_dict() { // so different dicts are instances of the same thing
-			// So I can add prototype methods and not have it on literally every object in existance
-			var Dictionary = class dict extends Object {
-				constructor(dict) {
-					super();
-					for (const e of Object.keys(dict))
-						this[e] = dict[e];
-				} keys()            { return Object.keys(this)              }
-				values()            { return Object.values(this)            }
-				entries()           { return Object.entries(this)           }
-				freeze()            { return Object.freeze(this)            }
-				isFrozen()          { return Object.isFrozen(this)          }
-				isExtensible()      { return Object.isExtensible(this)      }
-				preventExtensions() { return Object.preventExtensions(this) }
-				seal()              { return Object.seal(this)              }
-				isSealed()          { return Object.isSealed(this)          }
-				size()              { return len(Object.keys(this))         }
-			}
-			function dict(obj={}) { return new Dictionary(obj) }
-			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
-			return dict;
-		})();
-		let _ael = EventTarget.prototype.addEventListener
-		, _rel = EventTarget.prototype.removeEventListener
-		, listeners = dict()
-		, _click = HTMLElement.prototype.click;
-		EventTarget.prototype._ael = _ael;
-		EventTarget.prototype._rel = _rel;
-
-		function addEventListener(Type, listener=null, options={
-			capture  : false,
-			passive  : false,
-			once     : false,
-			type     : arguments[0],
-			listener : arguments[1] }) {
-
-			typeof options === "boolean" && (options = {
-				capture  : options,
-				passive  : false,
-				once     : false,
-				type     : Type,
-				listener : listener
-			});
-			_ael.call(this, Type, listener, options);
-			if (listeners[Type] === void 0) listeners[Type] = [];
-			listeners[Type].push({
-				object   : this,
-				capture  : options.capture,
-				passive  : options.passive,
-				once     : options.once,
-				type     : options.type,
-				listener : options.listener
-			});
-		} function removeEventListener(Type, listener=null, options={
-			capture  : false,
-			passive  : false,
-			once     : false,
-			type     : arguments[0],
-			listener : arguments[1] }) {
-
-			typeof options === "boolean" && (options = {
-				capture  : options,
-				passive  : false,
-				once     : false,
-				type     : Type,
-				listener : listener
-			});
-			_rel.call(this, Type, listener, options);
-			for (var i = listeners[Type]?.length; i --> 0 ;) {
-				if (listeners[Type][i].capture  === options.capture  &&
-					listeners[Type][i].passive  === options.passive  &&
-					listeners[Type][i].once     === options.once     &&
-					listeners[Type][i].type     === options.type     &&
-					listeners[Type][i].listener === options.listener
-				) listeners[Type].splice(i, 1);
-			}
-		} function getEventListeners() {
-			// gets all event listeners for all objects.
-			return listeners;
-		} function getMyEventListeners() {
-			// gets all event listeners on the current EventTarget object the function is called from
-			return dict(Object.fromEntries(
-				listeners.entries().map( e => {
-					const value = e[1].filter(e => e.object === (this || window));
-					return len(value) ? [e[0], value] : [];
-				}).filter(e => len(e))
-			));
-		} function click(times=1) {
-			if ( isNaN(times = Number(times)) ) times = 1;
-			while (times --> 0) _click.call(this);
-		}
-
-		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener;
-		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener;
-		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners;
-		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
-		HTMLElement.prototype.click = click;
-		Document.prototype.click = function click(times=1) { document.head.click(times) }
-		document.doctype && (document.all.doctype = document.doctype);
-
-		if (Creepily_Watch_Every_Action && Creepily_Watch_Every_Action !== "default") {
-			let log = console.log;
-			document.ael("click"            , e => { log(e.type); this[e.type] = e });
-			document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
-			document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
-			document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
-			document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
-			document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
-			document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
-			document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
-			document.ael("drag"             , e => { log(e.type); this[e.type] = e });
-			document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
-			document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
-			document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
-			document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
-			document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
-			document.ael("drop"             , e => { log(e.type); this[e.type] = e });
-			document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
-			document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
-			document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
-			document.ael("copy"             , e => { log(e.type); this[e.type] = e });
-			document.ael("paste"            , e => { log(e.type); this[e.type] = e });
-			document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
-			document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
-			document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
-			document.ael("input"            , e => { log(e.type); this[e.type] = e });
-			document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
-			document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
-			document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
-			document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
-			document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
-			document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
-			document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
-			document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
-			this    .ael("load"             , e => { log(e.type); this[e.type] = e });
-			this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
-			this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
-			this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
-		}
 	} {// Conflict and Library Functions
 		var
 		LIBRARY_FUNCTIONS = [
-			"infinity","isIterable","isArr","sizeof","len","dim","abs","π","𝑒",Symbol.for("<0x200b>"),
-			Symbol.for("<0x08>"),"json","rand","randint","randInt","complex","constr","copy","assert","help",
-			"dir","nSub","revLList","findDayOfWeek","type","round","parseDec","fpart","floor","ceil","int",
-			"str","list","numToAccStr","range","numToWords","numToStrW_s","Errors","strMul","LinkedList",
-			"Types","numStrNorm","ipart","stopKeylogger","simulateKeypress","passwordGenerator",
-			"getAllDocumentObjects","dQuery","getArguments","createElement","getEventListeners","getMyEventListeners","ael","rel","gel",
-			"gml","sMath","rMath","bMath","cMath","fMath","aMath","MathObjects","Logic"
-		], NOT_ACTIVE_ARR = ["revArr","timeThrow","convertType","quine"].map(
-				e => [ this[e] != null, e ]
-			).filter( e => e[0] ).map( e => e[1] )
-		, CONFLICT_ARR = LIBRARY_FUNCTIONS.map(e=>[this[e] == null, e]).filter(e => !e[0]).map(e => e[1])
+			"infinity","isIterable","isArr","sizeof","len","dim","abs","sgn","π","𝑒",Symbol.for("<0x200b>"),
+			Symbol.for("<0x08>"),"json","rand","randint","complex","constr","copy","assert","help","dir",
+			"nSub","revLList","findDayOfWeek","type","round","fpart","floor","ceil","int","str","list",
+			"range","numToWords","numToStrW_s","Errors","strMul","LinkedList","Types","numStrNorm","ipart",
+			"stopKeylogger","simulateKeypress","passwordGenerator","getAllDocumentObjects","dQuery",
+			"getArguments","createElement","css","formatjson","minifyjson","getEventListeners",
+			"getMyEventListeners","ael","rel","gel","gml","sMath","rMath","bMath","cMath","fMath","aMath",
+			"MathObjects","Logic"
+		], NOT_ACTIVE_ARR = []//.map(
+		//		e => [ this[e] != null, e ]
+		//	).filter( e => e[0] ).map( e => e[1] )
+		, CONFLICT_ARR = LIBRARY_FUNCTIONS.filter(e => this[e] != null)
 		;
 		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
 		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
@@ -271,13 +119,14 @@ void (() => { "use strict";
 		}; this.len = e => e?.length;
 		this.dim = (e, n=1) => e?.length - n;
 		this.abs = Math.abs;
+		this.sgn = Math.sign;
 		this.π = 3.141592653589793;
 		this.𝑒 = 2.718281828459045;
 		this[Symbol.for("<0x200b>")] = "​"; // zero width space
 		this[Symbol.for("<0x08>")] = ""; // \b
 		this.json = JSON;
 		this.rand = Math.random;
-		this.randint = this.randInt = function randomInt(min=1, max=null) {
+		this.randint = function randomInt(min=1, max=null) {
 			if (max == null) {
 				max = min;
 				min = 0;
@@ -289,7 +138,7 @@ void (() => { "use strict";
 		this.constr = function constructorName(input, name=true) {
 			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
 			return input?.constructor?.name;
-		}; this.copy = obj => json?.parse?.( json?.stringify?.(obj) );
+		}; this.copy = obj => JSON.parse( JSON.stringify(obj) );
 		this.assert = function assert(condition, message="false") {
 			return !condition &&
 				Errors?.("Failed Assertion", message);
@@ -326,50 +175,11 @@ void (() => { "use strict";
 			return type(num) === "bigint" ?
 				Number(num) * n :
 				num;
-		}; this.revArr ??= function reverseArray(array) {
-			for (var left = 0, right = dim(array), tmp; left < right;)
-				[tmp, array[left], array[right]] = [array[left++], array[right--], tmp];
-			return array;
 		}; this.revLList = function reverseLinkedList(list) {
 			for (let cur = list.head, prev = null, next; current ;) 
 				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
 			list.head = prev || list.head;
 			return list;
-		}; this.convertType ??= function convertType(input, Type, fail="throw", handle=!1) {
-			if (Type == null || input == null) throw Error(`No type or input given. input: ${e}. type: ${E}`);
-			if (type(input) == Type) return input;
-			switch (Type) {
-				case "string": return `${input}`;
-				case "boolean": return !!input;
-				case "undefined": return;
-				case "number":
-					input = Number(input);
-					if (rMath.isNaN(input)) {
-						if (fail !== "throw") return;
-						throw Error(`cannot convert ${type(input)} to number`);
-					}
-					return input;
-				case "bigint":
-					if (type(input) === "number" || rMath.isAN(input)) return BigInt(input);
-					if (type(input) === "bigint") return input;
-					if (fail !== "throw") return;
-					throw Error(`cannot convert ${type(input)} to bigint`);
-				case "function":
-					if (type(input) === "function") return input;
-					return Function(input);
-				case "symbol":
-					if (handle !== !1) return Symbol.for(input);
-					if (fail !== "throw") return;
-					throw Error(`cannot convert ${type(input)} to symbol`);
-				case "object":
-					if (type(input) === "object") return input;
-					if (handle !== !1) return{data: input};
-					if (fail !== "throw") return;
-					throw Error(`cannot convert ${type(input)} to object`);
-				default:
-					if (fail !== "throw") return;
-					throw Error(`Invalid Type: ${Type}`);
-			}
 		}; this.findDayOfWeek = function findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0){
 			// dd-mm-yyyy makes more sense in the current context. 
 			if (isNaN( day = Number(day) ) || !isFinite(day))
@@ -431,7 +241,9 @@ void (() => { "use strict";
 				ans;
 		}; this.type = function type(a, specific=!1) {
 			return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
-				typeof a :
+				/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
+					"string" :
+					typeof a :
 				typeof a === "number" ?
 					isNaN(a) ?
 						"nan" :
@@ -441,7 +253,7 @@ void (() => { "use strict";
 					typeof a === "object" ?
 						constr(a) === 'NodeList' ?
 							"nodelist" :
-							`${a.test}` === 'function test() { [native code] }' ?
+							a.test === /a/?.test ?
 								"regex" :
 								a === null ?
 									"null" :
@@ -453,53 +265,45 @@ void (() => { "use strict";
 												"fraction" :
 												/^type\(\){return("|'|`)set\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
 													"set" :
-													isArr(a) ?
-														"arr" :
-														"obj" :
+													/^type\(\){return("|'|`)dict\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+														"dict" :
+														/^type\(\){return("|'|`)mutstr\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+															"mutstr" :
+															isArr(a) ?
+																"arr" :
+																"obj" :
 						typeof a === "string" ?
 							"str" :
 							typeof a === "boolean" ?
 								"bool" :
-							/^class /.in(a+"") ?
+							/^class/.in(a+"") ?
 								"class" :
 								"func"
-		}; this.timeThrow ??= function timeThrow(message="Error Message Here.", run=false) {
-			let date = new Date().getHours();
-			if (date > 22 || date < 4) throw Error("Go to Sleep.");
-			if (run === !1) throw Error(`${message}`);
-			type(run, 1) === "func" && run();
-		}; this.quine ??= function quine() {
-			return {
-				fn_1: '$=$=>`$=${$},$($)`,$($)',
-				fn_2: '$=$=>`$=${$};$($)`;$($)',
-				funny: "// Jarvis, execute the following code.\nconsole.log(void(++([{}+([][[{}]])][(![]+[this])[+[]]]+[[]])[[$]+([NaN])]+{},0b10101100-0xF1+[void([{}])],[[({}),,0o0,null,],]+{},$=$=>`$=${$},$($)`,$($))),(0);",
-				instructions: "copy the string contents to the console."
-			};
 		}; this.round = function round(n) {
 			return type(n) === "number" ?
-				fpart(n) * (n<0?-1:1) < .5 ?
+				abs(fpart(n)) < .5 ?
 					int(n) :
-					int(n) + (n<0?-1:1) :
+					int(n) + sgn(n) :
 				NaN;
-		}; this.parseDec = this.fpart = Number.parseDec = Number.fpart = function fPart(n, number=true) {
+		}; this.fpart = Number.fpart = function fPart(n, number=true) {
 			if ( isNaN(n) ) return NaN;
 			if ( n.isInt() ) return 0;
 			return number ? Number( `${n}`.slc(".") ) : `0${`${n}`.slc(".")}`;
 		}; this.floor = function floor(n) {
 			return type(n) === "number" ?
-				int(n) - (n<0 && fpart(n)) :
+				int(n) - (n<0) :
 				NaN;
 		}; this.ceil = function ceil(n) {
 			return type(n) === "number" ?
-				int(n) + (n>0 && fpart(n)) :
+				int(n) + (n>0) :
 				NaN;
 		}; this.int = Number.parseInt;
 		this.str = function String(a, b) {
+			// mainly just for numbers.
 			return b <= 36 && b >= 2 ?
 				a.toString( int(b) ) :
 				a + "";
 		}; this.list = Array.from;
-		this.numToAccStr = function numberToAccountingString(n) { return n<0 ? `(${-n})` : n+"" };
 		this.range = function* range(start, stop, step=1) {
 			stop == null ? [stop, start] = [start, 0] : stop++;
 			for (var i = start; i < stop; i += step) yield i;
@@ -655,7 +459,7 @@ void (() => { "use strict";
 			Object(input, handle=!1) {
 				return type(input) === "object" ? input : handle == !0 ? { data: input } : void 0
 			},
-			undefined: () => {},
+			undefined() {},
 			Symbol(input, handle=!1) {
 				return type(input) === "symbol" ? input : handle == !0 ? Symbol.for(input) : void 0
 			}
@@ -673,39 +477,6 @@ void (() => { "use strict";
 				snum = snum.substr(0, dim(snum));
 			return snum + (snum.endsW(".") ? "0" : "");
 		}; this.ipart = Number.parseInt;
-		if (Run_KeyLogger === "default" ? !1 : Run_KeyLogger) {
-			let debug     = KeyLogger_Debug_Argument === "default" ?
-				!1 :
-				KeyLogger_Debug_Argument
-			, variable    = KeyLogger_Variable_Argument === "default" ?
-				Symbol.for('keys') :
-				KeyLogger_Variable_Argument
-			, copy_object = KeyLogger_Copy_Obj_Argument === "default" ?
-				!0 :
-				KeyLogger_Copy_Obj_Argument
-			, type        = KeyLogger_Type_Argument === "default" ?
-				"keydown" :
-				KeyLogger_Type_Argument;
-			const handler = e => {
-				window[variable] += e.key;
-				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
-				copy_object && (window.keypressObj = e);
-			}; this.stopKeylogger = function stopKeylogger() {
-				var alert =  KeyLogger_Alert_Start_Stop || KeyLogger_Debug_Argument
-				, type = KeyLogger_Debug_Argument;
-				type === "default" && (type = "keydown");
-				alert && console.log("keylogger manually terminated.");
-				document.body.removeEventListener(type, handler);
-				return !0;
-			}; (function key_logger_v3() {
-				if (window[variable] !== void 0) return debug &&
-					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
-				window[variable] = "";
-				document.body.ael(type, handler);
-				(debug || KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${KeyLogger_Debug_Argument}${KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${KeyLogger_Copy_Obj_Argument}${KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${KeyLogger_Type_Argument}${KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
-			})();
-		} else if (KeyLogger_Alert_Unused && KeyLogger_Alert_Unused !== "default")
-			console.log("keylogger launch failed due to library settings");
 		this.simulateKeypress = function simulateKeypress({
 			key = "",
 			code = "",
@@ -773,9 +544,7 @@ void (() => { "use strict";
 					, type               : type
 				})
 			);
-		}; /*this.simulateMouseclick = */function simulateMouseClick({
-			a = undefined
-		}={}) {
+		}; /*this.simulateMouseclick = */function simulateMouseClick({a = undefined}={}) {
 			; // MouseEvent   : mouseup, mousedown, mouseover, mouseleave, mousemove
 			; // PointerEvent : click, contextmenu
 			; // WheelEvent   : scroll
@@ -835,7 +604,7 @@ void (() => { "use strict";
 			if (type(fn) !== "function") return !1;
 			fn += ""; // fn = fn.toString()
 			if (fn.incl("{ [native code] }")) return "native function. can't get arguments";
-			if (fn.sW("class")) return a.slc(0, "{", 0, -1).trim();
+			if (fn.sW("class")) return a.slc(0, "{").trim();
 			if (/^\s*function/.in(fn) && /^\s*\(/.in(fn)) return fn.match(/^\w+/)[0];
 			for (var i = 0, fn = fn.slc("("), n = len(fn), count = 0; i < n; i++) {
 				if (fn[i] === "(") count++;
@@ -851,15 +620,14 @@ void (() => { "use strict";
 				for (const e of Object.keys(options)) image[e] = options[e];
 				return image;
 			};
-		})(); this.createElement = function createElement(element="p", options={}, options2={}) {
-			var element = document.createElement(element, options2);
-			var object;
+		})(); this.createElement = function createElement(element="p", options={}) {
+			var element = document.createElement(element), objects = null, click = null;
 			for (const e of Object.keys(options)) {
 				if (e === "children") {
 					type(options[e], 1) === "arr" ?
 						options[e].forEach(c => element.appendChild(c)) :
 						element.appendChild(options[e]);
-				} else if (e === "onClick") { // not onclick
+				} else if (e === "onClick") { // not "onclick"
 					type(options[e]) === "function" ?
 						element.ael("click", options[e]) :
 						element.ael("click", ...options[e]);
@@ -870,25 +638,113 @@ void (() => { "use strict";
 						passive : e.passive ,
 						once    : e.once    ,
 					});
-				} else if (e === "object") {
-					object =
-						options[e];
+
+				} else if (["object", "objects"].incl(e)) {
+					objects = options[e];
 				} else if (e === "style") {
 					for (const stl of Object.keys(options[e]))
 						element.style[stl] = options[e][stl];
+				} else if (e === "click") {
+					click = options[e];
 				} else element[e] = options[e];
 			}
-			object !== void 0 && (object.appendChild(element));
+			if (objects !== null) {
+				if (objects instanceof Array)
+					for (var i = len(objects); i --> 0 ;)
+						object[i].appendChild(element);
+				else object.appendChild(element);
+			}
+			element.click(click);
 			return element;
-		}; this.css = function css(text="", options={}) {
+		}; this.css = function css(text="", options={}, append=true) {
 			options.innerHTML ??= text;
-			var append = options.append;
-			delete options.append;
 			options.type ??= "text/css";
 			var element = createElement("style", options);
 			if (append) document.head.appendChild(element);
 			return element;
-		}; for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+		}; this.formatjson = function formatJSON(json="{}", {
+			objectNewline = true,
+			tab = "\t",
+			newline = "\n",
+			space = " ",
+			arrayOneLine = true,
+			arrayAlwaysOneLine = false, // doesn't do anything yet
+			arrayOneLineSpace = " ", // if " ", [ ITEM ]. if "\t", [\tITEM\t]. etc
+		}={}) {
+			if (typeof json !== "string") throw TypeError("formatjson() requires a string");
+			try {JSON.parse(json) } catch { throw TypeError("formatjson() requires a JSON string") }
+			if (json.remove(/\s/g) === "{}") return "{}";
+			if (json.remove(/\s/g) === "[]") return `[${newline}${newline}]`;
+			for (var i = 0, n = len(json), tabs = 0, output = "", inString = !1; i < n; i++) {
+				if (json[i] === '"' && json[i - 1] !== '\\') inString = !inString;
+				if (inString) output += json[i];
+				else if (/\s/.in(json[i])) continue;
+				else if (json[i] === "{") output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
+				else if (json[i] === "[") {
+					if (!arrayOneLine) {
+						output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
+						continue;
+					}
+					for (let arrayInString = !1, index = i + 1 ;; index++) {
+						if (json[index] === '"' && json[index - 1] !== '\\')
+							arrayInString = !arrayInString;
+						if (arrayInString) continue;
+						if (["{", "[", ","].incl(json[index])) {
+							output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
+							break;
+						} else if (json[index] === "]") {
+							output += `[${arrayOneLineSpace}${
+								json.substring(i + 1, index)
+							}${arrayOneLineSpace}]`;
+							i = index;
+							break;
+						}
+					}
+				} else if (["}", "]"].incl(json[i])) output += `${newline}${strMul(tab, --tabs)}${json[i]}`;
+				else if (json[i] === ":") output += `${json[i]}${space}`;
+				else if (json[i] === ",") {
+					// objectNewline === true : }, {
+					// objectNewline === false: },\n\t{
+					let s = json.substr(i);
+					output += json[i] + (!objectNewline && json[i + 1 + len(s) - len(s.remove(/^\s+/))] === "{" ? `${space}` : `${newline}${strMul(tab, tabs)}`);
+				} else output += json[i];
+			}
+			return output;
+		}; this.minifyjson = function minifyJSON(json) {
+			// removes all the unnecessary spaces and things
+			return formatjson(json, {
+				objectNewline      : true, // less conditionals are checked if this is set to true
+				tab                : "",
+				newline            : "",
+				space              : "",
+				arrayOneLine       : false, // less conditionals
+				arrayAlwaysOneLine : false,
+				arrayOneLineSpace  : "",
+			})
+		};
+		this.dict = (function create_dict() {
+			// So I can add prototype methods and not have it on literally every object in existance
+			var Dictionary = class dict extends Object {
+				constructor(dict) {
+					super();
+					for (const e of Object.keys(dict))
+						this[e] = dict[e];
+				} keys()            { return Object.keys(this)              }
+				values()            { return Object.values(this)            }
+				entries()           { return Object.entries(this)           }
+				freeze()            { return Object.freeze(this)            }
+				isFrozen()          { return Object.isFrozen(this)          }
+				isExtensible()      { return Object.isExtensible(this)      }
+				preventExtensions() { return Object.preventExtensions(this) }
+				seal()              { return Object.seal(this)              }
+				isSealed()          { return Object.isSealed(this)          }
+				size()              { return len(Object.keys(this))         }
+				type()              { return "dict";                        }
+			}
+			function dict(obj={}) { return new Dictionary(obj) }
+			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
+			return dict;
+		})(); for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				multable[i][j] = i * j;
 		for (var i = 10, j, addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
@@ -900,7 +756,176 @@ void (() => { "use strict";
 		for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				divtable[i][j] = i / j;
-	} {// math and logic Variables
+	} {// Event and Document things
+		
+		let _ael = EventTarget.prototype.addEventListener
+		, _rel = EventTarget.prototype.removeEventListener
+		, listeners = dict()
+		, _click = HTMLElement.prototype.click;
+		EventTarget.prototype._ael = _ael;
+		EventTarget.prototype._rel = _rel;
+
+		function addEventListener(Type, listener=null, options={
+			capture  : false,
+			passive  : false,
+			once     : false,
+			type     : arguments[0],
+			listener : arguments[1] }) {
+
+			typeof options === "boolean" && (options = {
+				capture  : options,
+				passive  : false,
+				once     : false,
+				type     : Type,
+				listener : listener
+			});
+			_ael.call(this, Type, listener, options);
+			if (listeners[Type] === void 0) listeners[Type] = [];
+			listeners[Type].push({
+				object   : this,
+				capture  : options.capture,
+				passive  : options.passive,
+				once     : options.once,
+				type     : options.type,
+				listener : options.listener
+			});
+			return this;
+		} function removeEventListener(Type, listener=null, options={
+			capture  : false,
+			passive  : false,
+			once     : false,
+			type     : arguments[0],
+			listener : arguments[1] }) {
+
+			typeof options === "boolean" && (options = {
+				capture  : options,
+				passive  : false,
+				once     : false,
+				type     : Type,
+				listener : listener
+			});
+			_rel.call(this, Type, listener, options);
+			for (var i = listeners[Type]?.length; i --> 0 ;) {
+				if (listeners[Type][i].capture  === options.capture  &&
+					listeners[Type][i].passive  === options.passive  &&
+					listeners[Type][i].once     === options.once     &&
+					listeners[Type][i].type     === options.type     &&
+					listeners[Type][i].listener === options.listener
+				) listeners[Type].splice(i, 1);
+			}
+			return this;
+		} function getEventListeners() {
+			// gets all event listeners for all objects.
+			return listeners;
+		} function getMyEventListeners() {
+			// gets all event listeners on the current EventTarget object the function is called from
+			return dict(Object.fromEntries(
+				listeners.entries().map( e => {
+					const value = e[1].filter(e => e.object === (this || window));
+					return len(value) ? [e[0], value] : [];
+				}).filter(e => len(e))
+			));
+		} function click(times=1) {
+			if ( isNaN(times = Number(times)) ) times = 1;
+			while (times --> 0) _click.call(this);
+			return this;
+		}
+
+		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener   ;
+		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener;
+		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners  ;
+		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
+		HTMLElement.prototype.click = click;
+		Document.prototype.click = function click(times=1) { return document.head.click(times) }
+		// document.all == null for some reason.
+		document.doctype && document.all !== void 0 && (document.all.doctype = document.doctype);
+
+		if (Creepily_Watch_Every_Action && Creepily_Watch_Every_Action !== "default") {
+			let log = console.log;
+			document.ael("click"            , e => { log(e.type); this[e.type] = e });
+			document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
+			document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
+			document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
+			document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
+			document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
+			document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
+			document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
+			document.ael("drag"             , e => { log(e.type); this[e.type] = e });
+			document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
+			document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
+			document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
+			document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
+			document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
+			document.ael("drop"             , e => { log(e.type); this[e.type] = e });
+			document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
+			document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
+			document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
+			document.ael("copy"             , e => { log(e.type); this[e.type] = e });
+			document.ael("paste"            , e => { log(e.type); this[e.type] = e });
+			document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
+			document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
+			document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
+			document.ael("input"            , e => { log(e.type); this[e.type] = e });
+			document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
+			document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
+			document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
+			document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
+			document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
+			document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
+			document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
+			document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
+			this    .ael("load"             , e => { log(e.type); this[e.type] = e });
+			this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
+			this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
+			this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
+		}
+		if (Run_KeyLogger === "default" ? !1 : Run_KeyLogger) {
+			let debug     = KeyLogger_Debug_Argument === "default" ?
+				!1 :
+				KeyLogger_Debug_Argument
+			, variable    = KeyLogger_Variable_Argument === "default" ?
+				Symbol.for('keys') :
+				KeyLogger_Variable_Argument
+			, copy_object = KeyLogger_Copy_Obj_Argument === "default" ?
+				!0 :
+				KeyLogger_Copy_Obj_Argument
+			, type        = KeyLogger_Type_Argument === "default" ?
+				"keydown" :
+				KeyLogger_Type_Argument;
+			const handler = e => {
+				window[variable] += e.key;
+				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
+				copy_object && (window.keypressObj = e);
+			}; this.stopKeylogger = function stopKeylogger() {
+				var alert =  KeyLogger_Alert_Start_Stop || KeyLogger_Debug_Argument
+				, type = KeyLogger_Debug_Argument;
+				type === "default" && (type = "keydown");
+				alert && console.log("keylogger manually terminated.");
+				document.body.removeEventListener(type, handler);
+				return !0;
+			}; (function key_logger_v3() {
+				if (window[variable] !== void 0) return debug &&
+					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
+				window[variable] = "";
+				document.body.ael(type, handler);
+				(debug || KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${KeyLogger_Debug_Argument}${KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${KeyLogger_Copy_Obj_Argument}${KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${KeyLogger_Type_Argument}${KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
+			})();
+		} else if (KeyLogger_Alert_Unused && KeyLogger_Alert_Unused !== "default")
+			console.log("keylogger launch failed due to library settings");
+	} {// Math and Logic Variables
 		MATH_LOG_DEFAULT_BASE   === "default" && (MATH_LOG_DEFAULT_BASE   = 10 );
 		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
 		this.sMath = new (class stringRealMath {
@@ -928,7 +953,7 @@ void (() => { "use strict";
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
 							a = a.substr(1); b = b.substr(1);
-							if (this.seq(a, b)) return !1;
+							if (this.eq(a, b)) return !1;
 							return !this.gt(a, b);
 						}
 						for (var a_index = 0 ;;) {
@@ -957,7 +982,7 @@ void (() => { "use strict";
 						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
 						return this.gt(a, b) ||
-							this.seq(a, b);
+							this.eq(a, b);
 					}, lt(a="0.0", b="0.0") {// <
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
@@ -966,7 +991,7 @@ void (() => { "use strict";
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
 							a = a.substr(1); b = b.substr(1);
-							if (this.seq(a, b)) return !1;
+							if (this.eq(a, b)) return !1;
 							return !this.lt(a, b);
 						}
 
@@ -994,15 +1019,15 @@ void (() => { "use strict";
 							if (1*a[i] > 1*b[i]) return !1;
 						}
 						return !1;
-					}, le(a="0.0", b="0.0") {/* <= */ return this.lt(a, b) || this.seq(a, b) },
-					seq(a="0.0", b="0.0") {// strict equal to. infinite decimal places
+					}, le(a="0.0", b="0.0") {/* <= */ return this.lt(a, b) || this.eq(a, b) },
+					eq(a="0.0", b="0.0") { // strict equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
-							return this.seq( a.substr(1), b.substr(1) );
+							return this.eq( a.substr(1), b.substr(1) );
 
 						for (var a_index = 0 ;;) {
 							if (a[a_index] === "0") {
@@ -1028,14 +1053,14 @@ void (() => { "use strict";
 							if (1*a[i] !== 1*b[i]) return !1;
 						}
 						return !0;
-					}, sneq(a="0.0", b="0.0") {// strict not equal to. infinite decimal places
+					}, ne(a="0.0", b="0.0") {// strict not equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a = a.toString(); !a.incl(".") && ( a += ".0" );
 						b = b.toString(); !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
-							return this.sneq( a.substr(1), b.substr(1) );
+							return this.ne( a.substr(1), b.substr(1) );
 
 
 						for (var a_index = 0 ;;) {
@@ -1135,7 +1160,7 @@ void (() => { "use strict";
 				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
 				const sign = this.sgn(a) === this.sgn(b) ? 1 : -1;
 				a = this.abs(a); b = this.abs(b);
-				if (this.eq.seq(a, "0.0") || this.eq.seq(b, "0.0")) return "0.0";
+				if (this.eq.eq(a, "0.0") || this.eq.eq(b, "0.0")) return "0.0";
 
 				a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
 				var dec = 0;
@@ -1162,18 +1187,18 @@ void (() => { "use strict";
 				type(num) === "bigint" && (num = `${num}`); type(denom) === "bigint" && (denom = `${denom}`);
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
 				isNaN(precision) && (precision = 18);
-				if ( this.eq.seq(denom, 0) )
-					return this.eq.seq(num, 0) ?
+				if ( this.eq.eq(denom, 0) )
+					return this.eq.eq(num, 0) ?
 						NaN :
 						Infinity;
-				if ( this.eq.seq(num, 0) ) return "0.0";
+				if ( this.eq.eq(num, 0) ) return "0.0";
 				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
-				while (this.eq.sneq(fpart(num, !1), 0)) {
+				while (this.eq.ne(fpart(num, !1), 0)) {
 					num = this.mul(num, 10);
 					denom = this.mul(num, 10);
-				} while (this.eq.sneq(fpart(denom, !1), 0)) {
+				} while (this.eq.ne(fpart(denom, !1), 0)) {
 					num = this.mul(num, 10);
 					denom = this.mul(num, 10);
 				}
@@ -1188,8 +1213,8 @@ void (() => { "use strict";
 				var ansString = `${ans}`;
 				if (precision === 0) return `${ansString}.0`;
 				var remainder = this.mul( 10, this.sub(num, this.mul(ans, denom)) );
-				if (this.eq.sneq(remainder, 0)) ansString += ".";
-				for (var i = 0, j; this.eq.sneq(remainder, 0) && i++ < precision ;) {
+				if (this.eq.ne(remainder, 0)) ansString += ".";
+				for (var i = 0, j; this.eq.ne(remainder, 0) && i++ < precision ;) {
 					for (j = 9; this.eq.lt(this.sub(remainder, table[j]), 0) ;) j--;
 					remainder = this.mul( this.sub(remainder, table[j]), 10 );
 					ansString += `${j}`;
@@ -1199,11 +1224,11 @@ void (() => { "use strict";
 				return ansString;
 			} idiv(num="0.0", denom="1.0", precision=18) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
-				if ( this.eq.seq(denom, 0) )
-					return this.eq.seq(num, 0) ?
+				if ( this.eq.eq(denom, 0) )
+					return this.eq.eq(num, 0) ?
 						NaN :
 						Infinity;
-				if ( this.eq.seq(num, 0) ) return "0.0";
+				if ( this.eq.eq(num, 0) ) return "0.0";
 				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
@@ -1216,8 +1241,8 @@ void (() => { "use strict";
 				var ansString = `${ans}`;
 				if (precision < 1) return `${ansString}.0`;
 				var remainder = this.mul( this.sub(num, this.mul(ans, denom)), 10 );
-				if (this.eq.sneq(remainder, 0)) ansString += ".";
-				for (var i = 0, j; this.eq.sneq(remainder, 0) && i++ < precision ;) {
+				if (this.eq.ne(remainder, 0)) ansString += ".";
+				for (var i = 0, j; this.eq.ne(remainder, 0) && i++ < precision ;) {
 					for (j = 9; this.eq.lt(this.sub(remainder, table[j]), 0) ;) j--;
 					remainder = this.mul( this.sub(remainder, table[j]), 10 );
 					ansString += `${j}`;
@@ -1228,13 +1253,13 @@ void (() => { "use strict";
 			} ipow(a="0.0", b="1.0") {
 				type(a) === "bigint" && (a = a.toString()); type(b) === "bigint" && (b = b.toString());
 				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
-				if ( this.eq.sneq(fpart(b), 0) ) throw Error("no decimals allowed for exponent.");
+				if ( this.eq.ne(fpart(b), 0) ) throw Error("no decimals allowed for exponent.");
 				var t = "1.0";
 				if (this.sgn(b) >= 0) for (; b > 0; b = this.sub(b, 1)) t = this.mul(t, a);
 				else for (; b < 0; b = this.add(b, 1)) t = this.div(t, a);
 				return t;
 			} ifact(n="0.0") {
-				if ( this.eq.sneq(fpart(n), 0) ) throw Error("no decimals allowed.");
+				if ( this.eq.ne(fpart(n), 0) ) throw Error("no decimals allowed.");
 				for (var i = n.toString(), total = "1.0"; i > 0; i = this.sub(i, 1))
 					total = this.mul(i, total);
 				return this.ipart(total);
@@ -1264,7 +1289,7 @@ void (() => { "use strict";
 						0 :
 						`0${`${n}`.slc(".")}`;
 			} ipart(n="0") {
-				return n.slc(0, ".", 0, -1);
+				return n.slc(0, ".");
 				;
 			} square(n="0") {
 				return this.mul(n, n);
@@ -3243,7 +3268,7 @@ void (() => { "use strict";
 			} deriv(f=x=>2*x+1, x=1, dx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
-					const VARIABLE = f.slc(0, ":", 0, -1).remove(/\s+/g);
+					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
 					if (VARIABLE === "" || /\s+/.in(VARIABLE))
 						throw Error(`Invalid String input`);
 					f = f.slc(":", Infinity, 1);
@@ -3275,7 +3300,7 @@ void (() => { "use strict";
 			} tanLine(f=x=>x, x=1, ret=Object, dx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
-					const VARIABLE = f.slc(0, ":", 0, -1).remove(/\s+/g);
+					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
 					if (VARIABLE === "" || /\s+/.in(VARIABLE))
 						throw Error(`Invalid String input`);
 					f = f.slc(":", Infinity, 1);
@@ -3457,20 +3482,34 @@ void (() => { "use strict";
 						len(set1) >= len(set2) ?
 							set1.union( set2, !1 ) :
 							set2.union( set1, !1 );
-			} harmonic(n=1) { return this.sum(
-				1,
-				parseInt( Number(n) ),
-				n => this.div(1, n, !0, 18)
-			)} fraction(num=0, denom=0) {
-				return fMath?.new?.(num, denom);
-				;
+			} harmonic(n=1, decimals=18) {
+				return this.sum(
+					1,
+					int( Number(n) ),
+					n => this.div(1, n, !0, 18)
+				)
+			} fraction(numer=0, denom=0) {
+				return fMath?.new?.(
+					numer,
+					denom,
+				);
 			} complex(re=0, im=0) {
-				return cMath?.new?.(re, im);
-				;
+				return cMath?.new?.(
+					re,
+					im,
+				);
 			} bigint(value=0) {
-				try { return BigInt(value) } catch { return NaN }
+				try { return BigInt(value) }
+				catch { return NaN }
 			} number(value=0) {
-				try { return Number(value) } catch { return NaN }
+				try { return Number(value) }
+				catch { return NaN }
+			} toAccountingStr(n = 0) {
+				return this.isNaN(n) ?
+					NaN :
+					n < 0 ?
+						`(${-n})` :
+						n+""
 			}
 			// piApprox
 			// simplify sin(nx)
@@ -4481,11 +4520,11 @@ void (() => { "use strict";
 			for (var a = this, b = [], i = 0, n = len(a); i < n && i <= end; i++)
 				i >= start && b.push( a[i] );
 			return b;
-		}, Array.prototype.print = function print(fn=console.log) {
-			fn(this);
+		}, Array.prototype.print = function print(print=console.log) {
+			print(this);
 			return this;
-		}, Array.prototype.printEach = function printEach(fn=console.log) {
-			for (const e of this) fn(e);
+		}, Array.prototype.printEach = function printEach(print=console.log) {
+			for (const e of this) print(e);
 			return this;
 		}, Array.prototype.swap = function swap(i1=0, i2=1) {
 			const A = this, B = A[i1];
@@ -4525,11 +4564,11 @@ void (() => { "use strict";
 				a.splice(newindex, 0, b);
 			return a;
 		}, Array.prototype.rotr = function rotateRight(num=1) {
-			for (num %= len(this); num --> 0;)
+			for (num %= len(this); num --> 0 ;)
 				this.unshift(this.pop());
 			return this;
 		}, Array.prototype.rotl = function rotateRight(num=1) {
-			for (num %= len(this); num --> 0;)
+			for (num %= len(this); num --> 0 ;)
 				this.push(this.shift());
 			return this;
 		}, Array.prototype.rotl3 = function rotate3itemsLeft(i1=0, i2=1, i3=2) {
@@ -4539,7 +4578,7 @@ void (() => { "use strict";
 			a[i3] = b;
 			return a;
 		}, Array.prototype.len = function setLength(num) {
-			this.length = Math.max(num, 0);
+			this.length = rMath.max(num, 0);
 			return this;
 		}, Array.prototype.extend = function extend(length, filler, form="new") {
 			if (form === "new") return this.concat(Array(length).fill(filler));
@@ -4557,7 +4596,7 @@ void (() => { "use strict";
 		}, Array.prototype.sort = function sort() {
 			var list = this;
 			if (rMath.isNaN(list.join(""))) return list.sortOld();
-			for (var output = []; len(list) > 0 ;) {
+			for (var output = []; len(list) ;) {
 				output.push(rMath.min(list));
 				list.splice(list.io(rMath.min(list)), 1);
 			}
@@ -4583,115 +4622,98 @@ void (() => { "use strict";
 		,  String.prototype.rstrip = String.prototype.trimRight
 		,  String.prototype.sW = String.prototype.startsW = String.prototype.startsWith
 		,  String.prototype.eW = String.prototype.endsW = String.prototype.endsWith
-		, String.prototype.sL = String.prototype.startsL = String.prototype.startsLike =
+		,  String.prototype.last = lastElement
+		,  String.prototype.sL = String.prototype.startsL = String.prototype.startsLike =
 		function startsLike(strOrArr="", position=0) { // TODO: Finish
 			if (!["str", "arr"].incl(type(strOrArr, 1))) return !1;
 			if (type(strOrArr) === "string") {
 
 			}
-		},  String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=true) {
-			var a = this.valueOf();
-			if (type(start) === "string") start = a.io(start);
-			if (type(end) === "string") end = a.io(end);
-			return Array.from(a).slc(
+		}, String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=true) {
+			if (type(start) === "string") start = this.io(start);
+			if (type(end) === "string") end = this.io(end) - 1;
+			return Array.from(this).slc(
 				start + startOffset,
 				end + endOffset
 			).join("");
-		}, String.prototype.tag = function tag(tagName="") {
-			var a = this.valueOf();
-			if (type(tagName, 1) !== "str" || tagName === "") return a;
-			return `<${tagName}>${a}</${tagName}>`;
+		}, String.prototype.tag = function tag(tagName) {
+			if (type(tagName, 1) !== "str" || !tagName) return this;
+			return `<${tagName}>${this}</${tagName}>`;
 		}, String.prototype.rand = function random() {
-			return Array.prototype.rand.call(
-				this.valueOf()
-			);
+			return Array.prototype.rand.call(this);
 		}, String.prototype.upper = function upper(length=Infinity, start=0, end=-1) {
-			var a = this.valueOf(), str = "";
-			return !isFinite(Number(length)) || isNaN(length) ? a.toUpperCase() :
+			return !isFinite(Number(length)) || isNaN(length) ? this.upper() :
 			end === -1 ?
-				a.substr(0, start) +
-					a.substr(start, length).toUpperCase() +
-					a.substr(start + length) :
-				a.substring(0, start) +
-					a.substring(start, end).toUpperCase() +
-					a.substring(end);
+				this.substr(0, start) +
+					this.substr(start, length).toUpperCase() +
+					this.substr(start + length) :
+				this.substr(0, start) +
+					this.substring(start, end).toUpperCase() +
+					this.substr(end);
 		}, String.prototype.lower = function lower(length=Infinity, start=0, end=-1) {
-			var a = this.valueOf(), str = "";
-			return !isFinite(Number(length)) || isNaN(length) ? a.toLowerCase() :
+			return !isFinite(Number(length)) || isNaN(length) ? this.toLowerCase() :
 			end === -1 ?
-				a.substr(0, start) +
-					a.substr(start, length).toLowerCase() +
-					a.substr(start + length) :
-				a.substring(0, start) +
-					a.substring(start, end).toLowerCase() +
-					a.substring(end);
+				this.substr(0, start) +
+					this.substr(start, length).toLowerCase() +
+					this.substr(start + length) :
+				this.substr(0, start) +
+					this.substring(start, end).toLowerCase() +
+					this.substr(end);
 		}, String.prototype.toObj = function toObj(obj=window) {
-			this.valueOf().split(/[.[\]'"]/).filter(e=>e).for(e => obj=obj[e]);
+			this.split(/[.[\]'"]/).filter(e=>e).for(e => obj=obj[e]);
 			return obj;
 		}, String.prototype.hasDupesA = function hasDuplicatesAll() {
-			return/(.)\1+/.test(
-				this.valueOf().split("").sort().join("")
+			return/(.|\n)\1+/.in(
+				this.split("").sort().join("")
 			);
 		}, String.prototype.hasDupesL = function hasDuplicateLetters() {
-			return/(\w)\1+/.test(
-				this.valueOf().split("").sort().join("")
+			return/(\w)\1+/.in(
+				this.split("").sort().join("")
 			);
 		}, String.prototype.reverse = function reverse() {
-			return this.valueOf().split("").
-			reverse().join("");
+			return this.split("").reverse().join("");
 		}, String.prototype.remove = function remove(arg) {
-			return this.valueOf().replace(
-				arg, ""
-			);
+			return this.replace(arg, "");
 		}, String.prototype.remrep = function removeRepeats() {
-			return Array.from(
-				new Set( this.valueOf() )
+			return Array.from( // this also sorts the string. *shrugs*, "whatever"
+				new Set(this)
 			).join("");
 		}, String.prototype.each = function putArgBetweenEachCharacter(arg="") {
-			return Array.from(
-				this.valueOf()
-			).join(`${arg}`);
+			return Array.from(this).join(`${arg}`);
 		}, String.prototype.toFunc = function toNamedFunction(name="anonymous") {
 			var s = this.valueOf();
-			if (s.substring(0,7) === "Symbol(" && s.substring(len(s) - 1) === ")") throw Error("Can't parse Symbol().");
-			s = (""+s).replace(/^(\s*function\s*\w*\s*\(\s*)/,"");
-			var args = s.substring(0, s.io(")"));
+			if (s.sW("Symbol(") && s.eW(")")) throw Error("Can't parse Symbol().");
+			s = (""+s).remove(/^(\s*function\s*\w*\s*\(\s*)/);
+			var args = s.substr(0, s.io(")"));
 			return (
-				(fn, name) => (new Function(
+				(fn, name) => (Function(
 					`return function(call){return function ${name}() { return call (this, arguments) }}`
 				)())(Function.apply.bind(fn))
-			)(new Function(args, s.replace(
-				new RegExp(`^(${(z=>{
+			)(Function(args, s.replace(
+				RegExp(`^(${(z=>{
 					for (var i=len(z), g=""; i --> 0 ;) g += (/[$^()+*|[\]{}?.]/.in(z[i]) && "\\") + z[i];
 					return g;
-			})(args)}\\)\\s*\\{)`,"g"), "").replace(/\s*;*\s*}\s*;*\s*/, "")), name);
+			})(args)}\\)\\s*\\{)`,"g"), "").remove(/\s*;*\s*}\s*;*\s*/)), name);
 		}, String.prototype.toFun = function toNamelessFunction() {
-			return (
-				(...a) => () => a[0](this, a)
-			)(
-				Function.apply.bind( new Function(this.valueOf()) )
-			);
+			var f = () => Function(this).call(this)
+			return () => f();
 		}, String.prototype.toRegex = function toRegularExpression(f="", form="escaped") {
-			var a = this.valueOf();
 			if (form === "escaped" || form === "excape" || form === "e")
-				for (var i = 0, b = "", l = len(a); i < l; i++)
-					b += /[$^()+*\\|[\]{}?.]/.in(a[i]) ?
-						`\\${a[i]}` :
-						a[i];
-			else return new RegExp(a, f);
-			return new RegExp(b, f);
+				for (var i = 0, b = "", l = len(this); i < l; i++)
+					b += /[$^()+*\\|[\]{}?.]/.in(this[i]) ?
+						`\\${this[i]}` :
+						this[i];
+			else return RegExp(this, f);
+			return RegExp(b, f);
 		}, String.prototype.toNumber = String.prototype.toNum = function toNumber() {
-			return 1 *
-				this.valueOf();
+			return 1 * this;
 		}, String.prototype.toBigInt = function toBigInt() {
-			let a = this.valueOf();
-			try { return BigInt(a) }
-			catch { throw TypeError(`Cannot convert input to BigInt. input: '${a}'`) }
+			try { return BigInt(this) }
+			catch { throw TypeError(`Cannot convert input to BigInt. input: '${this}'`) }
 		}, String.prototype.pop2 = function pop2() {
-			var s = this.valueOf();
-			return s.substring(0, s.length - 1);
+			return this.substr(0, dim(this));
 		}, String.prototype.unescape = function unescape() {
-			return this.valueOf().split("").map(
+			return this.split("").map(
 				e => e === "\n" ?
 					"\\n" :
 					e === "\t" ?
@@ -4707,62 +4729,55 @@ void (() => { "use strict";
 										e
 			).join("");
 		}, String.prototype.includes = String.prototype.incl = function includes(input) {
-			return input.toRegex().in(
-				this.valueOf()
-			);
-		}, String.prototype.start = function start(start="") { // if the string is empty it becomes the argument
-			return this.valueOf() ||
-				`${start}`;
-		}, String.prototype.begin = function begin(text="") { // basically Array.unshift2
-			return `${text}${
-				this.valueOf()
-			}`;
+			return input.toRegex().in(this);
+		}, String.prototype.start = function start(start="") {
+			// if the string is empty it returns the argument
+			return this || `${start}`;
+		}, String.prototype.begin = function begin(text="") { // basically Array.unshift2 for strings
+			return `${text}${this}`;
 		}, String.prototype.splitn = function splitNTimes(input, times=1, joinUsingInput=true, customJoiner="") {
 			var joiner = joinUsingInput ? input : customJoiner;
 			assert(type(input, 1) === "regex" || type(input, 1) === "str", "function requires a regular expression or a string");
-			for (var i = 0, arr = this.valueOf().split(input), arr2 = [], n = len(arr); i < n && i < times; i++)
+			for (var i = 0, arr = this.split(input), arr2 = [], n = len(arr); i < n && i++ < times ;)
 				arr2.push(arr.shift());
 			if (len(arr)) arr2.push(arr.join(joiner));
 			return arr2;
 		}, String.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
-			return isNaN(this.valueOf()) ?
+			return isNaN(this) ?
 				!1 :
-				Number(this.valueOf()).inRange(n1, n2, include);
+				Number(this).inRange(n1, n2, include);
 		}, String.prototype.isInt = function isInt() {
-			var a = this.valueOf();
+			var a = this;
 			if ( isNaN(a) ) return !1;
-			a = a.slc(".");
 			if (a.io(".") === -1) return !0;
+			a = a.slc(".");
 			for (var i = len(a); i --> 1 ;)
 				if (a[i] !== "0") return !1;
 			return !0;
 		}, String.prototype.exists = function exists() {
 			return this != "";
+		}, Number.prototype.bitLength = function bitLength() {
+			return len(str(abs(this), 2));
 		}, Number.prototype.isPrime = function isPrime() {// can probably be optimized
-			var n = int(this.valueOf());
+			var n = int(this);
+			if (this !== n) return !1;
 			if (n === 2) return !0;
 			if (n < 2 || !(n % 2)) return !1;
-			for (var i = 3, a = n / 3; i <= a; i += 2) {
+			for (var i = 3, a = n / 3; i <= a; i += 2)
 				if (!(n % i)) return !1;
-			}
 			return !0;
 		}, Number.prototype.shl = function shl(num) {
-			return this.valueOf() <<
-				Number(num);
+			return this << Number(num);
 		}, Number.prototype.shr = function shr(num) {
-			return this.valueOf() >>
-				Number(num);
+			return this >> Number(num);
 		}, Number.prototype.shr2 = function shr2(num) {
-			return this.valueOf() >>>
-				Number(num);
+			return this >>> Number(num);
 		}, Number.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
-			let a = this.valueOf();
 			return include ?
-				a >= n1 && a <= n2 :
-				a > n1 && a < n2;
+				this >= n1 && this <= n2 :
+				this > n1 && this < n2;
 		}, Number.prototype.isInt = function isInt() {
-			var n = this.valueOf();
-			return n === int(n);
+			return this === int(this);
 		}, Number.prototype.add = function add(arg) {
 			return this + Number(arg);
 		}, Number.prototype.sub = function sub(arg) {
@@ -4776,11 +4791,11 @@ void (() => { "use strict";
 		}, Number.prototype.pow = function pow(arg) {
 			return this ** Number(arg);
 		}, BigInt.prototype.shl = function shl(num) {
-			return this.valueOf() << BigInt(num);
+			return this << BigInt(num);
 		}, BigInt.prototype.shr = function shr(num) {
-			return this.valueOf() >> BigInt(num);
+			return this >> BigInt(num);
 		}, BigInt.prototype.shr2 = function shr2(num) {
-			return this.valueOf() >>> BigInt(num);
+			return this >>> BigInt(num);
 		}, BigInt.prototype.isPrime = function isPrime() {
 			var n = this.valueOf();
 			if (n === 2n) return !0;
@@ -4790,10 +4805,9 @@ void (() => { "use strict";
 			return !0;
 		}, BigInt.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
 			n2 == null && (n2 = n1);
-			var a = this.valueOf();
 			return include ?
-				a >= n1 && a <= n2 :
-				a > n1 && a < n2;
+				this >= n1 && this <= n2 :
+				this > n1 && this < n2;
 		}, BigInt.prototype.toExponential = function toExponential(maxDigits=16, form=String) {
 			var a = `${this}`;
 			maxDigits < 0 && (maxDigits = 0);
@@ -4807,22 +4821,16 @@ void (() => { "use strict";
 			else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
 		}, BigInt.prototype.add = function add(arg) {
 			return this + BigInt(arg);
-			//
 		}, BigInt.prototype.sub = function sub(arg) {
 			return this - BigInt(arg);
-			//
 		}, BigInt.prototype.mul = function mul(arg) {
 			return this * BigInt(arg);
-			//
 		}, BigInt.prototype.div = function div(arg) {
 			return this / BigInt(arg);
-			//
 		}, BigInt.prototype.mod = function mod(arg) {
 			return this % BigInt(arg);
-			//
 		}, BigInt.prototype.pow = function pow(arg) {
 			return this ** BigInt(arg);
-			//
 		};
 	} {// bad text encoders
 		function asciiToChar(number) {
@@ -5061,4 +5069,22 @@ void (() => { "use strict";
 		// ½: atob(170)[1]
 		// Í: atob(180)[1]
 	}
+})();
+// This will be moved into the main function later.
+var MutableString = (function createMutableString() {
+	var MutStr = class MutableString extends Array {
+		constructor() {
+			super();
+			this.pop();
+			for (const e of arguments)
+				typeof e === "string" && this.union(e.split(""));
+		}
+		type() { return "mutstr" }
+		push(chars) {
+			if (type(chars, 1) === "str" || false);
+		}
+		toString() { return this.join("") }
+	};
+	for (const s of Object.keys(String.prototype)) MutStr.prototype[s] ??= String.prototype[s];
+	return function MutableString(/*arguments*/) { return new MutStr(...arguments) }
 })();
