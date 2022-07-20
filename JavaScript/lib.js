@@ -721,8 +721,7 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : false,
 				arrayOneLineSpace  : "",
 			})
-		};
-		this.dict = (function create_dict() {
+		}; this.dict = (function create_dict() {
 			// So I can add prototype methods and not have it on literally every object in existance
 			var Dictionary = class dict extends Object {
 				constructor(dict) {
@@ -744,7 +743,24 @@ void (() => { "use strict";
 			function dict(obj={}) { return new Dictionary(obj) }
 			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
 			return dict;
-		})(); for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+		})();this.MutableString = (function createMutableString() {
+			var MutStr = class MutableString extends Array {
+				constructor() {
+					super();
+					this.pop();
+					for (const e of arguments)
+						typeof e === "string" && this.union(e.split(""));
+				}
+				type() { return "mutstr" }
+				push(chars) {
+					if (type(chars, 1) === "str" || false);
+				}
+				toString() { return this.join("") }
+			};
+			for (const s of Object.keys(String.prototype)) MutStr.prototype[s] ??= String.prototype[s];
+			return function MutableString(/*arguments*/) { return new MutStr(...arguments) }
+		})();
+		for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				multable[i][j] = i * j;
 		for (var i = 10, j, addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
@@ -4383,9 +4399,14 @@ void (() => { "use strict";
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
 		function lastElement() { return this[dim(this)] } // can't be an arrow function because of "this"
+		// NodeList prototype
 		NodeList.prototype.last = lastElement
-		,  HTMLCollection.prototype.last = lastElement
-		,  Object.prototype.tofar = function toFlatArray() {
+		; // HTMLCollection prototype
+		HTMLCollection.prototype.last = lastElement
+		; // HTMLAllCollection prototype
+		HTMLAllCollection.prototype.last = lastElement
+		; // Object prototype
+		Object.prototype.tofar = function toFlatArray() {
 			// TODO: Fix for 'Arguments' objects and HTML elements
 			var val = this;
 			if (
@@ -4400,13 +4421,15 @@ void (() => { "use strict";
 			for (const key of Object.keys(obj))
 				if (obj[key] === value) return key;
 			return null;
-		},  RegExp.prototype.in = RegExp.prototype?.test
+		}; // RegExp prototype
+		RegExp.prototype.in = RegExp.prototype?.test
 		,  RegExp.prototype.toRegex = function toRegex() {
 			return this;
 		}, RegExp.prototype.all = function all(str="") {
 			var a = `${this}`;
 			return RegExp(`^(${a.substr(1, dim(a, 2))})$`, "").in(str);
-		},  Array.prototype.any = Array.prototype.some
+		}; // Array prototype
+		Array.prototype.any = Array.prototype.some
 		, Array.prototype.append = Array.prototype.push
 		, Array.prototype.io = Array.prototype.indexOf
 		,  Array.prototype.rev = Array.prototype.reverse
@@ -4615,7 +4638,8 @@ void (() => { "use strict";
 		}, Array.prototype.clear = function clear() {
 			this.length = 0;
 			return this;
-		}, String.prototype.io = String.prototype.indexOf
+		}; // String prototype
+		String.prototype.io = String.prototype.indexOf
 		,  String.prototype.lio = String.prototype.lastIndexOf
 		,  String.prototype.strip = String.prototype.trim
 		,  String.prototype.lstrip = String.prototype.trimLeft
@@ -4756,7 +4780,8 @@ void (() => { "use strict";
 			return !0;
 		}, String.prototype.exists = function exists() {
 			return this != "";
-		}, Number.prototype.bitLength = function bitLength() {
+		}; // Number prototype
+		Number.prototype.bitLength = function bitLength() {
 			return len(str(abs(this), 2));
 		}, Number.prototype.isPrime = function isPrime() {// can probably be optimized
 			var n = int(this);
@@ -4790,7 +4815,8 @@ void (() => { "use strict";
 			return this % Number(arg);
 		}, Number.prototype.pow = function pow(arg) {
 			return this ** Number(arg);
-		}, BigInt.prototype.shl = function shl(num) {
+		}; // BigInt prototype
+		BigInt.prototype.shl = function shl(num) {
 			return this << BigInt(num);
 		}, BigInt.prototype.shr = function shr(num) {
 			return this >> BigInt(num);
@@ -4815,7 +4841,7 @@ void (() => { "use strict";
 			var rest = a.substr(1, maxDigits);
 			rest = 1 * rest ? rest : "";
 			if (["string", "str", "s", String].incl(form?.lower?.() || form))
-				return `${a[0]}${decimal}${rest}e+${dim(a)}`;
+				return `${a[0]}${decimal}${rest}e+${dim(a)}`.replace(".e", "e");
 			else if (["number", "num", "n", Number].incl(form?.lower?.() || form))
 				return 1 * `${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
 			else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
@@ -4831,6 +4857,8 @@ void (() => { "use strict";
 			return this % BigInt(arg);
 		}, BigInt.prototype.pow = function pow(arg) {
 			return this ** BigInt(arg);
+		}, BigInt.prototype.length = function length(n=0) {
+			return dim(`${this}`, n);
 		};
 	} {// bad text encoders
 		function asciiToChar(number) {
@@ -5069,22 +5097,4 @@ void (() => { "use strict";
 		// ½: atob(170)[1]
 		// Í: atob(180)[1]
 	}
-})();
-// This will be moved into the main function later.
-var MutableString = (function createMutableString() {
-	var MutStr = class MutableString extends Array {
-		constructor() {
-			super();
-			this.pop();
-			for (const e of arguments)
-				typeof e === "string" && this.union(e.split(""));
-		}
-		type() { return "mutstr" }
-		push(chars) {
-			if (type(chars, 1) === "str" || false);
-		}
-		toString() { return this.join("") }
-	};
-	for (const s of Object.keys(String.prototype)) MutStr.prototype[s] ??= String.prototype[s];
-	return function MutableString(/*arguments*/) { return new MutStr(...arguments) }
 })();
