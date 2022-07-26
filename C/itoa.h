@@ -1,4 +1,5 @@
 #ifndef ITOA_H
+#define ITOA_H
 
 char itoa(unsigned int natural_number) {
 	// reverse of atoi from string.h
