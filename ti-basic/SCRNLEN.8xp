@@ -5,7 +5,7 @@ If imag(V
 W+(1≠imag(V))+(imag(V) and real(V→W
 2→dim(⌊Z
 imag(V→⌊Z(1
-⌊Z(1→⌊Z(2
+imag(V→⌊Z(2
 real(V→V
 V→N
 For(,1,2
@@ -13,7 +13,7 @@ While (V/10)≥1 or ­1≥(V/10
 V/10→V
 W+1→W
 End
-W+(V<0)+(0≠fPart(N→W
+W+(V<0)+not(not(N→W
 While fPart(N
 10N→N
 W+1→W
