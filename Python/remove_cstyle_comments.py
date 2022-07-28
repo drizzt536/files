@@ -52,8 +52,10 @@ def remove_comments_str(text: str, /) -> str:
 	return output[0:-1] if not endsWithNewLine and text[-1] == "\n" else output
 
 def remove_comments_file(filepath: str | int, edit: bool = False, /) -> str:
-	"""takes the file location of a file. removes all C-style comments from the file.
-		if the second argument is truthy, The file is overwrited to the new state.
-		returns the output string"""
-	from automate.misc import read, write
-	return (edit and write(filepath, (output := remove_comments_str(read(filepath))), 'w')) or output
+    """takes the file location of a file. removes all C-style comments from the file.
+        if the second argument is truthy, The file is overwrited to the new state.
+        returns the output string"""
+    from automate.misc import read, write
+    output = remove_comments_str( read(filepath) )
+    edit and write(filepath, output, 'w')
+    return output
