@@ -7,9 +7,9 @@ Input "c=",C
 If not(real(A) or imag(A:Then
 If not(real(B) or imag(B:Then
 If not(real(C) or imag(C:Then
-Disp "All Real"
+Disp "All Real
 Return:End
-Disp "No Solution"
+Disp "No Solution
 Return:End
 ­C/B→X
 Disp "X = ",X
