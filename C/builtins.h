@@ -1,9 +1,14 @@
 #ifndef __LIBRARY_MINGW_GCC_BUILTINS__ // probably not all of them
 #define __LIBRARY_MINGW_GCC_BUILTINS__
 struct FILE *__acrt_iob_func(unsigned index); // stdio.h
+int atoi(const char *_Str); // stdlib.h
+double atof(const char *_String); // stdlib.h
+long atol(const char *_Str); // stdlib.h
+int rand(void); // stdlib.h
 char **__sys_errlist(void);
 int *__sys_nerr(void);
 int *_errno(void); // stderr.h
+void perror(const char *_ErrMsg); // errno.h
 unsigned long *__doserrno(void); // stdlib.h
 int _set_errno(int _Value); // errno.h
 int _get_errno(int *_Value); // errno.h
