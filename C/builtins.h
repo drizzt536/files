@@ -1,12 +1,15 @@
 #ifndef __LIBRARY_MINGW_GCC_BUILTINS__ // probably not all of them
 #define __LIBRARY_MINGW_GCC_BUILTINS__
+#ifndef __ALSO_USE_CUSTOM_MACROS_FOR_BUILTINS_H_LIBRARY__
+#define __ALSO_USE_CUSTOM_MACROS_FOR_BUILTINS_H_LIBRARY__ (_Bool) 1u
+#endif
 struct FILE *__acrt_iob_func(unsigned index); // stdio.h
 int atoi(const char *_Str); // stdlib.h
 double atof(const char *_String); // stdlib.h
 long atol(const char *_Str); // stdlib.h
 int rand(void); // stdlib.h
-char **__sys_errlist(void);
-int *__sys_nerr(void);
+char **__sys_errlist(void); // errno.h?
+int *__sys_nerr(void); // errno.h?
 int *_errno(void); // stderr.h
 void perror(const char *_ErrMsg); // errno.h
 unsigned long *__doserrno(void); // stdlib.h
@@ -501,6 +504,7 @@ int _get_doserrno(unsigned long *_Value); // stdlib.h
 #define _timezone (* __timezone())
 #define _tzname (__tzname())
 #define strftime __builtin_strftime
+#if __ALSO_USE_CUSTOM_MACROS_FOR_BUILTINS_H_LIBRARY__
 // my macros. not builtin
 #define ctoi(c) ((int) (c - 48))
 #define ctol(c) ((long) (c - 48))
@@ -523,4 +527,5 @@ int _get_doserrno(unsigned long *_Value); // stdlib.h
 	*_x = (typeof(x)) *_y;\
 	*_y = (typeof(y)) *t;\
 	0ULL/*so gcc will let me use the macro in operations*/; })
+#endif
 #endif // ifndef __LIBRARY_MINGW_GCC_BUILTINS__
