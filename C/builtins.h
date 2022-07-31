@@ -501,4 +501,26 @@ int _get_doserrno(unsigned long *_Value); // stdlib.h
 #define _timezone (* __timezone())
 #define _tzname (__tzname())
 #define strftime __builtin_strftime
+// my macros. not builtin
+#define ctoi(c) ((int) (c - 48))
+#define ctol(c) ((long) (c - 48))
+#define ctoa(c) ((char *) c)
+#define substr(str, index) (str[index])
+#define stringify_bool(b) (b ? "true" : "false")
+#define ullong unsigned long long int
+#define llong signed long long int
+#define error(str, err) ({\
+	fprintf(stderr, "ERROR:%s:%llu: %s\n", __FILE__, __LINE__, (char *)str);\
+	exit((int) err);\
+	0ULL/*so gcc will let me use the macro in operations*/; })
+#define alloc(n1, n2) __builtin_malloc((n1) * (n2))
+#define max(x, y) ({ typeof(x) a = (x); typeof(y) b = (y); (a > b ? a : b); })
+#define min(x, y) ({ typeof(x) a = (x); typeof(y) b = (y); (a < b ? a : b); })
+#define swap(x, y) ({/*only evaluates each input once. takes values not addresses*/\
+	typeof(x) *_x = &(x);\
+	typeof(x) *t = _x;\
+	typeof(y) *_y = &(y);\
+	*_x = (typeof(x)) *_y;\
+	*_y = (typeof(y)) *t;\
+	0ULL/*so gcc will let me use the macro in operations*/; })
 #endif // ifndef __LIBRARY_MINGW_GCC_BUILTINS__
