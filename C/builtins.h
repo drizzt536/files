@@ -527,5 +527,16 @@ int _get_doserrno(unsigned long *_Value); // stdlib.h
 	*_x = (typeof(x)) *_y;\
 	*_y = (typeof(y)) *t;\
 	0ULL/*so gcc will let me use the macro in operations*/; })
+extern _Bool includes(char *str, char c) {
+	for (unsigned long long int i = 0; str[i] != 0 ; ++i)
+		if (str[i] == c) return ((_Bool) 1u);
+	return ((_Bool) 0u);
+}
+// #define not_extern static
+extern signed long long int indexOf(char *str, char c) {
+	for (signed long long int i = 0LL; str[i] != 0; ++i)
+		if (str[i] == c) return i;
+	return -1LL;
+}
 #endif
 #endif // ifndef __LIBRARY_MINGW_GCC_BUILTINS__
