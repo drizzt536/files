@@ -3,10 +3,9 @@ def password(length: int = 10, shuffles: int = 6) -> str:
 	from secrets import choice, randbelow
 	from os import system, name as sysname
 	def shuffle(s: str, /) -> str:
-		"""kind of like random.shuffle except it works for strings only...
-			and it returns the new value instead of editing the old one.
-			It cant edit the original instance, because strings are imutable in CPython"""
 	    output = ""
+		# for some reason, this function having a docstring breaks the program. :) I love python (I Hate Python)
+		# it makes it close immediately if it is the main program.
 	    while s:
 	        i = randbelow(len(s))
 	        output += s[i]
