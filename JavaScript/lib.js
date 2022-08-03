@@ -172,7 +172,7 @@ void (() => { "use strict";
 				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
 		}; this.nSub = function substituteNInBigIntegers(num, n=1) {
 			return type(num) === "bigint" ?
-				Number(num) * n :
+				n * Number(num) :
 				num;
 		}; this.revLList = function reverseLinkedList(list) {
 			for (let cur = list.head, prev = null, next; current ;) 
@@ -280,26 +280,32 @@ void (() => { "use strict";
 								"func"
 		}; this.round = function round(n) {
 			return type(n) === "number" ?
-				abs(fpart(n)) < .5 ?
+				fpart(n) < .5 ?
 					int(n) :
 					int(n) + sgn(n) :
-				NaN;
+				type(n) === "bigint" ?
+					n :
+					NaN;
 		}; this.fpart = Number.fpart = function fPart(n, number=true) {
 			if ( rMath.isNaN(n) ) return NaN;
 			if ( n.isInt() ) return 0;
 			if ((n+"").incl("e+")) n = n.toPrecision(100);
-			else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), +(n+"").slc("-", void 0, 1) );
+			else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), Number((n+"").slc("-", void 0, 1)) );
 			return number ?
-				+(n+"").slc(".") :
+				Number( (n+"").slc(".") ) :
 				`0${`${n}`.slc(".")}`;
 		}; this.floor = function floor(n) {
 			return type(n) === "number" ?
-				int(n) - (n<0) :
-				NaN;
+				int(n) - (n<0 && n != int(n)) :
+				type(n) === "bigint" ?
+					n :
+					NaN;
 		}; this.ceil = function ceil(n) {
 			return type(n) === "number" ?
-				int(n) + (n>0) :
-				NaN;
+				int(n) + (n>0 && n != int(n)) :
+				type(n) === "bigint" ?
+					n :
+					NaN;
 		}; this.int = Number.parseInt;
 		this.str = function String(a) {
 			return a?.toString?.(
@@ -879,7 +885,7 @@ void (() => { "use strict";
 				}).filter(e => len(e))
 			));
 		} function click(times=1) {
-			if ( isNaN(times = Number(times)) ) times = 1;
+			if (isNaN( times = Number(times) )) times = 1;
 			while (times --> 0) _click.call(this);
 			return this;
 		}
@@ -985,26 +991,44 @@ void (() => { "use strict";
 			constructor(help="default", comparatives="default") {
 				help === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
+				this.zero = "0.0"; // cannonical format for 0.
+				this.one = "1.0"; // cannonical format for 1.
 				if (help) this.help = {
-					add: "Takes 2 string number arguments (a and b). returns a + b as a string with maximum precision",
-					sub: "Takes 2 string number arguments (a and b). returns a - b as a string with maximum precision",
-					mul: "Takes 2 string number arguments (a and b). returns a * b as a string with maximum precision",
+					add: "Takes 2 string number arguments (a and b). returns a + b as a string with maximum precision and no floating point errors",
+					sub: "Takes 2 string number arguments (a and b). returns a - b as a string with maximum precision and no floating point errors",
+					mul: "Takes 2 string number arguments (a and b). returns a * b as a string with maximum precision and no floating point errors",
 					mul10: "Takes 2 arguments. 1: string number (n).  2: integer (x).  returns n * 10^x as a string more efficiently than mul(n, 10) would. see mul, div10",
 					div: "Takes 3 arguments. (string number or number, string number or number, precision). division",
-					div10: "Takes 2 arguments. 1: string number (n).  2: integer (x).  returns n / 10^x as a string more efficiently than div(n, 10) would. see div, mul10",
+					fdiv: "Takes 2 string number arguments. returns the floored division of the two numbers faster than flooring the result of div() would. see div, div10. basically just Python's '//' operator",
+					div10: "Takes 2 arguments. 1: string number (n).  2: integer (x).  returns n / 10^x as a string more efficiently than div(n, 10) would. see div, fdiv, mul10",
 					idiv: "Takes 3 arguments. the same as div() but only for integers. should be faster, and doesn't check for invalid inputs",
-					mod: "2 string number arguments. modulo operator.",
+					mod: "Takes 3 arguments. 2 string number arguments and 1 positive integer argument for the precision of tge division. modulo operator.",
 					ipow: "2 string number arguments. power but only for integer powers",
 					ifact: "1 string number argument. integer factorial",
 					neg: "Takes 1 string number argument. negates the input",
 					sgn: "1 string number argument. returns the sign of the input. sgn(0) = 0.  see sign, abs, neg",
 					sign: "1 string number argument. returns the sign of the input. sgn(0) = 0. see sgn, abs, neg",
+					ssgn: "Takes 1 argument. returns the sign as a string. see sgn, sign, ssign",
+					ssign: "Takes 1 argument. returns the sign as a string. see sgn, sign, ssgn",
 					abs: "1 string number argument. returns the absolute value of the input.",
-					fpart: null,
-					ipart: null,
-					square: null,
-					cube: null,
+					fpart: "Takes 1 string number argument. returns the fractional part of the input as a string. the output is always positive.",
+					ipart: "takes 1 string number argument. returns the truncated version. same as Math.trunc, but for strings. rounds towards zero. see trunc, floor, ceil, round",
+					square: "Takes 1 string number argument. squares the argument and returns it.",
+					cube: "Takes 1 string number argument. cubes the argument and returns it.",
+					tesseract: "Takes 1 string number argument. raises it the the fourth power and returns it.",
 					norm: null,
+					decr: null,
+					incr: null,
+					isNaN: null,
+					isInt: null,
+					isFloat: null,
+					min: null,
+					max: null,
+					lmgf: null,
+					floor: null,
+					ceil: null,
+					round: null,
+					trunc: "takes 1 string number argument. returns the truncated version. same as Math.trunc, but for strings. rounds towards zero. see ipart, floor, ceil, round",
 					eq: {
 						gt: null,
 						ge: null,
@@ -1012,12 +1036,18 @@ void (() => { "use strict";
 						le: null,
 						eq: null,
 						ne: null,
+						ez: null,
+						nz: null,
+						ng: null,
+						nn: null,
+						ps: null,
+						np: null,
 					},
 				}; if (comparatives) this.eq = {
 					gt(a="0.0", b="0.0") {// >
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
@@ -1045,8 +1075,8 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] > 1*b[i]) return !0;
-							if (1*a[i] < 1*b[i]) return !1;
+							if (Number(a[i]) > Number(b[i])) return !0;
+							if (Number(a[i]) < Number(b[i])) return !1;
 						}
 						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
@@ -1054,8 +1084,8 @@ void (() => { "use strict";
 							this.eq(a, b);
 					}, lt(a="0.0", b="0.0") {// <
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
@@ -1084,15 +1114,15 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] < 1*b[i]) return !0;
-							if (1*a[i] > 1*b[i]) return !1;
+							if (Number(a[i]) < Number(b[i])) return !0;
+							if (Number(a[i]) > Number(b[i])) return !1;
 						}
 						return !1;
 					}, le(a="0.0", b="0.0") {/* <= */ return this.lt(a, b) || this.eq(a, b) },
 					eq(a="0.0", b="0.0") { // strict equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
@@ -1119,13 +1149,13 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return !1;
+							if (Number(a[i]) !== Number(b[i])) return !1;
 						}
 						return !0;
 					}, ne(a="0.0", b="0.0") {// strict not equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
@@ -1152,18 +1182,31 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return !0;
+							if (Number(a[i]) !== Number(b[i])) return !0;
 						}
 						return !1;
-					},
+					}, ez(snum="0.0") {
+						// x == 0
+						for (var i = 0, n = len(snum); i < n; i++)
+							if (snum[i] !== "0" && snum[i] !== ".") return false;
+						return true;
+					}, nz(snum="0.0") {
+						// x != 0
+						for (var i = 0, n = len(snum); i < n; i++)
+							if (snum[i] !== "0" && snum[i] !== ".") return true;
+						return false;
+					}, ng(snum="0.0") { /*x < 0*/ return snum[0] === "-" },
+					nn(snum="0.0") { /*x >= 0*/ return snum[0] !== "-" },
+					ps(snum="0.0") { /*x > 0*/ return snum[0] !== "-" && this.nz(snum) },
+					np(snum="0.0") { /*x <= 0*/ return snum[0] === "-" || this.ez(snum) },
 				};
 			} add(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
 				if (a.startsW("-") && b.startsW("-"))
 					return this.neg( this.add(a.substr(1), b.substr(1)) );
-				if (a.startsW("-")  && !b.startsW("-")) return this.sub(b, a.substr(1));
-				if (!a.startsW("-") &&  b.startsW("-")) return this.sub(a, b.substr(1));
+				if (a.sW("-")  && !b.sW("-")) return this.sub(b, a.substr(1));
+				if (!a.sW("-") &&  b.sW("-")) return this.sub(a, b.substr(1));
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", len(b) - len(a));
 				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", len(a) - len(b));
 				a = a.split("."); b = b.split(".");
@@ -1174,7 +1217,7 @@ void (() => { "use strict";
 				].map(
 					e => e.map( f => f.split("") )
 				).map(
-					o => o[0].map( (e, i) => +e + +o[1][i] )
+					o => o[0].map( (e, i) => Number(e) + Number(o[1][i]) )
 				);
 				for (var i = 2; i --> 0 ;) {
 					for (var j = len(c[i]), tmp; j --> 0 ;) {
@@ -1191,9 +1234,9 @@ void (() => { "use strict";
 			} sub(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
-				if (!a.startsW("-") && b.startsW("-")) return this.add(a, b.substr(1));
-				if (a.startsW("-") && b.startsW("-")) return this.sub(b.substr(1), a);
-				if (a.startsW("-") && !b.startsW("-"))
+				if (!a.sW("-") && b.sW("-")) return this.add(a, b.substr(1));
+				if (a.sW("-") && b.sW("-")) return this.sub(b.substr(1), a);
+				if (a.sW("-") && !b.sW("-"))
 					return this.neg( this.add(a.substr(1), b) );
 				if (this.eq.gt(b, a)) return this.neg( this.sub(b, a) );
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", len(b) - len(a));
@@ -1206,7 +1249,7 @@ void (() => { "use strict";
 				].map(
 					e => e.map( f => f.split("") )
 				).map(
-					o => o[0].map( (e, i) => +e - +o[1][i] )
+					o => o[0].map( (e, i) => Number(e) - Number(o[1][i]) )
 				), neg = c[0][0] < 0;
 				for (var i = 2, j, tmp; i --> 0 ;) { // c[1] then c[0]
 					for (j = len( c[i] ) ; j --> 0 ;) { // for each element in c[i]
@@ -1222,15 +1265,11 @@ void (() => { "use strict";
 				c = c.map( e => e.join("") ).join(".");
 				return c.incl(".") ? c : `${c}.0`;
 			} mul(a="0.0", b="0.0") {
-				{
-					const tmp = rMath.log10(b);
-					if (tmp === int(tmp)) return this.mul10(a+"", tmp);
-				}
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
 				const sign = this.sgn(a) === this.sgn(b) ? 1 : -1;
 				a = this.abs(a); b = this.abs(b);
-				if (this.eq.eq(a, "0.0") || this.eq.eq(b, "0.0")) return "0.0";
+				if (this.eq.ez(a) || this.eq.ez(b)) return "0.0";
 
 				a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
 				var dec = 0;
@@ -1241,7 +1280,7 @@ void (() => { "use strict";
 					for (j = len(a), str = "", carryover = 0; j --> 0 ;) {
 						tmp = multable[ b[i] ][ a[j] ] + carryover + "";
 						carryover = dim(tmp) ? Number(tmp[0]) : 0;
-						tmp = Number( tmp[dim(tmp)] );
+						tmp = Number(tmp[dim(tmp)]);
 						str = tmp + str;
 						!j && carryover && (str = carryover + str);
 					}
@@ -1252,107 +1291,128 @@ void (() => { "use strict";
 					total = this.add(arr[i], total).remove(/\.0+$/);
 				total = (total.substr(0, len(total) - dec) + "." + total.substr(len(total) - dec)).replace(/\.$/, ".0");
 				return sign === -1 ? this.neg( total ) : total;
-			} mul10(n="0.0", x=1) {
-				if (rMath.isNaN(n)) return NaN;
-				if (isNaN( x = floor(Number(x)) )) return NaN;
-				if (!x) return number;
-				if (x < 0) return this.mul10(number, -x);
-				number = numStrNorm( number+"" );
-				let i = number.io("."),
-					tmp = number.slc(0, i - 1) + number.slc(i + 1, i + x),
-					output = tmp + strMul("0", i + x - len(tmp)) + "." + number.slc(i+x+1);
-				return numStrNorm(output + (output.last() == "." ? "0" : ""));
+			} mul10(snum="0.0", x=1) {
+				if (rMath.isNaN(snum)) return NaN;
+				if (isNaN( x = int(Number(x)) )) return NaN;
+				if (!x) return snum;
+				if (x < 0) return this.div10(snum, -x);
+				snum = numStrNorm( snum+"" );
+				let i = snum.io("."),
+					tmp = snum.slc(0, i) + snum.slc(i + 1, i + x + 1),
+					output = tmp + strMul("0", i + x - len(tmp)) + "." + snum.slc(i+x+1);
+				return numStrNorm(output + (output.last() === "." ? "0" : ""));
 			} div(num="0.0", denom="1.0", precision=18) {
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
-				{
-					const tmp = rMath.log10(denom);
-					if (tmp === int(tmp)) return this.div10(num+"", tmp);
-				}
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				isNaN(precision) && (precision = 18);
-				if ( this.eq.eq(denom, 0) )
-					return this.eq.eq(num, 0) ?
+				isNaN(precision = Number(precision)) && (precision = 18);
+				if ( this.eq.ez(denom) )
+					return this.eq.ez(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.eq(num, 0) ) return "0.0";
+				if ( this.eq.ez(num) ) return "0.0";
 				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
-				while (this.eq.ne(fpart(num, !1), 0)) {
-					num = this.mul(num, 10);
-					denom = this.mul(num, 10);
-				} while (this.eq.ne(fpart(denom, !1), 0)) {
-					num = this.mul(num, 10);
-					denom = this.mul(num, 10);
-				}
+				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
+				num = this.mul10(num, exponent); denom = this.mul10(denom, exponent);
 				// return this.idiv(num, denom); // extra checks for the same cases.
 
 				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
-				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2), 0)) {
+				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
 					tmp1 = tmp3;
 					ans++;
 				}
 				var ansString = `${ans}`;
 				if (!precision) return `${ansString}.0`;
-				var remainder = this.mul( 10, this.sub(num, this.mul(ans, denom)) );
-				if (this.eq.ne(remainder, 0)) ansString += ".";
-				for (var i = 0, j; this.eq.ne(remainder, 0) && i++ < precision ;) {
-					for (j = 9; this.eq.lt(this.sub(remainder, table[j]), 0) ;) j--;
-					remainder = this.mul( this.sub(remainder, table[j]), 10 );
+				var remainder = this.mul10( this.sub(num, this.mul(ans, denom)) );
+				if (this.eq.nz(remainder)) ansString += ".";
+				for (var i = 0, j; this.eq.nz(remainder) && i++ < precision ;) {
+					for (j = 9; this.eq.ng(this.sub(remainder, table[j])) ;) j--;
+					remainder = this.mul10( this.sub(remainder, table[j]) );
 					ansString += `${j}`;
 				}
 				ansString.io(".") < 0 && (ansString += ".0");
-				ansString = sign === -1 ? `-${ansString}` : ansString;
-				return ansString;
-			} div10(number="0.0", x=1) {
-				if (rMath.isNaN(number)) return NaN;
-				if (isNaN( x = floor(Number(x)) )) return NaN;
-				if (!x) return number;
-				if (x < 0) return this.div10(number, -x);
-				number = numStrNorm( number+"" );
-				var i = number.io("."),
-					tmp = number.slc(0, i - x - 1),
-					output = tmp + "." + strMul("0", len(tmp) + x - i) + number.slc(i - x, i - 1) + number.slc(i + 1);
+				return sgn === -1 ? `-${ansString}` : ansString;
+			} fdiv(num="0.0", denom="1.0") {
+				// floor division
+				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
+				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
+				if ( this.eq.ez(denom) )
+					return this.eq.ez(num) ?
+						NaN :
+						Infinity;
+				if ( this.eq.ez(num) ) return "0.0";
+				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
+				const sign = this.sgn(num) * this.sgn(denom);
+				num = this.abs(num); denom = this.abs(denom);
+				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
+				num = this.mul10(num, exponent); denom = this.mul10(denom, exponent);
+
+				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
+				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
+				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
+					tmp1 = tmp3;
+					ans++;
+				}
+				return `${sign === -1 && this.mul10( this.sub(num, this.mul(ans, denom)) ) ?
+					-++ans :
+					ans
+				}.0`;
+			} div10(snum="0.0", x=1) {
+				if (rMath.isNaN(snum)) return NaN;
+				if (isNaN( x = int(Number(x)) )) return NaN;
+				if (!x) return snum;
+				if (x < 0) return this.mul10(snum, -x);
+				snum = numStrNorm( snum+"" );
+				var i = snum.io("."),
+					tmp = snum.slc(0, i - x),
+					output = tmp + "." + strMul("0", len(tmp) + x - i) + snum.slc(i - x, i) + snum.slc(i + 1);
 				return numStrNorm((output[0] == "." ? "0" : "") + output);
 			} idiv(num="0.0", denom="1.0", precision=18) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
-				if ( this.eq.eq(denom, 0) )
-					return this.eq.eq(num, 0) ?
+				if ( this.eq.ez(denom) )
+					return this.eq.ez(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.eq(num, 0) ) return "0.0";
+				if ( this.eq.ez(num) ) return "0.0";
 				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
 				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
-				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2), 0)) {
+				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
 					tmp1 = tmp3;
 					ans++;
 				}
 				var ansString = `${ans}`;
 				if (precision < 1) return `${ansString}.0`;
-				var remainder = this.mul( this.sub(num, this.mul(ans, denom)), 10 );
-				if (this.eq.ne(remainder, 0)) ansString += ".";
-				for (var i = 0, j; this.eq.ne(remainder, 0) && i++ < precision ;) {
-					for (j = 9; this.eq.lt(this.sub(remainder, table[j]), 0) ;) j--;
-					remainder = this.mul( this.sub(remainder, table[j]), 10 );
+				var remainder = this.mul10( this.sub(num, this.mul(ans, denom)) );
+				if (this.eq.nz(remainder)) ansString += ".";
+				for (var i = 0, j; this.eq.nz(remainder) && i++ < precision ;) {
+					for (j = 9; this.eq.ng(this.sub(remainder, table[j])) ;) j--;
+					remainder = this.mul10( this.sub(remainder, table[j]) );
 					ansString += `${j}`;
 				}
 				ansString.io(".") < 0 && (ansString += ".0");
 				return sign === -1 ? `-${ansString}` : ansString;
-			} mod() { throw Error("Not Implemented");
+			} mod(a="0.0", b="0.0", precision=18) {
+				return this.sub(
+					a, this.floor(
+						this.div(a, b, precision)
+					)
+				)
+				throw Error("Not Implemented");
 			} ipow(a="0.0", b="1.0") {
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
-				if ( this.eq.ne(fpart(b), 0) ) throw Error("no decimals allowed for exponent.");
+				if ( this.eq.nz(fpart(b, !1)) ) throw Error("no decimals allowed for exponent.");
 				var t = "1.0";
-				if (this.sgn(b) >= 0) for (; b > 0; b = this.sub(b, 1)) t = this.mul(t, a);
+				if (this.sgn(b) >= 0) for (; b > 0; b = this.decr(b)) t = this.mul(t, a);
 				else for (; b < 0; b = this.add(b, 1)) t = this.div(t, a);
 				return t;
 			} ifact(n="0.0") {
-				if ( this.eq.ne(fpart(n), 0) ) throw Error("no decimals allowed.");
-				for (var i = n+"", total = "1.0"; i > 0; i = this.sub(i, 1))
+				if ( this.eq.nz(fpart(n, !1)) ) throw Error("no decimals allowed.");
+				for (var i = n+"", total = "1.0"; i > 0; i = this.decr(i))
 					total = this.mul(i, total);
 				return this.ipart(total);
 			} neg(snum="0.0") {
@@ -1361,14 +1421,24 @@ void (() => { "use strict";
 					snum.substr(1) :
 					`-${snum}`;
 			} sgn(snum="0.0") {
-				// string sign
+				// string sign. sMath.sgn("-0") => -1
 				return snum[0] === "-" ?
 					-1 :
-					/0+\.?0*/.test(snum) ?
+					/^0+\.?0*$/.test(snum) ?
 						0 :
 						1;
 			} sign(snum="0.0") {
 				return this.sgn(snum);
+				;
+			} ssgn(snum="0.0") {
+				// string sign. sMath.sgn("-0") => -1
+				return snum[0] === "-" ?
+					"-1.0" :
+					/^0+\.?0*$/.test(snum) ?
+						"0.0" :
+						"1.0";
+			} ssign(snum="0.0") {
+				return this.ssgn(snum);
 				;
 			} abs(snum="0.0") {
 				return snum[0] === "-" ?
@@ -1377,21 +1447,124 @@ void (() => { "use strict";
 			} fpart(n="0.0") {
 				return isNaN(n) ?
 					NaN :
-					fpart(n);
-			} ipart(n="0") {
-				return n.slc(0, ".");
-				;
-			} square(n="0") {
-				return this.mul(n, n);
-				;
-			} cube(n="0") {
+					fpart(n, !1);
+			} ipart(n="0.0") {
+				return n.slc(
+					0, "."
+				) + ".0";
+			} square(n="0.0") {
+				return this.mul(
+					n, n
+				);
+			} cube(n="0.0") {
 				return this.mul(
 					this.square(n),
 					n
 				);
+			} tesseract(n="0.0") {
+				return this.square(
+					this.square(n)
+				);
 			} norm/*alize*/(snum="0.0") {
-				return numStrNorm(snum);
-				;
+				return numStrNorm(
+					snum
+				);
+			} decr(snum="1.0") {
+				// probably faster than sMath.sub(x, 1) because there is less array manipulation
+				// the drawback is there is more string manipulation, which is probably slower.
+				if ("0-.".incl(snum[0])) return this.sub(snum, "1.0");
+				var i1 = snum.io("."), i2;
+				if (i1 < 0) throw Error("sMath.decrp's argument had no '.'");
+				for (i2 = i1; snum[--i1] === "0" ;);
+				snum = snum.slc(0, i1) + (Number(snum[i1])-1) + snum.slc(i1+1);
+				for (; ++i1 < i2 ;)
+					snum = snum.slc(0, i1) + "9" + snum.slc(i1+1);
+				return snum;
+			} incr(snum="0.0") {
+				return this.add(snum, "1.0");
+				// return x + 1
+			} isNaN(snum="0.0") {
+				if (type(snum) !== "string") return !0;
+				for (var i = 0, n = len(snum), period = !1; i < n; i++) {
+					if (snum[i] === ".") {
+						if (period) return !0;
+						period = !0;
+					} else if ( !"0123456789".incl(snum[i]) ) return !0;
+				}
+				return !1;
+			} isInt(snum="0.0") {
+				if (type(snum) !== "string") return false;
+				var i = snum.io(".");
+				if (i === -1 || i === dim(snum)) return true;
+				for (var n = len(snum); ++i < n ;)
+					if (snum[i] !== "0") return false;
+				return true;
+			} isFloat(snum="0.0") {
+				// not actually a float, but floats have decimals and it checks for decimals, so whatever
+				if (type(snum) !== "string") return false;
+				var i = snum.io(".");
+				if (i === -1 || i === dim(snum)) return false;
+				for (var n = len(snum); ++i < n ;)
+					if (snum[i] !== "0") return true;
+				return false;
+			} min(...args) {
+				if (!len(args)) return "0.0";
+				args = args.flatten();
+				for (var min = args[0], i = len(args); i --> 1 ;)
+					if (this.eq.lt(args[i], min))
+						min = args[i];
+				return min;
+			} max(...args) {
+				if (!len(args)) return "0.0";
+				var args = args.flatten();
+				for (var max = args[0], i = len(args); i --> 1 ;)
+					if (this.eq.gt(args[i], max))
+						max = args[i];
+				return max;
+			} lmgf(t="lcm", ...ns) {
+				throw Error("not implemented");
+				// least commond multiple and greatest common factor
+				ns = ns.flatten();
+				["l", "lcm", "g", "gcf", "gcd"].incl(t) || (t = "lcm");
+				if (t[0] === "g") {
+					for (const e of ns)
+						if (this.isFloat(e))
+							return 1;
+				} else if (t[0] === "l") {
+					for (const e of ns) {
+						if (this.isFloat(e))
+							return ns.reduce((t, e) => this.mul(t, e), "1.0");
+					}
+				} else throw Error("invalid first argument for sMath.lmgf");
+				for (var i = t[0] === "l" ? this.max(ns) : this.min(ns), c
+					;; i = t[0] === "l" ? this.add(i, 1) : this.decr(i)
+				) {
+					// TODO: continue here
+					for (var j = dim(ns); j >= 0; --j) {
+						if (t[0] === "l" ? i % ns[j] : ns[j] % i) {
+							c = !1;
+							break;
+						}
+						c = !0;
+					}
+					if (c) return i;
+				}
+			} floor(snum="0.0") {
+				var ans = this.ipart(snum+".0");
+				snum[0] === "-" && this.isFloat(snum) && (ans = this.decr(ans));
+				return ans;
+			} ceil(snum="0.0") {
+				var ans = this.ipart(snum+".0");
+				this.eq.ps(snum) && this.isFloat(snum) && (ans = this.add(ans, 1));
+				return ans;
+			} round(snum="0.0") {
+				return this.eq.lt(this.fpart(snum+".0"), "0.5") ?
+					this.ipart(snum) :
+					this.add(this.ipart(snum), this.sgn(snum)+"")
+			} trunc(snum="0.0") {
+				return this.ipart(
+					snum
+				);
 			}
 		})(
 			sMath_Help_Argument,
@@ -1721,10 +1894,11 @@ void (() => { "use strict";
 					ceil: "returns ceil(argument)",
 					rand: "0 arguments. returns window.rand(), which is the original Math.random",
 					random: "returns a random number in the range [0,1)",
-					pow: "Takes two arguments (a,b).  similar to a**b.",
-					nthrt: "Takes 2 parameters (x, n).  returns x**(1/n).  the root defaults to 2.",
-					square: "1 argument (x). returns x^2. see pow, cube, hyper3",
-					cube: null,
+					pow: "Takes two arguments (a,b). similar to a**b.",
+					nthrt: "Takes 2 parameters (x, n). returns x**(1/n). the root defaults to 2.",
+					square: "1 argument (x). returns x^2. see pow, cube, tesseract, hyper3",
+					cube: "1 argument (x). returns x^3. see pow, square, hyper3, tesseract",
+					tesseract: "1 argument (x). returns x^4. see pow, square, hyper3, cube",
 					ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
 					findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers",
 					// TODO: Fix li() documentation
@@ -1763,7 +1937,7 @@ void (() => { "use strict";
 					tempConv: null,
 					coprime: null,
 					ncoprime: null,
-					cumsum: null,
+					cumsum: "",
 					set: null,
 					setUnion: null,
 					piApprox: null,
@@ -1825,8 +1999,8 @@ void (() => { "use strict";
 				}; if (comparatives) this.eq = {
 					gt(a="0.0", b="0.0") {// >
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
@@ -1854,17 +2028,16 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] > 1*b[i]) return !0;
-							if (1*a[i] < 1*b[i]) return !1;
+							if (Number(a[i]) > Number(b[i])) return !0;
+							if (Number(a[i]) < Number(b[i])) return !1;
 						}
 						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
-						return this.gt(a, b) ||
-							this.seq(a, b);
+						return this.gt(a, b) || this.seq(a, b);
 					}, lt(a="0.0", b="0.0") {// <
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
@@ -1893,20 +2066,19 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] < 1*b[i]) return !0;
-							if (1*a[i] > 1*b[i]) return !1;
+							if (Number(a[i]) < Number(b[i])) return !0;
+							if (Number(a[i]) > Number(b[i])) return !1;
 						}
 						return !1;
 					}, le(a="0.0", b="0.0") {/* <= */
 						return this.lt(a, b) ||
 							this.seq(a, b);
 					}, leq(a=0, b=0) { // loose equal to. regular decimal place number
-						return Number(a) ===
-							Number(b);
+						return Number(a) === Number(b);
 					}, seq(a="0.0", b="0.0") {// strict equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
@@ -1933,16 +2105,15 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return !1;
+							if (Number(a[i]) !== Number(b[i])) return !1;
 						}
 						return !0;
 					}, lneq(a=0, b=0) {// loose not equal to. normal number of decimal places
-						return Number(a) !==
-							Number(b);
+						return Number(a) !== Number(b);
 					}, sneq(a="0.0", b="0.0") {// strict not equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a = a.toString(); !a.incl(".") && ( a += ".0" );
-						b = b.toString(); !b.incl(".") && ( b += ".0" );
+						a += ""; !a.incl(".") && ( a += ".0" );
+						b += ""; !b.incl(".") && ( b += ".0" );
 						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
 						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0)
@@ -1969,7 +2140,7 @@ void (() => { "use strict";
 						b = strMul( "0", a.io(".") - b.io(".") ) + b + strMul( "0", len(a) - len(b) );
 						for (var i = 0, n = len(a); i < n; i++) {
 							if (a[i] === ".") continue;
-							if (1*a[i] !== 1*b[i]) return !0;
+							if (Number(a[i]) !== Number(b[i])) return !0;
 						}
 						return !1;
 					},
@@ -2091,9 +2262,9 @@ void (() => { "use strict";
 							return arr;
 						}
 					).flat().map( e => e.sort().join() ).remrep().map(
-						e => e.split(",").map(e => 1*e).sort()
+						e => e.split(",").map(e => Number(e)).sort()
 					).map( e => e.sort().join() ).remrep().map( // double check is required
-						e => e.split(",").map(e => 1*e).sort()
+						e => e.split(",").map(e => Number(e)).sort()
 					).filter( e => !e.hasDupes() );
 				}
 				var out = [[null]];
@@ -2235,49 +2406,35 @@ void (() => { "use strict";
 				for (var a = 0, i = 0, n = len(ns); i < n; i++)
 					a += ns[i]**2;
 				return a**.5;
-			} log(n, base, acy=50) {
-				base = base == null ? MATH_LOG_DEFAULT_BASE : base;
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( base = Number(base) )) return NaN;
-				if (isNaN( acy = Number(acy) )) acy = 50;
-				if (base === Infinity) return n === Infinity ? NaN : 0;
-				if (base <= 0 || n <= 0 || base === 1 || isNaN(n)) return NaN;
-				if (n === Infinity) return Infinity;
-				if (base === n) return 1;
-				if (n === 1) return 0;
-				for (var pow = 1, notClosestInt = !0, tmp, frac = 1, i = acy; notClosestInt ;) {
-					tmp = this.abs(n - base ** pow);
-					tmp > this.abs(n - base ** (pow + 1)) ?
-						++pow :
-						tmp > this.abs(n - base ** (pow - 1)) ?
-							--pow :
-							notClosestInt = !1;
-				}
-				while ( i --> 0 ) {
-					tmp = this.abs( n - base ** pow );
-					tmp > this.abs( n - base ** (pow + (frac /= 2)) ) ?
-						pow += frac :
-						tmp > this.abs( n - base ** (pow - frac) ) && (pow -= frac);
-				}
-				return pow;
-			} logbase(base, n, acy=50) {
+			} log(x, base=MATH_LOG_DEFAULT_BASE) {
+				// TODO: Fix.
+				if (isNaN( x = Number(x) ) || isNaN( base = Number(base) ) || base <= 0 || x <= 0 || base === 1)
+					return NaN;
+				if (base === Infinity) return x === Infinity ? NaN : 0;
+				if (x === Infinity) return Infinity;
+				for (var ans = floor(x / 2 / base), tmp = 1, i = 1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
+					ans !=(ans += abs(x - base**(ans - tmp)) < abs(x - base**ans) ? -tmp :
+						abs(x - base**(ans + tmp)) < abs(x - base**ans) ? tmp : 0)
+				);
+				return ans;
+			} logbase(base, n) {
 				return isNaN( base = Number(base) ) ||
-				isNaN( n = Number(n) ) ||
-				isNaN( acy = Number(acy) ) ?
+				isNaN( n = Number(n) ) ?
 					NaN :
-					this.log( n, base, acy );
-			} ln(n, acy=50) {
-				return isNaN( n = Number(n) ) ||
-					isNaN( acy = Number(acy) ) ?
-					NaN : this.log( n, 𝑒, acy );
+					this.log( n, base );
+			} ln(n) {
+				return isNaN( n = n ) ?
+					NaN : this.log( n, 𝑒 );
 			} max(...ns) {
 				ns = ns.flatten();
+				if (!len(ns)) return -Infinity;
 				if ( ns.isNaN() ) return NaN;
 				let max = ns[0];
 				for (let i of ns) max = i > max ? i : max;
 				return max;
 			} min(...ns) {
 				ns = ns.flatten();
+				if (!len(ns)) return Infinity;
 				if ( ns.isNaN() ) return NaN;
 				let min = ns[0];
 				for (let i of ns) min = i < min ? i : min;
@@ -2316,9 +2473,16 @@ void (() => { "use strict";
 				ns = ns.flatten();
 				type(t) !== "string" && (t = "lcm");
 				if ( ns.isNaN() ) return NaN;
-				ns = ns.map(b => this.abs( int(b) ));
-				for (let c, i = t[0] === "l" ? this.max(ns) : this.min(ns); ; t[0] === "l" ? i++ : i-- ) {
-					for (let j = len(ns) - 1; j >= 0; --j) {
+				if (t[0] === "g") {
+					for (const e of ns)
+						if (!e?.isInt?.())
+							return 1;
+				} else if (t[0] === "l")
+					for (const e of ns)
+						if (!e?.isInt?.())
+							return ns.reduce((t, e) => t*e, 1);
+				for (var c, i = t[0] === "l" ? this.max(ns) : this.min(ns); ; t[0] === "l" ? i++ : i-- ) {
+					for (var j = dim(ns); j >= 0; --j) {
 						if (t[0] === "l" ? i % ns[j] : ns[j] % i) {
 							c = !1;
 							break;
@@ -2447,8 +2611,8 @@ void (() => { "use strict";
 				// a^2 + b^2 = (b+m)^2
 				if (isNaN( a = Number(a) )) return "No Solution";
 				if (isNaN( m = Number(m) )) return "No Solution";
-				if (fpart(a) || fpart(m))   return "No Solution";
-				if (this.mod(a+m, 2))       return "No Solution";
+				if (fpart(a) || fpart(m)) return "No Solution";
+				if (this.mod(a+m, 2))     return "No Solution";
 
 				var b = (a**2 - m**2) / (2*m),
 					c = b + m;
@@ -2479,10 +2643,9 @@ void (() => { "use strict";
 					snum.substr(1) :
 					snum;
 			} add(a="0.0", b="0.0", number=true, precision=Infinity) {
-				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				if ( isNaN(precision) ) precision = Infinity;
-				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
+				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
 				if (a.startsW("-") && b.startsW("-"))
 					return this.neg(this.add(a.substr(1), b.substr(1), number, precision) , number);
 				if (a.startsW("-")  && !b.startsW("-")) return this.sub(b, a.substr(1), number, precision);
@@ -2497,7 +2660,7 @@ void (() => { "use strict";
 				].map(
 					e => e.map( f => f.split("") )
 				).map(
-					o => o[0].map( (e, i) => 1*e + 1*o[1][i] )
+					o => o[0].map( (e, i) => Number(e) + Number(o[1][i]) )
 				);
 				for (var i = 2; i --> 0 ;) {
 					for (var j = len(c[i]), tmp; j --> 0 ;) {
@@ -2505,7 +2668,7 @@ void (() => { "use strict";
 						c[i][j] -= 10*tmp;
 						if (tmp) {
 							if (j) c[i][j-1] += tmp;
-							else i === 1 ? c[0][len(c[0]) - 1] += tmp : c[i].unshift(tmp);
+							else i === 1 ? c[0][dim(c[0])] += tmp : c[i].unshift(tmp);
 						}
 					}
 				}
@@ -2517,10 +2680,9 @@ void (() => { "use strict";
 						0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
 					);
 			} sub(a="0.0", b="0.0", number=true, precision=Infinity) {
-				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				if ( isNaN(precision) ) precision = Infinity;
-				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
+				if (isNaN( precision )) precision = Infinity;
+				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
 				if (!a.startsW("-") && b.startsW("-")) return this.add(a, b.substr(1), number, precision);
 				if (a.startsW("-") && b.startsW("-")) return this.sub(b.substr(1), a, number, precision);
 				if (a.startsW("-") && !b.startsW("-"))
@@ -2536,7 +2698,7 @@ void (() => { "use strict";
 				].map(
 					e => e.map( f => f.split("") )
 				).map(
-					o => o[0].map( (e, i) => 1*e - 1*o[1][i] )
+					o => o[0].map( (e, i) => Number(e) - Number(o[1][i]) )
 				), neg = c[0][0] < 0;
 				for (var i = 2, j, tmp; i --> 0 ;) { // c[1] then c[0]
 				for (j = len( c[i] ) ; j --> 0 ;) { // for each element in c[i]
@@ -2544,7 +2706,7 @@ void (() => { "use strict";
 						while (c[i][j] < 0) {
 							i + j && (c[i][j] += 10);
 							if (j) c[i][j-1] -= tmp;
-							else if (i === 1) c[0][len(c[0]) - 1] -= tmp;
+							else if (i === 1) c[0][dim(c[0])] -= tmp;
 							else throw Error(`Broken. End value shouldn't be negative.`);
 						}
 					}
@@ -2557,23 +2719,22 @@ void (() => { "use strict";
 						0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
 					);
 			} mul(a="0.0", b="0.0", number=true, precision=Infinity) {
-				type(a) === "bigint" && (a = Number(a)); type(b) === "bigint" && (b = Number(b));
 				if (this.isNaN(a) || this.isNaN(b)) return NaN;
-				a = numStrNorm( a.toString() ); b = numStrNorm( b.toString() );
+				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
 				const sign = this.ssgn(a) === this.ssgn(b) ? 1 : -1;
 				a = this.sabs(a); b = this.sabs(b);
 				if (this.eq.seq(a, 0) || this.eq.seq(b, 0)) return number ? 0 : "0.0";
 
 				a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
 				var dec = 0;
-				a.io(".") > 0 && (dec += len(a) - a.io(".") - 1);
-				b.io(".") > 0 && (dec += len(b) - b.io(".") - 1);
+				a.io(".") > 0 && (dec += dim(a) - a.io("."));
+				b.io(".") > 0 && (dec += dim(b) - b.io("."));
 				a = a.remove("."); b = b.remove(".");
 				for (var i = len(b), arr = [], carryover, tmp, str, j; i --> 0 ;) {
 					for (j = len(a), str = "", carryover = 0; j --> 0 ;) {
-						tmp = (multable[ b[i] ][ a[j] ] + carryover).toString();
+						tmp = multable[ b[i] ][ a[j] ] + carryover + "";
 						carryover = dim(tmp) ? Number(tmp[0]) : 0;
-						tmp = Number( tmp[dim(tmp)] );
+						tmp = Number(tmp[dim(tmp)]);
 						str = tmp + str;
 						!j && carryover && (str = carryover + str);
 					}
@@ -2589,27 +2750,26 @@ void (() => { "use strict";
 					number ? Number(total) : total;
 			} div(num="0.0", denom="1.0", number=true, precision=18) {
 				// NOTE: Will probably break the denominator is "-0"
-				type(num) === "bigint" && (num = `${num}`); type(denom) === "bigint" && (denom = `${denom}`);
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
 				isNaN(precision) && (precision = 18);
 				if ( this.eq.seq(denom, 0) )
 					return this.eq.seq(num, 0) ?
-						NaN :
-						Infinity;
+						NaN : Infinity;
 				if ( this.eq.seq(num, 0) )
 					return number ?
 						0 :
 						"0.0";
-				num = numStrNorm( num.toString() ); denom = numStrNorm( denom.toString() );
+				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
 				const sign = this.ssgn(num) * this.ssgn(denom);
 				num = this.sabs(num); denom = this.sabs(denom);
-				while (this.eq.sneq(fpart(num, !1), 0)) {
-					num = this.mul(num, 10, !1);
-					denom = this.mul(num, 10, !1);
-				} while (this.eq.sneq(fpart(denom, !1), 0)) {
-					num = this.mul(num, 10, !1);
-					denom = this.mul(num, 10, !1);
-				}
+
+				let exponent = this.max(
+					len(fpart(num, !1)),
+					len(fpart(denom, !1))
+				) - 2;
+				num = sMath.mul10(num, exponent);
+				denom = sMath.mul10(denom, exponent);
+
 				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom, !1);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
 				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2, !1), 0)) {
@@ -2776,11 +2936,11 @@ void (() => { "use strict";
 				return isNaN( n = Number(n) ) ?
 					n :
 					this.sgn(n);
-			} exp(n, x) {
+			} exp(n, x=𝑒) {
 				return isNaN( n = Number(n) ) ||
 					isNaN( x = Number(x) ) ?
 					NaN :
-					(x === void 0 ? 𝑒 : x) ** n;
+					x ** n;
 			} round(n) {
 				return isNaN( n = Number(n) ) ?
 					n :
@@ -2808,24 +2968,25 @@ void (() => { "use strict";
 					b >>= 1;
 					if (b === 0) return (this.nthrt(d, 1 / fpart(c)) || 1) * y;
 				}
-			} nthrt(x, rt=2, acy=100) {
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( rt = Number(rt) )) return NaN;
+			} nthrt(x, rt=2) {
+				if (isNaN( x = Number(x) ) || isNaN( rt = Number(rt) ) || x < 0) return NaN;
 				if (rt < 0) return this.pow(x, rt);
 				if (!rt || !(rt % 2) && x < 0) return NaN;
 				if (!x) return 0;
-				if (isNaN( acy = Number(acy) )) return NaN;
-				for (var pow, cur = x, i = 0; pow !== cur && i < acy; i++) {
-					pow = cur;
-					cur = ((rt - 1) * pow**rt + x) / (rt * pow**(rt - 1));
-				}
-				return cur;
+				for (var ans = floor(x/2/rt), tmp=1, i=1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
+					ans != (ans += abs(x - (ans - tmp)**rt) < abs(x - ans**rt) ? -tmp :
+						abs(x - (ans + tmp)**rt) < abs(x - ans**rt) ? tmp : 0)
+				);
+				return ans;
 			} square(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				return n ** 2;
 			} cube(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				return n ** 3;
+			} tesseract(n) {
+				if (isNaN( n = Number(n) )) return NaN;
+				return n ** 4;
 			} ifact(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (!n) return 1;
@@ -3347,7 +3508,7 @@ void (() => { "use strict";
 				if (isNaN( x = Number(x) )) return NaN;
 				if (form === 1) return this.sgn( 1 + this.sgn(x) );
 				if (form === 2) return (1 + this.sgn(x)) / 2
-				return Number(x > 0);
+				return +(x > 0);
 			} W(x) {
 				// TODO: Implement Lambert W function
 				// Lambert W function, product log
@@ -3490,7 +3651,7 @@ void (() => { "use strict";
 					str = str.replace(/\(-?1x\)/g, "(x)");
 					str = str.replace(/cos\(-?0x\)/g, "1");
 					tmp = /cos\((\d+)x\)/.exec(str);
-					if (tmp[1])str = str.replace(/cos\((\d+)x\)/, `[2cosxcos(${tmp[1]*1-1}x)-cos(${tmp[1]*1-2}x)]`);
+					if (tmp[1])str = str.replace(/cos\((\d+)x\)/, `[2cosxcos(${+tmp[1]-1}x)-cos(${+tmp[1]-2}x)]`);
 					str = str.replace(/\(-?1x\)/g, "(x)").replace(/cos\(-?0x\)/g, "1");
 				}
 				str = str.replaceAll("(x)", "x").replaceAll("cosxcosx", "cos^2x");
@@ -3650,17 +3811,11 @@ void (() => { "use strict";
 				}; if (degTrig) this.deg = {
 				};
 			}
-			add(a, b) {
-				return a + b
-			} sub(a, b) {
-				return a - b
-			} mul(a, b) {
-				return a * b
-			} div(a, b) {
-				return a / b
-			} pow(a, b) {
-				return a ** b
-			}
+			add(a, b) { return a + b }
+			sub(a, b) { return a - b }
+			mul(a, b) { return a * b }
+			div(a, b) { return a / b }
+			pow(a, b) { return a ** b }
 		})(
 			bMath_Help_Argument,
 			bMath_DegTrig_Argument
@@ -4054,7 +4209,7 @@ void (() => { "use strict";
 		})(
 			cMath_DegTrig_Argument,
 			cMath_Help_Argument
-		); this.fMath = new (class fractionalRealMath {
+		); this.fMath = new (class FractionalRealMath {
 			// TODO: Make the functions convert numbers into fractions if they are inputed instead
 			constructor(help="default", degTrig="default") {
 				help === "default" && (help = !0);
@@ -4115,39 +4270,65 @@ void (() => { "use strict";
 			constructor(help="default") {
 				help === "default" && (help = !0);
 				// constants
-
 				if (help) this.help = {
+					_call: "used internally for calling the functions. takes 2 named (string) arguments for the function name and type. if no type is given, it is decided by the first argument. the rest of the arguments are passed into the function being called via Function.apply.",
+					_getNameOf: "used internally for getting the names of math objects. returns Object.keyof(window, argument);",
+					add: "calls the add method of whatever math object is the correct one",
 				};
 			}
-			add(a, b) {
-				return this.call("all", a, b);
-			}
-			call(fname) {
-				var args = Array.from(arguments).slc(1), typ = type(args[0], 1);
-				if ( args.any(e => type(e, 1) !== typ) )
-					throw Error("arguments to aMath.add() must be of the same type");
-
+			add(typ=null) { return this._call("add", typ, ...arguments) }
+			sub(typ=null) { return this._call("sub", typ, ...arguments) }
+			mul(typ=null) { return this._call("mul", typ, ...arguments) }
+			div(typ=null) { return this._call("div", typ, ...arguments) }
+			_call(fname, typ=null, ...args) {
+				args = args.slc(1); // because typ is also passed in with it from the other functions
+				typ === null && (typ = type(args[0], 1));
 				var fns = {
-					num      : rMath,
 					bigint   : bMath,
-					str      : sMath,
 					complex  : cMath,
 					fraction : fMath,
-				}, fn = fns?.[type(a, 1)][fname];
-				if (fn) return fn.apply( fns[type(a, 1)], args );
-				// just using fn() makes "this" inside the function undefined.
-				throw Error("invalid arguments or function doesn't exist");
-			}
+					num      : rMath,
+					number   : rMath,
+					str      : sMath,
+					string   : sMath,
+				}, fn = fns?.[typ?.lower?.()]?.[fname];
+				if (fn) return fn.apply( fns[typ], args ); // just using fn() makes "this" inside the function undefined.
+				if (fns[typ] !== void 0)
+				throw Error(`${this._getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
+			} _getNameOf(MathObect) { return Object.keyof(window.MathObjects, MathObect) }
 		})(
 			aMath_Help_Argument
 			,
-		); this.MathObjects = {
-			aMath : aMath,
-			bMath : bMath,
-			cMath : cMath,
-			fMath : fMath,
-			sMath : sMath,
-			rMath : rMath,
+		); this.cfsMath = new (class ComplexFractionalStringMath {
+			constructor() {
+				this.CSFraction = class ComplexStringFraction {
+					constructor(rn="0.0", rd="0.0", cn="0.0", cd="0.0") {
+						if (sMath.isNaN(rn) || sMath.isNaN(rd) || sMath.isNaN(cn) || sMath.isNaN(cd))
+							throw ValueError("cfsMath.CSFraction requires 4 string numbers.");
+						var rgcd = 1, igcd = 1;
+						if (sMath.isInt(rn) && sMath.isInt(rd)) {
+							//gcd = 
+						}
+						this.re = {
+							numer: numStrNorm(rn),
+							denom: numStrNorm(rd),
+						};
+						this.im = {
+							numer: numStrNorm(cn),
+							denom: numStrNorm(cd),
+						};
+					}
+				};
+			}
+		})(); this.MathObjects = {
+			aMath   : aMath,
+			bMath   : bMath,
+			cMath   : cMath,
+			cfsMath : cfsMath,
+			fMath   : fMath,
+			rMath   : rMath,
+			sMath   : sMath,
 		}; this.Logic = new (class Logic {
 			constructor(bitwise, comparatives, help) {
 				bitwise === "default" && (bitwise = "bit");
@@ -4197,9 +4378,9 @@ void (() => { "use strict";
 
 							// get the true or false per bit ans stor into 'output'
 							for (str_i = 0; str_i < len(bits); str_i++)
-								output += Number(bits[str_i]).inRange(range[0], range[1]) ? 1 : 0;
+								output += (Number(bits[str_i])).inRange(range[0], range[1]) ? 1 : 0;
 
-							return `0b${output}` * 1;
+							return Number(`0b${output}`);
 						},
 
 						nxor: function xnor(a, b) {
@@ -4459,15 +4640,25 @@ void (() => { "use strict";
 			Logic_Comparatives_Argument,
 			Logic_Help_Argument
 		); aMath.aMath = aMath; aMath.bMath = bMath; aMath.cMath = cMath; aMath.fMath = fMath;
-			aMath.sMath = sMath; aMath.rMath = rMath; bMath.aMath = aMath; bMath.bMath = bMath;
-			bMath.cMath = cMath; bMath.fMath = fMath; bMath.sMath = sMath; bMath.rMath = rMath;
-			cMath.aMath = aMath; cMath.bMath = bMath; cMath.cMath = cMath; cMath.fMath = fMath;
-			cMath.sMath = sMath; cMath.rMath = rMath; fMath.aMath = aMath; fMath.bMath = bMath;
-			fMath.cMath = cMath; fMath.fMath = fMath; fMath.sMath = sMath; fMath.rMath = rMath;
+			aMath.sMath = sMath; aMath.rMath = rMath; aMath.cfsMath = cfsMath; bMath.aMath = aMath;
+			bMath.bMath = bMath; bMath.cMath = cMath; bMath.fMath = fMath; bMath.sMath = sMath;
+			bMath.rMath = rMath; bMath.cfsMath = cfsMath; cMath.aMath = aMath; cMath.bMath = bMath;
+			cMath.cMath = cMath; cMath.fMath = fMath; cMath.sMath = sMath; cMath.rMath = rMath;
+			cMath.cfsMath = cfsMath; fMath.aMath = aMath; fMath.bMath = bMath; fMath.cMath = cMath;
+			fMath.fMath = fMath; fMath.sMath = sMath; fMath.rMath = rMath; fMath.cfsMath = cfsMath;
 			sMath.aMath = aMath; sMath.bMath = bMath; sMath.cMath = cMath; sMath.fMath = fMath;
-			sMath.sMath = sMath; sMath.rMath = rMath; rMath.aMath = aMath; rMath.bMath = bMath;
-			rMath.cMath = cMath; rMath.fMath = fMath; rMath.sMath = sMath; rMath.rMath = rMath;
+			sMath.sMath = sMath; sMath.rMath = rMath; sMath.cfsMath = cfsMath; rMath.aMath = aMath;
+			rMath.bMath = bMath; rMath.cMath = cMath; rMath.fMath = fMath; rMath.sMath = sMath;
+			rMath.rMath = rMath; rMath.cfsMath = cfsMath; cfsMath.aMath = aMath; cfsMath.bMath = bMath;
+			cfsMath.cMath = cMath; cfsMath.fMath = fMath; cfsMath.sMath = fMath; cfsMath.rMath = rMath;
+			cfsMath.cfsMath = cfsMath;
 		this[Output_Math_Variable] = this[Input_Math_Variable];
+		sMath["+"] = sMath.add;
+		sMath["-"] = sMath.sub;
+		sMath["*"] = sMath.mul;
+		sMath["/"] = sMath.div;
+		sMath["^"] = sMath.pow;
+		sMath["**"] = sMath.pow;
 	} {// Prototypes
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
@@ -4495,7 +4686,7 @@ void (() => { "use strict";
 				if (obj[key] === value) return key;
 			return null;
 		}; // RegExp prototype
-		RegExp.prototype.in = RegExp.prototype?.test
+		RegExp.prototype.in = RegExp.prototype.test
 		,  RegExp.prototype.toRegex = function toRegex() {
 			return this;
 		}, RegExp.prototype.all = function all(str="") {
@@ -4613,9 +4804,10 @@ void (() => { "use strict";
 			for (const thing of things) this.insrand(thing);
 			return this;
 		}
-		, Array.prototype.slc = function slice(start=0, end=Infinity) {
-			for (var a = this, b = [], i = 0, n = len(a); i < n && i <= end; i++)
-				i >= start && b.push( a[i] );
+		, Array.prototype.slc = function slice(first=0, end=Infinity) {
+			// last index = end - 1
+			for (var a = this, b = [], i = 0, n = len(a); i < n && i < end; i++)
+				i >= first && b.push( a[i] );
 			return b;
 		}, Array.prototype.print = function print(print=console.log) {
 			print(this);
@@ -4734,8 +4926,9 @@ void (() => { "use strict";
 
 			}
 		}, String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=true) {
-			if (type(start) === "string") start = this.io(start);
-			if (type(end) === "string") end = this.io(end) - 1;
+			// last index = end - 1
+			type(start) === "string" && (start = this.io(start));
+			type( end ) === "string" && (end   = this.io( end ));
 			return Array.from(this).slc(
 				start + startOffset,
 				end + endOffset
@@ -4767,11 +4960,11 @@ void (() => { "use strict";
 			this.split(/[.[\]'"]/).filter(e=>e).for(e => obj=obj[e]);
 			return obj;
 		}, String.prototype.hasDupesA = function hasDuplicatesAll() {
-			return/(.|\n)\1+/.in(
+			return /(.|\n)\1+/.in(
 				this.split("").sort().join("")
 			);
 		}, String.prototype.hasDupesL = function hasDuplicateLetters() {
-			return/(\w)\1+/.in(
+			return /(\w)\1+/.in(
 				this.split("").sort().join("")
 			);
 		}, String.prototype.reverse = function reverse() {
@@ -4779,7 +4972,7 @@ void (() => { "use strict";
 		}, String.prototype.remove = function remove(arg) {
 			return this.replace(arg, "");
 		}, String.prototype.remrep = function removeRepeats() {
-			return Array.from( // this also sorts the string. *shrugs*, "whatever"
+			return Array.from( // this also sorts the string. *shrugs*, whatever idc
 				new Set(this)
 			).join("");
 		}, String.prototype.each = function putArgBetweenEachCharacter(arg="") {
@@ -4802,7 +4995,7 @@ void (() => { "use strict";
 			var f = () => Function(this).call(this)
 			return () => f();
 		}, String.prototype.toRegex = function toRegularExpression(f="", form="escaped") {
-			if (form === "escaped" || form === "excape" || form === "e")
+			if (form === "escaped" || form === "escape" || form === "e")
 				for (var i = 0, b = "", l = len(this); i < l; i++)
 					b += /[$^()+*\\|[\]{}?.]/.in(this[i]) ?
 						`\\${this[i]}` :
@@ -4810,7 +5003,7 @@ void (() => { "use strict";
 			else return RegExp(this, f);
 			return RegExp(b, f);
 		}, String.prototype.toNumber = String.prototype.toNum = function toNumber() {
-			return 1 * this;
+			return +this;
 		}, String.prototype.toBigInt = function toBigInt() {
 			try { return BigInt(this) }
 			catch { throw TypeError(`Cannot convert input to BigInt. input: '${this}'`) }
@@ -4849,7 +5042,7 @@ void (() => { "use strict";
 		}, String.prototype.inRange = function inRange(n1, n2=arguments[0], include=true) {
 			return isNaN(this) ?
 				!1 :
-				Number(this).inRange(n1, n2, include);
+				(+this).inRange(n1, n2, include);
 		}, String.prototype.isInt = function isInt() {
 			var a = this;
 			if ( isNaN(a) ) return !1;
@@ -4917,13 +5110,13 @@ void (() => { "use strict";
 		}, BigInt.prototype.toExponential = function toExponential(maxDigits=16, form=String) {
 			var a = `${this}`;
 			maxDigits < 0 && (maxDigits = 0);
-			var decimal = maxDigits && len(a) > 1 && a.substr(1)*1 ? "." : "";
-			var rest = a.substr(1, maxDigits);
-			rest = 1 * rest ? rest : "";
+			var decimal = maxDigits && len(a) > 1 && +a.slc(1) ? "." : "",
+				rest = a.substr(1, maxDigits);
+			rest = +rest ? rest : "";
 			if (["string", "str", "s", String].incl(form?.lower?.() || form))
 				return `${a[0]}${decimal}${rest}e+${dim(a)}`.replace(".e", "e");
 			else if (["number", "num", "n", Number].incl(form?.lower?.() || form))
-				return 1 * `${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
+				return +`${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
 			else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
 		}, BigInt.prototype.add = function add(arg) {
 			return this + BigInt(arg);
@@ -5020,7 +5213,7 @@ void (() => { "use strict";
 		} function num_encoder(numstr, warn=false) {
 			const ODD = len(numstr) % 2;
 			warn && isNaN(numstr) && console.warn("using non-numbers in num_encoder() causes loss of information");
-			return ODD+(numstr+(ODD?"0":"")).match(/../g).map(e=>`${e[0]}${len(`${1*e[0]+1*e[1]}`)===1?1*e[0]+1*e[1]:`${1*e[0]+1*e[1]}`[1]}`).join("");
+			return ODD+(numstr+(ODD?"0":"")).match(/../g).map(e=>`${e[0]}${len(`${+e[0]+ +e[1]}`)===1?+e[0]+ +e[1]:`${+e[0]+ +e[1]}`[1]}`).join("");
 
 			// output starts with 0 --> even input string length
 			// output starts with 1 --> odd input string length
@@ -5033,7 +5226,7 @@ void (() => { "use strict";
 			str = `${str}`;
 			let newstr = "";
 			for (let c of str) {
-				c = isNaN(c) ? c : (c*1).toString(2);
+				c = isNaN(c) ? c : Number(c).toString(2);
 				while (len(c) < 4) c = `0${c}`;
 				newstr += c;
 			}
@@ -5179,28 +5372,7 @@ void (() => { "use strict";
 	}
 })();
 
-void function sqrt(x) {
-	if (isNaN( x = Number(x) ) || x < 0) return NaN;
-	for (var ans = floor(x / 4), tmp = 1, i = 1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
-		ans != (ans += abs(x - (ans - tmp)**2) < abs(x - ans**2) ? -tmp :
-			abs(x - (ans + tmp)**2) < abs(x - ans**2) ? tmp : 0)
-	);
-	return ans;
-} void function nthrt(x, rt=2) {
-	if (isNaN( x = Number(x) ) || x < 0) return NaN;
-	for (var ans = floor(x / 2 / rt), tmp = 1, i = 1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
-		ans != (ans += abs(x - (ans - tmp)**rt) < abs(x - ans**rt) ? -tmp :
-			abs(x - (ans + tmp)**rt) < abs(x - ans**rt) ? tmp : 0)
-	);
-	return ans;
-} void function log(x, base=10) {
-	if (isNaN( x = Number(x) ) || isNaN( base = Number(base) )) return NaN;
-	for (var ans = floor(x / 2 / base), tmp = 1, i = 1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
-		ans !=(ans += abs(x - base**(ans - tmp)) < abs(x - base**ans) ? -tmp :
-			abs(x - base**(ans + tmp)) < abs(x - base**ans) ? tmp : 0)
-	);
-	return ans;
-} void function _pow(x) {
+void function _pow(x) {
 	if (!x) return [0];
 	if (x % 1) return NaN;
 	var negative = false;
@@ -5217,3 +5389,129 @@ void function sqrt(x) {
 	negative && arr.push(-arr.at(-1));
 	return arr;
 }
+/*var pow = */void(function create_pow() {
+	// TODO: Make dynamic
+	const pows = [
+		function pow0(x) {
+			const x0 = 1;
+			return x0;
+		}, function pow2(x) {
+			const x2 = x * x; // 1 * x2
+			return x2;
+		}, function pow4(x) {
+			const x2 = x  * x;
+			const x4 = x2 * x2;
+			return x4;
+		}, function pow8(x) {
+			const x2 = x  * x;
+			const x4 = x2 * x2;
+			const x8 = x4 * x4;
+			return x8;
+		}, function pow12(x) {
+			const x2  = x  * x;
+			const x4  = x2 * x2;
+			const x8  = x4 * x4;
+			const x12 = x8 * x4;
+			return x12;
+		}, function pow16(x) {
+			const x2  = x  * x;
+			const x4  = x2 * x2;
+			const x8  = x4 * x4;
+			const x16 = x8 * x8;
+			return x16;
+		}, function pow20(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x20 = x16 * x4;
+			return x20;
+		}, function pow24(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x24 = x16 * x8;
+			return x24;
+		}, function pow28(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x24 = x16 * x8;
+			const x28 = x24 * x4;
+			return x28;
+		}, function pow32(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x32 = x16 * x16;
+			return x32;
+		}, function pow36(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x32 = x16 * x16;
+			const x36 = x32 * x4;
+			return x36;
+		}, function pow40(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x32 = x16 * x16;
+			const x40 = x32 * x8;
+			return x40;
+		}, function pow44(x) {
+			const x2  = x   * x;
+			const x4  = x2  * x2;
+			const x8  = x4  * x4;
+			const x16 = x8  * x8;
+			const x32 = x16 * x16;
+			const x40 = x32 * x8;
+			const x44 = x40 * x4;
+			return x44;
+		},
+	]; return function pow(x, y) {
+		// the following observations are general. faster means less multiplications.
+		// exponents closer to 2^x are faster
+		// even exponents are faster than odd
+		// smaller exponents are faster
+		if (y % 1) return NaN;
+		var negative = false;
+		if (y < 0) {
+			negative = true;
+			y *= -1;
+		}
+		var odd = !!(y % 2), output, index, multiply = false;
+		if (!y || y === 1) index = 0;
+		else if (y === 2 || y === 3) index = 1;
+		else if (!odd) {
+			index = y/4 + 1;
+			if (index % 1) {
+				index = floor(index);
+				multiply = true;
+			}
+		} else { // y is odd
+			index = y/4 + 1;
+			if (index % 1) {
+				index % 1 === .75 && (multiply = true);
+				index = floor(index);
+			}
+		}
+		if (x > 9 && [2, 6, 10, 14, 18].incl(x % 20)) output = pows[ index ] (x);
+		else {
+			if (index >= len(pows)) {
+				// default
+				var output = pows.at(-1) (x); // use as much of the efficiency as possible
+				for (index = 2 * (index - dim(pows)); index --> 0 ; output *= x);
+				return negative ? 1 / output : output;
+			}
+			output = pows[ index ] (x);
+		}
+		output *= (multiply ? x * x : 1) * (odd ? x : 1);
+		return negative ? 1 / output : output;
+	}
+})();
