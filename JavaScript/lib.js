@@ -13,15 +13,15 @@ void (() => { "use strict";
 		 * "None" will be chosen instead.
 		 * The defaults are the boolean value true, unless otherwise noted on the same line in a comment
 		 * All alerts happen using console.log except for conflict stuff.
-		 * 
+
 		 * Input Math Variable Options:
-		 * aMath (all)
-		 * bMath (bigint)
-		 * cMath (complex)
-		 * cfsMath (complex fractional string)
-		 * fMath (fraction)
-		 * rMath (real numbers)
-		 * sMath (string)
+		   - aMath   (all)
+		   - bMath   (bigint)
+		   - cMath   (complex)
+		   - cfsMath (complex fractional string)
+		   - fMath   (fraction)
+		   - rMath   (real numbers)
+		   - sMath   (string)
 		**/
 
 		var
@@ -43,7 +43,7 @@ void (() => { "use strict";
 		, fMath_Help_Argument         = "default"
 		, fMath_DegTrig_Argument      = "default"
 		, sMath_Help_Argument         = "default"
-		, sMath_Comparatives_Argument = "default"
+		, sMath_Comparatives_Argument = "default" // only recommended to be false if you are planning to never use sMath at all
 		, rMath_DegTrig_Argument      = "default"
 		, rMath_Help_Argument         = "default"
 		, rMath_Comparatives_Argument = "default"
@@ -199,7 +199,317 @@ void (() => { "use strict";
 			type() {
 				return "linkedlist";
 			}
-		}, "Image": (function create_Image() {
+		}, "Logic": new (class Logic {
+			constructor(bitwise, comparatives, help) {
+				bitwise === "default" && (bitwise = "bit");
+				comparatives === "default" && (comparatives = null);
+				help === "default" && (help = "help");
+
+				if (bitwise != null) {
+					// TODO: Add the other logic gates to bitwise
+					this[bitwise] = {
+						shr: (a, b) => a >> b,
+						shr2: (a, b) => a >>> b,
+						shl: (a, b) => a << b,
+						not: (...a) => len(a = a.flatten()) == 1 ? ~a[0] : a.map(b => ~b),
+						and: function and(...a) {
+							return type(a[0], 1) !== "arr" ?
+								this.xor(a, len(a)) :
+								this.xor(a[0], len(a[0]));
+						},
+						nand: (a, b) => null,
+						or: function or(a, b) { return this.xor([a, b], [1, 2]) },
+						nor: function nor(...b) { return this.xor(b, [0]) },
+						xor: (ns, range=[1]) => {
+							if (isNaN( (ns = ns.tofar()).join("") )) throw TypeError("numbers req. for 1st parameter");
+							if (isNaN( (range = range.tofar()).join("") )) throw TypeError("numbers req. for 2nd parameter");
+							// fix range
+							const min = rMath.min(range), max = rMath.max(range);
+							range = [
+								min < 0 ? 0 : int(min),
+								max > len(ns) - 1 ? len(ns) - 1 : int(max)
+							];
+							ns = ns.map(b => b.toString(2));
+							const maxlen = rMath.max( ns.map(b => len(b)) );
+							// normalize the string lengths
+							ns.for((e, i) => {
+								while (len(e) < maxlen)
+									e = `0${e}`;
+								ns[i] = e;
+							});
+							// get the totals per bit, and store into 'bits'
+							for (var str_i = 0, arr_i = 0, bits = "", total, output = "";
+								str_i < maxlen;
+								str_i++, bits += total
+							) {
+								for (arr_i = 0, total = 0; arr_i < len(ns); arr_i++)
+									total += ns[arr_i][str_i] == 1;
+							}
+
+							// get the true or false per bit ans stor into 'output'
+							for (str_i = 0; str_i < len(bits); str_i++)
+								output += (Number(bits[str_i])).inRange(range[0], range[1]) ? 1 : 0;
+
+							return Number(`0b${output}`);
+						},
+
+						nxor: function xnor(a, b) {
+							return this.not(// TODO: Figure out what this is supposed to be for
+
+							);
+						},
+						imply: null,
+						nimply: null,
+					}
+				}
+				if (comparatives != null) {
+					this[comparatives] = {
+						gt: (a, b) => a > b,
+						lt: (a, b) => a < b,
+						get: (a, b) => a >= b,
+						let: (a, b) => a <= b,
+						leq: (a, b) => a == b,
+						seq: (a, b) => a === b,
+						lneq: (a, b) => a != b,
+						sneq: (a, b) => a !== b,
+					}
+				}
+				if (help != null) {
+					// TODO: finish Logic help text
+					this[help] = {
+						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
+						and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
+						nand: "Takes any number of arguments either directly or in an array. returns true as long as not all the arguments coerce to true",
+						or: "takes any amount of arguments either directly or in an array. returns true if any of the arguments coerce to true. Logical OR gate",
+						nor: "Takes any amount of arguments either directly or in an array. returns true if all the inputs are false. Logical NOR gate",
+						xor: "Takes any amount of arguments either directly or in an array.  returns true if half of the arguments coerce to true. Logical XOR gate.",
+						xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
+						nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
+						nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
+						iff: "Takes 2 arguments. retruns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
+						if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
+						imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
+						nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
+						xnor: "returns false",
+						is: "Takes any number of arguments. returns true if all the inputs are exactly equal to the first argument, although, objects can be different objects with the same values",
+						isnt: "Takes any number of arguments. returns true as long as any of the arguments is different from any other",
+						near: "Takes 3 paramaters.  1: fist number.  2: second number.  3?: range.  returns true if the numbers are in the range of eachother. the default range is ±3e-16, which should be enough to account for rounding errors. the same as python's math.isclose() function but with a different default range.",
+						bitwise: {
+							xor: "adds up the numbers in the first array bitwise, and returns 1 for bits in range of, or equal to the second array, returns zero for the others, and returns the answer in base 10. xor([a,b])==a^b.",
+							not:    "if there is one argument, returns ~argument.  if there is more than 1 argument, returns an array. example: Logic.bit.not(4,5,-1) returns [~4,~5,~-1]",
+							nil:    "if all of the inputs are zero for a given bit, it outputs one. Inverse &.",
+							and:    "a & b",
+							or:     "a | b",
+							left:   "a << b",
+							right:  "a >> b",
+							right2: "a >>> b",
+						},
+						equality: {
+							gt: "greater than (>)",
+							get: "greater than or equal to (>=)",
+							lt: "less than (<)",
+							let: "less than or equal to (<=)",
+							leq: "loose equality (==)",
+							seq: "strict equality (===)",
+							lneq: "loose non-equality (!=)",
+							sneq: "strict non-equality (!==)"
+						}
+					}
+				}
+			}
+			not(...a) {// NOT gate
+				// +---+-----+
+				// | p | ¬ p |
+				// +---+-----+
+				// | T |  F  |
+				// | F |  T  |
+				// +---+-----+
+				return len(a) == 1 ? !a[0] : a.map(b=>!b);
+			}
+			and(...a) {// AND gate
+				// +---+---+-------+
+				// | p | q | p ∧ q |
+				// +---+---+-------+
+				// | T | T |   T   |
+				// | T | F |   F   |
+				// | F | T |   F   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json?.stringify?.(a = a?.flatten?.()) === "[]") 
+					return !1;
+				for (var i = len(a); i --> 0 ;)
+					if (a[i] == !1) return !1;
+				return !0;
+			}
+			nand(...a) {// not (p and q)
+				// +---+---+-------+
+				// | p | q | p ⊼ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   T   |
+				// +---+---+-------+
+				return !this.and(a);
+			}
+			or(...a) {// OR gate
+				// +---+---+-------+
+				// | p | q | p ∨ q |
+				// +---+---+-------+
+				// | T | T |   T   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json.stringify(a = a.flatten()) === "[]") return !1;
+				for (var i = len(a); i --> 0 ;)
+					if (a[i] == !0) return !0;
+				return !1;
+			}
+			nor(...a) {// not (p or q)
+				// +---+---+-------+
+				// | p | q | p ⊽ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   F   |
+				// | F | T |   F   |
+				// | F | F |   T   |
+				// +---+---+-------+
+				return !this.or(a);
+			}
+			xor(...a) {// exclusive or gate
+				// +---+---+-------+
+				// | p | q | p ⊻ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json.stringify(a = a.flatten()) === "[]")
+					return !1;
+				return len(a.filter(b => b == !0)) == len(a) / 2
+			}
+			xor2(...a) {// exclusive or gate
+				// +---+---+-------+
+				// | p | q | p ⊻ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json.stringify(a = a.flatten()) === "[]")
+					return !1;
+				return len(a.filter(b => b == !0)) == len(a) % 2 > 0
+			}
+			nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
+				// +---+---+----------+
+				// | p | q | p xnor q |
+				// +---+---+----------+
+				// | T | T |     T    |
+				// | T | F |     F    |
+				// | F | T |     F    |
+				// | F | F |     T    |
+				// +---+---+----------+
+				// should be nxor because it is not xor and not exclusive nor
+				return !this.xor(a);
+			}
+			nxor2(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
+				// +---+---+----------+
+				// | p | q | p xnor q |
+				// +---+---+----------+
+				// | T | T |     T    |
+				// | T | F |     F    |
+				// | F | T |     F    |
+				// | F | F |     T    |
+				// +---+---+----------+
+				// should be nxor because it is not xor and not exclusive nor
+				return !this.xor2(a);
+			}
+			iff(...a) {// boolean algebra name for 'if and only if' (↔, <-->); not(p xor q)
+				// +---+---+----------+
+				// | p | q | p xnor q |
+				// +---+---+----------+
+				// | T | T |     T    |
+				// | T | F |     F    |
+				// | F | T |     F    |
+				// | F | F |     T    |
+				// +---+---+----------+
+				return !this.xor(a);
+			}
+			if(a, b) {// boolean algebra name for 'IMPLY gate'.
+				// +---+---+---------+
+				// | p | q | p --> q |
+				// +---+---+---------+
+				// | T | T |    T    |
+				// | T | F |    F    |
+				// | F | T |    T    |
+				// | F | F |    T    |
+				// +---+---+---------+
+				return this.imply(a, b);
+			}
+			imply(a, b) {// IMPLY gate; P --> Q
+				// +---+---+---------+
+				// | p | q | p --> q |
+				// +---+---+---------+
+				// | T | T |    T    |
+				// | T | F |    F    |
+				// | F | T |    T    |
+				// | F | F |    T    |
+				// +---+---+---------+
+				return a ? b == !0 : !0;
+			}
+			nimply(a, b) {// not (P --> Q)
+				// +---+---+---------+
+				// | p | q | p ->/ q |
+				// +---+---+---------+
+				// | T | T |    F    |
+				// | T | F |    T    |
+				// | F | T |    F    |
+				// | F | F |    F    |
+				// +---+---+---------+
+				return !this.if(a, b);
+			}
+			xnor() {// exclusive-nor but what it does what it says it does
+				// for xnor to return true:
+				// the inputs have to both be false, hence the 'nor' part.
+				// the inputs have to both be different, hence the 'exclusive' part.
+				// +---+---+-------------+---------+
+				// | p | q | p nor q (r) | excls r |
+				// +---+---+-------------+---------+
+				// | T | T |    False    |  False  |
+				// | T | F |    False    |  False  |
+				// | F | T |    False    |  False  |
+				// | F | F |    True     |  False  |
+				// +---+---+-------------+---------+
+				return !1;
+			}
+			is(...a) {// Object.is() but more than 2 inputs
+				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
+				for (var i = len(a); i --> 0 ;)
+					if (a[i] !== a[0]) return !1;
+				return !0;
+			}
+			isnt(...a) {// !Object.is() but more than 2 inputs and broken
+				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
+				for (var i = len(a) - 1; i --> 0;) {
+					if ( len(a.filter(b => b === a.last())) !== 1 )
+						return !1;
+					a.pop();
+				}
+				return !0;
+			}
+			near(n1, n2, range=Number.EPSILON) {// same as python math.isclose() with different default range
+				return n1 > n2 - range && n1 < n2 + range ?
+					!0 :
+					!1;
+			}
+		})(
+			Logic_BitWise_Argument,
+			Logic_Comparatives_Argument,
+			Logic_Help_Argument
+		), "Image": (function create_Image() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
 			return function Image(width, height, options={}) {
@@ -801,16 +1111,15 @@ void (() => { "use strict";
 		, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
 		};
 
-
 		LIBRARY_FUNCTIONS[Symbol.for("<0x200b>")] = "​"; // zero width space
 		LIBRARY_FUNCTIONS[Symbol.for("<0x08>")] = ""; // \b
 		Number.fpart = LIBRARY_FUNCTIONS.fpart;
 		Number.EPSILON == null && (Number.EPSILON = 2**-52);
-		for (const s of Object.keys(LIBRARY_FUNCTIONS))
-			this[s] = LIBRARY_FUNCTIONS[s];
 	} {// Conflict and Library Functions
-		LIBRARY_FUNCTIONS = Object.keys(LIBRARY_FUNCTIONS);
-		var CONFLICT_ARR = LIBRARY_FUNCTIONS.filter(e => this[e] != null);
+		var CONFLICT_ARR = Object.keys(LIBRARY_FUNCTIONS).concat([
+			"aMath", "bMath", "cMath", "fMath", "cfsMath", "rMath", "sMath", "MathObjects"
+		]).filter(e => e != "Image" && this[e] != null);
+		for (const s of Object.keys(LIBRARY_FUNCTIONS)) this[s] = LIBRARY_FUNCTIONS[s];
 		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
 		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
 		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
@@ -989,7 +1298,7 @@ void (() => { "use strict";
 			})();
 		} else if (KeyLogger_Alert_Unused && KeyLogger_Alert_Unused !== "default")
 			console.log("keylogger launch failed due to library settings");
-	} {// Math and Logic Variables
+	} {// Math Variables
 		MATH_LOG_DEFAULT_BASE   === "default" && (MATH_LOG_DEFAULT_BASE   = 10 );
 		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
 		this.sMath = new (class stringRealMath {
@@ -1521,19 +1830,19 @@ void (() => { "use strict";
 			} isFloatN(snum="0.0") {
 				return snum.at(-2) +
 					snum.at(-1) !== ".0";
-			} min(...args) {
-				if (!len(args)) return "0.0";
-				args = args.flatten();
-				for (var min = args[0], i = len(args); i --> 1 ;)
-					if (this.eq.lt(args[i], min))
-						min = args[i];
+			} min(...snums) {
+				if (!len(snums)) return "0.0";
+				snums = snums.flatten();
+				for (var min = snums[0], i = len(snums); i --> 1 ;)
+					if (this.eq.lt(snums[i], min))
+						min = snums[i];
 				return min;
-			} max(...args) {
-				if (!len(args)) return "0.0";
-				var args = args.flatten();
-				for (var max = args[0], i = len(args); i --> 1 ;)
-					if (this.eq.gt(args[i], max))
-						max = args[i];
+			} max(...snums) {
+				if (!len(snums)) return "0.0";
+				var snums = snums.flatten();
+				for (var max = snums[0], i = len(snums); i --> 1 ;)
+					if (this.eq.gt(snums[i], max))
+						max = snums[i];
 				return max;
 			} _lmgf(t="lcm", ...ns) {
 				// throw Error("not implemented");
@@ -1544,7 +1853,7 @@ void (() => { "use strict";
 				if (t[0] === "g") {
 					for (const e of ns)
 						if (this.isFloatN(e))
-							return 1;
+							return "1.0";
 				} else if (t[0] === "l") {
 					for (const e of ns) {
 						if (this.isFloatN(e))
@@ -1586,17 +1895,17 @@ void (() => { "use strict";
 				return number === int(number) ?
 					number + ".0" :
 					number + "";
-			} lcm(...args) {
+			} lcm(...snums) {
 				return this._lmgf(
-					"lcm", ...args
+					"lcm", ...snums
 				)
-			} gcd(...args) {
+			} gcd(...snums) {
 				return this._lmgf(
-					"gcd", ...args
+					"gcd", ...snums
 				)
-			} gcf(...args) {
+			} gcf(...snums) {
 				return this._lmgf(
-					"gcf", ...args
+					"gcf", ...snums
 				)
 			}
 		})(
@@ -1695,6 +2004,7 @@ void (() => { "use strict";
 				*/// TODO: Update rMath.help
 				if (help) this.help = {
 					null: "If a value is null or missing, then you should just directly check what the function does.",
+					undefined: "If a value is undefined, It means that it was added and not comleted, than removed, but it is planned to reimplement it at a later date.",
 					trig: { // update trig
 						sin: "1 argument. returns sin(angle), using the taylor series definition of sin. (radians)",
 						cos: "1 argument. returns cos(angle), using the taylor series definition of cos. (radians)",
@@ -1842,19 +2152,19 @@ void (() => { "use strict";
 					log10: "1 argument. base 10 logarithm",
 					logpi: "1 argument. base π logarithm",
 					log1p: "1 argument. returns ln(1 + x)",
-					clz32: "takes one parameter.  same as original Math.clz32. count leading zeros 32 [bit]",
+					clz32: "takes one parameter.  same as original Math.clz32. count leading zeros for a 32 bit integer. -2147483647 (1 - 2^31) and 4294967295 (2^32 - 1) both return zero.",
 					clbz: "takes one parameter.  same as original Math.clz32. stands for count leading binary zeros",
 					fact: "takes one parameter.  returns the factorial of a number. Also works for floats.",
 					factorial: "1 numeric argument (x). returns x!. see fact and ifact",
-					// start here
-					sgn: "takes one parameter.  returns the sign of a number.  If input is NaN, returns NaN.  If  input == 0, returns the input.  If the input is positive, returns 1.  If the input is negative, returns -1.",
+					sgn: "takes one parameter.  returns the sign of a number.  If input is NaN, returns NaN. If  input == 0, returns the input.  If the input is positive, returns 1.  If the input is negative, returns -1. sgn(-0) == -0.",
 					abs: "takes one parameter.  returns sign(input) * input, which always returns a positive number or zero.",
+					cabs: "Takes 1 complex argument. returns cMath.abs(argument). returns a real number",
 					sum: "stands for summation.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to sum each time, in the form of a function that takes in one parameter. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
 					infsum: "Takes 3 arguments. 1: start.  2: function.  3: increment.  start is defaulted to 0, function is defaulted to n=>1/n, and the increment is defaulted to 1.  Stands for infinite summation.  Will only return an answer if it converges, otherwise it will kepp calculating eternally",
 					prod: "stands for product operator.  Takes 4 arguments.  1: Start value.  2: End value.  3: What to multiply by each time, in the form of a function with an input and output. 4: increment, which is 1 is normal summations, but could be useful to change in other situations.  The increment is defaulted to 1, and the function is defaulted to just output the input. The start and end parameters are inclusive.",
-					gamma: "stands for gamma function. gamma(x) = factorial(x-1).  Takes three parameters.  1: the number to take the gamma function of.  2: accuracy of the function (default is 1000). 3: rest parameter that does nothing.  if the number is an integer returns ifact(n-1). else, it does the integral from 0 to a, of x**(n-1)/𝑒**x.  if this is Infinity, return NaN, otherwise, it returns the answer.",
-					igammal: null,
-					igammau: null,
+					gamma: "stands for gamma function. gamma(x) = factorial(x-1).  Takes three parameters.  1: the number to take the gamma function of.  2: accuracy of the function (default is 1000). 3: rest parameter that does nothing.  if the number is an integer returns ifact(n-1). else, it does the integral from 0 to a, of x**(n-1)/𝑒**x.  if this is Infinity, it returns NaN, otherwise, it returns the answer.",
+					igammal: "Takes 2 arguments. a number and the increment for the integral. lower incomplete gamma function.",
+					igammau: "Takes 2 arguments. a number and the increment for the integral. upper incomplete gamma function.",
 					_: "Takes 1 argument. returns 1 / argument",
 					inverse: "Takes 1 argument. returns 1 / argument",
 					int: "stands for integral.  Takes 4 arguments.  1: starting value (inclusive).  2: ending value (exclusive).  3: what you are taking the integral of, in the form of a function with an input, and an output.  4: rectangle size, or in other words, the accuracy, where smaller is more accurate.  the accuracy is defaulted to 0.001, and it is defaulted to taking the integral of y=x.",
@@ -1866,37 +2176,37 @@ void (() => { "use strict";
 					min: "Takes any amount of arguments directly, either directly or in one or many array(s).  returns the smallest number inputed.  Although, if the last parameter is not either a number or a bigint, that value will be returned instead.",
 					mean: "Takes any amount of arguments, either directly or in one or many array(s).  adds up the arguments, and divides by the number of arguments present. and returns the answer.",
 					median: "Takes any amount of arguments, either directly or in one or many array(s).  it removes items from the end and beginning until there are either one or two elements remaining. if there is one, it returns it.  if there are two, it returns the average of them.",
-					mode: null,
+					mode: "takes any amount of arguments either directly or in an array. returns the value that is the most common of the arguments.",
 					mad: "Stands for mean absolute deviation.  takes any amount of arguments, either directly or in one or many array(s).  gets the mean of the arguments.  then finds the mean of the absolute deviation from the mean.",
 					isPrime: "Takes 1 input, and returns true if it is prime, false if it is composite.",
 					_lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the parameters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
 					linReg: "Takes 3 paramates. finds the line of best fit (y = mx + b), given the x and y coordinates as arrays. 1: x-coordinates.  2: y-coordinates.  3: if this is \"obj\", then it returns an object, otherwise it returns it as a string",
 					pascal: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
 					fib: "Stands for fibonacci. returns the fibonacci sequence number of the inputed index.  If floats are inputed, then it will effectively return fib(ceil(input)).  Currently negative indexes are not implemented.  fib(0) returns 0, fib(1) returns 1, fib(2) returns 1, fib(3) returns 2, etc.",
-					fibonacci: null,
-					lucas: null,
+					fibonacci: "Takes 1 numerical argument (n). returns rMath.fib(n).",
+					lucas: "Takes 1 numerical argument (n). returns the nth number in the lucas series.",
 					primeFactorInt: "Takes 1 numberic argument, and returns a list of the prime factors",
 					findFactors: "Takes 1 integer argument and finds all integer factors of said integer.",
 					iMaxFactor: "Takes 1 integer argument and returns the largest factor of said integer",
-					synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant",
+					synthDiv: "Takes 2 arguments. 1: coefficients of the variables. 2: the divisor.  the equation should take the form of ax^n + bx^(n-1) + cx^(n-2) + ... + constant, with the '^'s here standing in for exponentiation.",
 					simpRad: "Takes 1 integer argument (number under radical) and returns, as a string, the radical in simplified form",
 					PythagTriple: "Takes one argument. 1: max size. finds all principle pythagorean triples such that a**2 + b**2 = c**2, a < max size, and b < max size, and a, b, and c are all integers.",
-					iPythagorean: null,
-					neg: null,
-					ssgn: null,
-					ssign: null,
-					sabs: null,
+					iPythagorean: "Takes 3 arguments. the first 2 are just generic variables for the function (a, m). the last argument is the form. if the form is Array, it returns an array of [a,b,c], otherwise it returns an object. solves for a^2 + b^2 = (b+m)^2. only returns integer pythagorean triples. (a+m) mod₀ 2 = 0  <==>  formula works. or in english, if (a+m) is even, the formula works, and vice verca.",
+					neg: "takes 2 arguments. the first is the number to negate and the second argument is whether or not to return a number or a string. true returns a number, false returns a string.",
+					ssgn: "Takes 1 string number argument. returns as a number, the sign of the input. sgn('-0.0') == -1",
+					ssign: "Takes 1 string number argument. returns as a number, the sign of the input. sgn('-0.0') == -1",
+					sabs: "Takes 1 string number argument. returns the absolute value of the input. see sMath.abs",
 					add: "Takes 4 arguments.  1: a number (a).  2: a number (b).  3:boolean, true returns a number, false returns a string.  4:number, decimal precision. returns a + b with no floating point arithmetic errors. if number is false, it returns a string with the precision of the last argument. a and b default to 0. if precsion is not a number, it becomes infinity.",
 					sub: null,
 					mul: null,
 					div: "Takes 4 arguments.  1:number, numerator.  2:number, denominator.  3:boolean, true returns a number, false returns a string.  4:number, decimal precision.  returns the numerator divided by the denominator with no floating point errors.  numerator defaults to 0, and denominator defaults to 1",
-					mod2: null,
-					mod: "Takes two arguments (a,b).  similar to a%b.",
+					mod2: "Takes 3 arguments (a, n, k). returns a % n + k through iteration. mod() is better in every way. the built in '%' operator is probably even faster as well.",
+					mod: "Takes 3 arguments (a, n, k).  similar to a%n + k.",
 					parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
 					nCr: "Stands for n Choose r. takes 2 arguments. same as python's math.comb()",
-					comb: null,
+					comb: "2 arguments. n, k. returns nCr(n, k). stands for combination",
 					nPr: "Stands for n Permute r. takes 2 arguments.",
-					perm: null,
+					perm: "2 arguments. n, k. returns nPr(n, k). stands for permutation",
 					isClose: "Takes 3 arguments. 1: number a. 2: number b.  3: number c. if a third argument is not provided, it will be set to Number.EPSILON (2^-52).  returns true if number a is in range c of number b, otherwise it returns false.",
 					complex: "Creates a complex number",
 					erf: "Takes one numeric argument \"z\". returns 2/√π ∫(0, z, 1/𝑒^t^2)dt. In mathematics, it is called the \"Gauss error function\"",
@@ -1970,10 +2280,10 @@ void (() => { "use strict";
 					tempConv: null,
 					coprime: null,
 					ncoprime: null,
-					cumsum: "",
+					cumsum: null,
 					set: null,
 					setUnion: null,
-					piApprox: null,
+					piApprox: undefined,
 				}; if (degTrig) this.deg = {
 					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sin(θ*π/180),
 					cos: θ => isNaN( θ = Number(θ) ) ? θ : this.cos(θ*π/180),
@@ -2357,6 +2667,10 @@ void (() => { "use strict";
 				return isNaN( n = Number(n) ) ?
 					NaN :
 					this.sgn(n) * n;
+			} cabs(cnum) {
+				return cMath.abs(
+					cnum
+				);
 			} sum(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( last = Number(last) )) return NaN;
@@ -2859,7 +3173,7 @@ void (() => { "use strict";
 					isNaN( k = Number(k) ) ?
 					NaN :
 					this.nPr(n, k) / this.fact(k);
-			} comb(m, k) {
+			} comb(n, k) {
 				// idk, python uses "comb" for some reason. probably means "combination"
 				return this.nCr(n, k);
 			} nPr(n, k) {
@@ -4362,317 +4676,8 @@ void (() => { "use strict";
 			fMath   : fMath,
 			rMath   : rMath,
 			sMath   : sMath,
-		}; this.Logic = new (class Logic {
-			constructor(bitwise, comparatives, help) {
-				bitwise === "default" && (bitwise = "bit");
-				comparatives === "default" && (comparatives = null);
-				help === "default" && (help = "help");
-
-				if (bitwise != null) {
-					// TODO: Add the other logic gates to bitwise
-					this[bitwise] = {
-						shr: (a, b) => a >> b,
-						shr2: (a, b) => a >>> b,
-						shl: (a, b) => a << b,
-						not: (...a) => len(a = a.flatten()) == 1 ? ~a[0] : a.map(b => ~b),
-						and: function and(...a) {
-							return type(a[0], 1) !== "arr" ?
-								this.xor(a, len(a)) :
-								this.xor(a[0], len(a[0]));
-						},
-						nand: (a, b) => null,
-						or: function or(a, b) { return this.xor([a, b], [1, 2]) },
-						nor: function nor(...b) { return this.xor(b, [0]) },
-						xor: (ns, range=[1]) => {
-							if (isNaN( (ns = ns.tofar()).join("") )) throw TypeError("numbers req. for 1st parameter");
-							if (isNaN( (range = range.tofar()).join("") )) throw TypeError("numbers req. for 2nd parameter");
-							// fix range
-							const min = rMath.min(range), max = rMath.max(range);
-							range = [
-								min < 0 ? 0 : int(min),
-								max > len(ns) - 1 ? len(ns) - 1 : int(max)
-							];
-							ns = ns.map(b => b.toString(2));
-							const maxlen = rMath.max( ns.map(b => len(b)) );
-							// normalize the string lengths
-							ns.for((e, i) => {
-								while (len(e) < maxlen)
-									e = `0${e}`;
-								ns[i] = e;
-							});
-							// get the totals per bit, and store into 'bits'
-							for (var str_i = 0, arr_i = 0, bits = "", total, output = "";
-								str_i < maxlen;
-								str_i++, bits += total
-							) {
-								for (arr_i = 0, total = 0; arr_i < len(ns); arr_i++)
-									total += ns[arr_i][str_i] == 1;
-							}
-
-							// get the true or false per bit ans stor into 'output'
-							for (str_i = 0; str_i < len(bits); str_i++)
-								output += (Number(bits[str_i])).inRange(range[0], range[1]) ? 1 : 0;
-
-							return Number(`0b${output}`);
-						},
-
-						nxor: function xnor(a, b) {
-							return this.not(// TODO: Figure out what this is supposed to be for
-
-							);
-						},
-						imply: null,
-						nimply: null,
-					}
-				}
-				if (comparatives != null) {
-					this[comparatives] = {
-						gt: (a, b) => a > b,
-						lt: (a, b) => a < b,
-						get: (a, b) => a >= b,
-						let: (a, b) => a <= b,
-						leq: (a, b) => a == b,
-						seq: (a, b) => a === b,
-						lneq: (a, b) => a != b,
-						sneq: (a, b) => a !== b,
-					}
-				}
-				if (help != null) {
-					// TODO: finish Logic help text
-					this[help] = {
-						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
-						and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
-						nand: "Takes any number of arguments either directly or in an array. returns true as long as not all the arguments coerce to true",
-						or: "takes any amount of arguments either directly or in an array. returns true if any of the arguments coerce to true. Logical OR gate",
-						nor: "Takes any amount of arguments either directly or in an array. returns true if all the inputs are false. Logical NOR gate",
-						xor: "Takes any amount of arguments either directly or in an array.  returns true if half of the arguments coerce to true. Logical XOR gate.",
-						xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
-						nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						iff: "Takes 2 arguments. retruns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
-						if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
-						imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
-						nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
-						xnor: "returns false",
-						is: "Takes any number of arguments. returns true if all the inputs are exactly equal to the first argument, although, objects can be different objects with the same values",
-						isnt: "Takes any number of arguments. returns true as long as any of the arguments is different from any other",
-						near: "Takes 3 paramaters.  1: fist number.  2: second number.  3?: range.  returns true if the numbers are in the range of eachother. the default range is ±3e-16, which should be enough to account for rounding errors. the same as python's math.isclose() function but with a different default range.",
-						bitwise: {
-							xor: "adds up the numbers in the first array bitwise, and returns 1 for bits in range of, or equal to the second array, returns zero for the others, and returns the answer in base 10. xor([a,b])==a^b.",
-							not:    "if there is one argument, returns ~argument.  if there is more than 1 argument, returns an array. example: Logic.bit.not(4,5,-1) returns [~4,~5,~-1]",
-							nil:    "if all of the inputs are zero for a given bit, it outputs one. Inverse &.",
-							and:    "a & b",
-							or:     "a | b",
-							left:   "a << b",
-							right:  "a >> b",
-							right2: "a >>> b",
-						},
-						equality: {
-							gt: "greater than (>)",
-							get: "greater than or equal to (>=)",
-							lt: "less than (<)",
-							let: "less than or equal to (<=)",
-							leq: "loose equality (==)",
-							seq: "strict equality (===)",
-							lneq: "loose non-equality (!=)",
-							sneq: "strict non-equality (!==)"
-						}
-					}
-				}
-			}
-			not(...a) {// NOT gate
-				// +---+-----+
-				// | p | ¬ p |
-				// +---+-----+
-				// | T |  F  |
-				// | F |  T  |
-				// +---+-----+
-				return len(a) == 1 ? !a[0] : a.map(b=>!b);
-			}
-			and(...a) {// AND gate
-				// +---+---+-------+
-				// | p | q | p ∧ q |
-				// +---+---+-------+
-				// | T | T |   T   |
-				// | T | F |   F   |
-				// | F | T |   F   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json?.stringify?.(a = a?.flatten?.()) === "[]") 
-					return !1;
-				for (var i = len(a); i --> 0 ;)
-					if (a[i] == !1) return !1;
-				return !0;
-			}
-			nand(...a) {// not (p and q)
-				// +---+---+-------+
-				// | p | q | p ⊼ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   T   |
-				// +---+---+-------+
-				return !this.and(a);
-			}
-			or(...a) {// OR gate
-				// +---+---+-------+
-				// | p | q | p ∨ q |
-				// +---+---+-------+
-				// | T | T |   T   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]") return !1;
-				for (var i = len(a); i --> 0 ;)
-					if (a[i] == !0) return !0;
-				return !1;
-			}
-			nor(...a) {// not (p or q)
-				// +---+---+-------+
-				// | p | q | p ⊽ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   F   |
-				// | F | T |   F   |
-				// | F | F |   T   |
-				// +---+---+-------+
-				return !this.or(a);
-			}
-			xor(...a) {// exclusive or gate
-				// +---+---+-------+
-				// | p | q | p ⊻ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]")
-					return !1;
-				return len(a.filter(b => b == !0)) == len(a) / 2
-			}
-			xor2(...a) {// exclusive or gate
-				// +---+---+-------+
-				// | p | q | p ⊻ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]")
-					return !1;
-				return len(a.filter(b => b == !0)) == len(a) % 2 > 0
-			}
-			nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
-				// +---+---+----------+
-				// | p | q | p xnor q |
-				// +---+---+----------+
-				// | T | T |     T    |
-				// | T | F |     F    |
-				// | F | T |     F    |
-				// | F | F |     T    |
-				// +---+---+----------+
-				// should be nxor because it is not xor and not exclusive nor
-				return !this.xor(a);
-			}
-			nxor2(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
-				// +---+---+----------+
-				// | p | q | p xnor q |
-				// +---+---+----------+
-				// | T | T |     T    |
-				// | T | F |     F    |
-				// | F | T |     F    |
-				// | F | F |     T    |
-				// +---+---+----------+
-				// should be nxor because it is not xor and not exclusive nor
-				return !this.xor2(a);
-			}
-			iff(...a) {// boolean algebra name for 'if and only if' (↔, <-->); not(p xor q)
-				// +---+---+----------+
-				// | p | q | p xnor q |
-				// +---+---+----------+
-				// | T | T |     T    |
-				// | T | F |     F    |
-				// | F | T |     F    |
-				// | F | F |     T    |
-				// +---+---+----------+
-				return !this.xor(a);
-			}
-			if(a, b) {// boolean algebra name for 'IMPLY gate'.
-				// +---+---+---------+
-				// | p | q | p --> q |
-				// +---+---+---------+
-				// | T | T |    T    |
-				// | T | F |    F    |
-				// | F | T |    T    |
-				// | F | F |    T    |
-				// +---+---+---------+
-				return this.imply(a, b);
-			}
-			imply(a, b) {// IMPLY gate; P --> Q
-				// +---+---+---------+
-				// | p | q | p --> q |
-				// +---+---+---------+
-				// | T | T |    T    |
-				// | T | F |    F    |
-				// | F | T |    T    |
-				// | F | F |    T    |
-				// +---+---+---------+
-				return a ? b == !0 : !0;
-			}
-			nimply(a, b) {// not (P --> Q)
-				// +---+---+---------+
-				// | p | q | p ->/ q |
-				// +---+---+---------+
-				// | T | T |    F    |
-				// | T | F |    T    |
-				// | F | T |    F    |
-				// | F | F |    F    |
-				// +---+---+---------+
-				return !this.if(a, b);
-			}
-			xnor() {// exclusive-nor but what it does what it says it does
-				// for xnor to return true:
-				// the inputs have to both be false, hence the 'nor' part.
-				// the inputs have to both be different, hence the 'exclusive' part.
-				// +---+---+-------------+---------+
-				// | p | q | p nor q (r) | excls r |
-				// +---+---+-------------+---------+
-				// | T | T |    False    |  False  |
-				// | T | F |    False    |  False  |
-				// | F | T |    False    |  False  |
-				// | F | F |    True     |  False  |
-				// +---+---+-------------+---------+
-				return !1;
-			}
-			is(...a) {// Object.is() but more than 2 inputs
-				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
-				for (var i = len(a); i --> 0 ;)
-					if (a[i] !== a[0]) return !1;
-				return !0;
-			}
-			isnt(...a) {// !Object.is() but more than 2 inputs and broken
-				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
-				for (var i = len(a) - 1; i --> 0;) {
-					if ( len(a.filter(b => b === a.last())) !== 1 )
-						return !1;
-					a.pop();
-				}
-				return !0;
-			}
-			near(n1, n2, range=Number.EPSILON) {// same as python math.isclose() with different default range
-				return n1 > n2 - range && n1 < n2 + range ?
-					!0 :
-					!1;
-			}
-		})(
-			Logic_BitWise_Argument,
-			Logic_Comparatives_Argument,
-			Logic_Help_Argument
-		); aMath.aMath = aMath; aMath.bMath = bMath; aMath.cMath = cMath; aMath.fMath = fMath;
+		};
+		aMath.aMath = aMath; aMath.bMath = bMath; aMath.cMath = cMath; aMath.fMath = fMath;
 			aMath.sMath = sMath; aMath.rMath = rMath; aMath.cfsMath = cfsMath; bMath.aMath = aMath;
 			bMath.bMath = bMath; bMath.cMath = cMath; bMath.fMath = fMath; bMath.sMath = sMath;
 			bMath.rMath = rMath; bMath.cfsMath = cfsMath; cMath.aMath = aMath; cMath.bMath = bMath;
@@ -5345,8 +5350,8 @@ void (() => { "use strict";
 		catch { ON_CONFLICT = "None" }
 		
 		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
-		if (ON_CONFLICT && len(CONFLICT_ARR)) {
-			switch (Alert_Conflict_OverWritten) {
+		if (Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
+			switch (ON_CONFLICT) {
 				case "ast":
 				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "dbg":
@@ -5363,6 +5368,7 @@ void (() => { "use strict";
 				case "trw":
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 			}
+			console.debug("lib.js load failed");
 			return 1;
 		}
 		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && (
