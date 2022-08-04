@@ -1,6 +1,6 @@
 #!/usr/bin/env js
 void (() => { "use strict";
-	{// Customization
+	{// Customization & Constants
 
 		const onConflict_Options = [
 			"log", "throw" , "trw", "return", "ret", "error",
@@ -13,6 +13,15 @@ void (() => { "use strict";
 		 * "None" will be chosen instead.
 		 * The defaults are the boolean value true, unless otherwise noted on the same line in a comment
 		 * All alerts happen using console.log except for conflict stuff.
+		 * 
+		 * Input Math Variable Options:
+		 * aMath (all)
+		 * bMath (bigint)
+		 * cMath (complex)
+		 * cfsMath (complex fractional string)
+		 * fMath (fraction)
+		 * rMath (real numbers)
+		 * sMath (string)
 		**/
 
 		var
@@ -20,7 +29,8 @@ void (() => { "use strict";
 		, ON_CONFLICT                 = "default" // "debug"
 		, Alert_Conflict_For_Math     = "default" // false
 		, Alert_Conflict_OverWritten  = "default"
-		, Alert_Conflict_Unused       = "default" // false. ??= is used instead of = to create the functions
+		, Library_Startup_Message     = "default" // "lib.js loaded"
+		, Library_Startup_Function    = "default" // console.log
 		, Output_Math_Variable        = "default" // "Math"
 		, Input_Math_Variable         = "default" // "rMath"
 		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log
@@ -51,351 +61,74 @@ void (() => { "use strict";
 		, Clear_LocalStorage          = "default" // false
 		, Clear_SessionStorage        = "default" // false
 		, Creepily_Watch_Every_Action = "default" // false
-		// -----------------------------------------------------------
-		//                          constants
-		// -----------------------------------------------------------
-		, π      = 3.141592653589793
-		, 𝜏      = 6.283185307179586
-		, 𝑒      = 2.718281828459045
-		, ϕ      = 1.618033988749895 // -2 sin 666°
-		, α      = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
-		, γ      = .5772156649015329
-		, Ω      = .5671432904097838 // Ωe^Ω = 1
-		, pi     = π
-		, tau    = 𝜏
-		, e      = 𝑒
-		, phi    = ϕ
-		, foia   = α
-		, emc    = γ // Euler-Mascheroni Constant
-		, omega  = Ω
+
 		;
+
 		Clear_LocalStorage   && Clear_LocalStorage   !== "default" && localStorage  .clear();
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
-		// clear cookies and caches
-	} {// Conflict and Library Functions
-		var
-		LIBRARY_FUNCTIONS = [
-			"infinity","isIterable","isArr","sizeof","len","dim","abs","sgn","π","𝑒",Symbol.for("<0x200b>"),
-			Symbol.for("<0x08>"),"json","rand","randint","complex","constr","copy","assert","help","dir",
-			"nSub","revLList","findDayOfWeek","type","round","fpart","floor","ceil","int","str","list",
-			"range","numToWords","numToStrW_s","Errors","strMul","LinkedList","Types","numStrNorm",
-			"stopKeylogger","simulateKeypress","passwordGenerator","getAllDocumentObjects","dQuery",
-			"getArguments","createElement","css","formatjson","minifyjson","dict","MutableString","getIp",
-			"bisectLeft","bisectRight","bisect","getEventListeners","getMyEventListeners","ael","rel","gel",
-			"gml","sMath","rMath","bMath","cMath","fMath","aMath","MathObjects","Logic"
-		], NOT_ACTIVE_ARR = []//.map(
-		//		e => [ this[e] != null, e ]
-		//	).filter( e => e[0] ).map( e => e[1] )
-		, CONFLICT_ARR = LIBRARY_FUNCTIONS.filter(e => this[e] != null)
-		;
-		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
-		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
-		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
-		this[Output_Math_Variable] !== void 0 && (
-			Output_Math_Variable === "Math" ?
-				Alert_Conflict_For_Math === !0 :
-				Output_Math_Variable === void 0 ?
-					!1 : !0
-		) && CONFLICT_ARR.push(Output_Math_Variable);
+		// TODO: clear cookies and caches if the library user wants
 	} {// Variables/Functions
-		var alphabetL = "abcdefghijklmnopqrstuvwxyz",
-			alphabet = alphabetL,
-			alphabetU = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-			numbers = "0123456789",
-			base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-			characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\";
-		this.infinity = Infinity;
-		this.isIterable = function isIterable(arg) {
-			try { for (const e of arg) break; return !0 }
-			catch { return !1 }
-		}; this.isArr = Array.isArray;
-		this.sizeof = function sizeof(obj) {
-			if (obj == null) return 0;
-			var length = len(obj);
-			if (length != null) return length;
-			if (constr(obj) === "Object") return len( Object.keys(obj) );
-			return 0;
-		}; this.len = e => e?.length;
-		this.dim = (e, n=1) => e?.length - n;
-		this.abs = Math.abs;
-		this.sgn = Math.sign;
-		this.π = 3.141592653589793;
-		this.𝑒 = 2.718281828459045;
-		this[Symbol.for("<0x200b>")] = "​"; // zero width space
-		this[Symbol.for("<0x08>")] = ""; // \b
-		this.json = JSON;
-		this.rand = Math.random;
-		this.randint = function randomInt(min=1, max=null) {
-			if (max == null) {
-				max = min;
-				min = 0;
-			}
-			if (type(min) !== "number" || type(max) !== "number") return round( rand() );
-			min < 0 && min--;
-			return round( rand() * abs(min - max) + min );
-		}; this.complex = (re=0, im=0) => cMath?.new?.(re, im);
-		this.constr = function constructorName(input, name=true) {
-			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
-			return input?.constructor?.name;
-		}; this.copy = obj => JSON.parse( JSON.stringify(obj) );
-		this.assert = function assert(condition, message="false") {
-			return !condition &&
-				Errors?.("Failed Assertion", message);
-		}; this.help = function help(str) {
-			// eval doesn't matter here because this function is for developer use only.
-			try { eval(str) }
-			catch (err) {
-				if (/SyntaxError: Unexpected token '.+'/.in(`${err}`)) {
-					open(`https://developer.mozilla.org/en-US/search?q=${/'(.+)'/.exec(`${err}`)[1]}`, "_blank");
-					return "Keyword";
-				}
-				if (`${err}` === "SyntaxError: Unexpected end of input") {
-					open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
-					return "Keyword";
-				}
-			} try {
-				var fn = eval(str);
-				if (type(fn) === "function") {
-					if (`${fn}`.incl(/\(\) { \[native code\] }/)) {
-						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
-						return "native function. arguments can't be retrieved";
-					}
-					return `Function: arguments = ${getArguments?.(fn)}`;
-				}
-			} catch {}
-			try { return "Variable: value = " + Function(`return ${str}`)() }
-			catch { return "Variable not Found" }	
-		}; this.dir = function currentDirectory(loc=new Error().stack) {
-			// sometimes doesn't work
-			return `${loc}`
-				.substr(13)
-				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
-		}; this.nSub = function substituteNInBigIntegers(num, n=1) {
-			return type(num) === "bigint" ?
-				n * Number(num) :
-				num;
-		}; this.revLList = function reverseLinkedList(list) {
-			for (let cur = list.head, prev = null, next; current ;) 
-				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
-			list.head = prev || list.head;
-			return list;
-		}; this.findDayOfWeek = function findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0){
-			// dd-mm-yyyy makes more sense in the current context. 
-			if (isNaN( day = Number(day) ) || !isFinite(day))
-				throw TypeError(`argument 1 either isn't finite or isn't a number`);
-			if (isNaN( month = Number(month) ) || !isFinite(month))
-				throw TypeError(`argument 2 either isn't finite or isn't a number`);
-			if (isNaN( year = Number(year) ) || !isFinite(year))
-				throw TypeError(`argument 3 either isn't finite or isn't a number`);
-			if (type(order) !== "string" ) throw TypeError(`argument 5 isn't a string`);
-			if (order !== "dd/mm/yyyy") {
-				order = order.lower().split(/\/|-/);
-				const tmp = [day, month, year],
-					used = [!1, !1, !1];
-				for (var i = 0; i < 3; i++) {
-					switch (order[i]) {
-						case "dd":
-							if (used[0]) throw Error("Invalid input for argument 5");
-							[used[0], day] = [!0, tmp[i]];
-							break;
-						case "mm":
-							if (used[1]) throw Error("Invalid input for argument 5");
-							[used[1], month] = [!0, tmp[i]];
-							break;
-						case "yyyy":
-							if (used[2]) throw Error("Invalid input for argument 5");
-							[used[2], year] = [!0, tmp[i]];
-							break;
-						default: throw Error("Invalid input for argument 5");
-					}
-				}
-			}
-			day += !day - 1;
-			month += !month - 1;
-			const LEAP = !(year % 4);
-			// 'days' is the number of days in the month
-			// 'offset' is the offset from the beginning of the year to the beginning of the month in days
-			const Months = [
-				{ days: 31,        offset: 0   },
-				{ days: 28 + LEAP, offset: 31  },
-				{ days: 31, offset: 59  + LEAP },
-				{ days: 30, offset: 90  + LEAP },
-				{ days: 31, offset: 120 + LEAP },
-				{ days: 30, offset: 151 + LEAP },
-				{ days: 31, offset: 181 + LEAP },
-				{ days: 31, offset: 212 + LEAP },
-				{ days: 30, offset: 243 + LEAP },
-				{ days: 31, offset: 273 + LEAP },
-				{ days: 30, offset: 304 + LEAP },
-				{ days: 31, offset: 334 + LEAP }
-			];
-			for (; day > Months[month % 12].days; month++)
-				day -= Months[month % 12].days;
-			let ans = (1 + (year += floor(month / 12) - 1) % 4 * 5 +
-				year % 100 * 4 + year % 400 * 6 + day +
-				Months[month % 12].offset
-			) % 7;
-			return str ?
-				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
-				ans;
-		}; this.type = function type(a, specific=!1) {
-			return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
-				/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
-					"string" :
-					typeof a :
-				typeof a === "number" ?
-					isNaN(a) ?
-						"nan" :
-						isNaN(a - a) ?
-							"inf" :
-							"num" :
-					typeof a === "object" ?
-						constr(a) === 'NodeList' ?
-							"nodelist" :
-							a.test === /a/?.test ?
-								"regex" :
-								a === null ?
-									"null" :
-									/^type\(\){return("|'|`)linkedlist\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-										"linkedlist" :
-										/^type\(\){return("|'|`)complex\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-											"complex" :
-											/^type\(\){return("|'|`)fraction\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-												"fraction" :
-												/^type\(\){return("|'|`)set\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-													"set" :
-													/^type\(\){return("|'|`)dict\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-														"dict" :
-														/^type\(\){return("|'|`)mutstr\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-															"mutstr" :
-															isArr(a) ?
-																"arr" :
-																"obj" :
-						typeof a === "string" ?
-							"str" :
-							typeof a === "boolean" ?
-								"bool" :
-							/^class/.in(a+"") ?
-								"class" :
-								"func"
-		}; this.round = function round(n) {
-			return type(n) === "number" ?
-				fpart(n) < .5 ?
-					int(n) :
-					int(n) + sgn(n) :
-				type(n) === "bigint" ?
-					n :
-					NaN;
-		}; this.fpart = Number.fpart = function fPart(n, number=true) {
-			if ( rMath.isNaN(n) ) return NaN;
-			if ( n.isInt() ) return 0;
-			if ((n+"").incl("e+")) n = n.toPrecision(100);
-			else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), Number((n+"").slc("-", void 0, 1)) );
-			return number ?
-				Number( (n+"").slc(".") ) :
-				`0${`${n}`.slc(".")}`;
-		}; this.floor = function floor(n) {
-			return type(n) === "number" ?
-				int(n) - (n<0 && n != int(n)) :
-				type(n) === "bigint" ?
-					n :
-					NaN;
-		}; this.ceil = function ceil(n) {
-			return type(n) === "number" ?
-				int(n) + (n>0 && n != int(n)) :
-				type(n) === "bigint" ?
-					n :
-					NaN;
-		}; this.int = Number.parseInt;
-		this.str = function String(a) {
-			return a?.toString?.(
-				...Array.from(arguments).slc(1)
-			);
-		}; this.list = Array.from;
-		this.range = function* range(start, stop, step=1) {
-			stop == null ? [stop, start] = [start, 0] : stop++;
-			for (var i = start; i < stop; i += step) yield i;
-		}; this.numToWords = function numberToWords(number, fancyInfinity=true) {
-			if (abs(number) === Infinity) return `${number<0?"negative ":""}${fancyInfinity?"apeirogintillion":"infinity"}`;
-			// TODO: Update to use a loop or something to expand to as close to infinity as possible
-			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
-			var string = number.toString().remove(/\.$/);
-			number = Number(number);
-			switch (!0) {
-				case /\./.in(string):
-					var decimals = `${numberToWords(string.substring(0, string.io(".")))} point`;
-					for (var i = string.io(".") + 1; i < len(string); i++)
-						decimals += ` ${numberToWords(string[i])}`;
-					return decimals;
-				case string < 0 || Object.is(Number(string), -0): return `negative ${numberToWords(string.substr(1))}`;
-				case string ==  0: return "zero";
-				case string ==  1: return "one";
-				case string ==  2: return "two";
-				case string ==  3: return "three";
-				case string ==  4: return "four";
-				case string ==  5: return "five";
-				case string ==  6: return "six";
-				case string ==  7: return "seven";
-				case string ==  8: return "eight";
-				case string ==  9: return "nine";
-				case string == 10: return "ten";
-				case string == 11: return "eleven";
-				case string == 12: return "twelve";
-				case string == 13: return "thirteen";
-				case string == 15: return "fifteen";
-				case string == 18: return "eighteen";
-				case string  < 20: return `${numberToWords(string[1])}teen`;
-				case string == 20: return "twenty";
-				case string  < 30: return `twenty-${numberToWords(string[1])}`;
-				case string == 30: return "thirty";
-				case string  < 40: return `thirty-${numberToWords(string[1])}`;
-				case string == 40: return "forty";
-				case string  < 50: return `forty-${numberToWords(string[1])}`;
-				case string == 50: return "fifty";
-				case string  < 60: return `fifty-${numberToWords(string[1])}`;
-				case string == 60: return "sixty";
-				case string  < 70: return `sixty-${numberToWords(string[1])}`;
-				case string == 70: return "seventy";
-				case string  < 80: return `seventy-${numberToWords(string[1])}`;
-				case string == 80: return "eighty";
-				case string  < 90: return `eighty-${numberToWords(string[1])}`;
-				case string == 90: return "ninety";
-				case string < 100: return `ninety-${numberToWords(string[1])}`;
-				case string % 100===0 && len(string)===3: return `${numberToWords(string[0])} hundred`;
-				case string < 1e3: return `${numberToWords(string[0])} hundred and ${numberToWords(string.substr(1,2))}`;
-				case string % 1e3===0 && len(string)===4: return `${numberToWords(string[0])} thousand`;
-				case string < 1e4: return `${numberToWords(string[0])} thousand ${numberToWords(string.substr(1,3))}`;
-				case string % 1e3===0 && len(string)===5: return `${numberToWords(string.substr(0,2))} thousand`;
-				case string < 1e5: return`${numberToWords(string.substr(0,2))} thousand ${numberToWords(string.substr(2))}`;
-				case string % 1e3===0 && len(string)===6: return `${numberToWords(string.substr(0,3))} thousand`;
-				case string < 1e6: return`${numberToWords(string.substr(0,3))} thousand ${numberToWords(string.substr(3))}`;
-				case string % 1e6===0 && len(string)===7: return `${numberToWords(string[0])} million`;
-				case string < 1e7: return`${numberToWords(string[0])} million ${numberToWords(string.substr(1))}`;
-				case string % 1e6===0 && len(string)===8: return `${numberToWords(string.substr(0,2))} million`;
-				case string < 1e8: return `${numberToWords(string.substr(0,2))} million ${numberToWords(string.substr(2))}`;
-				case string % 1e6===0 && len(string)===9: return `${numberToWords(string.substr(0,3))} million`;
-				case string < 1e9: return `${numberToWords(string.substr(0,3))} million ${numberToWords(string.substr(3))}`;
-				case string % 1e9===0 && len(string)===10: return `${numberToWords(string[0])} billion`;
-				case string < 1e10: return `${numberToWords(string[0])} billion ${numberToWords(string.substr(1))}`;
-				case string % 1e9===0 && len(string)===11: return `${numberToWords(string.substr(0,2))} billion`;
-				case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.substr(2))}`;
-				default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
-			}
-		}; this.numToStrW_s = function numberToStringWith_s(number) {
-			for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++) {
-				(!(i % 3) && i) && (str2 += "_");
-				str2 += str[i];
-			}
-			return str2.reverse();
-		}; this.Errors = function customErrors(name="Error", text="") {
-			Error.prototype.name = `${name}`;
-			throw new Error(text).stack.remove(/ {4}at(.|\s)*\n/);
-		}; this.strMul = function stringMultiplication(s1="", num=1) {
-			// the same as regular string multiplication in Python
-			if (isNaN(num) || type(s1, 1) !== "str") return "";
-			for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
-			return s2;
-		}; this.LinkedList = class LinkedList {
+		for (var i=10,j,multable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)multable[i][j] = i * j;
+		for (var i=10,j,addtable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)addtable[i][j] = i + j;
+		for (var i=10,j,subtable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)subtable[i][j] = i - j;
+		for (var i=10,j,divtable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)divtable[i][j] = i / j;
+		var
+		alphabetL       = "abcdefghijklmnopqrstuvwxyz"
+		, alphabet      = alphabetL
+		, alphabetU     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		, numbers       = "0123456789"
+		, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		, characters    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
+		, π             = 3.141592653589793
+		, 𝜏             = 6.283185307179586
+		, 𝑒             = 2.718281828459045
+		, ϕ             = 1.618033988749895 // -2 sin 666°
+		, α             = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
+		, γ             = .5772156649015329
+		, Ω             = .5671432904097838 // Ωe^Ω = 1
+		, pi            = π
+		, tau           = 𝜏
+		, e             = 𝑒
+		, phi           = ϕ
+		, foia          = α
+		, emc           = γ // Euler-Mascheroni Constant
+		, omega         = Ω
+		, LIBRARY_FUNCTIONS = {
+		"isArr": Array.isArray
+		, "list": Array.from
+		, "int": Number.parseInt
+		, "abs": Math.abs
+		, "sgn": Math.sign
+		, "rand": Math.random
+		, "json": JSON
+		, "infinity": Infinity
+		, "π": π
+		, "𝜏": 𝜏
+		, "𝑒": 𝑒
+		, "ϕ": ϕ
+		, "γ": γ
+		, "Ω": Ω
+		, "Types": {
+			Boolean  : Boolean,
+			Number   : Number,
+			String   : String,
+			BigInt   : BigInt,
+			Function : Function,
+			Array    : Array,
+			Object(input, handle=!1) {
+				return type(input) === "object" ?
+					input :
+					handle == !0 ?
+						{ data: input } :
+						void 0
+			}, Symbol(input, handle=!1) {
+				return type(input) === "symbol" ?
+					input :
+					handle == !0 ?
+						Symbol.for(input) :
+						void 0
+			}, undefined() { return void 0 }
+		}, "LinkedList": class LinkedList {
 			constructor(head) {
 				this.size = 0;
 				this.Node = class Node {
@@ -458,34 +191,221 @@ void (() => { "use strict";
 			type() {
 				return "linkedlist";
 			}
-		}; this.Types = {
-			Boolean: Boolean,
-			Number: Number,
-			String: String,
-			BigInt: BigInt,
-			Function: Function,
-			Array: Array,
-			Object(input, handle=!1) {
-				return type(input) === "object" ? input : handle == !0 ? { data: input } : void 0
-			},
-			undefined() {},
-			Symbol(input, handle=!1) {
-				return type(input) === "symbol" ? input : handle == !0 ? Symbol.for(input) : void 0
+		}, "Image": (function create_Image() {
+			// the function can still be used the same as before
+			var _Image = window.Image;
+			return function Image(width, height, options={}) {
+				var image = new _Image(width, height);
+				for (const e of Object.keys(options)) image[e] = options[e];
+				return image;
+			};
+		})(), "dict": (function create_dict() {
+			// So I can add prototype methods and not have it on literally every object in existance
+			var Dictionary = class dict extends Object {
+				constructor(dict) {
+					super();
+					for (const e of Object.keys(dict))
+						this[e] = dict[e];
+				} keys()            { return Object.keys(this)              }
+				values()            { return Object.values(this)            }
+				entries()           { return Object.entries(this)           }
+				freeze()            { return Object.freeze(this)            }
+				isFrozen()          { return Object.isFrozen(this)          }
+				isExtensible()      { return Object.isExtensible(this)      }
+				preventExtensions() { return Object.preventExtensions(this) }
+				seal()              { return Object.seal(this)              }
+				isSealed()          { return Object.isSealed(this)          }
+				size()              { return len(Object.keys(this))         }
+				type()              { return "dict";                        }
 			}
-		}; this.numStrNorm = function NormalizeNumberString(snum="0.0") {
-			if (isNaN(snum)) return NaN;
-			snum = snum.toString();
-			if (rMath.eq.seq(snum, "0.0")) return "0.0";
-			!snum.incl(".") && (snum += ".0");
-			if (snum[0] === "-")
-				while (snum[1] === "0" && snum[2] !== ".")
-					snum = `-${snum.substr(2)}`;
-			else while (snum[0] === "0" && snum[1] !== ".")
-					snum = snum.substr(1);
-			while (snum[dim(snum)] === "0" && snum[dim(snum, 2)] !== ".")
-				snum = snum.substr(0, dim(snum));
-			return snum + (snum.endsW(".") ? "0" : "");
-		}; this.simulateKeypress = function simulateKeypress({
+			function dict(obj={}) { return new Dictionary(obj) }
+			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
+			return dict;
+		})(), "MutableString": (function create_MutableString() {
+			// TODO: Make safety things for the functions so the user doesn't add non-character things
+			var MutStr = class MutableString extends Array {
+				constructor() {
+					super();
+					this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
+					for (const e of arguments)
+						// type() and not typeof so mutable strings also work
+						type(e) === "string" && this.union(e.split(""));
+				}
+				type() { return "mutstr" }
+				push(chars) {
+					if (type(chars, 1) === "str" || false);
+				}
+				toString() { return this.join("") }
+			};
+			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
+			
+			for (const s of Object.getOwnPropertyNames(String.prototype))
+				!protoArray.includes(s) && (MutStr.prototype[s] = String.prototype[s]);
+
+			MutStr.prototype.concat = Array.prototype.concat;
+
+			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
+			MutableString.fromString
+			return MutableString;
+		})(), isIterable(arg) {
+			try { for (const e of arg) break; return !0 }
+			catch { return !1 }
+		}, sizeof(obj) {
+			if (obj == null) return 0;
+			var length = len(obj);
+			if (length != null) return length;
+			if (constr(obj) === "Object") return len( Object.keys(obj) );
+			return 0;
+		}, assert(condition, message="false") {
+			return !condition &&
+				Errors?.("Failed Assertion", message);
+		}, help(str) {
+			// eval doesn't matter here because this function is for developer use only.
+			try { eval(str) }
+			catch (err) {
+				if (/SyntaxError: Unexpected token '.+'/.in(`${err}`)) {
+					open(`https://developer.mozilla.org/en-US/search?q=${/'(.+)'/.exec(`${err}`)[1]}`, "_blank");
+					return "Keyword";
+				}
+				if (`${err}` === "SyntaxError: Unexpected end of input") {
+					open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
+					return "Keyword";
+				}
+			} try {
+				var fn = eval(str);
+				if (type(fn) === "function") {
+					if (`${fn}`.incl(/\(\) { \[native code\] }/)) {
+						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
+						return "native function. arguments can't be retrieved";
+					}
+					return `Function: arguments = ${getArguments?.(fn)}`;
+				}
+			} catch {}
+			try { return "Variable: value = " + Function(`return ${str}`)() }
+			catch { return "Variable not Found" }	
+		}, findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0){
+			// dd-mm-yyyy makes more sense in the current context. 
+			if (isNaN( day = Number(day) ) || !isFinite(day))
+				throw TypeError(`argument 1 either isn't finite or isn't a number`);
+			if (isNaN( month = Number(month) ) || !isFinite(month))
+				throw TypeError(`argument 2 either isn't finite or isn't a number`);
+			if (isNaN( year = Number(year) ) || !isFinite(year))
+				throw TypeError(`argument 3 either isn't finite or isn't a number`);
+			if (type(order) !== "string" ) throw TypeError(`argument 5 isn't a string`);
+			if (order !== "dd/mm/yyyy") {
+				order = order.lower().split(/\/|-/);
+				const tmp = [day, month, year],
+					used = [!1, !1, !1];
+				for (var i = 0; i < 3; i++) {
+					switch (order[i]) {
+						case "dd":
+							if (used[0]) throw Error("Invalid input for argument 5");
+							[used[0], day] = [!0, tmp[i]];
+							break;
+						case "mm":
+							if (used[1]) throw Error("Invalid input for argument 5");
+							[used[1], month] = [!0, tmp[i]];
+							break;
+						case "yyyy":
+							if (used[2]) throw Error("Invalid input for argument 5");
+							[used[2], year] = [!0, tmp[i]];
+							break;
+						default: throw Error("Invalid input for argument 5");
+					}
+				}
+			}
+			day += !day - 1;
+			month += !month - 1;
+			const LEAP = !(year % 4);
+			// 'days' is the number of days in the month
+			// 'offset' is the offset from the beginning of the year to the beginning of the month in days
+			const Months = [
+				{ days: 31,        offset: 0   },
+				{ days: 28 + LEAP, offset: 31  },
+				{ days: 31, offset: 59  + LEAP },
+				{ days: 30, offset: 90  + LEAP },
+				{ days: 31, offset: 120 + LEAP },
+				{ days: 30, offset: 151 + LEAP },
+				{ days: 31, offset: 181 + LEAP },
+				{ days: 31, offset: 212 + LEAP },
+				{ days: 30, offset: 243 + LEAP },
+				{ days: 31, offset: 273 + LEAP },
+				{ days: 30, offset: 304 + LEAP },
+				{ days: 31, offset: 334 + LEAP }
+			];
+			for (; day > Months[month % 12].days; month++)
+				day -= Months[month % 12].days;
+			let ans = (1 + (year += floor(month / 12) - 1) % 4 * 5 +
+				year % 100 * 4 + year % 400 * 6 + day +
+				Months[month % 12].offset
+			) % 7;
+			return str ?
+				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
+				ans;
+		}, type(a, specific=!1) {
+			return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
+				/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
+					"string" :
+					typeof a :
+				typeof a === "number" ?
+					isNaN(a) ?
+						"nan" :
+						isNaN(a - a) ?
+							"inf" :
+							"num" :
+					typeof a === "object" ?
+						constr(a) === 'NodeList' ?
+							"nodelist" :
+							a.test === /a/?.test ?
+								"regex" :
+								a === null ?
+									"null" :
+									/^type\(\){return("|'|`)linkedlist\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+										"linkedlist" :
+										/^type\(\){return("|'|`)complex\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+											"complex" :
+											/^type\(\){return("|'|`)fraction\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+												"fraction" :
+												/^type\(\){return("|'|`)set\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+													"set" :
+													/^type\(\){return("|'|`)dict\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+														"dict" :
+														/^type\(\){return("|'|`)mutstr\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
+															"mutstr" :
+															isArr(a) ?
+																"arr" :
+																"obj" :
+						typeof a === "string" ?
+							"str" :
+							typeof a === "boolean" ?
+								"bool" :
+							/^class/.in(a+"") ?
+								"class" :
+								"func"
+		}, round(n) {
+			return type(n) === "number" ?
+				fpart(n) < .5 ?
+					int(n) :
+					int(n) + sgn(n) :
+				type(n) === "bigint" ?
+					n :
+					NaN;
+		}, floor(n) {
+			return type(n) === "number" ?
+				int(n) - (n<0 && n != int(n)) :
+				type(n) === "bigint" ?
+					n :
+					NaN;
+		}, ceil(n) {
+			return type(n) === "number" ?
+				int(n) + (n>0 && n != int(n)) :
+				type(n) === "bigint" ?
+					n :
+					NaN;
+		}, *range(start, stop, step=1) {
+			stop == null ? [stop, start] = [start, 0] : stop++;
+			for (var i = start; i < stop; i += step) yield i;
+		}, simulateKeypress({
 			key = "",
 			code = "",
 			ctrl = false,
@@ -552,16 +472,7 @@ void (() => { "use strict";
 					, type               : type
 				})
 			);
-		}; /*this.simulateMouseclick = */function simulateMouseClick({a = undefined}={}) {
-			; // MouseEvent   : mouseup, mousedown, mouseover, mouseleave, mousemove
-			; // PointerEvent : click, contextmenu
-			; // WheelEvent   : scroll
-			; // DragEvent
-		}; this.passwordGenerator = function passwordGenerator(
-			length = 18,
-			charsToRemove = void 0,
-			chars = characters
-		) {
+		}, passwordGenerator(length=18, charsToRemove=void 0, chars=characters) {
 			if (isNaN( length = Number(length)) || length < 0) return !1;
 			length = int(length);
 			if (type(charsToRemove, 1) === "arr")
@@ -577,13 +488,12 @@ void (() => { "use strict";
 					chars = chars.remove(char);
 			for (var i = length, password = ""; i --> 0 ;) password += chars.rand();
 			return password;
-		}; Number.EPSILON == null && (Number.EPSILON = 2**-52);
-		this.getAllDocumentObjects = function getAllDocumentObjects() {
+		}, getAllDocumentObjects() {
 			var objs = [document];
 			document.doctype && objs.push(document.doctype);
 			objs.union(document.all);
 			return objs;
-		}; this.dQuery = function dQuery(selector="*", {doctype=true, one=false, oneIndex=0}={}) {
+		}, dQuery(selector="*", {doctype=true, one=false, oneIndex=0}={}) {
 			if (constr(selector) === "dQuery") return selector;
 			if (type(selector) !== "string") throw TypeError("dQuery() requires a string or dQuery object for the first argument");
 			try {
@@ -607,7 +517,7 @@ void (() => { "use strict";
 					selector !== void 0 && (this.selector = selector);
 				}
 			})(values, selector, void 0);
-		}; this.getArguments = function getArguments(fn) {
+		}, getArguments(fn) {
 			// any comments inside the argument parens acts as a docstring like in python.
 			// works for all functions
 			if (type(fn) !== "function") return !1;
@@ -621,15 +531,7 @@ void (() => { "use strict";
 				if (!count) break;
 			}
 			return fn.substr(0, i + 1);
-		}; this.Image = (() => {
-			// the function can still be used the same as before
-			var _Image = this.Image;
-			return function Image(width, height, options={}) {
-				var image = new _Image(width, height);
-				for (const e of Object.keys(options)) image[e] = options[e];
-				return image;
-			};
-		})(); this.createElement = function createElement(element="p", options={}) {
+		}, createElement(element="p", options={}) {
 			var element = document.createElement(element), objects = null, click = null;
 			for (const e of Object.keys(options)) {
 				if (e === "children") {
@@ -665,13 +567,167 @@ void (() => { "use strict";
 			}
 			element.click(click);
 			return element;
-		}; this.css = function css(text="", options={}, append=true) {
+		}, css(text="", options={}, append=true) {
 			options.innerHTML ??= text;
 			options.type ??= "text/css";
 			var element = createElement("style", options);
 			if (append) document.head.appendChild(element);
 			return element;
-		}; this.formatjson = function formatJSON(json="{}", {
+		}, bisectLeft(arr, x, lo=0, hi=null) {
+			hi === null && (hi = len(arr));
+			if (lo < 0 || hi < lo || hi > len(arr)) return false;
+			while (lo != hi) {
+				mid = low + floor((hi-low)/2);
+				if (arr[mid] < x) lo = mid + 1; else hi = mid;
+			}
+			return lo;
+		}, bisectRight(arr, x, lo=0, hi=null) {
+			hi === null && (hi = len(arr));
+			if (lo < 0 || hi < lo || hi > len(arr)) return false;
+			while (lo != hi) {
+				mid = low + floor((hi-low)/2);
+				if (arr[mid] <= x) lo = mid + 1;
+				else hi = mid;
+			}
+			return lo;
+		}, bisect(arr, x, lo=0, hi=null, orientation="left", use=true) {
+			return (orientation === "left" ?
+				bisectLeft : bisectRight
+			)(arr, x, lo, hi);
+		}, "randint"      : function randomInt(min=1, max=null) {
+			if (max == null) {
+				max = min;
+				min = 0;
+			}
+			if (type(min) !== "number" || type(max) !== "number") return round( rand() );
+			min < 0 && min--;
+			return round( rand() * abs(min - max) + min );
+		}, "constr"      : function constructorName(input, name=true) {
+			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
+			return input?.constructor?.name;
+		}, "dir"         : function currentDirectory(loc=new Error().stack) {
+			// sometimes doesn't work
+			return `${loc}`
+				.substr(13)
+				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
+		}, "nsub"        : function substituteNInBigIntegers(num, n=1) {
+			return type(num) === "bigint" ?
+				n * Number(num) :
+				num;
+		}, "revLList"    : function reverseLinkedList(list) {
+			for (let cur = list.head, prev = null, next; current ;) 
+				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
+			list.head = prev || list.head;
+			return list;
+		}, "fpart"       : function fPart(n, number=true) {
+			if ( rMath.isNaN(n) ) return NaN;
+			if ( n.isInt() ) return 0;
+			if ((n+"").incl("e+")) n = n.toPrecision(100);
+			else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), Number((n+"").slc("-", void 0, 1)) );
+			return number ?
+				Number( (n+"").slc(".") ) :
+				`0${`${n}`.slc(".")}`;
+		}, "str"         : function String(a) {
+			return a?.toString?.(
+				...Array.from(arguments).slc(1)
+			);
+			// return a?.toString?.apply?.(
+			// 	Array.from(arguments).slc(1)
+			// );
+		}, "numToWords"  : function numberToWords(number, fancyInfinity=true) {
+			if (abs(number) === Infinity) return `${number<0?"negative ":""}${fancyInfinity?"apeirogintillion":"infinity"}`;
+			// TODO: Update to use a loop or something to expand to as close to infinity as possible
+			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
+			var string = number.toString().remove(/\.$/);
+			number = Number(number);
+			switch (!0) {
+				case /\./.in(string):
+					var decimals = `${numberToWords(string.substring(0, string.io(".")))} point`;
+					for (var i = string.io(".") + 1; i < len(string); i++)
+						decimals += ` ${numberToWords(string[i])}`;
+					return decimals;
+				case string < 0 || Object.is(Number(string), -0): return `negative ${numberToWords(string.substr(1))}`;
+				case string ==  0: return "zero";
+				case string ==  1: return "one";
+				case string ==  2: return "two";
+				case string ==  3: return "three";
+				case string ==  4: return "four";
+				case string ==  5: return "five";
+				case string ==  6: return "six";
+				case string ==  7: return "seven";
+				case string ==  8: return "eight";
+				case string ==  9: return "nine";
+				case string == 10: return "ten";
+				case string == 11: return "eleven";
+				case string == 12: return "twelve";
+				case string == 13: return "thirteen";
+				case string == 15: return "fifteen";
+				case string == 18: return "eighteen";
+				case string  < 20: return `${numberToWords(string[1])}teen`;
+				case string == 20: return "twenty";
+				case string  < 30: return `twenty-${numberToWords(string[1])}`;
+				case string == 30: return "thirty";
+				case string  < 40: return `thirty-${numberToWords(string[1])}`;
+				case string == 40: return "forty";
+				case string  < 50: return `forty-${numberToWords(string[1])}`;
+				case string == 50: return "fifty";
+				case string  < 60: return `fifty-${numberToWords(string[1])}`;
+				case string == 60: return "sixty";
+				case string  < 70: return `sixty-${numberToWords(string[1])}`;
+				case string == 70: return "seventy";
+				case string  < 80: return `seventy-${numberToWords(string[1])}`;
+				case string == 80: return "eighty";
+				case string  < 90: return `eighty-${numberToWords(string[1])}`;
+				case string == 90: return "ninety";
+				case string < 100: return `ninety-${numberToWords(string[1])}`;
+				case string % 100===0 && len(string)===3: return `${numberToWords(string[0])} hundred`;
+				case string < 1e3: return `${numberToWords(string[0])} hundred and ${numberToWords(string.substr(1,2))}`;
+				case string % 1e3===0 && len(string)===4: return `${numberToWords(string[0])} thousand`;
+				case string < 1e4: return `${numberToWords(string[0])} thousand ${numberToWords(string.substr(1,3))}`;
+				case string % 1e3===0 && len(string)===5: return `${numberToWords(string.substr(0,2))} thousand`;
+				case string < 1e5: return`${numberToWords(string.substr(0,2))} thousand ${numberToWords(string.substr(2))}`;
+				case string % 1e3===0 && len(string)===6: return `${numberToWords(string.substr(0,3))} thousand`;
+				case string < 1e6: return`${numberToWords(string.substr(0,3))} thousand ${numberToWords(string.substr(3))}`;
+				case string % 1e6===0 && len(string)===7: return `${numberToWords(string[0])} million`;
+				case string < 1e7: return`${numberToWords(string[0])} million ${numberToWords(string.substr(1))}`;
+				case string % 1e6===0 && len(string)===8: return `${numberToWords(string.substr(0,2))} million`;
+				case string < 1e8: return `${numberToWords(string.substr(0,2))} million ${numberToWords(string.substr(2))}`;
+				case string % 1e6===0 && len(string)===9: return `${numberToWords(string.substr(0,3))} million`;
+				case string < 1e9: return `${numberToWords(string.substr(0,3))} million ${numberToWords(string.substr(3))}`;
+				case string % 1e9===0 && len(string)===10: return `${numberToWords(string[0])} billion`;
+				case string < 1e10: return `${numberToWords(string[0])} billion ${numberToWords(string.substr(1))}`;
+				case string % 1e9===0 && len(string)===11: return `${numberToWords(string.substr(0,2))} billion`;
+				case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.substr(2))}`;
+				default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
+			}
+		}, "numToStrW_s" : function numberToStringWithUnderscores(number) {
+			for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++) {
+				(!(i % 3) && i) && (str2 += "_");
+				str2 += str[i];
+			}
+			return str2.reverse();
+		}, "Errors"      : function customErrors(name="Error", text="") {
+			Error.prototype.name = `${name}`;
+			throw new Error(text).stack.remove(/ {4}at(.|\s)*\n/);
+		}, "strMul"      : function stringMultiplication(s1="", num=1) {
+			// the same as regular string multiplication in Python
+			if (isNaN(num) || type(s1, 1) !== "str") return "";
+			for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
+			return s2;
+		}, "numStrNorm"  : function NormalizeNumberString(snum="0.0") {
+			if (isNaN(snum)) return NaN;
+			snum = snum.toString();
+			if (rMath.eq.seq(snum, "0.0")) return "0.0";
+			!snum.incl(".") && (snum += ".0");
+			if (snum[0] === "-")
+				while (snum[1] === "0" && snum[2] !== ".")
+					snum = `-${snum.substr(2)}`;
+			else while (snum[0] === "0" && snum[1] !== ".")
+					snum = snum.substr(1);
+			while (snum[dim(snum)] === "0" && snum[dim(snum, 2)] !== ".")
+				snum = snum.substr(0, dim(snum));
+			return snum + (snum.endsW(".") ? "0" : "");
+		}, "formatjson": function formatJSON(json="{}", {
 			objectNewline = true,
 			tab = "\t",
 			newline = "\n",
@@ -719,7 +775,7 @@ void (() => { "use strict";
 				} else output += json[i];
 			}
 			return output;
-		}; this.minifyjson = function minifyJSON(json) {
+		}, "minifyjson": function minifyJSON(json) {
 			// removes all the unnecessary spaces and things
 			return formatjson(json, {
 				objectNewline      : true, // less conditionals are checked if this is set to true
@@ -730,91 +786,32 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : false,
 				arrayOneLineSpace  : "",
 			})
-		}; this.dict = (function create_dict() {
-			// So I can add prototype methods and not have it on literally every object in existance
-			var Dictionary = class dict extends Object {
-				constructor(dict) {
-					super();
-					for (const e of Object.keys(dict))
-						this[e] = dict[e];
-				} keys()            { return Object.keys(this)              }
-				values()            { return Object.values(this)            }
-				entries()           { return Object.entries(this)           }
-				freeze()            { return Object.freeze(this)            }
-				isFrozen()          { return Object.isFrozen(this)          }
-				isExtensible()      { return Object.isExtensible(this)      }
-				preventExtensions() { return Object.preventExtensions(this) }
-				seal()              { return Object.seal(this)              }
-				isSealed()          { return Object.isSealed(this)          }
-				size()              { return len(Object.keys(this))         }
-				type()              { return "dict";                        }
-			}
-			function dict(obj={}) { return new Dictionary(obj) }
-			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
-			return dict;
-		})(); this.MutableString = (function create_MutableString() {
-			// TODO: Make safety things for the functions so the user doesn't add non-character things
-			var MutStr = class MutableString extends Array {
-				constructor() {
-					super();
-					this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
-					for (const e of arguments)
-						// type() and not typeof so mutable strings also work
-						type(e) === "string" && this.union(e.split(""));
-				}
-				type() { return "mutstr" }
-				push(chars) {
-					if (type(chars, 1) === "str" || false);
-				}
-				toString() { return this.join("") }
-			};
-			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
-			
-			for (const s of Object.getOwnPropertyNames(String.prototype))
-				!protoArray.includes(s) && (MutStr.prototype[s] = String.prototype[s]);
+		}, dim(e, n=1) { return e?.element - n }
+		, len(e) { return e?.length }
+		, complex(re=0, im=0) { return cMath?.new?.(re, im) }
+		, copy(object) { return JSON.parse( JSON.stringify(obj) ) }
+		, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
+		};
 
-			MutStr.prototype.concat = Array.prototype.concat;
 
-			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
-			MutableString.fromString
-			return MutableString;
-		})(); this.getIp = async function getIp() {
-			return (
-				await fetch("https://api.ipify.org/")
-			).text();
-		}; this.bisectLeft = function bisectLeft(arr, x, lo=0, hi=null) {
-			hi === null && (hi = len(arr));
-			if (lo < 0 || hi < lo || hi > len(arr)) return false;
-			while (lo != hi) {
-				mid = low + floor((hi-low)/2);
-				if (arr[mid] < x) lo = mid + 1; else hi = mid;
-			}
-			return lo;
-		}; this.bisectRight = function bisectRight(arr, x, lo=0, hi=null) {
-			hi === null && (hi = len(arr));
-			if (lo < 0 || hi < lo || hi > len(arr)) return false;
-			while (lo != hi) {
-				mid = low + floor((hi-low)/2);
-				if (arr[mid] <= x) lo = mid + 1;
-				else hi = mid;
-			}
-			return lo;
-		}; this.bisect = function bisect(arr, x, lo=0, hi=null, orientation="left", use=true) {
-			return (orientation === "left" ?
-				bisectLeft : bisectRight
-			)(arr, x, lo, hi);
-		}; for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j = 10; j --> 0 ;)
-				multable[i][j] = i * j;
-		for (var i = 10, j, addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j = 10; j --> 0 ;)
-				addtable[i][j] = i + j;
-		for (var i = 10, j, subtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j = 10; j --> 0 ;)
-				subtable[i][j] = i - j;
-		for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j = 10; j --> 0 ;)
-				divtable[i][j] = i / j;
+		LIBRARY_FUNCTIONS[Symbol.for("<0x200b>")] = "​"; // zero width space
+		LIBRARY_FUNCTIONS[Symbol.for("<0x08>")] = ""; // \b
+		Number.fpart = LIBRARY_FUNCTIONS.fpart;
+		Number.EPSILON == null && (Number.EPSILON = 2**-52);
+		for (const s of Object.keys(LIBRARY_FUNCTIONS))
+			this[s] = LIBRARY_FUNCTIONS[s];
+	} {// Conflict and Library Functions
+		LIBRARY_FUNCTIONS = Object.keys(LIBRARY_FUNCTIONS);
+		var CONFLICT_ARR = LIBRARY_FUNCTIONS.filter(e => this[e] != null);
+		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
+		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
+		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
+		this[Output_Math_Variable] !== void 0 && (
+			Output_Math_Variable === "Math" ?
+				Alert_Conflict_For_Math === !0 :
+				Output_Math_Variable === void 0 ?
+					!1 : !0
+		) && CONFLICT_ARR.push(Output_Math_Variable);
 	} {// Event and Document things
 		
 		let _ael = EventTarget.prototype.addEventListener
@@ -4652,13 +4649,16 @@ void (() => { "use strict";
 			rMath.rMath = rMath; rMath.cfsMath = cfsMath; cfsMath.aMath = aMath; cfsMath.bMath = bMath;
 			cfsMath.cMath = cMath; cfsMath.fMath = fMath; cfsMath.sMath = fMath; cfsMath.rMath = rMath;
 			cfsMath.cfsMath = cfsMath;
+
+		for (const obj of Object.values(MathObjects)) {
+			obj["+"]  = obj.add;
+			obj["-"]  = obj.sub;
+			obj["*"]  = obj.mul;
+			obj["/"]  = obj.div;
+			obj["**"] = obj.pow;
+		}
+
 		this[Output_Math_Variable] = this[Input_Math_Variable];
-		sMath["+"] = sMath.add;
-		sMath["-"] = sMath.sub;
-		sMath["*"] = sMath.mul;
-		sMath["/"] = sMath.div;
-		sMath["^"] = sMath.pow;
-		sMath["**"] = sMath.pow;
 	} {// Prototypes
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
@@ -5307,13 +5307,12 @@ void (() => { "use strict";
 			"1234567890a";
 		}
 	} {// Error Handling
-		let exit1 = !1;
 		try { ON_CONFLICT = ON_CONFLICT.lower() }
 		catch { ON_CONFLICT = "None" }
-		Alert_Conflict_Unused === "default" && (Alert_Conflict_Unused = !1);
-		ON_CONFLICT           === "default" && (ON_CONFLICT           = "dbg");
-		if (len(CONFLICT_ARR)) {
-			switch (ON_CONFLICT && Alert_Conflict_OverWritten) {
+		
+		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
+		if (ON_CONFLICT && len(CONFLICT_ARR)) {
+			switch (Alert_Conflict_OverWritten) {
 				case "ast":
 				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "dbg":
@@ -5330,31 +5329,17 @@ void (() => { "use strict";
 				case "trw":
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 			}
-			exit1 = !0;
-		} if (len(NOT_ACTIVE_ARR) && Alert_Conflict_Unused) {
-			switch (ON_CONFLICT) {
-				case "ast":
-				case "assert": console.assert(!1, "Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
-				case "err":
-				case "error": console.error("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
-				case "dbg":
-				case "debug": console.debug("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
-				case "inf":
-				case "info": console.info("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
-				case "wrn":
-				case "warn": console.warn("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
-				case "log": console.log("Not Active Global Variables: %o", NOT_ACTIVE_ARR); break;
-				case "alt":
-				case "alert": alert(`Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`); break;
-				case "ret":
-				case "return": return `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
-				case "trw":
-				case "throw": throw `Not Active Global Variables: ${NOT_ACTIVE_ARR.join(", ")}`;
-			}
-			exit1 = !0;
+			return 1;
 		}
-		if (exit1) return 1;
-		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && console.log("lib.js loaded");
+		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && (
+			Library_Startup_Function === "default" ?
+				console.log :
+				Library_Startup_Function
+		)(
+			Library_Startup_Message === "default" ?
+				"lib.js loaded" :
+				Library_Startup_Message
+		);
 		return 0;
 	} {// Comments
 		/**
@@ -5389,7 +5374,7 @@ void function _pow(x) {
 	negative && arr.push(-arr.at(-1));
 	return arr;
 }
-/*var pow = */void(function create_pow() {
+/*var pow = */void (function create_pow() {
 	// TODO: Make dynamic
 	const pows = [
 		function pow0(x) {
