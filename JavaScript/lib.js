@@ -67,11 +67,19 @@ void (() => { "use strict";
 		Clear_LocalStorage   && Clear_LocalStorage   !== "default" && localStorage  .clear();
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
 		// TODO: clear cookies and caches if the library user wants
-	} {// Variables/Functions
-		for (var i=10,j,multable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)multable[i][j] = i * j;
-		for (var i=10,j,addtable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)addtable[i][j] = i + j;
-		for (var i=10,j,subtable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)subtable[i][j] = i - j;
-		for (var i=10,j,divtable=Array(10).fill([]); i --> 0 ;) for (j=10; j --> 0 ;)divtable[i][j] = i / j;
+	} {// Variables & Functions
+		for (var i=10,j,multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j=10; j --> 0 ;)
+				multable[i][j] = i * j;
+		for (var i=10,j,addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j=10; j --> 0 ;)
+				addtable[i][j] = i + j;
+		for (var i=10,j,subtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j=10; j --> 0 ;)
+				subtable[i][j] = i - j;
+		for (var i=10,j,divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j=10; j --> 0 ;)
+				divtable[i][j] = i / j;
 		var
 		alphabetL       = "abcdefghijklmnopqrstuvwxyz"
 		, alphabet      = alphabetL
@@ -621,7 +629,7 @@ void (() => { "use strict";
 			return list;
 		}, "fpart"       : function fPart(n, number=true) {
 			if ( rMath.isNaN(n) ) return NaN;
-			if ( n.isInt() ) return 0;
+			if ( n.isInt() ) return number ? 0 : "0.0";
 			if ((n+"").incl("e+")) n = n.toPrecision(100);
 			else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), Number((n+"").slc("-", void 0, 1)) );
 			return number ?
@@ -786,7 +794,7 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : false,
 				arrayOneLineSpace  : "",
 			})
-		}, dim(e, n=1) { return e?.element - n }
+		}, dim(e, n=1) { return e?.length - n }
 		, len(e) { return e?.length }
 		, complex(re=0, im=0) { return cMath?.new?.(re, im) }
 		, copy(object) { return JSON.parse( JSON.stringify(obj) ) }
@@ -996,7 +1004,7 @@ void (() => { "use strict";
 					mul: "Takes 2 string number arguments (a and b). returns a * b as a string with maximum precision and no floating point errors",
 					mul10: "Takes 2 arguments. 1: string number (n).  2: integer (x).  returns n * 10^x as a string more efficiently than mul(n, 10) would. see mul, div10",
 					div: "Takes 3 arguments. (string number or number, string number or number, precision). division",
-					fdiv: "Takes 2 string number arguments. returns the floored division of the two numbers faster than flooring the result of div() would. see div, div10. basically just Python's '//' operator",
+					fdiv: "Takes 2 string number arguments. returns the floored division of the two numbers faster than flooring the result of div() would. see div, div10. basically just Python's '//' operator. the argument order is numerator then denominator.",
 					div10: "Takes 2 arguments. 1: string number (n).  2: integer (x).  returns n / 10^x as a string more efficiently than div(n, 10) would. see div, fdiv, mul10",
 					idiv: "Takes 3 arguments. the same as div() but only for integers. should be faster, and doesn't check for invalid inputs",
 					mod: "Takes 3 arguments. 2 string number arguments and 1 positive integer argument for the precision of tge division. modulo operator.",
@@ -1013,32 +1021,38 @@ void (() => { "use strict";
 					square: "Takes 1 string number argument. squares the argument and returns it.",
 					cube: "Takes 1 string number argument. cubes the argument and returns it.",
 					tesseract: "Takes 1 string number argument. raises it the the fourth power and returns it.",
-					norm: null,
-					decr: null,
-					incr: null,
-					isNaN: null,
-					isInt: null,
-					isFloat: null,
-					min: null,
-					max: null,
-					lmgf: null,
-					floor: null,
-					ceil: null,
-					round: null,
+					norm: "Takes 1 string number argument. calls window.numStrNorm(argument). normalizes the number, ie: remove leading zeros, remove trailing decimal zeros.",
+					decr: "Takes 1 string number argument (x). returns x - 1 as a string, more efficiently (I think), than sub(x, 1) would. see incr, sub",
+					incr: "Takes 1 string number argument (x). as of aug 4, 2022, this function just calls add(x, 1). see decr, add",
+					isNaN: "Takes 1 string number argument. returns true, if it is NOT a number, and false if it is a number. the cases that it will return false in are if it has characters outside of the decimal numerals (and period), it has multiple periods, or it is't a string all together",
+					isInt: "Takes 1 string number argument. returns whether or not the input is an integer. It does not assume the argument is normalized.",
+					isIntN: "Takes 1 string number argument. returns whether or not the input is an integer. It assumes the argument is correct and normalized as per sMath.norm or window.numStrNorm (they're the same function). In this case it is faster to use this function than the regular isInt",
+					isFloat: "Takes 1 string number argument. returns whether or not the input has non-zero decimal places. It does not assume the argument is normalized.",
+					isFloatN: "Takes 1 string number argument. returns whether or not the input has non-zero decimal places. It assumes the argument is correct and normalized as per sMath.norm or window.numStrNorm (they're the same function). In this case it is faster to use this function than the regular isFloat",
+					min: "Takes any amount of string number arguments. the arguments can be passed in via an array or directly. the minimum value will be returned. if no arguments are given, the default return value is 0, or more specificly, \"0.0\". see sMath.zero, max",
+					max: "Takes any amount of string number arguments. the arguments can be passed in via an array or directly. the maximum value will be returned. if no arguments are given, the default return value is 0, or more specificly, \"0.0\". see sMath.zero, min",
+					_lmgf: "This function is used internally to act as both gcf/gcd and lcm in one function. Takes 1 named argument for either lcm or gcf/gcd. the rest of the arguments should be string numbers that are normalized with either sMath.norm or window.numStrNorm.",
+					floor: "Takes 1 string number argument. returns the floored version of it. (round towards negative infinity)",
+					ceil: "Takes 1 string number argument. returns the ceilinged version of it. (round towards positive infinity)",
+					round: "Takes 1 string number argument. returns number rounded to the nearest integer.",
 					trunc: "takes 1 string number argument. returns the truncated version. same as Math.trunc, but for strings. rounds towards zero. see ipart, floor, ceil, round",
+					new: "Takes 1 numerical argument. returns the input in the canonical string form. It also works if the input isn't a number. In this case, it just returns (input+\"\")",
+					lcm: null,
+					gcf: null,
+					gcd: null,
 					eq: {
-						gt: null,
-						ge: null,
-						lt: null,
-						le: null,
-						eq: null,
-						ne: null,
-						ez: null,
-						nz: null,
-						ng: null,
-						nn: null,
-						ps: null,
-						np: null,
+						gt: "Takes 2 string number arguments (a, b). returns a > b",
+						ge: "Takes 2 string number arguments (a, b). returns a ≥ b",
+						lt: "Takes 2 string number arguments (a, b). returns a < b",
+						le: "Takes 2 string number arguments (a, b). returns a ≤ b",
+						eq: "Takes 2 string number arguments (a, b). returns a == b",
+						ne: "Takes 2 string number arguments (a, b). returns a ≠ b",
+						ez: "Takes 1 string number argument (x). returns x == 0. using this function is more efficient than using the two argumented counterpart.",
+						nz: "Takes 1 string number argument (x). returns x ≠ 0. using this function is more efficient than using the two argumented counterpart.",
+						ng: "Takes 1 string number argument (x). returns x < 0. negative. using this function is more efficient than using the two argumented counterpart.",
+						nn: "Takes 1 string number argument (x). returns x ≥ 0. not negative. using this function is more efficient than using the two argumented counterpart.",
+						ps: "Takes 1 string number argument (x). returns x > 0. positive. using this function is more efficient than using the two argumented counterpart.",
+						np: "Takes 1 string number argument (x). returns x ≤ 0. not positive. using this function is more efficient than using the two argumented counterpart.",
 					},
 				}; if (comparatives) this.eq = {
 					gt(a="0.0", b="0.0") {// >
@@ -1313,7 +1327,6 @@ void (() => { "use strict";
 				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
 				num = this.mul10(num, exponent); denom = this.mul10(denom, exponent);
 				// return this.idiv(num, denom); // extra checks for the same cases.
-
 				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
 				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
@@ -1395,9 +1408,7 @@ void (() => { "use strict";
 				return sign === -1 ? `-${ansString}` : ansString;
 			} mod(a="0.0", b="0.0", precision=18) {
 				return this.sub(
-					a, this.floor(
-						this.div(a, b, precision)
-					)
+					a, this.mul( b, this.fdiv(a, b, precision) )
 				)
 				throw Error("Not Implemented");
 			} ipow(a="0.0", b="1.0") {
@@ -1496,6 +1507,9 @@ void (() => { "use strict";
 				for (var n = len(snum); ++i < n ;)
 					if (snum[i] !== "0") return false;
 				return true;
+			} isIntN(snum="0.0") {
+				return snum.at(-2) +
+					snum.at(-1) === ".0";
 			} isFloat(snum="0.0") {
 				// not actually a float, but floats have decimals and it checks for decimals, so whatever
 				if (type(snum) !== "string") return false;
@@ -1504,6 +1518,9 @@ void (() => { "use strict";
 				for (var n = len(snum); ++i < n ;)
 					if (snum[i] !== "0") return true;
 				return false;
+			} isFloatN(snum="0.0") {
+				return snum.at(-2) +
+					snum.at(-1) !== ".0";
 			} min(...args) {
 				if (!len(args)) return "0.0";
 				args = args.flatten();
@@ -1518,31 +1535,34 @@ void (() => { "use strict";
 					if (this.eq.gt(args[i], max))
 						max = args[i];
 				return max;
-			} lmgf(t="lcm", ...ns) {
-				throw Error("not implemented");
+			} _lmgf(t="lcm", ...ns) {
+				// throw Error("not implemented");
 				// least commond multiple and greatest common factor
+				// the arguments should be correctly formatted, or it will not always work
 				ns = ns.flatten();
 				["l", "lcm", "g", "gcf", "gcd"].incl(t) || (t = "lcm");
 				if (t[0] === "g") {
 					for (const e of ns)
-						if (this.isFloat(e))
+						if (this.isFloatN(e))
 							return 1;
 				} else if (t[0] === "l") {
 					for (const e of ns) {
-						if (this.isFloat(e))
+						if (this.isFloatN(e))
 							return ns.reduce((t, e) => this.mul(t, e), "1.0");
 					}
 				} else throw Error("invalid first argument for sMath.lmgf");
-				for (var i = t[0] === "l" ? this.max(ns) : this.min(ns), c
-					;; i = t[0] === "l" ? this.add(i, 1) : this.decr(i)
+				for (var
+					i = t[0] === "l" ? this.max(ns) : this.min(ns),
+					c
+					; true ;
+					i = t[0] === "l" ? this.incr(i) : this.decr(i)
 				) {
-					// TODO: continue here
-					for (var j = dim(ns); j >= 0; --j) {
-						if (t[0] === "l" ? i % ns[j] : ns[j] % i) {
-							c = !1;
+					for (var j = len(ns); j --> 0 ;) {
+						if (this.eq.nz(t[0] === "l" ? this.mod(i, ns[j]) : this.mod(ns[j], i))) {
+							c = false;
 							break;
 						}
-						c = !0;
+						c = true;
 					}
 					if (c) return i;
 				}
@@ -1562,6 +1582,22 @@ void (() => { "use strict";
 				return this.ipart(
 					snum
 				);
+			} new(number=1) {
+				return number === int(number) ?
+					number + ".0" :
+					number + "";
+			} lcm(...args) {
+				return this._lmgf(
+					"lcm", ...args
+				)
+			} gcd(...args) {
+				return this._lmgf(
+					"gcd", ...args
+				)
+			} gcf(...args) {
+				return this._lmgf(
+					"gcf", ...args
+				)
 			}
 		})(
 			sMath_Help_Argument,
@@ -1833,7 +1869,7 @@ void (() => { "use strict";
 					mode: null,
 					mad: "Stands for mean absolute deviation.  takes any amount of arguments, either directly or in one or many array(s).  gets the mean of the arguments.  then finds the mean of the absolute deviation from the mean.",
 					isPrime: "Takes 1 input, and returns true if it is prime, false if it is composite.",
-					lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the parameters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
+					_lmgf: "stands for lcm gcf.  Takes at least two arguments.  if the first argument is equal tp \"lcm\" or \"l\" (lowercase L), it will perform the least common multiple. otherwise,  it will do the greatest common factor.  the rest of the parameters can be inputed either directly, or as one or many arrays.  any arguments that are not numbers or bigInts are ignored, as long as it is not the second argument.",
 					linReg: "Takes 3 paramates. finds the line of best fit (y = mx + b), given the x and y coordinates as arrays. 1: x-coordinates.  2: y-coordinates.  3: if this is \"obj\", then it returns an object, otherwise it returns it as a string",
 					pascal: "Takes 2 arguments.  1: row.  2: col in row.  if the column is less than 1 or greater than row + 1, it will return NaN. otherwise, if col is not \"all\", it will return nCr(row,col-1). if col is equal to \"all\", it will return an array of all the numbers in that row of pascals triangle.",
 					fib: "Stands for fibonacci. returns the fibonacci sequence number of the inputed index.  If floats are inputed, then it will effectively return fib(ceil(input)).  Currently negative indexes are not implemented.  fib(0) returns 0, fib(1) returns 1, fib(2) returns 1, fib(3) returns 2, etc.",
@@ -1874,9 +1910,9 @@ void (() => { "use strict";
 					isaN: "Takes one argument.  returns the opposite of rMath.isNaN. see isAN, isNNaN",
 					isNNaN: "Takes one argument.  is not not a number. returns the opposite of rMath.isNaN. see isAN, isaN",
 					imul: "returns the result of the C-like 32-bit multiplication of the two parameters.",
-					lcm: "returns the least common multiple of a list of numbers. see lmgf",
-					gcf: "returns the greatest common factor of a list of numbers. see lmgf, gcd",
-					gcd: "see gcf, lmgf",
+					lcm: "returns the least common multiple of a list of numbers. see _lmgf",
+					gcf: "returns the greatest common factor of a list of numbers. see _lmgf, gcd",
+					gcd: "see gcf, _lmgf",
 					fround: "returns the nearest 32-bit single precision float representation of a number.",
 					sqrt: "Takes one argument. returns nthrt(arg)",
 					cbrt: "Takes one argument.  returns the cube root of the argument.",
@@ -2465,7 +2501,7 @@ void (() => { "use strict";
 				return this.isNaN(n) ?
 					NaN :
 					n.isPrime();
-			} lmgf(t="lcm", ...ns) {
+			} _lmgf(t="lcm", ...ns) {
 				// least commond multiple and greatest common factor
 				ns = ns.flatten();
 				type(t) !== "string" && (t = "lcm");
@@ -2892,15 +2928,15 @@ void (() => { "use strict";
 			} lcm(...ns) {
 				return ns.isNaN() ?
 					NaN :
-					this.lmgf("lcm", ns);
+					this._lmgf("lcm", ns);
 			} gcf(...ns) {
 				return ns.isNaN() ?
 					NaN :
-					this.lmgf("gcf", ns);
+					this._lmgf("gcf", ns);
 			} gcd(...ns) {
 				return ns.isNaN() ?
 					NaN :
-					this.lmgf("gcd", ns);
+					this._lmgf("gcd", ns);
 			} fround(n) {
 				return isNaN( n = Number(n) ) ?
 					n :
@@ -4651,11 +4687,9 @@ void (() => { "use strict";
 			cfsMath.cfsMath = cfsMath;
 
 		for (const obj of Object.values(MathObjects)) {
-			obj["+"]  = obj.add;
-			obj["-"]  = obj.sub;
-			obj["*"]  = obj.mul;
-			obj["/"]  = obj.div;
-			obj["**"] = obj.pow;
+			obj["+"]  = obj.add; obj["-"]  = obj.sub;
+			obj["*"]  = obj.mul; obj["/"]  = obj.div;
+			obj["**"] = obj.pow; obj["e^"] = obj.exp;
 		}
 
 		this[Output_Math_Variable] = this[Input_Math_Variable];
@@ -5374,7 +5408,7 @@ void function _pow(x) {
 	negative && arr.push(-arr.at(-1));
 	return arr;
 }
-/*var pow = */void (function create_pow() {
+/*var pow = */ void (function create_pow() {
 	// TODO: Make dynamic
 	const pows = [
 		function pow0(x) {
