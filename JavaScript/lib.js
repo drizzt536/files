@@ -36,6 +36,8 @@ void (() => { "use strict";
 		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log
 		, MATH_DEFAULT_END_SYSTEM     = "default" // for rMath.tempConv
 		, aMath_Help_Argument         = "default"
+		, aMath_Trig_Argument         = "default"
+		, aMath_Comparatives_Argument = "default"
 		, bMath_Help_Argument         = "default"
 		, bMath_DegTrig_Argument      = "default"
 		, cMath_DegTrig_Argument      = "default"
@@ -48,6 +50,7 @@ void (() => { "use strict";
 		, rMath_Help_Argument         = "default"
 		, rMath_Comparatives_Argument = "default"
 		, rMath_Constants_Argument    = "default"
+		, cfsMath_Help_Argument       = "default"
 		, Logic_BitWise_Argument      = "default"
 		, Logic_Comparatives_Argument = "default"
 		, Logic_Help_Argument         = "default"
@@ -66,8 +69,11 @@ void (() => { "use strict";
 
 		Clear_LocalStorage   && Clear_LocalStorage   !== "default" && localStorage  .clear();
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
+		MATH_LOG_DEFAULT_BASE   === "default" && (MATH_LOG_DEFAULT_BASE   = 10 );
+		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
 		// TODO: clear cookies and caches if the library user wants
 	} {// Variables & Functions
+		// Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
 		for (var i=10,j,multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j=10; j --> 0 ;)
 				multable[i][j] = i * j;
@@ -110,6 +116,8 @@ void (() => { "use strict";
 		, "rand": Math.random
 		, "json": JSON
 		, "infinity": Infinity
+		, "literal symbol.for <0x200b>": "​" // zero width space
+		, "literal symbol.for <0x08>": "" // \b
 		, "π": π
 		, "𝜏": 𝜏
 		, "𝑒": 𝑒
@@ -199,317 +207,7 @@ void (() => { "use strict";
 			type() {
 				return "linkedlist";
 			}
-		}, "Logic": new (class Logic {
-			constructor(bitwise, comparatives, help) {
-				bitwise === "default" && (bitwise = "bit");
-				comparatives === "default" && (comparatives = null);
-				help === "default" && (help = "help");
-
-				if (bitwise != null) {
-					// TODO: Add the other logic gates to bitwise
-					this[bitwise] = {
-						shr: (a, b) => a >> b,
-						shr2: (a, b) => a >>> b,
-						shl: (a, b) => a << b,
-						not: (...a) => len(a = a.flatten()) == 1 ? ~a[0] : a.map(b => ~b),
-						and: function and(...a) {
-							return type(a[0], 1) !== "arr" ?
-								this.xor(a, len(a)) :
-								this.xor(a[0], len(a[0]));
-						},
-						nand: (a, b) => null,
-						or: function or(a, b) { return this.xor([a, b], [1, 2]) },
-						nor: function nor(...b) { return this.xor(b, [0]) },
-						xor: (ns, range=[1]) => {
-							if (isNaN( (ns = ns.tofar()).join("") )) throw TypeError("numbers req. for 1st parameter");
-							if (isNaN( (range = range.tofar()).join("") )) throw TypeError("numbers req. for 2nd parameter");
-							// fix range
-							const min = rMath.min(range), max = rMath.max(range);
-							range = [
-								min < 0 ? 0 : int(min),
-								max > len(ns) - 1 ? len(ns) - 1 : int(max)
-							];
-							ns = ns.map(b => b.toString(2));
-							const maxlen = rMath.max( ns.map(b => len(b)) );
-							// normalize the string lengths
-							ns.for((e, i) => {
-								while (len(e) < maxlen)
-									e = `0${e}`;
-								ns[i] = e;
-							});
-							// get the totals per bit, and store into 'bits'
-							for (var str_i = 0, arr_i = 0, bits = "", total, output = "";
-								str_i < maxlen;
-								str_i++, bits += total
-							) {
-								for (arr_i = 0, total = 0; arr_i < len(ns); arr_i++)
-									total += ns[arr_i][str_i] == 1;
-							}
-
-							// get the true or false per bit ans stor into 'output'
-							for (str_i = 0; str_i < len(bits); str_i++)
-								output += (Number(bits[str_i])).inRange(range[0], range[1]) ? 1 : 0;
-
-							return Number(`0b${output}`);
-						},
-
-						nxor: function xnor(a, b) {
-							return this.not(// TODO: Figure out what this is supposed to be for
-
-							);
-						},
-						imply: null,
-						nimply: null,
-					}
-				}
-				if (comparatives != null) {
-					this[comparatives] = {
-						gt: (a, b) => a > b,
-						lt: (a, b) => a < b,
-						get: (a, b) => a >= b,
-						let: (a, b) => a <= b,
-						leq: (a, b) => a == b,
-						seq: (a, b) => a === b,
-						lneq: (a, b) => a != b,
-						sneq: (a, b) => a !== b,
-					}
-				}
-				if (help != null) {
-					// TODO: finish Logic help text
-					this[help] = {
-						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
-						and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
-						nand: "Takes any number of arguments either directly or in an array. returns true as long as not all the arguments coerce to true",
-						or: "takes any amount of arguments either directly or in an array. returns true if any of the arguments coerce to true. Logical OR gate",
-						nor: "Takes any amount of arguments either directly or in an array. returns true if all the inputs are false. Logical NOR gate",
-						xor: "Takes any amount of arguments either directly or in an array.  returns true if half of the arguments coerce to true. Logical XOR gate.",
-						xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
-						nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						iff: "Takes 2 arguments. retruns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
-						if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
-						imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
-						nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
-						xnor: "returns false",
-						is: "Takes any number of arguments. returns true if all the inputs are exactly equal to the first argument, although, objects can be different objects with the same values",
-						isnt: "Takes any number of arguments. returns true as long as any of the arguments is different from any other",
-						near: "Takes 3 paramaters.  1: fist number.  2: second number.  3?: range.  returns true if the numbers are in the range of eachother. the default range is ±3e-16, which should be enough to account for rounding errors. the same as python's math.isclose() function but with a different default range.",
-						bitwise: {
-							xor: "adds up the numbers in the first array bitwise, and returns 1 for bits in range of, or equal to the second array, returns zero for the others, and returns the answer in base 10. xor([a,b])==a^b.",
-							not:    "if there is one argument, returns ~argument.  if there is more than 1 argument, returns an array. example: Logic.bit.not(4,5,-1) returns [~4,~5,~-1]",
-							nil:    "if all of the inputs are zero for a given bit, it outputs one. Inverse &.",
-							and:    "a & b",
-							or:     "a | b",
-							left:   "a << b",
-							right:  "a >> b",
-							right2: "a >>> b",
-						},
-						equality: {
-							gt: "greater than (>)",
-							get: "greater than or equal to (>=)",
-							lt: "less than (<)",
-							let: "less than or equal to (<=)",
-							leq: "loose equality (==)",
-							seq: "strict equality (===)",
-							lneq: "loose non-equality (!=)",
-							sneq: "strict non-equality (!==)"
-						}
-					}
-				}
-			}
-			not(...a) {// NOT gate
-				// +---+-----+
-				// | p | ¬ p |
-				// +---+-----+
-				// | T |  F  |
-				// | F |  T  |
-				// +---+-----+
-				return len(a) == 1 ? !a[0] : a.map(b=>!b);
-			}
-			and(...a) {// AND gate
-				// +---+---+-------+
-				// | p | q | p ∧ q |
-				// +---+---+-------+
-				// | T | T |   T   |
-				// | T | F |   F   |
-				// | F | T |   F   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json?.stringify?.(a = a?.flatten?.()) === "[]") 
-					return !1;
-				for (var i = len(a); i --> 0 ;)
-					if (a[i] == !1) return !1;
-				return !0;
-			}
-			nand(...a) {// not (p and q)
-				// +---+---+-------+
-				// | p | q | p ⊼ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   T   |
-				// +---+---+-------+
-				return !this.and(a);
-			}
-			or(...a) {// OR gate
-				// +---+---+-------+
-				// | p | q | p ∨ q |
-				// +---+---+-------+
-				// | T | T |   T   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]") return !1;
-				for (var i = len(a); i --> 0 ;)
-					if (a[i] == !0) return !0;
-				return !1;
-			}
-			nor(...a) {// not (p or q)
-				// +---+---+-------+
-				// | p | q | p ⊽ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   F   |
-				// | F | T |   F   |
-				// | F | F |   T   |
-				// +---+---+-------+
-				return !this.or(a);
-			}
-			xor(...a) {// exclusive or gate
-				// +---+---+-------+
-				// | p | q | p ⊻ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]")
-					return !1;
-				return len(a.filter(b => b == !0)) == len(a) / 2
-			}
-			xor2(...a) {// exclusive or gate
-				// +---+---+-------+
-				// | p | q | p ⊻ q |
-				// +---+---+-------+
-				// | T | T |   F   |
-				// | T | F |   T   |
-				// | F | T |   T   |
-				// | F | F |   F   |
-				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]")
-					return !1;
-				return len(a.filter(b => b == !0)) == len(a) % 2 > 0
-			}
-			nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
-				// +---+---+----------+
-				// | p | q | p xnor q |
-				// +---+---+----------+
-				// | T | T |     T    |
-				// | T | F |     F    |
-				// | F | T |     F    |
-				// | F | F |     T    |
-				// +---+---+----------+
-				// should be nxor because it is not xor and not exclusive nor
-				return !this.xor(a);
-			}
-			nxor2(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
-				// +---+---+----------+
-				// | p | q | p xnor q |
-				// +---+---+----------+
-				// | T | T |     T    |
-				// | T | F |     F    |
-				// | F | T |     F    |
-				// | F | F |     T    |
-				// +---+---+----------+
-				// should be nxor because it is not xor and not exclusive nor
-				return !this.xor2(a);
-			}
-			iff(...a) {// boolean algebra name for 'if and only if' (↔, <-->); not(p xor q)
-				// +---+---+----------+
-				// | p | q | p xnor q |
-				// +---+---+----------+
-				// | T | T |     T    |
-				// | T | F |     F    |
-				// | F | T |     F    |
-				// | F | F |     T    |
-				// +---+---+----------+
-				return !this.xor(a);
-			}
-			if(a, b) {// boolean algebra name for 'IMPLY gate'.
-				// +---+---+---------+
-				// | p | q | p --> q |
-				// +---+---+---------+
-				// | T | T |    T    |
-				// | T | F |    F    |
-				// | F | T |    T    |
-				// | F | F |    T    |
-				// +---+---+---------+
-				return this.imply(a, b);
-			}
-			imply(a, b) {// IMPLY gate; P --> Q
-				// +---+---+---------+
-				// | p | q | p --> q |
-				// +---+---+---------+
-				// | T | T |    T    |
-				// | T | F |    F    |
-				// | F | T |    T    |
-				// | F | F |    T    |
-				// +---+---+---------+
-				return a ? b == !0 : !0;
-			}
-			nimply(a, b) {// not (P --> Q)
-				// +---+---+---------+
-				// | p | q | p ->/ q |
-				// +---+---+---------+
-				// | T | T |    F    |
-				// | T | F |    T    |
-				// | F | T |    F    |
-				// | F | F |    F    |
-				// +---+---+---------+
-				return !this.if(a, b);
-			}
-			xnor() {// exclusive-nor but what it does what it says it does
-				// for xnor to return true:
-				// the inputs have to both be false, hence the 'nor' part.
-				// the inputs have to both be different, hence the 'exclusive' part.
-				// +---+---+-------------+---------+
-				// | p | q | p nor q (r) | excls r |
-				// +---+---+-------------+---------+
-				// | T | T |    False    |  False  |
-				// | T | F |    False    |  False  |
-				// | F | T |    False    |  False  |
-				// | F | F |    True     |  False  |
-				// +---+---+-------------+---------+
-				return !1;
-			}
-			is(...a) {// Object.is() but more than 2 inputs
-				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
-				for (var i = len(a); i --> 0 ;)
-					if (a[i] !== a[0]) return !1;
-				return !0;
-			}
-			isnt(...a) {// !Object.is() but more than 2 inputs and broken
-				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
-				for (var i = len(a) - 1; i --> 0;) {
-					if ( len(a.filter(b => b === a.last())) !== 1 )
-						return !1;
-					a.pop();
-				}
-				return !0;
-			}
-			near(n1, n2, range=Number.EPSILON) {// same as python math.isclose() with different default range
-				return n1 > n2 - range && n1 < n2 + range ?
-					!0 :
-					!1;
-			}
-		})(
-			Logic_BitWise_Argument,
-			Logic_Comparatives_Argument,
-			Logic_Help_Argument
-		), "Image": (function create_Image() {
+		}, "Image": (function create_Image() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
 			return function Image(width, height, options={}) {
@@ -912,7 +610,7 @@ void (() => { "use strict";
 			return (orientation === "left" ?
 				bisectLeft : bisectRight
 			)(arr, x, lo, hi);
-		}, "randint"      : function randomInt(min=1, max=null) {
+		}, "randint"     : function randomInt(min=1, max=null) {
 			if (max == null) {
 				max = min;
 				min = 0;
@@ -1045,7 +743,7 @@ void (() => { "use strict";
 			while (snum[dim(snum)] === "0" && snum[dim(snum, 2)] !== ".")
 				snum = snum.substr(0, dim(snum));
 			return snum + (snum.endsW(".") ? "0" : "");
-		}, "formatjson": function formatJSON(json="{}", {
+		}, "formatjson"  : function formatJSON(json="{}", {
 			objectNewline = true,
 			tab = "\t",
 			newline = "\n",
@@ -1093,7 +791,7 @@ void (() => { "use strict";
 				} else output += json[i];
 			}
 			return output;
-		}, "minifyjson": function minifyJSON(json) {
+		}, "minifyjson"  : function minifyJSON(json) {
 			// removes all the unnecessary spaces and things
 			return formatjson(json, {
 				objectNewline      : true, // less conditionals are checked if this is set to true
@@ -1109,200 +807,314 @@ void (() => { "use strict";
 		, complex(re=0, im=0) { return cMath?.new?.(re, im) }
 		, copy(object) { return JSON.parse( JSON.stringify(obj) ) }
 		, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
-		};
+		, "instance Logic": class Logic {
+			constructor(bitwise=Logic_BitWise_Argument, comparatives=Logic_Comparatives_Argument, help=Logic_Help_Argument) {
+				bitwise === "default" && (bitwise = "bit");
+				comparatives === "default" && (comparatives = null);
+				help === "default" && (help = "help");
 
-		LIBRARY_FUNCTIONS[Symbol.for("<0x200b>")] = "​"; // zero width space
-		LIBRARY_FUNCTIONS[Symbol.for("<0x08>")] = ""; // \b
-		Number.fpart = LIBRARY_FUNCTIONS.fpart;
-		Number.EPSILON == null && (Number.EPSILON = 2**-52);
-	} {// Conflict and Library Functions
-		var CONFLICT_ARR = Object.keys(LIBRARY_FUNCTIONS).concat([
-			"aMath", "bMath", "cMath", "fMath", "cfsMath", "rMath", "sMath", "MathObjects"
-		]).filter(e => e != "Image" && this[e] != null);
-		for (const s of Object.keys(LIBRARY_FUNCTIONS)) this[s] = LIBRARY_FUNCTIONS[s];
-		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
-		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
-		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
-		this[Output_Math_Variable] !== void 0 && (
-			Output_Math_Variable === "Math" ?
-				Alert_Conflict_For_Math === !0 :
-				Output_Math_Variable === void 0 ?
-					!1 : !0
-		) && CONFLICT_ARR.push(Output_Math_Variable);
-	} {// Event and Document things
-		
-		let _ael = EventTarget.prototype.addEventListener
-		, _rel = EventTarget.prototype.removeEventListener
-		, listeners = dict()
-		, _click = HTMLElement.prototype.click;
-		EventTarget.prototype._ael = _ael;
-		EventTarget.prototype._rel = _rel;
+				if (bitwise != null) {
+					// TODO: Add the other logic gates to bitwise
+					this[bitwise] = {
+						shr: (a, b) => a >> b,
+						shr2: (a, b) => a >>> b,
+						shl: (a, b) => a << b,
+						not: (...a) => len(a = a.flatten()) == 1 ? ~a[0] : a.map(b => ~b),
+						and: function and(...a) {
+							return type(a[0], 1) !== "arr" ?
+								this.xor(a, len(a)) :
+								this.xor(a[0], len(a[0]));
+						},
+						nand: (a, b) => null,
+						or: function or(a, b) { return this.xor([a, b], [1, 2]) },
+						nor: function nor(...b) { return this.xor(b, [0]) },
+						xor: (ns, range=[1]) => {
+							if (isNaN( (ns = ns.tofar()).join("") )) throw TypeError("numbers req. for 1st parameter");
+							if (isNaN( (range = range.tofar()).join("") )) throw TypeError("numbers req. for 2nd parameter");
+							// fix range
+							const min = rMath.min(range), max = rMath.max(range);
+							range = [
+								min < 0 ? 0 : int(min),
+								max > len(ns) - 1 ? len(ns) - 1 : int(max)
+							];
+							ns = ns.map(b => b.toString(2));
+							const maxlen = rMath.max( ns.map(b => len(b)) );
+							// normalize the string lengths
+							ns.for((e, i) => {
+								while (len(e) < maxlen)
+									e = `0${e}`;
+								ns[i] = e;
+							});
+							// get the totals per bit, and store into 'bits'
+							for (var str_i = 0, arr_i = 0, bits = "", total, output = "";
+								str_i < maxlen;
+								str_i++, bits += total
+							) {
+								for (arr_i = 0, total = 0; arr_i < len(ns); arr_i++)
+									total += ns[arr_i][str_i] == 1;
+							}
 
-		function addEventListener(Type, listener=null, options={
-			capture  : false,
-			passive  : false,
-			once     : false,
-			type     : arguments[0],
-			listener : arguments[1] }) {
+							// get the true or false per bit ans stor into 'output'
+							for (str_i = 0; str_i < len(bits); str_i++)
+								output += (Number(bits[str_i])).inRange(range[0], range[1]) ? 1 : 0;
 
-			typeof options === "boolean" && (options = {
-				capture  : options,
-				passive  : false,
-				once     : false,
-				type     : Type,
-				listener : listener
-			});
-			_ael.call(this, Type, listener, options);
-			if (listeners[Type] === void 0) listeners[Type] = [];
-			listeners[Type].push({
-				object   : this,
-				capture  : options.capture,
-				passive  : options.passive,
-				once     : options.once,
-				type     : options.type,
-				listener : options.listener
-			});
-			return this;
-		} function removeEventListener(Type, listener=null, options={
-			capture  : false,
-			passive  : false,
-			once     : false,
-			type     : arguments[0],
-			listener : arguments[1] }) {
+							return Number(`0b${output}`);
+						},
 
-			typeof options === "boolean" && (options = {
-				capture  : options,
-				passive  : false,
-				once     : false,
-				type     : Type,
-				listener : listener
-			});
-			_rel.call(this, Type, listener, options);
-			for (var i = listeners[Type]?.length; i --> 0 ;) {
-				if (listeners[Type][i].capture  === options.capture  &&
-					listeners[Type][i].passive  === options.passive  &&
-					listeners[Type][i].once     === options.once     &&
-					listeners[Type][i].type     === options.type     &&
-					listeners[Type][i].listener === options.listener
-				) listeners[Type].splice(i, 1);
+						nxor: function xnor(a, b) {
+							return this.not(// TODO: Figure out what this is supposed to be for
+
+							);
+						},
+						imply: null,
+						nimply: null,
+					}
+				}
+				if (comparatives != null) {
+					this[comparatives] = {
+						gt: (a, b) => a > b,
+						lt: (a, b) => a < b,
+						get: (a, b) => a >= b,
+						let: (a, b) => a <= b,
+						leq: (a, b) => a == b,
+						seq: (a, b) => a === b,
+						lneq: (a, b) => a != b,
+						sneq: (a, b) => a !== b,
+					}
+				}
+				if (help != null) {
+					// TODO: finish Logic help text
+					this[help] = {
+						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
+						and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
+						nand: "Takes any number of arguments either directly or in an array. returns true as long as not all the arguments coerce to true",
+						or: "takes any amount of arguments either directly or in an array. returns true if any of the arguments coerce to true. Logical OR gate",
+						nor: "Takes any amount of arguments either directly or in an array. returns true if all the inputs are false. Logical NOR gate",
+						xor: "Takes any amount of arguments either directly or in an array.  returns true if half of the arguments coerce to true. Logical XOR gate.",
+						xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
+						nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
+						nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
+						iff: "Takes 2 arguments. retruns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
+						if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
+						imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
+						nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
+						xnor: "returns false",
+						is: "Takes any number of arguments. returns true if all the inputs are exactly equal to the first argument, although, objects can be different objects with the same values",
+						isnt: "Takes any number of arguments. returns true as long as any of the arguments is different from any other",
+						near: "Takes 3 paramaters.  1: fist number.  2: second number.  3?: range.  returns true if the numbers are in the range of eachother. the default range is ±3e-16, which should be enough to account for rounding errors. the same as python's math.isclose() function but with a different default range.",
+						bitwise: {
+							xor: "adds up the numbers in the first array bitwise, and returns 1 for bits in range of, or equal to the second array, returns zero for the others, and returns the answer in base 10. xor([a,b])==a^b.",
+							not:    "if there is one argument, returns ~argument.  if there is more than 1 argument, returns an array. example: Logic.bit.not(4,5,-1) returns [~4,~5,~-1]",
+							nil:    "if all of the inputs are zero for a given bit, it outputs one. Inverse &.",
+							and:    "a & b",
+							or:     "a | b",
+							left:   "a << b",
+							right:  "a >> b",
+							right2: "a >>> b",
+						},
+						equality: {
+							gt: "greater than (>)",
+							get: "greater than or equal to (>=)",
+							lt: "less than (<)",
+							let: "less than or equal to (<=)",
+							leq: "loose equality (==)",
+							seq: "strict equality (===)",
+							lneq: "loose non-equality (!=)",
+							sneq: "strict non-equality (!==)"
+						}
+					}
+				}
 			}
-			return this;
-		} function getEventListeners() {
-			// gets all event listeners for all objects.
-			return listeners;
-		} function getMyEventListeners() {
-			// gets all event listeners on the current EventTarget object the function is called from
-			return dict(Object.fromEntries(
-				listeners.entries().map( e => {
-					const value = e[1].filter(e => e.object === (this || window));
-					return len(value) ? [e[0], value] : [];
-				}).filter(e => len(e))
-			));
-		} function click(times=1) {
-			if (isNaN( times = Number(times) )) times = 1;
-			while (times --> 0) _click.call(this);
-			return this;
-		}
-
-		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener   ;
-		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener;
-		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners  ;
-		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
-		HTMLElement.prototype.click = click;
-		Document.prototype.click = function click(times=1) { return document.head.click(times) }
-		// document.all == null for some reason.
-		document.doctype && document.all !== void 0 && (document.all.doctype = document.doctype);
-
-		if (Creepily_Watch_Every_Action && Creepily_Watch_Every_Action !== "default") {
-			let log = console.log;
-			document.ael("click"            , e => { log(e.type); this[e.type] = e });
-			document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
-			document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
-			document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
-			document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
-			document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
-			document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
-			document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
-			document.ael("drag"             , e => { log(e.type); this[e.type] = e });
-			document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
-			document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
-			document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
-			document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
-			document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
-			document.ael("drop"             , e => { log(e.type); this[e.type] = e });
-			document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
-			document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
-			document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
-			document.ael("copy"             , e => { log(e.type); this[e.type] = e });
-			document.ael("paste"            , e => { log(e.type); this[e.type] = e });
-			document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
-			document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
-			document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
-			document.ael("input"            , e => { log(e.type); this[e.type] = e });
-			document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
-			document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
-			document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
-			document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
-			document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
-			document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
-			document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
-			document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
-			this    .ael("load"             , e => { log(e.type); this[e.type] = e });
-			this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
-			this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
-			this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
-		}
-		if (Run_KeyLogger === "default" ? !1 : Run_KeyLogger) {
-			let debug     = KeyLogger_Debug_Argument === "default" ?
-				!1 :
-				KeyLogger_Debug_Argument
-			, variable    = KeyLogger_Variable_Argument === "default" ?
-				Symbol.for('keys') :
-				KeyLogger_Variable_Argument
-			, copy_object = KeyLogger_Copy_Obj_Argument === "default" ?
-				!0 :
-				KeyLogger_Copy_Obj_Argument
-			, type        = KeyLogger_Type_Argument === "default" ?
-				"keydown" :
-				KeyLogger_Type_Argument;
-			const handler = e => {
-				window[variable] += e.key;
-				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
-				copy_object && (window.keypressObj = e);
-			}; this.stopKeylogger = function stopKeylogger() {
-				var alert =  KeyLogger_Alert_Start_Stop || KeyLogger_Debug_Argument
-				, type = KeyLogger_Debug_Argument;
-				type === "default" && (type = "keydown");
-				alert && console.log("keylogger manually terminated.");
-				document.body.removeEventListener(type, handler);
+			not(...a) {// NOT gate
+				// +---+-----+
+				// | p | ¬ p |
+				// +---+-----+
+				// | T |  F  |
+				// | F |  T  |
+				// +---+-----+
+				return len(a) == 1 ? !a[0] : a.map(b=>!b);
+			}
+			and(...a) {// AND gate
+				// +---+---+-------+
+				// | p | q | p ∧ q |
+				// +---+---+-------+
+				// | T | T |   T   |
+				// | T | F |   F   |
+				// | F | T |   F   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json?.stringify?.(a = a?.flatten?.()) === "[]") 
+					return !1;
+				for (var i = len(a); i --> 0 ;)
+					if (a[i] == !1) return !1;
 				return !0;
-			}; (function key_logger_v3() {
-				if (window[variable] !== void 0) return debug &&
-					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
-				window[variable] = "";
-				document.body.ael(type, handler);
-				(debug || KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${KeyLogger_Debug_Argument}${KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${KeyLogger_Copy_Obj_Argument}${KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${KeyLogger_Type_Argument}${KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
-			})();
-		} else if (KeyLogger_Alert_Unused && KeyLogger_Alert_Unused !== "default")
-			console.log("keylogger launch failed due to library settings");
-	} {// Math Variables
-		MATH_LOG_DEFAULT_BASE   === "default" && (MATH_LOG_DEFAULT_BASE   = 10 );
-		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
-		this.sMath = new (class stringRealMath {
-			constructor(help="default", comparatives="default") {
+			}
+			nand(...a) {// not (p and q)
+				// +---+---+-------+
+				// | p | q | p ⊼ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   T   |
+				// +---+---+-------+
+				return !this.and(a);
+			}
+			or(...a) {// OR gate
+				// +---+---+-------+
+				// | p | q | p ∨ q |
+				// +---+---+-------+
+				// | T | T |   T   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json.stringify(a = a.flatten()) === "[]") return !1;
+				for (var i = len(a); i --> 0 ;)
+					if (a[i] == !0) return !0;
+				return !1;
+			}
+			nor(...a) {// not (p or q)
+				// +---+---+-------+
+				// | p | q | p ⊽ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   F   |
+				// | F | T |   F   |
+				// | F | F |   T   |
+				// +---+---+-------+
+				return !this.or(a);
+			}
+			xor(...a) {// exclusive or gate
+				// +---+---+-------+
+				// | p | q | p ⊻ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json.stringify(a = a.flatten()) === "[]")
+					return !1;
+				return len(a.filter(b => b == !0)) == len(a) / 2
+			}
+			xor2(...a) {// exclusive or gate
+				// +---+---+-------+
+				// | p | q | p ⊻ q |
+				// +---+---+-------+
+				// | T | T |   F   |
+				// | T | F |   T   |
+				// | F | T |   T   |
+				// | F | F |   F   |
+				// +---+---+-------+
+				if (json.stringify(a = a.flatten()) === "[]")
+					return !1;
+				return len(a.filter(b => b == !0)) == len(a) % 2 > 0
+			}
+			nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
+				// +---+---+----------+
+				// | p | q | p xnor q |
+				// +---+---+----------+
+				// | T | T |     T    |
+				// | T | F |     F    |
+				// | F | T |     F    |
+				// | F | F |     T    |
+				// +---+---+----------+
+				// should be nxor because it is not xor and not exclusive nor
+				return !this.xor(a);
+			}
+			nxor2(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
+				// +---+---+----------+
+				// | p | q | p xnor q |
+				// +---+---+----------+
+				// | T | T |     T    |
+				// | T | F |     F    |
+				// | F | T |     F    |
+				// | F | F |     T    |
+				// +---+---+----------+
+				// should be nxor because it is not xor and not exclusive nor
+				return !this.xor2(a);
+			}
+			iff(...a) {// boolean algebra name for 'if and only if' (↔, <-->); not(p xor q)
+				// +---+---+----------+
+				// | p | q | p xnor q |
+				// +---+---+----------+
+				// | T | T |     T    |
+				// | T | F |     F    |
+				// | F | T |     F    |
+				// | F | F |     T    |
+				// +---+---+----------+
+				return !this.xor(a);
+			}
+			if(a, b) {// boolean algebra name for 'IMPLY gate'.
+				// +---+---+---------+
+				// | p | q | p --> q |
+				// +---+---+---------+
+				// | T | T |    T    |
+				// | T | F |    F    |
+				// | F | T |    T    |
+				// | F | F |    T    |
+				// +---+---+---------+
+				return this.imply(a, b);
+			}
+			imply(a, b) {// IMPLY gate; P --> Q
+				// +---+---+---------+
+				// | p | q | p --> q |
+				// +---+---+---------+
+				// | T | T |    T    |
+				// | T | F |    F    |
+				// | F | T |    T    |
+				// | F | F |    T    |
+				// +---+---+---------+
+				return a ? b == !0 : !0;
+			}
+			nimply(a, b) {// not (P --> Q)
+				// +---+---+---------+
+				// | p | q | p ->/ q |
+				// +---+---+---------+
+				// | T | T |    F    |
+				// | T | F |    T    |
+				// | F | T |    F    |
+				// | F | F |    F    |
+				// +---+---+---------+
+				return !this.if(a, b);
+			}
+			xnor() {// exclusive-nor but what it does what it says it does
+				// for xnor to return true:
+				// the inputs have to both be false, hence the 'nor' part.
+				// the inputs have to both be different, hence the 'exclusive' part.
+				// +---+---+-------------+---------+
+				// | p | q | p nor q (r) | excls r |
+				// +---+---+-------------+---------+
+				// | T | T |    False    |  False  |
+				// | T | F |    False    |  False  |
+				// | F | T |    False    |  False  |
+				// | F | F |    True     |  False  |
+				// +---+---+-------------+---------+
+				return !1;
+			}
+			is(...a) {// Object.is() but more than 2 inputs
+				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
+				for (var i = len(a); i --> 0 ;)
+					if (a[i] !== a[0]) return !1;
+				return !0;
+			}
+			isnt(...a) {// !Object.is() but more than 2 inputs and broken
+				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
+				for (var i = len(a) - 1; i --> 0;) {
+					if ( len(a.filter(b => b === a.last())) !== 1 )
+						return !1;
+					a.pop();
+				}
+				return !0;
+			}
+			near(n1, n2, range=Number.EPSILON) {// same as python math.isclose() with different default range
+				return n1 > n2 - range && n1 < n2 + range ?
+					!0 :
+					!1;
+			}
+		}, "instance sMath": class stringRealMath {
+			constructor(help=sMath_Help_Argument, comparatives=sMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
 				this.zero = "0.0"; // cannonical format for 0.
@@ -1908,11 +1720,13 @@ void (() => { "use strict";
 					"gcf", ...snums
 				)
 			}
-		})(
-			sMath_Help_Argument,
-			sMath_Comparatives_Argument,
-		); this.rMath = new (class RealMath {
-			constructor(degTrig="default", help="default", comparatives="default", constants="default") {
+		}, "instance rMath": class RealMath {
+			constructor(
+				degTrig = rMath_DegTrig_Argument,
+				help = rMath_Help_Argument,
+				comparatives = rMath_Comparatives_Argument,
+				constants = rMath_Constants_Argument,
+			) {
 				degTrig === "default" && (degTrig = !0);
 				help         === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
@@ -4144,13 +3958,8 @@ void (() => { "use strict";
 			// compareText
 			// coulomb
 			// electrical things
-		})(
-			rMath_DegTrig_Argument,
-			rMath_Help_Argument,
-			rMath_Comparatives_Argument,
-			rMath_Constants_Argument
-		); this.bMath = new (class BigIntRealMath {
-			constructor(help="default", degTrig="default") {
+		}, "instance bMath": class BigIntRealMath {
+			constructor(help=bMath_Help_Argument, degTrig=bMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 
@@ -4163,11 +3972,8 @@ void (() => { "use strict";
 			mul(a, b) { return a * b }
 			div(a, b) { return a / b }
 			pow(a, b) { return a ** b }
-		})(
-			bMath_Help_Argument,
-			bMath_DegTrig_Argument
-		); this.cMath = new (class ComplexMath {
-			constructor(degTrig="default", help="default") {
+		}, "instance cMath": class ComplexMath {
+			constructor(degTrig=cMath_DegTrig_Argument, help=cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
 				this.ComplexNumber = class Complex {
@@ -4553,12 +4359,9 @@ void (() => { "use strict";
 				if (type(z, 1) !== "complex") throw TypeError("cMath.isPrime() requires a complex argument");
 				throw Error("Not Implemented");
 			}
-		})(
-			cMath_DegTrig_Argument,
-			cMath_Help_Argument
-		); this.fMath = new (class FractionalRealMath {
+		}, "instance fMath": class FractionalRealMath {
 			// TODO: Make the functions convert numbers into fractions if they are inputed instead
-			constructor(help="default", degTrig="default") {
+			constructor(help=fMath_Help_Argument, degTrig=fMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 				this.Fraction = class Fraction {
@@ -4609,26 +4412,26 @@ void (() => { "use strict";
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
 				return this.simp(this.new(a.numer*b.denom, a.denom*b.numer));
 			}
-		})(
-			fMath_Help_Argument,
-			fMath_DegTrig_Argument
-		); this.aMath = new (class AllMath {
+		}, "instance aMath": class AllMath {
 			// aMath will call the correct function based upon the input
-			constructor(help="default") {
+			constructor(help=aMath_Help_Argument, trig=aMath_Trig_Argument, comparatives=aMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
+				trig === "default" && (trig = !0);
+				comparatives === "default" && (comparatives = !0);
 				// constants
 				if (help) this.help = {
 					_call: "used internally for calling the functions. takes 2 named (string) arguments for the function name and type. if no type is given, it is decided by the first argument. the rest of the arguments are passed into the function being called via Function.apply.",
 					_getNameOf: "used internally for getting the names of math objects. returns Object.keyof(window, argument);",
 					add: "calls the add method of whatever math object is the correct one",
+				}; if (trig) this.trig = {
+				}; if (comparatives) this.eq = {
 				};
 			}
-			add(typ=null) { return this._call("add", typ, ...arguments) }
-			sub(typ=null) { return this._call("sub", typ, ...arguments) }
-			mul(typ=null) { return this._call("mul", typ, ...arguments) }
-			div(typ=null) { return this._call("div", typ, ...arguments) }
+			add() { return this._call("add", ...arguments) }
+			sub() { return this._call("sub", ...arguments) }
+			mul() { return this._call("mul", ...arguments) }
+			div() { return this._call("div", ...arguments) }
 			_call(fname, typ=null, ...args) {
-				args = args.slc(1); // because typ is also passed in with it from the other functions
 				typ === null && (typ = type(args[0], 1));
 				var fns = {
 					bigint   : bMath,
@@ -4644,11 +4447,9 @@ void (() => { "use strict";
 				throw Error(`${this._getNameOf(fns[typ])}["${fname}"] doesn't exist`);
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
 			} _getNameOf(MathObect) { return Object.keyof(window.MathObjects, MathObect) }
-		})(
-			aMath_Help_Argument
-			,
-		); this.cfsMath = new (class ComplexFractionalStringMath {
-			constructor() {
+		}, "instance cfsMath": class ComplexFractionalStringMath {
+			constructor(help=cfsMath_Help_Argument) {
+				help === "default" && (help = !0);
 				this.CSFraction = class ComplexStringFraction {
 					constructor(rn="0.0", rd="0.0", cn="0.0", cd="0.0") {
 						if (sMath.isNaN(rn) || sMath.isNaN(rd) || sMath.isNaN(cn) || sMath.isNaN(cd))
@@ -4667,37 +4468,216 @@ void (() => { "use strict";
 						};
 					}
 				};
+				if (help) this.help = {
+					CSFraction: null,
+				};
 			}
-		})(); this.MathObjects = {
-			aMath   : aMath,
-			bMath   : bMath,
-			cMath   : cMath,
-			cfsMath : cfsMath,
-			fMath   : fMath,
-			rMath   : rMath,
-			sMath   : sMath,
+		}
 		};
-		aMath.aMath = aMath; aMath.bMath = bMath; aMath.cMath = cMath; aMath.fMath = fMath;
-			aMath.sMath = sMath; aMath.rMath = rMath; aMath.cfsMath = cfsMath; bMath.aMath = aMath;
-			bMath.bMath = bMath; bMath.cMath = cMath; bMath.fMath = fMath; bMath.sMath = sMath;
-			bMath.rMath = rMath; bMath.cfsMath = cfsMath; cMath.aMath = aMath; cMath.bMath = bMath;
-			cMath.cMath = cMath; cMath.fMath = fMath; cMath.sMath = sMath; cMath.rMath = rMath;
-			cMath.cfsMath = cfsMath; fMath.aMath = aMath; fMath.bMath = bMath; fMath.cMath = cMath;
-			fMath.fMath = fMath; fMath.sMath = sMath; fMath.rMath = rMath; fMath.cfsMath = cfsMath;
-			sMath.aMath = aMath; sMath.bMath = bMath; sMath.cMath = cMath; sMath.fMath = fMath;
-			sMath.sMath = sMath; sMath.rMath = rMath; sMath.cfsMath = cfsMath; rMath.aMath = aMath;
-			rMath.bMath = bMath; rMath.cMath = cMath; rMath.fMath = fMath; rMath.sMath = sMath;
-			rMath.rMath = rMath; rMath.cfsMath = cfsMath; cfsMath.aMath = aMath; cfsMath.bMath = bMath;
-			cfsMath.cMath = cMath; cfsMath.fMath = fMath; cfsMath.sMath = fMath; cfsMath.rMath = rMath;
-			cfsMath.cfsMath = cfsMath;
 
+	} {// Conflict & assignment
+		var CONFLICT_ARR = Object.keys(LIBRARY_FUNCTIONS).concat( ["MathObjects"] ).filter(
+			e => e != "Image" && this[e] != null
+		), MathObjects = {};
+		for (const s of Object.keys(LIBRARY_FUNCTIONS)) {
+			if (s.startsWith("instance ")) {
+				let tmp = s.substr(9)
+				this[tmp] = new LIBRARY_FUNCTIONS[s];
+				s.includes("Math") && (MathObjects[tmp] = this[tmp]);
+			} else if (s.startsWith("literal symbol.for "))
+				this[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
+			else this[s] = LIBRARY_FUNCTIONS[s];
+		}
+		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
+		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
+		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
+		this[Output_Math_Variable] !== void 0 && (
+			Output_Math_Variable === "Math" ?
+				Alert_Conflict_For_Math === !0 :
+				Output_Math_Variable === void 0 ?
+					!1 : !0
+		) && CONFLICT_ARR.push(Output_Math_Variable);
+		let maths = Object.keys(MathObjects);
 		for (const obj of Object.values(MathObjects)) {
-			obj["+"]  = obj.add; obj["-"]  = obj.sub;
-			obj["*"]  = obj.mul; obj["/"]  = obj.div;
-			obj["**"] = obj.pow; obj["e^"] = obj.exp;
+			for (const s of maths) obj[s] = MathObjects[s];
+			obj["+"]  = obj.add;  obj["-"]  = obj.sub;
+			obj["*"]  = obj.mul;  obj["/"]  = obj.div;
+			obj["**"] = obj.pow;  obj["e^"] = obj.exp;
+			obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
+			obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
+		}
+		rMath.ℙ = rMath.P;
+		this[Output_Math_Variable] = this[Input_Math_Variable];
+		this.MathObjects = MathObjects;
+	} {// Event and Document things
+		
+		let _ael = EventTarget.prototype.addEventListener
+		, _rel = EventTarget.prototype.removeEventListener
+		, listeners = dict()
+		, _click = HTMLElement.prototype.click;
+		EventTarget.prototype._ael = _ael;
+		EventTarget.prototype._rel = _rel;
+
+		function addEventListener(Type, listener=null, options={
+			capture  : false,
+			passive  : false,
+			once     : false,
+			type     : arguments[0],
+			listener : arguments[1] }) {
+
+			typeof options === "boolean" && (options = {
+				capture  : options,
+				passive  : false,
+				once     : false,
+				type     : Type,
+				listener : listener
+			});
+			_ael.call(this, Type, listener, options);
+			if (listeners[Type] === void 0) listeners[Type] = [];
+			listeners[Type].push({
+				object   : this,
+				capture  : options.capture,
+				passive  : options.passive,
+				once     : options.once,
+				type     : options.type,
+				listener : options.listener
+			});
+			return this;
+		} function removeEventListener(Type, listener=null, options={
+			capture  : false,
+			passive  : false,
+			once     : false,
+			type     : arguments[0],
+			listener : arguments[1] }) {
+
+			typeof options === "boolean" && (options = {
+				capture  : options,
+				passive  : false,
+				once     : false,
+				type     : Type,
+				listener : listener
+			});
+			_rel.call(this, Type, listener, options);
+			for (var i = listeners[Type]?.length; i --> 0 ;) {
+				if (listeners[Type][i].capture  === options.capture  &&
+					listeners[Type][i].passive  === options.passive  &&
+					listeners[Type][i].once     === options.once     &&
+					listeners[Type][i].type     === options.type     &&
+					listeners[Type][i].listener === options.listener
+				) listeners[Type].splice(i, 1);
+			}
+			return this;
+		} function getEventListeners() {
+			// gets all event listeners for all objects.
+			return listeners;
+		} function getMyEventListeners() {
+			// gets all event listeners on the current EventTarget object the function is called from
+			return dict(Object.fromEntries(
+				listeners.entries().map( e => {
+					const value = e[1].filter(e => e.object === (this || window));
+					return len(value) ? [e[0], value] : [];
+				}).filter(e => len(e))
+			));
+		} function click(times=1) {
+			if (isNaN( times = Number(times) )) times = 1;
+			while (times --> 0) _click.call(this);
+			return this;
 		}
 
-		this[Output_Math_Variable] = this[Input_Math_Variable];
+		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener   ;
+		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener;
+		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners  ;
+		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
+		HTMLElement.prototype.click = click;
+		Document.prototype.click = function click(times=1) { return document.head.click(times) }
+		// document.all == null for some reason.
+		document.doctype && document.all !== void 0 && (document.all.doctype = document.doctype);
+
+		if (Creepily_Watch_Every_Action && Creepily_Watch_Every_Action !== "default") {
+			let log = console.log;
+			document.ael("click"            , e => { log(e.type); this[e.type] = e });
+			document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
+			document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
+			document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
+			document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
+			document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
+			document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
+			document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
+			document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
+			document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
+			document.ael("drag"             , e => { log(e.type); this[e.type] = e });
+			document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
+			document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
+			document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
+			document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
+			document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
+			document.ael("drop"             , e => { log(e.type); this[e.type] = e });
+			document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
+			document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
+			document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
+			document.ael("copy"             , e => { log(e.type); this[e.type] = e });
+			document.ael("paste"            , e => { log(e.type); this[e.type] = e });
+			document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
+			document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
+			document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
+			document.ael("input"            , e => { log(e.type); this[e.type] = e });
+			document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
+			document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
+			document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
+			document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
+			document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
+			document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
+			document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
+			document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
+			this    .ael("load"             , e => { log(e.type); this[e.type] = e });
+			this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
+			this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
+			this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
+		}
+		if (Run_KeyLogger === "default" ? !1 : Run_KeyLogger) {
+			let debug     = KeyLogger_Debug_Argument === "default" ?
+				!1 :
+				KeyLogger_Debug_Argument
+			, variable    = KeyLogger_Variable_Argument === "default" ?
+				Symbol.for('keys') :
+				KeyLogger_Variable_Argument
+			, copy_object = KeyLogger_Copy_Obj_Argument === "default" ?
+				!0 :
+				KeyLogger_Copy_Obj_Argument
+			, type        = KeyLogger_Type_Argument === "default" ?
+				"keydown" :
+				KeyLogger_Type_Argument;
+			const handler = e => {
+				window[variable] += e.key;
+				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
+				copy_object && (window.keypressObj = e);
+			}; this.stopKeylogger = function stopKeylogger() {
+				var alert =  KeyLogger_Alert_Start_Stop || KeyLogger_Debug_Argument
+				, type = KeyLogger_Debug_Argument;
+				type === "default" && (type = "keydown");
+				alert && console.log("keylogger manually terminated.");
+				document.body.removeEventListener(type, handler);
+				return !0;
+			}; (function key_logger_v3() {
+				if (window[variable] !== void 0) return debug &&
+					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
+				window[variable] = "";
+				document.body.ael(type, handler);
+				(debug || KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${KeyLogger_Debug_Argument}${KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${KeyLogger_Copy_Obj_Argument}${KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${KeyLogger_Type_Argument}${KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
+			})();
+		} else if (KeyLogger_Alert_Unused && KeyLogger_Alert_Unused !== "default")
+			console.log("keylogger launch failed due to library settings");
 	} {// Prototypes
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
