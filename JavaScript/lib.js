@@ -2,13 +2,31 @@
 void (() => { "use strict";
 	{// Customization & Constants
 
-		const onConflict_Options = [
+		const onConflictOptions = [
 			"log", "throw" , "trw", "return", "ret", "error",
 			"err", "warn"  , "wrn", "debug" , "dbg", "info" ,
-			"inf", "assert", "ast", "alert" , "alt", "None" ,
+			"inf", "assert", "ast", "alert" , "alt", "none" ,
+			"crash", "cry", "dont-use", "warning", "default",
+			// cry just logs every time something is overwritten instead of all at the end in one message.
+			// none just ignores the error and overwrites it anyway.
 		];
 
 		/**
+		 * OnConflict Options (ones in parentheses are alternate names for the same thing):
+		   - log
+		   - throw (trw)
+		   - return (ret)
+		   - error (err)
+		   - warning (warn, wrn)
+		   - debug (dbg, default)
+		   - info (inf)
+		   - assert (ast)
+		   - alert (alt)
+		   - crash
+		   - cry
+		   - dont-use
+		   - none (anything else defaults to this)
+
 		 * If something not in the options is used for ON_CONFLICT, excluding "default",
 		 * "None" will be chosen instead.
 		 * The defaults are the boolean value true, unless otherwise noted on the same line in a comment
@@ -33,7 +51,7 @@ void (() => { "use strict";
 		, Library_Startup_Function    = "default" // console.log
 		, Output_Math_Variable        = "default" // "Math"
 		, Input_Math_Variable         = "default" // "rMath"
-		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log
+		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log and rMath.logbase
 		, MATH_DEFAULT_END_SYSTEM     = "default" // for rMath.tempConv
 		, aMath_Help_Argument         = "default"
 		, aMath_Trig_Argument         = "default"
@@ -45,7 +63,7 @@ void (() => { "use strict";
 		, fMath_Help_Argument         = "default"
 		, fMath_DegTrig_Argument      = "default"
 		, sMath_Help_Argument         = "default"
-		, sMath_Comparatives_Argument = "default" // only recommended to be false if you are planning to never use sMath at all
+		, sMath_Comparatives_Argument = "default" // true, only recommended to be false if you plan to never use sMath
 		, rMath_DegTrig_Argument      = "default"
 		, rMath_Help_Argument         = "default"
 		, rMath_Comparatives_Argument = "default"
@@ -71,6 +89,7 @@ void (() => { "use strict";
 		Clear_SessionStorage && Clear_SessionStorage !== "default" && sessionStorage.clear();
 		MATH_LOG_DEFAULT_BASE   === "default" && (MATH_LOG_DEFAULT_BASE   = 10 );
 		MATH_DEFAULT_END_SYSTEM === "default" && (MATH_DEFAULT_END_SYSTEM = "c");
+		if (!onConflictOptions.includes(ON_CONFLICT)) ON_CONFLICT = "none";
 		// TODO: clear cookies and caches if the library user wants
 	} {// Variables & Functions
 		// Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
@@ -207,7 +226,7 @@ void (() => { "use strict";
 			type() {
 				return "linkedlist";
 			}
-		}, "Image": (function create_Image() {
+		}, "overwrite Image": (function create_Image() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
 			return function Image(width, height, options={}) {
@@ -802,12 +821,15 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : false,
 				arrayOneLineSpace  : "",
 			})
-		}, dim(e, n=1) { return e?.length - n }
-		, len(e) { return e?.length }
-		, complex(re=0, im=0) { return cMath?.new?.(re, im) }
-		, copy(object) { return JSON.parse( JSON.stringify(obj) ) }
-		, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
-		, "instance Logic": class Logic {
+		}, dim(e, n=1)         { return e?.length - n }
+		, len(e)               { return e?.length }
+		, complex(re=0, im=0)  { return cMath?.new?.(re, im) }
+		, copy(object)         { return JSON.parse( JSON.stringify(obj) ) }
+		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
+		, chr(integer)         { return String.fromCharCode(integer) }
+		, ord(string)          { return string.charCodeAt(0) }
+		// Instance Variables:
+		, "instance Logic"    : class Logic {
 			constructor(bitwise=Logic_BitWise_Argument, comparatives=Logic_Comparatives_Argument, help=Logic_Help_Argument) {
 				bitwise === "default" && (bitwise = "bit");
 				comparatives === "default" && (comparatives = null);
@@ -1113,7 +1135,7 @@ void (() => { "use strict";
 					!0 :
 					!1;
 			}
-		}, "instance sMath": class stringRealMath {
+		}, "instance sMath"   : class stringRealMath {
 			constructor(help=sMath_Help_Argument, comparatives=sMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
@@ -1720,7 +1742,7 @@ void (() => { "use strict";
 					"gcf", ...snums
 				)
 			}
-		}, "instance rMath": class RealMath {
+		}, "instance rMath"   : class RealMath {
 			constructor(
 				degTrig = rMath_DegTrig_Argument,
 				help = rMath_Help_Argument,
@@ -3958,7 +3980,7 @@ void (() => { "use strict";
 			// compareText
 			// coulomb
 			// electrical things
-		}, "instance bMath": class BigIntRealMath {
+		}, "instance bMath"   : class BigIntRealMath {
 			constructor(help=bMath_Help_Argument, degTrig=bMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
@@ -3972,7 +3994,7 @@ void (() => { "use strict";
 			mul(a, b) { return a * b }
 			div(a, b) { return a / b }
 			pow(a, b) { return a ** b }
-		}, "instance cMath": class ComplexMath {
+		}, "instance cMath"   : class ComplexMath {
 			constructor(degTrig=cMath_DegTrig_Argument, help=cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
@@ -4359,7 +4381,7 @@ void (() => { "use strict";
 				if (type(z, 1) !== "complex") throw TypeError("cMath.isPrime() requires a complex argument");
 				throw Error("Not Implemented");
 			}
-		}, "instance fMath": class FractionalRealMath {
+		}, "instance fMath"   : class FractionalRealMath {
 			// TODO: Make the functions convert numbers into fractions if they are inputed instead
 			constructor(help=fMath_Help_Argument, degTrig=fMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
@@ -4412,7 +4434,7 @@ void (() => { "use strict";
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
 				return this.simp(this.new(a.numer*b.denom, a.denom*b.numer));
 			}
-		}, "instance aMath": class AllMath {
+		}, "instance aMath"   : class AllMath {
 			// aMath will call the correct function based upon the input
 			constructor(help=aMath_Help_Argument, trig=aMath_Trig_Argument, comparatives=aMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
@@ -4447,7 +4469,7 @@ void (() => { "use strict";
 				throw Error(`${this._getNameOf(fns[typ])}["${fname}"] doesn't exist`);
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
 			} _getNameOf(MathObect) { return Object.keyof(window.MathObjects, MathObect) }
-		}, "instance cfsMath": class ComplexFractionalStringMath {
+		}, "instance cfsMath" : class ComplexFractionalStringMath {
 			constructor(help=cfsMath_Help_Argument) {
 				help === "default" && (help = !0);
 				this.CSFraction = class ComplexStringFraction {
@@ -4472,34 +4494,53 @@ void (() => { "use strict";
 					CSFraction: null,
 				};
 			}
-		}
+		},
 		};
-
-	} {// Conflict & assignment
-		var CONFLICT_ARR = Object.keys(LIBRARY_FUNCTIONS).concat( ["MathObjects"] ).filter(
-			e => e != "Image" && this[e] != null
-		), MathObjects = {};
-		for (const s of Object.keys(LIBRARY_FUNCTIONS)) {
-			if (s.startsWith("instance ")) {
-				let tmp = s.substr(9)
-				this[tmp] = new LIBRARY_FUNCTIONS[s];
-				s.includes("Math") && (MathObjects[tmp] = this[tmp]);
-			} else if (s.startsWith("literal symbol.for "))
-				this[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
-			else this[s] = LIBRARY_FUNCTIONS[s];
-		}
-		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
-		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
-		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
+	} {// Conflict & Assignment
+		var CONFLICT_ARR = [], MathObjects = {};
 		this[Output_Math_Variable] !== void 0 && (
 			Output_Math_Variable === "Math" ?
 				Alert_Conflict_For_Math === !0 :
 				Output_Math_Variable === void 0 ?
 					!1 : !0
 		) && CONFLICT_ARR.push(Output_Math_Variable);
+		for (const s of Object.keys(LIBRARY_FUNCTIONS)) {
+			if (s.startsWith("instance ")) {
+				let tmp = s.substr(9);
+				if (this[tmp] !== void 0) {
+					if (ON_CONFLICT === "crash") throw Error(`window['${tmp}'] is already defined and ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`window['${tmp}'] overwritten and ON_CONFLICT is set to cry.`);
+					else if (ON_CONFLICT === "dont-use") continue;
+					CONFLICT_ARR.push(tmp);
+				}
+				this[tmp] = new LIBRARY_FUNCTIONS[s];
+				tmp.includes("Math") && (MathObjects[tmp] = this[tmp]);
+			} else if (s.startsWith("literal symbol.for ")) {
+				let tmp = Symbol.for(s.substr(19));
+				if (this[tmp] !== void 0) {
+					if (ON_CONFLICT === "crash") throw Error(`window[${String(tmp)}] is already defined and ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`window[${String(tmp)}] overwritten and ON_CONFLICT is set to cry.`);
+					else if (ON_CONFLICT === "dont-use") continue;
+					CONFLICT_ARR.push(tmp);
+				}
+				this[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
+			} else if (s.startsWith("overwrite ")) this[s.substr(10)] = LIBRARY_FUNCTIONS[s];
+			else {
+				if (this[s] !== void 0) {
+					if (ON_CONFLICT === "crash") throw Error(`window['${s}'] is already defined and ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`window['${s}'] overwritten and ON_CONFLICT is set to cry.`);
+					else if (ON_CONFLICT === "dont-use") continue;
+					CONFLICT_ARR.push(s);
+				}
+				this[s] = LIBRARY_FUNCTIONS[s];
+			}
+		}
+		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
+		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
+		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
 		let maths = Object.keys(MathObjects);
 		for (const obj of Object.values(MathObjects)) {
-			for (const s of maths) obj[s] = MathObjects[s];
+			maths.forEach(s => obj[s] = MathObjects[s]);
 			obj["+"]  = obj.add;  obj["-"]  = obj.sub;
 			obj["*"]  = obj.mul;  obj["/"]  = obj.div;
 			obj["**"] = obj.pow;  obj["e^"] = obj.exp;
@@ -4508,7 +4549,15 @@ void (() => { "use strict";
 		}
 		rMath.ℙ = rMath.P;
 		this[Output_Math_Variable] = this[Input_Math_Variable];
+		if (this.MathObjects !== void 0) {
+			if (ON_CONFLICT === "crash") throw Error(`window.MathObjects is already defined and ON_CONFLICT is set to 'crash'`);
+			if (ON_CONFLICT === "cry") console.log(`window.MathObjects overwritten and ON_CONFLICT is set to cry.`);
+			CONFLICT_ARR.push("MathObjects");
+		}
+		if (ON_CONFLICT !== "dont-use") this.MathObjects = MathObjects;
 		this.MathObjects = MathObjects;
+
+
 	} {// Event and Document things
 		
 		let _ael = EventTarget.prototype.addEventListener
@@ -5152,84 +5201,8 @@ void (() => { "use strict";
 		}, BigInt.prototype.length = function length(n=0) {
 			return dim(`${this}`, n);
 		};
-	} {// bad text encoders
-		function asciiToChar(number) {
-			switch (number) {
-				case   0: return "\x00"; case   1: return "\x01"; case   2: return "\x02";
-				case   3: return "\x03"; case   4: return "\x04"; case   5: return "\x05";
-				case   6: return "\x06"; case   7: return "\x07"; case   8: return "\b"  ;
-				case   9: return "\t"  ; case  10: return "\n"  ; case  11: return "\x0b";
-				case  12: return "\x0c"; case  13: return "\r"  ; case  14: return "\x0E";
-				case  15: return "\x0F"; case  16: return "\x10"; case  17: return "\x11";
-				case  18: return "\x12"; case  19: return "\x13"; case  20: return "\x14";
-				case  21: return "\x15"; case  22: return "\x16"; case  23: return "\x17";
-				case  24: return "\x18"; case  25: return "\x19"; case  26: return "\x1A";
-				case  27: return "\x1B"; case  28: return "\x1C"; case  29: return "\x1D";
-				case  30: return "\x1E"; case  31: return "\x1F"; case  32: return    " ";
-				case  33: return    "!"; case  34: return    '"'; case  35: return    "#";
-				case  36: return    "$"; case  37: return    "%"; case  38: return    "&"; case  39: return "'";
-				case  40: return    "("; case  41: return    ")"; case  42: return    "*"; case  43: return "+";
-				case  44: return    ","; case  45: return    "-"; case  46: return    "."; case  47: return "/";
-				case  48: return    "0"; case  49: return    "1"; case  50: return    "2"; case  51: return "3";
-				case  52: return    "4"; case  53: return    "5"; case  54: return    "6"; case  55: return "7";
-				case  56: return    "8"; case  57: return    "9"; case  58: return    ":"; case  59: return ";";
-				case  60: return    "<"; case  61: return    "="; case  62: return    ">"; case  63: return "?";
-				case  64: return    "@"; case  65: return    "A"; case  66: return    "B"; case  67: return "C";
-				case  68: return    "D"; case  69: return    "E"; case  70: return    "F"; case  71: return "G";
-				case  72: return    "H"; case  73: return    "I"; case  74: return    "J"; case  75: return "K";
-				case  76: return    "L"; case  77: return    "M"; case  78: return    "N"; case  79: return "O";
-				case  80: return    "P"; case  81: return    "Q"; case  82: return    "R"; case  83: return "S";
-				case  84: return    "T"; case  85: return    "U"; case  86: return    "V"; case  87: return "W";
-				case  88: return    "X"; case  89: return    "Y"; case  90: return    "Z"; case  91: return "[";
-				case  92: return   "\\"; case  93: return    "]"; case  94: return    "^"; case  95: return "_"; 
-				case  96: return    "`"; case  97: return    "a"; case  98: return    "b"; case  99: return "c";
-				case 100: return    "d"; case 101: return    "e"; case 102: return    "f"; case 103: return "g";
-				case 104: return    "h"; case 105: return    "i"; case 106: return    "j"; case 107: return "k";
-				case 108: return    "l"; case 109: return    "m"; case 110: return    "n"; case 111: return "o";
-				case 112: return    "p"; case 113: return    "q"; case 114: return    "r"; case 115: return "s";
-				case 116: return    "t"; case 117: return    "u"; case 118: return    "v"; case 119: return "w";
-				case 120: return    "x"; case 121: return    "y"; case 122: return    "z"; case 123: return "{";
-				case 124: return    "|"; case 125: return    "}"; case 126: return    "~"; default: throw Error(number);
-			}
-		} function charToAscii(str) {
-			switch (str) {
-				case "\x00" : return   0; case "\x01" : return   1; case "\x02" : return  2;
-				case "\x03" : return   3; case "\x04" : return   4; case "\x05" : return  5;
-				case "\x06" : return   6; case "\x07" : return   7; case "\b"   : return  8;
-				case "\t"   : return   9; case "\n"   : return  10; case "\x0b" : return 11;
-				case "\x0c" : return  12; case "\r"   : return  13; case "\x0E" : return 14;
-				case "\x0F" : return  15; case "\x10" : return  16; case "\x11" : return 17;
-				case "\x12" : return  18; case "\x13" : return  19; case "\x14" : return 20;
-				case "\x15" : return  21; case "\x16" : return  22; case "\x17" : return 23;
-				case "\x18" : return  24; case "\x19" : return  25; case "\x1A" : return 26;
-				case "\x1B" : return  27; case "\x1C" : return  28; case "\x1D" : return 29;
-				case "\x1E" : return  30; case "\x1F" : return  31;
-				case     " ": return  32; case     "!": return  33; case '"': return  34; case "#": return  35;
-				case     "$": return  36; case     "%": return  37; case "&": return  38; case "'": return  39;
-				case     "(": return  40; case     ")": return  41; case "*": return  42; case "+": return  43;
-				case     ",": return  44; case     "-": return  45; case ".": return  46; case "/": return  47;
-				case     "0": return  48; case     "1": return  49; case "2": return  50; case "3": return  51;
-				case     "4": return  52; case     "5": return  53; case "6": return  54; case "7": return  55;
-				case     "8": return  56; case     "9": return  57; case ":": return  58; case ";": return  59;
-				case     "<": return  60; case     "=": return  61; case ">": return  62; case "?": return  63;
-				case     "@": return  64; case     "A": return  65; case "B": return  66; case "C": return  67;
-				case     "D": return  68; case     "E": return  69; case "F": return  70; case "G": return  71;
-				case     "H": return  72; case     "I": return  73; case "J": return  74; case "K": return  75;
-				case     "L": return  76; case     "M": return  77; case "N": return  78; case "O": return  79;
-				case     "P": return  80; case     "Q": return  81; case "R": return  82; case "S": return  83;
-				case     "T": return  84; case     "U": return  85; case "V": return  86; case "W": return  87;
-				case     "X": return  88; case     "Y": return  89; case "Z": return  90; case "[": return  91;
-				case    "\\": return  92; case     "]": return  93; case "^": return  94; case "_": return  95;
-				case     "`": return  96; case     "a": return  97; case "b": return  98; case "c": return  99;
-				case     "d": return 100; case     "e": return 101; case "f": return 102; case "g": return 103;
-				case     "h": return 104; case     "i": return 105; case "j": return 106; case "k": return 107;
-				case     "l": return 108; case     "m": return 109; case "n": return 110; case "o": return 111;
-				case     "p": return 112; case     "q": return 113; case "r": return 114; case "s": return 115;
-				case     "t": return 116; case     "u": return 117; case "v": return 118; case "w": return 119;
-				case     "x": return 120; case     "y": return 121; case "z": return 122; case "{": return 123;
-				case     "|": return 124; case     "}": return 125; case "~": return 126; default: throw Error(str);
-			}
-		} function num_encoder(numstr, warn=false) {
+	} {// (probably idk) bad text encoders
+		function num_encoder(numstr, warn=false) {
 			const ODD = len(numstr) % 2;
 			warn && isNaN(numstr) && console.warn("using non-numbers in num_encoder() causes loss of information");
 			return ODD+(numstr+(ODD?"0":"")).match(/../g).map(e=>`${e[0]}${len(`${+e[0]+ +e[1]}`)===1?+e[0]+ +e[1]:`${+e[0]+ +e[1]}`[1]}`).join("");
@@ -5325,13 +5298,14 @@ void (() => { "use strict";
 			"յͿΡЈ𝗉pJРрPȷ";
 			"1234567890a";
 		}
-	} {// Error Handling
+	} {// Error Handling & Exiting
 		try { ON_CONFLICT = ON_CONFLICT.lower() }
-		catch { ON_CONFLICT = "None" }
+		catch { ON_CONFLICT = "none" }
 		
 		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
 		if (Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
 			switch (ON_CONFLICT) {
+				case "crash": throw Error("there was a conflict and the program hasn't crashed yet.");
 				case "ast":
 				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "dbg":
@@ -5339,7 +5313,10 @@ void (() => { "use strict";
 				case "inf":
 				case "info": console.info("Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "wrn":
+				case "warning":
 				case "warn": console.warn("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "err":
+				case "error": console.error("Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "log": console.log("Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "alt":
 				case "alert": alert(`Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`); break;
@@ -5347,9 +5324,14 @@ void (() => { "use strict";
 				case "return": return `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 				case "trw":
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
+				// case "ignore": break;
+				// case "cry": break;
+				// case "none": break;
 			}
-			console.debug("lib.js load failed");
-			return 1;
+			if (ON_CONFLICT !== "cry") {
+				ON_CONFLICT !== "none" && console.debug("lib.js load failed");
+				return 1;
+			}
 		}
 		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && (
 			Library_Startup_Function === "default" ?
@@ -5361,19 +5343,6 @@ void (() => { "use strict";
 				Library_Startup_Message
 		);
 		return 0;
-	} {// Comments
-		/**
-			!function codehs(b="100%",d=$("#nav-photo-wrapper")[0].children[0].src,e=userData.name){var a=$$(".module-info"),c=($$(".user-stat"),$$(".user-stat")[0].children[0].children);function f(){var a="finalized",b="submitted",c={icon:a,challenge:a,quiz:a,"chs-badge":a,video:a,connection:a,example:a,"lesson-status":a,exercise:b,"free-response":b};$$(`.unopened,.not-${b}`).forEach((a,b,d)=>d[b].className=a.className.replace(/unopened|not-submitted/g,c[a.className.split(/ +/)[0]])),$$(".bg-slate").filter(a=>"bg-slate"==a.className.trim()).forEach((c,a,b)=>{b[a].style.width="100%",b[a].className=c.className.replace(/progressBar/g,"bg-slate")}),$$(".percent-box").forEach((a,b,c)=>{c[b].innerHTML=a.innerHTML.replace(/\d+%/g,"100%"),c[b].className=a.className.replace(/(progress-)\d+/,"$1100")})}for(let g of(a[0].click(),a[0].click(),a))g.click(),f();$(".nav-user-name-text")[0].innerHTML=e,$("#nav-photo-wrapper")[0].children[0].src=d,c[1].innerHTML=b,c[2].children[0].children[0].style.width=b,clear()}()
-			https://codehs.com/identicon/image/
-			1P 1$ 2( 3h 3H 3L 44 5H 5K 5O 5P 65 6h 6o 6t 6v 6F
-			last seen: 7R
-		*/
-		// ×: atob(10)
-		// ß: atob(30)
-		// ç: atob(60)
-		// ÷: atob(90)
-		// ½: atob(170)[1]
-		// Í: atob(180)[1]
 	}
 })();
 
