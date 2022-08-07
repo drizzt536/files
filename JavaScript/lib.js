@@ -629,6 +629,48 @@ void (() => { "use strict";
 			return (orientation === "left" ?
 				bisectLeft : bisectRight
 			)(arr, x, lo, hi);
+		}, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue=3, precision=18) {
+			// ^ means exponent now.
+			if (type(variable) !== "string" || !len(variable)) return !1;
+			defaultArgValue = String(defaultArgValue);
+			if (type(fn, 1) !== "func") return !1;
+			var code = (type(fn) === "function" ? fn.code() : fn).remove(/^\s*return\s*/)
+				.replace(/(\d*\.\d+|\d+\.\d*)/g, '"$1"');
+			while (!0) {
+				let m = code.match(/(?<!")(\b(?<!\.)\d+(?!\.)\b)(?!")/);
+				if (m === null) break;
+				code = code.slc(0, m.index) + `"${m[0]}"` + code.slc(m.index + len(m[0]));
+			}
+			code = `(${ code.replace(RegExp(`(\\d+\\.?\\d*)${variable}`, "g"), `sMath.mul[$1,${variable}]`) })`;
+			while (code.io("(") !== -1) {
+				for (var index = 0, i = 0, n = len(code), p = 0, highest = 0; i < n; i++) {
+					// find the deepest parentheses
+					if (code[i] === "(") p++; else
+					if (code[i] === ")") p--;
+					if (p > highest) highest = p, index = i;
+				}
+				var arr = code.slc(index, ")", 0, 1).replace(/([^\s()]+)/g, "($1)")
+					.slc(1, -1).strip().split(/(?=\()/g).map(e => e.strip().slc(1, -1));
+				if (len(arr) > 3) {
+					var i = rMath.min([ arr.io("**"), arr.io("^") ].filter(e => e !== -1));
+					if (i === -1) {
+						i = rMath.min([ arr.io("*"), arr.io("/"), arr.io("%"), arr.io("//") ].filter(e => e !== -1));
+						if (i === -1) {
+							i = rMath.min([ arr.io("+"), arr.io("-") ].filter(e => e !== -1));
+							if (i === -1) throw Error("Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.");
+						}
+					}
+					code = code.replace(
+						code.slc(index, ")", -1, 0).toRegex(),
+						`${arr.slc(0, i-1).join(" ")} (${arr.slc(i - 1, i + 2).join(" ")}) ${arr.slc(i + 2).join(" ")}`.strip()
+					);
+					continue;
+				}
+				let tmp = `sMath.${sMath[arr[1]].name}[${arr[0]},${arr[2]}`;
+				if (tmp.incl("mod") || tmp.incl("div")) tmp += `,${precision}`;
+				code = code.replace(code.slc(index, ")", 0, 1).toRegex(), tmp + "]");
+			}
+			return Function(variable + " = " + defaultArgValue, `return ${ code.replace(/\[/g, "(").replace(/\]/g, ")") }`);
 		}, "randint"     : function randomInt(min=1, max=null) {
 			if (max == null) {
 				max = min;
@@ -1385,7 +1427,7 @@ void (() => { "use strict";
 					}
 				}
 				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
-				return c.incl(".") ? c : `${c}.0`;
+				return numStrNorm( c.incl(".") ? c : `${c}.0` );
 			} sub(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
@@ -1418,7 +1460,7 @@ void (() => { "use strict";
 					}
 				}
 				c = c.map( e => e.join("") ).join(".");
-				return c.incl(".") ? c : `${c}.0`;
+				return numStrNorm( c.incl(".") ? c : `${c}.0` );
 			} mul(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
@@ -1460,12 +1502,12 @@ void (() => { "use strict";
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
 				isNaN(precision = Number(precision)) && (precision = 18);
+				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
 				if ( this.eq.ez(denom) )
 					return this.eq.ez(num) ?
 						NaN :
 						Infinity;
 				if ( this.eq.ez(num) ) return "0.0";
-				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
 				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
@@ -4548,6 +4590,7 @@ void (() => { "use strict";
 			obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
 			obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
 		}
+		sMath["//"] = sMath.fdiv;
 		sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
 		rMath.ℙ = rMath.P;
 		this[Output_Math_Variable] = this[Input_Math_Variable];
@@ -4909,11 +4952,13 @@ void (() => { "use strict";
 		}, Array.prototype.insrands = function insertThingsRandomLocation(...things) {
 			for (const thing of things) this.insrand(thing);
 			return this;
-		}, Array.prototype.slc = function slice(first=0, end=Infinity) {
+		}, Array.prototype.slc = function slice(start=0, end=Infinity, startOffset=0, endOffset=0, includeEnd=false) {
 			// last index = end - 1
 			end < 0 && (end += len(this));
-			for (var a = this, b = [], i = 0, n = len(a); i < n && i < end; i++)
-				i >= first && b.push( a[i] );
+			end += endOffset + includeEnd;
+
+			for (var a = this, b = [], i = start + startOffset, n = rMath.min(len(a), end); i < n; i++)
+				b.push( a[i] );
 			return b;
 		}, Array.prototype.print = function print(print=console.log) {
 			print(this);
@@ -4973,7 +5018,11 @@ void (() => { "use strict";
 			a[i3] = b;
 			return a;
 		}, Array.prototype.len = function setLength(num) {
-			this.length = rMath.max(num, 0);
+			this.length = isIterable(num) ?
+				len(num) :
+				isNaN(num = Number(num)) ?
+					NaN :
+					rMath.max(num, 0)
 			return this;
 		}, Array.prototype.extend = function extend(length, filler, form="new") {
 			if (form === "new") return this.concat(Array(length).fill(filler));
@@ -5035,13 +5084,16 @@ void (() => { "use strict";
 			if (type(strOrArr) === "string") {
 
 			}
-		}, String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=true) {
+		}, String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=false) {
 			// last index = end - 1
 			type(start) === "string" && (start = this.io(start));
 			type( end ) === "string" && (end   = this.io( end ));
 			return Array.from(this).slc(
-				start + startOffset,
-				end + endOffset
+				start,
+				end,
+				startOffset,
+				endOffset,
+				includeEnd
 			).join("");
 		}, String.prototype.tag = function tag(tagName) {
 			if (!tagName || type(tagName, 1) !== "str") return this;
@@ -5289,10 +5341,10 @@ void (() => { "use strict";
 			const ASCII_LAST_NUM = 127;
 			let newstr = "";
 			for (const c of str) {
-				let num = (charToAscii(c) + offset) % ASCII_LAST_NUM;
+				let num = (ord(c) + offset) % ASCII_LAST_NUM;
 				while (num.inRange(1, 8) || num.inRange(11, 12) || num.inRange(14, 31))
 					num += rMath.sgn(offset);
-				newstr += asciiToChar(num);
+				newstr += chr(num);
 			}
 			return newstr;
 		} function let_encoder(str, type="encode") {
@@ -5313,14 +5365,15 @@ void (() => { "use strict";
 
 			return str2;
 		} function random_encoder(input="") {
-			return input.split(" ").map(
-				e => alphabet.rand() + e + alphabet.rand()
-			).join(" ");
+			// rrCrrCrrCrrC. r := random character, C := correct character
+			return characters.rand() + input.split("").map(
+				e => characters.rand() + e + characters.rand()
+			).join("") + characters.rand()
 		} function shift_encoder(s1="", shifts=[1], mod=127) {
-			if (type(shifts, 1) !== "arr" && isNaN(shifts)) shifts = 1;
-			shifts = shifts.tofar().len(len(s1));
+			if (type(shifts, 1) !== "arr" && isNaN(shifts = Number(shifts))) shifts = 1;
+			shifts = shifts.tofar().len(s1);
 			for (var i = 0, n = len(s1), s2 = "", tmp; i < n; i++)
-				s2 += asciiToChar(rMath.mod( charToAscii(s1[i]) + (shifts[i] == null ? 1 : shifts[i]), mod ));
+				s2 += chr(rMath.mod( ord(s1[i]) + (shifts[i] == null ? 1 : shifts[i]), mod ));
 			return s2;
 		} () => {
 			const arr = [
@@ -5368,6 +5421,7 @@ void (() => { "use strict";
 				// case "ignore": break;
 				// case "cry": break;
 				// case "none": break;
+				// default: break;
 			}
 			if (ON_CONFLICT !== "cry") {
 				ON_CONFLICT !== "none" && console.debug("lib.js load failed");
