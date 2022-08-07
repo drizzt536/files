@@ -559,7 +559,7 @@ void (() => { "use strict";
 			fn += ""; // fn = fn.toString()
 			if (fn.incl("{ [native code] }")) return "native function. can't get arguments";
 			if (fn.sW("class")) return a.slc(0, "{").trim();
-			if (/^\s*function/.in(fn) && /^\s*\(/.in(fn)) return fn.match(/^\w+/)[0];
+			if (/^function /.in(fn) && /^\s*\(/.in(fn)) return fn.match(/^\w+/)[0]; // ??? idk
 			for (var i = 0, fn = fn.slc("("), n = len(fn), count = 0; i < n; i++) {
 				if (fn[i] === "(") count++;
 				else if (fn[i] === ")") count--;
@@ -768,13 +768,14 @@ void (() => { "use strict";
 			newline = "\n",
 			space = " ",
 			arrayOneLine = true,
-			arrayAlwaysOneLine = false, // doesn't do anything yet
+			// arrayAlwaysOneLine = false, // doesn't do anything yet
 			arrayOneLineSpace = " ", // if " ", [ ITEM ]. if "\t", [\tITEM\t]. etc
 		}={}) {
 			if (typeof json !== "string") throw TypeError("formatjson() requires a string");
-			try {JSON.parse(json) } catch { throw TypeError("formatjson() requires a JSON string") }
+			try { JSON.parse(json) } catch { throw TypeError("formatjson() requires a JSON string") }
 			if (json.remove(/\s/g) === "{}") return "{}";
-			if (json.remove(/\s/g) === "[]") return `[${newline}${newline}]`;
+			if (json.remove(/\s/g) === "[]") return "[]";
+			if (/\s*("|'|`)(.|\n)*\1\s*/.in(json.remove(/\s/g))) return json.remove(/(^\s*)|(\s*$)/g);
 			for (var i = 0, n = len(json), tabs = 0, output = "", inString = !1; i < n; i++) {
 				if (json[i] === '"' && json[i - 1] !== '\\') inString = !inString;
 				if (inString) output += json[i];
@@ -916,7 +917,7 @@ void (() => { "use strict";
 						xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
 						nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
 						nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						iff: "Takes 2 arguments. retruns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
+						iff: "Takes 2 arguments. returns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
 						if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
 						imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
 						nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
@@ -1819,7 +1820,7 @@ void (() => { "use strict";
 				};
 				this.phi = this.PHI = this.ϕ = ϕ; this.e = this.E = this.𝑒 = 𝑒;
 				this.ec    = this.γ = γ; this.pi  = this.PI  = π;
-				this.foias = this.α = α; this.tau = this.TAU = this.𝜏 = 𝜏;
+				this.foia = this.α = α; this.tau = this.TAU = this.𝜏 = 𝜏;
 				this.Phi = -0.6180339887498949; this.sqrt3 = 1.7320508075688772;
 				this.omega   = 0.5671432904097838 ; this.LN2     = 0.6931471805599453;
 				this.ln2     = .69314718055994531 ; this.LN10    = 2.3025850929940450;
@@ -1840,8 +1841,8 @@ void (() => { "use strict";
 				*/// TODO: Update rMath.help
 				if (help) this.help = {
 					null: "If a value is null or missing, then you should just directly check what the function does.",
-					undefined: "If a value is undefined, It means that it was added and not comleted, than removed, but it is planned to reimplement it at a later date.",
-					trig: { // update trig
+					undefined: "If a value is undefined, It means that it was added and not comleted, then removed, but it is planned to be re-implemented at a later date.",
+					trig: { // TODO: update trig
 						sin: "1 argument. returns sin(angle), using the taylor series definition of sin. (radians)",
 						cos: "1 argument. returns cos(angle), using the taylor series definition of cos. (radians)",
 						tan: "1 argument. returns sin(angle) / cos(angle) (radians)",
@@ -2080,16 +2081,16 @@ void (() => { "use strict";
 					tesseract: "1 argument (x). returns x^4. see pow, square, hyper3, cube",
 					ifact: "Returns the factorial of a number, and disregards all numbers in decimal places.",
 					findPrimes: "Takes two parameters.  1: maximum number of primes to be returned.  2: maximum size (inclusive) for the desired numbers",
-					// TODO: Fix li() documentation
-					li: "3 arguments. 1: number to take li of. 2: increment or accuracy depending on the form. 3: form number. form 1 uses an integral. form 2 uses a summation. form 3 does π(x) because it is asymptotic to it. form 3 is the fastest",
-					Li: null,
+					// TODO: update li() documentation
+					li: "3 arguments. 1: number to take li of. 2: increment or accuracy depending on the form. 3: form number. form 1 uses an integral. form 2 uses a summation of summations. form 3 does π(x) because it is asymptotic to it. form 3 is the fastest",
+					Li: "Takes 3 arguments. (x, incrementOrAccuracy=.001, form=1). returns rMath.li of the same arguments subtracted by li(2) or ~1.045163780117493. if either of the first 2 arguments are not a number, NaN is returned instead. see li",
 					Ei: null,
-					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information",
+					tetrate: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information see hyper4",
 					hyper0: "Takes 1 argument and returns 1 + the argument",
 					hyper1: "Takes 2 numeric arguments and returns the sum of the arguments",
 					hyper2: "Takes 2 numeric arguments and returns the product of the arguments",
 					hyper3: "Takes 2 numeric arguments and returns the first argument to the power of the second argument",
-					hyper4: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information",
+					hyper4: "Takes 2 numeric arguments (a and b).  returns a to the power of a, n times. look up tetration for more information. see tetrate",
 					Si: null,
 					si: null,
 					Cin: null,
@@ -2098,7 +2099,7 @@ void (() => { "use strict";
 					Chi: null,
 					tanhc: "Takes 1 numeric argument (z) and returns tanh(z) / z",
 					sinhc: "Takes 1 numeric argument (z) and returns sinh(z) / z",
-					Tanc : "Takes 1 numeric argument (x) and returns tanx / x using radians",
+					Tanc : "Takes 1 numeric argument (x) and returns tan(x) / x using radians",
 					Coshc: "Takes 1 numeric argument (z) and returns cosh(z) / z",
 					H: null,
 					W: null,
@@ -2107,9 +2108,9 @@ void (() => { "use strict";
 					gd: null,
 					lam: null,
 					base10Conv: null,
-					bin: null,
-					oct: null,
-					hex: null,
+					bin: "Takes 3 arguments. the first argument is the number you want to convert to binary. if this is not a number, it gets returned. if the second argument is truthy, the output has '0b' at the beginning. if the third argument is truthy the output has '2:' at the end. this is because rMath.base10Conv uses this syntax for the output for the base. the second argument is more important than the third in deciding which thing happens. the output is a string.",
+					oct: "Takes 3 arguments. the first argument is the number you want to convert to octal. if this is not a number, it gets returned. if the second argument is truthy, the output has '0o' at the beginning. if the third argument is truthy the output has '8:' at the end. this is because rMath.base10Conv uses this syntax for the output for the base. the second argument is more important than the third in deciding which thing happens. the output is a string.",
+					hex: "Takes 3 arguments. the first argument is the number you want to convert to hexadecimal. if this is not a number, it gets returned. if the second argument is truthy, the output has '0x' at the beginning. if the third argument is truthy the output has '16:' at the end. this is because rMath.base10Conv uses this syntax for the output for the base. the second argument is more important than the third in deciding which thing happens. the output is a string.",
 					timesTable: null,
 					cosNxSimplify: null,
 					heron: null,
@@ -3812,18 +3813,18 @@ void (() => { "use strict";
 				}
 				return `${numberOnly ? "" : `${base}:`}${str}`.remove(/\.?0*$/);
 			} bin(x, zeroB=true, twoColon=false) {
-				return isNaN( x = Number(x) ) ? x :
-					`${zeroB ? "0b" : twoColon ? "2:" : ""}${his.base10Conv(x)}`;
-			} oct(x, zeroO=true) {
-				return isNaN( x = Number(x) ) ? x :
-					`${zeroO ? "0o" : ""}${x.toString(8)}`;
-			} hex(x, zeroX=true) {
-				return isNaN( x = Number(x) ) ? x :
-					`${zeroX ? "0x" : ""}${ x.toString(16) }`;
+				return this.isNaN( x = Number(x) ) ? x :
+					`${zeroB ? "0b" : twoColon ? "2:" : ""}${this.base10Conv(x, 2).slc(2)}`;
+			} oct(x, zeroO=true, eightColon=false) {
+				return this.isNaN( x = Number(x) ) ? x :
+					`${zeroO ? "0o" : eightColon ? "8:" : ""}${this.base10Conv(x, 8).slc(8)}`;
+			} hex(x, zeroX=true, sixteenColon=false) {
+				return this.isNaN( x = Number(x) ) ? x :
+					`${zeroX ? "0x" : sixteenColon ? "16:" : ""}${this.base10Conv(x, 16).slc(2)}`;
 			} timesTable(start=0, end=9) {
-				for (var i = ++end, j, table = []; i --> start ;)
-				for (j = end, table[i] = []; j --> start ;)
-					table[i][j] = i * j;
+				for (var i = floor(++end), j, table = []; i --> start ;)
+					for (j = floor(end), table[i] = []; j --> start ;)
+						table[i][j] = i * j;
 				return table;
 			} cosNxSimplify(str="cos(x)") {
 				typeof str === "number" && !(str % 1) && (str = `cos(${str}x)`);
@@ -4547,6 +4548,7 @@ void (() => { "use strict";
 			obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
 			obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
 		}
+		sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
 		rMath.ℙ = rMath.P;
 		this[Output_Math_Variable] = this[Input_Math_Variable];
 		if (this.MathObjects !== void 0) {
@@ -4555,9 +4557,6 @@ void (() => { "use strict";
 			CONFLICT_ARR.push("MathObjects");
 		}
 		if (ON_CONFLICT !== "dont-use") this.MathObjects = MathObjects;
-		this.MathObjects = MathObjects;
-
-
 	} {// Event and Document things
 		
 		let _ael = EventTarget.prototype.addEventListener
@@ -4737,8 +4736,49 @@ void (() => { "use strict";
 		HTMLCollection.prototype.last = lastElement
 		; // HTMLAllCollection prototype
 		HTMLAllCollection.prototype.last = lastElement
-		; // Object prototype
-		Object.prototype.tofar = function toFlatArray() {
+		; // Function prototype
+		Function.prototype.args = function getArguments() {
+			var s = window.getArguments(this);
+			return s.slc(1, dim(s));
+		}, Function.prototype.code = function code() {
+			var s = this + "";
+			if (s.sW("class")) return false;
+			else if (s.sW("function")) {
+				s = s.slc("(", void 0, 1);
+				for (var parenCount = 1, i = 0, n = len(s); parenCount && i < n; i++) {
+					if (s[i] === "(") parenCount++; else
+					if (s[i] === ")") parenCount--;
+				}
+				while ( /^\s$/.in(s[i]) ) i++;
+				return s.substring(i + 1, dim(s));
+			} else if (s[0] === "(") { // arrow function with perens around arguments
+				s = s.substr(1);
+				for (var parenCount = 1, i = 0, n = len(s); parenCount && i < n; i++) {
+					if (s[i] === "(") parenCount++; else
+					if (s[i] === ")") parenCount--;
+				}
+				while ( /^\s$/.in(s[i]) ) i++;
+				i += 2;
+				while ( /^\s$/.in(s[i]) ) i++;
+				return s[i] === "{" ?
+					s.substring(i + 1, dim(s)) :
+					s.substr(i);
+			} else { // arrow function without perens around arguments
+				s = s.remove(/^\w+\s*=>\s*/);
+				return s[0] === "{" ?
+					s.substring(1, dim(s)) :
+					s;
+			}
+		}, Function.prototype.isArrow = function isArrowFunction() {
+			var s = this + "";
+			return !s.sW("function") && !s.sW("class");
+		}, Function.prototype.isClass = function isClass() {
+			return (this + "").sW("class");
+		}, Function.prototype.isRegular = function isRegularFunction() {
+			return (this + "").sW("function");
+		}; // Object prototype
+		Object.copy = copy
+		, Object.prototype.tofar = function toFlatArray() {
 			// TODO: Fix for 'Arguments' objects and HTML elements
 			var val = this;
 			if (
@@ -4748,8 +4788,7 @@ void (() => { "use strict";
 			)
 				return [this.valueOf()].flatten();
 			return Array.from(this.valueOf()).flatten();
-		}, Object.copy = copy
-		,  Object.keyof = function keyof(obj, value) {
+		},  Object.keyof = function keyof(obj, value) {
 			for (const key of Object.keys(obj))
 				if (obj[key] === value) return key;
 			return null;
@@ -4768,7 +4807,6 @@ void (() => { "use strict";
 		,  Array.prototype.lio = Array.prototype.lastIndexOf
 		,  Array.prototype.incl = Array.prototype.includes
 		,  Array.prototype.last = lastElement
-		,  Array.prototype.sortOld = Array.prototype.sort
 		, delete Array.prototype.some
 		, Array.prototype.some = function some(fn) {
 			// "some" implies that it has to be plural. use any for any. some != any
@@ -4871,9 +4909,9 @@ void (() => { "use strict";
 		}, Array.prototype.insrands = function insertThingsRandomLocation(...things) {
 			for (const thing of things) this.insrand(thing);
 			return this;
-		}
-		, Array.prototype.slc = function slice(first=0, end=Infinity) {
+		}, Array.prototype.slc = function slice(first=0, end=Infinity) {
 			// last index = end - 1
+			end < 0 && (end += len(this));
 			for (var a = this, b = [], i = 0, n = len(a); i < n && i < end; i++)
 				i >= first && b.push( a[i] );
 			return b;
@@ -4950,16 +4988,20 @@ void (() => { "use strict";
 			return this.last() === item;
 		}, Array.prototype.flatten = function flatten() {
 			return this.flat(Infinity);
-		}, delete Array.prototype.sort
-		, Array.prototype.sort = function sort() {
-			var list = this;
-			if (rMath.isNaN(list.join(""))) return list.sortOld();
-			for (var output = []; len(list) ;) {
-				output.push(rMath.min(list));
-				list.splice(list.io(rMath.min(list)), 1);
+		}, Array.prototype.sort = (function create_sort() {
+			const _sort = Array.prototype.sort;
+			return function sort() {
+				// uses a very bad sorting method.
+				// TODO: implement qsort or literally anything else, this is like the worst possible method.
+				if (this.isNaN()) return _sort.call(this);
+				var list = this;
+				for (var output = []; len(list) ;) {
+					output.push(rMath.min(list));
+					list.splice(list.io(rMath.min(list)), 1);
+				}
+				return output;
 			}
-			return output;
-		}, Array.prototype.shuffle = function shuffle(times=1) {
+		})(), Array.prototype.shuffle = function shuffle(times=1) {
 			var arr = this;
 			for (var i = times; i --> 0 ;)
 				for (var j = 0, n = len(arr), arr2 = []; j < n; j++)
@@ -4967,7 +5009,7 @@ void (() => { "use strict";
 					arr2.splice(randint(len(arr2)), 0, arr.pop());
 			return arr2;
 		}, Array.prototype.isNaN = function isNaN(strict=false) {
-			const fn = strict ? window.isNaN : rMath.isNaN;
+			const fn = (strict ? window : rMath).isNaN;
 			for (const val of this)
 				if (fn(val)) return !0;
 			return !1;
@@ -5002,7 +5044,7 @@ void (() => { "use strict";
 				end + endOffset
 			).join("");
 		}, String.prototype.tag = function tag(tagName) {
-			if (type(tagName, 1) !== "str" || !tagName) return this;
+			if (!tagName || type(tagName, 1) !== "str") return this;
 			return `<${tagName}>${this}</${tagName}>`;
 		}, String.prototype.rand = function random() {
 			return Array.prototype.rand.call(this);
@@ -5079,26 +5121,20 @@ void (() => { "use strict";
 			return this.substr(0, dim(this));
 		}, String.prototype.unescape = function unescape() {
 			return this.split("").map(
-				e => e === "\n" ?
-					"\\n" :
-					e === "\t" ?
-						"\\t" :
-						e === "\f" ?
-							"\\f" :
-							e === "\r" ?
-								"\\r" :
-								e === "\v" ?
-									"\\v" :
-									e === "\b" ?
-										"\\b" :
-										e
+				e => e === "\n" ? "\\n" : e === "\0" ? "\\0" : e === "\t" ? "\\t" : e === "\f" ? "\\f" :
+					e === "\r" ? "\\r" : e === "\v" ? "\\v" : e === "\b" ? "\\b" : e === "\\" ? "\\\\" :
+						ord(e) < 127 && ord(e) > 31 ? e :
+							ord(e) < 32 ?
+								(s => "\\x" + strMul("0", 2 - len(s)) + s)(ord(e).toString(16)) :
+								(s => "\\u" + strMul("0", 4 - len(s)) + s)(ord(e).toString(16))
 			).join("");
-		}, String.prototype.includes = String.prototype.incl = function includes(input) {
+		}, String.prototype.incl = function includes(input) {
 			return input.toRegex().in(this);
 		}, String.prototype.start = function start(start="") {
 			// if the string is empty it returns the argument
 			return this || `${start}`;
-		}, String.prototype.begin = function begin(text="") { // basically Array.unshift2 for strings
+		}, String.prototype.begin = function begin(text="") {
+			// basically Array.unshift2 for strings
 			return `${text}${this}`;
 		}, String.prototype.splitn = function splitNTimes(input, times=1, joinUsingInput=true, customJoiner="") {
 			var joiner = joinUsingInput ? input : customJoiner;
@@ -5121,6 +5157,11 @@ void (() => { "use strict";
 			return !0;
 		}, String.prototype.exists = function exists() {
 			return this != "";
+		}, String.prototype.line = function line(index=Infinity) {
+			if (rMath.isNaN(index)) return false;
+			for (var line = 1, i = 0; i < this.length; this[i] === "\n" && line++, i++)
+				if (i === index) return line;
+			return line;
 		}; // Number prototype
 		Number.prototype.bitLength = function bitLength() {
 			return len(str(abs(this), 2));
@@ -5363,6 +5404,7 @@ void function _pow(x) {
 	negative && arr.push(-arr.at(-1));
 	return arr;
 }
+
 /*var pow = */ void (function create_pow() {
 	// TODO: Make dynamic
 	const pows = [
@@ -5489,3 +5531,17 @@ void function _pow(x) {
 		return negative ? 1 / output : output;
 	}
 })();
+
+void function anonymizeFunction(fn) {
+	/**
+	 * Functions that refer to themselves and are not globally defined will not work with this function
+	 * they will have to use arguments.callee, which is disallowed in strict mode
+	 * Example:
+	 * var a = function asdf() { return asdf }
+	 * a() // ƒ asdf() { return asdf }
+	 * anonymizeFunction(a)() // Uncaught ReferenceError: asdf is not defined ...
+	**/
+	return type(fn) === "function" ?
+		Function(fn.args(), fn.code()) :
+		Function(fn);
+}
