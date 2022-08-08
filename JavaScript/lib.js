@@ -134,7 +134,6 @@ void (() => { "use strict";
 		, "sgn": Math.sign
 		, "rand": Math.random
 		, "json": JSON
-		, "infinity": Infinity
 		, "literal symbol.for <0x200b>": "​" // zero width space
 		, "literal symbol.for <0x08>": "" // \b
 		, "π": π
@@ -256,32 +255,133 @@ void (() => { "use strict";
 			function dict(obj={}) { return new Dictionary(obj) }
 			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
 			return dict;
-		})(), "MutableString": (function create_MutableString() {
-			// TODO: Make safety things for the functions so the user doesn't add non-character things
-			var MutStr = class MutableString extends Array {
-				constructor() {
-					super();
-					this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
-					for (const e of arguments)
-						// type() and not typeof so mutable strings also work
-						type(e) === "string" && this.union(e.split(""));
-				}
-				type() { return "mutstr" }
-				push(chars) {
-					if (type(chars, 1) === "str" || false);
-				}
-				toString() { return this.join("") }
-			};
-			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
-			
-			for (const s of Object.getOwnPropertyNames(String.prototype))
-				!protoArray.includes(s) && (MutStr.prototype[s] = String.prototype[s]);
-
-			MutStr.prototype.concat = Array.prototype.concat;
-
-			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
-			MutableString.fromString
-			return MutableString;
+		})(), "md5": (function create_md5(n) {
+			function r(n, r) {
+				var t = (65535 & n) + (65535 & r);
+				return (n >> 16) + (r >> 16) + (t >> 16) << 16 | 65535 & t
+			} function t(n, t, e, u, o, c) {
+				return r((f = r(r(t, n), r(u, c))) << (i = o) | f >>> 32 - i, e);
+				var f, i
+			} function e(n, r, e, u, o, c, f) { return t(r & e | ~r & u, n, r, o, c, f)
+			} function u(n, r, e, u, o, c, f) { return t(r & u | e & ~u, n, r, o, c, f)
+			} function o(n, r, e, u, o, c, f) { return t(r ^ e ^ u, n, r, o, c, f)
+			} function c(n, r, e, u, o, c, f) { return t(e ^ (r | ~u), n, r, o, c, f)
+			} function f(n, t) {
+				var f, i, a, h, l;
+				n[t >> 5] |= 128 << t % 32,
+				n[14 + (t + 64 >>> 9 << 4)] = t;
+				var v = 1732584193
+				  , d = -271733879
+				  , g = -1732584194
+				  , s = 271733878;
+				for (f = 0; f < n.length; f += 16)
+					i = v,
+					a = d,
+					h = g,
+					l = s,
+					v = e(v, d, g, s, n[f], 7, -680876936),
+					s = e(s, v, d, g, n[f + 1], 12, -389564586),
+					g = e(g, s, v, d, n[f + 2], 17, 606105819),
+					d = e(d, g, s, v, n[f + 3], 22, -1044525330),
+					v = e(v, d, g, s, n[f + 4], 7, -176418897),
+					s = e(s, v, d, g, n[f + 5], 12, 1200080426),
+					g = e(g, s, v, d, n[f + 6], 17, -1473231341),
+					d = e(d, g, s, v, n[f + 7], 22, -45705983),
+					v = e(v, d, g, s, n[f + 8], 7, 1770035416),
+					s = e(s, v, d, g, n[f + 9], 12, -1958414417),
+					g = e(g, s, v, d, n[f + 10], 17, -42063),
+					d = e(d, g, s, v, n[f + 11], 22, -1990404162),
+					v = e(v, d, g, s, n[f + 12], 7, 1804603682),
+					s = e(s, v, d, g, n[f + 13], 12, -40341101),
+					g = e(g, s, v, d, n[f + 14], 17, -1502002290),
+					v = u(v, d = e(d, g, s, v, n[f + 15], 22, 1236535329), g, s, n[f + 1], 5, -165796510),
+					s = u(s, v, d, g, n[f + 6], 9, -1069501632),
+					g = u(g, s, v, d, n[f + 11], 14, 643717713),
+					d = u(d, g, s, v, n[f], 20, -373897302),
+					v = u(v, d, g, s, n[f + 5], 5, -701558691),
+					s = u(s, v, d, g, n[f + 10], 9, 38016083),
+					g = u(g, s, v, d, n[f + 15], 14, -660478335),
+					d = u(d, g, s, v, n[f + 4], 20, -405537848),
+					v = u(v, d, g, s, n[f + 9], 5, 568446438),
+					s = u(s, v, d, g, n[f + 14], 9, -1019803690),
+					g = u(g, s, v, d, n[f + 3], 14, -187363961),
+					d = u(d, g, s, v, n[f + 8], 20, 1163531501),
+					v = u(v, d, g, s, n[f + 13], 5, -1444681467),
+					s = u(s, v, d, g, n[f + 2], 9, -51403784),
+					g = u(g, s, v, d, n[f + 7], 14, 1735328473),
+					v = o(v, d = u(d, g, s, v, n[f + 12], 20, -1926607734), g, s, n[f + 5], 4, -378558),
+					s = o(s, v, d, g, n[f + 8], 11, -2022574463),
+					g = o(g, s, v, d, n[f + 11], 16, 1839030562),
+					d = o(d, g, s, v, n[f + 14], 23, -35309556),
+					v = o(v, d, g, s, n[f + 1], 4, -1530992060),
+					s = o(s, v, d, g, n[f + 4], 11, 1272893353),
+					g = o(g, s, v, d, n[f + 7], 16, -155497632),
+					d = o(d, g, s, v, n[f + 10], 23, -1094730640),
+					v = o(v, d, g, s, n[f + 13], 4, 681279174),
+					s = o(s, v, d, g, n[f], 11, -358537222),
+					g = o(g, s, v, d, n[f + 3], 16, -722521979),
+					d = o(d, g, s, v, n[f + 6], 23, 76029189),
+					v = o(v, d, g, s, n[f + 9], 4, -640364487),
+					s = o(s, v, d, g, n[f + 12], 11, -421815835),
+					g = o(g, s, v, d, n[f + 15], 16, 530742520),
+					v = c(v, d = o(d, g, s, v, n[f + 2], 23, -995338651), g, s, n[f], 6, -198630844),
+					s = c(s, v, d, g, n[f + 7], 10, 1126891415),
+					g = c(g, s, v, d, n[f + 14], 15, -1416354905),
+					d = c(d, g, s, v, n[f + 5], 21, -57434055),
+					v = c(v, d, g, s, n[f + 12], 6, 1700485571),
+					s = c(s, v, d, g, n[f + 3], 10, -1894986606),
+					g = c(g, s, v, d, n[f + 10], 15, -1051523),
+					d = c(d, g, s, v, n[f + 1], 21, -2054922799),
+					v = c(v, d, g, s, n[f + 8], 6, 1873313359),
+					s = c(s, v, d, g, n[f + 15], 10, -30611744),
+					g = c(g, s, v, d, n[f + 6], 15, -1560198380),
+					d = c(d, g, s, v, n[f + 13], 21, 1309151649),
+					v = c(v, d, g, s, n[f + 4], 6, -145523070),
+					s = c(s, v, d, g, n[f + 11], 10, -1120210379),
+					g = c(g, s, v, d, n[f + 2], 15, 718787259),
+					d = c(d, g, s, v, n[f + 9], 21, -343485551),
+					v = r(v, i),
+					d = r(d, a),
+					g = r(g, h),
+					s = r(s, l);
+				return [v, d, g, s]
+			} function i(n) {
+				var r, t = "", e = 32 * n.length;
+				for (r = 0; r < e; r += 8)
+					t += String.fromCharCode(n[r >> 5] >>> r % 32 & 255);
+				return t
+			} function a(n) {
+				var r, t = [];
+				for (t[(n.length >> 2) - 1] = void 0,
+				r = 0; r < t.length; r += 1)
+					t[r] = 0;
+				var e = 8 * n.length;
+				for (r = 0; r < e; r += 8)
+					t[r >> 5] |= (255 & n.charCodeAt(r / 8)) << r % 32;
+				return t
+			} function h(n) {
+				var r, t, e = "0123456789abcdef", u = "";
+				for (t = 0; t < n.length; t += 1)
+					r = n.charCodeAt(t),
+					u += e.charAt(r >>> 4 & 15) + e.charAt(15 & r);
+				return u
+			} function l(n) { return unescape(encodeURIComponent(n))
+			} function v(n) {
+				return function(n) {
+					return i(f(a(n), 8 * n.length))
+				}(l(n))
+			} function d(n, r) {
+				return function(n, r) {
+					var t, e, u = a(n), o = [], c = [];
+					for (o[15] = c[15] = void 0,
+					u.length > 16 && (u = f(u, 8 * n.length)),
+					t = 0; t < 16; t += 1)
+						o[t] = 909522486 ^ u[t],
+						c[t] = 1549556828 ^ u[t];
+					return e = f(o.concat(a(r)), 512 + 8 * r.length),
+					i(f(c.concat(e), 640))
+				}(l(n), l(r))
+			} return function md5(n, r, t) { return r ? t ? d(r, n) : h(d(r, n)) : t ? v(n) : h(v(n)) }
 		})(), isIterable(arg) {
 			try { for (const e of arg) break; return !0 }
 			catch { return !1 }
@@ -611,37 +711,62 @@ void (() => { "use strict";
 		}, bisectLeft(arr, x, lo=0, hi=null) {
 			hi === null && (hi = len(arr));
 			if (lo < 0 || hi < lo || hi > len(arr)) return false;
+			let mid;
 			while (lo != hi) {
-				mid = low + floor((hi-low)/2);
+				mid = lo + floor((hi-lo)/2);
 				if (arr[mid] < x) lo = mid + 1; else hi = mid;
 			}
 			return lo;
 		}, bisectRight(arr, x, lo=0, hi=null) {
 			hi === null && (hi = len(arr));
 			if (lo < 0 || hi < lo || hi > len(arr)) return false;
+			let mid;
 			while (lo != hi) {
-				mid = low + floor((hi-low)/2);
+				mid = lo + floor((hi-lo)/2);
 				if (arr[mid] <= x) lo = mid + 1;
 				else hi = mid;
 			}
 			return lo;
-		}, bisect(arr, x, lo=0, hi=null, orientation="left", use=true) {
+		}, bisect(arr, x, orientation="left", lo=0, hi=null) {
 			return (orientation === "left" ?
 				bisectLeft : bisectRight
 			)(arr, x, lo, hi);
-		}, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue=3, precision=18) {
+		}, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue='"1.0"', precision=18) {
 			// ^ means exponent now.
 			if (type(variable) !== "string" || !len(variable)) return !1;
 			defaultArgValue = String(defaultArgValue);
-			if (type(fn, 1) !== "func") return !1;
 			var code = (type(fn) === "function" ? fn.code() : fn).remove(/^\s*return\s*/)
-				.replace(/(\d*\.\d+|\d+\.\d*)/g, '"$1"');
+				.replace([/(\d*\.\d+|\d+\.\d*)/g, /\[/g, /\]/g], ['"$1"', "(", ")"]);
 			while (!0) {
+				// stringify non-stringified number literals
 				let m = code.match(/(?<!")(\b(?<!\.)\d+(?!\.)\b)(?!")/);
 				if (m === null) break;
 				code = code.slc(0, m.index) + `"${m[0]}"` + code.slc(m.index + len(m[0]));
 			}
-			code = `(${ code.replace(RegExp(`(\\d+\\.?\\d*)${variable}`, "g"), `sMath.mul[$1,${variable}]`) })`;
+			// replace things line 5x with (5 * x)
+			code = `(${code.replace(RegExp(`(\\d+\\.?\\d*)${variable}`, "g"), `sMath.mul[$1,${variable}]`)})`;
+
+			while (code.io("⌈") !== -1 || code.io("⌊") !== -1) {
+				// find the cases for flooring, ceiling, and rounding, and parentheses errors
+				let i = rMath.min([code.io("⌈"), code.io("⌊")].filter(e => e !== -1));
+				let index = i + 1, count = 1;
+				for (; count ; index++) {
+					if (index === code.length) throw Error(`parentheses starting at ${i} not closed.`);
+					if ( "(⌈⌊".incl(code[index]) ) count++;
+					else if ( ")⌉⌋".incl(code[index]) ) count--;
+				}
+				index--;
+				if (code[index] === ")") throw Error(`invalid parentheses set at ${i} through ${index}`);
+				code = `${code.slc(0, i)}sMath.${
+					code[i] === "⌈" ?
+						code[index] === "⌉" ?
+							"ceil" :
+							"round" :
+						code[index] === "⌋" ?
+							"floor" :
+							"round"
+				}[(${code.slc(i + 1, index).strip()})]${code.slc(index + 1)}`;
+			}
 			while (code.io("(") !== -1) {
 				for (var index = 0, i = 0, n = len(code), p = 0, highest = 0; i < n; i++) {
 					// find the deepest parentheses
@@ -651,26 +776,64 @@ void (() => { "use strict";
 				}
 				var arr = code.slc(index, ")", 0, 1).replace(/([^\s()]+)/g, "($1)")
 					.slc(1, -1).strip().split(/(?=\()/g).map(e => e.strip().slc(1, -1));
+				if (len(arr) === 1) {
+					code = code.replace(
+						code.slc(index, ")", -1, 1).toRegex(),
+						`[${arr}]`
+					)
+				}
 				if (len(arr) > 3) {
 					var i = rMath.min([ arr.io("**"), arr.io("^") ].filter(e => e !== -1));
-					if (i === -1) {
+					if (i === Infinity) {
 						i = rMath.min([ arr.io("*"), arr.io("/"), arr.io("%"), arr.io("//") ].filter(e => e !== -1));
-						if (i === -1) {
+						if (i === Infinity) {
 							i = rMath.min([ arr.io("+"), arr.io("-") ].filter(e => e !== -1));
-							if (i === -1) throw Error("Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.");
+							if (i === Infinity) throw Error("Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.");
 						}
 					}
 					code = code.replace(
-						code.slc(index, ")", -1, 0).toRegex(),
-						`${arr.slc(0, i-1).join(" ")} (${arr.slc(i - 1, i + 2).join(" ")}) ${arr.slc(i + 2).join(" ")}`.strip()
+						code.slc(index + 1, ")").toRegex(),
+						`${arr.slc(0, i-1).join(" ")} (${
+							arr.slc(i - 1, i + 2).join(" ")
+						}) ${arr.slc(i + 2).join(" ")}`.strip()
 					);
 					continue;
 				}
 				let tmp = `sMath.${sMath[arr[1]].name}[${arr[0]},${arr[2]}`;
-				if (tmp.incl("mod") || tmp.incl("div")) tmp += `,${precision}`;
+				if (tmp.sW("sMath.div") || tmp.sW("sMath.mod")) tmp += `,"${precision}"`;
 				code = code.replace(code.slc(index, ")", 0, 1).toRegex(), tmp + "]");
 			}
-			return Function(variable + " = " + defaultArgValue, `return ${ code.replace(/\[/g, "(").replace(/\]/g, ")") }`);
+			return Function(
+				variable + " = " + defaultArgValue,
+				`\treturn ${
+					code.replace([/\[/g, /\]/g], ["(", ")"])
+				};`.replace(/,/g, ", ")
+			);
+		}, arrzip(arr1, arr2) {
+			if (!isIterable(arr1) || !isIterable(arr2)) return [];
+			if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = Array.from(arr1);
+			if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = Array.from(arr2);
+			for (var output = [], length = rMath.min(len(arr1), len(arr2)), i = 0; i < length; i++)
+				output.push([arr1[i], arr2[i]]);
+			return output;
+		}, *genzip(gen1, gen2) {
+			gen1 = toGenerator(gen1); gen2 = toGenerator(gen2);
+			var a = gen1.next(), b = gen2.next();
+			while (!a.done && !b.done) {
+				let output = [a.value, b.value];
+				yield output;
+				a = gen1.next();
+				b = gen2.next();
+			}
+		}, toGenerator(thing) {
+			if (thing?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") return thing;
+			function *Generator() {
+				if (isIterable(thing))
+					for (const e of thing)
+						yield e;
+				else yield thing;
+			}
+			return Generator(thing);
 		}, "randint"     : function randomInt(min=1, max=null) {
 			if (max == null) {
 				max = min;
@@ -864,10 +1027,36 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : false,
 				arrayOneLineSpace  : "",
 			})
+		}, "defer_call MutableString"() {
+			// TODO: Make safety things for the functions so the user doesn't add non-character things
+			var MutStr = class MutableString extends Array {
+				constructor() {
+					super();
+					this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
+					for (const e of arguments)
+						// type() and not typeof so mutable strings also work
+						type(e) === "string" && this.union(e.split(""));
+				}
+				type() { return "mutstr" }
+				push(chars) {
+					if (type(chars, 1) === "str" || false);
+				}
+				toString() { return this.join("") }
+			};
+			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
+			
+			for (const s of Object.getOwnPropertyNames(String.prototype))
+				!protoArray.includes(s) && (MutStr.prototype[s] = String.prototype[s]);
+
+			MutStr.prototype.concat = Array.prototype.concat;
+
+			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
+			MutableString.fromCharCode = function fromCharCode(code) { return this(String.fromCharCode(code)) }
+			return MutableString;
 		}, dim(e, n=1)         { return e?.length - n }
 		, len(e)               { return e?.length }
 		, complex(re=0, im=0)  { return cMath?.new?.(re, im) }
-		, copy(object)         { return JSON.parse( JSON.stringify(obj) ) }
+		, copy(object)         { return json.parse( json.stringify(object) ) }
 		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
 		, chr(integer)         { return String.fromCharCode(integer) }
 		, ord(string)          { return string.charCodeAt(0) }
@@ -1639,10 +1828,12 @@ void (() => { "use strict";
 					snum.substr(1) :
 					snum;
 			} fpart(n="0.0") {
+				n = numStrNorm(n);
 				return isNaN(n) ?
 					NaN :
 					fpart(n, !1);
 			} ipart(n="0.0") {
+				n = numStrNorm(n);
 				return n.slc(
 					0, "."
 				) + ".0";
@@ -1753,15 +1944,18 @@ void (() => { "use strict";
 					if (c) return i;
 				}
 			} floor(snum="0.0") {
-				var ans = this.ipart(snum+".0");
+				snum = numStrNorm(snum);
+				var ans = this.ipart(snum);
 				snum[0] === "-" && this.isFloat(snum) && (ans = this.decr(ans));
 				return ans;
 			} ceil(snum="0.0") {
-				var ans = this.ipart(snum+".0");
+				snum = numStrNorm(snum);
+				var ans = this.ipart(snum);
 				this.eq.ps(snum) && this.isFloat(snum) && (ans = this.add(ans, 1));
 				return ans;
 			} round(snum="0.0") {
-				return this.eq.lt(this.fpart(snum+".0"), "0.5") ?
+				snum = numStrNorm(snum);
+				return this.eq.lt(this.fpart(snum), "0.5") ?
 					this.ipart(snum) :
 					this.add(this.ipart(snum), this.sgn(snum)+"")
 			} trunc(snum="0.0") {
@@ -2523,13 +2717,14 @@ void (() => { "use strict";
 				n = n.toString(2);
 				while ( len(n) < 32 ) n = `0${n}`;
 				return len( n.remove(/1.*/) );
-			} fact(n, acy=1e3, inc=.1) {
+			} fact(x, acy=1e3, inc=.1) {
 				// TODO: Fix for negative non-integer numbers
-				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
-				if ( n.isInt() ) return this.ifact(n);
-				var ans = this.int(0, acy, x=>x**n/𝑒**x, inc);
+				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x);
+				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j=>x+j);
+				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : ans;
 			} factorial(n) {
 				;
@@ -2585,16 +2780,14 @@ void (() => { "use strict";
 				if ( n.isInt() ) return this.ifact(n-1);
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
-				n--;
-				var ans = this.int(0, acy, t=>t**n/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : n;
+				return this.fact(n-1, acy, inc);
 			} igammal(n, inc=.1) {
 				// lower incomplete gamma function
 				if (isNaN( n = Number(n) )) return NaN;
 				if ( n.isInt() ) return this.ifact(n-1);
 				if (isNaN( inc = Number(inc) )) return NaN;
 				n--;
-				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
+				var ans = this.int(0, --n, t=>t**n/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			} igammau(n, acy=1000, inc=.1) {
 				// upper incomplete gamma function
@@ -2682,7 +2875,8 @@ void (() => { "use strict";
 					if (n in obj) obj[n]++;
 					else obj[n] = 1;
 				}
-				const max = this.max( Object.values(obj) );
+				const value = Object.keyof( obj, this.max( Object.values(obj) ) );
+
 				// get max value
 				// return all keys with that value
 			} mad(...ns) {
@@ -2837,8 +3031,8 @@ void (() => { "use strict";
 				// a^2 + b^2 = (b+m)^2
 				if (isNaN( a = Number(a) )) return "No Solution";
 				if (isNaN( m = Number(m) )) return "No Solution";
-				if (fpart(a) || fpart(m)) return "No Solution";
-				if (this.mod(a+m, 2))     return "No Solution";
+				if (fpart(a) || fpart(m))   return "No Solution";
+				if (this.mod(a+m, 2))       return "No Solution";
 
 				var b = (a**2 - m**2) / (2*m),
 					c = b + m;
@@ -2900,11 +3094,11 @@ void (() => { "use strict";
 				}
 				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
 				if (number) return Number(c);
-				return c.io(".") < 0 ?
-					c + ".0" :
-					c.substr(
-						0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
-					);
+				return numStrNorm(
+					c.io(".") < 0 ?
+						c + ".0" :
+						c.substr( 0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1) )
+				);
 			} sub(a="0.0", b="0.0", number=true, precision=Infinity) {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				if (isNaN( precision )) precision = Infinity;
@@ -2939,10 +3133,10 @@ void (() => { "use strict";
 				}
 				c = c.map( e => e.join("") ).join(".");
 				if (number) return Number(c);
-				return c.io(".") < 0 ?
-					c + ".0" :
-					c.substr(
-						0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1)
+				return numStrNorm(
+					c.io(".") < 0 ?
+						c + ".0" :
+						c.substr( 0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1) )
 					);
 			} mul(a="0.0", b="0.0", number=true, precision=Infinity) {
 				if (this.isNaN(a) || this.isNaN(b)) return NaN;
@@ -3038,7 +3232,7 @@ void (() => { "use strict";
 				// modulo using the formula
 				if (isNaN( a = Number(a) )) return NaN;
 				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( d = Number(d) )) return NaN;
+				if (isNaN( k = Number(k) )) return NaN;
 				if (!n) return NaN;
 				return a - n*floor(a/n) + k;
 			} parity(...ns) {
@@ -3195,7 +3389,7 @@ void (() => { "use strict";
 					if (b === 0) return (this.nthrt(d, 1 / fpart(c)) || 1) * y;
 				}
 			} nthrt(x, rt=2) {
-				if (isNaN( x = Number(x) ) || isNaN( rt = Number(rt) ) || x < 0) return NaN;
+				if (isNaN( x = Number(x) ) || isNaN( rt = Number(rt) )) return NaN;
 				if (rt < 0) return this.pow(x, rt);
 				if (!rt || !(rt % 2) && x < 0) return NaN;
 				if (!x) return 0;
@@ -3203,7 +3397,7 @@ void (() => { "use strict";
 					ans != (ans += abs(x - (ans - tmp)**rt) < abs(x - ans**rt) ? -tmp :
 						abs(x - (ans + tmp)**rt) < abs(x - ans**rt) ? tmp : 0)
 				);
-				return ans;
+				return this.copysign(ans, x);
 			} square(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				return n ** 2;
@@ -4540,6 +4734,7 @@ void (() => { "use strict";
 		},
 		};
 	} {// Conflict & Assignment
+		var DEFER_ARR = [];
 		var CONFLICT_ARR = [], MathObjects = {};
 		this[Output_Math_Variable] !== void 0 && (
 			Output_Math_Variable === "Math" ?
@@ -4547,37 +4742,45 @@ void (() => { "use strict";
 				Output_Math_Variable === void 0 ?
 					!1 : !0
 		) && CONFLICT_ARR.push(Output_Math_Variable);
-		for (const s of Object.keys(LIBRARY_FUNCTIONS)) {
+		var define = function define(s, section=0) {
 			if (s.startsWith("instance ")) {
 				let tmp = s.substr(9);
-				if (this[tmp] !== void 0) {
+				if (window[tmp] !== void 0) {
 					if (ON_CONFLICT === "crash") throw Error(`window['${tmp}'] is already defined and ON_CONFLICT is set to 'crash'`);
 					if (ON_CONFLICT === "cry") console.log(`window['${tmp}'] overwritten and ON_CONFLICT is set to cry.`);
-					else if (ON_CONFLICT === "dont-use") continue;
+					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(tmp);
 				}
-				this[tmp] = new LIBRARY_FUNCTIONS[s];
-				tmp.includes("Math") && (MathObjects[tmp] = this[tmp]);
+				window[tmp] = new LIBRARY_FUNCTIONS[s];
+				tmp.includes("Math") && (MathObjects[tmp] = window[tmp]);
 			} else if (s.startsWith("literal symbol.for ")) {
 				let tmp = Symbol.for(s.substr(19));
-				if (this[tmp] !== void 0) {
+				if (window[tmp] !== void 0) {
 					if (ON_CONFLICT === "crash") throw Error(`window[${String(tmp)}] is already defined and ON_CONFLICT is set to 'crash'`);
 					if (ON_CONFLICT === "cry") console.log(`window[${String(tmp)}] overwritten and ON_CONFLICT is set to cry.`);
-					else if (ON_CONFLICT === "dont-use") continue;
+					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(tmp);
 				}
-				this[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
-			} else if (s.startsWith("overwrite ")) this[s.substr(10)] = LIBRARY_FUNCTIONS[s];
-			else {
-				if (this[s] !== void 0) {
+				window[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
+			} else if (s.startsWith("overwrite ")) window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
+			else if (s.startsWith("defer_call ")) {
+				if (section) window[s.substr(11)] = LIBRARY_FUNCTIONS[s]();
+				else DEFER_ARR.push(s);
+			} else if (s.startsWith("defer ")) {
+				if (section) window[s.substr(6)] = LIBRARY_FUNCTIONS[s];
+				else DEFER_ARR.push(s);
+			} else {
+				if (window[s] !== void 0) {
 					if (ON_CONFLICT === "crash") throw Error(`window['${s}'] is already defined and ON_CONFLICT is set to 'crash'`);
 					if (ON_CONFLICT === "cry") console.log(`window['${s}'] overwritten and ON_CONFLICT is set to cry.`);
-					else if (ON_CONFLICT === "dont-use") continue;
+					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(s);
 				}
-				this[s] = LIBRARY_FUNCTIONS[s];
+				window[s] = LIBRARY_FUNCTIONS[s];
 			}
 		}
+		for (const s of Object.keys(LIBRARY_FUNCTIONS))
+			define(s, false);
 		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
 		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
 		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
@@ -4916,8 +5119,11 @@ void (() => { "use strict";
 		}, Array.prototype.toLList = function toLinkedList() {
 			if (window.LinkedList == null) throw Error("window.LinkedList == null");
 			let a = new window.LinkedList();
-			for (const i of this.rev()) a.insertFirst(i);
+			for (const e of this.rev()) a.insertFirst(e);
 			return a;
+		}, Array.prototype.toGen = function* toGenerator() {
+			for (const e of this)
+				yield e;
 		}, Array.prototype.remove = function remove(e) {
 			var a = this;
 			a.incl(e) && a.splice(a.io(e), 1);
@@ -5069,6 +5275,12 @@ void (() => { "use strict";
 			for (var arr = copy(this), dupes = [], i = len(arr), val; i --> 0 ;)
 				arr.incl(val = arr.pop()) && dupes.push([i, val]);
 			return len(dupes) ? dupes : null;
+		}, Array.prototype.bisectLeft = function bisectLeft(x, low=0, high=null) {
+			return bisectLeft(this, x, low, high);
+		}, Array.prototype.bisectRight = function bisectRight(x, low=0, high=null) {
+			return bisectRight(this, x, low, high);
+		}, Array.prototype.bisect = function bisect(x, orientation="left", low=0, high=null) {
+			return bisect(this, x, orientation, low, high);
 		}; // String prototype
 		String.prototype.io = String.prototype.indexOf
 		,  String.prototype.lio = String.prototype.lastIndexOf
@@ -5084,6 +5296,20 @@ void (() => { "use strict";
 			if (type(strOrArr) === "string") {
 
 			}
+		}, String.prototype.replace = (function create_replace() {
+			const _replace = String.prototype.replace;
+			return function replace(search, replacer) {
+				!isArr(search) && (search = [search]);
+				!isArr(replacer) && (replacer = [replacer]);
+				var output = this;
+				for (let [a, b] of arrzip(search, replacer))
+					output = _replace.call(output, a, b);
+				return output;
+			}
+		})(), String.prototype.ios = function indexesOf(chars="") {
+			return type(chars) === "string" ?
+				Object.keys(this).filter( i => chars?.incl?.(this[i]) ).map(s => +s) :
+				[];
 		}, String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=false) {
 			// last index = end - 1
 			type(start) === "string" && (start = this.io(start));
@@ -5122,13 +5348,11 @@ void (() => { "use strict";
 			this.split(/[.[\]'"]/).filter(e=>e).for(e => obj=obj[e]);
 			return obj;
 		}, String.prototype.hasDupesA = function hasDuplicatesAll() {
-			return /(.|\n)\1+/.in(
+			return /(.|\n)\1/.in(
 				this.split("").sort().join("")
 			);
 		}, String.prototype.hasDupesL = function hasDuplicateLetters() {
-			return /(\w)\1+/.in(
-				this.split("").sort().join("")
-			);
+			return /(\w)\1/.in( this.split("").sort().join("") );
 		}, String.prototype.reverse = function reverse() {
 			return this.split("").reverse().join("");
 		}, String.prototype.remove = function remove(arg) {
@@ -5393,6 +5617,7 @@ void (() => { "use strict";
 			"1234567890a";
 		}
 	} {// Error Handling & Exiting
+		for (const s of DEFER_ARR) define(s, 1);
 		try { ON_CONFLICT = ON_CONFLICT.lower() }
 		catch { ON_CONFLICT = "none" }
 		
@@ -5599,3 +5824,13 @@ void function anonymizeFunction(fn) {
 		Function(fn.args(), fn.code()) :
 		Function(fn);
 }
+/*
+	var value = 2n, collatz = () => { for (var x = value + 1n, i = 0n; x > value ; i++) x = x % 2n ? 3n*x + 1n : x / 2n; value += 2n; ![3n,6n,8n,11n,13n].includes(i) && process.stdout.write(`${i},`) }; while (1) collatz();
+
+	22_567_581_584n
+
+
+	process.stdout.write('\033c');
+	process.stdin
+	process.stderr
+*/
