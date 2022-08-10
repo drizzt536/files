@@ -73,8 +73,4 @@ def test(size: int = 1000, debug: bool = False, /) -> None:
     else:
         for i in range(round(size)):
             test_Complex_class(i)
-<<<<<<< HEAD
     print("Done")
-=======
-    print("Done")
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217

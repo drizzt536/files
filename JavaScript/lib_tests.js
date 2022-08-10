@@ -1,5 +1,4 @@
 // This file is for testing ./lib.js, and thus requires it.
-<<<<<<< HEAD
 // ./lib.js Library Function Used for this file: dir
 
 
@@ -8,14 +7,6 @@
 (function run_tests() {
 	// error code 0 is pass, and 1 is fail
 	// if the input is supposed to fail, put the error message as the output
-=======
-
-
-// TODO: Make functions of the same name able to be tested with separate inputs and outputs
-(function run_tests() {
-	// error code 0 is pass, and 1 is fail
-	// if the input is supposed to fail, put the error as the output
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 	var tmpLL = new LinkedList;
 	tmpLL.insertLast( 0 ); tmpLL.insertLast( 1 );
 	tmpLL.insertLast( 2 ); tmpLL.insertLast( 3 );
@@ -42,15 +33,9 @@
 		Infinity,
 		-Infinity,
 		NaN,
-<<<<<<< HEAD
 		document.querySelector("p"), // HTMLElement
 		Symbol.for("asdf"),
 		Symbol.iterator, // idk what this is but whatever
-=======
-		dQuery("p")[0], // HTML\w+Element
-		Symbol.for("asdf"),
-		Symbol.iterator,
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 		Symbol(),
 		undefined,
 		null,
@@ -96,11 +81,7 @@
 		/asdf(?=12){2,}\+(?<name>3-4).\/ \k<name>\\k`g<>`'~%\^/,
 	], O = (output, err) => new class Output {
 		constructor() {
-<<<<<<< HEAD
 			if (err === void 0) throw Error("err is missing");
-=======
-			if (err     === void 0) throw Error("err is missing"   );
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 			this.out = output;
 			this.err = err;
 		}
@@ -116,11 +97,7 @@
 		Error.prototype.name = "TestError";
 		try {
 			if (debug) debugger;
-<<<<<<< HEAD
 			return Error(`Error is probably at '${loc}'\n\tfailed function: '${f}'\n\tfailed input: '${typeof input === "symbol" ? "(symbol)" : input}'\n\tfailed output: '${output}'\n\tfailed indexes: '${JSON.stringify(indexes)}'\n`);
-=======
-			return Error(`Error is probably at '${loc}'\n\tfailed function: '${f}'\n\tfailed input: '${type(input) === "symbol" ? "(symbol)" : input}'\n\tfailed output: '${output}'\n\tfailed indexes: '${json.stringify(indexes)}'\n`);
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 		} catch { throw Error("???!?...") }
 		finally { Error.prototype.name = name }
 	} function fn() {
@@ -148,16 +125,11 @@
 		} if (!fn) {
 			console.error(`Uncaught Error: 'fn' object property is missing from '${name}' in lib_tests.js run_tests()`);
 			exit = true;
-<<<<<<< HEAD
 		} if (!(objs instanceof Array)) {
-=======
-		} if (!isArr(objs)) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 			console.error(`Uncaught Error: 'objs' object property is not an array for '${name}' in lib_tests.js run_tests()`);
 			exit = true;
 		} if (exit) return false;
 		for (const obj of objs) {
-<<<<<<< HEAD
 			if (!obj || obj?.constructor?.name !== "Object" && obj !== window)
 				throw Error(`object in 'objs' object property is missing or invalid for '${name}' in lib_tests.js run_tests()\n\tobjs: ${JSON.stringify(objs)}\n`);
 		} let fs = [];
@@ -168,14 +140,6 @@
 			// remove this once different arguments have different inputs
 			throw `Assertion Failed: Inputs and Outputs are incompatible lengths for '${name}'\n\tlen(inputs): ${inputs.length}\n\tlen(outputs): ${outputs.length}\n\targuments: ${args}`;
 		}
-=======
-			if (!obj || obj?.constructor.name !== "Object" && obj !== window)
-				throw Error(`object in 'objs' object property is missing or invalid for '${name}' in lib_tests.js run_tests()\n\tobjs: ${json.stringify(objs)}\n`);
-		} const fs = [];
-		// test all the functions with the same name in different namespaces
-		fs.len( len(objs) ).smap( (e, i) => objs[i][name] ); // ??
-		assert( len(inputs)**args === len(outputs), `inputs and outputs are incompatible lengths for '${name}'\n\tlen(inputs): ${len(inputs)}\n\tlen(outputs): ${len(outputs)}\n\targuments: ${args}` );
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 		for (const f of fs) testfs[args] (f, outputs, name, inputs, args);
 	} let testfs = [
 		function test_0_arg_fn(f, output, name, inputs, numArguments) {
@@ -191,11 +155,7 @@
 			}
 		}, function test_1_arg_fn(f, outputs, name, inputs, numArguments) {
 			var out, err;
-<<<<<<< HEAD
 			for (var i = inputs.length, absolute_index = i; i --> 0 ;) {
-=======
-			for (var i = len(inputs), absolute_index = i; i --> 0 ;) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 				try {
 					out = f(inputs[i]);
 					err = 0;
@@ -208,145 +168,87 @@
 			}
 		}, function test_2_arg_fn(f, outputs, name, inputs, numArguments) {
 			var out, err;
-<<<<<<< HEAD
 			for (var i = inputs.length, absolute_index = i; i --> 0 ;)
 			for (var j = inputs.length; j --> 0 ;) {
-=======
-			for (var i = len(inputs), absolute_index = i; i --> 0 ;)
-			for (var j = len(inputs); j --> 0 ;) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
+
 				try {
 					out = f(inputs[i], inputs[j]);
 					err = 0;
 				} catch (e) { out = e; err = 1 }
 	
 				if (out !== outputs[--absolute_index].out || err !== outputs[absolute_index].err) {
-<<<<<<< HEAD
 					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${JSON.stringify([i, j])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
-=======
-					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${json.stringify([i, j])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 					throw TestError(name, inputs[i], outputs[i], [i, j], dir() );
 				}
 			}
 		}, function test_3_arg_fn(f, outputs, name, inputs, numArguments) {
 			var out, err;
-<<<<<<< HEAD
 			for (var i = inputs.length, absolute_index = i; i --> 0 ;)
 			for (var j = inputs.length; j --> 0 ;)
 			for (var k = inputs.length; k --> 0 ;) {
-=======
-			for (var i = len(inputs), absolute_index = i; i --> 0 ;)
-			for (var j = len(inputs); j --> 0 ;)
-			for (var k = len(inputs); k --> 0 ;) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 				try {
 					out = f(inputs[i], inputs[j], inputs[k]);
 					err = 0;
 				} catch (e) { out = e; err = 1 }
 
 				if (out !== outputs[--absolute_index].out || err !== outputs[absolute_index].err) {
-<<<<<<< HEAD
 					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${JSON.stringify([i, j, k])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
-=======
-					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${json.stringify([i, j, k])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 					throw TestError(name, inputs[i], outputs[i], [i, j, k], dir() );
 				}
 			}
 		}, function test_4_arg_fn(f, outputs, name, inputs, numArguments) {
 			var out, err;
-<<<<<<< HEAD
 			for (var i = inputs.length, absolute_index = i; i --> 0 ;)
 			for (var j = inputs.length; j --> 0 ;)
 			for (var k = inputs.length; k --> 0 ;)
 			for (var l = inputs.length; l --> 0 ;) {
-=======
-			for (var i = len(inputs), absolute_index = i; i --> 0 ;)
-			for (var j = len(inputs); j --> 0 ;)
-			for (var k = len(inputs); k --> 0 ;)
-			for (var l = len(inputs); l --> 0 ;) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 				try {
 					out = f(inputs[i], inputs[j], inputs[k], inputs[l]);
 					err = 0;
 				} catch (e) { out = e; err = 1 }
 
 				if (out !== outputs[--absolute_index].out || err !== outputs[absolute_index].err) {
-<<<<<<< HEAD
 					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}', '${inputs[l]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${JSON.stringify([i, j, k, l])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
-=======
-					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}', '${inputs[l]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${json.stringify([i, j, k, l])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 					throw TestError(name, inputs[i], outputs[i], [i, j, k, l], dir() );
 				}
 			}
 		}, function test_5_arg_fn(f, outputs, name, inputs, numArguments) {
 			var out, err;
-<<<<<<< HEAD
 			for (var i = inputs.length, absolute_index = i; i --> 0 ;)
 			for (var j = inputs.length; j --> 0 ;)
 			for (var k = inputs.length; k --> 0 ;)
 			for (var l = inputs.length; l --> 0 ;)
 			for (var m = inputs.length; m --> 0 ;) {
-=======
-			for (var i = len(inputs), absolute_index = i; i --> 0 ;)
-			for (var j = len(inputs); j --> 0 ;)
-			for (var k = len(inputs); k --> 0 ;)
-			for (var l = len(inputs); l --> 0 ;)
-			for (var m = len(inputs); m --> 0 ;) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 				try {
 					out = f(inputs[i], inputs[j], inputs[k], inputs[l], inputs[m]);
 					err = 0;
 				} catch (e) { out = e; err = 1 }
 
 				if (out !== outputs[--absolute_index].out || err !== outputs[absolute_index].err) {
-<<<<<<< HEAD
 					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}', '${inputs[l]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${JSON.stringify([i, j, k, l, m])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
-=======
-					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}', '${inputs[l]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${json.stringify([i, j, k, l, m])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 					throw TestError(name, inputs[i], outputs[i], [i, j, k, l, m], dir() );
 				}
 			}
 		}, function test_6_arg_fn(f, outputs, name, inputs, numArguments) {
 			var out, err;
-<<<<<<< HEAD
 			for (var i = inputs.length, absolute_index = i; i --> 0 ;)
 			for (var j = inputs.length; j --> 0 ;)
 			for (var k = inputs.length; k --> 0 ;)
 			for (var l = inputs.length; l --> 0 ;)
 			for (var m = inputs.length; m --> 0 ;)
 			for (var n = inputs.length; n --> 0 ;) {
-=======
-			for (var i = len(inputs), absolute_index = i; i --> 0 ;)
-			for (var j = len(inputs); j --> 0 ;)
-			for (var k = len(inputs); k --> 0 ;)
-			for (var l = len(inputs); l --> 0 ;)
-			for (var m = len(inputs); m --> 0 ;)
-			for (var n = len(inputs); n --> 0 ;) {
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 				try {
 					out = f(inputs[i], inputs[j], inputs[k], inputs[l], inputs[m], inputs[n]);
 					err = 0;
 				} catch (e) { out = e; err = 1 }
 
 				if (out !== outputs[--absolute_index].out || err !== outputs[absolute_index].err) {
-<<<<<<< HEAD
 					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}', '${inputs[l]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${JSON.stringify([i, j, k, l, m, n])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
-=======
-					console.log(`function: '${f}'\nname: '${name}'\ninputs: '${inputs[i]}', '${inputs[j]}', '${inputs[k]}', '${inputs[l]}'\nexpected output: 'out:${outputs[absolute_index].out},err:${outputs[absolute_index].err}'\nactual output: 'out:${out},err:${err}'\nindexes: '${json.stringify([i, j, k, l, m, n])}'\ndir(): '${dir()}'\nnumber of arguments: '${numArguments}'\nabsolute index: '${absolute_index}'`);
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 					throw TestError(name, inputs[i], outputs[i], [i, j, k, l, m, n], dir() );
 				}
 			}
 		},
-<<<<<<< HEAD
 	], tests = { // length of in**args === length of out
-=======
-	], tests = { // len in^args = len out
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 		isIterable: {
 			fn: fn,
 			args: 1,
@@ -390,19 +292,11 @@
 			inputs: [
 				2, undefined, "asdfasdf", [1, 2, 3, 4],
 				{a:1, b:2, c:3}, (()=>{}), 2n, true, false,
-<<<<<<< HEAD
 				Symbol.for("a"), -17n, 5.76, [,,], {}, [[1,1], [2], [3], [4,4]],
 			], outputs: [
 				O(0, 0), O(0, 0), O(8, 0), O(4, 0), O(3, 0), O(0, 0),
 				O(BigInt.prototype.length, 0), O(0, 0), O(0, 0), O(0, 0),
 				O(BigInt.prototype.length, 0), O(0, 0),	O(2, 0), O(0, 0), O(4, 0)
-=======
-				Symbol.for("a"), 2n, 5.76, [,,], {}, [[1,1], [2], [3], [4,4]],
-			], outputs: [
-				O(0, 0), O(0, 0), O(8, 0), O(4, 0), O(3, 0), O(0, 0),
-				O(0, 0), O(0, 0), O(0, 0), O(0, 0), O(0, 0), O(0, 0),
-				O(2, 0), O(0, 0), O(4, 0)
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 			],
 			ignore: false,
 		}, len: {
@@ -412,17 +306,10 @@
 			inputs: [
 				2, undefined, "asdfasdf", [1, 2, 3, 4],
 				{a:1, b:2, c:3}, (()=>{}), 2n, true, false,
-<<<<<<< HEAD
 				Symbol.for("a"), -12n, 5.76, "", [], [,,,], [[1,1], [2], [3], [4,4]],
 			], outputs: [
 				O(undefined, 0), O(undefined, 0), O(8, 0), O(4, 0), O(undefined, 0), O(0, 0),
 				O(BigInt.prototype.length, 0), O(undefined, 0), O(undefined, 0), O(undefined, 0), O(BigInt.prototype.length, 0),
-=======
-				Symbol.for("a"), 2n, 5.76, "", [], [,,,], [[1,1], [2], [3], [4,4]],
-			], outputs: [
-				O(undefined, 0), O(undefined, 0), O(8, 0), O(4, 0), O(undefined, 0), O(0, 0),
-				O(undefined, 0), O(undefined, 0), O(undefined, 0), O(undefined, 0), O(undefined, 0),
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 				O(undefined, 0), O(0, 0), O(0, 0), O(3, 0), O(4, 0),
 			],
 			ignore: false,
@@ -436,7 +323,6 @@
 		},
 	};
 	for (const key of Object.keys(tests)) tests[key].name = key;
-<<<<<<< HEAD
 	for (var testvals = Object.values(tests), i = testvals.length; i --> 0 ;) {
 		if (!(testvals[i].args < testfs.length)) throw `Failed Assertion: Unsupported number of arguments for testing.\n\tfunction name: '${testvals[i].name}'\n\tfunction index: '${i}'\n\tnumber of arguments: '${testvals[i].args}'\n\tmax supported arguments: '${testfs.length - 1}'\n`;
 		!testvals[i].ignore && testvals[i].fn();
@@ -476,10 +362,3 @@ If the new way is introduced, there can be 1 function to test all functions rega
 }
 if objs in [null, "default"] it should default to [window, "window"]
 */
-=======
-	for (var testvals = Object.values(tests), i = len(testvals); i --> 0 ;) {
-		assert(testvals[i].args < len(testfs), `Unsupported number of arguments for testing.\n\tfunction name: '${testvals[i].name}'\n\tfunction index: '${i}'\n\tnumber of arguments: '${testvals[i].args}'\n\tmax supported arguments: '${len(testfs) - 1}'\n`);
-		!testvals[i].ignore && testvals[i].fn();
-	}
-})();
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217

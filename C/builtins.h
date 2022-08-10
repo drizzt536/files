@@ -538,9 +538,4 @@ extern signed long long int indexOf(char *str, char c) {
 		if (str[i] == c) return i;
 	return -1LL;
 }
-#endif
-<<<<<<< HEAD
 #endif // ifndef __LIBRARY_MINGW_GCC_BUILTINS__
-=======
-#endif // ifndef __LIBRARY_MINGW_GCC_BUILTINS__
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217

@@ -1,8 +1,5 @@
 #!/usr/bin/env js
-<<<<<<< HEAD
 
-=======
->>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
 void (() => { "use strict";
 	{// Customization & Constants
 
