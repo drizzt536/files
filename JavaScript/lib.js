@@ -113,24 +113,15 @@ void (() => { "use strict";
 		, numbers       = "0123456789"
 		, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		, characters    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
-		, π             = 3.141592653589793
-		, π_2           = 1.5707963267948966
-		, π_3           = 1.0471975511965979
-		, π2_3          = 2.0943951023931957
-		, π_4           = 0.7853981633974483
-		, π3_4          = 2.356194490192345
-		, π5_4          = 3.9269908169872414
-		, π7_4          = 5.497787143782138
-		, π_5           = 0.6283185307179586
-		, π_6           = 0.5235987755982989
-		, π5_6          = 2.6179938779914944
-		, π7_6          = 3.6651914291880923
-		, π11_6         = 5.759586531581288
-		, π_7           = 0.4487989505128276
-		, π_8           = 0.39269908169872414
-		, π_9           = 0.3490658503988659
-		, π_10          = 0.3141592653589793
-		, π_11          = 0.28559933214452665
+		, π             = 3.141592653589793   , π_2           = 1.5707963267948966
+		, π_3           = 1.0471975511965979  , π2_3          = 2.0943951023931957
+		, π_4           = 0.7853981633974483  , π3_4          = 2.356194490192345
+		, π5_4          = 3.9269908169872414  , π7_4          = 5.497787143782138
+		, π_5           = 0.6283185307179586  , π_6           = 0.5235987755982989
+		, π5_6          = 2.6179938779914944  , π7_6          = 3.6651914291880923
+		, π11_6         = 5.759586531581288   , π_7           = 0.4487989505128276
+		, π_8           = 0.39269908169872414 , π_9           = 0.3490658503988659
+		, π_10          = 0.3141592653589793  , π_11          = 0.28559933214452665
 		, π_12          = 0.26179938779914946
 		, 𝜏             = 6.283185307179586
 		, 𝑒             = 2.718281828459045
@@ -146,8 +137,7 @@ void (() => { "use strict";
 		, emc           = γ // Euler-Mascheroni Constant
 		, omega         = Ω
 		, LIBRARY_FUNCTIONS = {
-		"isArr": Array.isArray
-		, "list": Array.from
+		"list": Array.from
 		, "int": Number.parseInt
 		, "abs": Math.abs
 		, "sgn": Math.sign
@@ -863,6 +853,12 @@ void (() => { "use strict";
 				else yield thing;
 			}
 			return Generator(thing);
+		}, ord(string)          {
+			return typeof string === "string" && len(string) ?
+				len(string) - 1 ?
+					string.split("").map(c => c.charCodeAt()) :
+					string.charCodeAt() :
+				0
 		}, "randint"     : function randomInt(min=1, max=null) {
 			if (max == null) {
 				max = min;
@@ -983,19 +979,16 @@ void (() => { "use strict";
 			if (isNaN(num) || type(s1, 1) !== "str") return "";
 			for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
 			return s2;
-		}, "numStrNorm"  : function NormalizeNumberString(snum="0.0") {
-			if (isNaN(snum)) return NaN;
-			snum = snum.toString();
-			if (rMath.eq.seq(snum, "0.0")) return "0.0";
+		}, "numStrNorm"  : function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
+			if (typeof snum === "bigint") return snum + ".0";
+			if (isNaN(snum)) return defaultValue;
+			if (sMath.eq.ez(snum += "")) return "0.0";
 			!snum.incl(".") && (snum += ".0");
-			if (snum[0] === "-")
-				while (snum[1] === "0" && snum[2] !== ".")
-					snum = `-${snum.substr(2)}`;
-			else while (snum[0] === "0" && snum[1] !== ".")
-					snum = snum.substr(1);
-			while (snum[dim(snum)] === "0" && snum[dim(snum, 2)] !== ".")
-				snum = snum.substr(0, dim(snum));
-			return snum + (snum.endsW(".") ? "0" : "");
+			return (snum[0] === "-" ? "-" : "") +
+				snum.substring( (snum[0] === "-") +
+					len(snum.match(/^-?(0+(?!\.))/)?.[1]), // can evaluate to NaN, but it doesn't matter
+					snum.match(/(?<!\.)0+$/)?.index || Infinity
+			);
 		}, "formatjson"  : function formatJSON(json="{}", {
 			objectNewline = true,
 			tab = "\t",
@@ -1082,13 +1075,13 @@ void (() => { "use strict";
 			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
 			MutableString.fromCharCode = function fromCharCode(code) { return this(String.fromCharCode(code)) }
 			return MutableString;
-		}, dim(e, n=1)         { return e?.length - n }
+		}, "isArr"       : function isArray(thing) { return constr(thing) === "Array" }
+		, dim(e, n=1)         { return e?.length - n }
 		, len(e)               { return e?.length }
 		, complex(re=0, im=0)  { return cMath?.new?.(re, im) }
 		, copy(object)         { return json.parse( json.stringify(object) ) }
 		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
-		, chr(integer)         { return String.fromCharCode(integer) }
-		, ord(string)          { return string.charCodeAt(0) }
+		, chr(integer)         { return String.fromCharCode(Number(integer)) }
 		// Instance Variables:
 		, "instance Logic"    : class Logic {
 			constructor(bitwise=Logic_BitWise_Argument, comparatives=Logic_Comparatives_Argument, help=Logic_Help_Argument) {
@@ -1996,11 +1989,11 @@ void (() => { "use strict";
 					typeof number === "number" ?
 						number === int(number) ?
 							number + ".0" :
-							number + "" :
+							numStrNorm(number + "") :
 						typeof number === "string" ?
 							this.isNaN(number) ?
 								defaultValue :
-								number :
+								numStrNorm(number) :
 							defaultValue;
 			} snum(number=1) {
 				return this.new(
@@ -4379,9 +4372,8 @@ void (() => { "use strict";
 				degTrig === "default" && (degTrig = !0);
 				this.Fraction = class SFraction {
 					constructor(numerator="1.0", denominator="1.0") {
-						numerator = sMath.new(numerator);
-						denominator = sMath.new(denominator);
-						if (sMath.isNaN(numerator) || sMath.isNaN(denominator))
+						if (isNaN(numerator = sMath.new(numerator, NaN)) ||
+							isNaN(denominator = sMath.new(denominator, NaN)))
 							throw Error("sMath.Fraction() requires string number arguments.");
 						 this.numer = numerator;
 						 this.denom = denominator;
@@ -4397,14 +4389,11 @@ void (() => { "use strict";
 				};
 			}
 			// do something about non-numbers and 0 denominators
-			fraction(numerator="0.0", denominator="0.0") {
-				return new this.Fraction(numerator, denominator);
-				;
-			} new(numerator=0, denominator=0) {
-				return new this.Fraction(numerator, denominator);
-				;
+			fraction(numerator="1.0", denominator="1.0") { return new this.Fraction(numerator, denominator);
+			} new(numerator="1.0", denominator="1.0") { return new this.Fraction(numerator, denominator);
 			} simplify(fraction) {
-				["number", "bigint", "string"].incl(type(fraction)) && (fraction = this.new(fraction, 1));
+				// TODO: Finish
+				["number", "bigint", "string"].incl(type(fraction)) && (fraction = this.new(numStrNorm(fraction), "1.0"));
 				if (type(fraction, 1) !== "fraction") return NaN;
 				if (!["number", "bigint", "string"].incl(type(fraction.numer)) || rMath.isNaN(fraction.numer)) return NaN;
 				if (!["number", "bigint", "string"].incl(type(fraction.denom)) || rMath.isNaN(fraction.denom)) return NaN;
