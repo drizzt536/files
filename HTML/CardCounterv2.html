@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="utf-8">
+	<meta name="description" content="BlackJack card counter with multi-deck capabilities">
+	<meta name="keywords" content="Blackjack, card, cardCounter">
+	<title>BlackJack Card Counter</title>
+	<style type="text/css">
+		body { background: #646464 }
+		.center { margin: 0 auto }
+		.tdiv { margin: 0px 5px 10px 10px !important }
+		.hrb {
+			background: black;
+			border: 0.5px solid black;
+			margin-right: 15px;
+			margin-left: 15px;
+		} .wrapper {
+			display: flex;
+			justify-content: center;
+			flex-flow: wrap;
+			margin-left: 4px;
+			margin-top: 4px;
+		} button {
+			display: inline-block;
+			padding: 10px 0px 10px 0px;
+			margin-top: 20px !important;
+			width: 100px;
+		} .text {
+			display: inline-block;
+			margin: 2px 8px 0px 20px;
+		}
+	</style>
+</head>
+<body dir="ltr">
+	<noscript>
+		<div>
+			<strong><h3 style="margin-left: 1.2rem;">
+				JavaScript is disabled in your browser. Enable it to run this application.
+			</h3></strong>
+			<hr class="hrb">
+		</div>
+	</noscript>
+	<div class="wrapper" style="justify-content: left !important;" id="main">
+		<div class="wrapper" id="line1Div">
+			<h1>Card Counter</h1>
+			<hr class="hrb">
+			<div class="center tdiv">
+				<button class="center" id="resetButton">Reset</button>
+			</div>
+			<div class="center tdiv">
+				<button class="center" id="shuffleButton">Shuffle Decks</button>
+			</div>
+		</div>
+		<div class="wrapper" id="line2Div">
+			<h1 style="color: #646464" id="title2">Card Counter</h1>
+			<hr class="hrb" id="hr2">
+			<div class="center tdiv">
+				<button class=center id="discardButton">Discard</button>
+			</div>
+			<div class="center tdiv">
+				<button class="center" id="logButton">Log Decks</button>
+			</div>
+		</div>
+	</div>
+	<hr style="border: .5px solid black; margin: 6px 5px 0px 5px">
+	<button id="toggleCountsButton" style="margin: 0px 0px 0px 20px">Toggle Counts</button>
+	<div id="textDiv">
+		<br />
+		<span class="text">Current Card:</span>
+		<span id="currentCardText">None</span>
+		<br />
+		<span class="text">Decks Left:</span>
+		<span id="decksLeftText">0</span>
+		<br />
+		<span class="text">Cards Left:</span>
+		<span id="cardsLeftText">54</span>
+		<div style="display: inline" id="countsDiv">
+			<br />
+			<span class="text">Running Count:</span>
+			<span id="runningCountText">0</span>
+			<br />
+			<span class="text">True Count:</span>
+			<span id="trueCountText">0</span>
+		</div>
+	</div>
+	<script type="text/javascript" src="../JavaScript/lib.js"></script>
+	<script type="text/javascript">
+		class Deck {
+			constructor() {
+				this.deck = [null,
+					"Ace Spades","2 Spades","3 Spades","4 Spades","5 Spades","6 Spades","7 Spades","8 Spades","9 Spades","10 Spades","Jack Spades","Queen Spades","King Spades",
+					"Ace Diamonds","2 Diamonds","3 Diamonds","4 Diamonds","5 Diamonds","6 Diamonds","7 Diamonds","8 Diamonds","9 Diamonds","10 Diamonds","Jack Diamonds","Queen Diamonds","King Diamonds",
+					"King Clubs","Queen Clubs","Jack Clubs","10 Clubs","9 Clubs","8 Clubs","7 Clubs","6 Clubs","5 Clubs","4 Clubs","3 Clubs","2 Clubs","Ace Clubs",
+					"King Hearts","Queen Hearts","Jack Hearts","10 Hearts","9 Hearts","8 Hearts","7 Hearts","6 Hearts","5 Hearts","4 Hearts","3 Hearts","2 Hearts","Ace Hearts"
+				];
+				this.discard = [];
+			}
+			shuffle() {
+				var num = 1 * prompt("How Many Decks?");
+				(isNaN(num) || num === 0) && (num = 1);
+				this.deck.clear();
+				while (num --> 0) this.deck.insrands(...new Deck().deck.slc(1));
+				numDecks = num;
+				this.deck.unshift(null);
+				updateScreen(this);
+			}
+			discardf() {
+				this.discard.push(this.deck.shift());
+				this.discard.last() == null && this.discard.pop();
+				updateScreen(this);
+			}
+			log() {
+				console.log("Deck:%o\nDiscard:%o", this.deck.filter(e=>e), this.discard);
+			}
+		}
+		var numDecks = 1,
+			tCount = 0,
+			rCount = 0,
+			decks = new Deck(),
+			$ = e => document.getElementById(e),
+			$sd = (e, disp, act=1) => act === 1 ? $(e).style.display = disp : $(e).style.display == disp;
+		function updateScreen(variable) {
+			$("currentCardText").innerHTML = variable.deck[0] || "None";
+			if (variable.deck[0]) {
+				let temp = 1 * variable.deck[0].substr(0, 2);
+				tCount = 52 / variable.deck.length * (
+					temp < 7 ?
+						++rCount :
+						temp < 10 ? rCount : --rCount
+				)
+			}
+			isNaN(tCount) && (tCount = 0);
+			$("decksLeftText").innerHTML = numDecks = `${(
+				round(len(variable.deck) / 5.2) || ceil(len(variable.deck) / 5.2)
+			) / 10}`;
+			$("runningCountText").innerHTML = rCount;
+			$("trueCountText").innerHTML = tCount;
+			$("cardsLeftText").innerHTML = !variable.deck[0] && len(variable.deck) ? dim(variable.deck) : len(variable.deck);
+		}
+		function reset(ask=true) {
+			if (ask && prompt("are you sure? ")[0].lower() !== ["y"]) return;
+			numDecks = 1;
+			decks = new Deck();
+			tCount = rCount = 0;
+			updateScreen(decks);
+			$("currentCardText").innerHTML = "None";
+			$("decksLeftText").innerHTML = numDecks;
+			$("runningCountText").innerHTML = $("trueCountText").innerHTML = 0;
+		}
+		$("resetButton").ael("click", reset);
+		$("shuffleButton").ael("click", () => {
+			reset(false);
+			decks.shuffle();
+		});
+		$("discardButton").ael("click", () => decks.discardf());
+		$("logButton").ael("click", () => decks.log());
+		$("toggleCountsButton").ael("click", ()=>
+			$sd("countsDiv", "inline", 2) ? $sd("countsDiv", "none") : $sd("countsDiv", "inline")
+		);
+		function resizeDiv() {
+			if ($("main").scrollWidth > 689) return $sd("title2", $sd("hr2", "none")), $("line2Div").style.marginLeft = 0;
+			if ($("main").scrollWidth > 343) return $sd("title2", $sd("hr2", $("line2Div").style.marginLeft = ""));
+			$sd("hr2", $sd("title2", "none"));
+			if ($("main").scrollWidth < 229) return document.querySelector("hr").style.display = "none";
+			document.querySelector("hr").style.display = "";
+		}
+		document.ael("DOMContentLoaded", () => {
+			let resizer = new ResizeObserver(resizeDiv);
+			resizer.observe($("main"));
+		});
+	</script>
+</body>
+</html>
