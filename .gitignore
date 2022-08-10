@@ -5,8 +5,6 @@
 /txt
 /TypeScript
 
-C/notes.c
-
 HTML/3quine.html
 HTML/calculator.html
 HTML/BlackJack.html
@@ -14,9 +12,10 @@ HTML/testing.html
 
 JavaScript/jquery.js
 
-Python/notes.py
+# not actually passwords.
 Python/passwords.py
 
+*/notes.*
 *.exe
 *.o
 *.obj
