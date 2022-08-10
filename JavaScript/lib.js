@@ -113,6 +113,24 @@ void (() => { "use strict";
 		, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		, characters    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
 		, π             = 3.141592653589793
+		, π_2           = 1.5707963267948966
+		, π_3           = 1.0471975511965979
+		, π2_3          = 2.0943951023931957
+		, π_4           = 0.7853981633974483
+		, π3_4          = 2.356194490192345
+		, π5_4          = 3.9269908169872414
+		, π7_4          = 5.497787143782138
+		, π_5           = 0.6283185307179586
+		, π_6           = 0.5235987755982989
+		, π5_6          = 2.6179938779914944
+		, π7_6          = 3.6651914291880923
+		, π11_6         = 5.759586531581288
+		, π_7           = 0.4487989505128276
+		, π_8           = 0.39269908169872414
+		, π_9           = 0.3490658503988659
+		, π_10          = 0.3141592653589793
+		, π_11          = 0.28559933214452665
+		, π_12          = 0.26179938779914946
 		, 𝜏             = 6.283185307179586
 		, 𝑒             = 2.718281828459045
 		, ϕ             = 1.618033988749895 // -2 sin 666°
@@ -353,7 +371,7 @@ void (() => { "use strict";
 			} function a(n) {
 				var r, t = [];
 				for (t[(n.length >> 2) - 1] = void 0,
-				r = 0; r < t.length; r += 1)
+				r = 0; r < t.length; r++)
 					t[r] = 0;
 				var e = 8 * n.length;
 				for (r = 0; r < e; r += 8)
@@ -361,7 +379,7 @@ void (() => { "use strict";
 				return t
 			} function h(n) {
 				var r, t, e = "0123456789abcdef", u = "";
-				for (t = 0; t < n.length; t += 1)
+				for (t = 0; t < n.length; t++)
 					r = n.charCodeAt(t),
 					u += e.charAt(r >>> 4 & 15) + e.charAt(15 & r);
 				return u
@@ -375,13 +393,21 @@ void (() => { "use strict";
 					var t, e, u = a(n), o = [], c = [];
 					for (o[15] = c[15] = void 0,
 					u.length > 16 && (u = f(u, 8 * n.length)),
-					t = 0; t < 16; t += 1)
+					t = 0; t < 16; t++)
 						o[t] = 909522486 ^ u[t],
 						c[t] = 1549556828 ^ u[t];
 					return e = f(o.concat(a(r)), 512 + 8 * r.length),
 					i(f(c.concat(e), 640))
 				}(l(n), l(r))
-			} return function md5(n, r, t) { return r ? t ? d(r, n) : h(d(r, n)) : t ? v(n) : h(v(n)) }
+			} return function md5(n, r, t) {
+				return r !== void 0 ?
+					t !== void 0 ?
+						d(r, n) :
+						h( d(r, n) ) :
+					t !== void 0 ?
+						v(n) :
+						h(v(n));
+			}
 		})(), isIterable(arg) {
 			try { for (const e of arg) break; return !0 }
 			catch { return !1 }
@@ -800,7 +826,7 @@ void (() => { "use strict";
 					continue;
 				}
 				let tmp = `sMath.${sMath[arr[1]].name}[${arr[0]},${arr[2]}`;
-				if (tmp.sW("sMath.div") || tmp.sW("sMath.mod")) tmp += `,"${precision}"`;
+				tmp.sW("sMath.div") && (tmp += `,"${precision}"`);
 				code = code.replace(code.slc(index, ")", 0, 1).toRegex(), tmp + "]");
 			}
 			return Function(
@@ -810,6 +836,7 @@ void (() => { "use strict";
 				};`.replace(/,/g, ", ")
 			);
 		}, arrzip(arr1, arr2) {
+			// array zip
 			if (!isIterable(arr1) || !isIterable(arr2)) return [];
 			if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = Array.from(arr1);
 			if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = Array.from(arr2);
@@ -817,6 +844,7 @@ void (() => { "use strict";
 				output.push([arr1[i], arr2[i]]);
 			return output;
 		}, *genzip(gen1, gen2) {
+			// generator zip
 			gen1 = toGenerator(gen1); gen2 = toGenerator(gen2);
 			var a = gen1.next(), b = gen2.next();
 			while (!a.done && !b.done) {
@@ -1367,7 +1395,7 @@ void (() => { "use strict";
 					!0 :
 					!1;
 			}
-		}, "instance sMath"   : class stringRealMath {
+		}, "defer_instance sMath"   : class stringRealMath {
 			constructor(help=sMath_Help_Argument, comparatives=sMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
@@ -1781,11 +1809,10 @@ void (() => { "use strict";
 				}
 				ansString.io(".") < 0 && (ansString += ".0");
 				return sign === -1 ? `-${ansString}` : ansString;
-			} mod(a="0.0", b="0.0", precision=18) {
+			} mod(a="0.0", b="0.0") {
 				return this.sub(
-					a, this.mul( b, this.fdiv(a, b, precision) )
+					a, this.mul( b, this.fdiv(a, b) )
 				)
-				throw Error("Not Implemented");
 			} ipow(a="0.0", b="1.0") {
 				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
 				if ( this.eq.nz(fpart(b, !1)) ) throw Error("no decimals allowed for exponent.");
@@ -1962,10 +1989,22 @@ void (() => { "use strict";
 				return this.ipart(
 					snum
 				);
-			} new(number=1) {
-				return number === int(number) ?
+			} new(number=1, defaultValue=NaN) {
+				return typeof number === "bigint" ?
 					number + ".0" :
-					number + "";
+					typeof number === "number" ?
+						number === int(number) ?
+							number + ".0" :
+							number + "" :
+						typeof number === "string" ?
+							this.isNaN(number) ?
+								defaultValue :
+								number :
+							defaultValue;
+			} snum(number=1) {
+				return this.new(
+					number
+				);
 			} lcm(...snums) {
 				return this._lmgf(
 					"lcm", ...snums
@@ -1979,7 +2018,7 @@ void (() => { "use strict";
 					"gcf", ...snums
 				)
 			}
-		}, "instance rMath"   : class RealMath {
+		}, "defer_instance rMath"   : class RealMath {
 			constructor(
 				degTrig = rMath_DegTrig_Argument,
 				help = rMath_Help_Argument,
@@ -2056,7 +2095,7 @@ void (() => { "use strict";
 				};
 				this.phi = this.PHI = this.ϕ = ϕ; this.e = this.E = this.𝑒 = 𝑒;
 				this.ec    = this.γ = γ; this.pi  = this.PI  = π;
-				this.foia = this.α = α; this.tau = this.TAU = this.𝜏 = 𝜏;
+				this.tau = this.TAU = this.𝜏 = 𝜏;
 				this.Phi = -0.6180339887498949; this.sqrt3 = 1.7320508075688772;
 				this.omega   = 0.5671432904097838 ; this.LN2     = 0.6931471805599453;
 				this.ln2     = .69314718055994531 ; this.LN10    = 2.3025850929940450;
@@ -2066,7 +2105,7 @@ void (() => { "use strict";
 				this.sqrt1_2 = .70710678118654752 ; this.SQRT2   = 1.4142135623730951;
 				this.sqrt2   = 1.4142135623730951 ; this.logpi10 = 2.0114658675880609;
 				this.dtor = .01745329251994329576 ; this.rtod = 57.295779513082320876;
-				this.sqrt5 = 2.23606797749979; this.π_2 = 1.5707963267948966; // Math.π_2 == Math.π/2 but faster
+				this.sqrt5 = 2.23606797749979; this.π_2 = π_2; // Math.π_2 == Math.π/2 but faster
 				this.Math = Math;
 				/*
 					G = 6.67m³/(10¹¹ kg s²)
@@ -2391,7 +2430,7 @@ void (() => { "use strict";
 					crd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.sin(x / 2), // chord
 					acrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.asin(x / 2), // arc-chord
 					ccrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.cos(x / 2), // co-chord
-					accrd: x => isNaN( x = Number(x) ) ? x : π/2 - this.deg.acrd(x), // arc-co-chord
+					accrd: x => isNaN( x = Number(x) ) ? x : π_2 - this.deg.acrd(x), // arc-co-chord
 					exsec: x => isNaN( x = Number(x) ) ? x : this.deg.sec(x) - 1, // external-secant
 					aexsec: x => isNaN( x = Number(x) ) ? x : this.deg.asec(x + 1), // arc-exsecant
 					excsc: x => isNaN( x = Number(x) ) ? x : this.deg.csc(x) - 1, // external-cosecant
@@ -2561,6 +2600,7 @@ void (() => { "use strict";
 						return !1;
 					},
 				}; if (constants) {
+					this.foia = this.α = α                             ;
 					this.ɡ = this.gravity = 9.80665                    ;
 					this.avogadro = 6.02214076e+23                     ;
 					this.bohrMagneton = 9.2740100783e-24               ;
@@ -2603,7 +2643,7 @@ void (() => { "use strict";
 					this.solarConstants = {
 						Earth: 1380,
 						Venus: 2613,
-						Mars : 589
+						Mars : 589,
 					};
 				};
 			} Ω(x=Math.E, i=10_000) {
@@ -2871,14 +2911,8 @@ void (() => { "use strict";
 				ns = ns.flatten();
 				if ( ns.isNaN() ) return NaN;
 				var obj = {};
-				for (const n of ns) {
-					if (n in obj) obj[n]++;
-					else obj[n] = 1;
-				}
-				const value = Object.keyof( obj, this.max( Object.values(obj) ) );
-
-				// get max value
-				// return all keys with that value
+				for (const n of ns) n in obj ? obj[n]++ : (obj[n] = 1);
+				return Object.keyof( obj, this.max(Object.values(obj)) );
 			} mad(...ns) {
 				ns = ns.flatten();
 				if ( ns.isNaN() ) return NaN;
@@ -3503,37 +3537,17 @@ void (() => { "use strict";
 					this.sum(0, 25, n=>(-1)**n /
 						this.fact(2*n)*(θ%(2*π))**(2*n)
 					);
-			} tan(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.sin(θ) /
-						this.cos(θ);
-			} csc(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 / this.sin(θ);
-			} sec(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 / this.cos(θ);
-			} cot(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 / this.tan(θ);
+			} tan(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sin(θ) / this.cos(θ);
+			} csc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sin(θ);
+			} sec(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cos(θ);
+			} cot(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.tan(θ);
 			} asin(x) {
-				return isNaN( x = Number(x) ) || x > 1 || x < -1 ?
-					NaN :
-					this.sum(0, 80, n=>this.fact(2*n) /
-						(4**n*this.fact(n)**2 * (2*n+1))*(θ**(2*n+1)));
-			} acos(x) {
-				return isNaN( x = Number(x) ) ?
-					z :
-					π/2 - this.asin(x);
-			} atan(x) {
-				return isNaN( x = Number(x) ) ?
-					z :
-					this.Math.atan(x);
+				return isNaN( x = Number(x) ) || x > 1 || x < -1 ? NaN :
+					this.sum(0, 80, n=>this.ifact(2*n) / (4**n*this.ifact(n)**2 * (2*n+1))*(x**(2*n+1)));
+			} acos(x) { return isNaN( x = Number(x) ) ? z : π_2 - this.asin(x);
+			} atan(x) { return isNaN( x = Number(x) ) ? z : this.asin(x / this.hypot(x, 1));
 			} atan2(x, y, flipArgs=false) {
+				// most places use atan2(y, x), but that is stupid.
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( y = Number(y) )) return NaN;
 				if (flipArgs) return this.atan2(y, x, !1);
@@ -3541,347 +3555,85 @@ void (() => { "use strict";
 				return x > 0 ?
 					output :
 					!x ?
-						this.sgn(y)**2 / this.sgn(y) * π/2 :
+						this.sgn(y)**2 / this.sgn(y) * π_2 :
 						y >= 0 ? output + π : output - π;
-			} acsc(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asin(1/x);
-			} asec(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acos(1/x);
-			} acot(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					!x ?
-						π/2 :
-						this.atan(1/x) + π*(x < 0);
-			} excst(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.hypot(
-						this.exsec(θ),
-						this.cot(θ)
-					);
-			} exset(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.hypot(
-						this.exsec(θ),
-						this.tan(θ)
-					);
-			} vcs(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.hypot(
-						this.verc(θ),
-						this.sin(θ)
-					);
-			} cvs(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.hypot(
-						1,
-						this.sin(θ)
-					);
-			} acvs(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asin(x**2 - 1);
-			} ccvs(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.hypot(
-						1,
-						this.cos(θ)
-					);
-			} accvs(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acos(x**2 - 1);
-			} crd(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					2 * this.sin(θ / 2);
-			} acrd(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					2 * this.asin(x / 2);
-			} ccrd(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					2 * this.cos(θ / 2);
-			} accrd(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					π/2 - this.acrd(x);
-			} exsec(x) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.sec(θ) - 1;
-			} aexsec(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asec(x + 1);
-			} excsc(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.csc(θ) - 1;
-			} aexcsc(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acsc(x + 1);
-			} vers(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 - this.cos(θ);
-			} avers(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acos(x + 1);
-			} verc(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 + this.cos(θ);
-			} averc(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acos(x - 1);
-			} cvers(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 - this.sin(θ);
-			} acvers(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asin(1 - x);
-			} cverc(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					1 + this.sin(θ);
-			} acverc(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asin(x - 1);
-			} hav(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.vers(θ) / 2;
-			} ahav(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acos(1 - 2*x);
-			} hverc(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.verc(θ) / 2;
-			} ahverc(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acos(2*x - 1);
-			} hcvers(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.cvers(θ) / 2;
-			} ahcvers(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asin(1 - 2*x);
-			} hcverc(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.cverc(θ) / 2;
-			} ahcverc(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asin(2*x - 1);
-			} sinh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					(𝑒**x - 𝑒**-x) / 2;
-			} cosh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					(𝑒**x + 𝑒**-x) / 2;
-			} tanh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.sinh(x) /
-						this.cosh(x);
-			} csch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 / this.sinh(x);
-			} sech(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 / this.cosh(x);
-			} coth(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 / this.tanh(x);
-			} asinh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.ln( x + this.sqrt(x**2+1) );
-			} acosh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.ln( x + this.sqrt(x**2-1) );
-			} atanh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.ln( (x+1) / (1-x) ) / 2;
-			} acsch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asinh(1/x);
-			} asech(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acosh(1/x);
-			} acoth(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.atanh(1/x);
-			} excsth(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.hypot(
-						this.coth(x),
-						this.exsech(x)
-					);
-			} exseth(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.hypot(
-						this.exsech(x),
-						this.tanh(x)
-					);
-			} vcsh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.hypot(
-						this.verch(x),
-						this.sinh(x)
-					);
-			} cvsh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.hypot(
-						1,
-						this.sinh(x)
-					);
-			} acvsh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asinh(x**2 - 1);
-			} ccvsh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.hypot( 1, this.cosh(x) );
-			} accvsh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acosh(x**2 - 1);
-			} crdh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					2*this.sinh(x / 2);
-			} acrdh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					2*this.asinh(x / 2);
-			} ccrdh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					2*this.cosh(x / 2);
-			} accrdh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					π/2 -
-						2*this.asinh(x / 2);
-			} exsech(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.sech(x) - 1;
-			} aexsech(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asech(x + 1);
-			} excsch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.csch(x) - 1;
-			} aexcsch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acsch(x + 1);
-			} versh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 - this.cosh(x);
-			} aversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acosh(x + 1);
-			} verch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 + this.cosh(x);
-			} averch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acosh(x - 1);
-			} cversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 - this.sinh(x);
-			} acversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asinh(1 - x);
-			} cverch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					1 + this.sinh(x);
-			} acverch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asinh(x - 1);
-			} hversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.versh(x) / 2;
-			} ahversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acosh(1 - 2*x);
-			} hverch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.verch(x) / 2;
-			} ahverch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.acosh(2*x - 1);
-			} hcversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.cversh(x) / 2;
-			} ahcversh(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asinh(1 - 2*x);
-			} hcverch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.cverch(x) / 2;
-			} ahcverch(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.asinh(2*x - 1);
+			} acsc(x) { return isNaN( x = Number(x) ) ? x : this.asin(1/x);
+			} asec(x) { return isNaN( x = Number(x) ) ? x : this.acos(1/x);
+			} acot(x) { return isNaN( x = Number(x) ) ? x : !x ? π_2 : this.atan(1/x) + π*(x < 0);
+			} excst(θ) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( this.exsec(θ), this.cot(θ) );
+			} exset(θ) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( this.exsec(θ), this.tan(θ) );
+			} vcs(θ) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( this.verc(θ), this.sin(θ) );
+			} cvs(θ) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( 1, this.sin(θ) );
+			} acvs(x) { return isNaN( x = Number(x) ) ? x : this.asin(x**2 - 1);
+			} ccvs(θ) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( 1, this.cos(θ) );
+			} accvs(x) { return isNaN( x = Number(x) ) ? x : this.acos(x**2 - 1);
+			} crd(θ) { return isNaN( θ = Number(θ) ) ? θ : 2 * this.sin(θ / 2);
+			} acrd(x) { return isNaN( x = Number(x) ) ? x : 2 * this.asin(x / 2);
+			} ccrd(θ) { return isNaN( θ = Number(θ) ) ? θ : 2 * this.cos(θ / 2);
+			} accrd(x) { return isNaN( x = Number(x) ) ? x : π_2 - this.acrd(x);
+			} exsec(x) { return isNaN( θ = Number(θ) ) ? θ : this.sec(θ) - 1;
+			} aexsec(x) { return isNaN( x = Number(x) ) ? x : this.asec(x + 1);
+			} excsc(θ) { return isNaN( θ = Number(θ) ) ? θ : this.csc(θ) - 1;
+			} aexcsc(x) { return isNaN( x = Number(x) ) ? x : this.acsc(x + 1);
+			} vers(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 - this.cos(θ);
+			} avers(x) { return isNaN( x = Number(x) ) ? x : this.acos(x + 1);
+			} verc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 + this.cos(θ);
+			} averc(x) { return isNaN( x = Number(x) ) ? x : this.acos(x - 1);
+			} cvers(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 - this.sin(θ);
+			} acvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - x);
+			} cverc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 + this.sin(θ);
+			} acverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(x - 1);
+			} hav(θ) { return isNaN( θ = Number(θ) ) ? θ : this.vers(θ) / 2;
+			} ahav(x) { return isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x);
+			} hverc(θ) { return isNaN( θ = Number(θ) ) ? θ : this.verc(θ) / 2;
+			} ahverc(x) { return isNaN( x = Number(x) ) ? x : this.acos(2*x - 1);
+			} hcvers(θ) { return isNaN( θ = Number(θ) ) ? θ : this.cvers(θ) / 2;
+			} ahcvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x);
+			} hcverc(θ) { return isNaN( θ = Number(θ) ) ? θ : this.cverc(θ) / 2;
+			} ahcverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1);
+			} sinh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2;
+			} cosh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x + 𝑒**-x) / 2;
+			} tanh(x) { return isNaN( x = Number(x) ) ? x : this.sinh(x) / this.cosh(x);
+			} csch(x) { return isNaN( x = Number(x) ) ? x : 1 / this.sinh(x);
+			} sech(x) { return isNaN( x = Number(x) ) ? x : 1 / this.cosh(x);
+			} coth(x) { return isNaN( x = Number(x) ) ? x : 1 / this.tanh(x);
+			} asinh(x) { return isNaN( x = Number(x) ) ? x : this.ln( x + this.hypot(x, 1) );
+			} acosh(x) { return isNaN( x = Number(x) ) ? x : this.ln( x + this.sqrt(x**2-1) );
+			} atanh(x) { return isNaN( x = Number(x) ) ? x : this.ln( (x+1) / (1-x) ) / 2;
+			} acsch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1/x);
+			} asech(x) { return isNaN( x = Number(x) ) ? x : this.acosh(1/x);
+			} acoth(x) { return isNaN( x = Number(x) ) ? x : this.atanh(1/x);
+			} excsth(x) { return isNaN( x = Number(x) ) ? x : this.hypot( this.coth(x), this.exsech(x) );
+			} exseth(x) { return isNaN( x = Number(x) ) ? x : this.hypot( this.exsech(x), this.tanh(x) );
+			} vcsh(x) { return isNaN( x = Number(x) ) ? x : this.hypot( this.verch(x), this.sinh(x) );
+			} cvsh(x) { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.sinh(x) );
+			} acvsh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(x**2 - 1);
+			} ccvsh(x) { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.cosh(x) );
+			} accvsh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(x**2 - 1);
+			} crdh(x) { return isNaN( x = Number(x) ) ? x : 2*this.sinh(x / 2);
+			} acrdh(x) { return isNaN( x = Number(x) ) ? x : 2*this.asinh(x / 2);
+			} ccrdh(x) { return isNaN( x = Number(x) ) ? x : 2*this.cosh(x / 2);
+			} accrdh(x) { return isNaN( x = Number(x) ) ? x : π_2 - 2*this.asinh(x / 2);
+			} exsech(x) { return isNaN( x = Number(x) ) ? x : this.sech(x) - 1;
+			} aexsech(x) { return isNaN( x = Number(x) ) ? x : this.asech(x + 1);
+			} excsch(x) { return isNaN( x = Number(x) ) ? x : this.csch(x) - 1;
+			} aexcsch(x) { return isNaN( x = Number(x) ) ? x : this.acsch(x + 1);
+			} versh(x) { return isNaN( x = Number(x) ) ? x : 1 - this.cosh(x);
+			} aversh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(x + 1);
+			} verch(x) { return isNaN( x = Number(x) ) ? x : 1 + this.cosh(x);
+			} averch(x) { return isNaN( x = Number(x) ) ? x : this.acosh(x - 1);
+			} cversh(x) { return isNaN( x = Number(x) ) ? x : 1 - this.sinh(x);
+			} acversh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - x);
+			} cverch(x) { return isNaN( x = Number(x) ) ? x : 1 + this.sinh(x);
+			} acverch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(x - 1);
+			} hversh(x) { return isNaN( x = Number(x) ) ? x : this.versh(x) / 2;
+			} ahversh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(1 - 2*x);
+			} hverch(x) { return isNaN( x = Number(x) ) ? x : this.verch(x) / 2;
+			} ahverch(x) { return isNaN( x = Number(x) ) ? x : this.acosh(2*x - 1);
+			} hcversh(x) { return isNaN( x = Number(x) ) ? x : this.cversh(x) / 2;
+			} ahcversh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x);
+			} hcverch(x) { return isNaN( x = Number(x) ) ? x : this.cverch(x) / 2;
+			} ahcverch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1);
 			} Si(x, inc=.001) {
 				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
 					NaN :
@@ -3889,7 +3641,7 @@ void (() => { "use strict";
 			} si(x, inc=.001) {
 				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
 					NaN :
-					this.Si(x) - π/2;
+					this.Si(x) - this.π_2;
 			} Cin(x, inc=.001) {
 				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
 					NaN :
@@ -4020,21 +3772,22 @@ void (() => { "use strict";
 				// inverse gudermannian function
 				// Lambertian function
 				if (isNaN( x = Number(x) )) return NaN;
-				if (x <= -π/2 || x >= π/2) return NaN;
+				if (x <= -π_2 || x >= π_2) return NaN;
 				return this.int(0, x, t=>this.sec(t), inc);
 			} base10Conv(n, base, decAcy=54, numberOnly=false) {
 				// only works for base <= 10
+				// TODO: Fix
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( n = Number(n) ) || base < 2) return NaN;
 				if (isNaN( base = Number(base) )) return NaN;
 				if (base < 2) throw Error("Base must be greater than 2");
-				if (base > 10) throw Error("base x > 10 is not supported");
-				var iPart = int(n).toString(),
-					fPart = `${fpart(n)}`.toString();
+				if (base > 10) throw Error("base x > 10 is not supported yet");
+				var iPart = sMath.ipart(`${n}`),
+					fPart = `${fpart(n, 0)}`;
 				var str = "";
-				while (iPart != 0) {
-					str += iPart % base;
-					iPart = floor(iPart / base);
+				while (sMath.eq.nz(iPart)) {
+					str += sMath.mod(iPart, base);
+					iPart = sMath.fdiv(iPart, base);
 				}
 				str = str.reverse();
 				fPart && (str += ".");
@@ -4056,7 +3809,7 @@ void (() => { "use strict";
 					`${zeroO ? "0o" : eightColon ? "8:" : ""}${this.base10Conv(x, 8).slc(8)}`;
 			} hex(x, zeroX=true, sixteenColon=false) {
 				return this.isNaN( x = Number(x) ) ? x :
-					`${zeroX ? "0x" : sixteenColon ? "16:" : ""}${this.base10Conv(x, 16).slc(2)}`;
+					`${zeroX ? "0x" : sixteenColon ? "16:" : ""}${this.base10Conv(x, 16).slc(3)}`;
 			} timesTable(start=0, end=9) {
 				for (var i = floor(++end), j, table = []; i --> start ;)
 					for (j = floor(end), table[i] = []; j --> start ;)
@@ -4217,7 +3970,7 @@ void (() => { "use strict";
 			// compareText
 			// coulomb
 			// electrical things
-		}, "instance bMath"   : class BigIntRealMath {
+		}, "defer_instance bMath"   : class BigIntRealMath {
 			constructor(help=bMath_Help_Argument, degTrig=bMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
@@ -4231,7 +3984,7 @@ void (() => { "use strict";
 			mul(a, b) { return a * b }
 			div(a, b) { return a / b }
 			pow(a, b) { return a ** b }
-		}, "instance cMath"   : class ComplexMath {
+		}, "defer_instance cMath"   : class ComplexMath {
 			constructor(degTrig=cMath_DegTrig_Argument, help=cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
@@ -4395,7 +4148,7 @@ void (() => { "use strict";
 					fpart(New=true) { return this.frac(New) }
 				};
 				this.lnNeg1 = this.new(0, π);
-				this.lni    = this.new(0, π/2);
+				this.lni    = this.new(0, π_2);
 				this.i      = this.new(0, 1);
 
 				if (degTrig) this.deg = {
@@ -4618,13 +4371,17 @@ void (() => { "use strict";
 				if (type(z, 1) !== "complex") throw TypeError("cMath.isPrime() requires a complex argument");
 				throw Error("Not Implemented");
 			}
-		}, "instance fMath"   : class FractionalRealMath {
+		}, "defer_instance fMath"   : class FractionalStringMath {
 			// TODO: Make the functions convert numbers into fractions if they are inputed instead
 			constructor(help=fMath_Help_Argument, degTrig=fMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
-				this.Fraction = class Fraction {
-					constructor(numerator=1, denominator=1) {
+				this.Fraction = class SFraction {
+					constructor(numerator="1.0", denominator="1.0") {
+						numerator = sMath.new(numerator);
+						denominator = sMath.new(denominator);
+						if (sMath.isNaN(numerator) || sMath.isNaN(denominator))
+							throw Error("sMath.Fraction() requires string number arguments.");
 						 this.numer = numerator;
 						 this.denom = denominator;
 					}
@@ -4632,14 +4389,14 @@ void (() => { "use strict";
 						return "fraction";
 					}
 				};
-				this.one = this.new(1, 1);
+				this.one = this.new("1.0", "1.0");
 
 				if (help) this.help = {
 				}; if (degTrig) this.deg = {
 				};
 			}
 			// do something about non-numbers and 0 denominators
-			fraction(numerator=0, denominator=0) {
+			fraction(numerator="0.0", denominator="0.0") {
 				return new this.Fraction(numerator, denominator);
 				;
 			} new(numerator=0, denominator=0) {
@@ -4671,7 +4428,32 @@ void (() => { "use strict";
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
 				return this.simp(this.new(a.numer*b.denom, a.denom*b.numer));
 			}
-		}, "instance aMath"   : class AllMath {
+		}, "defer_instance cfsMath" : class ComplexFractionalStringMath {
+			constructor(help=cfsMath_Help_Argument) {
+				help === "default" && (help = !0);
+				this.CSFraction = class ComplexStringFraction {
+					constructor(rn="0.0", rd="0.0", cn="0.0", cd="0.0") {
+						if (sMath.isNaN(rn) || sMath.isNaN(rd) || sMath.isNaN(cn) || sMath.isNaN(cd))
+							throw ValueError("cfsMath.CSFraction requires 4 string numbers.");
+						var rgcd = 1, igcd = 1;
+						if (sMath.isInt(rn) && sMath.isInt(rd)) {
+							//gcd = 
+						}
+						this.re = {
+							numer: numStrNorm(rn),
+							denom: numStrNorm(rd),
+						};
+						this.im = {
+							numer: numStrNorm(cn),
+							denom: numStrNorm(cd),
+						};
+					}
+				};
+				if (help) this.help = {
+					CSFraction: null,
+				};
+			}
+		}, "defer_instance aMath"   : class AllMath {
 			// aMath will call the correct function based upon the input
 			constructor(help=aMath_Help_Argument, trig=aMath_Trig_Argument, comparatives=aMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
@@ -4706,44 +4488,57 @@ void (() => { "use strict";
 				throw Error(`${this._getNameOf(fns[typ])}["${fname}"] doesn't exist`);
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
 			} _getNameOf(MathObect) { return Object.keyof(window.MathObjects, MathObect) }
-		}, "instance cfsMath" : class ComplexFractionalStringMath {
-			constructor(help=cfsMath_Help_Argument) {
-				help === "default" && (help = !0);
-				this.CSFraction = class ComplexStringFraction {
-					constructor(rn="0.0", rd="0.0", cn="0.0", cd="0.0") {
-						if (sMath.isNaN(rn) || sMath.isNaN(rd) || sMath.isNaN(cn) || sMath.isNaN(cd))
-							throw ValueError("cfsMath.CSFraction requires 4 string numbers.");
-						var rgcd = 1, igcd = 1;
-						if (sMath.isInt(rn) && sMath.isInt(rd)) {
-							//gcd = 
-						}
-						this.re = {
-							numer: numStrNorm(rn),
-							denom: numStrNorm(rd),
-						};
-						this.im = {
-							numer: numStrNorm(cn),
-							denom: numStrNorm(cd),
-						};
-					}
-				};
-				if (help) this.help = {
-					CSFraction: null,
-				};
+		}, "defer_call_local cleanup_math"() {
+			Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math");
+			for (const obj of Object.values(MathObjects)) {
+				Object.keys(MathObjects).forEach(s => obj[s] = MathObjects[s]);
+				obj["+"]  = obj.add;  obj["-"]  = obj.sub;
+				obj["*"]  = obj.mul;  obj["/"]  = obj.div;
+				obj["**"] = obj.pow;  obj["e^"] = obj.exp;
+				obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
+				obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
 			}
-		},
+			sMath["//"] = sMath.fdiv;
+			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
+			rMath.ℙ = rMath.P; // power set
+			if (window[Output_Math_Variable] !== void 0 && (Output_Math_Variable === "Math" ?
+					Alert_Conflict_For_Math === true :
+					Output_Math_Variable === void 0 ?
+						false : true)
+			) {
+				if (ON_CONFLICT === "crash") throw Error(`window["${Output_Math_Variable}"] is already defined and ON_CONFLICT is set to 'crash'`);
+				if (ON_CONFLICT === "cry") console.log(`window["${Output_Math_Variable}"] overwritten and ON_CONFLICT is set to cry.`);
+				CONFLICT_ARR.push(Output_Math_Variable);
+				if (ON_CONFLICT !== "dont-use") window[Output_Math_Variable] = window[Input_Math_Variable];
+			} else window[Output_Math_Variable] = window[ Input_Math_Variable === "default" ? "rMath" : Input_Math_Variable ];
+			
+			if (window.MathObjects !== void 0) {
+				if (ON_CONFLICT === "crash") throw Error(`window.MathObjects is already defined and ON_CONFLICT is set to 'crash'`);
+				if (ON_CONFLICT === "cry") console.log(`window.MathObjects overwritten and ON_CONFLICT is set to cry.`);
+				CONFLICT_ARR.push("MathObjects");
+				if (ON_CONFLICT !== "dont-use") window.MathObjects = MathObjects;
+			} else window.MathObjects = MathObjects;
+			return void 0;
+		}
 		};
 	} {// Conflict & Assignment
-		var DEFER_ARR = [];
-		var CONFLICT_ARR = [], MathObjects = {};
-		this[Output_Math_Variable] !== void 0 && (
-			Output_Math_Variable === "Math" ?
-				Alert_Conflict_For_Math === !0 :
-				Output_Math_Variable === void 0 ?
-					!1 : !0
-		) && CONFLICT_ARR.push(Output_Math_Variable);
-		var define = function define(s, section=0) {
-			if (s.startsWith("instance ")) {
+		try { ON_CONFLICT = ON_CONFLICT.lower() } catch { ON_CONFLICT = "none" }
+		var DEFER_ARR = []
+		, CONFLICT_ARR = []
+		, MathObjects = {}
+		, define = function define(s, section=0) {
+			// section 0 stores the defer functions in DEFER_ARR
+			// section 1 calls the defer functions
+			if (s.startsWith("literal symbol.for ")) {
+				let tmp = Symbol.for(s.substr(19));
+				if (window[tmp] !== void 0) {
+					if (ON_CONFLICT === "crash") throw Error(`window[${String(tmp)}] is already defined and ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`window[${String(tmp)}] overwritten and ON_CONFLICT is set to cry.`);
+					else if (ON_CONFLICT === "dont-use") return;
+					CONFLICT_ARR.push(tmp);
+				}
+				window[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
+			} else if (s.startsWith("instance ")) {
 				let tmp = s.substr(9);
 				if (window[tmp] !== void 0) {
 					if (ON_CONFLICT === "crash") throw Error(`window['${tmp}'] is already defined and ON_CONFLICT is set to 'crash'`);
@@ -4753,56 +4548,41 @@ void (() => { "use strict";
 				}
 				window[tmp] = new LIBRARY_FUNCTIONS[s];
 				tmp.includes("Math") && (MathObjects[tmp] = window[tmp]);
-			} else if (s.startsWith("literal symbol.for ")) {
-				let tmp = Symbol.for(s.substr(19));
-				if (window[tmp] !== void 0) {
-					if (ON_CONFLICT === "crash") throw Error(`window[${String(tmp)}] is already defined and ON_CONFLICT is set to 'crash'`);
-					if (ON_CONFLICT === "cry") console.log(`window[${String(tmp)}] overwritten and ON_CONFLICT is set to cry.`);
-					else if (ON_CONFLICT === "dont-use") return;
-					CONFLICT_ARR.push(tmp);
+			} else if (s.startsWith("defer_instance ")) {
+				if (section) {
+					let tmp = s.substr(15);
+					if (window[tmp] !== void 0) {
+						if (ON_CONFLICT === "crash") throw Error(`window['${tmp}'] is already defined and ON_CONFLICT is set to 'crash'`);
+						if (ON_CONFLICT === "cry") console.log(`window['${tmp}'] overwritten and ON_CONFLICT is set to cry.`);
+						else if (ON_CONFLICT === "dont-use") return;
+						CONFLICT_ARR.push(tmp);
+					}
+					window[tmp] = new LIBRARY_FUNCTIONS[s];
+					tmp.includes("Math") && (MathObjects[tmp] = window[tmp]);
 				}
-				window[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
-			} else if (s.startsWith("overwrite ")) window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
-			else if (s.startsWith("defer_call ")) {
-				if (section) window[s.substr(11)] = LIBRARY_FUNCTIONS[s]();
 				else DEFER_ARR.push(s);
 			} else if (s.startsWith("defer ")) {
 				if (section) window[s.substr(6)] = LIBRARY_FUNCTIONS[s];
 				else DEFER_ARR.push(s);
-			} else {
+			} else if (s.startsWith("defer_call ")) {
+				if (section) window[s.substr(11)] = LIBRARY_FUNCTIONS[s]();
+				else DEFER_ARR.push(s);
+			} else if (s.startsWith("defer_call_local")) {
+				section ?
+					LIBRARY_FUNCTIONS[s]() :
+					DEFER_ARR.push(s);
+			} else if (s.startsWith("overwrite ")) window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
+			else {
 				if (window[s] !== void 0) {
 					if (ON_CONFLICT === "crash") throw Error(`window['${s}'] is already defined and ON_CONFLICT is set to 'crash'`);
-					if (ON_CONFLICT === "cry") console.log(`window['${s}'] overwritten and ON_CONFLICT is set to cry.`);
+					if (ON_CONFLICT === "cry") console.log(`window['${s}'] overwritten and ON_CONFLICT is set to 'cry'`);
 					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(s);
 				}
 				window[s] = LIBRARY_FUNCTIONS[s];
 			}
-		}
-		for (const s of Object.keys(LIBRARY_FUNCTIONS))
-			define(s, false);
-		Alert_Conflict_For_Math === "default" && (Alert_Conflict_For_Math = !1     );
-		Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math" );
-		Input_Math_Variable     === "default" && (Input_Math_Variable     = "rMath");
-		let maths = Object.keys(MathObjects);
-		for (const obj of Object.values(MathObjects)) {
-			maths.forEach(s => obj[s] = MathObjects[s]);
-			obj["+"]  = obj.add;  obj["-"]  = obj.sub;
-			obj["*"]  = obj.mul;  obj["/"]  = obj.div;
-			obj["**"] = obj.pow;  obj["e^"] = obj.exp;
-			obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
-			obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
-		}
-		sMath["//"] = sMath.fdiv;
-		sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
-		rMath.ℙ = rMath.P;
-		this[Output_Math_Variable] = this[Input_Math_Variable];
-		if (this.MathObjects !== void 0) {
-			if (ON_CONFLICT === "crash") throw Error(`window.MathObjects is already defined and ON_CONFLICT is set to 'crash'`);
-			if (ON_CONFLICT === "cry") console.log(`window.MathObjects overwritten and ON_CONFLICT is set to cry.`);
-			CONFLICT_ARR.push("MathObjects");
-		}
-		if (ON_CONFLICT !== "dont-use") this.MathObjects = MathObjects;
+		};
+		for (const s of Object.keys(LIBRARY_FUNCTIONS)) define(s, 0);
 	} {// Event and Document things
 		
 		let _ael = EventTarget.prototype.addEventListener
@@ -5276,11 +5056,11 @@ void (() => { "use strict";
 				arr.incl(val = arr.pop()) && dupes.push([i, val]);
 			return len(dupes) ? dupes : null;
 		}, Array.prototype.bisectLeft = function bisectLeft(x, low=0, high=null) {
-			return bisectLeft(this, x, low, high);
+			return window.bisectLeft(this, x, low, high);
 		}, Array.prototype.bisectRight = function bisectRight(x, low=0, high=null) {
-			return bisectRight(this, x, low, high);
+			return window.bisectRight(this, x, low, high);
 		}, Array.prototype.bisect = function bisect(x, orientation="left", low=0, high=null) {
-			return bisect(this, x, orientation, low, high);
+			return window.bisect(this, x, orientation, low, high);
 		}; // String prototype
 		String.prototype.io = String.prototype.indexOf
 		,  String.prototype.lio = String.prototype.lastIndexOf
@@ -5618,8 +5398,6 @@ void (() => { "use strict";
 		}
 	} {// Error Handling & Exiting
 		for (const s of DEFER_ARR) define(s, 1);
-		try { ON_CONFLICT = ON_CONFLICT.lower() }
-		catch { ON_CONFLICT = "none" }
 		
 		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
 		if (Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
@@ -5823,12 +5601,10 @@ void function anonymizeFunction(fn) {
 	return type(fn) === "function" ?
 		Function(fn.args(), fn.code()) :
 		Function(fn);
-}
-/*
+}/*
 	var value = 2n, collatz = () => { for (var x = value + 1n, i = 0n; x > value ; i++) x = x % 2n ? 3n*x + 1n : x / 2n; value += 2n; ![3n,6n,8n,11n,13n].includes(i) && process.stdout.write(`${i},`) }; while (1) collatz();
 
 	22_567_581_584n
-
 
 	process.stdout.write('\033c');
 	process.stdin
