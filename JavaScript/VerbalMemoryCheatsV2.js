@@ -16,7 +16,7 @@ var x = 50_000; // input
 	if (location.href !== "https://humanbenchmark.com/tests/verbal-memory" || isNaN( score = Number(score) )) return !1;
 	$$("button").forEach((e,i,a) => a.length === 2 && e.click());
 	window.words ??= [];
-	for (var var [SEEN, NEW] = $$("button").slice(1), word; score --> 0 ;) {
+	for (var [SEEN, NEW] = $$("button").slice(1), word; score --> 0 ;) {
 		word = document.querySelector(".word").innerHTML;
 		words.includes(word) ?
 			SEEN.click() :
