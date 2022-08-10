@@ -8,14 +8,14 @@
 HTML/3quine.html
 HTML/calculator.html
 HTML/BlackJack.html
-HTML/testing.html
 
 JavaScript/jquery.js
 
 # not actually passwords.
 Python/passwords.py
 
-*/notes.*
+notes.*
+test.*
+testing.*
 *.exe
 *.o
-*.obj
