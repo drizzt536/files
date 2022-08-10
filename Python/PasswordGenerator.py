@@ -29,4 +29,8 @@ def password(length: int = 10, shuffles: int = 6) -> str:
 			return password( print() or abs(int(input("length: ") or 10)), abs(int(input("# shuffles: ")) or 6) )
 	return psw
 
+<<<<<<< HEAD
 __name__ == "__main__" and password( print() or abs(int(input("length: ") or 10)), abs(int(input("# shuffles: ")) or 6) )
+=======
+__name__ == "__main__" and password( print() or abs(int(input("length: ") or 10)), abs(int(input("# shuffles: ")) or 6) )
+>>>>>>> 3743d4811b56202951e6fde3bbf7ee4568637217
