@@ -627,9 +627,11 @@ void (() => { "use strict";
 		}, passwordGenerator(length=18, charsToRemove=void 0, chars=characters) {
 			if (isNaN( length = Number(length)) || length < 0) return !1;
 			length = int(length);
-			if (type(charsToRemove, 1) === "arr")
-			if (charsToRemove.every( e => type(e) === "string" )) charsToRemove = charsToRemove.join("");
-			else return !1;
+			if (type(charsToRemove, 1) === "arr") {
+				if (charsToRemove.every( e => type(e) === "string" ))
+					charsToRemove = charsToRemove.join("");
+				else return !1;
+			}
 			else if (
 				type(charsToRemove) !== "string" &&
 				charsToRemove !== void 0 &&
@@ -638,7 +640,8 @@ void (() => { "use strict";
 			if (chars === characters && charsToRemove !== void 0 && charsToRemove !== null)
 				for (const char in charsToRemove)
 					chars = chars.remove(char);
-			for (var i = length, password = ""; i --> 0 ;) password += chars.rand();
+			for (var i = length, password = ""; i --> 0 ;)
+				password += chars.rand();
 			return password;
 		}, getAllDocumentObjects() {
 			var objs = [document];
@@ -4370,78 +4373,74 @@ void (() => { "use strict";
 			constructor(help=fMath_Help_Argument, degTrig=fMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
-				this.Fraction = class SFraction {
+				this.Fraction = class Fraction {
 					constructor(numerator="1.0", denominator="1.0") {
 						if (isNaN(numerator = sMath.new(numerator, NaN)) ||
 							isNaN(denominator = sMath.new(denominator, NaN)))
-							throw Error("sMath.Fraction() requires string number arguments.");
-						 this.numer = numerator;
-						 this.denom = denominator;
+							throw Error("fMath.Fraction() requires string number arguments.");
+						if (sMath.eq.ez(denominator)) throw Error("fMath.Fraction() cannot have a zero denominator");
+						var gcd = sMath.gcd(numerator, denominator);
+						this.numer = sMath.div(numerator, gcd);
+						this.denom = sMath.div(denominator, gcd);
 					}
 					type() {
 						return "fraction";
 					}
 				};
-				this.one = this.new("1.0", "1.0");
-
+				this.one = this.new("1.0", "1.0"); // can't move to before the class declaration
 				if (help) this.help = {
+					"Fraction": "create a new fraction. takes 2 string number arguments. for the numerator then denominator.",
 				}; if (degTrig) this.deg = {
 				};
-			}
-			// do something about non-numbers and 0 denominators
-			fraction(numerator="1.0", denominator="1.0") { return new this.Fraction(numerator, denominator);
 			} new(numerator="1.0", denominator="1.0") { return new this.Fraction(numerator, denominator);
-			} simplify(fraction) {
-				// TODO: Finish
-				["number", "bigint", "string"].incl(type(fraction)) && (fraction = this.new(numStrNorm(fraction), "1.0"));
-				if (type(fraction, 1) !== "fraction") return NaN;
-				if (!["number", "bigint", "string"].incl(type(fraction.numer)) || rMath.isNaN(fraction.numer)) return NaN;
-				if (!["number", "bigint", "string"].incl(type(fraction.denom)) || rMath.isNaN(fraction.denom)) return NaN;
-				if (type(fraction, 1) !== "fraction") fraction = this.new(fraction, 1);
-				var gcd = rMath.gcd(fraction.numer, fraction.denom);
-				fraction.numer = window[type(fraction.numer).upper(1)](rMath.div(fraction.numer, gcd));
-				fraction.denom = window[type(fraction.denom).upper(1)](rMath.div(fraction.denom, gcd));
-				return fraction;
+			} fraction(numerator="1.0", denominator="1.0") { return this.new(numerator, denominator);
+			} simplify(fraction) { return this.simp(fraction);
 			} simp(fraction) {
-				return this.simplify(fraction);
-				;
+				["number", "bigint", "string"].incl( type(fraction) ) && (fraction = this.new(numStrNorm(fraction), "1.0"));
+				if (type(fraction, 1) !== "fraction") return NaN;
+				if ( sMath.isNaN(fraction.numer) ) return NaN;
+				if ( sMath.isNaN(fraction.denom) ) return NaN;
+				var gcd = sMath.gcd(fraction.numer, fraction.denom);
+				return this.new( sMath.div(fraction.numer, gcd), sMath.div(fraction.denom, gcd) );
 			} add(a, b) {
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
-				return this.simp(this.new(a.numer*b.denom + b.numer*a.denom, a.denom*b.denom));
+				return this.simp(
+					this.new(
+						sMath.add( sMath.mul(a.numer, b.denom), sMath.mul(b.numer, a.denom) ),
+						sMath.mul(a.denom, b.denom)
+					)
+				);
 			} sub(a, b) {
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
-				return this.simp(this.new(a.numer*b.denom - b.numer*a.denom, a.denom*b.denom));
+				return this.simp(
+					this.new(
+						sMath.sub( sMath.mul(a.numer, b.denom), sMath.mul(b.numer, a.denom) ),
+						sMath.mul(a.denom, b.denom),
+					)
+				);
 			} mul(a, b) {
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
-				return this.simp(this.new(a.numer*b.numer, a.denom*b.denom));
+				return this.simp( this.new(sMath.mul(a.numer, b.numer), sMath.mul(a.denom, b.denom)) );
 			} div(a, b) {
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
-				return this.simp(this.new(a.numer*b.denom, a.denom*b.numer));
+				return this.simp( this.new(sMath.mul(a.numer, b.denom), sMath.mul(a.denom, b.numer)) );
 			}
-		}, "defer_instance cfsMath" : class ComplexFractionalStringMath {
+		}, "defer_instance cfMath" : class ComplexFractionalStringMath {
 			constructor(help=cfsMath_Help_Argument) {
 				help === "default" && (help = !0);
-				this.CSFraction = class ComplexStringFraction {
-					constructor(rn="0.0", rd="0.0", cn="0.0", cd="0.0") {
-						if (sMath.isNaN(rn) || sMath.isNaN(rd) || sMath.isNaN(cn) || sMath.isNaN(cd))
-							throw ValueError("cfsMath.CSFraction requires 4 string numbers.");
-						var rgcd = 1, igcd = 1;
-						if (sMath.isInt(rn) && sMath.isInt(rd)) {
-							//gcd = 
-						}
-						this.re = {
-							numer: numStrNorm(rn),
-							denom: numStrNorm(rd),
-						};
-						this.im = {
-							numer: numStrNorm(cn),
-							denom: numStrNorm(cd),
-						};
+				this.CSFraction = class ComplexFraction {
+					constructor(re=fMath.one, im=fMath.one) {
+						if (type(re, 1) !== "fraction" || type(im, 1) !== "fraction")
+							throw ValueError("cfsMath.CSFraction requires 2 fractional arguments.");
+						this.re = fMath.simp(re);
+						this.im = fMath.simp(im);
 					}
 				};
 				if (help) this.help = {
 					CSFraction: null,
 				};
+			}
+			new(re=fMath.one, im=fMath.one) { return new this.CSFraction(re, im);
 			}
 		}, "defer_instance aMath"   : class AllMath {
 			// aMath will call the correct function based upon the input
@@ -5066,6 +5065,10 @@ void (() => { "use strict";
 			if (type(strOrArr) === "string") {
 
 			}
+		}, String.prototype.shuffle = function shuffle(times=1) {
+			return this.split("")
+				.shuffle(times)
+				.join("");
 		}, String.prototype.replace = (function create_replace() {
 			const _replace = String.prototype.replace;
 			return function replace(search, replacer) {
