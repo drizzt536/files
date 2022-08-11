@@ -83,6 +83,8 @@ void (() => { "use strict";
 		, Clear_LocalStorage          = "default" // false
 		, Clear_SessionStorage        = "default" // false
 		, Creepily_Watch_Every_Action = "default" // false
+		, Freeze_Everything           = "default" // false
+		, Freeze_Instance_Objects     = "default" // false, only matters if Freeze_Everything is not truthy
 
 		;
 
@@ -151,90 +153,67 @@ void (() => { "use strict";
 		, "ϕ": ϕ
 		, "γ": γ
 		, "Ω": Ω
-		, "Types": {
-			Boolean  : Boolean,
-			Number   : Number,
-			String   : String,
-			BigInt   : BigInt,
-			Function : Function,
-			Array    : Array,
-			Object(input, handle=!1) {
-				return type(input) === "object" ?
-					input :
-					handle == !0 ?
-						{ data: input } :
-						void 0
-			}, Symbol(input, handle=!1) {
-				return type(input) === "symbol" ?
-					input :
-					handle == !0 ?
-						Symbol.for(input) :
-						void 0
-			}, undefined() { return void 0 }
-		}, "LinkedList": class LinkedList {
-			constructor(head) {
-				this.size = 0;
-				this.Node = class Node {
-					constructor(value, next=null) {
-						this.value = value;
-						this.next = next;
-					}
-				};
-				this.head = head == null ? null : new this.Node(head);
-			}
-			insertLast(value) {
-				if (!this.size) return this.insertFirst(value);
-				this.size++;
-				for (var current = this.head; current.next ;)
-					current = current.next;
-				current.next = new this.Node(value);
-			}
-			insertAt(value, index=0) {
-				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
-				if (!index) return this.insertFirst(value);
-				if (index === this.size) return this.insertLast(value);
-				for (var current = this.head; index --> 0 ;)
-					current = current.next;
-				this.size++;
-				current.next = new this.Node(value, current.next)
-			}
-			getAt(index=0) {
-				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
-				for (var current = this.head; index --> 0 ;)
-					current = current.next;
-				return current;
-			}
-			removeAt(index) {
-				if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
-				for (var current = this.head; index --> 1 ;)
-					current = current.next;
-				current.next = current.next.next;
-				this.size--;
-			}
-			insertFirst(value) {
-				this.head = new this.Node(value, this.head);
-				this.size++;
-			}
-			reverse() {
-				for (var cur = this.head, prev = null, next; cur ;)
-					[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
-				this.head = prev || this.head;
-			}
-			toArray() {
-				for (let current = this.head, a = []; current ;) {
-					a.push(current.value);
-					current = current.next;
+		, "LinkedList": (function create_LinkedList() {
+			class Node {
+				constructor(value, next=null) {
+					this.value = value;
+					this.next = next;
 				}
-				return a;
 			}
-			clear() {
-				this.head = null;
-				this.size = 0;
+			return class LinkedList {
+				constructor(head) {
+					this.size = 0;
+					this.head = head == null ? null : new Node(head);
+				} insertLast(value) {
+					if (!this.size) return this.insertFirst(value);
+					this.size++;
+					for (var current = this.head; current.next ;)
+						current = current.next;
+					current.next = new Node(value);
+					return this;
+				} insertAt(value, index=0) {
+					if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+					if (!index) return this.insertFirst(value);
+					if (index === this.size) return this.insertLast(value);
+					for (var current = this.head; index --> 0 ;)
+						current = current.next;
+					this.size++;
+					current.next = new Node(value, current.next)
+					return this;
+				} getAt(index=0) {
+					if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+					for (var current = this.head; index --> 0 ;)
+						current = current.next;
+					return current;
+				} removeAt(index) {
+					if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+					for (var current = this.head; index --> 1 ;)
+						current = current.next;
+					current.next = current.next.next;
+					this.size--;
+					return this;
+				} insertFirst(value) {
+					this.head = new Node(value, this.head);
+					this.size++;
+					return this;
+				} reverse() {
+					for (var cur = this.head, prev = null, next; cur ;)
+						[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
+					this.head = prev || this.head;
+					return this;
+				} toArray() {
+					for (let current = this.head, a = []; current ;) {
+						a.push(current.value);
+						current = current.next;
+					}
+					return a;
+				} clear() {
+					this.head = null;
+					this.size = 0;
+					return this;
+				} type() { return "linkedlist" }
 			}
-			type() {
-				return "linkedlist";
-			}
-		}, "overwrite Image": (function create_Image() {
+		})(), "overwrite Image": (function create_Image() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
 			return function Image(width, height, options={}) {
@@ -262,7 +241,7 @@ void (() => { "use strict";
 				type()              { return "dict";                        }
 			}
 			function dict(obj={}) { return new Dictionary(obj) }
-			dict.fromEntries = function fromEntries(entries=[]) { return dict(Object.fromEntries(entries)) }
+			dict.fromEntries = function fromEntries(entries=[]) { return this( Object.fromEntries(entries) ) }
 			return dict;
 		})(), "md5": (function create_md5(n) {
 			function r(n, r) {
@@ -631,8 +610,7 @@ void (() => { "use strict";
 				if (charsToRemove.every( e => type(e) === "string" ))
 					charsToRemove = charsToRemove.join("");
 				else return !1;
-			}
-			else if (
+			} else if (
 				type(charsToRemove) !== "string" &&
 				charsToRemove !== void 0 &&
 				charsToRemove !== null
@@ -856,9 +834,9 @@ void (() => { "use strict";
 				else yield thing;
 			}
 			return Generator(thing);
-		}, ord(string)          {
+		}, ord(string) {
 			return typeof string === "string" && len(string) ?
-				len(string) - 1 ?
+				dim(string) ?
 					string.split("").map(c => c.charCodeAt()) :
 					string.charCodeAt() :
 				0
@@ -989,8 +967,8 @@ void (() => { "use strict";
 			!snum.incl(".") && (snum += ".0");
 			return (snum[0] === "-" ? "-" : "") +
 				snum.substring( (snum[0] === "-") +
-					len(snum.match(/^-?(0+(?!\.))/)?.[1]), // can evaluate to NaN, but it doesn't matter
-					snum.match(/(?<!\.)0+$/)?.index || Infinity
+					len(snum.match(/^-?(0+\B)/)?.[1]), // can evaluate to NaN, but it doesn't matter
+					snum.match(/\B0+$/)?.index || Infinity
 			);
 		}, "formatjson"  : function formatJSON(json="{}", {
 			objectNewline = true,
@@ -1058,35 +1036,37 @@ void (() => { "use strict";
 				constructor() {
 					super();
 					this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
-					for (const e of arguments)
+					for (const e of arguments) {
 						// type() and not typeof so mutable strings also work
 						type(e) === "string" && this.union(e.split(""));
+						if (isArr(e) && e.every(e => type(e) === "string"))
+							this.union(e);
+					}
 				}
 				type() { return "mutstr" }
-				push(chars) {
-					if (type(chars, 1) === "str" || false);
-				}
-				toString() { return this.join("") }
+				toString(arg="") { return this.join(arg) }
+				valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
+				concat() { return Array.prototype.concat.apply(this, arguments) }
 			};
 			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
 			
 			for (const s of Object.getOwnPropertyNames(String.prototype))
-				!protoArray.includes(s) && (MutStr.prototype[s] = String.prototype[s]);
-
-			MutStr.prototype.concat = Array.prototype.concat;
+				!protoArray.incl(s) && (MutStr.prototype[s] = String.prototype[s]);
 
 			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
-			MutableString.fromCharCode = function fromCharCode(code) { return this(String.fromCharCode(code)) }
+			MutableString.fromCharCode = function fromCharCode(code) {
+				return this (isArr(code) ? code.map(e => chr(e)) : chr(code));
+			}
 			return MutableString;
 		}, "isArr"       : function isArray(thing) { return constr(thing) === "Array" }
-		, dim(e, n=1)         { return e?.length - n }
+		, dim(e, n=1)          { return e?.length - n }
 		, len(e)               { return e?.length }
-		, complex(re=0, im=0)  { return cMath?.new?.(re, im) }
+		, complex(re=0, im=0)  { return cMath.new(re, im) }
 		, copy(object)         { return json.parse( json.stringify(object) ) }
 		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
-		, chr(integer)         { return String.fromCharCode(Number(integer)) }
+		, chr(integer)         { return String.fromCharCode( Number(integer) ) }
 		// Instance Variables:
-		, "instance Logic"    : class Logic {
+		, "instance Logic"          : class Logic {
 			constructor(bitwise=Logic_BitWise_Argument, comparatives=Logic_Comparatives_Argument, help=Logic_Help_Argument) {
 				bitwise === "default" && (bitwise = "bit");
 				comparatives === "default" && (comparatives = null);
@@ -3985,9 +3965,11 @@ void (() => { "use strict";
 			constructor(degTrig=cMath_DegTrig_Argument, help=cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
-				this.ComplexNumber = class Complex {
+				this.Complex = class Complex {
 					// TODO: Add customization so the functions don't always modify the state
 					constructor(re=0, im=0) {
+						Object.is(re, -0) && (re = 0);
+						Object.is(im, -0) && (im = 0);
 						this.re = re;
 						this.im = im;
 					}
@@ -4163,10 +4145,10 @@ void (() => { "use strict";
 
 				if (type(re) === "bigint" && type(im) === "bigint" ) {
 					throw Error("not implemented");
-					return new this.ComplexNumber(re, im);
+					return new this.Complex(re, im);
 				}
 				if (type(re) === "number" && type(im) === "number" )
-					return new this.ComplexNumber(re, im);
+					return new this.Complex(re, im);
 				throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
 			}
 			complex(re=0, im=0) { return this.new(re, im) }
@@ -4425,22 +4407,22 @@ void (() => { "use strict";
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
 				return this.simp( this.new(sMath.mul(a.numer, b.denom), sMath.mul(a.denom, b.numer)) );
 			}
-		}, "defer_instance cfMath" : class ComplexFractionalStringMath {
+		}, "defer_instance cfMath"  : class ComplexFractionalStringMath {
 			constructor(help=cfsMath_Help_Argument) {
 				help === "default" && (help = !0);
-				this.CSFraction = class ComplexFraction {
+				this.CFraction = class ComplexFraction {
 					constructor(re=fMath.one, im=fMath.one) {
 						if (type(re, 1) !== "fraction" || type(im, 1) !== "fraction")
-							throw ValueError("cfsMath.CSFraction requires 2 fractional arguments.");
+							throw ValueError("cfMath.CFraction requires 2 fractional arguments.");
 						this.re = fMath.simp(re);
 						this.im = fMath.simp(im);
 					}
 				};
 				if (help) this.help = {
-					CSFraction: null,
+					CFraction: null,
 				};
 			}
-			new(re=fMath.one, im=fMath.one) { return new this.CSFraction(re, im);
+			new(re=fMath.one, im=fMath.one) { return new this.CFraction(re, im);
 			}
 		}, "defer_instance aMath"   : class AllMath {
 			// aMath will call the correct function based upon the input
@@ -4477,6 +4459,36 @@ void (() => { "use strict";
 				throw Error(`${this._getNameOf(fns[typ])}["${fname}"] doesn't exist`);
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
 			} _getNameOf(MathObect) { return Object.keyof(window.MathObjects, MathObect) }
+		}, "defer_call Types"() {
+			return {
+				Boolean  : Boolean,
+				Number   : Number,
+				String   : String,
+				BigInt   : BigInt,
+				Function : Function,
+				Array    : Array,
+				Object(input, handle=!1) {
+					return type(input) === "object" ?
+						input :
+						handle == !0 ?
+							{ data: input } :
+							void 0
+				}, Symbol(input, handle=!1) {
+					return type(input) === "symbol" ?
+						input :
+						handle == !0 ?
+							Symbol.for(input) :
+							void 0
+				}, undefined() { return void 0 },
+				Fraction: fMath.Fraction,
+				CFraction: cfMath.CFraction,
+				Set: rMath.Set,
+				Complex: cMath.Complex,
+				dict: dict,
+				LinkedList: LinkedList,
+				MutableString: MutableString,
+				
+			}
 		}, "defer_call_local cleanup_math"() {
 			Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math");
 			for (const obj of Object.values(MathObjects)) {
@@ -4518,7 +4530,15 @@ void (() => { "use strict";
 		, define = function define(s, section=0) {
 			// section 0 stores the defer functions in DEFER_ARR
 			// section 1 calls the defer functions
-			if (s.startsWith("literal symbol.for ")) {
+			if (s.indexOf(" ") < 0) {
+				if (window[s] !== void 0) {
+					if (ON_CONFLICT === "crash") throw Error(`window['${s}'] is already defined and ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`window['${s}'] overwritten and ON_CONFLICT is set to 'cry'`);
+					else if (ON_CONFLICT === "dont-use") return;
+					CONFLICT_ARR.push(s);
+				}
+				window[s] = LIBRARY_FUNCTIONS[s];
+			} else if (s.startsWith("literal symbol.for ")) {
 				let tmp = Symbol.for(s.substr(19));
 				if (window[tmp] !== void 0) {
 					if (ON_CONFLICT === "crash") throw Error(`window[${String(tmp)}] is already defined and ON_CONFLICT is set to 'crash'`);
@@ -4560,15 +4580,8 @@ void (() => { "use strict";
 				section ?
 					LIBRARY_FUNCTIONS[s]() :
 					DEFER_ARR.push(s);
-			} else if (s.startsWith("overwrite ")) window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
-			else {
-				if (window[s] !== void 0) {
-					if (ON_CONFLICT === "crash") throw Error(`window['${s}'] is already defined and ON_CONFLICT is set to 'crash'`);
-					if (ON_CONFLICT === "cry") console.log(`window['${s}'] overwritten and ON_CONFLICT is set to 'cry'`);
-					else if (ON_CONFLICT === "dont-use") return;
-					CONFLICT_ARR.push(s);
-				}
-				window[s] = LIBRARY_FUNCTIONS[s];
+			} else if (s.startsWith("overwrite ")) { window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
+			} else if (s.startsWith("call ")) { window[s.substr(5)] = LIBRARY_FUNCTIONS[s]();
 			}
 		};
 		for (const s of Object.keys(LIBRARY_FUNCTIONS)) define(s, 0);
@@ -5391,6 +5404,15 @@ void (() => { "use strict";
 		}
 	} {// Error Handling & Exiting
 		for (const s of DEFER_ARR) define(s, 1);
+		if (Freeze_Everything) {
+			for (let name of Object.keys(LIBRARY_FUNCTIONS))
+				Object.freeze(window[ name.match(/\S+$/)?.[0] || "" ]);
+		} else if (Freeze_Instance_Objects && Freeze_Instance_Objects !== "default") {
+			Object.freeze(Types);
+			Object.freeze(MathObjects);
+			for (let o of Object.values(MathObjects))
+				Object.freeze(o);
+		}
 		
 		ON_CONFLICT === "default" && (ON_CONFLICT = "dbg");
 		if (Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
@@ -5425,14 +5447,8 @@ void (() => { "use strict";
 			}
 		}
 		Alert_Library_Load_Finished && Alert_Library_Load_Finished !== "default" && (
-			Library_Startup_Function === "default" ?
-				console.log :
-				Library_Startup_Function
-		)(
-			Library_Startup_Message === "default" ?
-				"lib.js loaded" :
-				Library_Startup_Message
-		);
+			Library_Startup_Function === "default" ? console.log : Library_Startup_Function
+		)( Library_Startup_Message === "default" ? "lib.js loaded" : Library_Startup_Message );
 		return 0;
 	}
 })();

@@ -362,3 +362,73 @@ If the new way is introduced, there can be 1 function to test all functions rega
 }
 if objs in [null, "default"] it should default to [window, "window"]
 */
+
+
+void function run_tests_v2() {
+	var tmpLL = new LinkedList;
+	tmpLL.insertLast( 0 ); tmpLL.insertLast( 1 );
+	tmpLL.insertLast( 2 ); tmpLL.insertLast( 3 );
+	var inputs = [
+		[],
+		[0, 1, 2, 3, 4],
+		MutableString("asdf"),
+		MutableString(),
+		"",
+		"13",
+		"1234123471283479128374912837489127384971829374897128937489",
+		"asdf",
+		"asdhf9q43yhihfoh934y8r23hj ih3489ryq9w8uerpo123iu4\t\n\r\f\b\vr18290u3r213r\0",
+		{}, {
+			key1: "value1",
+			key2: "value2",
+			key3: "value3",
+			key4: "value4",
+		},
+		0n,
+		-2n,
+		4n,
+		true,
+		false,
+		((a, b, c, ...args)=> 1 ),
+		(a => 1 ),
+		((a) => 1 ),
+		(a => {return 1} ),
+		((a) => {return 1} ),
+		(function() { return 2 }),
+		24.7215623492039402,
+		-26.5671432904097838,
+		0,
+		-0,
+		Infinity,
+		-Infinity,
+		NaN,
+		document.querySelector("p"), // HTMLElement
+		Symbol.for("asdf"),
+		Symbol.iterator, // idk what this is but whatever
+		Symbol("asdf"),
+		undefined,
+		null,
+		document.getElementsByClassName("script"), // HTMLCollection
+		document.querySelectorAll("script"), // NodeList
+		tmpLL, // LinkedList
+		cMath.new(1.5, Infinity),
+		cMath.new(1.5, 1.5),
+		cMath.new(1.5, 0),
+		cMath.new(1.5, -0),
+		cMath.new(1.5, -1.5),
+		cMath.new(1.5, -Infinity),
+		cMath.new(0, Infinity),
+		cMath.new(0, 1.5),
+		cMath.new(0, 0),
+		cMath.new(0, -0),
+		cMath.new(0, -1.5),
+		cMath.new(0, -Infinity),
+		cMath.new(-1.5, Infinity),
+		cMath.new(-1.5, 1.5),
+		cMath.new(-1.5, 0),
+		cMath.new(-1.5, -0),
+		cMath.new(-1.5, -1.5),
+		cMath.new(-1.5, -Infinity),
+		/asdf(?=12){2,}\+(?<name>3-4).\/ \k<name>\\k`g<>`'~%\^/,
+	]
+}
