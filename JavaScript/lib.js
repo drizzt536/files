@@ -1,5 +1,4 @@
 #!/usr/bin/env js
-
 void (() => { "use strict";
 	{// Customization & Constants
 
@@ -95,6 +94,214 @@ void (() => { "use strict";
 		if (!onConflictOptions.includes(ON_CONFLICT)) ON_CONFLICT = "none";
 		// TODO: clear cookies and caches if the library user wants
 	} {// Variables & Functions
+		{// Local Functions
+			// the comment is for the function directly below
+			var list = Array.from
+			, int = Number.parseInt
+			, abs = Math.abs
+			, sgn = Math.sign
+			, rand = Math.random
+			, json = JSON
+			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
+			, isIterable = function isIterable(arg) {
+				try { for (const e of arg) break; return !0 }
+				catch { return !1 }
+			}, len = function length(e) { return e?.length }
+			, dim = function dim(e, n=1) { return e?.length - n }
+			, numStrNorm = function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
+				if (typeof snum === "bigint") return snum + ".0";
+				if (isNaN(snum)) return defaultValue;
+				if (sMath.eq.ez(snum += "")) return "0.0";
+				!snum.includes(".") && (snum += ".0");
+				return (snum[0] === "-" ? "-" : "") +
+					snum.substring( (snum[0] === "-") +
+						len(snum.match(/^-?(0+\B)/)?.[1]), // can evaluate to NaN, but it doesn't matter
+						snum.match(/\B0+$/)?.index || Infinity
+				);
+			} // uses isArr
+			, type = function type(a, specific=!1) {
+				return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
+					/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
+						"string" :
+						typeof a :
+					typeof a === "number" ?
+						isNaN(a) ?
+							"nan" :
+							isNaN(a - a) ?
+								"inf" :
+								"num" :
+						typeof a === "object" ?
+							a?.constructor?.name === 'NodeList' ?
+								"nodelist" :
+								a.test === /a/?.test ?
+									"regex" :
+									a === null ?
+										"null" :
+										/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+											"linkedlist" :
+											/^type\(\){return("|'|`)complex\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+												"complex" :
+												/^type\(\){return("|'|`)fraction\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+													"fraction" :
+													/^type\(\){return("|'|`)set\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+														"set" :
+														/^type\(\){return("|'|`)dict\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+															"dict" :
+															/^type\(\){return("|'|`)mutstr\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+																"mutstr" :
+																isArr(a) ?
+																	"arr" :
+																	"obj" :
+							typeof a === "string" ?
+								"str" :
+								typeof a === "boolean" ?
+									"bool" :
+								/^class/.test(a+"") ?
+									"class" :
+									"func"
+			}, fpart = function fPart(n, number=true) {
+				if ( rMath.isNaN(n) ) return NaN;
+				if ( n.isInt() ) return number ? 0 : "0.0";
+				if ((n+"").includes("e+")) n = n.toPrecision(100);
+				else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), Number((n+"").slc("-", void 0, 1)) );
+				return number ?
+					Number( (n+"").slc(".") ) :
+					`0${`${n}`.slc(".")}`;
+			}, round = function round(n) {
+				return typeof n === "number" ?
+					fpart(n) < .5 ?
+						Number.parseInt(n) :
+						Number.parseInt(n) + sgn(n) :
+					typeof n === "bigint" ?
+						n :
+						NaN;
+			}, floor = function floor(n) {
+				return typeof n === "number" ?
+					Number.parseInt(n) - (n<0 && n != Number.parseInt(n)) :
+					typeof n === "bigint" ?
+						n :
+						NaN;
+			}, ceil = function ceil(n) {
+				return typeof n === "number" ?
+					Number.parseInt(n) + (n>0 && n != Number.parseInt(n)) :
+					typeof n === "bigint" ?
+						n :
+						NaN;
+			}, getArguments = function getArguments(fn) {
+				// any comments inside the argument parens acts as a docstring like in python.
+				// works for all functions
+				if (typeof fn !== "function") return !1;
+				fn += ""; // fn = fn.toString()
+				if (/^function \w+\(\)\s*{\s*\[native code\]\s*$/.in(fn)) return "native function. can't get arguments";
+				if (fn.sW("class")) return a.slc(0, "{").trim();
+				if (/^function/.in(fn) && /^\s*\(/.in(fn)) return fn.match(/^\w+/)[0]; // ??? idk
+				for (var i = 0, fn = fn.slc("("), n = fn.length, count = 0; i < n; i++) {
+					if (fn[i] === "(") count++;
+					else if (fn[i] === ")") count--;
+					if (!count) break;
+				}
+				return fn.substr(1, i);
+			}, createElement = function createElement(element="p", options={}) {
+				var element = document.createElement(element), objects = null, click = null;
+				for (const e of Object.keys(options)) {
+					if (e === "children") {
+						type(options[e], 1) === "arr" ?
+							options[e].forEach(c => element.appendChild(c)) :
+							element.appendChild(options[e]);
+					} else if (e === "onClick") { // not "onclick"
+						typeof options[e] === "function" ?
+							element.ael("click", options[e]) :
+							element.ael("click", ...options[e]);
+					} else if (e === "on") {
+						e.listener ??= e.handler;
+						element.ael( e.type, e.listener, {
+							capture : e.capture ,
+							passive : e.passive ,
+							once    : e.once    ,
+						});
+
+					} else if (["object", "objects"].includes(e)) {
+						objects = options[e];
+					} else if (e === "style") {
+						for (const stl of Object.keys(options[e]))
+							element.style[stl] = options[e][stl];
+					} else if (e === "click") {
+						click = options[e];
+					} else element[e] = options[e];
+				}
+				if (objects !== null) {
+					if (objects instanceof Array)
+						for (var i = len(objects); i --> 0 ;)
+							object[i].appendChild(element);
+					else object.appendChild(element);
+				}
+				element.click(click);
+				return element;
+			}, numToStrW_s = function numberToStringWithUnderscores(number) {
+				for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++) {
+					(!(i % 3) && i) && (str2 += "_");
+					str2 += str[i];
+				}
+				return str2.reverse();
+			}, strMul = function stringMultiplication(s1="", num=1) {
+				// the same as regular string multiplication in Python
+				if (rMath.isNaN(num) || type(s1) !== "string") return "";
+				for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
+				return s2;
+			}, formatjson = function formatJSON(json="{}", {
+				objectNewline = true,
+				tab = "\t",
+				newline = "\n",
+				space = " ",
+				arrayOneLine = true,
+				// arrayAlwaysOneLine = false, // doesn't do anything yet
+				arrayOneLineSpace = " ", // if " ", [ ITEM ]. if "\t", [\tITEM\t]. etc
+			}={}) {
+				if (type(json) !== "string") throw TypeError("formatjson() requires a string");
+				try { JSON.parse(json) } catch { throw TypeError("formatjson() requires a JSON string") }
+				if (json.remove(/\s/g) === "{}") return "{}";
+				if (json.remove(/\s/g) === "[]") return "[]";
+				if (/\s*("|'|`)(.|\n)*\1\s*/.in(json.remove(/\s/g))) return json.remove(/(^\s*)|(\s*$)/g);
+				for (var i = 0, n = len(json), tabs = 0, output = "", inString = !1; i < n; i++) {
+					if (json[i] === '"' && json[i - 1] !== '\\') inString = !inString;
+					if (inString) output += json[i];
+					else if (/\s/.in(json[i])) continue;
+					else if (json[i] === "{") output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
+					else if (json[i] === "[") {
+						if (!arrayOneLine) {
+							output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
+							continue;
+						}
+						for (let arrayInString = !1, index = i + 1 ;; index++) {
+							if (json[index] === '"' && json[index - 1] !== '\\')
+								arrayInString = !arrayInString;
+							if (arrayInString) continue;
+							if (["{", "[", ","].incl(json[index])) {
+								output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
+								break;
+							} else if (json[index] === "]") {
+								output += `[${arrayOneLineSpace}${
+									json.substring(i + 1, index)
+								}${arrayOneLineSpace}]`;
+								i = index;
+								break;
+							}
+						}
+					} else if (["}", "]"].incl(json[i])) output += `${newline}${strMul(tab, --tabs)}${json[i]}`;
+					else if (json[i] === ":") output += `${json[i]}${space}`;
+					else if (json[i] === ",") {
+						// objectNewline === true : }, {
+						// objectNewline === false: },\n\t{
+						let s = json.substr(i);
+						output += json[i] + (!objectNewline && json[i + 1 + len(s) - len(s.remove(/^\s+/))] === "{" ? `${space}` : `${newline}${strMul(tab, tabs)}`);
+					} else output += json[i];
+				}
+				return output;
+			}
+			// constr
+			// fpart
+			// move bisects to the array prototype
+		}
 		// Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
 		for (var i=10,j,multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j=10; j --> 0 ;)
@@ -139,12 +346,12 @@ void (() => { "use strict";
 		, emc           = γ // Euler-Mascheroni Constant
 		, omega         = Ω
 		, LIBRARY_FUNCTIONS = {
-		"list": Array.from
-		, "int": Number.parseInt
-		, "abs": Math.abs
-		, "sgn": Math.sign
-		, "rand": Math.random
-		, "json": JSON
+		"list": list
+		, "int": int
+		, "abs": abs
+		, "sgn": sgn
+		, "rand": rand
+		, "json": json
 		, "literal symbol.for <0x200b>": "​" // zero width space
 		, "literal symbol.for <0x08>": "" // \b
 		, "π": π
@@ -172,7 +379,7 @@ void (() => { "use strict";
 					current.next = new Node(value);
 					return this;
 				} insertAt(value, index=0) {
-					if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+					if (index < 0 || index > this.size) throw Error(`Index out of range: index: ${index}`);
 					if (!index) return this.insertFirst(value);
 					if (index === this.size) return this.insertLast(value);
 					for (var current = this.head; index --> 0 ;)
@@ -181,15 +388,15 @@ void (() => { "use strict";
 					current.next = new Node(value, current.next)
 					return this;
 				} getAt(index=0) {
-					if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+					if (index < 0 || index > this.size) throw Error(`Index out of range. index: ${index}`);
 					for (var current = this.head; index --> 0 ;)
 						current = current.next;
 					return current;
 				} removeAt(index) {
-					if (index < 0 || index > this.size) throw Error(`Index out of range: (index: ${index})`);
+					if (index < 0 || index > this.size) throw Error(`Index out of range. index: ${index}`);
 					for (var current = this.head; index --> 1 ;)
 						current = current.next;
-					current.next = current.next.next;
+					current.next = current.next.next; // Garbage Collector Will worry about this
 					this.size--;
 					return this;
 				} insertFirst(value) {
@@ -202,7 +409,7 @@ void (() => { "use strict";
 					this.head = prev || this.head;
 					return this;
 				} toArray() {
-					for (let current = this.head, a = []; current ;) {
+					for (var current = this.head, a = []; current ;) {
 						a.push(current.value);
 						current = current.next;
 					}
@@ -216,11 +423,13 @@ void (() => { "use strict";
 		})(), "overwrite Image": (function create_Image() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
-			return function Image(width, height, options={}) {
+			function Image(width, height, options={}) {
 				var image = new _Image(width, height);
 				for (const e of Object.keys(options)) image[e] = options[e];
 				return image;
-			};
+			}
+			Image._Image = _Image;
+			return Image;
 		})(), "dict": (function create_dict() {
 			// So I can add prototype methods and not have it on literally every object in existance
 			var Dictionary = class dict extends Object {
@@ -378,18 +587,12 @@ void (() => { "use strict";
 						v(n) :
 						h(v(n));
 			}
-		})(), isIterable(arg) {
-			try { for (const e of arg) break; return !0 }
-			catch { return !1 }
-		}, sizeof(obj) {
+		})(), isIterable: isIterable, sizeof(obj) {
 			if (obj == null) return 0;
 			var length = len(obj);
 			if (length != null) return length;
-			if (constr(obj) === "Object") return len( Object.keys(obj) );
+			if (obj?.constructor?.name === "Object") return len( Object.keys(obj) );
 			return 0;
-		}, assert(condition, message="false") {
-			return !condition &&
-				Errors?.("Failed Assertion", message);
 		}, help(str) {
 			// eval doesn't matter here because this function is for developer use only.
 			try { eval(str) }
@@ -404,12 +607,12 @@ void (() => { "use strict";
 				}
 			} try {
 				var fn = eval(str);
-				if (type(fn) === "function") {
+				if (typeof fn === "function") {
 					if (`${fn}`.incl(/\(\) { \[native code\] }/)) {
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
 						return "native function. arguments can't be retrieved";
 					}
-					return `Function: arguments = ${getArguments?.(fn)}`;
+					return `Function: arguments = ${getArguments(fn)}`;
 				}
 			} catch {}
 			try { return "Variable: value = " + Function(`return ${str}`)() }
@@ -473,67 +676,11 @@ void (() => { "use strict";
 			return str ?
 				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
 				ans;
-		}, type(a, specific=!1) {
-			return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
-				/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
-					"string" :
-					typeof a :
-				typeof a === "number" ?
-					isNaN(a) ?
-						"nan" :
-						isNaN(a - a) ?
-							"inf" :
-							"num" :
-					typeof a === "object" ?
-						constr(a) === 'NodeList' ?
-							"nodelist" :
-							a.test === /a/?.test ?
-								"regex" :
-								a === null ?
-									"null" :
-									/^type\(\){return("|'|`)linkedlist\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-										"linkedlist" :
-										/^type\(\){return("|'|`)complex\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-											"complex" :
-											/^type\(\){return("|'|`)fraction\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-												"fraction" :
-												/^type\(\){return("|'|`)set\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-													"set" :
-													/^type\(\){return("|'|`)dict\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-														"dict" :
-														/^type\(\){return("|'|`)mutstr\1}$/.in(`${a.type}`.remove(/\s|;/g)) ?
-															"mutstr" :
-															isArr(a) ?
-																"arr" :
-																"obj" :
-						typeof a === "string" ?
-							"str" :
-							typeof a === "boolean" ?
-								"bool" :
-							/^class/.in(a+"") ?
-								"class" :
-								"func"
-		}, round(n) {
-			return type(n) === "number" ?
-				fpart(n) < .5 ?
-					int(n) :
-					int(n) + sgn(n) :
-				type(n) === "bigint" ?
-					n :
-					NaN;
-		}, floor(n) {
-			return type(n) === "number" ?
-				int(n) - (n<0 && n != int(n)) :
-				type(n) === "bigint" ?
-					n :
-					NaN;
-		}, ceil(n) {
-			return type(n) === "number" ?
-				int(n) + (n>0 && n != int(n)) :
-				type(n) === "bigint" ?
-					n :
-					NaN;
-		}, *range(start, stop, step=1) {
+		}, type: type
+		, round: round
+		, floor: floor
+		, ceil: ceil
+		, *range(start, stop, step=1) {
 			stop == null ? [stop, start] = [start, 0] : stop++;
 			for (var i = start; i < stop; i += step) yield i;
 		}, simulateKeypress({
@@ -627,10 +774,10 @@ void (() => { "use strict";
 			objs.union(document.all);
 			return objs;
 		}, dQuery(selector="*", {doctype=true, one=false, oneIndex=0}={}) {
-			if (constr(selector) === "dQuery") return selector;
+			if (selector?.constructor?.name === "dQuery") return selector;
 			if (type(selector) !== "string") throw TypeError("dQuery() requires a string or dQuery object for the first argument");
 			try {
-				var values = Array.from(document.querySelectorAll(selector));
+				var values = list(document.querySelectorAll(selector));
 				doctype && document.doctype && values.unshift(document.doctype);
 			} catch { throw Error(`Invalid selector (in single quotes): '${selector}'`) }
 			return one ?
@@ -643,64 +790,16 @@ void (() => { "use strict";
 							super(...values) :
 							super(values);
 					if (values !== document) {
-						this.previous = constr(previous) === "dQuery" ?
+						this.previous = previous?.constructor?.name === "dQuery" ?
 							previous :
 							new dQuery(document);
 					}
 					selector !== void 0 && (this.selector = selector);
 				}
 			})(values, selector, void 0);
-		}, getArguments(fn) {
-			// any comments inside the argument parens acts as a docstring like in python.
-			// works for all functions
-			if (type(fn) !== "function") return !1;
-			fn += ""; // fn = fn.toString()
-			if (fn.incl("{ [native code] }")) return "native function. can't get arguments";
-			if (fn.sW("class")) return a.slc(0, "{").trim();
-			if (/^function /.in(fn) && /^\s*\(/.in(fn)) return fn.match(/^\w+/)[0]; // ??? idk
-			for (var i = 0, fn = fn.slc("("), n = len(fn), count = 0; i < n; i++) {
-				if (fn[i] === "(") count++;
-				else if (fn[i] === ")") count--;
-				if (!count) break;
-			}
-			return fn.substr(0, i + 1);
-		}, createElement(element="p", options={}) {
-			var element = document.createElement(element), objects = null, click = null;
-			for (const e of Object.keys(options)) {
-				if (e === "children") {
-					type(options[e], 1) === "arr" ?
-						options[e].forEach(c => element.appendChild(c)) :
-						element.appendChild(options[e]);
-				} else if (e === "onClick") { // not "onclick"
-					type(options[e]) === "function" ?
-						element.ael("click", options[e]) :
-						element.ael("click", ...options[e]);
-				} else if (e === "on") {
-					e.listener ??= e.handler;
-					element.ael( e.type, e.listener, {
-						capture : e.capture ,
-						passive : e.passive ,
-						once    : e.once    ,
-					});
-
-				} else if (["object", "objects"].incl(e)) {
-					objects = options[e];
-				} else if (e === "style") {
-					for (const stl of Object.keys(options[e]))
-						element.style[stl] = options[e][stl];
-				} else if (e === "click") {
-					click = options[e];
-				} else element[e] = options[e];
-			}
-			if (objects !== null) {
-				if (objects instanceof Array)
-					for (var i = len(objects); i --> 0 ;)
-						object[i].appendChild(element);
-				else object.appendChild(element);
-			}
-			element.click(click);
-			return element;
-		}, css(text="", options={}, append=true) {
+		}, getArguments: getArguments
+		, createElement: createElement
+		, css(text="", options={}, append=true) {
 			options.innerHTML ??= text;
 			options.type ??= "text/css";
 			var element = createElement("style", options);
@@ -810,8 +909,8 @@ void (() => { "use strict";
 		}, arrzip(arr1, arr2) {
 			// array zip
 			if (!isIterable(arr1) || !isIterable(arr2)) return [];
-			if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = Array.from(arr1);
-			if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = Array.from(arr2);
+			if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = list(arr1);
+			if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = list(arr2);
 			for (var output = [], length = rMath.min(len(arr1), len(arr2)), i = 0; i < length; i++)
 				output.push([arr1[i], arr2[i]]);
 			return output;
@@ -835,7 +934,7 @@ void (() => { "use strict";
 			}
 			return Generator(thing);
 		}, ord(string) {
-			return typeof string === "string" && len(string) ?
+			return type(string) === "string" && len(string) ?
 				dim(string) ?
 					string.split("").map(c => c.charCodeAt()) :
 					string.charCodeAt() :
@@ -845,7 +944,7 @@ void (() => { "use strict";
 				max = min;
 				min = 0;
 			}
-			if (type(min) !== "number" || type(max) !== "number") return round( rand() );
+			if (typeof min !== "number" || typeof max !== "number") return round( rand() );
 			min < 0 && min--;
 			return round( rand() * abs(min - max) + min );
 		}, "constr"      : function constructorName(input, name=true) {
@@ -857,7 +956,7 @@ void (() => { "use strict";
 				.substr(13)
 				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
 		}, "nsub"        : function substituteNInBigIntegers(num, n=1) {
-			return type(num) === "bigint" ?
+			return typeof num === "bigint" ?
 				n * Number(num) :
 				num;
 		}, "revLList"    : function reverseLinkedList(list) {
@@ -865,17 +964,10 @@ void (() => { "use strict";
 				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
 			list.head = prev || list.head;
 			return list;
-		}, "fpart"       : function fPart(n, number=true) {
-			if ( rMath.isNaN(n) ) return NaN;
-			if ( n.isInt() ) return number ? 0 : "0.0";
-			if ((n+"").incl("e+")) n = n.toPrecision(100);
-			else if ((n+"").incl("e-")) n = sMath.div10( (n+"").slc(0, "e"), Number((n+"").slc("-", void 0, 1)) );
-			return number ?
-				Number( (n+"").slc(".") ) :
-				`0${`${n}`.slc(".")}`;
-		}, "str"         : function String(a) {
+		}, fpart: fpart
+		, "str"          : function String(a) {
 			return a?.toString?.(
-				...Array.from(arguments).slc(1)
+				...list(arguments).slc(1)
 			);
 			// return a?.toString?.apply?.(
 			// 	Array.from(arguments).slc(1)
@@ -884,7 +976,7 @@ void (() => { "use strict";
 			if (abs(number) === Infinity) return `${number<0?"negative ":""}${fancyInfinity?"apeirogintillion":"infinity"}`;
 			// TODO: Update to use a loop or something to expand to as close to infinity as possible
 			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
-			var string = number.toString().remove(/\.$/);
+			var string = `${number}`.remove(/\.$/);
 			number = Number(number);
 			switch (!0) {
 				case /\./.in(string):
@@ -946,80 +1038,14 @@ void (() => { "use strict";
 				case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.substr(2))}`;
 				default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
 			}
-		}, "numToStrW_s" : function numberToStringWithUnderscores(number) {
-			for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++) {
-				(!(i % 3) && i) && (str2 += "_");
-				str2 += str[i];
-			}
-			return str2.reverse();
-		}, "Errors"      : function customErrors(name="Error", text="") {
+		}, numToStrW_s: numToStrW_s
+		, "Errors"      : function customErrors(name="Error", text="") {
 			Error.prototype.name = `${name}`;
 			throw new Error(text).stack.remove(/ {4}at(.|\s)*\n/);
-		}, "strMul"      : function stringMultiplication(s1="", num=1) {
-			// the same as regular string multiplication in Python
-			if (isNaN(num) || type(s1, 1) !== "str") return "";
-			for (var i = num, s2 = ""; i --> 0 ;) s2 += s1;
-			return s2;
-		}, "numStrNorm"  : function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
-			if (typeof snum === "bigint") return snum + ".0";
-			if (isNaN(snum)) return defaultValue;
-			if (sMath.eq.ez(snum += "")) return "0.0";
-			!snum.incl(".") && (snum += ".0");
-			return (snum[0] === "-" ? "-" : "") +
-				snum.substring( (snum[0] === "-") +
-					len(snum.match(/^-?(0+\B)/)?.[1]), // can evaluate to NaN, but it doesn't matter
-					snum.match(/\B0+$/)?.index || Infinity
-			);
-		}, "formatjson"  : function formatJSON(json="{}", {
-			objectNewline = true,
-			tab = "\t",
-			newline = "\n",
-			space = " ",
-			arrayOneLine = true,
-			// arrayAlwaysOneLine = false, // doesn't do anything yet
-			arrayOneLineSpace = " ", // if " ", [ ITEM ]. if "\t", [\tITEM\t]. etc
-		}={}) {
-			if (typeof json !== "string") throw TypeError("formatjson() requires a string");
-			try { JSON.parse(json) } catch { throw TypeError("formatjson() requires a JSON string") }
-			if (json.remove(/\s/g) === "{}") return "{}";
-			if (json.remove(/\s/g) === "[]") return "[]";
-			if (/\s*("|'|`)(.|\n)*\1\s*/.in(json.remove(/\s/g))) return json.remove(/(^\s*)|(\s*$)/g);
-			for (var i = 0, n = len(json), tabs = 0, output = "", inString = !1; i < n; i++) {
-				if (json[i] === '"' && json[i - 1] !== '\\') inString = !inString;
-				if (inString) output += json[i];
-				else if (/\s/.in(json[i])) continue;
-				else if (json[i] === "{") output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
-				else if (json[i] === "[") {
-					if (!arrayOneLine) {
-						output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
-						continue;
-					}
-					for (let arrayInString = !1, index = i + 1 ;; index++) {
-						if (json[index] === '"' && json[index - 1] !== '\\')
-							arrayInString = !arrayInString;
-						if (arrayInString) continue;
-						if (["{", "[", ","].incl(json[index])) {
-							output += `${json[i]}${newline}${strMul(tab, ++tabs)}`;
-							break;
-						} else if (json[index] === "]") {
-							output += `[${arrayOneLineSpace}${
-								json.substring(i + 1, index)
-							}${arrayOneLineSpace}]`;
-							i = index;
-							break;
-						}
-					}
-				} else if (["}", "]"].incl(json[i])) output += `${newline}${strMul(tab, --tabs)}${json[i]}`;
-				else if (json[i] === ":") output += `${json[i]}${space}`;
-				else if (json[i] === ",") {
-					// objectNewline === true : }, {
-					// objectNewline === false: },\n\t{
-					let s = json.substr(i);
-					output += json[i] + (!objectNewline && json[i + 1 + len(s) - len(s.remove(/^\s+/))] === "{" ? `${space}` : `${newline}${strMul(tab, tabs)}`);
-				} else output += json[i];
-			}
-			return output;
-		}, "minifyjson"  : function minifyJSON(json) {
+		}, strMul: strMul
+		, numStrNorm: numStrNorm
+		, formatjson: formatjson
+		, "minifyjson"  : function minifyJSON(json) {
 			// removes all the unnecessary spaces and things
 			return formatjson(json, {
 				objectNewline      : true, // less conditionals are checked if this is set to true
@@ -1049,7 +1075,7 @@ void (() => { "use strict";
 				concat() { return Array.prototype.concat.apply(this, arguments) }
 			};
 			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
-			
+
 			for (const s of Object.getOwnPropertyNames(String.prototype))
 				!protoArray.incl(s) && (MutStr.prototype[s] = String.prototype[s]);
 
@@ -1059,12 +1085,12 @@ void (() => { "use strict";
 			}
 			return MutableString;
 		}, "isArr"       : function isArray(thing) { return constr(thing) === "Array" }
-		, dim(e, n=1)          { return e?.length - n }
-		, len(e)               { return e?.length }
+		, dim: dim
+		, len: len
 		, complex(re=0, im=0)  { return cMath.new(re, im) }
 		, copy(object)         { return json.parse( json.stringify(object) ) }
 		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
-		, chr(integer)         { return String.fromCharCode( Number(integer) ) }
+		, chr: chr
 		// Instance Variables:
 		, "instance Logic"          : class Logic {
 			constructor(bitwise=Logic_BitWise_Argument, comparatives=Logic_Comparatives_Argument, help=Logic_Help_Argument) {
@@ -1183,17 +1209,15 @@ void (() => { "use strict";
 						}
 					}
 				}
-			}
-			not(...a) {// NOT gate
+			} not(...a) {// NOT gate
 				// +---+-----+
 				// | p | ¬ p |
 				// +---+-----+
 				// | T |  F  |
 				// | F |  T  |
 				// +---+-----+
-				return len(a) == 1 ? !a[0] : a.map(b=>!b);
-			}
-			and(...a) {// AND gate
+				return len(a) === 1 ? !a[0] : a.map(b=>!b);
+			} and(...a) {// AND gate
 				// +---+---+-------+
 				// | p | q | p ∧ q |
 				// +---+---+-------+
@@ -1202,13 +1226,11 @@ void (() => { "use strict";
 				// | F | T |   F   |
 				// | F | F |   F   |
 				// +---+---+-------+
-				if (json?.stringify?.(a = a?.flatten?.()) === "[]") 
-					return !1;
+				if (!len(a = a.flatten())) return !1;
 				for (var i = len(a); i --> 0 ;)
-					if (a[i] == !1) return !1;
+					if (!a[i]) return !1;
 				return !0;
-			}
-			nand(...a) {// not (p and q)
+			} nand(...a) {// not (p and q)
 				// +---+---+-------+
 				// | p | q | p ⊼ q |
 				// +---+---+-------+
@@ -1218,8 +1240,7 @@ void (() => { "use strict";
 				// | F | F |   T   |
 				// +---+---+-------+
 				return !this.and(a);
-			}
-			or(...a) {// OR gate
+			} or(...a) {// OR gate
 				// +---+---+-------+
 				// | p | q | p ∨ q |
 				// +---+---+-------+
@@ -1228,12 +1249,11 @@ void (() => { "use strict";
 				// | F | T |   T   |
 				// | F | F |   F   |
 				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]") return !1;
+				if (!len(a = a.flatten())) return !1;
 				for (var i = len(a); i --> 0 ;)
-					if (a[i] == !0) return !0;
+					if (!!a[i]) return !0;
 				return !1;
-			}
-			nor(...a) {// not (p or q)
+			} nor(...a) {// not (p or q)
 				// +---+---+-------+
 				// | p | q | p ⊽ q |
 				// +---+---+-------+
@@ -1243,8 +1263,7 @@ void (() => { "use strict";
 				// | F | F |   T   |
 				// +---+---+-------+
 				return !this.or(a);
-			}
-			xor(...a) {// exclusive or gate
+			} xor(...a) {// exclusive or gate
 				// +---+---+-------+
 				// | p | q | p ⊻ q |
 				// +---+---+-------+
@@ -1253,11 +1272,9 @@ void (() => { "use strict";
 				// | F | T |   T   |
 				// | F | F |   F   |
 				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]")
-					return !1;
-				return len(a.filter(b => b == !0)) == len(a) / 2
-			}
-			xor2(...a) {// exclusive or gate
+				if (!len(a = a.flatten())) return !1;
+				return len(a.filter(b => b)) === len(a) / 2
+			} xor2(...a) {// exclusive or gate
 				// +---+---+-------+
 				// | p | q | p ⊻ q |
 				// +---+---+-------+
@@ -1266,11 +1283,9 @@ void (() => { "use strict";
 				// | F | T |   T   |
 				// | F | F |   F   |
 				// +---+---+-------+
-				if (json.stringify(a = a.flatten()) === "[]")
-					return !1;
-				return len(a.filter(b => b == !0)) == len(a) % 2 > 0
-			}
-			nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
+				if (!len(a = a.flatten())) return !1;
+				return len(a.filter(b => b)) === len(a) % 2 > 0
+			} nxor(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
 				// +---+---+----------+
 				// | p | q | p xnor q |
 				// +---+---+----------+
@@ -1281,8 +1296,7 @@ void (() => { "use strict";
 				// +---+---+----------+
 				// should be nxor because it is not xor and not exclusive nor
 				return !this.xor(a);
-			}
-			nxor2(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
+			} nxor2(...a) {// boolean algebra '↔' (<->); not(p xor q); usually 'xnor', but that is wrong
 				// +---+---+----------+
 				// | p | q | p xnor q |
 				// +---+---+----------+
@@ -1293,8 +1307,7 @@ void (() => { "use strict";
 				// +---+---+----------+
 				// should be nxor because it is not xor and not exclusive nor
 				return !this.xor2(a);
-			}
-			iff(...a) {// boolean algebra name for 'if and only if' (↔, <-->); not(p xor q)
+			} iff(...a) {// boolean algebra name for 'if and only if' (↔, <-->); not(p xor q)
 				// +---+---+----------+
 				// | p | q | p xnor q |
 				// +---+---+----------+
@@ -1304,8 +1317,7 @@ void (() => { "use strict";
 				// | F | F |     T    |
 				// +---+---+----------+
 				return !this.xor(a);
-			}
-			if(a, b) {// boolean algebra name for 'IMPLY gate'.
+			} if(a, b) {// boolean algebra name for 'IMPLY gate'.
 				// +---+---+---------+
 				// | p | q | p --> q |
 				// +---+---+---------+
@@ -1315,8 +1327,7 @@ void (() => { "use strict";
 				// | F | F |    T    |
 				// +---+---+---------+
 				return this.imply(a, b);
-			}
-			imply(a, b) {// IMPLY gate; P --> Q
+			} imply(a, b) {// IMPLY gate; P --> Q
 				// +---+---+---------+
 				// | p | q | p --> q |
 				// +---+---+---------+
@@ -1325,9 +1336,8 @@ void (() => { "use strict";
 				// | F | T |    T    |
 				// | F | F |    T    |
 				// +---+---+---------+
-				return a ? b == !0 : !0;
-			}
-			nimply(a, b) {// not (P --> Q)
+				return a ? !!b : !0;
+			} nimply(a, b) {// not (P --> Q)
 				// +---+---+---------+
 				// | p | q | p ->/ q |
 				// +---+---+---------+
@@ -1337,8 +1347,7 @@ void (() => { "use strict";
 				// | F | F |    F    |
 				// +---+---+---------+
 				return !this.if(a, b);
-			}
-			xnor() {// exclusive-nor but what it does what it says it does
+			} xnor() {// exclusive-nor but what it does what it says it does
 				// for xnor to return true:
 				// the inputs have to both be false, hence the 'nor' part.
 				// the inputs have to both be different, hence the 'exclusive' part.
@@ -1351,23 +1360,20 @@ void (() => { "use strict";
 				// | F | F |    True     |  False  |
 				// +---+---+-------------+---------+
 				return !1;
-			}
-			is(...a) {// Object.is() but more than 2 inputs
+			} is(...a) {// Object.is() but more than 2 inputs
 				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
 				for (var i = len(a); i --> 0 ;)
 					if (a[i] !== a[0]) return !1;
 				return !0;
-			}
-			isnt(...a) {// !Object.is() but more than 2 inputs and broken
+			} isnt(...a) {// returns true if any item is different from any other item
 				a = a.map(b => `${b}` === "NaN" ? "NaN" : Object.is(b, -0) ? "-0" : json.stringify(b));
-				for (var i = len(a) - 1; i --> 0;) {
-					if ( len(a.filter(b => b === a.last())) !== 1 )
+				for (var i = len(a); i --> 1 ;) {
+					const tmp = a.pop();
+					if ( len(a.filter(b => Object.is(b, tmp))) )
 						return !1;
-					a.pop();
 				}
 				return !0;
-			}
-			near(n1, n2, range=Number.EPSILON) {// same as python math.isclose() with different default range
+			} near(n1, n2, range=Number.EPSILON) {// same as python math.isclose() with different default range
 				return n1 > n2 - range && n1 < n2 + range ?
 					!0 :
 					!1;
@@ -1471,8 +1477,7 @@ void (() => { "use strict";
 						}
 						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
-						return this.gt(a, b) ||
-							this.eq(a, b);
+						return this.gt(a, b) || this.eq(a, b);
 					}, lt(a="0.0", b="0.0") {// <
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a += ""; !a.incl(".") && ( a += ".0" );
@@ -1579,13 +1584,13 @@ void (() => { "use strict";
 					}, ez(snum="0.0") {
 						// x == 0
 						for (var i = 0, n = len(snum); i < n; i++)
-							if (snum[i] !== "0" && snum[i] !== ".") return false;
-						return true;
+							if (snum[i] !== "0" && snum[i] !== ".") return !1;
+						return !0;
 					}, nz(snum="0.0") {
 						// x != 0
 						for (var i = 0, n = len(snum); i < n; i++)
-							if (snum[i] !== "0" && snum[i] !== ".") return true;
-						return false;
+							if (snum[i] !== "0" && snum[i] !== ".") return !0;
+						return !1;
 					}, ng(snum="0.0") { /*x < 0*/ return snum[0] === "-" },
 					nn(snum="0.0") { /*x >= 0*/ return snum[0] !== "-" },
 					ps(snum="0.0") { /*x > 0*/ return snum[0] !== "-" && this.nz(snum) },
@@ -1593,7 +1598,7 @@ void (() => { "use strict";
 				};
 			} add(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
+				a = this.norm( a+"" ); b = this.norm( b+"" );
 				if (a.startsW("-") && b.startsW("-"))
 					return this.neg( this.add(a.substr(1), b.substr(1)) );
 				if (a.sW("-")  && !b.sW("-")) return this.sub(b, a.substr(1));
@@ -1621,10 +1626,10 @@ void (() => { "use strict";
 					}
 				}
 				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
-				return numStrNorm( c.incl(".") ? c : `${c}.0` );
+				return this.norm( c.incl(".") ? c : `${c}.0` );
 			} sub(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
+				a = this.norm( a+"" ); b = this.norm( b+"" );
 				if (!a.sW("-") && b.sW("-")) return this.add(a, b.substr(1));
 				if (a.sW("-") && b.sW("-")) return this.sub(b.substr(1), a);
 				if (a.sW("-") && !b.sW("-"))
@@ -1654,10 +1659,10 @@ void (() => { "use strict";
 					}
 				}
 				c = c.map( e => e.join("") ).join(".");
-				return numStrNorm( c.incl(".") ? c : `${c}.0` );
+				return this.norm( c.incl(".") ? c : `${c}.0` );
 			} mul(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
+				a = this.norm( a+"" ); b = this.norm( b+"" );
 				const sign = this.sgn(a) === this.sgn(b) ? 1 : -1;
 				a = this.abs(a); b = this.abs(b);
 				if (this.eq.ez(a) || this.eq.ez(b)) return "0.0";
@@ -1687,16 +1692,16 @@ void (() => { "use strict";
 				if (isNaN( x = int(Number(x)) )) return NaN;
 				if (!x) return snum;
 				if (x < 0) return this.div10(snum, -x);
-				snum = numStrNorm( snum+"" );
+				snum = this.norm( snum+"" );
 				let i = snum.io("."),
 					tmp = snum.slc(0, i) + snum.slc(i + 1, i + x + 1),
 					output = tmp + strMul("0", i + x - len(tmp)) + "." + snum.slc(i+x+1);
-				return numStrNorm(output + (output.last() === "." ? "0" : ""));
+				return this.norm(output + (output.last() === "." ? "0" : ""));
 			} div(num="0.0", denom="1.0", precision=18) {
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
 				isNaN(precision = Number(precision)) && (precision = 18);
-				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
+				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				if ( this.eq.ez(denom) )
 					return this.eq.ez(num) ?
 						NaN :
@@ -1733,7 +1738,7 @@ void (() => { "use strict";
 						NaN :
 						Infinity;
 				if ( this.eq.ez(num) ) return "0.0";
-				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
+				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
 				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
@@ -1754,11 +1759,11 @@ void (() => { "use strict";
 				if (isNaN( x = int(Number(x)) )) return NaN;
 				if (!x) return snum;
 				if (x < 0) return this.mul10(snum, -x);
-				snum = numStrNorm( snum+"" );
+				snum = this.norm( snum+"" );
 				var i = snum.io("."),
 					tmp = snum.slc(0, i - x),
 					output = tmp + "." + strMul("0", len(tmp) + x - i) + snum.slc(i - x, i) + snum.slc(i + 1);
-				return numStrNorm((output[0] == "." ? "0" : "") + output);
+				return this.norm((output[0] == "." ? "0" : "") + output);
 			} idiv(num="0.0", denom="1.0", precision=18) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
 				if ( this.eq.ez(denom) )
@@ -1766,7 +1771,7 @@ void (() => { "use strict";
 						NaN :
 						Infinity;
 				if ( this.eq.ez(num) ) return "0.0";
-				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
+				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
 				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
@@ -1791,14 +1796,14 @@ void (() => { "use strict";
 					a, this.mul( b, this.fdiv(a, b) )
 				)
 			} ipow(a="0.0", b="1.0") {
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
-				if ( this.eq.nz(fpart(b, !1)) ) throw Error("no decimals allowed for exponent.");
+				a = this.norm( a+"" ); b = this.norm( b+"" );
+				if ( this.eq.nz(this.fpart(b)) ) throw Error("no decimals allowed for exponent.");
 				var t = "1.0";
 				if (this.sgn(b) >= 0) for (; b > 0; b = this.decr(b)) t = this.mul(t, a);
 				else for (; b < 0; b = this.add(b, 1)) t = this.div(t, a);
 				return t;
 			} ifact(n="0.0") {
-				if ( this.eq.nz(fpart(n, !1)) ) throw Error("no decimals allowed.");
+				if ( this.eq.nz(this.fpart(n)) ) throw Error("no decimals allowed.");
 				for (var i = n+"", total = "1.0"; i > 0; i = this.decr(i))
 					total = this.mul(i, total);
 				return this.ipart(total);
@@ -1811,33 +1816,31 @@ void (() => { "use strict";
 				// string sign. sMath.sgn("-0") => -1
 				return snum[0] === "-" ?
 					-1 :
-					/^0+\.?0*$/.test(snum) ?
+					/0+\.?0*/.all(snum) ?
 						0 :
 						1;
 			} sign(snum="0.0") {
 				return this.sgn(snum);
-				;
 			} ssgn(snum="0.0") {
-				// string sign. sMath.sgn("-0") => -1
+				// string sign. sMath.ssgn("-0") => "-1.0"
 				return snum[0] === "-" ?
 					"-1.0" :
-					/^0+\.?0*$/.test(snum) ?
+					/0+\.?0*/.all(snum) ?
 						"0.0" :
 						"1.0";
 			} ssign(snum="0.0") {
 				return this.ssgn(snum);
-				;
 			} abs(snum="0.0") {
 				return snum[0] === "-" ?
 					snum.substr(1) :
 					snum;
 			} fpart(n="0.0") {
-				n = numStrNorm(n);
+				n = this.norm(n);
 				return isNaN(n) ?
 					NaN :
 					fpart(n, !1);
 			} ipart(n="0.0") {
-				n = numStrNorm(n);
+				n = this.norm(n);
 				return n.slc(
 					0, "."
 				) + ".0";
@@ -1948,17 +1951,17 @@ void (() => { "use strict";
 					if (c) return i;
 				}
 			} floor(snum="0.0") {
-				snum = numStrNorm(snum);
+				snum = this.norm(snum);
 				var ans = this.ipart(snum);
 				snum[0] === "-" && this.isFloat(snum) && (ans = this.decr(ans));
 				return ans;
 			} ceil(snum="0.0") {
-				snum = numStrNorm(snum);
+				snum = this.norm(snum);
 				var ans = this.ipart(snum);
 				this.eq.ps(snum) && this.isFloat(snum) && (ans = this.add(ans, 1));
 				return ans;
 			} round(snum="0.0") {
-				snum = numStrNorm(snum);
+				snum = this.norm(snum);
 				return this.eq.lt(this.fpart(snum), "0.5") ?
 					this.ipart(snum) :
 					this.add(this.ipart(snum), this.sgn(snum)+"")
@@ -1970,30 +1973,18 @@ void (() => { "use strict";
 				return typeof number === "bigint" ?
 					number + ".0" :
 					typeof number === "number" ?
-						number === int(number) ?
+						number === Number.parseInt(number) ?
 							number + ".0" :
-							numStrNorm(number + "") :
+							this.norm(number + "") :
 						typeof number === "string" ?
 							this.isNaN(number) ?
 								defaultValue :
-								numStrNorm(number) :
+								this.norm(number) :
 							defaultValue;
-			} snum(number=1) {
-				return this.new(
-					number
-				);
-			} lcm(...snums) {
-				return this._lmgf(
-					"lcm", ...snums
-				)
-			} gcd(...snums) {
-				return this._lmgf(
-					"gcd", ...snums
-				)
-			} gcf(...snums) {
-				return this._lmgf(
-					"gcf", ...snums
-				)
+			} snum(number=1) { return this.new(number);
+			} lcm(...snums) { return this._lmgf("lcm", ...snums);
+			} gcd(...snums) { return this._lmgf("gcd", ...snums);
+			} gcf(...snums) { return this._lmgf("gcf", ...snums);
 			}
 		}, "defer_instance rMath"   : class RealMath {
 			constructor(
@@ -2009,14 +2000,14 @@ void (() => { "use strict";
 				this.Set = class RealSet extends Array {
 					// Probably not constant time lookup.
 					constructor(...args) {
-						args = args.flatten().filter(e => type(e) === "number");
+						args = args.flatten().filter(e => typeof e === "number");
 						if (len(args) === 1) {
 							super(...args.concat([null]));
 							this.pop();
 						} else super(...args.sort());
 					}
 					add(number=0) {
-						if (type(number) !== "number") return !1;
+						if (typeof number !== "number") return !1;
 						for (const n of this) if (n === number) return !1;
 						this.push(number);
 						this.sort();
@@ -2034,7 +2025,7 @@ void (() => { "use strict";
 						// fix in case the user used push or unshift instead of add.
 						// because that defeats the purpose
 						for (var i = len(this); i --> 0 ;)
-							type(this[i]) !== "number" && this.splice(i, 1);
+							typeof this[i] !== "number" && this.splice(i, 1);
 						return this.sort();
 					}
 					cumsum() {
@@ -2044,7 +2035,6 @@ void (() => { "use strict";
 					}
 					type() {
 						return "set";
-						;
 					}
 					sortA() {
 						var list = this.valueOf();
@@ -2070,19 +2060,20 @@ void (() => { "use strict";
 						return "Not finished";
 					}
 				};
-				this.phi = this.PHI = this.ϕ = ϕ; this.e = this.E = this.𝑒 = 𝑒;
-				this.ec    = this.γ = γ; this.pi  = this.PI  = π;
-				this.tau = this.TAU = this.𝜏 = 𝜏;
-				this.Phi = -0.6180339887498949; this.sqrt3 = 1.7320508075688772;
-				this.omega   = 0.5671432904097838 ; this.LN2     = 0.6931471805599453;
-				this.ln2     = .69314718055994531 ; this.LN10    = 2.3025850929940450;
-				this.ln10    = 2.3025850929940456 ; this.LOG2E   = 1.4426950408889634;
-				this.log2e   = 1.4426950408889634 ; this.LOG10E  = 0.4342944819032518;
-				this.loge    = .43429448190325183 ; this.SQRT1_2 = 0.7071067811865476;
-				this.sqrt1_2 = .70710678118654752 ; this.SQRT2   = 1.4142135623730951;
-				this.sqrt2   = 1.4142135623730951 ; this.logpi10 = 2.0114658675880609;
-				this.dtor = .01745329251994329576 ; this.rtod = 57.295779513082320876;
-				this.sqrt5 = 2.23606797749979; this.π_2 = π_2; // Math.π_2 == Math.π/2 but faster
+				this.phi = this.ϕ = ϕ; this.e  = this.E  = this.𝑒 = 𝑒;
+				this.ec  = this.γ = γ; this.pi = this.PI = π;
+				this.tau = this.𝜏 = 𝜏;
+				this.Phi      = -.6180339887498949  ; this.sqrt3    = 1.7320508075688772 ;
+				this.omega    = 0.5671432904097838  ; this.LN2      = 0.6931471805599453 ;
+				this.ln2      = .69314718055994531  ; this.LN10     = 2.3025850929940450 ;
+				this.ln10     = 2.3025850929940456  ; this.LOG2E    = 1.4426950408889634 ;
+				this.log2e    = 1.4426950408889634  ; this.LOG10E   = 0.4342944819032518 ;
+				this.loge     = .43429448190325183  ; this.SQRT1_2  = 0.7071067811865476 ;
+				this.sqrt1_2  = .70710678118654752  ; this.SQRT2    = 1.4142135623730951 ;
+				this.sqrt2    = 1.4142135623730951  ; this.logpi10  = 2.0114658675880609 ;
+				this.sqrt5    = 2.2360679774997894  ; this.logtaupi = .62285443720447269 ;
+				this.dtor     = .017453292519943295 ; this.rtod     = 57.29577951308232  ;
+				this.π_2 = π_2; // Math.π_2 == Math.π/2 but faster
 				this.Math = Math;
 				/*
 					G = 6.67m³/(10¹¹ kg s²)
@@ -2614,7 +2605,7 @@ void (() => { "use strict";
 					this.rydberg = 10973731.56816                      ;
 					this.sackurTetrode = -1.16487052358                ;
 					this.secondRadiation = 0.014387768775039337        ;
-					this.speedOfLight = this.c = 299792458             ;
+					this.speedOfLight = this.c = 299_792_458           ;
 					this.stefanBoltzmann = 5.67037441918443e-8         ;
 					this.weakMixingAngle = 0.2229                      ;
 					this.solarConstants = {
@@ -2636,8 +2627,7 @@ void (() => { "use strict";
 						ans -= (ans*x**ans-1) / (x**ans*(ans+1)-(ans+2)*(ans*x**ans-1)/(2*ans+2));
 						if (prev === ans) break;
 					}
-				}
-				else {
+				} else {
 					while ( i --> 0 ) {
 						prev = ans;
 						ans = (1 + ans) / (1 + x**ans)
@@ -2645,24 +2635,21 @@ void (() => { "use strict";
 					}
 				}
 				return ans;
-			} ζ(s, a, acy=1000) {
-				if (s === Infinity) return 1;
-				if (s === 0) return -.5;
-				if (s === 1) return Infinity;
-				return isNaN( s = Number(s) ) ||
-					s <= 1 ||
-					isNaN( acy = Number(acy) ) ?
-						NaN :
-						this.sum(1, acy, n => (n + a)**-s);
-			} Rzeta(s, acy=1000, a=0) {
+			} ζ(s, a=0, acy=1000, gAcy=1e3, gInc=.1) {
+				return isNaN(s = Number(s)) || isNaN(a = Number(a)) || isNaN( acy = Number(acy) ) ? NaN :
+				s === Infinity ? 1 :
+				!s ? -0.5 :
+				s === 1 ? Infinity :
+				s < 1 ? 2**s * π**(s-1) * this.sin(π_2*s) * this.gamma(1-s, gAcy, gInc) * this.ζ(1-s, a, acy) :
+				this.sum(1, acy, n => (n + a)**-s);
+			} Rzeta(s, acy=1000, gAcy=1e3, gInc=.1) {
 				// Reimann zeta function
-				// TODO: Use the analytic continuation expansion for s < 1
-				return this.ζ(s, a, acy);
-			} Hzeta(s, a, acy=1000) {
+				return this.ζ(s, 0, acy);
+			} Hzeta(s, a=0, acy, gAcy, gInc) {
 				// Hurwitz zeta function
-				return this.Rzeta(s, acy, a);
+				return this.ζ(s, a === void 0 ? 1000 : a, acy === void 0 ? 1000 : acy);
 			} π(x, form=1) {
-				if (isNaN( x = round(Number(x)) )) return NaN;
+				if (isNaN( x = floor(Number(x)) )) return NaN;
 				if (x < 2) return 0;
 				if (x === Infinity) return x;
 				if (form === 1) {
@@ -2673,9 +2660,7 @@ void (() => { "use strict";
 				if (form === 2) return this.li(x);
 				if (form === 3) return x / this.ln(x);
 				return NaN;
-			} primeCount(x, form=1) {
-				;
-				return this.π(x, form);
+			} primeCount(x, form=1) { return this.π(x, form);
 			} P(...set) {
 				// power set, set of all subsets
 				set = set.flatten();
@@ -2707,33 +2692,18 @@ void (() => { "use strict";
 				} while (json.stringify(set) !== "[]");
 				strict && len(out) > 1 && out.pop();
 				return out;
-			} expm(x, n) {
-				;
-				return 𝑒 ** x - n;
-			} expm1(x) {
-				;
-				return 𝑒 ** x - 1;
-			} log2(x) {
-				;
-				return this.logbase(2, x);
-			} log10(x) {
-				;
-				return this.logbase(10, x);
-			} logpi(x) {
-				;
-				return this.logbase(π, x);
-			} log1p(x) {
-				;
-				return this.ln1p(x);
-			} clz32(n) {
-				;
-				return this.clbz(n);
+			} expm(x, n) { return 𝑒 ** x - n;
+			} expm1(x) { return 𝑒 ** x - 1;
+			} log2(x) { return this.logbase(2, x);
+			} log10(x) { return this.logbase(10, x);
+			} logpi(x) { return this.logbase(π, x);
+			} log1p(x) { return this.ln1p(x);
+			} clz32(n) { return this.clbz(n);
 			} clbz(n) {
 				if (isNaN( n = Number(n) )) return NaN;
-				if (n < 0 || n > 2_147_483_647) return 0; // 2^31 - 1
+				if (n < 0 || n > 2_147_483_647) return 0; // 2^31 - 1. max uint32 value
 				n = n.toString(2);
-				while ( len(n) < 32 ) n = `0${n}`;
-				return len( n.remove(/1.*/) );
+				return len( (strMul("0", 32 - len(n)) + n).remove(/1.*/) );
 			} fact(x, acy=1e3, inc=.1) {
 				// TODO: Fix for negative non-integer numbers
 				if (isNaN( x = Number(x) )) return NaN;
@@ -2743,30 +2713,24 @@ void (() => { "use strict";
 				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j=>x+j);
 				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : ans;
-			} factorial(n) {
-				;
-				return this.fact(n);
+			} factorial(n) { return this.fact(n);
 			} sgn(n) {
 				return isNaN( n = Number(n) ) ?
 					NaN :
 					!n ?
 						n :
-						n<0 ?
+						n < 0 ?
 							-1 :
 							1;
 			} abs(n) {
 				return isNaN( n = Number(n) ) ?
 					NaN :
 					this.sgn(n) * n;
-			} cabs(cnum) {
-				return cMath.abs(
-					cnum
-				);
+			} cabs(cnum) { return cMath.abs(cnum);
 			} sum(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( last = Number(last) )) return NaN;
-				if (type(fn, 1) !== "func")
-					throw TypeError("rMath.sum() requires a function third argument");
+				if (type(fn, 1) !== "func") return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				var total = 0;
 				if (last === Infinity) {
@@ -2778,16 +2742,11 @@ void (() => { "use strict";
 				} else for (; n <= last; n += inc)
 					total += fn(n);
 				return total;
-			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) {
-				if (isNaN( start = Number(start) )) return NaN;
-				if (type(fn, 1) !== "func")
-					throw TypeError("rMath.infsum() requires a function second argument");
-				if (isNaN( inc = Number(inc) )) return NaN;
-				return this.sum(start, Infinity, fn, inc);
+			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) { return this.sum(start, Infinity, fn, inc);
 			} prod(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( last = Number(last) )) return NaN;
-				if (type(fn, 1) !== "func") throw TypeError("rMath.prod() requires a function third argument");
+				if (type(fn, 1) !== "func") return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				for (var total = 1; n <= last; n += inc)
 					total *= fn(n);
@@ -2804,7 +2763,7 @@ void (() => { "use strict";
 				if ( n.isInt() ) return this.ifact(n-1);
 				if (isNaN( inc = Number(inc) )) return NaN;
 				n--;
-				var ans = this.int(0, --n, t=>t**n/𝑒**t, inc);
+				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			} igammau(n, acy=1000, inc=.1) {
 				// upper incomplete gamma function
@@ -2815,33 +2774,25 @@ void (() => { "use strict";
 				n--;
 				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
-			} _(n) {
-				return isNaN( n = Number(n) ) ?
-					NaN :
-					1 / n;
-			} inverse(n) {
-				return isNaN( n = Number(n) ) ?
-					NaN :
-					1 / n;
+			} _(n) { 1 / Number(n);
+			} inverse(n) { 1 / Number(n);
 			} int(x/*start*/, end, fn=x=>x, inc=.001) {
 				// start and end are included.
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( end = Number(end) )) return NaN;
-				if (type(fn, 1) !== "func")
-					throw TypeError("rMath.int() requires a function third argument");
+				if (type(fn, 1) !== "func") return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				let ans = 0;
 				if (end > x)
 					for (; x <= end; x += inc)
 						ans += (fn(x) + fn(x + inc)) / 2 * inc;
 				else if (x > end) return -this.int(end, x, fn, inc);
-				return ans;
-			} hypot(...ns) {
-				ns = ns.flatten().map(e => Number(e));
-				if ( ns.isNaN() ) return NaN;
-				for (var a = 0, i = 0, n = len(ns); i < n; i++)
-					a += ns[i]**2;
-				return a**.5;
+				/*else */return ans;
+			} hypot(...args) {
+				if (len(arguments) !== 1) args = arguments;
+				for (var total = 0, i = len(args); i --> 0 ;)
+					total += args[i]**2;
+				return this.sqrt(a);
 			} log(x, base=MATH_LOG_DEFAULT_BASE) {
 				// TODO: Fix.
 				if (isNaN( x = Number(x) ) || isNaN( base = Number(base) ) || base <= 0 || x <= 0 || base === 1)
@@ -2849,18 +2800,12 @@ void (() => { "use strict";
 				if (base === Infinity) return x === Infinity ? NaN : 0;
 				if (x === Infinity) return Infinity;
 				for (var ans = floor(x / 2 / base), tmp = 1, i = 1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
-					ans !=(ans += abs(x - base**(ans - tmp)) < abs(x - base**ans) ? -tmp :
+					ans != (ans += abs(x - base**(ans - tmp)) < abs(x - base**ans) ? -tmp :
 						abs(x - base**(ans + tmp)) < abs(x - base**ans) ? tmp : 0)
 				);
 				return ans;
-			} logbase(base, n) {
-				return isNaN( base = Number(base) ) ||
-				isNaN( n = Number(n) ) ?
-					NaN :
-					this.log( n, base );
-			} ln(n) {
-				return isNaN( n = n ) ?
-					NaN : this.log( n, 𝑒 );
+			} logbase(base, x) { return isNaN( base = Number(base) ) || isNaN( n = Number(n) ) ? NaN : this.log( x, base );
+			} ln(n) { return isNaN( n = n ) ? NaN : this.log( n, 𝑒 );
 			} max(...ns) {
 				ns = ns.flatten();
 				if (!len(ns)) return -Infinity;
@@ -2875,14 +2820,12 @@ void (() => { "use strict";
 				let min = ns[0];
 				for (let i of ns) min = i < min ? i : min;
 				return min;
-			} mean(/*arguments*/) {
-				return Array.from(arguments).reduce((t, e) => t + e, 0) /
-					len(arguments);
+			} mean(/*arguments*/) { return Array.prototype.reduce.call(arguments, (t, e) => t + e, 0) / len(arguments);
 			} median(/*arguments*/) {
-				let arr = Array.from(arguments).flatten();
+				let arr = list(arguments).flatten();
 				return len(arr) % 2 ?
 					arr[dim(arr) / 2] :
-					(arr[len(arr)/2 - 1] + arr[len(arr)/2]) / 2
+					(arr[len(arr) / 2 - 1] + arr[len(arr) / 2]) / 2
 			} mode(...ns) {
 				// TODO: Finish
 				ns = ns.flatten();
@@ -2895,10 +2838,7 @@ void (() => { "use strict";
 				if ( ns.isNaN() ) return NaN;
 				const MEAN = this.mean(ns);
 				return ns.reduce((absDev, n) => absDev + this.abs(n - MEAN), 0) / len(ns);
-			} isPrime(n) {
-				return this.isNaN(n) ?
-					NaN :
-					n.isPrime();
+			} isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
 			} _lmgf(t="lcm", ...ns) {
 				// least commond multiple and greatest common factor
 				ns = ns.flatten();
@@ -2949,10 +2889,10 @@ void (() => { "use strict";
 			} pascal(row, col) {
 				// pascal's triangle
 				if (isNaN( row = Number(row) )) return NaN;
-				if (col !== "all") col = Number(all);
-				if (type(col, 1) !== "num" && col !== "all") return NaN;
+				if (col !== "all") col = Number(col);
+				if (typeof col !== "number" && col !== "all") return NaN;
 				row--;
-				if (col?.lower() !== "all") return this.nCr(row, col-1);
+				if (col?.lower?.() !== "all") return this.nCr(row, col-1);
 				for (var i = 0, arr = []; i <= row ;)
 					arr.push( this.nCr(row, i++) );
 				return arr;
@@ -2963,15 +2903,8 @@ void (() => { "use strict";
 					( ϕ**n - this.Phi**n ) / this.sqrt5
 				);
 				// ⌊ ϕⁿ/√5 ⌉ ∀ n∈ℤ > -1
-			} fibonacci(n=1) {
-				return isNaN( n = Number(n) ) ?
-					NaN :
-					this.fib(n);
-			} lucas(n=1) {
-				return isNaN( n = Number(n) ) ?
-					NaN :
-					round( ϕ**n + this.Phi**n );
-				// ⌊ϕⁿ⌉ ∀ n∈ℕ > 1
+			} fibonacci(n=1) { return isNaN( n = Number(n) ) ? NaN : this.fib(n);
+			} lucas(n=1) { return isNaN( n = Number(n) ) ? NaN : round( ϕ**n + this.Phi**n ); // ⌊ϕⁿ⌉ ∀ n∈ℕ > 1
 			} primeFactorInt(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if ( n.isPrime() ) return n;
@@ -2985,9 +2918,8 @@ void (() => { "use strict";
 				return primeFactors;
 			} findFactors(n) {
 				if (isNaN( n = Number(n) )) return NaN;
-				for (var i = 2, factors = [1, n], n = this.sqrt(n); i <= n; i++) {
+				for (var i = 2, factors = [1, n], n = this.sqrt(n); i <= n; i++)
 					if (!(n % i)) factors.push(i, n / i);
-				}
 				return factors;
 			} iMaxFactor(n) {
 				if (isNaN( n = Number(n) )) return NaN;
@@ -2995,32 +2927,32 @@ void (() => { "use strict";
 					if (!(n % --i))
 						return i;
 			} synthDiv(coeffs, /*x-*/divisor, includeRemainder=true, remainderType="string") {
-				if (type(coeffs, 1) !== "arr") throw TypeError("rMath.synthDiv() requires a array first argument");
-				if (type(remainderType) !== "string") throw TypeError("rMath.synthDiv() requires a string fourth argument");
+				if (type(coeffs, 1) !== "arr") return NaN;
+				if (type(remainderType) !== "string") return NaN;
 				if (isNaN( divisor = Number(divisor) )) return NaN;
 				for (var coeff = coeffs[0], coeffs2 = [coeffs[0]], n = len(coeffs), i = 1; i < n; i++) {
 					coeff = coeff * divisor + coeffs[i];
 					coeffs2.push(coeff);
 				}
 				coeffs = ["string", "str"].incl(remainderType.lower()) ?
-					coeffs2.mod(len(coeffs2)-1, e => this.isClose(e, 0, 1e-11) ?
+					coeffs2.mod(dim(coeffs2), e => this.isClose(e, 0, 1e-11) ?
 						0 :
 						`${e}/${divisor < 0 ?
-							`(x-${-divisor})` :
-							`(x+${divisor})`}`) :
+							`(x+${-divisor})` :
+							`(x-${divisor})`}`) :
 					coeffs2;
 				return includeRemainder ? coeffs : coeffs.pop2();
 			} simpRad(rad) {
 				if (isNaN( rad = Number(rad) )) return NaN;
 				for (var factor = 1, i = 2, sqrt = this.sqrt(this.abs(rad)); i <= sqrt; i += 1 + (i > 2))
-					while ( !(rad % (i*i)) ) {
-						rad /= i*i;
+					while ( !(rad % i**2) ) {
+						rad /= i**2;
 						factor *= i;
 					}
 				return `${factor}${rad < 0 ? "i" : ""}√${this.abs(rad)}`.remove(/^1|√1$/);
 			} PythagTriple(maxSize=1000) {
 				// TODO: Fix
-				if (type(maxSize, 1) !== "num") maxSize = 1000;
+				if (typeof maxSize !== "number") maxSize = 1000;
 				for (var a = 1, b = 1, c, triples = []; a < maxSize; a++) {
 					for (b = 1; b < maxSize; b++) {
 						c = this.hypot(a, b);
@@ -3055,176 +2987,19 @@ void (() => { "use strict";
 				// negate
 				return number ?
 					-num :
-					num.startsW("-") ?
+					num[0] === "-" ?
 						num.substr(1) :
 						`-${num}`;
-			} ssgn(snum="0.0") {
-				// string sign
-				return snum[0] === "-" ?
-					-1 :
-					/0+\.?0*/.test(snum) ?
-						0 :
-						1;
-			} ssign(snum="0.0") {
-				// string sign
-				return this.ssgn(snum);
-			} sabs(snum="0.0") {
-				// string absolute value
-				return snum[0] === "-" ?
-					snum.substr(1) :
-					snum;
-			} add(a="0.0", b="0.0", number=true, precision=Infinity) {
-				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				if ( isNaN(precision) ) precision = Infinity;
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
-				if (a.startsW("-") && b.startsW("-"))
-					return this.neg(this.add(a.substr(1), b.substr(1), number, precision) , number);
-				if (a.startsW("-")  && !b.startsW("-")) return this.sub(b, a.substr(1), number, precision);
-				if (!a.startsW("-") &&  b.startsW("-")) return this.sub(a, b.substr(1), number, precision);
-				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", len(b) - len(a));
-				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", len(a) - len(b));
-				a = a.split("."); b = b.split(".");
-
-				let c = [
-					[ a[0], b[0] ],
-					[ a[1], b[1] ],
-				].map(
-					e => e.map( f => f.split("") )
-				).map(
-					o => o[0].map( (e, i) => Number(e) + Number(o[1][i]) )
-				);
-				for (var i = 2; i --> 0 ;) {
-					for (var j = len(c[i]), tmp; j --> 0 ;) {
-						tmp = floor( c[i][j] / 10 );
-						c[i][j] -= 10*tmp;
-						if (tmp) {
-							if (j) c[i][j-1] += tmp;
-							else i === 1 ? c[0][dim(c[0])] += tmp : c[i].unshift(tmp);
-						}
-					}
-				}
-				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
-				if (number) return Number(c);
-				return numStrNorm(
-					c.io(".") < 0 ?
-						c + ".0" :
-						c.substr( 0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1) )
-				);
-			} sub(a="0.0", b="0.0", number=true, precision=Infinity) {
-				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				if (isNaN( precision )) precision = Infinity;
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
-				if (!a.startsW("-") && b.startsW("-")) return this.add(a, b.substr(1), number, precision);
-				if (a.startsW("-") && b.startsW("-")) return this.sub(b.substr(1), a, number, precision);
-				if (a.startsW("-") && !b.startsW("-"))
-					return this.neg( this.add(a.substr(1), b, number, precision) , number);
-				if (this.eq.gt(b, a)) return this.neg( this.sub(b, a, number, precision) , number );
-				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", len(b) - len(a));
-				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", len(a) - len(b));
-				a = a.split("."); b = b.split(".");
-
-				let c = [
-					[ a[0], b[0] ],
-					[ a[1], b[1] ],
-				].map(
-					e => e.map( f => f.split("") )
-				).map(
-					o => o[0].map( (e, i) => Number(e) - Number(o[1][i]) )
-				), neg = c[0][0] < 0;
-				for (var i = 2, j, tmp; i --> 0 ;) { // c[1] then c[0]
-				for (j = len( c[i] ) ; j --> 0 ;) { // for each element in c[i]
-						tmp = this.abs( floor(c[i][j] / 10) );
-						while (c[i][j] < 0) {
-							i + j && (c[i][j] += 10);
-							if (j) c[i][j-1] -= tmp;
-							else if (i === 1) c[0][dim(c[0])] -= tmp;
-							else throw Error(`Broken. End value shouldn't be negative.`);
-						}
-					}
-				}
-				c = c.map( e => e.join("") ).join(".");
-				if (number) return Number(c);
-				return numStrNorm(
-					c.io(".") < 0 ?
-						c + ".0" :
-						c.substr( 0, c.io(".") + (isNaN(precision) ? Infinity : precision + 1) )
-					);
-			} mul(a="0.0", b="0.0", number=true, precision=Infinity) {
-				if (this.isNaN(a) || this.isNaN(b)) return NaN;
-				a = numStrNorm( a+"" ); b = numStrNorm( b+"" );
-				const sign = this.ssgn(a) === this.ssgn(b) ? 1 : -1;
-				a = this.sabs(a); b = this.sabs(b);
-				if (this.eq.seq(a, 0) || this.eq.seq(b, 0)) return number ? 0 : "0.0";
-
-				a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
-				var dec = 0;
-				a.io(".") > 0 && (dec += dim(a) - a.io("."));
-				b.io(".") > 0 && (dec += dim(b) - b.io("."));
-				a = a.remove("."); b = b.remove(".");
-				for (var i = len(b), arr = [], carryover, tmp, str, j; i --> 0 ;) {
-					for (j = len(a), str = "", carryover = 0; j --> 0 ;) {
-						tmp = multable[ b[i] ][ a[j] ] + carryover + "";
-						carryover = dim(tmp) ? Number(tmp[0]) : 0;
-						tmp = Number(tmp[dim(tmp)]);
-						str = tmp + str;
-						!j && carryover && (str = carryover + str);
-					}
-					arr.push(str);
-				}
-				for (var i = len(arr); i --> 0 ;) arr[i] += strMul("0", i);
-				for (var total = "0.0", i = len(arr); i --> 0 ;)
-					total = this.add(arr[i], total, !1, precision)
-						.remove(/\.0+$/);
-				total = (total.substr(0, len(total) - dec) + "." + total.substr(len(total) - dec)).replace(/\.$/, ".0");
-				return sign === -1 ?
-					this.neg( total , number ) :
-					number ? Number(total) : total;
+			} ssgn(snum="0.0") { return snum[0] === "-" ? -1 : +!/0+\.?0*/.in(snum); // string sign
+			} ssign(snum="0.0") { return this.ssgn(snum); // string sign
+			} sabs(snum="0.0") { return snum[0] === "-" ? snum.substr(1) : snum; // string absolute value
+			} add(a="0.0", b="0.0", number=true) { return number ? Number(sMath.add(a, b)) : sMath.add(a, b);
+			} sub(a="0.0", b="0.0", number=true) { return number ? Number(sMath.sub(a, b)) : sMath.sub(a, b);
+			} mul(a="0.0", b="0.0", number=true) { return number ? Number(sMath.mul(a, b)) : sMath.mul(a, b);
 			} div(num="0.0", denom="1.0", number=true, precision=18) {
-				// NOTE: Will probably break the denominator is "-0"
-				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				isNaN(precision) && (precision = 18);
-				if ( this.eq.seq(denom, 0) )
-					return this.eq.seq(num, 0) ?
-						NaN : Infinity;
-				if ( this.eq.seq(num, 0) )
-					return number ?
-						0 :
-						"0.0";
-				num = numStrNorm( num+"" ); denom = numStrNorm( denom+"" );
-				const sign = this.ssgn(num) * this.ssgn(denom);
-				num = this.sabs(num); denom = this.sabs(denom);
-
-				let exponent = this.max(
-					len(fpart(num, !1)),
-					len(fpart(denom, !1))
-				) - 2;
-				num = sMath.mul10(num, exponent);
-				denom = sMath.mul10(denom, exponent);
-
-				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom, !1);
-				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
-				while (this.eq.ge(tmp3 = this.sub(tmp1, tmp2, !1), 0)) {
-					tmp1 = tmp3;
-					ans++;
-				}
-				var ansString = `${ans}`;
-				if (precision === 0) return `${ansString}.0`;
-				var remainder = this.mul(
-					this.sub(num, this.mul(ans, denom, !1), !1),
-					"10.0", !1
-				);
-				if (this.eq.sneq(remainder, 0)) ansString += ".";
-				for (var i = 0, j; this.eq.sneq(remainder, 0) && i++ < precision ;) {
-					for (j = 9; this.eq.lt(this.sub(remainder, table[j], !1), 0) ;) j--;
-					remainder = this.mul(
-						this.sub(remainder, table[j], !1),
-						"10.0", !1
-					);
-					ansString += `${j}`;
-				}
-				ansString.io(".") < 0 && (ansString += ".0");
-				ansString = sign === -1 ? `-${ansString}` : ansString;
-				return number ? Number(ansString) : ansString;
+				return number ?
+					Number(sMath.div(a, b, precision)) :
+					sMath.div(a, b, precision);
 			} mod2(a, n=1, k=0) {
 				// modulo using iteration
 				// it is rMath.mod2 because it is slower than rMath.mod
@@ -3244,25 +3019,17 @@ void (() => { "use strict";
 				if (isNaN( a = Number(a) )) return NaN;
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( k = Number(k) )) return NaN;
-				if (!n) return NaN;
 				return a - n*floor(a/n) + k;
-			} parity(...ns) {
-				ns = ns.flatten();
-				if ( ns.isNaN() ) return NaN;
-				return len(ns)-1 ?
-					ns.map(b => b%2 ? "odd" : "even") :
-					ns[0]%2 ? "odd" : "even";
+			} parity(x=0) { return x % 2 ? "odd" : "even";
 			} nCr(n, k) {
-				return isNaN( n = Number(n) ) ||
-					isNaN( k = Number(k) ) ?
+				return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ?
 					NaN :
 					this.nPr(n, k) / this.fact(k);
 			} comb(n, k) {
 				// idk, python uses "comb" for some reason. probably means "combination"
 				return this.nCr(n, k);
 			} nPr(n, k) {
-				return isNaN( n = Number(n) ) ||
-					isNaN( k = Number(k) ) ?
+				return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ?
 					NaN :
 					this.fact(n) / this.fact(n - k);
 			} perm(n, k) {
@@ -3298,8 +3065,7 @@ void (() => { "use strict";
 				if (isNaN( c = Number(c) )) return NaN;
 				return this.abs(a*x_0 + b*y_0 + c) / this.hypot(a, b);
 			} copysign(a, b) {
-				return isNaN( a = Number(a) ) ||
-					isNaN( b = Number(b) ) ?
+				return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ?
 					NaN :
 					this.abs(a) * this.sgn(b);
 			} trunc(n) {
@@ -3318,86 +3084,32 @@ void (() => { "use strict";
 			} isNNaN(e) {
 				// is not not a number. isaN, isAN
 				return this.isAN(e);
-			} imul(a, b) {
-				return isNaN( a = Number(a) ) ||
-					isNaN( b = Number(b) ) ?
-						NaN :
-						this.Math.imul(a, b);
-			} lcm(...ns) {
-				return ns.isNaN() ?
-					NaN :
-					this._lmgf("lcm", ns);
-			} gcf(...ns) {
-				return ns.isNaN() ?
-					NaN :
-					this._lmgf("gcf", ns);
-			} gcd(...ns) {
-				return ns.isNaN() ?
-					NaN :
-					this._lmgf("gcd", ns);
-			} fround(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					this.Math.fround(n);
-			} sqrt(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					this.nthrt(n, 2);
-			} cbrt(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					this.nthrt(n, 3);
-			} lnnp(x, n=1) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.ln(n + x);
-			} ln1p(x) {
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.ln(1 + x);
-			} degrees(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					n * this.rtod;
-			} radians(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					n * this.dtor;
-			} sign(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					this.sgn(n);
-			} exp(n, x=𝑒) {
-				return isNaN( n = Number(n) ) ||
-					isNaN( x = Number(x) ) ?
-					NaN :
-					x ** n;
-			} round(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					round(n);
-			} floor(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					floor(n);
-			} ceil(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					ceil(n);
-			} rand() {
-				;
-				return rand();
-			} random() {
-				;
-				return rand();
+			} imul(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.Math.imul(a, b);
+			} lcm(...ns) { return ns.isNaN() ? NaN : this._lmgf("lcm", ns);
+			} gcf(...ns) { return ns.isNaN() ? NaN : this._lmgf("gcf", ns);
+			} gcd(...ns) { return ns.isNaN() ? NaN : this._lmgf("gcd", ns);
+			} fround(n) { return isNaN( n = Number(n) ) ? n : this.Math.fround(n);
+			} sqrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2);
+			} cbrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3);
+			} lnnp(x, n=1) { return isNaN( x = Number(x) ) ? x : this.ln(n + x);
+			} ln1p(x) { return isNaN( x = Number(x) ) ? x : this.ln(1 + x);
+			} degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod;
+			} radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor;
+			} sign(n) { return isNaN( n = Number(n) ) ? n : this.sgn(n);
+			} exp(n, x=𝑒) { return isNaN( n = Number(n) ) || isNaN( x = Number(x) ) ? NaN : x ** n;
+			} round(n) { return isNaN( n = Number(n) ) ? n : round(n);
+			} floor(n) { return isNaN( n = Number(n) ) ? n : floor(n);
+			} ceil(n) { return isNaN( n = Number(n) ) ? n : ceil(n);
+			} rand() { return rand();
+			} random() { return rand();
 			} pow(a=1, b=1) {
 				// TODO: Make "pow" and "nthrt" faster
 				if (isNaN( a = Number(a) )) return NaN;
 				if (isNaN( b = Number(b) )) return NaN;
-				for (var y = 1, c = b, d = a ; true ; a *= a) {
+				for (var y = 1, c = b, d = a ;; a *= a) {
 					b & 1 && (y *= a);
 					b >>= 1;
-					if (b === 0) return (this.nthrt(d, 1 / fpart(c)) || 1) * y;
+					if (!b) return (this.nthrt(d, 1 / fpart(c)) || 1) * y;
 				}
 			} nthrt(x, rt=2) {
 				if (isNaN( x = Number(x) ) || isNaN( rt = Number(rt) )) return NaN;
@@ -3409,15 +3121,9 @@ void (() => { "use strict";
 						abs(x - (ans + tmp)**rt) < abs(x - ans**rt) ? tmp : 0)
 				);
 				return this.copysign(ans, x);
-			} square(n) {
-				if (isNaN( n = Number(n) )) return NaN;
-				return n ** 2;
-			} cube(n) {
-				if (isNaN( n = Number(n) )) return NaN;
-				return n ** 3;
-			} tesseract(n) {
-				if (isNaN( n = Number(n) )) return NaN;
-				return n ** 4;
+			} square(n) { return isNaN( n = Number(n) ) ? NaN : n ** 2;
+			} cube(n) { return isNaN( n = Number(n) ) ? NaN : n ** 3;
+			} tesseract(n) { return isNaN( n = Number(n) ) ? NaN : n ** 4;
 			} ifact(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (!n) return 1;
@@ -3457,42 +3163,25 @@ void (() => { "use strict";
 					return ans;
 				}
 			} Li(x, incOrAcy=.001, form=1) {
-				return isNaN( x = Number(x) ) ||
-					isNaN( incOrAcy = Number(incOrAcy) ) ?
+				return isNaN( x = Number(x) ) || isNaN( incOrAcy = Number(incOrAcy) ) ?
 					NaN :
 					this.li(x, incOrAcy, form) - 1.045163780117493;
 			} Ei(x, incOrAcy=.001, form=1) {
+				return isNaN( x = Number(x) ) ? NaN : this.li(e**x, incOrAcy, form);
 				// Exponential integral
 				// Ei(x) = li(e^x) ∀ -π < Im(x) ≤ π
-				if (isNaN( x = Number(x) )) return NaN;
-				return this.li(e**x, incOrAcy, form);
 			} tetrate(a, n, {Switch=false, number=false}={}) {
 				return this.hyper4(a, n, {
 					Switch: Switch,
 					number: number
 				});
-			} hyper0(n) {
-				return isNaN(n) ?
-					NaN :
-					this.add(n, 1);
-			} hyper1(a, n) {
-				return isNaN(a) ||
-					isNaN(n) ?
-					NaN :
-					this.add(a, n);
-			} hyper2(a, n) {
-				return isNaN(a) ||
-					isNaN(n) ?
-					NaN :
-					this.mul(a, n);
-			} hyper3(a, n) {
-				return isNaN(a) ||
-					isNaN(n) ?
-					NaN :
-					a ** n;
+			} hyper0(n) { return isNaN(n = Number(n)) ? NaN : this.add(n, 1);
+			} hyper1(a, n) { return isNaN(a = Number(a)) || isNaN(n = Number(n)) ? NaN : this.add(a, n);
+			} hyper2(a, n) { return isNaN(a = Number(a)) || isNaN(n = Number(n)) ? NaN : this.mul(a, n);
+			} hyper3(a, n) { return isNaN(a = Number(a)) || isNaN(n = Number(n)) ? NaN : a ** n;
 			} hyper4(a, n, {Switch=false, number=false}={}) {
-				// a ↑↑ n = a^^n = a^a^a n times = ⁿa = a ↑² n
-				if (this.isNaN( n = BigInt(n) )) return NaN;
+				// a ↑↑ n = a^^n = a^a^a^... n times = ⁿa = a ↑² n
+				if (this.isNaN( a = BigInt(a) )) return NaN;
 				if (this.isNaN( n = BigInt(n) )) return NaN;
 				if (Switch) return this.hyper4(n, a, {
 					Switch: !1,
@@ -3502,18 +3191,8 @@ void (() => { "use strict";
 				while ( n --> 1 )
 					a = A ** a;
 				return number ? Number(a) : a;
-			} sin(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.sum(0, 25, n=>(-1)**n /
-						this.fact(2*n+1)*(θ%(2*π))**(2*n+1)
-					);
-			} cos(θ) {
-				return isNaN( θ = Number(θ) ) ?
-					θ :
-					this.sum(0, 25, n=>(-1)**n /
-						this.fact(2*n)*(θ%(2*π))**(2*n)
-					);
+			} sin(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n+1)*(θ%(2*π))**(2*n+1) );
+			} cos(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n)*(θ%(2*π))**(2*n) );
 			} tan(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sin(θ) / this.cos(θ);
 			} csc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sin(θ);
 			} sec(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cos(θ);
@@ -3655,7 +3334,7 @@ void (() => { "use strict";
 				// Heaveside step function
 				// Heaveside theta function
 				if (isNaN( x = Number(x) )) return NaN;
-				if (form === 1) return this.sgn( 1 + this.sgn(x) );
+				if (form === 1) return this.sgn( this.sgn(x) + 1 );
 				if (form === 2) return (1 + this.sgn(x)) / 2
 				return +(x > 0);
 			} W(x) {
@@ -3664,7 +3343,7 @@ void (() => { "use strict";
 				if (isNaN( x = Number(x) )) return NaN;
 				if (x < -1 / e) return NaN;
 				throw Error("Not Implemented");
-			} deriv(f=x=>2*x+1, x=1, dx=1/1_073_741_824) {
+			} deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
@@ -3689,14 +3368,14 @@ void (() => { "use strict";
 					catch { throw Error("Variable name declaration is missing, and `x` was not used.") }
 				}
 
-				if (!( f(x) || f(x + dx) )) return 0;
-				let numerator = f(x + dx) - f(x);
+				if (!( f(x) || f(x + Δx) )) return 0;
+				let numerator = f(x + Δx) - f(x);
 				while ( !numerator ) {
-					dx *= 10;
-					numerator = f(x + dx) - f(x);
+					Δx *= 10;
+					numerator = f(x + Δx) - f(x);
 				}
-				return numerator / dx;
-			} tanLine(f=x=>x, x=1, ret=Object, dx=1/1_073_741_824) {
+				return numerator / Δx;
+			} tanLine(f=x=>x, x=1, ret=Object, Δx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
@@ -3721,15 +3400,14 @@ void (() => { "use strict";
 				}
 
 				var m;
-				if (!( f(x) || f(x + dx) )) {
-					m = 0;
-				} else {
-					let numerator = f(x + dx) - f(x);
+				if (!( f(x) || f(x + Δx) )) m = 0;
+				else {
+					let numerator = f(x + Δx) - f(x);
 					while ( !numerator ) {
-						dx *= 2;
-						numerator = f(x + dx) - f(x);
+						Δx *= 2;
+						numerator = f(x + Δx) - f(x);
 					}
-					m = numerator / dx;
+					m = numerator / Δx;
 				}
 				const b = f(x) - x*m;
 				type(ret, 1) === "str" && (ret = ret.lower());
@@ -3741,16 +3419,14 @@ void (() => { "use strict";
 					return `${ m ? `${m}x` : "" }${ b<0 ? `${b}` : b ? `${m ? "+" : ""}${b}` : "" }`.
 						start("0").remove(/1(?=x)/);
 			} gd(x, inc=.001) {
+				return isNaN( x = Number(x) ) ? x : this.int(0, x, t => this.sech(t), inc);
 				// gudermannian function
-				return isNaN( x = Number(x) ) ?
-					x :
-					this.int(0, x, t=>this.sech(t), inc)
 			} lam(x, inc=.001) {
 				// inverse gudermannian function
 				// Lambertian function
-				if (isNaN( x = Number(x) )) return NaN;
-				if (x <= -π_2 || x >= π_2) return NaN;
-				return this.int(0, x, t=>this.sec(t), inc);
+				return isNaN( x = Number(x) ) || x <= -π_2 || x >= π_2 ?
+					NaN :
+					this.int(0, x, t => this.sec(t), inc);
 			} base10Conv(n, base, decAcy=54, numberOnly=false) {
 				// only works for base <= 10
 				// TODO: Fix
@@ -3778,15 +3454,15 @@ void (() => { "use strict";
 					if (len(str) - str_len >= decAcy) break;
 				}
 				return `${numberOnly ? "" : `${base}:`}${str}`.remove(/\.?0*$/);
-			} bin(x, zeroB=true, twoColon=false) {
+			} bin(x, cstyle=true, colon=false) {
 				return this.isNaN( x = Number(x) ) ? x :
-					`${zeroB ? "0b" : twoColon ? "2:" : ""}${this.base10Conv(x, 2).slc(2)}`;
-			} oct(x, zeroO=true, eightColon=false) {
+					`${cstyle ? "0b" : colon ? "2:" : ""}${this.base10Conv(x, 2).slc(2)}`;
+			} oct(x, cstyle=true, colon=false) {
 				return this.isNaN( x = Number(x) ) ? x :
-					`${zeroO ? "0o" : eightColon ? "8:" : ""}${this.base10Conv(x, 8).slc(8)}`;
-			} hex(x, zeroX=true, sixteenColon=false) {
+					`${cstyle ? "0o" : colon ? "8:" : ""}${this.base10Conv(x, 8).slc(2)}`;
+			} hex(x, cstyle=true, colon=false) {
 				return this.isNaN( x = Number(x) ) ? x :
-					`${zeroX ? "0x" : sixteenColon ? "16:" : ""}${this.base10Conv(x, 16).slc(3)}`;
+					`${cstyle ? "0x" : colon ? "16:" : ""}${this.base10Conv(x, 16).slc(3)}`;
 			} timesTable(start=0, end=9) {
 				for (var i = floor(++end), j, table = []; i --> start ;)
 					for (j = floor(end), table[i] = []; j --> start ;)
@@ -3804,7 +3480,7 @@ void (() => { "use strict";
 					if (tmp[1])str = str.replace(/cos\((\d+)x\)/, `[2cosxcos(${+tmp[1]-1}x)-cos(${+tmp[1]-2}x)]`);
 					str = str.replace(/\(-?1x\)/g, "(x)").replace(/cos\(-?0x\)/g, "1");
 				}
-				str = str.replaceAll("(x)", "x").replaceAll("cosxcosx", "cos^2x");
+				str = str.replace(/\(x\)/g, "x").replace(/cosxcosx/g, "cos^2x");
 				return str.substring( 1, dim(str) ).replace(/^os$/, "cosx");
 			} heron(a=1, b=1, c=1) {
 				if (isNaN( a = Number(a) )) return NaN;
@@ -3822,10 +3498,10 @@ void (() => { "use strict";
 				startSystem.lower() === "fahrenheit"  && (startSystem = "f");
 				startSystem.lower() === "kelvin"      && (startSystem = "k");
 				/ra(nkine)?/i.in(startSystem.lower()) && (startSystem = "r");
-				endSystem  .lower() === "celcius"     && (  endSystem = "c");
-				endSystem  .lower() === "fahrenheit"  && (  endSystem = "f");
-				endSystem  .lower() === "kelvin"      && (  endSystem = "k");
-				/ra(nkine)?/i.in(  endSystem.lower()) && (  endSystem = "r");
+				endSystem  .lower() === "celcius"     && ( endSystem  = "c");
+				endSystem  .lower() === "fahrenheit"  && ( endSystem  = "f");
+				endSystem  .lower() === "kelvin"      && ( endSystem  = "k");
+				/ra(nkine)?/i.in( endSystem .lower()) && ( endSystem  = "r");
 				startSystem = startSystem.lower(); endSystem = endSystem.lower();
 				if (startSystem === endSystem) return value;
 				if (startSystem === "c") {
@@ -3987,7 +3663,7 @@ void (() => { "use strict";
 						return polar ?
 							`${cMath.abs(this)}e^${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}`.remove(
 								new RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
-							).start("1").replace(/^0.*/, "0").replace(/0\./g, ".") :
+							).start("1").replace([/^0.*/, /0\./g], ["0", "."]) :
 							this.re ? // rectangular
 								this.im ?
 									this.im > 0 ?
@@ -4018,8 +3694,9 @@ void (() => { "use strict";
 							rMath.atan2(this.re, this.im);
 					}
 					add(num, New=true) {
-						assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-						type(num) === "number" && (num = new this.constructor(num, 0));
+						if (typeof num !== "number" && type(num, 1) !== "complex")
+							throw Error("Invalid input to function");
+						typeof num === "number" && (num = new this.constructor(num, 0));
 						if (New) return new this.constructor(
 							this.re + num.re,
 							this.im + num.im
@@ -4029,8 +3706,9 @@ void (() => { "use strict";
 						return this;
 					}
 					sub(num, New=true) {
-						assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-						type(num) === "number" && (num = new this.constructor(num, 0));
+						if (typeof num !== "number" && type(num, 1) !== "complex")
+							throw Error("Invalid input to function");
+						typeof num === "number" && (num = new this.constructor(num, 0));
 						if (New) return new this.constructor(
 							this.re - num.re,
 							this.im - num.im
@@ -4040,8 +3718,9 @@ void (() => { "use strict";
 						return this;
 					}
 					mul(num, New=true) {
-						assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-						type(num) === "number" && (num = new this.constructor(num, 0));
+						if (typeof num !== "number" && type(num, 1) !== "complex")
+							throw Error("Invalid input to function");
+						typeof num === "number" && (num = new this.constructor(num, 0));
 						if (New) return new this.constructor(
 							this.re*num.re - this.im*num.im,
 							this.re*num.im + this.im*num.re
@@ -4052,8 +3731,9 @@ void (() => { "use strict";
 						return this;
 					}
 					div(num, New=true) {
-						assert(type(num) === "number" || type(num, 1) === "complex", "invalid input to function");
-						type(num) === "number" && (num = new this.constructor(num, 0));
+						if (typeof num !== "number" && type(num, 1) !== "complex")
+							throw Error("Invalid input to function");
+						typeof num === "number" && (num = new this.constructor(num, 0));
 						if (New) return new this.constructor(
 							(this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2),
 							(this.im*num.re - this.re*num.im) / (num.re**2 + num.im**2)
@@ -4100,7 +3780,7 @@ void (() => { "use strict";
 						return this;
 					}
 					pow(num, New=true) {
-						type(num) === "number" && (num = new this.constructor(num, 0));
+						typeof num === "number" && (num = new this.constructor(num, 0));
 
 						if (!this.im && !num.im) return new this.constructor(this.re ** num.re, 0);
 						if (type(num, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument");
@@ -4143,11 +3823,11 @@ void (() => { "use strict";
 				if (rMath.isNaN(re) || rMath.isNaN(im))
 					throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
 
-				if (type(re) === "bigint" && type(im) === "bigint" ) {
+				if (typeof re === "bigint" && typeof im === "bigint") {
 					throw Error("not implemented");
 					return new this.Complex(re, im);
 				}
-				if (type(re) === "number" && type(im) === "number" )
+				if (typeof re === "number" && typeof im === "number")
 					return new this.Complex(re, im);
 				throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
 			}
@@ -4177,7 +3857,7 @@ void (() => { "use strict";
 				);
 			}
 			floor(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.floor()");
 				return this.new(
 					floor(z.re),
@@ -4185,7 +3865,7 @@ void (() => { "use strict";
 				);
 			}
 			ceil(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.ceil()");
 				return this.new(
 					ceil(z.re),
@@ -4193,7 +3873,7 @@ void (() => { "use strict";
 				);
 			}
 			round(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.round()");
 				return this.new(
 					round(z.re),
@@ -4207,7 +3887,7 @@ void (() => { "use strict";
 					rMath.atan2(z.re, z.im) + 2*π*int(n);
 			}
 			ln(z, n=0) {
-				if (type(z) === "number") {
+				if (typeof z === "number") {
 					return z < 0 ?
 						this.new( rMath.ln(-z), π ) :
 						!z ?
@@ -4223,8 +3903,8 @@ void (() => { "use strict";
 				// ln(z) = ln|z| + Arg(z)i
 			}
 			log(z, base=null, n=0) {
-				type(z) === "number" && (z = this.new(z, 0));
-				type(base) === "number" && (base = this.new(base, 0));
+				typeof z === "number" && (z = this.new(z, 0));
+				typeof base === "number" && (base = this.new(base, 0));
 				if (base === null) return this.ln(z, n);
 				if (type(z, 1) !== "complex") throw TypeError("Invalid first argument");
 				if (type(base, 1) !== "complex") throw TypeError("Invalid second argument");
@@ -4232,15 +3912,15 @@ void (() => { "use strict";
 				// log_{a+bi}(c+di) = ln(c+di) / ln(a+bi)
 			}
 			logbase(base, z, n=0) {
-				type(base) === "number" && (base = this.new(base, 0));
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof base === "number" && (base = this.new(base, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(base, 1) !== "complex") throw TypeError("Incorrect first argument");
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect second argument");
 				return this.log( z, base, n );
 			}
 			pow(z1, z2, n=0) {
-				type(z1) === "number" && (z1 = this.new(z1, 0));
-				type(z2) === "number" && (z2 = this.new(z2, 0));
+				typeof z1 === "number" && (z1 = this.new(z1, 0));
+				typeof z2 === "number" && (z2 = this.new(z2, 0));
 
 				if (!z1.im && !z2.im) {
 					let pow = z1.re ** z2.re;
@@ -4256,37 +3936,37 @@ void (() => { "use strict";
 				return this.new(r*rMath.cos(θ), r*rMath.sin(θ));
 			}
 			exp(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				const r = rMath.e ** z.re;
 				return this.new(r * rMath.cos(z.im), r * rMath.sin(z.im))
 			}
 			abs(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
 				return rMath.hypot(z.re, z.im);
 			}
 			sgn(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
 				return z.div( this.abs(z) );
 				// exp(i arg num);
 			}
 			sign(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
 				return this.sgn(z);
 			}
 			nthrt(z, rt=2, n=0) {
 				// no longer broken for z ∧ rt ∈ ℝ
-				type(z) === "number" && (z = this.new(z, 0));
-				type(rt) === "number" && (rt = this.new(rt, 0));
+				typeof z === "number" && (z = this.new(z, 0));
+				typeof rt === "number" && (rt = this.new(rt, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Incorrect type for second argument");
 
 				if (type(rt, 1) === "complex") {
 					let c2d2 = rt.re**2 + rt.im**2;
 					return this.pow(z, this.new(rt.re/c2d2, -rt.im/c2d2));
 				}
-				if (type(rt) !== "number") throw TypeError("Incorrect type for first argument");
+				if (typeof rt !== "number") throw TypeError("Incorrect type for first argument");
 
 				return this.exp(
 					this.new( 0, this.arg(z, n) / rt )
@@ -4295,25 +3975,25 @@ void (() => { "use strict";
 				);
 			}
 			sqrt(z) {
-				if (type(z) !== "number" && type(z, 1) !== "complex") throw TypeError("Invalid type");
+				if (typeof z !== "number" && type(z, 1) !== "complex") throw TypeError("Invalid type");
 				return this.nthrt(z, 2);
 			}
 			cbrt(z) {
-				type(z) === "number" && (z = this.new(z, 0));
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") throw TypeError("Invalid type");
 				return this.nthrt(z, 3);
 			}
 			rect(r, θ) {
 				/* polar to rectangular */
-				type(r) === "number" && (r = this.new(r, 0));
-				type(θ) === "number" && (θ = this.new(θ, 0));
+				typeof r === "number" && (r = this.new(r, 0));
+				typeof θ === "number" && (θ = this.new(θ, 0));
 				if (type(r, 1) !== "complex") throw TypeError("Invalid type for first argument");
 				if (type(θ, 1) !== "complex") throw TypeError("Invalid type for second argument");
 				return this.exp(θ).mul(r);
 			}
 			isClose(z1, z2, range=Number.EPSILON) {
-				type(z1) === "number" && (z1 = this.new(z1, 0));
-				type(z2) === "number" && (z2 = this.new(z2, 0));
+				typeof z1 === "number" && (z1 = this.new(z1, 0));
+				typeof z2 === "number" && (z2 = this.new(z2, 0));
 				if (type(z1, 1) !== "complex") throw TypeError("Invalid type for first argument");
 				if (type(z2, 1) !== "complex") throw TypeError("Invalid type for second argument");
 				return rMath.isClose(this.abs(z1), this.abs(z2), range) &&
@@ -4321,9 +4001,9 @@ void (() => { "use strict";
 					rMath.isClose(z1.im, z2,im, range);
 			}
 			sum(n, last, func=z=>z, inc=1) {
-				type(n) === "number" && (n = this.new(n, 0));
-				type(last) === "number" && (last = this.new(last, 0));
-				type(inc) === "number" && (inc = this.new(inc, 0));
+				typeof n === "number" && (n = this.new(n, 0));
+				typeof last === "number" && (last = this.new(last, 0));
+				typeof inc === "number" && (inc = this.new(inc, 0));
 				// complex less than or equal to
 				const complet = (a, b) => !a.im && !b.im ? a.re <= b.re : this.abs(a) <= this.abs(b);
 				
@@ -4346,7 +4026,7 @@ void (() => { "use strict";
 			}
 			isPrime(z) {
 				// TODO: Start
-				if (type(z, 1) === "num") z = this.new(z, 0);
+				if (typeof z === "number") z = this.new(z, 0);
 				if (type(z, 1) !== "complex") throw TypeError("cMath.isPrime() requires a complex argument");
 				throw Error("Not Implemented");
 			}
@@ -4468,13 +4148,13 @@ void (() => { "use strict";
 				Function : Function,
 				Array    : Array,
 				Object(input, handle=!1) {
-					return type(input) === "object" ?
+					return typeof input === "object" ?
 						input :
 						handle == !0 ?
 							{ data: input } :
 							void 0
 				}, Symbol(input, handle=!1) {
-					return type(input) === "symbol" ?
+					return typeof input === "symbol" ?
 						input :
 						handle == !0 ?
 							Symbol.for(input) :
@@ -4766,8 +4446,7 @@ void (() => { "use strict";
 		HTMLAllCollection.prototype.last = lastElement
 		; // Function prototype
 		Function.prototype.args = function getArguments() {
-			var s = window.getArguments(this);
-			return s.slc(1, dim(s));
+			return window.getArguments(this);
 		}, Function.prototype.code = function code() {
 			var s = this + "";
 			if (s.sW("class")) return false;
@@ -4874,7 +4553,7 @@ void (() => { "use strict";
 			i = i.tofar();
 			if (e === void 0) {
 				for (j = 0, n = len(i); j < n; j++)
-					if (type(i[j], 1) === "num") a.push(a[i[j]]);
+					if (typeof i[j] === "number") a.push(a[i[j]]);
 			}
 			else {
 				if (/\S+=>{}/.in(`${e}`) && type(e, 1) === "func") a.push(void 0);
@@ -4888,7 +4567,7 @@ void (() => { "use strict";
 			i = i.tofar();
 			if (e === void 0) {
 				for (j = 0, n = len(i); j < n; j++)
-					if (type(i[j], 1) === "num")
+					if (typeof i[j] === "number")
 						a.unshift(a[i[j]]);
 			}
 			else {
@@ -5074,7 +4753,7 @@ void (() => { "use strict";
 		,  String.prototype.last = lastElement
 		,  String.prototype.sL = String.prototype.startsL = String.prototype.startsLike =
 		function startsLike(strOrArr="", position=0) { // TODO: Finish
-			if (!["str", "arr"].incl(type(strOrArr, 1))) return !1;
+			if (!["str", "mutstr", "arr"].incl(type(strOrArr, 1))) return !1;
 			if (type(strOrArr) === "string") {
 
 			}
@@ -5098,9 +4777,9 @@ void (() => { "use strict";
 				[];
 		}, String.prototype.slc = function slc(start=0, end=Infinity, startOffset=0, endOffset=0, substr=false, includeEnd=false) {
 			// last index = end - 1
-			type(start) === "string" && (start = this.io(start));
-			type( end ) === "string" && (end   = this.io( end ));
-			return Array.from(this).slc(
+			type(start) === "string" && (start = this.io(String(start)));
+			type( end ) === "string" && (end   = this.io(String( end )));
+			return list(this).slc(
 				start,
 				end,
 				startOffset,
@@ -5108,7 +4787,7 @@ void (() => { "use strict";
 				includeEnd
 			).join("");
 		}, String.prototype.tag = function tag(tagName) {
-			if (!tagName || type(tagName, 1) !== "str") return this;
+			if (!tagName || type(tagName) !== "string") return this;
 			return `<${tagName}>${this}</${tagName}>`;
 		}, String.prototype.rand = function random() {
 			return Array.prototype.rand.call(this);
@@ -5200,7 +4879,8 @@ void (() => { "use strict";
 			return `${text}${this}`;
 		}, String.prototype.splitn = function splitNTimes(input, times=1, joinUsingInput=true, customJoiner="") {
 			var joiner = joinUsingInput ? input : customJoiner;
-			assert(type(input, 1) === "regex" || type(input, 1) === "str", "function requires a regular expression or a string");
+			if (type(input, 1) !== "regex" && type(input) !== "string")
+				throw Error("function requires a regular expression or a string");
 			for (var i = 0, arr = this.split(input), arr2 = [], n = len(arr); i < n && i++ < times ;)
 				arr2.push(arr.shift());
 			if (len(arr)) arr2.push(arr.join(joiner));
@@ -5607,7 +5287,7 @@ void function anonymizeFunction(fn) {
 	 * a() // ƒ asdf() { return asdf }
 	 * anonymizeFunction(a)() // Uncaught ReferenceError: asdf is not defined ...
 	**/
-	return type(fn) === "function" ?
+	return type(fn, 1) === "func" ?
 		Function(fn.args(), fn.code()) :
 		Function(fn);
 }/*
