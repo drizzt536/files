@@ -102,12 +102,21 @@ void (() => { "use strict";
 			, sgn = Math.sign
 			, rand = Math.random
 			, json = JSON
+			, copy = function copy(object) { return json.parse( json.stringify(object) ) }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
 			, isIterable = function isIterable(arg) {
 				try { for (const e of arg) break; return !0 }
 				catch { return !1 }
 			}, len = function length(e) { return e?.length }
-			, dim = function dim(e, n=1) { return e?.length - n }
+			, arrzip = function arrzip(arr1, arr2) {
+				// array zip
+				if (!isIterable(arr1) || !isIterable(arr2)) return [];
+				if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = list(arr1);
+				if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = list(arr2);
+				for (var output = [], length = rMath.min(len(arr1), len(arr2)), i = 0; i < length; i++)
+					output.push([arr1[i], arr2[i]]);
+				return output;
+			}, dim = function dim(e, n=1) { return e?.length - n }
 			, numStrNorm = function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
 				if (typeof snum === "bigint") return snum + ".0";
 				if (isNaN(snum)) return defaultValue;
@@ -159,6 +168,12 @@ void (() => { "use strict";
 								/^class/.test(a+"") ?
 									"class" :
 									"func"
+			}, ord = function ord(string) {
+				return type(string) === "string" && len(string) ?
+					dim(string) ?
+						string.split("").map(c => c.charCodeAt()) :
+						string.charCodeAt() :
+					0
 			}, fpart = function fPart(n, number=true) {
 				if ( rMath.isNaN(n) ) return NaN;
 				if ( n.isInt() ) return number ? 0 : "0.0";
@@ -175,6 +190,14 @@ void (() => { "use strict";
 					typeof n === "bigint" ?
 						n :
 						NaN;
+			}, randint = function randomInt(min=1, max=null) {
+				if (max == null) {
+					max = min;
+					min = 0;
+				}
+				if (typeof min !== "number" || typeof max !== "number") return round( rand() );
+				min < 0 && min--;
+				return round( rand() * abs(min - max) + min );
 			}, floor = function floor(n) {
 				return typeof n === "number" ?
 					Number.parseInt(n) - (n<0 && n != Number.parseInt(n)) :
@@ -297,9 +320,33 @@ void (() => { "use strict";
 					} else output += json[i];
 				}
 				return output;
+			}, bisectLeft = function bisectLeft(arr, x, lo=0, hi=null) {
+				hi === null && (hi = len(arr));
+				if (lo < 0 || hi < lo || hi > len(arr)) return false;
+				let mid;
+				while (lo != hi) {
+					mid = lo + floor((hi-lo)/2);
+					if (arr[mid] < x) lo = mid + 1; else hi = mid;
+				}
+				return lo;
+			}, bisectRight = function bisectRight(arr, x, lo=0, hi=null) {
+				hi === null && (hi = len(arr));
+				if (lo < 0 || hi < lo || hi > len(arr)) return false;
+				let mid;
+				while (lo != hi) {
+					mid = lo + floor((hi-lo)/2);
+					if (arr[mid] <= x) lo = mid + 1;
+					else hi = mid;
+				}
+				return lo;
+			}, bisect = function bisect(arr, x, orientation="left", lo=0, hi=null) {
+				return (orientation === "left" ?
+					bisectLeft : bisectRight
+				)(arr, x, lo, hi);
 			}
+
+
 			// constr
-			// fpart
 			// move bisects to the array prototype
 		}
 		// Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
@@ -805,30 +852,10 @@ void (() => { "use strict";
 			var element = createElement("style", options);
 			if (append) document.head.appendChild(element);
 			return element;
-		}, bisectLeft(arr, x, lo=0, hi=null) {
-			hi === null && (hi = len(arr));
-			if (lo < 0 || hi < lo || hi > len(arr)) return false;
-			let mid;
-			while (lo != hi) {
-				mid = lo + floor((hi-lo)/2);
-				if (arr[mid] < x) lo = mid + 1; else hi = mid;
-			}
-			return lo;
-		}, bisectRight(arr, x, lo=0, hi=null) {
-			hi === null && (hi = len(arr));
-			if (lo < 0 || hi < lo || hi > len(arr)) return false;
-			let mid;
-			while (lo != hi) {
-				mid = lo + floor((hi-lo)/2);
-				if (arr[mid] <= x) lo = mid + 1;
-				else hi = mid;
-			}
-			return lo;
-		}, bisect(arr, x, orientation="left", lo=0, hi=null) {
-			return (orientation === "left" ?
-				bisectLeft : bisectRight
-			)(arr, x, lo, hi);
-		}, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue='"1.0"', precision=18) {
+		}, bisectLeft: bisectLeft
+		, bisectRight: bisectRight
+		, bisect: bisect
+		, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue='"1.0"', precision=18) {
 			// ^ means exponent now.
 			if (type(variable) !== "string" || !len(variable)) return !1;
 			defaultArgValue = String(defaultArgValue);
@@ -906,15 +933,8 @@ void (() => { "use strict";
 					code.replace([/\[/g, /\]/g], ["(", ")"])
 				};`.replace(/,/g, ", ")
 			);
-		}, arrzip(arr1, arr2) {
-			// array zip
-			if (!isIterable(arr1) || !isIterable(arr2)) return [];
-			if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = list(arr1);
-			if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = list(arr2);
-			for (var output = [], length = rMath.min(len(arr1), len(arr2)), i = 0; i < length; i++)
-				output.push([arr1[i], arr2[i]]);
-			return output;
-		}, *genzip(gen1, gen2) {
+		}, arrzip: arrzip
+		, *genzip(gen1, gen2) {
 			// generator zip
 			gen1 = toGenerator(gen1); gen2 = toGenerator(gen2);
 			var a = gen1.next(), b = gen2.next();
@@ -933,21 +953,9 @@ void (() => { "use strict";
 				else yield thing;
 			}
 			return Generator(thing);
-		}, ord(string) {
-			return type(string) === "string" && len(string) ?
-				dim(string) ?
-					string.split("").map(c => c.charCodeAt()) :
-					string.charCodeAt() :
-				0
-		}, "randint"     : function randomInt(min=1, max=null) {
-			if (max == null) {
-				max = min;
-				min = 0;
-			}
-			if (typeof min !== "number" || typeof max !== "number") return round( rand() );
-			min < 0 && min--;
-			return round( rand() * abs(min - max) + min );
-		}, "constr"      : function constructorName(input, name=true) {
+		}, ord: ord
+		, randint: randint
+		, "constr"      : function constructorName(input, name=true) {
 			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
 			return input?.constructor?.name;
 		}, "dir"         : function currentDirectory(loc=new Error().stack) {
@@ -1088,7 +1096,7 @@ void (() => { "use strict";
 		, dim: dim
 		, len: len
 		, complex(re=0, im=0)  { return cMath.new(re, im) }
-		, copy(object)         { return json.parse( json.stringify(object) ) }
+		, copy: copy
 		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
 		, chr: chr
 		// Instance Variables:
@@ -3544,10 +3552,7 @@ void (() => { "use strict";
 				return type(set, 1) === "set" ? 
 					set.cumsum() :
 					NaN;
-			} set(...args) {
-				return new this.Set(
-					...args.flatten()
-				);
+			} set(...args) { return new this.Set(...args.flatten() );
 			} setUnion(set1, set2) {
 				return type(set1, 1) !== "set" ?
 					type(set2, 1) !== "set" ?
@@ -3564,22 +3569,10 @@ void (() => { "use strict";
 					int( Number(n) ),
 					n => this.div(1, n, !0, 18)
 				)
-			} fraction(numer=0, denom=0) {
-				return fMath?.new?.(
-					numer,
-					denom,
-				);
-			} complex(re=0, im=0) {
-				return cMath?.new?.(
-					re,
-					im,
-				);
-			} bigint(value=0) {
-				try { return BigInt(value) }
-				catch { return NaN }
-			} number(value=0) {
-				try { return Number(value) }
-				catch { return NaN }
+			} fraction(numer=0, denom=0) { return fMath.new(numer, denom);
+			} complex(re=0, im=0) { return cMath.new(re, im);
+			} bigint(value=0) { try { return BigInt(value) } catch { return NaN }
+			} number(value=0) { try { return Number(value) } catch { return NaN }
 			} toAccountingStr(n = 0) {
 				return this.isNaN(n) ?
 					NaN :
@@ -3648,17 +3641,10 @@ void (() => { "use strict";
 						Object.is(im, -0) && (im = 0);
 						this.re = re;
 						this.im = im;
-					}
-					type() {
-						return "complex";
-					}
-					isComplex() {
-						return !!this.im;
-					}
-					toPolar(doubleStar=false) {
-						return `${cMath.abs(this)}e${doubleStar ? "**" : "^"}(${this.arg()}i)`;
-					}
-					toString( {polar=false, char="i", parens=true}={} ) {
+					} type() { return "complex";
+					} isComplex() { return !!this.im;
+					} toPolar(doubleStar=false) { return `${cMath.abs(this)}e${doubleStar ? "**" : "^"}(${this.arg()}i)`;
+					} toString( {polar=false, char="i", parens=true}={} ) {
 						char = char[0] || "i";
 						return polar ?
 							`${cMath.abs(this)}e^${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}`.remove(
@@ -3675,25 +3661,14 @@ void (() => { "use strict";
 										`${this.im ===  1  ? ""  : this.im}${char}` :
 										`${this.im === -1  ? "-" : this.im}${char}` :
 									"0";
-					}
-					toArr() {
-						return [this.re, this.im];
-					}
-					toLList() {
-						return this.toArr().toLList();
-					}
-					toRegObj() { // because for...of doesn't work with class objects
-						return {
-							re: this.re,
-							im: this.im
-						}
-					}
-					arg(form="radians") {
-						return ["d", "deg", "degree", "degrees"].incl(form) ?
+					} toArr() { return [this.re, this.im];
+					} toLList() { return this.toArr().toLList();
+					} toRegObj() { return { re: this.re, im: this.im }; // because for...of doesn't work with class objects
+					} arg(form="radians") {
+						return ["d", "deg", "degree", "degrees"].incl(form?.lower?.()) ?
 							rMath.deg.atan2(this.re, this.im) :
 							rMath.atan2(this.re, this.im);
-					}
-					add(num, New=true) {
+					} add(num, New=true) {
 						if (typeof num !== "number" && type(num, 1) !== "complex")
 							throw Error("Invalid input to function");
 						typeof num === "number" && (num = new this.constructor(num, 0));
@@ -3704,8 +3679,7 @@ void (() => { "use strict";
 						this.re += num.re;
 						this.im += num.im;
 						return this;
-					}
-					sub(num, New=true) {
+					} sub(num, New=true) {
 						if (typeof num !== "number" && type(num, 1) !== "complex")
 							throw Error("Invalid input to function");
 						typeof num === "number" && (num = new this.constructor(num, 0));
@@ -3716,8 +3690,7 @@ void (() => { "use strict";
 						this.re -= num.re;
 						this.im -= num.im;
 						return this;
-					}
-					mul(num, New=true) {
+					} mul(num, New=true) {
 						if (typeof num !== "number" && type(num, 1) !== "complex")
 							throw Error("Invalid input to function");
 						typeof num === "number" && (num = new this.constructor(num, 0));
@@ -3729,8 +3702,7 @@ void (() => { "use strict";
 						this.re = tmp*num.re - this.im*num.im;
 						this.im = tmp*num.im + this.im*num.re;
 						return this;
-					}
-					div(num, New=true) {
+					} div(num, New=true) {
 						if (typeof num !== "number" && type(num, 1) !== "complex")
 							throw Error("Invalid input to function");
 						typeof num === "number" && (num = new this.constructor(num, 0));
@@ -3742,8 +3714,7 @@ void (() => { "use strict";
 						this.re = (this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2);
 						this.im = (this.im*num.re - tmp*num.im) / (num.re**2 + num.im**2);
 						return this;
-					}
-					floor(New=true) {
+					} floor(New=true) {
 						if (New) return new this.constructor(
 							floor(this.re),
 							floor(this.im)
@@ -3751,8 +3722,7 @@ void (() => { "use strict";
 						this.re = floor(this.re);
 						this.im = floor(this.im);
 						return this;
-					}
-					ceil(New=true) {
+					} ceil(New=true) {
 						if (New) return new this.constructor(
 							ceil(this.re),
 							ceil(this.im)
@@ -3760,8 +3730,7 @@ void (() => { "use strict";
 						this.re = ceil(this.re);
 						this.im = ceil(this.im);
 						return this;
-					}
-					round(New=true) {
+					} round(New=true) {
 						if (New) return new this.constructor(
 							round(this.re),
 							round(this.im)
@@ -3769,8 +3738,7 @@ void (() => { "use strict";
 						this.re = round(this.re);
 						this.im = round(this.im);
 						return this;
-					}
-					frac(New=true) {
+					} frac(New=true) {
 						if (New) return new this.constructor(
 							fpart(this.re),
 							fpart(this.im)
@@ -3778,15 +3746,14 @@ void (() => { "use strict";
 						this.re = fpart(this.re);
 						this.im = fpart(this.im);
 						return this;
-					}
-					pow(num, New=true) {
+					} pow(num, New=true) {
 						typeof num === "number" && (num = new this.constructor(num, 0));
 
 						if (!this.im && !num.im) return new this.constructor(this.re ** num.re, 0);
-						if (type(num, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument");
+						if (type(num, 1) !== "complex") return NaN;
 
-						const r = (this.re**2+this.im**2) ** (num.re/2) / rMath.e ** ( num.im*this.arg(this) ),
-							θ = num.re*this.arg(this) + num.im*rMath.ln( rMath.hypot(this.re, this.im) )
+						const r = (this.re**2+this.im**2) ** (num.re/2) / e ** ( num.im*this.arg(this) ),
+							θ = num.re*this.arg() + num.im*rMath.ln( this.abs() )
 						if (New) return new this.constructor(
 							r * rMath.cos(θ),
 							r * rMath.sin(θ)
@@ -3794,17 +3761,16 @@ void (() => { "use strict";
 						this.re = r * rMath.cos(θ);
 						this.im = r * rMath.sin(θ);
 						return this;
-					}
-					exp(New=true) {
-						const r = rMath.e ** this.re;
+					} exp(New=true) {
+						const r = e ** this.re;
 						if (New) return new this.constructor(
 							r * rMath.cos(this.im),
 							r * rMath.sin(this.im)
 						);
 						this.re = r * rMath.cos(this.im);
 						this.im = r * rMath.sin(this.im);
-					}
-					fpart(New=true) { return this.frac(New) }
+					} fpart(New=true) { return this.frac(New) }
+					abs() { return cMath.abs(this) }
 				};
 				this.lnNeg1 = this.new(0, π);
 				this.lni    = this.new(0, π_2);
@@ -3813,15 +3779,13 @@ void (() => { "use strict";
 				if (degTrig) this.deg = {
 				}; if (help) this.help = {
 				};
-			}
-			new(re=0, im=0) {
+			} new(re=0, im=0) {
 				if (type(re, 1) === "complex") return re;
 				if (isArr(re)) {
 					im = re[1];
 					re = re[0];
 				}
-				if (rMath.isNaN(re) || rMath.isNaN(im))
-					throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
+				if (rMath.isNaN(re) || rMath.isNaN(im)) return NaN;
 
 				if (typeof re === "bigint" && typeof im === "bigint") {
 					throw Error("not implemented");
@@ -3829,64 +3793,54 @@ void (() => { "use strict";
 				}
 				if (typeof re === "number" && typeof im === "number")
 					return new this.Complex(re, im);
-				throw TypeError(`Invalid types for cMath.new() arguments: ${re}, ${im}`);
-			}
-			complex(re=0, im=0) { return this.new(re, im) }
+				return NaN;
+			} complex(re=0, im=0) { return this.new(re, im) }
 			add(a, b) {
-				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
-					throw TypeError("cMath.add requires complex arguments");
-				return this.new(a.re + b.re, a.im + b.im);
-			}
-			sub(a, b) {
-				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
-					throw TypeError("cMath.add requires complex arguments");
-				return this.new(a.re + b.re, a.im + b.im);
-			}
-			mul(a, b)  {
-				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
-					throw TypeError("cMath.add requires complex arguments");
-				return this.new(a.re*b.re - a.im*b.im, a.re*b.im + b.re*a.im);
-			}
-			div(a, b) {
-				if (type(a, 1) !== "complex" && type(b, 1) !== "complex")
-					throw TypeError("cMath.add requires complex arguments");
-
-				return this.new(
-					(a.re*b.re + a.im*b.im) / (b.re**2 + b.im**2),
-					(a.im*b.re - a.re*b.im) / (b.re**2 + b.im**2)
-				);
-			}
-			floor(z) {
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.new(a.re + b.re, a.im + b.im);
+			} sub(a, b) {
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.new(a.re + b.re, a.im + b.im);
+			} mul(a, b)  {
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.new(a.re*b.re - a.im*b.im, a.re*b.im + b.re*a.im);
+			} div(a, b) {
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.new(
+						(a.re*b.re + a.im*b.im) / (b.re**2 + b.im**2),
+						(a.im*b.re - a.re*b.im) / (b.re**2 + b.im**2)
+					);
+			} floor(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.floor()");
+				if (type(z, 1) !== "complex") return NaN;
 				return this.new(
 					floor(z.re),
 					floor(z.im),
 				);
-			}
-			ceil(z) {
+			} ceil(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.ceil()");
+				if (type(z, 1) !== "complex") return NaN;
 				return this.new(
 					ceil(z.re),
 					ceil(z.im),
 				);
-			}
-			round(z) {
+			} round(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.round()");
+				if (type(z, 1) !== "complex") return NaN;
 				return this.new(
 					round(z.re),
 					round(z.im),
 				);
-			}
-			arg(z, n=0, form="radians") {
-				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.arg()");
+			} arg(z, n=0, form="radians") {
+				if (type(z, 1) !== "complex") return NaN;
 				return form === "degrees" || form === "deg" || form === "degree" ?
-					rMath.deg.atan2(z.re, z.im) + 2*π*int(n) :
-					rMath.atan2(z.re, z.im) + 2*π*int(n);
-			}
-			ln(z, n=0) {
+					rMath.deg.atan2(z.re, z.im) + 𝜏*int(n) :
+					rMath.atan2(z.re, z.im) + 𝜏*int(n);
+			} ln(z, n=0) {
 				if (typeof z === "number") {
 					return z < 0 ?
 						this.new( rMath.ln(-z), π ) :
@@ -3894,31 +3848,28 @@ void (() => { "use strict";
 							NaN :
 							this.new( rMath.ln(z), 0 );
 				}
-				if (type(z, 1) !== "complex") throw TypeError("Invalid type for cMath.ln()");
+				if (type(z, 1) !== "complex") return NaN;
 				return this.new(
 					rMath.ln( this.abs(z) ),
 					this.arg(z, int(n))
 				);
 				// ln(0 + bi) = ln|b| + isgn(b)π/2
 				// ln(z) = ln|z| + Arg(z)i
-			}
-			log(z, base=null, n=0) {
+			} log(z, base=null, n=0) {
 				typeof z === "number" && (z = this.new(z, 0));
 				typeof base === "number" && (base = this.new(base, 0));
 				if (base === null) return this.ln(z, n);
-				if (type(z, 1) !== "complex") throw TypeError("Invalid first argument");
-				if (type(base, 1) !== "complex") throw TypeError("Invalid second argument");
+				if (type(z, 1) !== "complex") return NaN;
+				if (type(base, 1) !== "complex") return NaN;
 				return this.ln(z, n).div( this.ln(base, n) );
 				// log_{a+bi}(c+di) = ln(c+di) / ln(a+bi)
-			}
-			logbase(base, z, n=0) {
+			} logbase(base, z, n=0) {
 				typeof base === "number" && (base = this.new(base, 0));
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(base, 1) !== "complex") throw TypeError("Incorrect first argument");
-				if (type(z, 1) !== "complex") throw TypeError("Incorrect second argument");
+				if (type(base, 1) !== "complex") return NaN;
+				if (type(z, 1) !== "complex") return NaN;
 				return this.log( z, base, n );
-			}
-			pow(z1, z2, n=0) {
+			} pow(z1, z2, n=0) {
 				typeof z1 === "number" && (z1 = this.new(z1, 0));
 				typeof z2 === "number" && (z2 = this.new(z2, 0));
 
@@ -3927,107 +3878,86 @@ void (() => { "use strict";
 					if (isNaN(pow)) return this.new(0, (-z1.re) ** z2.re);
 					return this.new(z1.re ** z2.re, 0);
 				}
-				if (type(z1, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument 1");
-				if (type(z2, 1) !== "complex") throw TypeError("Invalid type for Complex.pow() argument 2");
+				if (type(z1, 1) !== "complex") return NaN;
+				if (type(z2, 1) !== "complex") return NaN;
 
 				const r = (z1.re**2 + z1.im**2) ** (z2.re / 2)  /  rMath.e ** ( z2.im*this.arg(z1, n) ),
 					θ = z2.re*this.arg(z1, n) + z2.im*rMath.ln(this.abs(z1))
 				//re^iθ = rcosθ + risinθ
 				return this.new(r*rMath.cos(θ), r*rMath.sin(θ));
-			}
-			exp(z) {
+			} exp(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				const r = rMath.e ** z.re;
+				const r = e ** z.re;
 				return this.new(r * rMath.cos(z.im), r * rMath.sin(z.im))
-			}
-			abs(z) {
+			} abs(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
+				if (type(z, 1) !== "complex") return NaN;
 				return rMath.hypot(z.re, z.im);
-			}
-			sgn(z) {
+			} sgn(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
+				if (type(z, 1) !== "complex") return NaN;
 				return z.div( this.abs(z) );
 				// exp(i arg num);
-			}
-			sign(z) {
+			} sign(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Incorrect argument type");
+				if (type(z, 1) !== "complex") return NaN;
 				return this.sgn(z);
-			}
-			nthrt(z, rt=2, n=0) {
-				// no longer broken for z ∧ rt ∈ ℝ
+			} nthrt(z, rt=2, n=0) {
 				typeof z === "number" && (z = this.new(z, 0));
 				typeof rt === "number" && (rt = this.new(rt, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Incorrect type for second argument");
-
+				if (type(z, 1) !== "complex") return NaN;
 				if (type(rt, 1) === "complex") {
 					let c2d2 = rt.re**2 + rt.im**2;
 					return this.pow(z, this.new(rt.re/c2d2, -rt.im/c2d2));
 				}
-				if (typeof rt !== "number") throw TypeError("Incorrect type for first argument");
+				if (typeof rt !== "number") return NaN;
 
 				return this.exp(
 					this.new( 0, this.arg(z, n) / rt )
 				).mul(
 					rMath.nthrt( this.abs(z), rt )
 				);
-			}
-			sqrt(z) {
-				if (typeof z !== "number" && type(z, 1) !== "complex") throw TypeError("Invalid type");
-				return this.nthrt(z, 2);
-			}
-			cbrt(z) {
+			} sqrt(z) { return typeof z !== "number" && type(z, 1) !== "complex" ? NaN : this.nthrt(z, 2);
+			} cbrt(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				if (type(z, 1) !== "complex") throw TypeError("Invalid type");
+				if (type(z, 1) !== "complex") return NaN;
 				return this.nthrt(z, 3);
-			}
-			rect(r, θ) {
+			} rect(r, θ) {
 				/* polar to rectangular */
 				typeof r === "number" && (r = this.new(r, 0));
 				typeof θ === "number" && (θ = this.new(θ, 0));
-				if (type(r, 1) !== "complex") throw TypeError("Invalid type for first argument");
-				if (type(θ, 1) !== "complex") throw TypeError("Invalid type for second argument");
+				if (type(r, 1) !== "complex") return NaN;
+				if (type(θ, 1) !== "complex") return NaN;
 				return this.exp(θ).mul(r);
-			}
-			isClose(z1, z2, range=Number.EPSILON) {
+			} isClose(z1, z2, range=Number.EPSILON) {
 				typeof z1 === "number" && (z1 = this.new(z1, 0));
 				typeof z2 === "number" && (z2 = this.new(z2, 0));
-				if (type(z1, 1) !== "complex") throw TypeError("Invalid type for first argument");
-				if (type(z2, 1) !== "complex") throw TypeError("Invalid type for second argument");
+				if (type(z1, 1) !== "complex") return NaN;
+				if (type(z2, 1) !== "complex") return NaN;
 				return rMath.isClose(this.abs(z1), this.abs(z2), range) &&
 					rMath.isClose(z1.re, z2,re, range) &&
 					rMath.isClose(z1.im, z2,im, range);
-			}
-			sum(n, last, func=z=>z, inc=1) {
+			} sum(n, last, func=z=>z, inc=1) {
 				typeof n === "number" && (n = this.new(n, 0));
 				typeof last === "number" && (last = this.new(last, 0));
 				typeof inc === "number" && (inc = this.new(inc, 0));
 				// complex less than or equal to
 				const complet = (a, b) => !a.im && !b.im ? a.re <= b.re : this.abs(a) <= this.abs(b);
 				
-				if (type(n, 1) !== "complex") throw TypeError("sum() requires a complex first argument");
-				if (type(last, 1) !== "complex") throw TypeError("sum() requires a complex second argument");
-				if (type(func, 1) !== "func") throw TypeError("sum() requires a function third argument");
-				if (type(inc, 1) !== "complex") throw TypeError("sum() requires a complex fourth argument");
+				if (type(n, 1) !== "complex") return NaN;
+				if (type(last, 1) !== "complex") return NaN;
+				if (type(func, 1) !== "func") return NaN;
+				if (type(inc, 1) !== "complex") return NaN;
 				
 				for ( var total = this.new(0, 0) ; complet(n, last) ; n.add(inc, 0) )
 					total.add( func(n, 0), 0 );
 				return total;
-			}
-			conjugate(z) {
-				if (type(z, 1) !== "complex") throw TypeError("conjugate() requires a complex argument");
-				return this.new(z.re, -z.im);
-			}
-			inverse(z) {
-				if (type(z, 1) !== "complex") throw TypeError("conjugate() requires a complex argument");
-				return this.new(1/z.re, 1/z.im);
-			}
-			isPrime(z) {
+			} conjugate(z) { return type(z, 1) !== "complex" ? NaN : this.new(z.re, -z.im);
+			} inverse(z) { return type(z, 1) !== "complex" ? NaN : this.new(1/z.re, 1/z.im);
+			} isPrime(z) {
 				// TODO: Start
 				if (typeof z === "number") z = this.new(z, 0);
-				if (type(z, 1) !== "complex") throw TypeError("cMath.isPrime() requires a complex argument");
+				if (type(z, 1) !== "complex") return NaN;
 				throw Error("Not Implemented");
 			}
 		}, "defer_instance fMath"   : class FractionalStringMath {
@@ -4159,7 +4089,7 @@ void (() => { "use strict";
 						handle == !0 ?
 							Symbol.for(input) :
 							void 0
-				}, undefined() { return void 0 },
+				}, undefined() {},
 				Fraction: fMath.Fraction,
 				CFraction: cfMath.CFraction,
 				Set: rMath.Set,
@@ -4167,7 +4097,6 @@ void (() => { "use strict";
 				dict: dict,
 				LinkedList: LinkedList,
 				MutableString: MutableString,
-				
 			}
 		}, "defer_call_local cleanup_math"() {
 			Output_Math_Variable    === "default" && (Output_Math_Variable    = "Math");
@@ -4183,9 +4112,8 @@ void (() => { "use strict";
 			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
 			rMath.ℙ = rMath.P; // power set
 			if (window[Output_Math_Variable] !== void 0 && (Output_Math_Variable === "Math" ?
-					Alert_Conflict_For_Math === true :
-					Output_Math_Variable === void 0 ?
-						false : true)
+					Alert_Conflict_For_Math === !0 :
+					Output_Math_Variable !== void 0)
 			) {
 				if (ON_CONFLICT === "crash") throw Error(`window["${Output_Math_Variable}"] is already defined and ON_CONFLICT is set to 'crash'`);
 				if (ON_CONFLICT === "cry") console.log(`window["${Output_Math_Variable}"] overwritten and ON_CONFLICT is set to cry.`);
@@ -4262,7 +4190,7 @@ void (() => { "use strict";
 					DEFER_ARR.push(s);
 			} else if (s.startsWith("overwrite ")) { window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
 			} else if (s.startsWith("call ")) { window[s.substr(5)] = LIBRARY_FUNCTIONS[s]();
-			}
+			} // else {}
 		};
 		for (const s of Object.keys(LIBRARY_FUNCTIONS)) define(s, 0);
 	} {// Event and Document things
@@ -4283,8 +4211,8 @@ void (() => { "use strict";
 
 			typeof options === "boolean" && (options = {
 				capture  : options,
-				passive  : false,
-				once     : false,
+				passive  : !1,
+				once     : !1,
 				type     : Type,
 				listener : listener
 			});
@@ -4308,8 +4236,8 @@ void (() => { "use strict";
 
 			typeof options === "boolean" && (options = {
 				capture  : options,
-				passive  : false,
-				once     : false,
+				passive  : !1,
+				once     : !1,
 				type     : Type,
 				listener : listener
 			});
@@ -4445,8 +4373,7 @@ void (() => { "use strict";
 		; // HTMLAllCollection prototype
 		HTMLAllCollection.prototype.last = lastElement
 		; // Function prototype
-		Function.prototype.args = function getArguments() {
-			return window.getArguments(this);
+		Function.prototype.args = function getArguments() { return window.getArguments(this);
 		}, Function.prototype.code = function code() {
 			var s = this + "";
 			if (s.sW("class")) return false;
@@ -4479,10 +4406,8 @@ void (() => { "use strict";
 		}, Function.prototype.isArrow = function isArrowFunction() {
 			var s = this + "";
 			return !s.sW("function") && !s.sW("class");
-		}, Function.prototype.isClass = function isClass() {
-			return (this + "").sW("class");
-		}, Function.prototype.isRegular = function isRegularFunction() {
-			return (this + "").sW("function");
+		}, Function.prototype.isClass = function isClass() { return (this + "").sW("class");
+		}, Function.prototype.isRegular = function isRegularFunction() { return (this + "").sW("function");
 		}; // Object prototype
 		Object.copy = copy
 		, Object.prototype.tofar = function toFlatArray() {
@@ -4491,18 +4416,17 @@ void (() => { "use strict";
 			if (
 				["number", "string", "symbol", "boolean", "bigint", "function"].incl(type(val)) ||
 				val == null ||
-				constr(val) === 'Object'
+				val?.constructor?.name === 'Object'
 			)
 				return [this.valueOf()].flatten();
-			return Array.from(this.valueOf()).flatten();
+			return list(this.valueOf()).flatten();
 		},  Object.keyof = function keyof(obj, value) {
 			for (const key of Object.keys(obj))
 				if (obj[key] === value) return key;
 			return null;
 		}; // RegExp prototype
 		RegExp.prototype.in = RegExp.prototype.test
-		,  RegExp.prototype.toRegex = function toRegex() {
-			return this;
+		,  RegExp.prototype.toRegex = function toRegex() { return this;
 		}, RegExp.prototype.all = function all(str="") {
 			var a = `${this}`;
 			return RegExp(`^(${a.substr(1, dim(a, 2))})$`, "").in(str);
@@ -4532,8 +4456,8 @@ void (() => { "use strict";
 			while ( num --> 0 ) this.shift();
 			return this;
 		}, Array.prototype.union = function union(array) {
-			["NodeList", "HTMLAllCollection", "HTMLCollection"].incl(constr(array)) &&
-				(array = Array.from(array));
+			["NodeList", "HTMLAllCollection", "HTMLCollection"].incl(array?.constructor?.name) &&
+				(array = list(array));
 			for (var arr = this.concat(array), i = len(arr); i --> 0 ;)
 				this[i] = arr[i];
 			return this;
@@ -4569,8 +4493,7 @@ void (() => { "use strict";
 				for (j = 0, n = len(i); j < n; j++)
 					if (typeof i[j] === "number")
 						a.unshift(a[i[j]]);
-			}
-			else {
+			} else {
 				if (/\S+=>{}/.in(`${e}`) && type(e, 1) === "func") a.unshift(void 0);
 				else a.unshift(e);
 				for (j = 0, n = len(i); j < n; j++)
@@ -4608,7 +4531,7 @@ void (() => { "use strict";
 				a[indexes[i]] = func[i](a[indexes[i]], indexes[i]);
 			return a;
 		}, Array.prototype.remrep = function removeRepeats() {
-			return Array.from(new Set(this));
+			return list(new Set(this));
 			// probably changes the order of the array
 		}, Array.prototype.rand = function random() {
 			var a = this;
@@ -4736,12 +4659,12 @@ void (() => { "use strict";
 			for (var arr = copy(this), dupes = [], i = len(arr), val; i --> 0 ;)
 				arr.incl(val = arr.pop()) && dupes.push([i, val]);
 			return len(dupes) ? dupes : null;
-		}, Array.prototype.bisectLeft = function bisectLeft(x, low=0, high=null) {
-			return window.bisectLeft(this, x, low, high);
-		}, Array.prototype.bisectRight = function bisectRight(x, low=0, high=null) {
-			return window.bisectRight(this, x, low, high);
-		}, Array.prototype.bisect = function bisect(x, orientation="left", low=0, high=null) {
-			return window.bisect(this, x, orientation, low, high);
+		}, Array.prototype.bisectLeft = function bisectLeftArray(x, low=0, high=null) {
+			return bisectLeft(this, x, low, high);
+		}, Array.prototype.bisectRight = function bisectRightArray(x, low=0, high=null) {
+			return bisectRight(this, x, low, high);
+		}, Array.prototype.bisect = function bisectArray(x, orientation="left", low=0, high=null) {
+			return bisect(this, x, orientation, low, high);
 		}; // String prototype
 		String.prototype.io = String.prototype.indexOf
 		,  String.prototype.lio = String.prototype.lastIndexOf
@@ -4823,11 +4746,11 @@ void (() => { "use strict";
 		}, String.prototype.remove = function remove(arg) {
 			return this.replace(arg, "");
 		}, String.prototype.remrep = function removeRepeats() {
-			return Array.from( // this also sorts the string. *shrugs*, whatever idc
+			return list( // this also sorts the string. *shrugs*, whatever idc
 				new Set(this)
 			).join("");
 		}, String.prototype.each = function putArgBetweenEachCharacter(arg="") {
-			return Array.from(this).join(`${arg}`);
+			return list(this).join(`${arg}`);
 		}, String.prototype.toFunc = function toNamedFunction(name="anonymous") {
 			var s = this.valueOf();
 			if (s.sW("Symbol(") && s.eW(")")) throw Error("Can't parse Symbol().");
