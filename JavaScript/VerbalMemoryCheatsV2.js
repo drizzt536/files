@@ -2,7 +2,7 @@ var x = 50_000; // input
 
 // for the minified versions, it will not work for invalid inputs, as opposed to returning
 
-// original version. 1004 characters
+// original version. 1000 characters
 !function main(score) {
 	/**INSTRUCTIONS
 	 * 1. go to https://humanbenchmark.com/tests/verbal-memory

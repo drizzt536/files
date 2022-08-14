@@ -4,12 +4,14 @@
 /PowerShell
 /txt
 /TypeScript
+/Haskell
 
 HTML/3quine.html
 HTML/calculator.html
 HTML/BlackJack.html
 
 JavaScript/jquery.js
+
 
 # not actually passwords.
 Python/passwords.py

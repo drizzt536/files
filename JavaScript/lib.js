@@ -24,22 +24,12 @@ void (() => { "use strict";
 		   - alert (alt)
 		   - crash
 		   - cry
-		   - dont-use
-		   - none (anything else defaults to this)
-
-		 * If something not in the options is used for ON_CONFLICT, excluding "default",
-		 * "None" will be chosen instead.
-		 * The defaults are the boolean value true, unless otherwise noted on the same line in a comment
-		 * All alerts happen using console.log except for conflict stuff.
-
-		 * Input Math Variable Options:
-		   - aMath   (all)
-		   - bMath   (bigint)
-		   - cMath   (complex)
-		   - cfsMath (complex fractional string)
-		   - fMath   (fraction)
-		   - rMath   (real numbers)
-		   - sMath   (string)
+		   - dont-use: doesn't overwrite anything
+		   - none (anything else defaults to this): ignores the error and overwrites the value anyway
+		 * For Below:
+		   - The defaults are the boolean value true, unless otherwise noted on the same line in a comment
+		   - if there is a comment that is not on the same line as a variable, it is for the variable directly below it
+		   - All alerts happen using console.log except for conflict stuff.
 		**/
 
 		var
@@ -52,18 +42,22 @@ void (() => { "use strict";
 		, Output_Math_Variable        = "default" // "Math"
 		, Input_Math_Variable         = "default" // "rMath"
 		, MATH_LOG_DEFAULT_BASE       = "default" // 10. for rMath.log and rMath.logbase
-		, MATH_DEFAULT_END_SYSTEM     = "default" // for rMath.tempConv
+		, MATH_DEFAULT_END_SYSTEM     = "default" // "c", for rMath.tempConv
 		, aMath_Help_Argument         = "default"
-		, aMath_Trig_Argument         = "default"
+		, aMath_DegTrig_Argument      = "default"
 		, aMath_Comparatives_Argument = "default"
+		, aMath_Internals_Argument    = "default"
 		, bMath_Help_Argument         = "default"
 		, bMath_DegTrig_Argument      = "default"
+		, bMath_Comparatives_Argument = "default"
 		, cMath_DegTrig_Argument      = "default"
 		, cMath_Help_Argument         = "default"
 		, fMath_Help_Argument         = "default"
 		, fMath_DegTrig_Argument      = "default"
 		, sMath_Help_Argument         = "default"
-		, sMath_Comparatives_Argument = "default" // true, only recommended to be false if you plan to never use sMath
+		, sMath_DegTrig_Argument      = "default"
+		// true, only recommended to be false if you plan to never use sMath or anything that uses it.
+		, sMath_Comparatives_Argument = "default"
 		, rMath_DegTrig_Argument      = "default"
 		, rMath_Help_Argument         = "default"
 		, rMath_Comparatives_Argument = "default"
@@ -102,8 +96,9 @@ void (() => { "use strict";
 			, sgn = Math.sign
 			, rand = Math.random
 			, json = JSON
-			, copy = function copy(object) { return json.parse( json.stringify(object) ) }
+			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
+			, copy = function copy(object) { return json.parse( json.stringify(object) ) }
 			, isIterable = function isIterable(arg) {
 				try { for (const e of arg) break; return !0 }
 				catch { return !1 }
@@ -127,47 +122,48 @@ void (() => { "use strict";
 						len(snum.match(/^-?(0+\B)/)?.[1]), // can evaluate to NaN, but it doesn't matter
 						snum.match(/\B0+$/)?.index || Infinity
 				);
-			} // uses isArr
-			, type = function type(a, specific=!1) {
-				return specific == !1 || typeof a === "bigint" || typeof a === "symbol" || a === void 0 ?
+			}, type = function type(a, specific=!1) {
+				return specific == !1 || typeof a === "bigint" || typeof a === "symbol" ?
 					/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
 						"string" :
 						typeof a :
-					typeof a === "number" ?
-						isNaN(a) ?
-							"nan" :
-							isNaN(a - a) ?
-								"inf" :
-								"num" :
-						typeof a === "object" ?
-							a?.constructor?.name === 'NodeList' ?
-								"nodelist" :
-								a.test === /a/?.test ?
-									"regex" :
-									a === null ?
-										"null" :
-										/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
-											"linkedlist" :
-											/^type\(\){return("|'|`)complex\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
-												"complex" :
-												/^type\(\){return("|'|`)fraction\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
-													"fraction" :
-													/^type\(\){return("|'|`)set\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
-														"set" :
-														/^type\(\){return("|'|`)dict\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
-															"dict" :
-															/^type\(\){return("|'|`)mutstr\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
-																"mutstr" :
-																isArr(a) ?
-																	"arr" :
-																	"obj" :
-							typeof a === "string" ?
-								"str" :
-								typeof a === "boolean" ?
-									"bool" :
-								/^class/.test(a+"") ?
-									"class" :
-									"func"
+					a === void 0 ?
+						"und" :
+						typeof a === "number" ?
+							isNaN(a) ?
+								"nan" :
+								isNaN(a - a) ?
+									"inf" :
+									"num" :
+							typeof a === "object" ?
+								a?.constructor?.name === 'NodeList' ?
+									"nodelist" :
+									a.test === /a/.test ?
+										"regex" :
+										a === null ?
+											"null" :
+											/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+												"linkedlist" :
+												/^type\(\){return("|'|`)complex\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+													"complex" :
+													/^type\(\){return("|'|`)fraction\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+														"fraction" :
+														/^type\(\){return("|'|`)set\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+															"set" :
+															/^type\(\){return("|'|`)dict\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+																"dict" :
+																/^type\(\){return("|'|`)mutstr\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+																	"mutstr" :
+																	isArr(a) ?
+																		"arr" :
+																		"obj" :
+								typeof a === "string" ?
+									"str" :
+									typeof a === "boolean" ?
+										"bool" :
+									/^class/.test(a+"") ?
+										"class" :
+										"func"
 			}, ord = function ord(string) {
 				return type(string) === "string" && len(string) ?
 					dim(string) ?
@@ -175,6 +171,7 @@ void (() => { "use strict";
 						string.charCodeAt() :
 					0
 			}, fpart = function fPart(n, number=true) {
+				if (typeof n === "bigint") return number ? 0 : "0.0";
 				if ( rMath.isNaN(n) ) return NaN;
 				if ( n.isInt() ) return number ? 0 : "0.0";
 				if ((n+"").includes("e+")) n = n.toPrecision(100);
@@ -223,7 +220,7 @@ void (() => { "use strict";
 					else if (fn[i] === ")") count--;
 					if (!count) break;
 				}
-				return fn.substr(1, i);
+				return fn.substr(1, i-1);
 			}, createElement = function createElement(element="p", options={}) {
 				var element = document.createElement(element), objects = null, click = null;
 				for (const e of Object.keys(options)) {
@@ -344,26 +341,20 @@ void (() => { "use strict";
 					bisectLeft : bisectRight
 				)(arr, x, lo, hi);
 			}
-
-
-			// constr
-			// move bisects to the array prototype
-		}
-		// Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
-		for (var i=10,j,multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j=10; j --> 0 ;)
+		} // Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
+		for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j = 10; j --> 0 ;)
 				multable[i][j] = i * j;
-		for (var i=10,j,addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j=10; j --> 0 ;)
+		for (var i = 10, j, addtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j = 10; j --> 0 ;)
 				addtable[i][j] = i + j;
-		for (var i=10,j,subtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j=10; j --> 0 ;)
+		for (var i = 10, j, subtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j = 10; j --> 0 ;)
 				subtable[i][j] = i - j;
-		for (var i=10,j,divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
-			for (j=10; j --> 0 ;)
+		for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
+			for (j = 10; j --> 0 ;)
 				divtable[i][j] = i / j;
-		var
-		alphabetL       = "abcdefghijklmnopqrstuvwxyz"
+		var alphabetL   = "abcdefghijklmnopqrstuvwxyz"
 		, alphabet      = alphabetL
 		, alphabetU     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		, numbers       = "0123456789"
@@ -511,97 +502,52 @@ void (() => { "use strict";
 			} function o(n, r, e, u, o, c, f) { return t(r ^ e ^ u, n, r, o, c, f)
 			} function c(n, r, e, u, o, c, f) { return t(e ^ (r | ~u), n, r, o, c, f)
 			} function f(n, t) {
-				var f, i, a, h, l;
-				n[t >> 5] |= 128 << t % 32,
-				n[14 + (t + 64 >>> 9 << 4)] = t;
-				var v = 1732584193
-				  , d = -271733879
-				  , g = -1732584194
-				  , s = 271733878;
-				for (f = 0; f < n.length; f += 16)
-					i = v,
-					a = d,
-					h = g,
-					l = s,
-					v = e(v, d, g, s, n[f], 7, -680876936),
-					s = e(s, v, d, g, n[f + 1], 12, -389564586),
-					g = e(g, s, v, d, n[f + 2], 17, 606105819),
-					d = e(d, g, s, v, n[f + 3], 22, -1044525330),
-					v = e(v, d, g, s, n[f + 4], 7, -176418897),
-					s = e(s, v, d, g, n[f + 5], 12, 1200080426),
-					g = e(g, s, v, d, n[f + 6], 17, -1473231341),
-					d = e(d, g, s, v, n[f + 7], 22, -45705983),
-					v = e(v, d, g, s, n[f + 8], 7, 1770035416),
-					s = e(s, v, d, g, n[f + 9], 12, -1958414417),
-					g = e(g, s, v, d, n[f + 10], 17, -42063),
-					d = e(d, g, s, v, n[f + 11], 22, -1990404162),
-					v = e(v, d, g, s, n[f + 12], 7, 1804603682),
-					s = e(s, v, d, g, n[f + 13], 12, -40341101),
+				n[t >> 5] |= 128 << t % 32, n[14 + (t + 64 >>> 9 << 4)] = t;
+				for (var f=0,i,a,h,l,v=1732584193, d=-271733879, g=-1732584194, s=271733878; f < n.length; f += 16)
+					i = v, a = d, h = g, l = s,
+					v = e(v, d, g, s, n[f], 7, -680876936), s = e(s, v, d, g, n[f + 1], 12, -389564586),
+					g = e(g, s, v, d, n[f + 2], 17, 606105819), d = e(d, g, s, v, n[f + 3], 22, -1044525330),
+					v = e(v, d, g, s, n[f + 4], 7, -176418897), s = e(s, v, d, g, n[f + 5], 12, 1200080426),
+					g = e(g, s, v, d, n[f + 6], 17, -1473231341), d = e(d, g, s, v, n[f + 7], 22, -45705983),
+					v = e(v, d, g, s, n[f + 8], 7, 1770035416), s = e(s, v, d, g, n[f + 9], 12, -1958414417),
+					g = e(g, s, v, d, n[f + 10], 17, -42063), d = e(d, g, s, v, n[f + 11], 22, -1990404162),
+					v = e(v, d, g, s, n[f + 12], 7, 1804603682), s = e(s, v, d, g, n[f + 13], 12, -40341101),
 					g = e(g, s, v, d, n[f + 14], 17, -1502002290),
 					v = u(v, d = e(d, g, s, v, n[f + 15], 22, 1236535329), g, s, n[f + 1], 5, -165796510),
-					s = u(s, v, d, g, n[f + 6], 9, -1069501632),
-					g = u(g, s, v, d, n[f + 11], 14, 643717713),
-					d = u(d, g, s, v, n[f], 20, -373897302),
-					v = u(v, d, g, s, n[f + 5], 5, -701558691),
-					s = u(s, v, d, g, n[f + 10], 9, 38016083),
-					g = u(g, s, v, d, n[f + 15], 14, -660478335),
-					d = u(d, g, s, v, n[f + 4], 20, -405537848),
-					v = u(v, d, g, s, n[f + 9], 5, 568446438),
-					s = u(s, v, d, g, n[f + 14], 9, -1019803690),
-					g = u(g, s, v, d, n[f + 3], 14, -187363961),
-					d = u(d, g, s, v, n[f + 8], 20, 1163531501),
-					v = u(v, d, g, s, n[f + 13], 5, -1444681467),
-					s = u(s, v, d, g, n[f + 2], 9, -51403784),
-					g = u(g, s, v, d, n[f + 7], 14, 1735328473),
+					s = u(s, v, d, g, n[f + 6], 9, -1069501632), g = u(g, s, v, d, n[f + 11], 14, 643717713),
+					d = u(d, g, s, v, n[f], 20, -373897302), v = u(v, d, g, s, n[f + 5], 5, -701558691),
+					s = u(s, v, d, g, n[f + 10], 9, 38016083), g = u(g, s, v, d, n[f + 15], 14, -660478335),
+					d = u(d, g, s, v, n[f + 4], 20, -405537848), v = u(v, d, g, s, n[f + 9], 5, 568446438),
+					s = u(s, v, d, g, n[f + 14], 9, -1019803690), g = u(g, s, v, d, n[f + 3], 14, -187363961),
+					d = u(d, g, s, v, n[f + 8], 20, 1163531501), v = u(v, d, g, s, n[f + 13], 5, -1444681467),
+					s = u(s, v, d, g, n[f + 2], 9, -51403784), g = u(g, s, v, d, n[f + 7], 14, 1735328473),
 					v = o(v, d = u(d, g, s, v, n[f + 12], 20, -1926607734), g, s, n[f + 5], 4, -378558),
-					s = o(s, v, d, g, n[f + 8], 11, -2022574463),
-					g = o(g, s, v, d, n[f + 11], 16, 1839030562),
-					d = o(d, g, s, v, n[f + 14], 23, -35309556),
-					v = o(v, d, g, s, n[f + 1], 4, -1530992060),
-					s = o(s, v, d, g, n[f + 4], 11, 1272893353),
-					g = o(g, s, v, d, n[f + 7], 16, -155497632),
-					d = o(d, g, s, v, n[f + 10], 23, -1094730640),
-					v = o(v, d, g, s, n[f + 13], 4, 681279174),
-					s = o(s, v, d, g, n[f], 11, -358537222),
-					g = o(g, s, v, d, n[f + 3], 16, -722521979),
-					d = o(d, g, s, v, n[f + 6], 23, 76029189),
-					v = o(v, d, g, s, n[f + 9], 4, -640364487),
-					s = o(s, v, d, g, n[f + 12], 11, -421815835),
-					g = o(g, s, v, d, n[f + 15], 16, 530742520),
+					s = o(s, v, d, g, n[f + 8], 11, -2022574463), g = o(g, s, v, d, n[f + 11], 16, 1839030562),
+					d = o(d, g, s, v, n[f + 14], 23, -35309556), v = o(v, d, g, s, n[f + 1], 4, -1530992060),
+					s = o(s, v, d, g, n[f + 4], 11, 1272893353), g = o(g, s, v, d, n[f + 7], 16, -155497632),
+					d = o(d, g, s, v, n[f + 10], 23, -1094730640), v = o(v, d, g, s, n[f + 13], 4, 681279174),
+					s = o(s, v, d, g, n[f], 11, -358537222), g = o(g, s, v, d, n[f + 3], 16, -722521979),
+					d = o(d, g, s, v, n[f + 6], 23, 76029189), v = o(v, d, g, s, n[f + 9], 4, -640364487),
+					s = o(s, v, d, g, n[f + 12], 11, -421815835), g = o(g, s, v, d, n[f + 15], 16, 530742520),
 					v = c(v, d = o(d, g, s, v, n[f + 2], 23, -995338651), g, s, n[f], 6, -198630844),
-					s = c(s, v, d, g, n[f + 7], 10, 1126891415),
-					g = c(g, s, v, d, n[f + 14], 15, -1416354905),
-					d = c(d, g, s, v, n[f + 5], 21, -57434055),
-					v = c(v, d, g, s, n[f + 12], 6, 1700485571),
-					s = c(s, v, d, g, n[f + 3], 10, -1894986606),
-					g = c(g, s, v, d, n[f + 10], 15, -1051523),
-					d = c(d, g, s, v, n[f + 1], 21, -2054922799),
-					v = c(v, d, g, s, n[f + 8], 6, 1873313359),
-					s = c(s, v, d, g, n[f + 15], 10, -30611744),
-					g = c(g, s, v, d, n[f + 6], 15, -1560198380),
-					d = c(d, g, s, v, n[f + 13], 21, 1309151649),
-					v = c(v, d, g, s, n[f + 4], 6, -145523070),
-					s = c(s, v, d, g, n[f + 11], 10, -1120210379),
-					g = c(g, s, v, d, n[f + 2], 15, 718787259),
-					d = c(d, g, s, v, n[f + 9], 21, -343485551),
-					v = r(v, i),
-					d = r(d, a),
-					g = r(g, h),
-					s = r(s, l);
+					s = c(s, v, d, g, n[f + 7], 10, 1126891415), g = c(g, s, v, d, n[f + 14], 15, -1416354905),
+					d = c(d, g, s, v, n[f + 5], 21, -57434055), v = c(v, d, g, s, n[f + 12], 6, 1700485571),
+					s = c(s, v, d, g, n[f + 3], 10, -1894986606), g = c(g, s, v, d, n[f + 10], 15, -1051523),
+					d = c(d, g, s, v, n[f + 1], 21, -2054922799), v = c(v, d, g, s, n[f + 8], 6, 1873313359),
+					s = c(s, v, d, g, n[f + 15], 10, -30611744), g = c(g, s, v, d, n[f + 6], 15, -1560198380),
+					d = c(d, g, s, v, n[f + 13], 21, 1309151649), v = c(v, d, g, s, n[f + 4], 6, -145523070),
+					s = c(s, v, d, g, n[f + 11], 10, -1120210379), g = c(g, s, v, d, n[f + 2], 15, 718787259),
+					d = c(d, g, s, v, n[f + 9], 21, -343485551), v = r(v, i), d = r(d, a), g = r(g, h), s = r(s, l);
 				return [v, d, g, s]
 			} function i(n) {
-				var r, t = "", e = 32 * n.length;
-				for (r = 0; r < e; r += 8)
+				for (var r = 0, t = "", e = 32 * n.length; r < e; r += 8)
 					t += String.fromCharCode(n[r >> 5] >>> r % 32 & 255);
 				return t
 			} function a(n) {
 				var r, t = [];
-				for (t[(n.length >> 2) - 1] = void 0,
-				r = 0; r < t.length; r++)
-					t[r] = 0;
+				for (t[(n.length >> 2) - 1] = void 0, r = 0; r < t.length; r++) t[r] = 0;
 				var e = 8 * n.length;
-				for (r = 0; r < e; r += 8)
-					t[r >> 5] |= (255 & n.charCodeAt(r / 8)) << r % 32;
+				for (r = 0; r < e; r += 8) t[r >> 5] |= (255 & n.charCodeAt(r / 8)) << r % 32;
 				return t
 			} function h(n) {
 				var r, t, e = "0123456789abcdef", u = "";
@@ -610,18 +556,12 @@ void (() => { "use strict";
 					u += e.charAt(r >>> 4 & 15) + e.charAt(15 & r);
 				return u
 			} function l(n) { return unescape(encodeURIComponent(n))
-			} function v(n) {
-				return function(n) {
-					return i(f(a(n), 8 * n.length))
-				}(l(n))
+			} function v(n) { return function(n) { return i(f(a(n), 8 * n.length)) }(l(n))
 			} function d(n, r) {
 				return function(n, r) {
 					var t, e, u = a(n), o = [], c = [];
-					for (o[15] = c[15] = void 0,
-					u.length > 16 && (u = f(u, 8 * n.length)),
-					t = 0; t < 16; t++)
-						o[t] = 909522486 ^ u[t],
-						c[t] = 1549556828 ^ u[t];
+					for (o[15] = c[15] = void 0, u.length > 16 && (u = f(u, 8 * n.length)), t = 0; t < 16; t++)
+						o[t] = 909522486 ^ u[t], c[t] = 1549556828 ^ u[t];
 					return e = f(o.concat(a(r)), 512 + 8 * r.length),
 					i(f(c.concat(e), 640))
 				}(l(n), l(r))
@@ -634,7 +574,7 @@ void (() => { "use strict";
 						v(n) :
 						h(v(n));
 			}
-		})(), isIterable: isIterable, sizeof(obj) {
+		})(), sizeof(obj) {
 			if (obj == null) return 0;
 			var length = len(obj);
 			if (length != null) return length;
@@ -723,11 +663,7 @@ void (() => { "use strict";
 			return str ?
 				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
 				ans;
-		}, type: type
-		, round: round
-		, floor: floor
-		, ceil: ceil
-		, *range(start, stop, step=1) {
+		}, *range(start, stop, step=1) {
 			stop == null ? [stop, start] = [start, 0] : stop++;
 			for (var i = start; i < stop; i += step) yield i;
 		}, simulateKeypress({
@@ -844,18 +780,13 @@ void (() => { "use strict";
 					selector !== void 0 && (this.selector = selector);
 				}
 			})(values, selector, void 0);
-		}, getArguments: getArguments
-		, createElement: createElement
-		, css(text="", options={}, append=true) {
+		}, css(text="", options={}, append=true) {
 			options.innerHTML ??= text;
 			options.type ??= "text/css";
 			var element = createElement("style", options);
 			if (append) document.head.appendChild(element);
 			return element;
-		}, bisectLeft: bisectLeft
-		, bisectRight: bisectRight
-		, bisect: bisect
-		, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue='"1.0"', precision=18) {
+		}, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue='"1.0"', precision=18) {
 			// ^ means exponent now.
 			if (type(variable) !== "string" || !len(variable)) return !1;
 			defaultArgValue = String(defaultArgValue);
@@ -933,8 +864,7 @@ void (() => { "use strict";
 					code.replace([/\[/g, /\]/g], ["(", ")"])
 				};`.replace(/,/g, ", ")
 			);
-		}, arrzip: arrzip
-		, *genzip(gen1, gen2) {
+		}, *genzip(gen1, gen2) {
 			// generator zip
 			gen1 = toGenerator(gen1); gen2 = toGenerator(gen2);
 			var a = gen1.next(), b = gen2.next();
@@ -953,34 +883,24 @@ void (() => { "use strict";
 				else yield thing;
 			}
 			return Generator(thing);
-		}, ord: ord
-		, randint: randint
-		, "constr"      : function constructorName(input, name=true) {
+		}, "constr"     : function constructorName(input, name=true) {
 			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
 			return input?.constructor?.name;
-		}, "dir"         : function currentDirectory(loc=new Error().stack) {
+		}, "dir"        : function currentDirectory(loc=new Error().stack) {
 			// sometimes doesn't work
 			return `${loc}`
 				.substr(13)
 				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
-		}, "nsub"        : function substituteNInBigIntegers(num, n=1) {
+		}, "nsub"       : function substituteNInBigIntegers(num, n=1) {
 			return typeof num === "bigint" ?
 				n * Number(num) :
 				num;
-		}, "revLList"    : function reverseLinkedList(list) {
+		}, "revLList"   : function reverseLinkedList(list) {
 			for (let cur = list.head, prev = null, next; current ;) 
 				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
 			list.head = prev || list.head;
 			return list;
-		}, fpart: fpart
-		, "str"          : function String(a) {
-			return a?.toString?.(
-				...list(arguments).slc(1)
-			);
-			// return a?.toString?.apply?.(
-			// 	Array.from(arguments).slc(1)
-			// );
-		}, "numToWords"  : function numberToWords(number, fancyInfinity=true) {
+		}, "numToWords" : function numberToWords(number, fancyInfinity=true) {
 			if (abs(number) === Infinity) return `${number<0?"negative ":""}${fancyInfinity?"apeirogintillion":"infinity"}`;
 			// TODO: Update to use a loop or something to expand to as close to infinity as possible
 			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
@@ -1046,14 +966,10 @@ void (() => { "use strict";
 				case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.substr(2))}`;
 				default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
 			}
-		}, numToStrW_s: numToStrW_s
-		, "Errors"      : function customErrors(name="Error", text="") {
+		}, "Errors"     : function customErrors(name="Error", text="") {
 			Error.prototype.name = `${name}`;
-			throw new Error(text).stack.remove(/ {4}at(.|\s)*\n/);
-		}, strMul: strMul
-		, numStrNorm: numStrNorm
-		, formatjson: formatjson
-		, "minifyjson"  : function minifyJSON(json) {
+			throw new Error(text).stack.replace(/ {4}at(.|\s)*\n/, "");
+		}, "minifyjson" : function minifyJSON(json) {
 			// removes all the unnecessary spaces and things
 			return formatjson(json, {
 				objectNewline      : true, // less conditionals are checked if this is set to true
@@ -1092,13 +1008,32 @@ void (() => { "use strict";
 				return this (isArr(code) ? code.map(e => chr(e)) : chr(code));
 			}
 			return MutableString;
-		}, "isArr"       : function isArray(thing) { return constr(thing) === "Array" }
-		, dim: dim
-		, len: len
-		, complex(re=0, im=0)  { return cMath.new(re, im) }
-		, copy: copy
-		, async getIp()        { return (await fetch("https://api.ipify.org/")).text() }
-		, chr: chr
+		}, "str": function String(a) { return a?.toString?.apply?.( [].slice.call(arguments, 1) ) }
+		, async getIp()       { return (await fetch("https://api.ipify.org/")).text() }
+		, complex(re=0, im=0) { return cMath.new(re, im) }
+		, createElement : createElement
+		, getArguments  : getArguments
+		, bisectRight   : bisectRight
+		, numToStrW_s   : numToStrW_s
+		, isIterable    : isIterable
+		, bisectLeft    : bisectLeft
+		, numStrNorm    : numStrNorm
+		, formatjson    : formatjson
+		, randint       : randint
+		, strMul        : strMul
+		, bisect        : bisect
+		, arrzip        : arrzip
+		, round         : round
+		, floor         : floor
+		, fpart         : fpart
+		, isArr         : isArr
+		, type          : type
+		, ceil          : ceil
+		, copy          : copy
+		, dim           : dim
+		, len           : len
+		, chr           : chr
+		, ord           : ord
 		// Instance Variables:
 		, "instance Logic"          : class Logic {
 			constructor(bitwise=Logic_BitWise_Argument, comparatives=Logic_Comparatives_Argument, help=Logic_Help_Argument) {
@@ -1386,9 +1321,32 @@ void (() => { "use strict";
 					!0 :
 					!1;
 			}
-		}, "defer_instance sMath"   : class stringRealMath {
-			constructor(help=sMath_Help_Argument, comparatives=sMath_Comparatives_Argument) {
+		}, "defer_instance bMath"   : class BigIntRealMath {
+			constructor(help=bMath_Help_Argument, degTrig=bMath_DegTrig_Argument, comparatives=bMath_Comparatives_Argument) {
 				help === "default" && (help = !0);
+				degTrig === "default" && (degTrig = !0);
+				comparatives === "default" && (comparatives = !0);
+
+				if (help) this.help = {
+				}; if (degTrig) this.deg = {
+				}; if (comparatives) this.eq = {
+				};
+			} pow(x, y) {
+				return this.isNaN(x) || this.isNaN(y) ?
+					NaN :
+					y < 0 ? 1n / x ** -y : x ** y;
+			} isNaN(x)  { return typeof x !== "bigint" }
+			sgn(x)    { return x < 0 ? -1n : x === 0n ? 0n : 1n }
+			sign(x)   { return x < 0 ? -1n : x === 0n ? 0n : 1n }
+			abs(x)    { return x * this.sgn(x) }
+			add(a, b) { return a + b }
+			sub(a, b) { return a - b }
+			mul(a, b) { return a * b }
+			div(a, b) { return a / b }
+		}, "defer_instance sMath"   : class stringRealMath {
+			constructor(help=sMath_Help_Argument, degTrig=sMath_DegTrig_Argument, comparatives=sMath_Comparatives_Argument) {
+				help === "default" && (help = !0);
+				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
 				this.zero = "0.0"; // cannonical format for 0.
 				this.one = "1.0"; // cannonical format for 1.
@@ -1448,6 +1406,7 @@ void (() => { "use strict";
 						ps: "Takes 1 string number argument (x). returns x > 0. positive. using this function is more efficient than using the two argumented counterpart.",
 						np: "Takes 1 string number argument (x). returns x ≤ 0. not positive. using this function is more efficient than using the two argumented counterpart.",
 					},
+				}; if (degTrig) this.deg = {
 				}; if (comparatives) this.eq = {
 					gt(a="0.0", b="0.0") {// >
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
@@ -2288,8 +2247,8 @@ void (() => { "use strict";
 					sub: null,
 					mul: null,
 					div: "Takes 4 arguments.  1:number, numerator.  2:number, denominator.  3:boolean, true returns a number, false returns a string.  4:number, decimal precision.  returns the numerator divided by the denominator with no floating point errors.  numerator defaults to 0, and denominator defaults to 1",
-					mod2: "Takes 3 arguments (a, n, k). returns a % n + k through iteration. mod() is better in every way. the built in '%' operator is probably even faster as well.",
-					mod: "Takes 3 arguments (a, n, k).  similar to a%n + k.",
+					mod2: "Takes 3 arguments (a, n, k). returns a % n + k through iteration. mod() is better in every way. the built in '%' operator is probably even faster as well. will return different answers from % if the second argument is negative due to the formula. see mod for more information",
+					mod: "Takes 3 arguments (a, n, k).  similar to a%n, the difference being the formula used. mod(a, b, 0) => a - b⌊a/b⌋. a%b => a - b*Math.trunc(a/b). see mod2",
 					parity: "Takes any amount of arguments directly, or in an array.  if there is one argument, it will return even or odd as a string.  if there 2 or more arguments, it will return an array of strings.",
 					nCr: "Stands for n Choose r. takes 2 arguments. same as python's math.comb()",
 					comb: "2 arguments. n, k. returns nCr(n, k). stands for combination",
@@ -2364,14 +2323,15 @@ void (() => { "use strict";
 					hex: "Takes 3 arguments. the first argument is the number you want to convert to hexadecimal. if this is not a number, it gets returned. if the second argument is truthy, the output has '0x' at the beginning. if the third argument is truthy the output has '16:' at the end. this is because rMath.base10Conv uses this syntax for the output for the base. the second argument is more important than the third in deciding which thing happens. the output is a string.",
 					timesTable: null,
 					cosNxSimplify: null,
-					heron: null,
+					heron: "Take 3 numeric arguments (a, b, c). returns herons formula, using the inputs as the sides. with s := (a+b+c)/2, it returns √[ s (s-a) (s-b) (s-c) ]",
 					tempConv: null,
 					coprime: null,
 					ncoprime: null,
-					cumsum: null,
-					set: null,
+					cumsum: "Takes 1 set argument. returns the cumulative sum of all the items in the set.",
+					set: "Takes any amount of numeric arguments. returns a new Set object. this functions is not a constructor. the constructor is at rMath.Set.",
 					setUnion: null,
 					piApprox: undefined,
+					_pow: "Takes 1 integer argument (n). returns an array of integers that represent the optimal route in exponentiating to the Nth power",
 				}; if (degTrig) this.deg = {
 					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sin(θ*π/180),
 					cos: θ => isNaN( θ = Number(θ) ) ? θ : this.cos(θ*π/180),
@@ -2644,18 +2604,31 @@ void (() => { "use strict";
 				}
 				return ans;
 			} ζ(s, a=0, acy=1000, gAcy=1e3, gInc=.1) {
-				return isNaN(s = Number(s)) || isNaN(a = Number(a)) || isNaN( acy = Number(acy) ) ? NaN :
-				s === Infinity ? 1 :
-				!s ? -0.5 :
-				s === 1 ? Infinity :
-				s < 1 ? 2**s * π**(s-1) * this.sin(π_2*s) * this.gamma(1-s, gAcy, gInc) * this.ζ(1-s, a, acy) :
+				return isNaN(s = Number(s)) || isNaN(a = Number(a)) || isNaN( acy = Number(acy) ) ?
+					NaN :
+				s === Infinity ?
+					1 :
+				!s ?
+					-0.5 :
+				s === 1 ?
+					Infinity :
+				s < 1 ?
+					2**s * π**(s-1) * this.sin(π_2*s) * this.gamma(1-s, gAcy, gInc) * this.ζ(1-s, a, acy) :
 				this.sum(1, acy, n => (n + a)**-s);
 			} Rzeta(s, acy=1000, gAcy=1e3, gInc=.1) {
 				// Reimann zeta function
 				return this.ζ(s, 0, acy);
 			} Hzeta(s, a=0, acy, gAcy, gInc) {
 				// Hurwitz zeta function
-				return this.ζ(s, a === void 0 ? 1000 : a, acy === void 0 ? 1000 : acy);
+				return this.ζ(
+					s,
+					a === void 0 ?
+						1000 :
+						a,
+					acy === void 0 ?
+						1000 :
+						acy
+				);
 			} π(x, form=1) {
 				if (isNaN( x = floor(Number(x)) )) return NaN;
 				if (x < 2) return 0;
@@ -2702,16 +2675,23 @@ void (() => { "use strict";
 				return out;
 			} expm(x, n) { return 𝑒 ** x - n;
 			} expm1(x) { return 𝑒 ** x - 1;
-			} log2(x) { return this.logbase(2, x);
-			} log10(x) { return this.logbase(10, x);
-			} logpi(x) { return this.logbase(π, x);
+			} log2(x) { return this.log(x, 2);
+			} log10(x) { return this.log(x, 10);
+			} logpi(x) { return this.log(x, π);
 			} log1p(x) { return this.ln1p(x);
 			} clz32(n) { return this.clbz(n);
 			} clbz(n) {
+				// count leading binary zeros
 				if (isNaN( n = Number(n) )) return NaN;
 				if (n < 0 || n > 2_147_483_647) return 0; // 2^31 - 1. max uint32 value
 				n = n.toString(2);
 				return len( (strMul("0", 32 - len(n)) + n).remove(/1.*/) );
+			} cebz(x) {
+				// count ending binary zeros
+				// log2(x & -x)  for |x| < 2^32
+				if (this.isNaN(x)) return NaN;
+				x = BigInt(x).toString(2);
+				return dim(x) - x.lio("1");
 			} fact(x, acy=1e3, inc=.1) {
 				// TODO: Fix for negative non-integer numbers
 				if (isNaN( x = Number(x) )) return NaN;
@@ -2750,6 +2730,10 @@ void (() => { "use strict";
 				} else for (; n <= last; n += inc)
 					total += fn(n);
 				return total;
+			} total(...args) {
+				var t = 0;
+				for (const x of (dim(arguments) ? args : arguments)) t += x;
+				return x;
 			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) { return this.sum(start, Infinity, fn, inc);
 			} prod(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
@@ -2801,18 +2785,27 @@ void (() => { "use strict";
 				for (var total = 0, i = len(args); i --> 0 ;)
 					total += args[i]**2;
 				return this.sqrt(a);
-			} log(x, base=MATH_LOG_DEFAULT_BASE) {
-				// TODO: Fix.
-				if (isNaN( x = Number(x) ) || isNaN( base = Number(base) ) || base <= 0 || x <= 0 || base === 1)
-					return NaN;
-				if (base === Infinity) return x === Infinity ? NaN : 0;
+			} log(x, base=MATH_LOG_DEFAULT_BASE, number=true) {
+				// really slow for large Xs
+				if (isNaN(x = Number(x)) || isNaN(base = Number(base)) || base <= 0 || x <= 0 || base == 1) return NaN;
+				if (base === Infinity) return x === Infinity  ?  NaN  :  number ? 0 : 0n;
+				if (x == base) return number ? 1 : 1n;
 				if (x === Infinity) return Infinity;
-				for (var ans = floor(x / 2 / base), tmp = 1, i = 1000; i --> 0 && ans != ans + tmp; tmp /= 10) while (
-					ans != (ans += abs(x - base**(ans - tmp)) < abs(x - base**ans) ? -tmp :
-						abs(x - base**(ans + tmp)) < abs(x - base**ans) ? tmp : 0)
+				var x2 = BigInt(x), b2 = BigInt(base), ans = floor(x2 / b2), chng = x2, i;
+				while (chng /= 10n) {
+					while (ans != (
+						ans += bMath.abs( x2 - bMath.pow(b2, ans - chng) ) < bMath.abs( x2 - bMath.pow(b2, ans) ) ? -chng :
+							bMath.abs( x2 - bMath.pow(b2, ans + chng) ) < bMath.abs( x2 - bMath.pow(b2, ans) ) ? chng : 0n
+					));
+					if (ans < 0n && x > base) ans = 1n;
+				}
+				if (!number) return ans;
+				for (ans = Number(ans), chng = 0.1; ans != ans + chng; chng /= 10) while (
+					ans != (ans += abs(x - base**(ans - chng)) < abs(x - base**ans) ? -chng :
+						abs(x - base**(ans + chng)) < abs(x - base**ans) ? chng : 0)
 				);
 				return ans;
-			} logbase(base, x) { return isNaN( base = Number(base) ) || isNaN( n = Number(n) ) ? NaN : this.log( x, base );
+			} logbase(base, x) { return isNaN( base = Number(base) ) || isNaN( x = Number(x) ) ? NaN : this.log( x, base );
 			} ln(n) { return isNaN( n = n ) ? NaN : this.log( n, 𝑒 );
 			} max(...ns) {
 				ns = ns.flatten();
@@ -3566,7 +3559,7 @@ void (() => { "use strict";
 			} harmonic(n=1, decimals=18) {
 				return this.sum(
 					1,
-					int( Number(n) ),
+					int(n),
 					n => this.div(1, n, !0, 18)
 				)
 			} fraction(numer=0, denom=0) { return fMath.new(numer, denom);
@@ -3579,13 +3572,36 @@ void (() => { "use strict";
 					n < 0 ?
 						`(${-n})` :
 						n+""
+			} collatz(x) {
+				if (this.isNaN(n) || x < 0) return NaN;
+				x = BigInt(x);
+				const infinity = 10n**312n;
+				throw Error("Not Implemented");
+				for (var i = 0n; n !== 1n && i < infinity; i++)
+					n = x % 2n ? 3n*x+1n >> 1n : n >> 1n;
+				return i;
+			} _pow(x) {
+				if (!x) return [0];
+				if (fpart(x) || this.isNaN(x)) return NaN;
+				x = int(x);
+				var negative = !1;
+				if (x < 0) {
+					negative = !0;
+					x *= -1;
+				}
+				let arr = [1];
+				while (arr.last() < x) for (var i = len(arr); i --> 0 ;) if (x >= arr.last() + arr[i]) {
+					arr.push( arr.last() + arr[i] );
+					break;
+				}
+				negative && arr.push(-arr.last());
+				return arr;
 			}
 			// piApprox
 			// simplify sin(nx)
 			// simplify tan(nx)
 			// bell numbers
 			// pell numbers
-			// harmonic series
 			// polylogarithms
 			// Beta function
 			// geometry
@@ -3612,24 +3628,11 @@ void (() => { "use strict";
 			// inverse of matrix
 			// Kullback-Leibler (KL) divergence  between two distributions.
 			// kronecker product of 2 matrices or vectors.
-			// nthrts // probably for aMath or cMath
+			// nthrts, probably for cMath
 			// compareText
 			// coulomb
 			// electrical things
-		}, "defer_instance bMath"   : class BigIntRealMath {
-			constructor(help=bMath_Help_Argument, degTrig=bMath_DegTrig_Argument) {
-				help === "default" && (help = !0);
-				degTrig === "default" && (degTrig = !0);
-
-				if (help) this.help = {
-				}; if (degTrig) this.deg = {
-				};
-			}
-			add(a, b) { return a + b }
-			sub(a, b) { return a - b }
-			mul(a, b) { return a * b }
-			div(a, b) { return a / b }
-			pow(a, b) { return a ** b }
+			// p-adic integers
 		}, "defer_instance cMath"   : class ComplexMath {
 			constructor(degTrig=cMath_DegTrig_Argument, help=cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
@@ -4034,41 +4037,61 @@ void (() => { "use strict";
 			}
 			new(re=fMath.one, im=fMath.one) { return new this.CFraction(re, im);
 			}
-		}, "defer_instance aMath"   : class AllMath {
-			// aMath will call the correct function based upon the input
-			constructor(help=aMath_Help_Argument, trig=aMath_Trig_Argument, comparatives=aMath_Comparatives_Argument) {
-				help === "default" && (help = !0);
-				trig === "default" && (trig = !0);
-				comparatives === "default" && (comparatives = !0);
-				// constants
-				if (help) this.help = {
-					_call: "used internally for calling the functions. takes 2 named (string) arguments for the function name and type. if no type is given, it is decided by the first argument. the rest of the arguments are passed into the function being called via Function.apply.",
-					_getNameOf: "used internally for getting the names of math objects. returns Object.keyof(window, argument);",
-					add: "calls the add method of whatever math object is the correct one",
-				}; if (trig) this.trig = {
-				}; if (comparatives) this.eq = {
-				};
-			}
-			add() { return this._call("add", ...arguments) }
-			sub() { return this._call("sub", ...arguments) }
-			mul() { return this._call("mul", ...arguments) }
-			div() { return this._call("div", ...arguments) }
-			_call(fname, typ=null, ...args) {
+		}, "defer_call aMath"() {
+			var _getNameOf = obj => Object.keyof(window.MathObjects, obj)
+			, protoProps = e => Object.getOwnPropertyNames(e.constructor.prototype)
+			, fns = {
+				bigint   : bMath, complex  : cMath, fraction : fMath, num      : rMath,
+				number   : rMath, str      : sMath, string   : sMath, mutstr   : sMath,
+			};
+			function _call(fname, typ=null, ...args) {
 				typ === null && (typ = type(args[0], 1));
-				var fns = {
-					bigint   : bMath,
-					complex  : cMath,
-					fraction : fMath,
-					num      : rMath,
-					number   : rMath,
-					str      : sMath,
-					string   : sMath,
-				}, fn = fns?.[typ?.lower?.()]?.[fname];
+				var fn = fns?.[typ?.lower?.()]?.[fname];
 				if (fn) return fn.apply( fns[typ], args ); // just using fn() makes "this" inside the function undefined.
-				if (fns[typ] !== void 0)
-				throw Error(`${this._getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				/*else*/
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
-			} _getNameOf(MathObect) { return Object.keyof(window.MathObjects, MathObect) }
+			} function _call_deg(fname, typ=null, ...args) {
+				typ === null && (typ = type(args[0], 1));
+				var fn = fns?.[typ?.lower?.()]?.deg?.[fname];
+				if (fn) return fn.apply( fns[typ], args ); // just using fn() makes "this" inside the function undefined.
+				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				/*else*/
+				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
+			} function _call_eq(fname, typ=null, ...args) {
+				typ === null && (typ = type(args[0], 1));
+				var fn = fns?.[typ?.lower?.()]?.eq?.[fname];
+				if (fn) return fn.apply( fns[typ], args ); // just using fn() makes "this" inside the function undefined.
+				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				/*else*/
+				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
+			}
+			
+			class AllMath { // aMath will call the correct function based upon the inputs' types
+				constructor() {
+					if (aMath_Help_Argument) this.help = "see the help attributes of the other math functions, which you can find at 'window.MathObjects'.  this.__call, this.__call_eq, and this.__call_deg just call functions from the correct math object. __call_eq uses the eq attribute of the math object, and __call_deg uses the deg attribute of the math object.  not all the functions are guaranteed to work for all types.";
+				}
+			}
+			for (const fname of Object.values(MathObjects).map(e => protoProps(e)).flat().remrep().remove("constructor"))
+				AllMath.prototype[fname] = function () { return _call(fname, null, ...arguments) }
+			if (aMath_DegTrig_Argument) {
+				AllMath.prototype.deg = {};
+				for (const fname of Object.getOwnPropertyNames(rMath.deg))
+					AllMath.prototype.deg[fname] = function () { return _call_deg(fname, null, ...arguments) }
+			}
+			if (aMath_Comparatives_Argument) {
+				AllMath.prototype.eq = {};
+				for (const fname of Object.getOwnPropertyNames(rMath.deg).concat(
+					Object.getOwnPropertyNames(sMath.deg)).concat(Object.getOwnPropertyNames(bMath.deg)))
+					AllMath.prototype.eq[fname] = function () { return _call_eq(fname, null, ...arguments) }
+			}
+			AllMath.prototype.internals = {
+				call      : _call,
+				call_deg  : _call_deg,
+				call_eq   : _call_eq,
+				getNameOf : _getNameOf,
+			};
+			return new AllMath;
 		}, "defer_call Types"() {
 			return {
 				Boolean  : Boolean,
@@ -4090,6 +4113,7 @@ void (() => { "use strict";
 							Symbol.for(input) :
 							void 0
 				}, undefined() {},
+				null() { return null },
 				Fraction: fMath.Fraction,
 				CFraction: cfMath.CFraction,
 				Set: rMath.Set,
@@ -4107,6 +4131,8 @@ void (() => { "use strict";
 				obj["**"] = obj.pow;  obj["e^"] = obj.exp;
 				obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
 				obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
+				obj["Σ"]  = obj.sum;  obj["Π"] = obj.prod;
+				obj["Γ"] = obj.gamma;
 			}
 			sMath["//"] = sMath.fdiv;
 			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
@@ -4131,11 +4157,14 @@ void (() => { "use strict";
 		}
 		};
 	} {// Conflict & Assignment
+		
+		--> asignment and conflict things
+		
 		try { ON_CONFLICT = ON_CONFLICT.lower() } catch { ON_CONFLICT = "none" }
 		var DEFER_ARR = []
 		, CONFLICT_ARR = []
 		, MathObjects = {}
-		, define = function define(s, section=0) {
+		, define = function define(s, section=0, customValue=void 0) {
 			// section 0 stores the defer functions in DEFER_ARR
 			// section 1 calls the defer functions
 			if (s.indexOf(" ") < 0) {
@@ -4145,7 +4174,7 @@ void (() => { "use strict";
 					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(s);
 				}
-				window[s] = LIBRARY_FUNCTIONS[s];
+				window[s] = customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue;
 			} else if (s.startsWith("literal symbol.for ")) {
 				let tmp = Symbol.for(s.substr(19));
 				if (window[tmp] !== void 0) {
@@ -4154,7 +4183,7 @@ void (() => { "use strict";
 					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(tmp);
 				}
-				window[Symbol.for(s.substr(19))] = LIBRARY_FUNCTIONS[s];
+				window[Symbol.for(s.substr(19))] = customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue;
 			} else if (s.startsWith("instance ")) {
 				let tmp = s.substr(9);
 				if (window[tmp] !== void 0) {
@@ -4163,7 +4192,7 @@ void (() => { "use strict";
 					else if (ON_CONFLICT === "dont-use") return;
 					CONFLICT_ARR.push(tmp);
 				}
-				window[tmp] = new LIBRARY_FUNCTIONS[s];
+				window[tmp] = new (customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue);
 				tmp.includes("Math") && (MathObjects[tmp] = window[tmp]);
 			} else if (s.startsWith("defer_instance ")) {
 				if (section) {
@@ -4174,33 +4203,60 @@ void (() => { "use strict";
 						else if (ON_CONFLICT === "dont-use") return;
 						CONFLICT_ARR.push(tmp);
 					}
-					window[tmp] = new LIBRARY_FUNCTIONS[s];
+					window[tmp] = new (customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue);
 					tmp.includes("Math") && (MathObjects[tmp] = window[tmp]);
 				}
 				else DEFER_ARR.push(s);
 			} else if (s.startsWith("defer ")) {
-				if (section) window[s.substr(6)] = LIBRARY_FUNCTIONS[s];
+				if (section) window[s.substr(6)] = customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue;
 				else DEFER_ARR.push(s);
 			} else if (s.startsWith("defer_call ")) {
-				if (section) window[s.substr(11)] = LIBRARY_FUNCTIONS[s]();
+				if (section) window[s.substr(11)] = (customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue)();
 				else DEFER_ARR.push(s);
 			} else if (s.startsWith("defer_call_local")) {
 				section ?
-					LIBRARY_FUNCTIONS[s]() :
+					(customValue === void 0 ? LIBRARY_FUNCTIONS[s] : customValue)() :
 					DEFER_ARR.push(s);
-			} else if (s.startsWith("overwrite ")) { window[s.substr(10)] = LIBRARY_FUNCTIONS[s];
-			} else if (s.startsWith("call ")) { window[s.substr(5)] = LIBRARY_FUNCTIONS[s]();
+			} else if (s.startsWith("overwrite ")) {
+				window[s.substr(10)] = customValue === void 0 ?
+					LIBRARY_FUNCTIONS[s] :
+					customValue;
+			} else if (s.startsWith("call ")) {
+				window[s.substr(5)] = (customValue === void 0 ?
+					LIBRARY_FUNCTIONS[s] : customValue
+				)();
 			} // else {}
 		};
 		for (const s of Object.keys(LIBRARY_FUNCTIONS)) define(s, 0);
-	} {// Event and Document things
 		
+		--> Interval things
+		
+		let intervals = dict()
+		, _setInterval = window.setInterval
+		, _clearInterval = window.clearInterval;
+		function setInterval(/*arguments*/) {
+			var interval = _setInterval.apply(window, arguments);
+			intervals[interval] = arguments;
+			return interval;
+		} function clearInterval(code) {
+			_clearInterval.apply(window, arguments);
+			delete intervals[code];
+		}
+		setInterval._setInterval = _setInterval, clearInterval._clearInterval = _clearInterval;
+		define("overwrite setInterval", 0, setInterval);
+		define("overwrite clearInterval", 0, clearInterval);
+		define("getIntervals", 0, function getIntervals() { return intervals });
+		define("clearIntervals", 0, function clearIntervals() {
+			for (const code of intervals.keys())
+				clearInterval(code);
+		});
+
+		--> document things
+
 		let _ael = EventTarget.prototype.addEventListener
 		, _rel = EventTarget.prototype.removeEventListener
 		, listeners = dict()
 		, _click = HTMLElement.prototype.click;
-		EventTarget.prototype._ael = _ael;
-		EventTarget.prototype._rel = _rel;
 
 		function addEventListener(Type, listener=null, options={
 			capture  : false,
@@ -4267,13 +4323,16 @@ void (() => { "use strict";
 			while (times --> 0) _click.call(this);
 			return this;
 		}
+		addEventListener._ael = _ael; // doesn't actually work. just for storing purposes
+		removeEventListener._rel = _rel; // doesn't actually work. just for storing purposes
+		click._click = _click; // doesn't actually work. just for storing purposes
 
-		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener   ;
-		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener;
-		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners  ;
-		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners;
+		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener    ;
+		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener ;
+		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners   ;
+		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners ;
 		HTMLElement.prototype.click = click;
-		Document.prototype.click = function click(times=1) { return document.head.click(times) }
+		Document.prototype.click = function click(times=1) { return window.document.head.click(times) }
 		// document.all == null for some reason.
 		document.doctype && document.all !== void 0 && (document.all.doctype = document.doctype);
 
@@ -4346,14 +4405,16 @@ void (() => { "use strict";
 				window[variable] += e.key;
 				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
 				copy_object && (window.keypressObj = e);
-			}; this.stopKeylogger = function stopKeylogger() {
+			};
+			define("stopKeylogger", 0, function stopKeylogger() {
 				var alert =  KeyLogger_Alert_Start_Stop || KeyLogger_Debug_Argument
 				, type = KeyLogger_Debug_Argument;
 				type === "default" && (type = "keydown");
 				alert && console.log("keylogger manually terminated.");
 				document.body.removeEventListener(type, handler);
 				return !0;
-			}; (function key_logger_v3() {
+			});
+			(function key_logger_v3() {
 				if (window[variable] !== void 0) return debug &&
 					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
 				window[variable] = "";
@@ -4867,9 +4928,9 @@ void (() => { "use strict";
 			return this << BigInt(num);
 		}, BigInt.prototype.shr = function shr(num) {
 			return this >> BigInt(num);
-		}, BigInt.prototype.shr2 = function shr2(num) {
+		}/*, BigInt.prototype.shr2 = function shr2(num) {
 			return this >>> BigInt(num);
-		}, BigInt.prototype.isPrime = function isPrime() {
+		}*/, BigInt.prototype.isPrime = function isPrime() {
 			var n = this.valueOf();
 			if (n === 2n) return !0;
 			if (n < 2n || !(n % 2n)) return !1;
@@ -4907,7 +4968,7 @@ void (() => { "use strict";
 		}, BigInt.prototype.length = function length(n=0) {
 			return dim(`${this}`, n);
 		};
-	} {// (probably idk) bad text encoders
+	} {// bad text encoders
 		function num_encoder(numstr, warn=false) {
 			const ODD = len(numstr) % 2;
 			warn && isNaN(numstr) && console.warn("using non-numbers in num_encoder() causes loss of information");
@@ -5056,24 +5117,6 @@ void (() => { "use strict";
 	}
 })();
 
-void function _pow(x) {
-	if (!x) return [0];
-	if (x % 1) return NaN;
-	var negative = false;
-	if (x < 0) {
-		negative = true;
-		x *= -1;
-	}
-	try { x = BigInt(x) } catch { return NaN }
-	let arr = [1];
-	while (arr.at(-1) < x) for (var i = len(arr); i --> 0 ;) if (x >= arr.at(-1) + arr[i]) {
-		arr.push( arr.at(-1) + arr[i] );
-		break;
-	}
-	negative && arr.push(-arr.at(-1));
-	return arr;
-}
-
 /*var pow = */ void (function create_pow() {
 	// TODO: Make dynamic
 	const pows = [
@@ -5201,22 +5244,12 @@ void function _pow(x) {
 	}
 })();
 
-void function anonymizeFunction(fn) {
-	/**
-	 * Functions that refer to themselves and are not globally defined will not work with this function
-	 * they will have to use arguments.callee, which is disallowed in strict mode
-	 * Example:
-	 * var a = function asdf() { return asdf }
-	 * a() // ƒ asdf() { return asdf }
-	 * anonymizeFunction(a)() // Uncaught ReferenceError: asdf is not defined ...
-	**/
-	return type(fn, 1) === "func" ?
-		Function(fn.args(), fn.code()) :
-		Function(fn);
-}/*
+/*
 	var value = 2n, collatz = () => { for (var x = value + 1n, i = 0n; x > value ; i++) x = x % 2n ? 3n*x + 1n : x / 2n; value += 2n; ![3n,6n,8n,11n,13n].includes(i) && process.stdout.write(`${i},`) }; while (1) collatz();
 
-	22_567_581_584n
+	const odd = n => even(n) - 1n, even = n => BigInt(n) << 1n, index = n => BigInt(n) + 1n >> 1n;
+
+	biggest: 22_567_581_584n
 
 	process.stdout.write('\033c');
 	process.stdin

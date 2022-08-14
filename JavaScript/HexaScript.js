@@ -48,8 +48,8 @@ var SupportedChars = (() => {
 			this['>']    = Symbol.for('SupportedChars.>');
 		}
 	}
-	SupportedChars.prototype.length = Object.keys(new SupportedChars()).length;
-	return new SupportedChars();
+	SupportedChars.prototype.length = Object.keys(new SupportedChars).length;
+	return new SupportedChars;
 })();
 
 
@@ -57,11 +57,11 @@ var SupportedChars = (() => {
 // Compile HexaScript to a JavaScript function
 
 function compileProgram(str, argnames=[], form="function", download=false, downloadFile="file.js", debug=false) {
-	if (type(argnames) === "string") argnames = [argnames];
-	assert(type(str, 1) === "str", `argument 1 in compileProgram() is not a string`);
-	assert(type(download, 1) === "bool", `argument 3 in compileProgram() is not a boolean`);
-	assert(type(downloadFile, 1) === "str", `argument 4 in compileProgram() is not a string`);
-	assert(type(debug, 1) === "bool", `argument 5 in compileProgram() is not a boolean`);
+	if (type(argnames) !== "string") argnames = [argnames];
+	if (type(str) !== "string") throw `argument 1 in compileProgram() is not a string`;
+	if (type(download, 1) !== "bool") throw `argument 3 in compileProgram() is not a boolean`;
+	if (type(downloadFile, 1) !== "str") throw `argument 4 in compileProgram() is not a string`;
+	if (type(debug, 1) !== "bool") throw `argument 5 in compileProgram() is not a boolean`;
 	if (str.sW("hx:")) {
 		debug && console.log("alternate hex compiler used");
 		return (function alternateHexCompiler() {
@@ -102,11 +102,10 @@ function compileProgram(str, argnames=[], form="function", download=false, downl
 				if (debug) debugger;
 				throw new Error("Invalid input");
 			}
-			for (var i = 0, code = ""; i < n; i += 2)
-				code += hexAsciiNumToChar(str.substr(i, 2));
+			for (var i = 0, code = ""; i < n; i += 2) code += hexAsciiNumToChar(str.substr(i, 2));
 			debug && console.log("code evaluation finished");
 			download && (function download(text, file, fileType="text/plain") {
-				assert(type(text, 1) + type(file, 1) === "strstr", `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`);
+				if (type(text, 1) + type(file, 1) !== "strstr") throw `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`;
 				const link = document.createElement("a");
 				link.download = `${file}`;
 				link.href = URL.createObjectURL(new Blob([text], {type: filetype}));
@@ -222,7 +221,7 @@ function compileProgram(str, argnames=[], form="function", download=false, downl
 	if (form === "object" || form === "obj" || form === "array" || form === "arr") return program;
 
 
-	assert(len(Intrinsics) === 12, `Exhausive handling of Intrinsics in compileProgram(): ${len(Intrinsics)}`);
+	if (len(Intrinsics) !== 12) throw `Exhausive handling of Intrinsics in compileProgram(): ${len(Intrinsics)}`;
 	var labels = {}, stack  = [], conditionalStack = [];
 	for (i = 0, n = len(program); i < n; i++) { // loop over the tokens and interpret them
 		if (debug) console.log("parsing: %o,  id: %o", program[i].token, i);
@@ -315,9 +314,8 @@ function compileProgram(str, argnames=[], form="function", download=false, downl
 	}
 	if (len(conditionalStack)) console.warn(`StackError: ${len(conditionalStack)} Conditional statement${len(conditionalStack) === 1 ? "" : "s"} not terminated`);
 
-
 	download && (function download(text, file, fileType="text/plain") {
-		assert(type(text, 1) + type(file, 1) === "strstr", `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`);
+		if (type(text, 1) + type(file, 1) !== "strstr") throw `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`;
 		const link = document.createElement("a");
 		link.download = `${file}`;
 		link.href = URL.createObjectURL(new Blob([text], {type: filetype}));
@@ -406,9 +404,7 @@ function compileJSToHex(...input) {
 				`0x${charToAsciiHex(e).toString(16)}`).join(" ").replace(/\n/g," 0x0a ").replace(/\t/g," 0x09 ").remove(/^\s*|\s*$/g).replace(/ +/g, " ");
 	}
 	return input.join(" ");
-}
-
-function compileJSToHexV2(...input) {
+} function compileJSToHexV2(...input) {
 	function charToAsciiHex(str) {
 		switch (str) {
 			case"\0": return"00"; case"\b": return"08"; case"\t": return"09";
