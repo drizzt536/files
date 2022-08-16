@@ -99,20 +99,23 @@ void (() => { "use strict";
 			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
 			, copy = function copy(object) { return json.parse( json.stringify(object) ) }
-			, isIterable = function isIterable(arg) {
+			, dim = function dim(e, n=1) { return e?.length - n }
+			, len = function length(e) { return e?.length }
+			, range = function* range(start, stop, step=1) {
+				stop == null ? [stop, start] = [start, 0] : stop++;
+				for (var i = start; i < stop; i += step) yield i;
+			}, isIterable = function isIterable(arg) {
 				try { for (const e of arg) break; return !0 }
 				catch { return !1 }
-			}, len = function length(e) { return e?.length }
-			, arrzip = function arrzip(arr1, arr2) {
+			}, arrzip = function arrzip(arr1, arr2) {
 				// array zip
-				if (!isIterable(arr1) || !isIterable(arr2)) return [];
 				if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = list(arr1);
 				if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = list(arr2);
-				for (var output = [], length = rMath.min(len(arr1), len(arr2)), i = 0; i < length; i++)
-					output.push([arr1[i], arr2[i]]);
+				if (!isIterable(arr1) || !isIterable(arr2)) return [arr1, arr2];
+				for (var output = [], length = Math.min(arr1.length, arr2.length), i = 0; i < length; i++)
+					output.push([ arr1[i] , arr2[i] ]);
 				return output;
-			}, dim = function dim(e, n=1) { return e?.length - n }
-			, numStrNorm = function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
+			}, numStrNorm = function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
 				if (typeof snum === "bigint") return snum + ".0";
 				if (isNaN(snum)) return defaultValue;
 				if (sMath.eq.ez(snum += "")) return "0.0";
@@ -580,6 +583,9 @@ void (() => { "use strict";
 			if (length != null) return length;
 			if (obj?.constructor?.name === "Object") return len( Object.keys(obj) );
 			return 0;
+		}, enumerate(iterable) {
+			if (!isIterable(iterable)) return [0, iterable];
+			return arrzip( Object.keys(iterable).map(e => +e), iterable );
 		}, help(str) {
 			// eval doesn't matter here because this function is for developer use only.
 			try { eval(str) }
@@ -663,9 +669,6 @@ void (() => { "use strict";
 			return str ?
 				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
 				ans;
-		}, *range(start, stop, step=1) {
-			stop == null ? [stop, start] = [start, 0] : stop++;
-			for (var i = start; i < stop; i += step) yield i;
 		}, simulateKeypress({
 			key = "",
 			code = "",
@@ -1027,6 +1030,7 @@ void (() => { "use strict";
 		, floor         : floor
 		, fpart         : fpart
 		, isArr         : isArr
+		, range         : range
 		, type          : type
 		, ceil          : ceil
 		, copy          : copy
@@ -2775,12 +2779,22 @@ void (() => { "use strict";
 				if (type(fn, 1) !== "func") return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				let ans = 0;
-				if (end > x)
-					for (; x <= end; x += inc)
-						ans += (fn(x) + fn(x + inc)) / 2 * inc;
+				if (end > x) {
+					if (isNaN(fn(x))) {
+						// if f(x) is not defined for the starting point, ev
+						let chng = Number.EPSILON;
+						while ( isNaN(fn(x)) )
+							x += chng,
+							chng = this.nextUp(chng);
+					}
+					if (isNaN(fn(end))) for (; x < end; x += inc) ans += (fn(x) + fn(x + inc)) / 2 * inc;
+					else for (; x <= end; x += inc) ans += (fn(x) + fn(x + inc)) / 2 * inc;
+				}
 				else if (x > end) return -this.int(end, x, fn, inc);
 				/*else */return ans;
-			} hypot(...args) {
+			} integral(x/*start*/, end, fn=x=>x, inc=.001) { return this.int(x, end, fn, inc);
+			}
+			hypot(...args) {
 				if (len(arguments) !== 1) args = arguments;
 				for (var total = 0, i = len(args); i --> 0 ;)
 					total += args[i]**2;
@@ -3566,21 +3580,20 @@ void (() => { "use strict";
 			} complex(re=0, im=0) { return cMath.new(re, im);
 			} bigint(value=0) { try { return BigInt(value) } catch { return NaN }
 			} number(value=0) { try { return Number(value) } catch { return NaN }
-			} toAccountingStr(n = 0) {
+			} toAccountingStr(n=0) {
 				return this.isNaN(n) ?
 					NaN :
 					n < 0 ?
 						`(${-n})` :
 						n+""
-			} collatz(x) {
-				if (this.isNaN(n) || x < 0) return NaN;
+			} collatz(x=2) {
+				if (this.isNaN(x) || x < 0) return NaN;
 				x = BigInt(x);
 				const infinity = 10n**312n;
-				throw Error("Not Implemented");
-				for (var i = 0n; n !== 1n && i < infinity; i++)
-					n = x % 2n ? 3n*x+1n >> 1n : n >> 1n;
-				return i;
-			} _pow(x) {
+				for (var i = 0n; x !== 1n && i < infinity; i++)
+					x = x % 2n ? 3n*x+1n >> 1n : x >> 1n;
+				return i === infinity ? Infinity : i;
+			} _pow(x=0) {
 				if (!x) return [0];
 				if (fpart(x) || this.isNaN(x)) return NaN;
 				x = int(x);
@@ -3596,6 +3609,23 @@ void (() => { "use strict";
 				}
 				negative && arr.push(-arr.last());
 				return arr;
+			} nextUp(x=0) {
+				if (isNaN(x)) return NaN;
+				if (x === -Infinity) return -Number.MAX_VALUE;
+				if (x === Infinity) return Infinity;
+				if (x === Number.MAX_VALUE) return Infinity;
+				var y = x * (x < 0 ? 1 - Number.EPSILON / 2 : 1 + Number.EPSILON);
+				if (y === x)
+					y = Number.MIN_VALUE * Number.EPSILON > 0 ? x + Number.MIN_VALUE * Number.EPSILON : x + Number.MIN_VALUE;
+				if (y === Infinity) y = Number.MAX_VALUE;
+				var b = x + (y - x) / 2;
+				if (x < b && b < y) y = b;
+				var c = (y + x) / 2;
+				if (x < c && c < y) y = c;
+				return y === 0 ? -0 : y;
+			} nextDown(x=0) { return -this.nextUp(-x);
+			} nextAfter(x=0, y=Infinity) { return x === y ? x : x > y ? this.nextDown(x) : this.nextUp(x);
+			} ulp(x=1) { return x < 0 ? this.nextUp(x) - x : x - this.nextDown(x);
 			}
 			// piApprox
 			// simplify sin(nx)
@@ -4131,8 +4161,7 @@ void (() => { "use strict";
 				obj["**"] = obj.pow;  obj["e^"] = obj.exp;
 				obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
 				obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
-				obj["Σ"]  = obj.sum;  obj["Π"] = obj.prod;
-				obj["Γ"] = obj.gamma;
+				obj.Σ = obj.sum; obj.Π = obj.prod; obj.Γ = obj.gamma;
 			}
 			sMath["//"] = sMath.fdiv;
 			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
@@ -4157,7 +4186,7 @@ void (() => { "use strict";
 		}
 		};
 	} {// Conflict & Assignment
-		
+
 		--> asignment and conflict things
 		
 		try { ON_CONFLICT = ON_CONFLICT.lower() } catch { ON_CONFLICT = "none" }
@@ -4776,7 +4805,7 @@ void (() => { "use strict";
 		}, String.prototype.rand = function random() {
 			return Array.prototype.rand.call(this);
 		}, String.prototype.upper = function upper(length=Infinity, start=0, end=-1) {
-			return !isFinite(Number(length)) || isNaN(length) ? this.upper() :
+			return !isFinite(Number(length)) || isNaN(length) ? this.toUpperCase() :
 			end === -1 ?
 				this.substr(0, start) +
 					this.substr(start, length).toUpperCase() +
