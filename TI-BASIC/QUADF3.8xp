@@ -68,13 +68,13 @@ ClrHome
 Disp "","
 Output(1,1,B
 B→V
-prgmSCRNLEN
+prgmLEN
 Ans+1-not(B
 Output(1,Ans,"+
 Ans+1→E
 Output(1,E,G
 G→V
-prgmSCRNLEN
+prgmLEN
 E+Ans-(real(G)=1 and not(imag(G
 Output(1,Ans,"√
 Output(1,1+Ans,abs(D
