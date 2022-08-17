@@ -20,3 +20,5 @@ ti_image
 ti_plotlib
 ti_rover
 ti_system
+
+Python version 3.4.0
