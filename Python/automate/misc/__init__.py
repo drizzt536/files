@@ -74,7 +74,7 @@ def monitors() -> list[dict["top", "left", "width", "height"], ...]:
     ), 0)
     return lst
 
-def view(module: Module, form: int = 1, /, *, form_6_dst = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
+def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
     """
         Module, int=1  ->  (tuple | list | set)[str, ...] | dict_keys | None
 
@@ -89,6 +89,7 @@ def view(module: Module, form: int = 1, /, *, form_6_dst = 1) -> tuple[str, ...]
             5. reads the file at module.__file__ and returns the file contents.
             6. reads the file at module.__file__ and copies to form_6_dst via shutil.copyfile. returns form_6_dst
             7. does the following: for s in list(module.__dict__): print(s)
+            8: tuple(module.__dict__) without anything starting with "__"
             else: directlty returns inputed module
     """
     if isntinstance(module, Module): raise TypeError("automate.misc.view() can only view modules")
@@ -112,6 +113,10 @@ def view(module: Module, form: int = 1, /, *, form_6_dst = 1) -> tuple[str, ...]
         for s in tuple(module.__dict__):
             print(s)
         print("\n")
+    elif form == 8:
+        return tuple(
+            filter( lambda x: not x.startswith("__"), tuple(mod) )
+        )
     else: return module
 
 def read(file_loc: str | int, /) -> str:
