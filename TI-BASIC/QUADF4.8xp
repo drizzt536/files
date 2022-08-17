@@ -44,7 +44,6 @@ D→H
 2A→J
 1→G
 2→I
-
 If imag(D
 Then
 gcd(abs(real(D)),abs(imag(D→K
@@ -67,7 +66,6 @@ G→G
 End
 End
 D/G²→D
-
 If real(B)<0 and imag(B)<0 and real(J)<0 and imag(J)<0
 Then
 ­B→B
