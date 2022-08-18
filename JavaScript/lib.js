@@ -2772,29 +2772,28 @@ void (() => { "use strict";
 				return type(ans, 1) === "inf" ? NaN : n;
 			} _(n) { 1 / Number(n);
 			} inverse(n) { 1 / Number(n);
-			} int(x/*start*/, end, fn=x=>x, inc=.001) {
+			} int(x/*start*/, end, f=x=>x, inc=.001) {
 				// start and end are included.
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( end = Number(end) )) return NaN;
-				if (type(fn, 1) !== "func") return NaN;
+				if (type(f, 1) !== "func") return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				let ans = 0;
 				if (end > x) {
-					if (isNaN(fn(x))) {
+					if (isNaN(f(x))) {
 						// if f(x) is not defined for the starting point, ev
 						let chng = Number.EPSILON;
-						while ( isNaN(fn(x)) )
+						while ( isNaN(f(x)) )
 							x += chng,
 							chng = this.nextUp(chng);
 					}
-					if (isNaN(fn(end))) for (; x < end; x += inc) ans += (fn(x) + fn(x + inc)) / 2 * inc;
-					else for (; x <= end; x += inc) ans += (fn(x) + fn(x + inc)) / 2 * inc;
+					if (isNaN(f(end))) for (; x < end; x += inc) ans += (f(x) + f(x + inc)) / 2 * inc;
+					else for (; x <= end; x += inc) ans += (f(x) + f(x + inc)) / 2 * inc;
 				}
-				else if (x > end) return -this.int(end, x, fn, inc);
+				else if (x > end) return -this.int(end, x, f, inc);
 				/*else */return ans;
-			} integral(x/*start*/, end, fn=x=>x, inc=.001) { return this.int(x, end, fn, inc);
-			}
-			hypot(...args) {
+			} integral(x/*start*/, end, f=x=>x, inc=.001) { return this.int(x, end, f, inc);
+			} hypot(...args) {
 				if (len(arguments) !== 1) args = arguments;
 				for (var total = 0, i = len(args); i --> 0 ;)
 					total += args[i]**2;
@@ -2835,7 +2834,9 @@ void (() => { "use strict";
 				let min = ns[0];
 				for (let i of ns) min = i < min ? i : min;
 				return min;
-			} mean(/*arguments*/) { return Array.prototype.reduce.call(arguments, (t, e) => t + e, 0) / len(arguments);
+			} mean(...args) {
+				if (dim(arguments)) args = arguments;
+				return Array.prototype.reduce.call(args, (t, e) => t + e, 0) / len(args);
 			} median(/*arguments*/) {
 				let arr = list(arguments).flatten();
 				return len(arr) % 2 ?
@@ -3676,7 +3677,7 @@ void (() => { "use strict";
 						this.im = im;
 					} type() { return "complex";
 					} isComplex() { return !!this.im;
-					} toPolar(doubleStar=false) { return `${cMath.abs(this)}e${doubleStar ? "**" : "^"}(${this.arg()}i)`;
+					} toPolar(doubleStar=false) { return `${cMath.abs(this)}e${doubleStar?"**":"^"}(${this.arg()}i)`;
 					} toString( {polar=false, char="i", parens=true}={} ) {
 						char = char[0] || "i";
 						return polar ?
