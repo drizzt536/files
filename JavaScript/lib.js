@@ -2702,7 +2702,7 @@ void (() => { "use strict";
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
 				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x);
-				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j=>x+j);
+				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j => x+j);
 				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : ans;
 			} factorial(n) { return this.fact(n);
@@ -2804,7 +2804,7 @@ void (() => { "use strict";
 				if (base === Infinity) return x === Infinity  ?  NaN  :  number ? 0 : 0n;
 				if (x == base) return number ? 1 : 1n;
 				if (x === Infinity) return Infinity;
-				var x2 = BigInt(x), b2 = BigInt(base), ans = floor(x2 / b2), chng = x2, i;
+				var x2 = BigInt(int(x)), b2 = BigInt(int(base)), ans = floor(x2 / b2), chng = x2, i;
 				while (chng /= 10n) {
 					while (ans != (
 						ans += bMath.abs( x2 - bMath.pow(b2, ans - chng) ) < bMath.abs( x2 - bMath.pow(b2, ans) ) ? -chng :
@@ -3350,16 +3350,28 @@ void (() => { "use strict";
 				// Heaveside step function
 				// Heaveside theta function
 				if (isNaN( x = Number(x) )) return NaN;
-				if (form === 1) return this.sgn( this.sgn(x) + 1 );
+				if (form === 1) return this.sgn( this.sgn(x) + 1 )
 				if (form === 2) return (1 + this.sgn(x)) / 2
 				return +(x > 0);
-			} W(x) {
-				// TODO: Implement Lambert W function
+			} W(x, acy=Infinity) {
 				// Lambert W function, product log
 				if (isNaN( x = Number(x) )) return NaN;
 				if (x < -1 / e) return NaN;
-				throw Error("Not Implemented");
-			} deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
+				if (x < e) {
+					if (acy === Infinity) {
+						for (var total = e**-x, prev;;) if ( (prev = total) === (total = e**-(x*total)) ) break
+					} else for (var total = e**-x; acy --> 0 ;) total = e**-(x*total);
+					return x * total;
+				} else {
+					if (acy === Infinity) {
+						for (var total = this.ln(x), prev;;) if ( (prev = total) === (total = this.ln( x / total )) ) break
+					} else for (var total = this.ln(x); acy --> 0 ;) total = this.ln( x / total );
+					return total;
+				}
+			} productLog(x, acy=Infinity) {
+
+			}
+			deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
@@ -3806,19 +3818,19 @@ void (() => { "use strict";
 					} fpart(New=true) { return this.frac(New) }
 					abs() { return cMath.abs(this) }
 				};
-				this.lnNeg1 = this.new(0, π);
-				this.lni    = this.new(0, π_2);
-				this.i      = this.new(0, 1);
+				this.lnNeg1       = this.new(0, π);
+				this.lni          = this.new(0, π_2);
+				this.i            = this.new(0, 1);
+				this.e   = this.𝑒 = this.new(e, 0);
+				this.pi  = this.π = this.new(π, 0);
+				this.tau = this.𝜏 = this.new(𝜏, 0);
 
 				if (degTrig) this.deg = {
 				}; if (help) this.help = {
 				};
 			} new(re=0, im=0) {
 				if (type(re, 1) === "complex") return re;
-				if (isArr(re)) {
-					im = re[1];
-					re = re[0];
-				}
+				isArr(re) && ([re, im] = re);
 				if (rMath.isNaN(re) || rMath.isNaN(im)) return NaN;
 
 				if (typeof re === "bigint" && typeof im === "bigint") {
@@ -3830,24 +3842,56 @@ void (() => { "use strict";
 				return NaN;
 			} complex(re=0, im=0) { return this.new(re, im) }
 			add(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
 					this.new(a.re + b.re, a.im + b.im);
 			} sub(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
 					this.new(a.re + b.re, a.im + b.im);
 			} mul(a, b)  {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
 					this.new(a.re*b.re - a.im*b.im, a.re*b.im + b.re*a.im);
 			} div(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
 					this.new(
 						(a.re*b.re + a.im*b.im) / (b.re**2 + b.im**2),
 						(a.im*b.re - a.re*b.im) / (b.re**2 + b.im**2)
 					);
+			} fdiv(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.div(a, b).floor();
+			} cdiv(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.div(a, b).ceil();
+			} rdiv(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.div(a, b).round();
+			} mod(a, b) {
+				typeof a === "number" && (a = this.new(a, 0)); typeof b === "number" && (b = this.new(b, 0));
+				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+					NaN :
+					this.sub(
+						a,
+						this.mul(
+							b,
+							this.floor(
+								this.div(a, b).floor
+							)
+						)
+					)
 			} floor(z) {
 				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") return NaN;
@@ -3869,7 +3913,7 @@ void (() => { "use strict";
 					round(z.re),
 					round(z.im),
 				);
-			} arg(z, n=0, form="radians") {
+			} arg(z, n=0, form="rad") {
 				if (type(z, 1) !== "complex") return NaN;
 				return form === "degrees" || form === "deg" || form === "degree" ?
 					rMath.deg.atan2(z.re, z.im) + 𝜏*int(n) :
@@ -3920,6 +3964,9 @@ void (() => { "use strict";
 				//re^iθ = rcosθ + risinθ
 				return this.new(r*rMath.cos(θ), r*rMath.sin(θ));
 			} exp(z) {
+				typeof z === "number" && (z = this.new(z, 0));
+				return this.pow(z, this.e)
+			} expi(z) {
 				typeof z === "number" && (z = this.new(z, 0));
 				const r = e ** z.re;
 				return this.new(r * rMath.cos(z.im), r * rMath.sin(z.im))
@@ -3982,7 +4029,7 @@ void (() => { "use strict";
 				if (type(last, 1) !== "complex") return NaN;
 				if (type(func, 1) !== "func") return NaN;
 				if (type(inc, 1) !== "complex") return NaN;
-				
+
 				for ( var total = this.new(0, 0) ; complet(n, last) ; n.add(inc, 0) )
 					total.add( func(n, 0), 0 );
 				return total;
