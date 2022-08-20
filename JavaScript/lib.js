@@ -2855,29 +2855,6 @@ void (() => { "use strict";
 				const MEAN = this.mean(ns);
 				return ns.reduce((absDev, n) => absDev + this.abs(n - MEAN), 0) / len(ns);
 			} isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
-			} _lmgf(t="lcm", ...ns) {
-				// least commond multiple and greatest common factor
-				ns = ns.flatten();
-				type(t) !== "string" && (t = "lcm");
-				if ( ns.isNaN() ) return NaN;
-				if (t[0] === "g") {
-					for (const e of ns)
-						if (!e?.isInt?.())
-							return 1;
-				} else if (t[0] === "l")
-					for (const e of ns)
-						if (!e?.isInt?.())
-							return ns.reduce((t, e) => t*e, 1);
-				for (var c, i = t[0] === "l" ? this.max(ns) : this.min(ns); ; t[0] === "l" ? i++ : i-- ) {
-					for (var j = dim(ns); j >= 0; --j) {
-						if (t[0] === "l" ? i % ns[j] : ns[j] % i) {
-							c = !1;
-							break;
-						}
-						c = !0;
-					}
-					if (c) return i;
-				}
 			} linReg(xs, ys, Return="obj") {
 				xs = xs.tofar(); ys = ys.tofar();
 				if (!len(xs)) throw Error("No elements given for first parameter of rMath.linReg()");
@@ -2896,7 +2873,7 @@ void (() => { "use strict";
 					for (; len(ys) > MIN;) ys.pop();
 				}
 				var m = (
-					len(xs) * this.sum(0, len(xs)-1, n=>xs[n]*ys[n]) -
+					len(xs) * this.sum(0, dim(xs), n=>xs[n]*ys[n]) -
 					this.sum(0, dim(xs), n=>xs[n]) * this.sum(0, dim(ys), n=>ys[n])
 				)/(len(xs) * this.sum(0, dim(xs), n=>xs[n]**2) - this.sum(0, dim(xs), n=>xs[n])**2),
 				b = (this.sum(0, dim(xs), n=>ys[n]) - m * this.sum(0, dim(xs), n=>xs[n])) / len(xs);
@@ -2919,8 +2896,8 @@ void (() => { "use strict";
 					( ϕ**n - this.Phi**n ) / this.sqrt5
 				);
 				// ⌊ ϕⁿ/√5 ⌉ ∀ n∈ℤ > -1
-			} fibonacci(n=1) { return isNaN( n = Number(n) ) ? NaN : this.fib(n);
-			} lucas(n=1) { return isNaN( n = Number(n) ) ? NaN : round( ϕ**n + this.Phi**n ); // ⌊ϕⁿ⌉ ∀ n∈ℕ > 1
+			} fibonacci(/*n=1*/) { return this.fib.apply(this, arguments);
+			} lucas(n=1) { return isNaN( n = Number(n) ) ? NaN : round( ϕ**n + this.Phi**n );//⌊ϕⁿ⌉, n∈ℕ>1
 			} primeFactorInt(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if ( n.isPrime() ) return n;
@@ -3016,6 +2993,38 @@ void (() => { "use strict";
 				return number ?
 					Number(sMath.div(a, b, precision)) :
 					sMath.div(a, b, precision);
+			} fdiv(num="0.0", denom="1.0", number=true) {
+				// floor division
+				return this.floor( this.div(
+					num,
+					denom,
+					number,
+					1
+				));
+			} cdiv(num="0.0", denom="1.0", number=true) {
+				// ceiling division
+				return this.ceil( this.div(
+					num,
+					denom,
+					number,
+					1
+				));
+			} rdiv(num="0.0", denom="1.0", number=true) {
+				// rounding division
+				return this.round( this.div(
+					num,
+					denom,
+					number,
+					1
+				));
+			} tdiv(num="0.0", denom="1.0", number=true) {
+				// truncatinng division
+				return this.trunc( this.div(
+					num,
+					denom,
+					number,
+					1
+				));
 			} mod2(a, n=1, k=0) {
 				// modulo using iteration
 				// it is rMath.mod2 because it is slower than rMath.mod
@@ -3061,6 +3070,7 @@ void (() => { "use strict";
 				return isNaN( z = Number(z) ) ?
 					NaN :
 					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
+					// 2/sqrt(pi) * ...
 			} erfc(z) {
 				return isNaN( z = Number(z) ) ?
 					NaN :
@@ -3100,10 +3110,30 @@ void (() => { "use strict";
 			} isNNaN(e) {
 				// is not not a number. isaN, isAN
 				return this.isAN(e);
-			} imul(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.Math.imul(a, b);
-			} lcm(...ns) { return ns.isNaN() ? NaN : this._lmgf("lcm", ns);
-			} gcf(...ns) { return ns.isNaN() ? NaN : this._lmgf("gcf", ns);
-			} gcd(...ns) { return ns.isNaN() ? NaN : this._lmgf("gcd", ns);
+			} imul(a, b) {
+				return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ?
+					NaN :
+					this.Math.imul(a, b);
+			} lcm(...args) {
+				if (isArr(args[0])) args = args[0];
+				return !len(args) ?
+					0 :
+				args.isNaN() ?
+					NaN :
+				!dim(args) ?
+					args[0] :
+				len(args) > 2 ?
+					this.lcm( args[0], this.lcm(args.slice(1)) ) :
+					abs(args[0] * args[1]) / this.gcd(args);
+			} gcd(...args) {
+				if (isArr(args[0])) args = args[0];
+				if (!len(args)) return 0;
+				if (args.isNaN()) return NaN;
+				if (!dim(args)) return args[0];
+				if (len(args) > 2) return this.gcd( args[0], this.gcd(args.slice(1)) );
+				while (args[1]) args = [args[1], this.mod(...args)];
+				return args[0];
+			} gcf() { return this.gcd.apply(this, arguments);
 			} fround(n) { return isNaN( n = Number(n) ) ? n : this.Math.fround(n);
 			} sqrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2);
 			} cbrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3);
@@ -3207,8 +3237,12 @@ void (() => { "use strict";
 				while ( n --> 1 )
 					a = A ** a;
 				return number ? Number(a) : a;
-			} sin(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n+1)*(θ%(2*π))**(2*n+1) );
-			} cos(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sum(0, 25, n=>(-1)**n / this.fact(2*n)*(θ%(2*π))**(2*n) );
+			} sin(θ) {
+				return isNaN( θ = Number(θ) ) ?
+					θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n+1)*(θ%(2*π))**(2*n+1) );
+			} cos(θ) {
+				return isNaN( θ = Number(θ) ) ?
+					θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n)*(θ%(2*π))**(2*n) );
 			} tan(θ) { return isNaN( θ = Number(θ) ) ? θ : this.sin(θ) / this.cos(θ);
 			} csc(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.sin(θ);
 			} sec(θ) { return isNaN( θ = Number(θ) ) ? θ : 1 / this.cos(θ);
@@ -3368,10 +3402,8 @@ void (() => { "use strict";
 					} else for (var total = this.ln(x); acy --> 0 ;) total = this.ln( x / total );
 					return total;
 				}
-			} productLog(x, acy=Infinity) {
-
-			}
-			deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
+			} productLog(/*x, acy*/) { return this.W.apply(this, arguments);
+			} deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
@@ -3640,6 +3672,7 @@ void (() => { "use strict";
 			} nextAfter(x=0, y=Infinity) { return x === y ? x : x > y ? this.nextDown(x) : this.nextUp(x);
 			} ulp(x=1) { return x < 0 ? this.nextUp(x) - x : x - this.nextDown(x);
 			}
+			// harmonic mean
 			// piApprox
 			// simplify sin(nx)
 			// simplify tan(nx)
