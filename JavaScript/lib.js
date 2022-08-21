@@ -321,7 +321,7 @@ void (() => { "use strict";
 				}
 				return output;
 			}, bisectLeft = function bisectLeft(arr, x, lo=0, hi=null) {
-				hi === null && (hi = len(arr));
+				hi === null && (hi = len(arr) || 0);
 				if (lo < 0 || hi < lo || hi > len(arr)) return false;
 				let mid;
 				while (lo != hi) {
@@ -330,21 +330,56 @@ void (() => { "use strict";
 				}
 				return lo;
 			}, bisectRight = function bisectRight(arr, x, lo=0, hi=null) {
-				hi === null && (hi = len(arr));
+				hi === null && (hi = len(arr) || 0);
 				if (lo < 0 || hi < lo || hi > len(arr)) return false;
 				let mid;
 				while (lo != hi) {
 					mid = lo + floor((hi-lo)/2);
-					if (arr[mid] <= x) lo = mid + 1;
-					else hi = mid;
+					if (arr[mid] <= x) lo = mid + 1; else hi = mid;
 				}
 				return lo;
 			}, bisect = function bisect(arr, x, orientation="left", lo=0, hi=null) {
 				return (orientation === "left" ?
 					bisectLeft : bisectRight
 				)(arr, x, lo, hi);
-			}
-		} // Array().fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
+			}, qsort = (function create_qsort() {
+				// does affect original variable, unlike msort
+				function partition(arr, low, high) {
+					let pivot = arr[high]
+						, left = low
+						, right = high - 1;
+					while (left < right) {
+						while (arr[left] < pivot) left++;
+						while (arr[right] > pivot) right--;
+						if (left >= right) break;
+						[arr[left], arr[right]] = [arr[right], arr[left]];
+					}
+					[arr[left], arr[high]] = [arr[high], arr[left]];
+					return left;
+				}
+				return function qsort(arr, low=0, high=dim(arguments[0])) {
+					if (low >= high) return arr;
+					let pivotPosition = partition(arr, low, high);
+					qsort(arr, low, pivotPosition-1);
+					qsort(arr, pivotPosition+1, high);
+					return arr;
+				}
+			})(), msort = (function create_msort() {
+				// doesn't affect original variable, unlike qsort
+				function merge(left, right) {
+					let arr = [];
+					while (len(left) && len(right)) arr.push( (left[0] < right[0] ? left : right).shift() );
+					return [ ...arr, ...left, ...right ];
+				}
+				return function msort(array) {
+					if (len(array) < 2) return array;
+					return merge(
+						msort( array.slice(0, len(array) / 2) ),
+						msort( array.slice(len(array) / 2) )
+					)
+				}
+			})();
+		} // Array(10).fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
 		for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
 				multable[i][j] = i * j;
@@ -1025,6 +1060,8 @@ void (() => { "use strict";
 		, randint       : randint
 		, strMul        : strMul
 		, bisect        : bisect
+		, qsort         : qsort
+		, msort         : msort
 		, arrzip        : arrzip
 		, round         : round
 		, floor         : floor
@@ -1968,69 +2005,52 @@ void (() => { "use strict";
 				help         === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
 				constants    === "default" && (constants = !0);
-				this.Set = class RealSet extends Array {
+				this.Set = class RealSet {
 					// Probably not constant time lookup.
 					constructor(...args) {
-						args = args.flatten().filter(e => typeof e === "number");
-						if (len(args) === 1) {
-							super(...args.concat([null]));
-							this.pop();
-						} else super(...args.sort());
-					}
-					add(number=0) {
-						if (typeof number !== "number") return !1;
-						for (const n of this) if (n === number) return !1;
-						this.push(number);
-						this.sort();
-						return !0;
-					}
-					delete(number=0) {
-						;
-						return this.remove(number);
-					}
-					has(number=0) {
-						;
-						return this.incl(number);
-					}
-					check() { // checks to make sure everything is a number and non-repeating
-						// fix in case the user used push or unshift instead of add.
-						// because that defeats the purpose
-						for (var i = len(this); i --> 0 ;)
-							typeof this[i] !== "number" && this.splice(i, 1);
-						return this.sort();
-					}
-					cumsum() {
-						var t = 0;
-						for (const n of this) t += n;
-						return t;
-					}
-					type() {
-						return "set";
-					}
-					sortA() {
-						var list = this.valueOf();
-						for (var output = []; len(list) > 0 ;) {
-							output.push( rMath.min(list) );
-							list.splice(
-								list.io(rMath.min(list)), 1
-							);
-						}
-						for (const n of output) this.push(n);
+						args = args.flatten().filter(e => typeof e === "number").sort();
+						for (let x of args) Array.prototype.push.call(this, x);
+						this.length ??= 0;
+					} add(number=0) {
+						if (typeof number !== "number") return this;
+						!this.has(number) && Array.prototype.push.call(this, number);
 						return this;
-					}
-					sortD() {
-						;
-						return this.sortA().reverse();
-					}
-					sort(type="A") {
-						try { return this[`sort${type[0].upper()}`] }
-						catch { return !1 }
-					}
-					union(set, New=true) {
+					} delete(number=0) { return Array.prototype.remove.call(this, number);
+					} has(number=0) { return Array.prototype.incl.call(this, number);
+					} cumsum() {
+						var sum = 0;
+						for (const x of this) sum += x;
+						return sum;
+					} type() { return "set";
+					} sortA() { return qsort(this);
+					} sortD() { return this.sortA().reverse();
+					} reverse() { return Array.prototype.reverse.call(this); // also changes the object
+					} sort(type="A") { try { return this[`sort${type[0].upper()}`] } catch { return !1 }
+					} union(set, New=true) {
+						if (type(set, 1) !== "set") return this;
+						if (New) {
+							let output = new this.constructor;
+							for (var i = len(this); i --> 0 ;) this.output(this[i]);
+							for (var i = len(set); i --> 0 ;) this.output(set[i]);
+								return output;
+						} else for (var i = len(set); i --> 0 ;) this.add(set[i]);
+						return this;
+					} intersection(set, New=true) {
+						if (type(set, 1) !== "set") return this;
+						throw Error("Not Implemented");
+					} difference(set, New=true) {
+						if (type(set, 1) !== "set") return this;
+						throw Error("Not Implemented");
+					} isSuperset(set, New=true) {
+						if (type(set, 1) !== "set") return !0;
+						throw Error("Not Implemented");
+					} isSubset(set, New=true) {
 						if (type(set, 1) !== "set") return !1;
-						return "Not finished";
+						throw Error("Not Implemented");
 					}
 				};
+				Set.prototype["⋃"] = Set.prototype.union;
+				Set.prototype["⋂"] = Set.prototype.intersection;
 				this.phi = this.ϕ = ϕ; this.e  = this.E  = this.𝑒 = 𝑒;
 				this.ec  = this.γ = γ; this.pi = this.PI = π;
 				this.tau = this.𝜏 = 𝜏;
@@ -2619,20 +2639,8 @@ void (() => { "use strict";
 				s < 1 ?
 					2**s * π**(s-1) * this.sin(π_2*s) * this.gamma(1-s, gAcy, gInc) * this.ζ(1-s, a, acy) :
 				this.sum(1, acy, n => (n + a)**-s);
-			} Rzeta(s, acy=1000, gAcy=1e3, gInc=.1) {
-				// Reimann zeta function
-				return this.ζ(s, 0, acy);
-			} Hzeta(s, a=0, acy, gAcy, gInc) {
-				// Hurwitz zeta function
-				return this.ζ(
-					s,
-					a === void 0 ?
-						1000 :
-						a,
-					acy === void 0 ?
-						1000 :
-						acy
-				);
+			} Rzeta(s, acy=1000, gAcy=1e3, gInc=.1) { return this.ζ(s, 0, acy, gAcy, gInc); // Reimann zeta function
+			} Hzeta(s, a=0, acy=1e3, gAcy=1e3, gInc=.1) { return this.ζ(s, a, acy, gAcy, gInc); // Hurwitz zeta function
 			} π(x, form=1) {
 				if (isNaN( x = floor(Number(x)) )) return NaN;
 				if (x < 2) return 0;
@@ -2678,7 +2686,7 @@ void (() => { "use strict";
 				strict && len(out) > 1 && out.pop();
 				return out;
 			} expm(x, n) { return 𝑒 ** x - n;
-			} expm1(x) { return 𝑒 ** x - 1;
+			} expm1(x) { return this.expm(x, 1);
 			} log2(x) { return this.log(x, 2);
 			} log10(x) { return this.log(x, 10);
 			} logpi(x) { return this.log(x, π);
@@ -2706,18 +2714,8 @@ void (() => { "use strict";
 				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : ans;
 			} factorial(n) { return this.fact(n);
-			} sgn(n) {
-				return isNaN( n = Number(n) ) ?
-					NaN :
-					!n ?
-						n :
-						n < 0 ?
-							-1 :
-							1;
-			} abs(n) {
-				return isNaN( n = Number(n) ) ?
-					NaN :
-					this.sgn(n) * n;
+			} sgn(n) { return isNaN( n = Number(n) ) ? NaN : !n ? n : n < 0 ? -1 : 1;
+			} abs(n) { return isNaN( n = Number(n) ) ? NaN : this.sgn(n) * n;
 			} cabs(cnum) { return cMath.abs(cnum);
 			} sum(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
@@ -2736,7 +2734,7 @@ void (() => { "use strict";
 				return total;
 			} total(...args) {
 				var t = 0;
-				for (const x of (dim(arguments) ? args : arguments)) t += x;
+				for (const x of (isArr(args[0]) ? args[0] : args)) t += x;
 				return x;
 			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) { return this.sum(start, Infinity, fn, inc);
 			} prod(n, last, fn=n=>n, inc=1) {
@@ -2772,6 +2770,10 @@ void (() => { "use strict";
 				return type(ans, 1) === "inf" ? NaN : n;
 			} _(n) { 1 / Number(n);
 			} inverse(n) { 1 / Number(n);
+			} conjugate(x) {
+				// complex conjugate
+				// TODO: Expand to CFractions
+				return type(x, 1) === "complex" ? cMath.conjugate(x) : x;
 			} int(x/*start*/, end, f=x=>x, inc=.001) {
 				// start and end are included.
 				if (isNaN( x = Number(x) )) return NaN;
@@ -2792,7 +2794,7 @@ void (() => { "use strict";
 				}
 				else if (x > end) return -this.int(end, x, f, inc);
 				/*else */return ans;
-			} integral(x/*start*/, end, f=x=>x, inc=.001) { return this.int(x, end, f, inc);
+			} integral() { return this.int.apply(this, arguments);
 			} hypot(...args) {
 				if (len(arguments) !== 1) args = arguments;
 				for (var total = 0, i = len(args); i --> 0 ;)
@@ -2818,8 +2820,11 @@ void (() => { "use strict";
 						abs(x - base**(ans + chng)) < abs(x - base**ans) ? chng : 0)
 				);
 				return ans;
-			} logbase(base, x) { return isNaN( base = Number(base) ) || isNaN( x = Number(x) ) ? NaN : this.log( x, base );
-			} ln(n) { return isNaN( n = n ) ? NaN : this.log( n, 𝑒 );
+			} logbase(base, x) {
+				return isNaN( base = Number(base) ) || isNaN( x = Number(x) ) ?
+					NaN :
+					this.log( x, base );
+			} ln(n) { return isNaN( n = n ) ? NaN : this.log( n, e );
 			} max(...ns) {
 				ns = ns.flatten();
 				if (!len(ns)) return -Infinity;
@@ -2843,7 +2848,6 @@ void (() => { "use strict";
 					arr[dim(arr) / 2] :
 					(arr[len(arr) / 2 - 1] + arr[len(arr) / 2]) / 2
 			} mode(...ns) {
-				// TODO: Finish
 				ns = ns.flatten();
 				if ( ns.isNaN() ) return NaN;
 				var obj = {};
@@ -2897,7 +2901,11 @@ void (() => { "use strict";
 				);
 				// ⌊ ϕⁿ/√5 ⌉ ∀ n∈ℤ > -1
 			} fibonacci(/*n=1*/) { return this.fib.apply(this, arguments);
-			} lucas(n=1) { return isNaN( n = Number(n) ) ? NaN : round( ϕ**n + this.Phi**n );//⌊ϕⁿ⌉, n∈ℕ>1
+			} lucas(n=1) {
+				return isNaN( n = Number(n) ) ?
+					NaN :
+					round( ϕ**n + this.Phi**n );
+				// ⌊ϕⁿ⌉, n ∈ ℕ>1
 			} primeFactorInt(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if ( n.isPrime() ) return n;
@@ -2976,13 +2984,7 @@ void (() => { "use strict";
 				return form === Array ?
 					[a, b, c] :
 					{ a: a, b: b, c: c };
-			} neg(num=0, number=false) {
-				// negate
-				return number ?
-					-num :
-					num[0] === "-" ?
-						num.substr(1) :
-						`-${num}`;
+			} neg(num=0, number=false) { return number ? -num : num[0] === "-" ? num.substr(1) : `-${num}`; // negate
 			} ssgn(snum="0.0") { return snum[0] === "-" ? -1 : +!/0+\.?0*/.in(snum); // string sign
 			} ssign(snum="0.0") { return this.ssgn(snum); // string sign
 			} sabs(snum="0.0") { return snum[0] === "-" ? snum.substr(1) : snum; // string absolute value
@@ -2993,51 +2995,10 @@ void (() => { "use strict";
 				return number ?
 					Number(sMath.div(a, b, precision)) :
 					sMath.div(a, b, precision);
-			} fdiv(num="0.0", denom="1.0", number=true) {
-				// floor division
-				return this.floor( this.div(
-					num,
-					denom,
-					number,
-					1
-				));
-			} cdiv(num="0.0", denom="1.0", number=true) {
-				// ceiling division
-				return this.ceil( this.div(
-					num,
-					denom,
-					number,
-					1
-				));
-			} rdiv(num="0.0", denom="1.0", number=true) {
-				// rounding division
-				return this.round( this.div(
-					num,
-					denom,
-					number,
-					1
-				));
-			} tdiv(num="0.0", denom="1.0", number=true) {
-				// truncatinng division
-				return this.trunc( this.div(
-					num,
-					denom,
-					number,
-					1
-				));
-			} mod2(a, n=1, k=0) {
-				// modulo using iteration
-				// it is rMath.mod2 because it is slower than rMath.mod
-				// a modₖ n
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( k = Number(k) )) return NaN;
-				if (!n) return NaN;
-				if (a >= 0 && n > 0) for (; a - n >= 0 ;) a -= n;
-				else if (a < 0 && n > 0) for (; a < 0 ;) a += n;
-				else if (a > 0 && n < 0) for (; a > 0 ;) a += n;
-				else if (a < 0 && n < 0) for (; a - n < 0 ;) a -= n;
-				return a + k;
+			} cdiv(num="0.0", denom="1.0", number=true) { return this.ceil ( this.div( num, denom, number, 1 ) );
+			} fdiv(num="0.0", denom="1.0", number=true) { return this.floor( this.div( num, denom, number, 1 ) );
+			} rdiv(num="0.0", denom="1.0", number=true) { return this.round( this.div( num, denom, number, 1 ) );
+			} tdiv(num="0.0", denom="1.0", number=true) { return this.trunc( this.div( num, denom, number, 1 ) );
 			} mod(a, n=1, k=0) {
 				// a modₖ n
 				// modulo using the formula
@@ -3045,21 +3006,19 @@ void (() => { "use strict";
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( k = Number(k) )) return NaN;
 				return a - n*floor(a/n) + k;
+			} rem(a, n=1, k=0) {
+				// a remₖ n
+				// different from mod()
+				if (isNaN( a = Number(a) )) return NaN;
+				if (isNaN( n = Number(n) )) return NaN;
+				if (isNaN( k = Number(k) )) return NaN;
+				return a - n*int(a/n) + k;
+			} remainder(/*a, n, k*/) { return this.rem.apply(this, arguments);
 			} parity(x=0) { return x % 2 ? "odd" : "even";
-			} nCr(n, k) {
-				return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ?
-					NaN :
-					this.nPr(n, k) / this.fact(k);
-			} comb(n, k) {
-				// idk, python uses "comb" for some reason. probably means "combination"
-				return this.nCr(n, k);
-			} nPr(n, k) {
-				return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ?
-					NaN :
-					this.fact(n) / this.fact(n - k);
-			} perm(n, k) {
-				// permuation
-				return this.nPr(n, k);
+			} nCr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.nPr(n, k) / this.fact(k);
+			} comb(n, k) { return this.nCr(n, k); // combination
+			} nPr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.fact(n) / this.fact(n - k);
+			} perm(n, k) { return this.nPr(n, k); // permuation
 			} isClose(n1, n2, range=Number.EPSILON) {
 				return isNaN( n1 = Number(n1) ) ||
 					isNaN( n2 = Number(n2) ) ||
@@ -3070,7 +3029,7 @@ void (() => { "use strict";
 				return isNaN( z = Number(z) ) ?
 					NaN :
 					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
-					// 2/sqrt(pi) * ...
+					// 2 / sqrt(pi) * ...
 			} erfc(z) {
 				return isNaN( z = Number(z) ) ?
 					NaN :
@@ -3090,30 +3049,6 @@ void (() => { "use strict";
 				if (isNaN( b = Number(b) )) return NaN;
 				if (isNaN( c = Number(c) )) return NaN;
 				return this.abs(a*x_0 + b*y_0 + c) / this.hypot(a, b);
-			} copysign(a, b) {
-				return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ?
-					NaN :
-					this.abs(a) * this.sgn(b);
-			} trunc(n) {
-				return isNaN( n = Number(n) ) ?
-					n :
-					int(n);
-			} isNaN(e) {
-				// is not a number
-				return isNaN( Number(e) );
-			} isAN(e) {
-				// is a number
-				return !this.isNaN(e);
-			} isaN(e) {
-				// is a number
-				return this.isAN(e);
-			} isNNaN(e) {
-				// is not not a number. isaN, isAN
-				return this.isAN(e);
-			} imul(a, b) {
-				return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ?
-					NaN :
-					this.Math.imul(a, b);
 			} lcm(...args) {
 				if (isArr(args[0])) args = args[0];
 				return !len(args) ?
@@ -3134,6 +3069,14 @@ void (() => { "use strict";
 				while (args[1]) args = [args[1], this.mod(...args)];
 				return args[0];
 			} gcf() { return this.gcd.apply(this, arguments);
+			} copysign(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.abs(a) * this.sgn(b);
+			} trunc(n) { return isNaN( n = Number(n) ) ? n : int(n);
+			} truncate(n) { return this.trunc.apply(this, arguments);
+			} isNaN(e) { return isNaN( Number(e) ); // is not a number
+			} isAN(e) { return !this.isNaN(e); // is a number
+			} isaN(e) { return this.isAN(e); // is a number
+			} isNNaN(e) { return this.isAN(e); // is not not a number. isaN, isAN
+			} imul(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.Math.imul(a, b);
 			} fround(n) { return isNaN( n = Number(n) ) ? n : this.Math.fround(n);
 			} sqrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2);
 			} cbrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3);
@@ -3211,7 +3154,7 @@ void (() => { "use strict";
 			} Li(x, incOrAcy=.001, form=1) {
 				return isNaN( x = Number(x) ) || isNaN( incOrAcy = Number(incOrAcy) ) ?
 					NaN :
-					this.li(x, incOrAcy, form) - 1.045163780117493;
+					this.li.apply(this, arguments) - 1.045163780117493;
 			} Ei(x, incOrAcy=.001, form=1) {
 				return isNaN( x = Number(x) ) ? NaN : this.li(e**x, incOrAcy, form);
 				// Exponential integral
@@ -3405,12 +3348,11 @@ void (() => { "use strict";
 			} productLog(/*x, acy*/) { return this.W.apply(this, arguments);
 			} deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
 				if (type(f) === "string") {
-					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
+					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used as the variable
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
-					if (VARIABLE === "" || /\s+/.in(VARIABLE))
-						throw Error(`Invalid String input`);
+					if (VARIABLE === "") throw Error(`Invalid String input`);
 					f = f.slc(":", Infinity, 1);
-					let regex = new RegExp(`\\d+${VARIABLE}`, "g"),
+					let regex = RegExp(`\\d+${VARIABLE}`, "g"),
 						arr = [];
 					let values = f.matchAll(regex);
 					let value = values.next();
@@ -3439,10 +3381,9 @@ void (() => { "use strict";
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used.
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
-					if (VARIABLE === "" || /\s+/.in(VARIABLE))
-						throw Error(`Invalid String input`);
+					if (VARIABLE === "") throw Error(`Invalid String input`);
 					f = f.slc(":", Infinity, 1);
-					let regex = new RegExp(`\\d+${VARIABLE}`, "g"),
+					let regex = RegExp(`\\d+${VARIABLE}`, "g"),
 						arr = [];
 					let values = f.matchAll(regex);
 					let value = values.next();
@@ -3484,7 +3425,7 @@ void (() => { "use strict";
 			} lam(x, inc=.001) {
 				// inverse gudermannian function
 				// Lambertian function
-				return isNaN( x = Number(x) ) || x <= -π_2 || x >= π_2 ?
+				return isNaN( x = Number(x) ) || abs(x) >= π_2 ?
 					NaN :
 					this.int(0, x, t => this.sec(t), inc);
 			} base10Conv(n, base, decAcy=54, numberOnly=false) {
@@ -3593,28 +3534,30 @@ void (() => { "use strict";
 						default: throw Error("Invalid 3rd Input to function");
 					}
 				} else throw Error("Invalid 2nd Input to function");
-			} coprime(a, b) {
-				// returns coprimality of a and b
-				return this.gcd(a, b) === 1;
-			} ncoprime(a, b) {
-				// returns inverse coprimality of a and b
-				return this.gcd(a, b) !== 1;
-			} cumsum(set) {
-				// cumulative sum
-				return type(set, 1) === "set" ? 
-					set.cumsum() :
-					NaN;
+			} coprime(a, b) { return this.gcd(a, b) === 1; // returns coprimality of a and b
+			} ncoprime(a, b) { return this.gcd(a, b) !== 1; // returns inverse coprimality of a and b
+			} cumsum(set) { return type(set, 1) === "set" ? set.cumsum() : NaN; // cumulative sum
 			} set(...args) { return new this.Set(...args.flatten() );
 			} setUnion(set1, set2) {
-				return type(set1, 1) !== "set" ?
-					type(set2, 1) !== "set" ?
-						!1 :
-						set2 :
-					type(set2, 1) !== "set" ?
-						set1 :
+				return type(set1, 1) === "set" ?
+					type(set2, 1) === "set" ?
 						len(set1) >= len(set2) ?
-							set1.union( set2, !1 ) :
-							set2.union( set1, !1 );
+							set1.union( set2, 1 ) :
+							set2.union( set1, 1 ) :
+						set1 :
+					type(set2, 1) === "set" ?
+						set2 :
+						!1;
+			} setIntersection(set1, set2) {
+				return type(set1, 1) === "set" ?
+					type(set2, 1) === "set" ?
+						len(set1) >= len(set2) ?
+							set1.intersection( set2, 1 ) :
+							set2.intersection( set1, 1 ) :
+						set1 :
+					type(set2, 1) === "set" ?
+						set2 :
+						!1;
 			} harmonic(n=1, decimals=18) {
 				return this.sum(
 					1,
@@ -3625,18 +3568,13 @@ void (() => { "use strict";
 			} complex(re=0, im=0) { return cMath.new(re, im);
 			} bigint(value=0) { try { return BigInt(value) } catch { return NaN }
 			} number(value=0) { try { return Number(value) } catch { return NaN }
-			} toAccountingStr(n=0) {
-				return this.isNaN(n) ?
-					NaN :
-					n < 0 ?
-						`(${-n})` :
-						n+""
+			} toAccountingStr(n=0) { return this.isNaN(n) ? NaN : n < 0 ? `(${-n})` : n+""
 			} collatz(x=2) {
 				if (this.isNaN(x) || x < 0) return NaN;
 				x = BigInt(x);
 				const infinity = 10n**312n;
 				for (var i = 0n; x !== 1n && i < infinity; i++)
-					x = x % 2n ? 3n*x+1n >> 1n : x >> 1n;
+					x = (x % 2n ? 3n*x+1n : x) >> 1n;
 				return i === infinity ? Infinity : i;
 			} _pow(x=0) {
 				if (!x) return [0];
@@ -3672,7 +3610,6 @@ void (() => { "use strict";
 			} nextAfter(x=0, y=Infinity) { return x === y ? x : x > y ? this.nextDown(x) : this.nextUp(x);
 			} ulp(x=1) { return x < 0 ? this.nextUp(x) - x : x - this.nextDown(x);
 			}
-			// harmonic mean
 			// piApprox
 			// simplify sin(nx)
 			// simplify tan(nx)
@@ -3680,16 +3617,10 @@ void (() => { "use strict";
 			// pell numbers
 			// polylogarithms
 			// Beta function
-			// geometry
-			// law of sines
-			// law of cosines
-			// law of tangents
-			// law of cotangents
 			// Bernoulli numbers
 			// K-function
 			// vector dot product
 			// vector cross product
-			// setIntersection
 			// setDifference
 			// isSubset
 			// isSuperset
@@ -3705,7 +3636,6 @@ void (() => { "use strict";
 			// Kullback-Leibler (KL) divergence  between two distributions.
 			// kronecker product of 2 matrices or vectors.
 			// nthrts, probably for cMath
-			// compareText
 			// coulomb
 			// electrical things
 			// p-adic integers
@@ -4636,7 +4566,7 @@ void (() => { "use strict";
 		// TODO: Add Array.prototype.fconcat. basically a mixture between concat and unshift
 		// TODO: Add Array.prototype.funion. basically a mixture between union and unshift
 		, Array.prototype.pop2 = function pop2(num=1) {
-			while ( num --> 0 ) this.pop();
+			while ( num --> 0 ) Array.prototype.pop.call(this);
 			return this;
 		}, Array.prototype.splice2 = function splice2(a, b, ...c) {
 			var d = this;
@@ -4680,13 +4610,11 @@ void (() => { "use strict";
 			for (const e of this)
 				yield e;
 		}, Array.prototype.remove = function remove(e) {
-			var a = this;
-			a.incl(e) && a.splice(a.io(e), 1);
-			return a;
+			this.incl(e) && this.splice(this.io(e), 1);
+			return this;
 		}, Array.prototype.removeAll = function removeAll(e) {
-			var a = this;
-			while (a.incl(e)) a.splice(a.io(e), 1);
-			return a;
+			while (this.incl(e)) this.splice(this.io(e), 1);
+			return this;
 		}, Array.prototype.hasDupes = function hasDuplicates() {
 			for (var a = copy(this), i = len(a); i --> 0 ;)
 				if (a.incl(a.pop())) return !0;
@@ -4705,19 +4633,27 @@ void (() => { "use strict";
 			return list(new Set(this));
 			// probably changes the order of the array
 		}, Array.prototype.rand = function random() {
-			var a = this;
-			return a[ randint(0, dim(a)) ];
+			return this[ randint(0, dim(this)) ];
 		}, Array.prototype.insrand = function insertRandomLocation(thing) {
 			this.splice(randint(len(this)), 0, thing);
 			return this;
 		}, Array.prototype.insrands = function insertThingsRandomLocation(...things) {
 			for (const thing of things) this.insrand(thing);
 			return this;
+		}, Array.prototype.insSorted = function insertSorted(thing) {
+			return this.splice2(
+				this.bisectLeft(thing),
+				0,
+				thing
+			);
+		}, Array.prototype.insSorteds = function insertThingsSorted(...things) {
+			for (let thing of things)
+				this.insSorted(thing);
+			return this;
 		}, Array.prototype.slc = function slice(start=0, end=Infinity, startOffset=0, endOffset=0, includeEnd=false) {
 			// last index = end - 1
 			end < 0 && (end += len(this));
 			end += endOffset + includeEnd;
-
 			for (var a = this, b = [], i = start + startOffset, n = rMath.min(len(a), end); i < n; i++)
 				b.push( a[i] );
 			return b;
@@ -4800,15 +4736,16 @@ void (() => { "use strict";
 			return this.flat(Infinity);
 		}, Array.prototype.sort = (function create_sort() {
 			const _sort = Array.prototype.sort;
-			return function sort() {
+			return function sort(update=true) {
 				// uses a very bad sorting method.
+
 				// TODO: implement qsort or literally anything else, this is like the worst possible method.
-				if (this.isNaN()) return _sort.call(this);
+				if (Array.prototype.isNaN.call(this)) return _sort.call(this);
 				var list = this;
-				for (var output = []; len(list) ;) {
-					output.push(rMath.min(list));
-					list.splice(list.io(rMath.min(list)), 1);
-				}
+				for (var output = [], i = len(list); i --> 0 ;)
+					output.insSorted(list[i]);
+				if (update) for (var i = len(list); i --> 0 ;)
+					list[i] = output[i];
 				return output;
 			}
 		})(), Array.prototype.shuffle = function shuffle(times=1) {
@@ -4820,7 +4757,7 @@ void (() => { "use strict";
 			return arr2;
 		}, Array.prototype.isNaN = function isNaN(strict=false) {
 			const fn = (strict ? window : rMath).isNaN;
-			for (const val of this)
+			for (const val of list(this))
 				if (fn(val)) return !0;
 			return !1;
 		}, Array.prototype.clear = function clear() {
