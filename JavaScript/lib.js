@@ -4953,8 +4953,6 @@ void (() => { "use strict";
 		}
 
 		LIBRARY_VARIABLES["MathObjects"]        = MathObjects;
-		LIBRARY_VARIABLES["local DEFER_ARR"]    = DEFER_ARR;
-		LIBRARY_VARIABLES["local CONFLICT_ARR"] = CONFLICT_ARR;
 
 
 
