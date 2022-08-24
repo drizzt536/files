@@ -15,6 +15,7 @@ JavaScript/jquery.js
 
 # not actually passwords.
 Python/passwords.py
+Python/fraction.py
 
 notes.*
 test.*
