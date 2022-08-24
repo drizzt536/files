@@ -15,7 +15,7 @@ void (() => { "use strict";
 
 		/**
 		 * OnConflict Options (ones in parentheses are aliases for the same thing):
-		   - log: console.log
+		   - log: console.log (default value)
 		   - throw (trw)
 		   - return (ret)
 		   - error (err): console.error
@@ -28,7 +28,7 @@ void (() => { "use strict";
 		   - crash
 		   - cry
 		   - dont-use: doesn't overwrite anything
-		   - none (anything else defaults to this): ignores the error and overwrites the value anyway
+		   - none: ignores the error and overwrites the value anyway
 		 * Library Settings:
 		   - The defaults are the boolean value true, unless otherwise noted on the same line in a comment
 		   - if there is a comment that is not on the same line as a variable, it is for the variable directly below it
@@ -42,6 +42,7 @@ void (() => { "use strict";
 		   - otherwise, nothing changes.
 		   - functions on the global ignore list can still be accessed through LIBRARY_VARIABLES if it is globalized
 		**/
+
 		var LibSettings = {
 			onConflictOptions                   : onConflictOptions
 			, Alert_Library_Load_Finished       : "default" // false
@@ -52,9 +53,10 @@ void (() => { "use strict";
 			, Alert_Conflict_For_Math           : "default" // false
 			, Alert_Conflict_OverWritten        : "default"
 			, Library_Startup_Message           : "default" // "lib.js loaded"
-			, Library_Startup_Function          : "default" // console.log. functions for logging that the statup finished
+			// console.log. function for logging that the startup finished without any errors.
+			, Library_Startup_Function          : "default"
 			, Output_Math_Variable              : "default" // "Math"
-			, Input_Math_Variable               : "default" // "rMath"
+			, Input_Math_Variable               : "default" // "rMath" (MathObjects object key)
 			, MATH_LOG_DEFAULT_BASE             : "default" // 10. for rMath.log and rMath.logbase
 			, MATH_TEMPCONV_DEFAULT_END_SYSTEM  : "default" // "c", for rMath.tempConv (temperature converter between systems)
 			, aMath_Help_Argument               : "default"
@@ -92,13 +94,18 @@ void (() => { "use strict";
 			, Creepily_Watch_Every_Action       : "default" // false
 			, Freeze_Everything                 : "default" // false
 			, Freeze_Instance_Objects           : "default" // false, only matters if Freeze_Everything is not truthy
+			// developer settings
+			, Define_Fn_Previous_Getter_String  : "default" // "\\previous".
 		};
 
 		LibSettings.Clear_LocalStorage   && LibSettings.Clear_LocalStorage   !== "default" && localStorage  .clear();
 		LibSettings.Clear_SessionStorage && LibSettings.Clear_SessionStorage !== "default" && sessionStorage.clear();
 		LibSettings.MATH_LOG_DEFAULT_BASE   === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE   = 10 );
 		LibSettings.MATH_DEFAULT_END_SYSTEM === "default" && (LibSettings.MATH_DEFAULT_END_SYSTEM = "c");
-		if (!onConflictOptions.includes(LibSettings.ON_CONFLICT)) LibSettings.ON_CONFLICT = "none";
+
+		onConflictOptions.includes(LibSettings.ON_CONFLICT) || (LibSettings.ON_CONFLICT = "dbg");
+		LibSettings.ON_CONFLICT === "default" && (LibSettings.ON_CONFLICT = "dbg");
+		LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
 		// TODO: clear cookies and caches if the library user wants
 	} {// Variables & Functions definitions
 		{// Local Variables (may also be global)
@@ -117,10 +124,11 @@ void (() => { "use strict";
 			for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 				for (j = 10; j --> 0 ;)
 					divtable[i][j] = i / j;
-			var
-			DEFER_ARR = []
-			, CONFLICT_ARR = []
-			, MathObjects = {}
+			var CONFLICT_ARR = [];
+			CONFLICT_ARR.push = function push(val, scope/*name*/) { return Array.prototype.push.call(
+				this, (scope.startsWith("object ") ? scope.slice(7) : scope.startsWith("prototype ") ?
+					scope.slice(10) + ".prototype" : "window") + "." + val
+			)}; var DEFER_ARR = [] , MathObjects = {}
 			//////////////////////////////// START OF CONSTANTS ////////////////////////////////
 			, list = Array.from
 			, int = Number.parseInt
@@ -208,17 +216,17 @@ void (() => { "use strict";
 										"regex" :
 										a === null ?
 											"null" :
-											/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+											/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 												"linkedlist" :
-												/^type\(\){return("|'|`)complex\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+												/^type\(\){return("|'|`)complex\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 													"complex" :
-													/^type\(\){return("|'|`)fraction\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+													/^type\(\){return("|'|`)fraction\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 														"fraction" :
-														/^type\(\){return("|'|`)set\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+														/^type\(\){return("|'|`)set\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 															"set" :
-															/^type\(\){return("|'|`)dict\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+															/^type\(\){return("|'|`)dict\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 																"dict" :
-																/^type\(\){return("|'|`)mutstr\1}$/.test(`${a.type}`.replace(/\s|;/g, "")) ?
+																/^type\(\){return("|'|`)mutstr\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 																	"mutstr" :
 																	isArr(a) ?
 																		"arr" :
@@ -234,92 +242,105 @@ void (() => { "use strict";
 				if (type(str) !== "string") return;
 				str.split(/[.[\]'"]/).filter(e=>e).forEach(e => obj = obj?.[e]);
 				return obj;
-			}, define = (function create_define() {
-				function error(val) {
-					CONFLICT_ARR.push(val);
+			}, define = (function create_define(previousGetterString="\\previous") {
+				function error(val, scopename) {
+					CONFLICT_ARR.push(val/*tmp*/, scopename);
 					if (LibSettings.ON_CONFLICT === "crash") throw Error(`scope[${String(val)}] is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
-					if (LibSettings.ON_CONFLICT === "debugger") {
-						debugger;
-						return !0;
-					} else if (LibSettings.ON_CONFLICT === "cry") {
-						console.log(`scope[${String(val)}] overwritten and LibSettings.ON_CONFLICT is set to cry.`);
-						return !0;
-					}
-					return !1; // for "dont-use"
-				} return function define(s /*key*/, section=0 /*for defer*/, scope=window, customValue=void 0) {
+					if (LibSettings.ON_CONFLICT === "cry") console.log(`scope[${String(val)}] overwritten and LibSettings.ON_CONFLICT is set to cry.`);
+					if (LibSettings.ON_CONFLICT === "debugger") debugger;
+					if (LibSettings.ON_CONFLICT === "dont-use") return !1;
+					return !0;
+				}
+				var previous = null;
+				return function define(
+					s /*key*/,
+					section /*for defer*/,
+					scope=window,
+					customValue=void 0,
+					scopename=void 0,
+				) {
 					// section 0 stores the defer functions in DEFER_ARR
 					// section 1 calls the defer functions
 					// "s" is the string for the name of the function/variable.
-					// a better name would have been "key"
+					// a better name would have been "key", but that is used for the object and prototype things.
 					// the return value is whether or not the function worked.
 					// returns the new length of DEFER_ARR if it section 0 for defer variables
+					// custom values of null mean do nothing, while undefined means use LIBRARY_VARIABLES[s]
 					if (
-						typeof s !== "string" || !s ||
+						typeof s !== "string" || !s || scope == null ||
 						(Array.isArray(LibSettings.Global_Ignore_List) ?
 							LibSettings.Global_Ignore_List.includes(s) :
-							LibSettings.Global_Ignore_List === s)
+							LibSettings.Global_Ignore_List === s) ||
+						customValue === null || scope != scope /*NaN*/
 					) return !1;
-					if (s.indexOf(" ") < 0) {
-						if (scope[s] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(s)) return !1;
-						scope[s] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
+					if (customValue === previousGetterString) { define(s, section, scope, previous, scopename);
+					} else if (s.indexOf(" ") < 0) {
+						if (scope[s] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(s, scopename)) return !1;
+						previous = scope[s] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
 					} else if (s.startsWith("delete ")) {
 						let tmp = s.slice(7);
 						delete scope[tmp];
 						return scope[tmp] === void 0
 					} else if (s.startsWith("literal symbol.for ")) {
 						let tmp = Symbol.for(s.slice(19));
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp)) return !1;
-						scope[Symbol.for(s.slice(19))] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
+						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
+						previous = scope[Symbol.for(s.slice(19))] = customValue === void 0 ?
+							LIBRARY_VARIABLES[s] :
+							customValue;
 					} else if (s.startsWith("instance ")) {
 						let tmp = s.slice(9);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp)) return !1;
-						scope[tmp] = new (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue);
+						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
+						previous = scope[tmp] = new (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue);
 						tmp.includes("Math") && (MathObjects[tmp] = scope[tmp]);
 					} else if (s.startsWith("defer_instance ")) {
 						if (!section) return DEFER_ARR.push(s);
 						let tmp = s.slice(15);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp)) return !1;
-						scope[tmp] = new (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue);
+						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
+						previous = scope[tmp] = new (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue);
 						tmp.includes("Math") && (MathObjects[tmp] = scope[tmp]);
 					} else if (s.startsWith("defer ")) {
 						if (!section) return DEFER_ARR.push(s);
 						let tmp = s.slice(6);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp)) return !1;
-						scope[tmp] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
+						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
+						previous = scope[tmp] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
 					} else if (s.startsWith("defer_call ")) {
 						if (!section) return DEFER_ARR.push(s);
 						let tmp = s.slice(11);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp)) return !1;
-						scope[tmp] = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
+						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
+						previous = scope[tmp] = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
 					} else if (s.startsWith("defer_call_local ")) {
 						if (!section) return DEFER_ARR.push(s);
-						(customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
+						previous = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
 					} else if (s.startsWith("overwrite ")) {
-						scope[s.slice(10)] = customValue === void 0 ?
+						previous = scope[s.slice(10)] = customValue === void 0 ?
 							LIBRARY_VARIABLES[s] :
 							customValue;
 					} else if (s.startsWith("overwrite_call ")) {
-						scope[s.slice(15)] = (customValue === void 0 ?
+						previous = scope[s.slice(15)] = (customValue === void 0 ?
 							LIBRARY_VARIABLES[s] : customValue
 						)();
 					} else if (s.startsWith("call ")) {
 						let tmp = s.slice(5);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp)) return !1;
-						scope[tmp] = (customValue === void 0 ?
+						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
+						previous = scope[tmp] = (customValue === void 0 ?
 							LIBRARY_VARIABLES[s] : customValue
 						)();
 					} else if (s.startsWith("object ")) {
 						let newScope = strToObj(s.slice(7), scope);
 						for (let [key, value] of Object.entries( LIBRARY_VARIABLES[s] ))
-							define(key, section, newScope, value);
+							define(key, section, newScope, value, s);
 					} else if (s.startsWith("prototype ")) {
 						let newScope = strToObj(s.slice(10), scope).prototype;
 						for (let [key, value] of Object.entries( LIBRARY_VARIABLES[s] ))
-							define(key, section, newScope, value);
+							define(key, section, newScope, value, s);
 					} // else { local variable, do nothing }
 					return !0;
 				}
-			})(), keyof = function keyof(obj, value) {
+			})(
+				LibSettings.Define_Fn_Previous_Getter_String === "default" ?
+					"\\previous" :
+					LibSettings.Define_Fn_Previous_Getter_String
+			), keyof = function keyof(obj, value) {
 				for (const key of Object.keys(obj))
 					if (obj[key] === value) return key;
 				return null;
@@ -499,24 +520,20 @@ void (() => { "use strict";
 					bisectLeft : bisectRight
 				)(arr, x, lo, hi);
 			}, qsort = (function create_quickSort() {
-				// does affect original variable, unlike msort
 				function partition(arr, low, high) {
-					let pivot = arr[high]
-						, left = low
-						, right = high - 1;
-					while (left < right) {
-						while (arr[left] < pivot) left++;
-						while (arr[right] > pivot) right--;
-						if (left >= right) break;
-						[arr[left], arr[right]] = [arr[right], arr[left]];
-					}
-					[arr[left], arr[high]] = [arr[high], arr[left]];
-					return left;
+					let pivot = arr[high];
+					for (var i = low - 1, j = low; j <= high - 1; j++)
+						if (arr[j] < pivot)
+							i++,
+							[arr[i], arr[j]] = [arr[j], arr[i]];
+					i++;
+					[arr[i], arr[high]] = [arr[high], arr[i]];
+					return i;
 				} return function qsort(arr, low=0, high=dim(arguments[0])) {
 					if (low >= high) return arr;
-					let pivot = partition(arr, low, high);
-					qsort(arr, low, pivot-1);
-					qsort(arr, pivot+1, high);
+					let pi = partition(arr, low, high);
+					qsort(arr, low, pi - 1);
+					qsort(arr, pi + 1, high);
 					return arr;
 				}
 			})(), msort = (function create_mergeSort() {
@@ -535,7 +552,7 @@ void (() => { "use strict";
 			})(), dict = (function create_dict() {
 				// So I can add prototype methods and not have it on literally every object in existance
 				var Dictionary = class dict extends Object {
-					// I think the "extends Object" might be redundant, but whatever
+					// I think "extends Object" here might be redundant, but whatever.
 					constructor(dict) {
 						super();
 						for (const e of Object.keys(dict))
@@ -551,7 +568,7 @@ void (() => { "use strict";
 					seal()              { return Object.seal(this)              }
 					isSealed()          { return Object.isSealed(this)          }
 					size()              { return len(Object.keys(this))         }
-					type()              { return "dict";                        }
+					__type__()          { return "dict";                        }
 				}
 				function dict(obj={}) { return new Dictionary(obj) }
 				dict.fromEntries = function fromEntries(entries=[]) { return this( Object.fromEntries(entries) ) }
@@ -622,7 +639,8 @@ void (() => { "use strict";
 					this.head = null;
 					this.size = 0;
 					return this;
-				} type() { return "linkedlist" }
+				} Node() { return new Node(...arguments);
+				} __type__() { return "linkedlist" }
 			}
 		}, "overwrite_call Image"() {
 			// the function can still be used the same as before
@@ -1137,7 +1155,7 @@ void (() => { "use strict";
 							this.union(e);
 					}
 				}
-				type() { return "mutstr" }
+				__type__() { return "mutstr" }
 				toString(arg="") { return this.join(arg) }
 				valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
 				concat() { return Array.prototype.concat.apply(this, arguments) }
@@ -1244,7 +1262,7 @@ void (() => { "use strict";
 				)
 					return [this].flatten();
 				return list(this).flatten();
-			}
+			},
 		}, "prototype RegExp": {
 			in: RegExp.prototype.test
 			, all(str="") {
@@ -1253,15 +1271,16 @@ void (() => { "use strict";
 			}, toRegex() { return this;
 			},
 		}, "prototype Array": {
-			any: Array.prototype.some
-			, append: Array.prototype.push
+			append: Array.prototype.push
 			, io: Array.prototype.indexOf
 			, rev: Array.prototype.reverse
 			, lio: Array.prototype.lastIndexOf
 			, incl: Array.prototype.includes
 			, last: lastElement
-			, "delete some": null
-			, some(fn) {
+			, any: (function create_any() {
+				var _some = Array.prototype.some;
+				return function any(callback=e=>e, thisArg=void 0) { return _some.call(this, callback, thisArg) }
+			})(), "overwrite some": function some(fn) {
 				// "some" implies that it has to be plural. use any for any. some != any
 				var num = 0;
 				for (var i = len(this); i --> 0 ;) {
@@ -1353,20 +1372,20 @@ void (() => { "use strict";
 				return list(new Set(this));
 				// probably changes the order of the array
 			}, random() { return this[ randint(0, dim(this)) ];
-			}, rand: Array.prototype.random
+			}, rand: "\\previous"
 			, insrand: function insertRandomLocation(thing) {
 				this.splice(randint(len(this)), 0, thing);
 				return this;
 			}, insrands: function insertThingsRandomLocation(...things) {
 				for (const thing of things) this.insrand(thing);
 				return this;
-			}, insertSorted(thing) {
+			}, insSorted: function insertSorted(thing) {
 				return this.splice2(
 					this.bisectLeft(thing),
 					0,
 					thing
 				);
-			}, insSorted: Array.prototype.insertSorted
+			}, insertSorted: "\\previous"
 			, insSorteds: function insertThingsSorted(...things) {
 				for (let thing of things)
 					this.insSorted(thing);
@@ -1448,26 +1467,21 @@ void (() => { "use strict";
 					else return this.concat(Array(length).fill(filler));
 				}
 				/*else */return a;
-			}, startsWith(item) { return this[0] === item;
-			}, startsW: Array.prototype.startsWith
-			, sW: Array.prototype.startsWith
-			, endsWith(item) { return this.last() === item;
-			}, endsW: Array.prototype.endsWith
-			, eW: Array.prototype.endsWith
+			}, sW: function startsWith(item) { return this[0] === item;
+			}, startsW: "\\previous"
+			, sW: "\\previous"
+			, endsWith(item) { return this.last() === item }
+			, eW: "\\previous"
+			, endsW: "previous"
 			, flatten() { return this.flat(Infinity);
-			}, sort: (function create_sort() {
+			}, "overwrite sort": (function create_sort() {
 				const _sort = Array.prototype.sort;
 				return function sort(update=true) {
-					// uses a very bad sorting method.
-
-					// TODO: implement qsort or literally anything else, this is like the worst possible method.
-					if (Array.prototype.isNaN.call(this)) return _sort.call(this);
-					var list = this;
-					for (var output = [], i = len(list); i --> 0 ;)
-						output.insSorted(list[i]);
-					if (update) for (var i = len(list); i --> 0 ;)
-						list[i] = output[i];
-					return output;
+					return Array.prototype.any.call(this, e => typeof e !== "bigint" && typeof e !== "number") ?
+						_sort.call(this) :
+						update ?
+							qsort(this) : // quick-sort, O(n^2), Ω(nlogn)
+							msort(this); // merge-sort, Ө(nlogn)
 				}
 			})(), shuffle(times=1) {
 				var arr = this;
@@ -1533,15 +1547,17 @@ void (() => { "use strict";
 			}, isRegular: function isRegularFunction() { return (this + "").sW("function");
 			}
 		}, "prototype String": {
-			io       : String.prototype.indexOf
-			, lio    : String.prototype.lastIndexOf
-			, strip  : String.prototype.trim
-			, lstrip : String.prototype.trimLeft
-			, rstrip : String.prototype.trimRight
-			, sW     : String.prototype.startsW = String.prototype.startsWith
-			, eW     : String.prototype.endsW = String.prototype.endsWith
-			, last   : lastElement
-			, replace: (function create_replace() {
+			io        : String.prototype.indexOf
+			, lio     : String.prototype.lastIndexOf
+			, strip   : String.prototype.trim
+			, lstrip  : String.prototype.trimLeft
+			, rstrip  : String.prototype.trimRight
+			, startsW : String.prototype.startsWith
+			, sW      : "\\previous"
+			, endsW   : String.prototype.endsWith
+			, eW      : "\\previous"
+			, last    : lastElement
+			, "overwrite replace" : (function create_replace() {
 				const _replace = String.prototype.replace;
 				return function replace(search, replacer) {
 					!isArr(search) && (search = [search]);
@@ -1556,8 +1572,8 @@ void (() => { "use strict";
 				if (type(strOrArr) === "string") {
 
 				}
-			}, startsL: String.prototype.startsLike
-			, sL      : String.prototype.startsLike
+			}, startsL: "\\previous"
+			, sL      : "\\previous"
 			, shuffle(times=1) { return this.split("").shuffle(times).join("");
 			}, ios: function indexesOf(chars="") {
 				return type(chars) === "string" ?
@@ -1645,7 +1661,7 @@ void (() => { "use strict";
 				else return RegExp(this, f);
 				return RegExp(b, f);
 			}, toNumber() { return +this;
-			}, toNum: String.prototype.toNumber
+			}, toNum: "\\previous"
 			, toBigInt() {
 				try { return BigInt(this) }
 				catch { throw TypeError(`Cannot convert input to BigInt. input: '${this}'`) }
@@ -1682,8 +1698,8 @@ void (() => { "use strict";
 				for (var i = len(a); i --> 1 ;)
 					if (a[i] !== "0") return !1;
 				return !0;
-			}, isInt: String.prototype.isInteger
-			, exists() { return this != "";
+			}, isInt: "\\previous"
+			, exists() { return this !== "";
 			}, line(index=Infinity) {
 				if (rMath.isNaN(index)) return false;
 				for (var line = 1, i = 0; i < this.length; this[i] === "\n" && line++, i++)
@@ -1708,7 +1724,7 @@ void (() => { "use strict";
 			}, shr(num) { return this >> Number(num);
 			}, shr2(num) { return this >>> Number(num);
 			}, isInteger() { return this === int(this);
-			}, isInt: Number.prototype.isInteger
+			}, isInt: "\\previous"
 			, add(arg) { return this + Number(arg);
 			}, sub(arg) { return this - Number(arg);
 			}, mul(arg) { return this * Number(arg);
@@ -1749,7 +1765,8 @@ void (() => { "use strict";
 			}, mod(arg) { return this % BigInt(arg);
 			}, pow(arg) { return this ** BigInt(arg);
 			}, length(n=0) { return dim(`${this}`, n);
-			},
+			}, isInteger() { return true}
+			, isInt: "\\previous"
 		}, "instance Logic"        : class Logic {
 			constructor(
 				bitwise = LibSettings.Logic_BitWise_Argument,
@@ -2707,7 +2724,7 @@ void (() => { "use strict";
 						var sum = 0;
 						for (const x of this) sum += x;
 						return sum;
-					} type() { return "set";
+					} __type__() { return "set";
 					} sortA() { return qsort(this);
 					} sortD() { return this.sortA().reverse();
 					} reverse() { return Array.prototype.reverse.call(this); // also changes the object
@@ -3235,10 +3252,6 @@ void (() => { "use strict";
 				return out;
 			} expm(x, n) { return 𝑒 ** x - n;
 			} expm1(x) { return this.expm(x, 1);
-			} log2(x) { return this.log(x, 2);
-			} log10(x) { return this.log(x, 10);
-			} logpi(x) { return this.log(x, π);
-			} log1p(x) { return this.ln1p(x);
 			} clz32(n) { return this.clbz(n);
 			} clbz(n) {
 				// count leading binary zeros
@@ -3252,16 +3265,6 @@ void (() => { "use strict";
 				if (this.isNaN(x)) return NaN;
 				x = BigInt(x).toString(2);
 				return dim(x) - x.lio("1");
-			} fact(x, acy=1e3, inc=.1) {
-				// TODO: Fix for negative non-integer numbers
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
-				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x);
-				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j => x+j);
-				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : ans;
-			} factorial(n) { return this.fact(n);
 			} sgn(n) { return isNaN( n = Number(n) ) ? NaN : !n ? n : n < 0 ? -1 : 1;
 			} abs(n) { return isNaN( n = Number(n) ) ? NaN : this.sgn(n) * n;
 			} cabs(cnum) { return cMath.abs(cnum);
@@ -3280,10 +3283,8 @@ void (() => { "use strict";
 				} else for (; n <= last; n += inc)
 					total += fn(n);
 				return total;
-			} total(...args) {
-				var sum = 0;
-				for (const x of (isArr(args[0]) ? args[0] : args)) sum += x;
-				return sum;
+			} total(...args) { return args.flatten().reduce((t, e) => t + e, 0);
+			} product(...args) {return args.flatten().reduce((t, e) => t * e, 1);
 			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) { return this.sum(start, Infinity, fn, inc);
 			} prod(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
@@ -3293,29 +3294,6 @@ void (() => { "use strict";
 				for (var total = 1; n <= last; n += inc)
 					total *= fn(n);
 				return total;
-			} gamma(n, acy=1e3, inc=.1) {
-				if (isNaN( n = Number(n) )) return NaN;
-				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
-				return this.fact(n-1, acy, inc);
-			} igammal(n, inc=.1) {
-				// lower incomplete gamma function
-				if (isNaN( n = Number(n) )) return NaN;
-				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( inc = Number(inc) )) return NaN;
-				n--;
-				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : n;
-			} igammau(n, acy=1000, inc=.1) {
-				// upper incomplete gamma function
-				if (isNaN( n = Number(n) )) return NaN;
-				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
-				n--;
-				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : n;
 			} _(n) { 1 / Number(n);
 			} inverse(n) { 1 / Number(n);
 			} conjugate(x) {
@@ -3344,7 +3322,7 @@ void (() => { "use strict";
 				/*else */return ans;
 			} integral() { return this.int.apply(this, arguments);
 			} hypot(...args) {
-				if (len(arguments) !== 1) args = arguments;
+				args = args.flatten();
 				for (var total = 0, i = len(args); i --> 0 ;)
 					total += args[i]**2;
 				return this.sqrt(a);
@@ -3373,7 +3351,15 @@ void (() => { "use strict";
 					NaN :
 					this.log( x, base );
 			} ln(n) { return isNaN( n = n ) ? NaN : this.log( n, e );
-			} max(...ns) {
+			} log2(x) { return this.log(x, 2);
+			} log10(x) { return this.log(x, 10);
+			} logpi(x) { return this.log(x, π);
+			} log1p() { return this.ln1p.apply(this, arguments);
+			} lnnp(x, n=1) { return isNaN( x = Number(x) ) ? x : this.ln(n + x);
+			} ln1p(x) { return isNaN( x = Number(x) ) ? x : this.ln(1 + x);
+			}
+			/////////////////////////////////////// STATISTICS START ///////////////////////////////////////
+			max(...ns) {
 				ns = ns.flatten();
 				if (!len(ns)) return -Infinity;
 				if ( ns.isNaN() ) return NaN;
@@ -3387,27 +3373,144 @@ void (() => { "use strict";
 				let min = ns[0];
 				for (let i of ns) min = i < min ? i : min;
 				return min;
+			} range(...ns) { return this.max(ns = ns.flatten()) - this.min(ns);
 			} mean(...args) {
-				if (dim(arguments)) args = arguments;
-				return Array.prototype.reduce.call(args, (t, e) => t + e, 0) / len(args);
+				args = args.flatten();
+				return args.reduce((t, e) => t + e, 0) / len(args);
 			} median(/*arguments*/) {
-				let arr = list(arguments).flatten();
+				let arr = list(arguments).flatten().sort();
 				return len(arr) % 2 ?
 					arr[dim(arr) / 2] :
-					(arr[len(arr) / 2 - 1] + arr[len(arr) / 2]) / 2
+					(arr[len(arr) / 2 - 1] + arr[len(arr) / 2]) / 2;
 			} mode(...ns) {
 				ns = ns.flatten();
 				if ( ns.isNaN() ) return NaN;
-				var obj = {};
+				let obj = {};
 				for (const n of ns) n in obj ? obj[n]++ : (obj[n] = 1);
 				return keyof( obj, this.max(Object.values(obj)) );
 			} mad(...ns) {
 				ns = ns.flatten();
+				return this.absdev(ns) / len(ns);
+			} trimean() { return this.TM.apply(this, arguments);
+			} lfence(...args) {
+				// lower fence. (for determining outliers)
+				args = args.flatten();
+				return this.Q1(arguments) - 1.5*this.IQR(args);
+			} ufence(...args) {
+				// upper fence. (for determining outliers)
+				args = args.flatten();
+				return this.Q3(arguments) + 1.5*this.IQR(args);
+			} med() { return this.median.apply(this, arguments);
+			} medianindex() { return dim( list(arguments).flatten() ) / 2;
+			} quartile(q, ...args) {
+				return !q ? this.Q0(args) :
+				q === 1 ? this.Q1(args) :
+				q === 2 ? this.Q2(args) :
+				q === 3 ? this.Q3(args) :
+				q === 4 ? this.Q4(args) :
+				NaN;
+			} quartile0() { return this.Q0.apply(this, arguments);
+			} quartile1() { return this.Q1.apply(this, arguments);
+			} quartile2() { return this.Q2.apply(this, arguments);
+			} quartile3() { return this.Q3.apply(this, arguments);
+			} quartile4() { return this.Q4.apply(this, arguments);
+			} Q0(/* ...args */) { return this.min.apply(this, arguments);
+			} Q1(...args) {
+				// https://en.wikipedia.org/wiki/Quartile method 4
+				args = args.flatten().sort();
+				return this.median( args.slice( 0, ceil(dim(args) / 2) ) );
+			} Q2(/* ...args */) { return this.median.apply(this, arguments);
+			} Q3(...args) {
+				// https://en.wikipedia.org/wiki/Quartile method 4
+				args = args.flatten().sort();
+				return this.median( args.slice( ceil(len(args) / 2) ) );
+			} Q4(/* ...args */) { return this.max.apply(this, arguments);
+			} IQR(...args) {
+				// inter-quantile range
+				args = args.flatten().sort();
+				return this.Q3(args) - this.Q1(args);
+			} IQM(...args) {
+				// interquartile mean
+				args = args.flatten().sort();
+				const n = len(args);
+				return 2/n * this.sum(1+n/4, 3*n/4, i => args[i], 1 )
+			} TM(...args) {
+				// trimean
+				args = args.flatten().sort();
+				return (this.Q1(args) + 2*this.Q2(args) + this.Q3(args)) / 4
+			} CHM(...args) {
+				// contraharmonic mean
+				args = args.flatten();
+				return args.reduce((t, e) => t + e**2, 0) / this.total(args);
+			} AM(/*...args*/) { return this.mean.apply(this, arguments); // arithmetic mean
+			} GM(...args) {
+				// geometric mean
+				args = args.flatten();
+				return this.nthrt( abs(this.product(args)), len(args) );
+			} HM(...args) {
+				// harmonic mean
+				args = args.flatten();
+				return len(args) / args.reduce((t, x) => t + 1 / x, 0);
+			} MR(...args) {
+				// mid-range
+				args = args.flatten();
+				return (this.min(args) + this.max(args)) / 2;
+			} MH(...args) {
+				// mid-hinge
+				args = args.flatten().sort();
+				return (this.Q1(args) + this.Q3(args)) / 2;
+			} MS(...args) {
+				// mean square
+				args = args.flatten();
+				return args.reduce((t, e) => t + e**2, 0) / len(args);
+			} RMS(...args) { return this.sqrt( this.MS(args) ); // root mean square
+			} MAE(Ys, Xs) {
+				// mean absolute error
+				Ys = Ys.flatten();
+				Xs = Xs.flatten();
+				return Ys.reduce((t, e, i) => t + abs(e + Xs[i]), 0) / len(Ys);
+			} ME(Ys, Xs) {
+				// mean error
+				Ys = Ys.flatten();
+				Xs = Xs.flatten();
+				return Ys.reduce((t, e, i) => t + e + Xs[i], 0) / len(Ys);
+			} EV(list=[], probabilities=[]) {
+				// expected value.
+				list = list.flatten();
+				probabilities = probabilities.flatten();
+				return list.reduce((t, e, i) => (probabilities[i] === void 0 ? 1 : probabilities[i]) * e);
+			} SD(...args) { return this.sqrt( this.var(args) ); // standard deviation
+			} SE(...args) {
+				// standard error
+				args = args.flatten();
+				return this.SD(args) / this.sqrt( len(args) );
+			} var(...args) {
+				args = args.flatten();
+				return this.EV(args.map(e => e**2)) - this.EV(args)**2;
+			} cov(X, Y) {
+				X = X.flatten(); Y = Y.flatten();
+				const Ex = this.EV(X), Ey = this.EV(Y);
+				return this.EV( X.map((e, i) => (e - Ex)*(Y[i]-Ey)) );
+			} absdev(...ns) {
+				ns = ns.flatten();
 				if ( ns.isNaN() ) return NaN;
 				const MEAN = this.mean(ns);
-				return ns.reduce((absDev, n) => absDev + this.abs(n - MEAN), 0) / len(ns);
-			} isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
+				return ns.reduce((absDev, n) => absDev + this.abs(n - MEAN), 0);
+			} stdev() { return this.SD.apply(this, arguments);
+			} stddev() { return this.SD.apply(this, arguments);
+			} midrange() { return this.MR.apply(this, arguments);
+			} midhinge() { return this.MH.apply(this, arguments);
+			} heronian(a, b) { return (a + b + this.sqrt(a*b)) / 3; // heronian mean
+			} lehmer(p, ...args) {
+				args = args.flatten();
+				return args.reduce((t, e) => t + e**p, 0) / args.reduce((t, e) => t + e**(p-1), 0)
+			} quadraticmean(...args) { return this.sqrt( args.reduce((t, e) => t + e**2, 0) / len(args) );
+			} cubicmean(...args) { return this.cbrt( args.reduce((t, e) => t + e**3, 0) / len(args) );
+			} quarticmean(...args) { return this.nthrt( args.reduce((t, e) => t + e**4, 0) / len(args), 4 );
+			} quinticmean(...args) { return this.nthrt( args.reduce((t, e) => t + e**5, 0) / len(args), 5 );
+			} powmean(power, ...args) { return this.nthrt( args.reduce((t, e) => t + e**power, 0) / len(args), power );
 			} linReg(xs, ys, Return="obj") {
+				// linear regression
 				xs = xs.tofar(); ys = ys.tofar();
 				if (!len(xs)) throw Error("No elements given for first parameter of rMath.linReg()");
 				if (!len(ys)) throw Error("No elements given for second parameter of rMath.linReg()");
@@ -3421,16 +3524,92 @@ void (() => { "use strict";
 				}
 				if (len(xs) !== len(ys)) {
 					const MIN = this.min(len(xs), len(ys));
-					for (; len(xs) > MIN;) xs.pop();
-					for (; len(ys) > MIN;) ys.pop();
+					for (; len(xs) > MIN ;) xs.pop();
+					for (; len(ys) > MIN ;) ys.pop();
 				}
 				var m = (
-					len(xs) * this.sum(0, dim(xs), n=>xs[n]*ys[n]) -
-					this.sum(0, dim(xs), n=>xs[n]) * this.sum(0, dim(ys), n=>ys[n])
-				)/(len(xs) * this.sum(0, dim(xs), n=>xs[n]**2) - this.sum(0, dim(xs), n=>xs[n])**2),
-				b = (this.sum(0, dim(xs), n=>ys[n]) - m * this.sum(0, dim(xs), n=>xs[n])) / len(xs);
+					len(xs) * this.sum(0, dim(xs), n=>xs[n]*ys[n]) - this.total(xs) * this.total(ys)
+				) / (len(xs) * this.total(xs.map(e => e**2)) - this.total(xs)**2),
+				b = (this.total(ys) - m * this.total(xs)) / len(xs);
 				if (Return === "obj") return {m: m, b: b};
 				return `y = ${m}x + ${b}`;
+			} erf(z) {
+				return isNaN( z = Number(z) ) ?
+					NaN :
+					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
+					// 2 / sqrt(pi) * ...
+				// erf(x) ≈ 3126/3125 sgn(x)sqrt(1-exp(-x^2))
+			} erfc(z) {
+				return isNaN( z = Number(z) ) ?
+					NaN :
+					1 - this.erf(z);
+			} nCr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.nPr(n, k) / this.fact(k);
+			} comb(n, k) { return this.nCr(n, k); // combination
+			} nPr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.fact(n) / this.fact(n - k);
+			} perm(n, k) { return this.nPr(n, k); // permuation
+			} ifact(n) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if (!n) return 1;
+				if (n < 0) return NaN;
+				for (var ans = 1, cur = 1; cur <= n; cur++)
+					ans *= cur;
+				return ans;
+			} fact(x, acy=1e3, inc=.1) {
+				// TODO: Fix for negative non-integer numbers
+				if (isNaN( x = Number(x) )) return NaN;
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
+				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x);
+				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j => x+j);
+				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : ans;
+			} factorial() { return this.fact.apply(this, arguments);
+			} gamma(n, acy=1e3, inc=.1) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
+				return this.fact(n-1, acy, inc);
+			} igammal(n, inc=.1) {
+				// lower incomplete gamma function
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
+			} igammau(n, acy=1000, inc=.1) {
+				// upper incomplete gamma function
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
+			} lcm(...args) {
+				if (isArr(args[0])) args = args[0];
+				return !len(args) ?
+					0 :
+				args.isNaN() ?
+					NaN :
+				!dim(args) ?
+					args[0] :
+				len(args) > 2 ?
+					this.lcm( args[0], this.lcm(args.slice(1)) ) :
+					abs(args[0] * args[1]) / this.gcd(args);
+			} gcd(...args) {
+				if (isArr(args[0])) args = args[0];
+				if (!len(args)) return 0;
+				if (args.isNaN()) return NaN;
+				if (!dim(args)) return args[0];
+				if (len(args) > 2) return this.gcd( args[0], this.gcd(args.slice(1)) );
+				while (args[1]) args = [args[1], this.mod(...args)];
+				return args[0];
+			} gcf() { return this.gcd.apply(this, arguments);
+			}
+			//////////////////////////////////////// STATISTICS END ////////////////////////////////////////
+			isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
 			} pascal(row, col) {
 				// pascal's triangle
 				if (isNaN( row = Number(row) )) return NaN;
@@ -3448,7 +3627,7 @@ void (() => { "use strict";
 					( ϕ**n - this.Phi**n ) / this.sqrt5
 				);
 				// ⌊ ϕⁿ/√5 ⌉ ∀ n∈ℤ > -1
-			} fibonacci(/*n=1*/) { return this.fib.apply(this, arguments);
+			} fibonacci(/*n*/) { return this.fib.apply(this, arguments);
 			} lucas(n=1) {
 				return isNaN( n = Number(n) ) ?
 					NaN :
@@ -3563,25 +3742,12 @@ void (() => { "use strict";
 				return a - n*int(a/n) + k;
 			} remainder(/*a, n, k*/) { return this.rem.apply(this, arguments);
 			} parity(x=0) { return x % 2 ? "odd" : "even";
-			} nCr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.nPr(n, k) / this.fact(k);
-			} comb(n, k) { return this.nCr(n, k); // combination
-			} nPr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.fact(n) / this.fact(n - k);
-			} perm(n, k) { return this.nPr(n, k); // permuation
 			} isClose(n1, n2, range=Number.EPSILON) {
 				return isNaN( n1 = Number(n1) ) ||
 					isNaN( n2 = Number(n2) ) ||
 					isNaN( range = Number(range) ) ?
 						NaN :
 						n1 > n2 - range && n1 < n2 + range;
-			} erf(z) {
-				return isNaN( z = Number(z) ) ?
-					NaN :
-					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
-					// 2 / sqrt(pi) * ...
-			} erfc(z) {
-				return isNaN( z = Number(z) ) ?
-					NaN :
-					1 - this.erf(z);
 			} dist(x1=0, y1=0, x2=0, y2=0) {
 				if (isNaN( x1 = Number(x1) )) return NaN;
 				if (isNaN( y1 = Number(y1) )) return NaN;
@@ -3597,26 +3763,6 @@ void (() => { "use strict";
 				if (isNaN( b = Number(b) )) return NaN;
 				if (isNaN( c = Number(c) )) return NaN;
 				return this.abs(a*x_0 + b*y_0 + c) / this.hypot(a, b);
-			} lcm(...args) {
-				if (isArr(args[0])) args = args[0];
-				return !len(args) ?
-					0 :
-				args.isNaN() ?
-					NaN :
-				!dim(args) ?
-					args[0] :
-				len(args) > 2 ?
-					this.lcm( args[0], this.lcm(args.slice(1)) ) :
-					abs(args[0] * args[1]) / this.gcd(args);
-			} gcd(...args) {
-				if (isArr(args[0])) args = args[0];
-				if (!len(args)) return 0;
-				if (args.isNaN()) return NaN;
-				if (!dim(args)) return args[0];
-				if (len(args) > 2) return this.gcd( args[0], this.gcd(args.slice(1)) );
-				while (args[1]) args = [args[1], this.mod(...args)];
-				return args[0];
-			} gcf() { return this.gcd.apply(this, arguments);
 			} copysign(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.abs(a) * this.sgn(b);
 			} trunc(n) { return isNaN( n = Number(n) ) ? n : int(n);
 			} truncate(n) { return this.trunc.apply(this, arguments);
@@ -3628,10 +3774,6 @@ void (() => { "use strict";
 			} fround(n) { return isNaN( n = Number(n) ) ? n : this.Math.fround(n);
 			} sqrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2);
 			} cbrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3);
-			} lnnp(x, n=1) { return isNaN( x = Number(x) ) ? x : this.ln(n + x);
-			} ln1p(x) { return isNaN( x = Number(x) ) ? x : this.ln(1 + x);
-			} degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod;
-			} radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor;
 			} sign(n) { return isNaN( n = Number(n) ) ? n : this.sgn(n);
 			} exp(n, x=𝑒) { return isNaN( n = Number(n) ) || isNaN( x = Number(x) ) ? NaN : x ** n;
 			} round(n) { return isNaN( n = Number(n) ) ? n : round(n);
@@ -3661,13 +3803,6 @@ void (() => { "use strict";
 			} square(n) { return isNaN( n = Number(n) ) ? NaN : n ** 2;
 			} cube(n) { return isNaN( n = Number(n) ) ? NaN : n ** 3;
 			} tesseract(n) { return isNaN( n = Number(n) ) ? NaN : n ** 4;
-			} ifact(n) {
-				if (isNaN( n = Number(n) )) return NaN;
-				if (!n) return 1;
-				if (n < 0) return NaN;
-				for (var ans = 1, cur = 1; cur <= n; cur++)
-					ans *= cur;
-				return ans;
 			} findPrimes(l=100, s=Infinity) {
 				if (isNaN( l = Number(l) )) return NaN;
 				if (isNaN( s = Number(s) )) return NaN;
@@ -3728,7 +3863,9 @@ void (() => { "use strict";
 				while ( n --> 1 )
 					a = A ** a;
 				return number ? Number(a) : a;
-			} sin(θ) {
+			}
+			////////////////////////////////////// TRIGONOMETRY START //////////////////////////////////////
+			sin(θ) {
 				return isNaN( θ = Number(θ) ) ?
 					θ : this.sum(0, 25, n => (-1)**n / this.fact(2*n+1)*(θ%(2*π))**(2*n+1) );
 			} cos(θ) {
@@ -3788,7 +3925,8 @@ void (() => { "use strict";
 			} ahcvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x);
 			} hcverc(θ) { return isNaN( θ = Number(θ) ) ? θ : this.cverc(θ) / 2;
 			} ahcverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1);
-			} sinh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2;
+			} //// HYPERBOLIC TRIG
+			sinh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2;
 			} cosh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x + 𝑒**-x) / 2;
 			} tanh(x) { return isNaN( x = Number(x) ) ? x : this.sinh(x) / this.cosh(x);
 			} csch(x) { return isNaN( x = Number(x) ) ? x : 1 / this.sinh(x);
@@ -3831,7 +3969,8 @@ void (() => { "use strict";
 			} ahcversh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x);
 			} hcverch(x) { return isNaN( x = Number(x) ) ? x : this.cverch(x) / 2;
 			} ahcverch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1);
-			} Si(x, inc=.001) {
+			} // integral trig functions
+			Si(x, inc=.001) {
 				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
 					NaN :
 					this.int(0, x, t => this.sin(t) / t, inc);
@@ -3871,7 +4010,20 @@ void (() => { "use strict";
 				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
 					NaN :
 					this.cosh(z) / z;
-			} H(x, form=1) {
+			} gd(x, inc=.001) {
+				return isNaN( x = Number(x) ) ? x : this.int(0, x, t => this.sech(t), inc);
+				// gudermannian function
+			} lam(x, inc=.001) {
+				// inverse gudermannian function
+				// Lambertian function
+				return isNaN( x = Number(x) ) || abs(x) >= π_2 ?
+					NaN :
+					this.int(0, x, t => this.sec(t), inc);
+			} degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod;
+			} radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor;
+			}
+			/////////////////////////////////////// TRIGONOMETRY END ///////////////////////////////////////
+			H(x, form=1) {
 				// Heaveside step function
 				// Heaveside theta function
 				if (isNaN( x = Number(x) )) return NaN;
@@ -3967,15 +4119,6 @@ void (() => { "use strict";
 				else if ( [String, "s", "str", "string"].incl(ret) )
 					return `${ m ? `${m}x` : "" }${ b<0 ? `${b}` : b ? `${m ? "+" : ""}${b}` : "" }`.
 						start("0").remove(/1(?=x)/);
-			} gd(x, inc=.001) {
-				return isNaN( x = Number(x) ) ? x : this.int(0, x, t => this.sech(t), inc);
-				// gudermannian function
-			} lam(x, inc=.001) {
-				// inverse gudermannian function
-				// Lambertian function
-				return isNaN( x = Number(x) ) || abs(x) >= π_2 ?
-					NaN :
-					this.int(0, x, t => this.sec(t), inc);
 			} base10Conv(n, base, decAcy=54, numberOnly=false) {
 				// only works for base <= 10
 				// TODO: Fix
@@ -4083,7 +4226,9 @@ void (() => { "use strict";
 				} else throw Error("Invalid 2nd Input to function");
 			} coprime(a, b) { return this.gcd(a, b) === 1; // returns coprimality of a and b
 			} ncoprime(a, b) { return this.gcd(a, b) !== 1; // returns inverse coprimality of a and b
-			} cumsum(set) { return type(set, 1) === "set" ? set.cumsum() : NaN; // cumulative sum
+			}
+			///////////////////////////////////// SET OPERATIONS START /////////////////////////////////////
+			cumsum(set) { return type(set, 1) === "set" ? set.cumsum() : NaN; // cumulative sum
 			} set(...args) { return new this.Set(...args.flatten() );
 			} setUnion(set1, set2) {
 				return type(set1, 1) === "set" ?
@@ -4105,7 +4250,10 @@ void (() => { "use strict";
 					type(set2, 1) === "set" ?
 						set2 :
 						!1;
-			} harmonic(n=1, decimals=18) {
+			}
+			////////////////////////////////////// SET OPERATIONS END //////////////////////////////////////
+			harmonic(n=1, decimals=18) {
+				// harmonic series
 				return this.sum(
 					1,
 					int(n),
@@ -4116,12 +4264,19 @@ void (() => { "use strict";
 			} bigint(value=0) { try { return BigInt(value) } catch { return NaN }
 			} number(value=0) { try { return Number(value) } catch { return NaN }
 			} toAccountingStr(n=0) { return this.isNaN(n) ? NaN : n < 0 ? `(${-n})` : n+""
-			} collatz(x=2) {
+			} collatz(x=2, ltx=true) {
 				if (this.isNaN(x) || x < 0) return NaN;
-				x = BigInt(x);
+				x = BigInt(int(x));
 				const infinity = 10n**312n;
-				for (var i = 0n; x !== 1n && i < infinity; i++)
-					x = (x % 2n ? 3n*x+1n : x) >> 1n;
+				if (ltx) {
+					if (x === 1n) return 0n; 
+					let y = x;
+					for (var i = 0n; x >= y && i < infinity; i++)
+						x = x % 2n ? 3n*x+1n : x >> 1n;
+				} else {
+					for (var i = 0n; x !== 1n && i < infinity; i++)
+						x = x % 2n ? 3n*x+1n : x >> 1n;
+				}
 				return i === infinity ? Infinity : i;
 			} _pow(x=0) {
 				if (!x) return [0];
@@ -4156,6 +4311,7 @@ void (() => { "use strict";
 			} nextDown(x=0) { return -this.nextUp(-x);
 			} nextAfter(x=0, y=Infinity) { return x === y ? x : x > y ? this.nextDown(x) : this.nextUp(x);
 			} ulp(x=1) { return x < 0 ? this.nextUp(x) - x : x - this.nextDown(x);
+			} midpoint([x1, y1], [x2, y2]) { return [(x1+x2)/2, (y1+y2)/2];
 			}
 			// piApprox
 			// simplify sin(nx)
@@ -4197,7 +4353,7 @@ void (() => { "use strict";
 						Object.is(im, -0) && (im = 0);
 						this.re = re;
 						this.im = im;
-					} type() { return "complex";
+					} __type__() { return "complex";
 					} isComplex() { return !!this.im;
 					} toPolar(doubleStar=false) { return `${cMath.abs(this)}e${doubleStar?"**":"^"}(${this.arg()}i)`;
 					} toString( {polar=false, char="i", parens=true}={} ) {
@@ -4566,7 +4722,7 @@ void (() => { "use strict";
 						this.numer = sMath.div(numerator, gcd);
 						this.denom = sMath.div(denominator, gcd);
 					}
-					type() {
+					__type__() {
 						return "fraction";
 					}
 				};
@@ -4718,26 +4874,16 @@ void (() => { "use strict";
 			sMath["//"] = sMath.fdiv;
 			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
 			rMath.ℙ = rMath.P; // power set
-			if (window[LibSettings.Output_Math_Variable] !== void 0 && (LibSettings.Output_Math_Variable === "Math" ?
-					LibSettings.Alert_Conflict_For_Math === !0 :
-					LibSettings.Output_Math_Variable !== void 0)
-			) {
-				if (LibSettings.ON_CONFLICT === "crash") throw Error(`window["${LibSettings.Output_Math_Variable}"] is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
-				if (LibSettings.ON_CONFLICT === "cry") console.log(`window["${LibSettings.Output_Math_Variable}"] overwritten and LibSettings.ON_CONFLICT is set to cry.`);
-				CONFLICT_ARR.push(LibSettings.Output_Math_Variable);
-				if (LibSettings.ON_CONFLICT !== "dont-use") window[LibSettings.Output_Math_Variable] = window[LibSettings.Input_Math_Variable];
-			} else window[LibSettings.Output_Math_Variable] = window[ LibSettings.Input_Math_Variable === "default" ? "rMath" : LibSettings.Input_Math_Variable ];
-
-			if (window.MathObjects !== void 0) {
-				if (LibSettings.ON_CONFLICT === "crash") throw Error(`window.MathObjects is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
-				if (LibSettings.ON_CONFLICT === "cry") console.log(`window.MathObjects overwritten and LibSettings.ON_CONFLICT is set to cry.`);
-				CONFLICT_ARR.push("MathObjects");
-				if (LibSettings.ON_CONFLICT !== "dont-use") window.MathObjects = MathObjects;
-			} else window.MathObjects = MathObjects;
+			define( (LibSettings.Alert_Conflict_For_Math !== "default" &&
+				LibSettings.Alert_Conflict_For_Math ? "" : "overwrite ") + LibSettings.Output_Math_Variable, 0, window,
+				MathObjects[ LibSettings.Input_Math_Variable === "default" ?
+					"rMath" :
+					LibSettings.Input_Math_Variable ]
+			);
+			define("MathObjects", 0, window, MathObjects);
 			return void 0;
-		}
-		};
-		if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
+		},
+		}; if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
 			LibSettings.Global_Library_Object_Name === "default" ?
 				"LIBRARY_VARIABLES" :
 				LibSettings.Global_Library_Object_Name 
@@ -4746,7 +4892,6 @@ void (() => { "use strict";
 
 		--> assignment and conflict things
 
-		try { LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.lower() } catch { LibSettings.ON_CONFLICT = "none" }
 		for (const key of Object.keys(LIBRARY_VARIABLES)) define(key, 0);
 
 		--> Interval things
@@ -4952,11 +5097,9 @@ void (() => { "use strict";
 				Object.freeze(o);
 		}
 
-		LIBRARY_VARIABLES["MathObjects"]        = MathObjects;
+		LIBRARY_VARIABLES.MathObjects = MathObjects;
+		delete CONFLICT_ARR.push;
 
-
-
-		LibSettings.ON_CONFLICT === "default" && (LibSettings.ON_CONFLICT = "dbg");
 		if (LibSettings.Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
 			switch (LibSettings.ON_CONFLICT) {
 				case "crash": throw Error("there was a conflict and the program hasn't crashed yet.");
@@ -4985,7 +5128,7 @@ void (() => { "use strict";
 				// default: break;
 			}
 			if (LibSettings.ON_CONFLICT !== "cry" && LibSettings.ON_CONFLICT !== "debugger") {
-				LibSettings.ON_CONFLICT !== "none" && console.debug("lib.js load failed");
+				LibSettings.ON_CONFLICT !== "none" && console.debug("lib.js encountered variable conflicts");
 				return 1;
 			}
 		}
