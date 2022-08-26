@@ -576,6 +576,22 @@ void (() => { "use strict";
 				return dict;
 			})();
 
+			--> Interval things
+
+			let intervals = dict()
+				, _setInterval = window.setInterval
+				, _clearInterval = window.clearInterval;
+			var setInterval = function setInterval(/*arguments*/) {
+				var interval = _setInterval.apply(window, arguments);
+				intervals[interval] = arguments;
+				return interval;
+			}, clearInterval = function clearInterval(/*code*/) {
+				_clearInterval.apply(window, arguments);
+				delete intervals[code];
+			}
+			setInterval._setInterval = _setInterval;
+			clearInterval._clearInterval = _clearInterval;
+
 			LibSettings.DEFER_ARR = DEFER_ARR;
 			LibSettings.CONFLICT_ARR = CONFLICT_ARR;
 		} // variables to be globalized:
@@ -1046,7 +1062,7 @@ void (() => { "use strict";
 					thing :
 					Generator(thing);
 			}
-		}, "fstrdiff": function firstStringDifferenceIndex(s1, s2) {
+		}, "fstrdiff"   : function firstStringDifferenceIndex(s1, s2) {
 			// returns the index of the first difference in two strings.
 			// returns NaN if either input is not a string.
 			// it is considered a string if it is the built-in string or...
@@ -1054,6 +1070,13 @@ void (() => { "use strict";
 			// returns -1 if there is no difference
 			if (type(s1) !== "string" || type(s2) !== "string") return NaN;
 			for (var i = 0, n = Math.min(len(s1), len(s2)) - 1 ; i < n; i++)
+				if (s1[i] !== s2[i]) return i;
+			return -1;
+		}, "lstrdiff"   : function lastStringDifferenceIndex(s1, s2) {
+			// returns the index of the last difference in two strings.
+			// otherwise, same rules as fstrdiff(a, b)
+			if (type(s1) !== "string" || type(s2) !== "string") return NaN;
+			for (var i = Math.min(len(s1), len(s2)); i --> 0 ;)
 				if (s1[i] !== s2[i]) return i;
 			return -1;
 		}, "constr"     : function constructorName(input, name=true) {
@@ -1225,40 +1248,40 @@ void (() => { "use strict";
 		, γ              : γ
 		, 𝑒              : 𝑒
 		, 𝜏              : 𝜏
-		, "local base62Numbers" : base62Numbers
-		, "local LibSettings"   : LibSettings
-		, "local characters"    : characters
-		, "local alphabetL"     : alphabetL
-		, "local alphabetU"     : alphabetU
-		, "local alphabet"      : alphabet
-		, "local numbers"       : numbers
-		, "local π_2"           : π_2
-		, "local π_3"           : π_3
-		, "local π2_3"          : π2_3
-		, "local π_4"           : π_4
-		, "local π3_4"          : π3_4
-		, "local π5_4"          : π5_4
-		, "local π7_4"          : π7_4
-		, "local π_5"           : π_5
-		, "local π_6"           : π_6
-		, "local π5_6"          : π5_6
-		, "local π7_6"          : π7_6
-		, "local π11_6"         : π11_6
-		, "local π_7"           : π_7
-		, "local π_8"           : π_8
-		, "local π_9"           : π_9
-		, "local π_10"          : π_10
-		, "local π_11"          : π_11
-		, "local π_12"          : π_12
-		, "local pi"            : pi
-		, "local tau"           : 𝜏
-		, "local e"             : 𝑒
-		, "local phi"           : ϕ
-		, "local foia"          : α
-		, "local emc"           : γ
-		, "local omega"         : Ω
-		, "local define"        : define
-		, "local MathObjects"   : MathObjects
+		, "local base62Numbers": base62Numbers
+		, "local LibSettings": LibSettings
+		, "local characters": characters
+		, "local alphabetL": alphabetL
+		, "local alphabetU": alphabetU
+		, "local alphabet": alphabet
+		, "local numbers": numbers
+		, "local π_2": π_2
+		, "local π_3": π_3
+		, "local π2_3": π2_3
+		, "local π_4": π_4
+		, "local π3_4": π3_4
+		, "local π5_4": π5_4
+		, "local π7_4": π7_4
+		, "local π_5": π_5
+		, "local π_6": π_6
+		, "local π5_6": π5_6
+		, "local π7_6": π7_6
+		, "local π11_6": π11_6
+		, "local π_7": π_7
+		, "local π_8": π_8
+		, "local π_9": π_9
+		, "local π_10": π_10
+		, "local π_11": π_11
+		, "local π_12": π_12
+		, "local pi": pi
+		, "local tau": 𝜏
+		, "local e": 𝑒
+		, "local phi": ϕ
+		, "local foia": α
+		, "local emc": γ
+		, "local omega": Ω
+		, "local define": define
+		, "MathObjects": MathObjects
 		, "object Object": {
 			copy : copy,
 			keyof: keyof
@@ -1778,7 +1801,7 @@ void (() => { "use strict";
 			}, length(n=0) { return dim(`${this}`, n);
 			}, isInteger() { return true}
 			, isInt: "\\previous"
-		}, "instance Logic"        : class Logic {
+		}, "instance Logic": class Logic {
 			constructor(
 				bitwise = LibSettings.Logic_BitWise_Argument,
 				comparatives = LibSettings.Logic_Comparatives_Argument,
@@ -2068,7 +2091,7 @@ void (() => { "use strict";
 					!0 :
 					!1;
 			}
-		}, "defer_instance bMath"  : class BigIntRealMath {
+		}, "defer_instance bMath": class BigIntRealMath {
 			constructor(
 				help = LibSettings.bMath_Help_Argument,
 				degTrig = LibSettings.bMath_DegTrig_Argument,
@@ -2094,7 +2117,7 @@ void (() => { "use strict";
 			sub(a, b) { return a - b }
 			mul(a, b) { return a * b }
 			div(a, b) { return a / b }
-		}, "defer_instance sMath"  : class stringRealMath {
+		}, "defer_instance sMath": class stringRealMath {
 			constructor(
 				help = LibSettings.sMath_Help_Argument,
 				degTrig = LibSettings.sMath_DegTrig_Argument,
@@ -2708,7 +2731,7 @@ void (() => { "use strict";
 			} gcd(...snums) { return this._lmgf("gcd", ...snums);
 			} gcf(...snums) { return this._lmgf("gcf", ...snums);
 			}
-		}, "defer_instance rMath"  : class RealMath {
+		}, "defer_instance rMath": class RealMath {
 			constructor(
 				degTrig = LibSettings.rMath_DegTrig_Argument,
 				help = LibSettings.rMath_Help_Argument,
@@ -4354,7 +4377,7 @@ void (() => { "use strict";
 			// coulomb
 			// electrical things
 			// p-adic integers
-		}, "defer_instance cMath"  : class ComplexMath {
+		}, "defer_instance cMath": class ComplexMath {
 			constructor(degTrig=LibSettings.cMath_DegTrig_Argument, help=LibSettings.cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
@@ -4719,7 +4742,7 @@ void (() => { "use strict";
 				if (type(z, 1) !== "complex") return NaN;
 				throw Error("Not Implemented");
 			}
-		}, "defer_instance fMath"  : class FractionalStringMath {
+		}, "defer_instance fMath": class FractionalStringMath {
 			// TODO: Make the functions convert numbers into fractions if they are inputed instead
 			constructor(help=LibSettings.fMath_Help_Argument, degTrig=LibSettings.fMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
@@ -4776,7 +4799,7 @@ void (() => { "use strict";
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
 				return this.simp( this.new(sMath.mul(a.numer, b.denom), sMath.mul(a.denom, b.numer)) );
 			}
-		}, "defer_instance cfMath" : class ComplexFractionalStringMath {
+		}, "defer_instance cfMath": class ComplexFractionalStringMath {
 			constructor(help=LibSettings.cfMath_Help_Argument) {
 				help === "default" && (help = !0);
 				this.CFraction = class ComplexFraction {
@@ -4892,7 +4915,6 @@ void (() => { "use strict";
 					"rMath" :
 					LibSettings.Input_Math_Variable ]
 			);
-			define("MathObjects", 0, window, MathObjects);
 			return void 0;
 		}
 		}; if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
@@ -4905,29 +4927,6 @@ void (() => { "use strict";
 		--> assignment and conflict things
 
 		for (const key of Object.keys(LIBRARY_VARIABLES)) define(key, 0);
-
-		--> Interval things
-
-		let intervals = dict()
-		, _setInterval = window.setInterval
-		, _clearInterval = window.clearInterval;
-		function setInterval(/*arguments*/) {
-			var interval = _setInterval.apply(window, arguments);
-			intervals[interval] = arguments;
-			return interval;
-		} function clearInterval(/*code*/) {
-			_clearInterval.apply(window, arguments);
-			delete intervals[code];
-		}
-		setInterval._setInterval = _setInterval;
-		clearInterval._clearInterval = _clearInterval;
-		define("overwrite setInterval", 0, window, setInterval);
-		define("overwrite clearInterval", 0, window, clearInterval);
-		define("getIntervals", 0, window, function getIntervals() { return intervals });
-		define("clearIntervals", 0, window, function clearIntervals() {
-			for (const code of intervals.keys())
-				clearInterval(code);
-		});
 
 		--> document things
 
@@ -5109,7 +5108,6 @@ void (() => { "use strict";
 				Object.freeze(o);
 		}
 
-		LIBRARY_VARIABLES.MathObjects = MathObjects;
 		delete CONFLICT_ARR.push;
 
 		if (LibSettings.Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
