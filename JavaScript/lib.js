@@ -255,9 +255,9 @@ void (() => { "use strict";
 				return function define(
 					s /*key*/,
 					section /*for defer*/,
-					scope=window,
-					customValue=void 0,
-					scopename=void 0,
+					scope = window,
+					customValue = void 0,
+					scopename = void 0,
 				) {
 					// section 0 stores the defer functions in DEFER_ARR
 					// section 1 calls the defer functions
@@ -273,6 +273,7 @@ void (() => { "use strict";
 							LibSettings.Global_Ignore_List === s) ||
 						customValue === null || scope != scope /*NaN*/
 					) return !1;
+					if (!Object.hasOwn(LIBRARY_VARIABLES, s)) LIBRARY_VARIABLES[`local ${s}`] = customValue;
 					if (customValue === previousGetterString) { define(s, section, scope, previous, scopename);
 					} else if (s.indexOf(" ") < 0) {
 						if (scope[s] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(s, scopename)) return !1;
@@ -1045,14 +1046,14 @@ void (() => { "use strict";
 					thing :
 					Generator(thing);
 			}
-		}, "fstrdiff": function firstStringDifferenceIndex(s1, s1) {
+		}, "fstrdiff": function firstStringDifferenceIndex(s1, s2) {
 			// returns the index of the first difference in two strings.
 			// returns NaN if either input is not a string.
 			// it is considered a string if it is the built-in string or...
 			// if input.__type__() returns "string"
 			// returns -1 if there is no difference
 			if (type(s1) !== "string" || type(s2) !== "string") return NaN;
-			for (var i = 0, n = Math.min(len(s1), len(s1)) - 1 ; i < n; i++)
+			for (var i = 0, n = Math.min(len(s1), len(s2)) - 1 ; i < n; i++)
 				if (s1[i] !== s2[i]) return i;
 			return -1;
 		}, "constr"     : function constructorName(input, name=true) {
@@ -4893,7 +4894,7 @@ void (() => { "use strict";
 			);
 			define("MathObjects", 0, window, MathObjects);
 			return void 0;
-		},
+		}
 		}; if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
 			LibSettings.Global_Library_Object_Name === "default" ?
 				"LIBRARY_VARIABLES" :
