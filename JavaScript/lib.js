@@ -1045,6 +1045,16 @@ void (() => { "use strict";
 					thing :
 					Generator(thing);
 			}
+		}, "fstrdiff": function firstStringDifferenceIndex(s1, s1) {
+			// returns the index of the first difference in two strings.
+			// returns NaN if either input is not a string.
+			// it is considered a string if it is the built-in string or...
+			// if input.__type__() returns "string"
+			// returns -1 if there is no difference
+			if (type(s1) !== "string" || type(s2) !== "string") return NaN;
+			for (var i = 0, n = Math.min(len(s1), len(s1)) - 1 ; i < n; i++)
+				if (s1[i] !== s2[i]) return i;
+			return -1;
 		}, "constr"     : function constructorName(input, name=true) {
 			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
 			return input?.constructor?.name;
@@ -3478,7 +3488,7 @@ void (() => { "use strict";
 				// expected value.
 				list = list.flatten();
 				probabilities = probabilities.flatten();
-				return list.reduce((t, e, i) => (probabilities[i] === void 0 ? 1 : probabilities[i]) * e);
+				return list.reduce((t, e, i) => t + (probabilities[i] === void 0 ? 1 : probabilities[i]) * e, 0);
 			} SD(...args) { return this.sqrt( this.var(args) ); // standard deviation
 			} SE(...args) {
 				// standard error
@@ -3486,7 +3496,8 @@ void (() => { "use strict";
 				return this.SD(args) / this.sqrt( len(args) );
 			} var(...args) {
 				args = args.flatten();
-				return this.EV(args.map(e => e**2)) - this.EV(args)**2;
+				const MEAN = this.mean(args);
+				return this.sum(0, dim(args), n => (args[n] - MEAN)**2, 1) / dim(args);
 			} cov(X, Y) {
 				X = X.flatten(); Y = Y.flatten();
 				const Ex = this.EV(X), Ey = this.EV(Y);
@@ -5138,3 +5149,26 @@ void (() => { "use strict";
 		return 0;
 	}
 })();
+
+/*
+	var piApprox = (function create_piApprox() {
+		var a = n => n ? (a(n-1) + b(n-1)) / 2 : 1
+		, b = n => n ? (a(n-1) * b(n-1))**.5 : Math.SQRT1_2
+		, t = n => n ? t(n-1) - 2**(n-1) * (a(n-1) - a(n))**2 : .25
+		, piApprox = n => a(n+1)**2 / t(n);
+		return piApprox;
+	})();
+
+
+	// sMath.sqrt, sMath.pow
+
+
+
+	var piApproxStr = (function create_piApproxStr() {
+		var a = n => n ? sMath.div( sMath.add(a(n-1), b(n-1)) , 2 ) : "1.0"
+		, b = n => n ? sMath.sqrt(sMath.mul(a(n-1), b(n-1))) : "0.7071067811865476"
+		, t = n => n ? t(n-1) - sMath.mul(sMath.ipow("2.0", sMath.new(n-1)), sMath.square(sMath.sub(a(n-1), a(n)))) : "0.25"
+		, piApproxStr = n => sMath.div(sMath.square(a(n+1)), t(n));
+		return piApproxStr;
+	})();
+*/
