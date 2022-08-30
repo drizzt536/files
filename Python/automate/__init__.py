@@ -5,7 +5,8 @@ from pynput.keyboard import (
     Events as KeyboardEvents,
     HotKey,
     GlobalHotKeys
-); from pynput.mouse import (
+)
+from pynput.mouse import (
     Button,
     Controller as MouseController,
     Listener as MouseListener,
@@ -14,24 +15,26 @@ from pynput.keyboard import (
 """
 pynput: https://pypi.org/project/pynput/
 file location:
-C:/Users/[user]/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0/LocalCache/local-packages/Python310/site-packages/automate.__init__.py
+C:/Python[version]/Lib/site-packages/automate/__init__.py
 """
 
 # variables
 
 buttons = []
 keys = []
-variables = (
+__variables__ = (
     'buttons',
     'keys',
     'Button',
     'Key',
-    'variables',
-    'functions',
+    '__variables__',
+    '__functions__',
+    '__all__',
     'fkeys',
     'winkey (Key.cmd)',
     "misc (module)",
-); functions = (
+)
+__functions__ = (
     'KeyboardController',
     'KeyboardListener',
     'KeyboardEvents',
@@ -66,7 +69,9 @@ variables = (
     'togglemute',
     'nextmedia',
     'prevmedia'
-); fkeys = (
+)
+__all__ = __variables__ + __functions__
+fkeys = (
     None,
     Key.f1, Key.f2, Key.f3,
     Key.f4, Key.f5, Key.f6,
@@ -76,7 +81,8 @@ variables = (
     Key.f16, Key.f17, Key.f18,
     Key.f19, Key.f20, Key.f21,
     Key.f22, Key.f23, Key.f24,
-); winkey = Key.winkey = Key.cmd
+)
+winkey = Key.winkey = Key.cmd
 
 Key.a = "a"; Key.A = "A"; Key.b = "b"; Key.B = "B"
 Key.c = "c"; Key.C = "C"; Key.d = "d"; Key.D = "D"
@@ -201,18 +207,9 @@ def prevmedia() -> None:
     keypress(Key.media_previous)
 
 if __name__ == '__main__':
-    print("__name__ == '__main__'\nautomate\n\nvariables:")
-    print(
-        "",
-        *variables,
-        **{"sep": "\n   * ", "end": 3*"\n"}
-    )
-    print("functions:")
-    print(
-        "",
-        *functions,
-        **{"sep": "\n   * ", "end": 3*"\n"}
-    )
+    print_options = {"sep": "\n * ", "end": 3*"\n"}
+    print( "__name__ == '__main__'\nautomate\n\nvariables:\n", *__variables__, **print_options )
+    print( "functions:\n", *__functions__, **print_options )
     input("Press Enter to exit...\n")
 
 from . import misc

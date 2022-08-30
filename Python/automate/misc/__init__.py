@@ -1,4 +1,4 @@
-# miscellaneous variables
+# variables
 
 import _string as string # smallest standard module I could find
 Module = type(string)
@@ -16,7 +16,7 @@ dict_values = type({}.values()) # useless
 dict_items = type({}.items()) # useless
 realnum = float | int
 number = realnum | complex
-variables = (
+__variables__ = (
     "Module",
     "string",
     "NoneType",
@@ -24,17 +24,19 @@ variables = (
     "false",
     "ellipsis",
     "NotImplementedType",
-    "generator",
+    "generator (useless)",
     "function",
     "array",
-    "dict_keys",
-    "dict_values",
-    "dict_items",
+    "dict_keys (useless)",
+    "dict_values (useless)",
+    "dict_items (useless)",
     "realnum (float | int)",
-    "number (float | int | complex)",
-    "variables",
-    "functions"
-); functions = (
+    "number (realnum | complex)",
+    "__variables__",
+    "__functions__",
+    "__all__"
+)
+__functions__ = (
     "monitors",
     "view (view module)",
     "read",
@@ -49,8 +51,9 @@ variables = (
     "nameOf",
     "tuplify_complex"
 )
+__all__ = __variables__ + __functions__
 
-# miscellaneous functions
+# functions
 
 def monitors() -> list[dict["top", "left", "width", "height"], ...]:
     """
@@ -89,7 +92,7 @@ def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...]
             5. reads the file at module.__file__ and returns the file contents.
             6. reads the file at module.__file__ and copies to form_6_dst via shutil.copyfile. returns form_6_dst
             7. does the following: for s in list(module.__dict__): print(s)
-            8: tuple(module.__dict__) without anything starting with "__"
+            8: tuple(module.__dict__) without anything starting with "__" or "_"
             else: directlty returns inputed module
     """
     if isntinstance(module, Module): raise TypeError("automate.misc.view() can only view modules")
@@ -115,7 +118,7 @@ def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...]
         print("\n")
     elif form == 8:
         return tuple(
-            filter( lambda x: not x.startswith("__"), tuple(mod) )
+            filter( lambda x: not(x.startswith("_")), tuple(mod) )
         )
     else: return module
 
@@ -276,16 +279,7 @@ def tuplify_complex(number: complex = complex(), /) -> tuple[float, float]:
     return (number.real, number.imag)
 
 if __name__ == '__main__':
-    print("__name__ == '__main__'\nautomate.misc\n\nvariables:")
-    print(
-        "",
-        *variables,
-        **{"sep": "\n * ", "end": 3*"\n"}
-    )
-    print("functions:")
-    print(
-        "",
-        *functions,
-        **{"sep": "\n * ", "end": 3*"\n"}
-    )
+    print_options = {"sep": "\n * ", "end": 3*"\n"}
+    print( "__name__ == '__main__'\nautomate.misc\n\nvariables:\n", *__variables__, **print_options )
+    print( "functions:\n", *__functions__, **print_options )
     input("Press Enter to exit...\n")
