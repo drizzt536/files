@@ -3596,32 +3596,14 @@ void (() => { "use strict";
 				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
 				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x);
 				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j => x+j);
+				if (x > 1) {
+					let xm1 = this.mod(x, 1);
+					return this.prod(1, floor(x), n => n + xm1) *
+						this.fact(xm1, acy, inc);
+				}
 				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : ans;
 			} factorial() { return this.fact.apply(this, arguments);
-			} gamma(n, acy=1e3, inc=.1) {
-				if (isNaN( n = Number(n) )) return NaN;
-				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
-				return this.fact(n-1, acy, inc);
-			} igammal(n, inc=.1) {
-				// lower incomplete gamma function
-				if (isNaN( n = Number(n) )) return NaN;
-				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( inc = Number(inc) )) return NaN;
-				n--;
-				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : n;
-			} igammau(n, acy=1000, inc=.1) {
-				// upper incomplete gamma function
-				if (isNaN( n = Number(n) )) return NaN;
-				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
-				n--;
-				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : n;
 			} lcm(...args) {
 				if (isArr(args[0])) args = args[0];
 				return !len(args) ?
@@ -3644,7 +3626,48 @@ void (() => { "use strict";
 			} gcf() { return this.gcd.apply(this, arguments);
 			}
 			//////////////////////////////////////// STATISTICS END ////////////////////////////////////////
-			isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
+			gamma(n, acy=1e3, inc=.1) {
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
+				return this.fact(n-1, acy, inc);
+			} beta(m, n, acy=1e3, inc=.1) {
+				// Beta Function
+				//           Γ(m)Γ(n)
+				// β(m, n) = --------
+				//           Γ(m + n)
+
+				// β(m, n) = β(n, m)
+				// β(x, 0) = 1
+				// β(x, 1) = 1/x
+				// β(m, -n) = undefined
+
+				//               Γ(m)√π
+				// β(m, 1/2) = ----------
+				//             Γ(m + 1/2)
+				// ∫_0^{π/2} sin^m(x)cos^n(x)dx = β((m+1)/2, (n+1/2))/2
+				// \frac12\int_0^{π/2}\sin^{2m-1}\theta\cos^{2n-1}d\theta=\Beta\left(m, n\right)
+				return this.gamma(m, acy, inc) * this.gamma(n, acy, inc) /
+					this.gamma(m + n, acy, inc);
+			} igammal(n, inc=.1) {
+				// lower incomplete gamma function
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
+			} igammau(n, acy=1000, inc=.1) {
+				// upper incomplete gamma function
+				if (isNaN( n = Number(n) )) return NaN;
+				if ( n.isInt() ) return this.ifact(n-1);
+				if (isNaN( acy = Number(acy) )) return NaN;
+				if (isNaN( inc = Number(inc) )) return NaN;
+				n--;
+				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
+				return type(ans, 1) === "inf" ? NaN : n;
+			} isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
 			} pascal(row, col) {
 				// pascal's triangle
 				if (isNaN( row = Number(row) )) return NaN;
