@@ -132,7 +132,7 @@ def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
     """
     from io import UnsupportedOperation
     try:
-        with open(file_loc, "r") as file:
+        with open(file_loc, "r", encoding=encoding) as file:
             return file.read()
     except FileNotFoundError as e:
         print("\nautomate.misc.read() failed to read the file because it does not exist")
@@ -175,7 +175,7 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: 
     if form not in {"a", "w", "write", "append"}:
         form = "a"
     try:
-        with open(file_loc, form[0]) as file:
+        with open(file_loc, form[0], encoding=encoding) as file:
             file.write(text)
     except FileNotFoundError as e:
         print("\nautomate.misc.write() failed to write to the file because it does not exist")
