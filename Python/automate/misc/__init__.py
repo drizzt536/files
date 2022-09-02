@@ -122,7 +122,7 @@ def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...]
         )
     else: return module
 
-def read(file_loc: str | int, /) -> str:
+def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
     """
         str | int  ->  str
 
@@ -134,11 +134,26 @@ def read(file_loc: str | int, /) -> str:
     try:
         with open(file_loc, "r") as file:
             return file.read()
-    except (FileNotFoundError, PermissionError, TypeError, OSError, UnsupportedOperation) as e:
-        print("\nautomate.misc.read() failed to read the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure that is always the reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n * ValueError - idk\n")
+    except FileNotFoundError as e:
+        print("\nautomate.misc.read() failed to read the file because it does not exist")
+        raise e
+    except PermissionError as e:
+        print("\nautomate.misc.read() failed to read the file because the file requested is a folder or there are incorrect permissions to view the file.")
+        raise e
+    except TypeError as e:
+        print("\nautomate.misc.read() failed to read the file was not a string or integer")
+        raise e
+    except ValueError as e:
+        print("\nautomate.misc.read() failed to read the file was not a correct value")
+        raise e
+    except OSError as e:
+        print("\nautomate.misc.read() failed to read the file was an invalid integer (ie: not 0, 1, or 2)")
+        raise e
+    except UnsupportedOperation as e:
+        print("\nautomate.misc.read() can't read from stdout")
         raise e
 
-def write(file_loc: str | int, text: str = "", form: str = "a", /) -> None:
+def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: str = "utf8") -> None:
     """
         str | int, str="", str="a"  ->  None
 
@@ -162,8 +177,23 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /) -> None:
     try:
         with open(file_loc, form[0]) as file:
             file.write(text)
-    except (FileNotFoundError, PermissionError, TypeError, OSError, UnsupportedOperation) as e:
-        print("\nautomate.misc.write() failed to write to the file for one of the following reasons:\n * FileNotFoundError - File doesn't exist\n * PermissionError - File requested is a folder (probably. I'm not 100% sure that is always the reason)\n * TypeError - Input was not a string or integer\n * OSError - the input was an integer and also invalid for some reason\n * io.UnsupportedOperation - something like writing to stdin or reading from stdout\n * ValueError - idk\n")
+    except FileNotFoundError as e:
+        print("\nautomate.misc.write() failed to write to the file because it does not exist")
+        raise e
+    except PermissionError as e:
+        print("\nautomate.misc.write() failed to write to the file because the file requested is a folder or there are incorrect permissions to view the file.")
+        raise e
+    except TypeError as e:
+        print("\nautomate.misc.write() failed to write to the file was not a string or integer")
+        raise e
+    except ValueError as e:
+        print("\nautomate.misc.write() failed to write to the file was not a correct value")
+        raise e
+    except OSError as e:
+        print("\nautomate.misc.write() failed to write to the file was an invalid integer (ie: not 0, 1, or 2)")
+        raise e
+    except UnsupportedOperation as e:
+        print("\nautomate.misc.write() can't write to stdin")
         raise e
 
 def clear(file_loc: str | int, /) -> bool:
