@@ -6,7 +6,7 @@
 	<meta name="description"content="This Website is a stopwatch timer">
 	<meta name="keywords" content="timer,stopwatch">
 	<title>Stopwatch Timer</title>
-	<style>
+	<style type="text/css">
 		#title { text-align: center }
 		.hide { display: none }
 		.container, #end { margin: 20px }
@@ -35,7 +35,7 @@
 		<br>
 		<button id=resetButton>reset</button>
 	</div>
-	<script>
+	<script type="text/javascript">
 		var c = 1
 		, decadesCounter = 0
 		, yearsCounter = 0
@@ -43,40 +43,36 @@
 		, hoursCounter = 0
 		, minutesCounter = 0
 		, secondsCounter = 0
-		, $ = function $() { return document.getElementById.apply(document, arguments) }
+		, $ = function $(/*arguments*/) { return document.getElementById.apply(document, arguments) }
 		, printMessage = () => {
-			if (c === 1) {
-				this.number = Math.abs(
-					+prompt('Number of seconds for timer\nType "Infinity" for no limit')
-						.replace(/^ *| *$/g,"")
-						.replace(/i(nfinity)/, "I$1")
-				)
-			}
+			if (c === 1) this.number = Math.abs(
+				+prompt('Number of seconds for timer\nType "Infinity" for no limit')
+					.replace(/^ *| *$/g,"")
+					.replace(/i(nfinity)/i, "I$1")
+			);
 			if (isNaN(number) || !number) {
 				$("end").style.display = "block";
-				clearInterval(intervalId);
-				return;
-			} else {
-				secondsCounter > 59 && (secondsCounter -= 60, minutesCounter++, $("showMinutes").style.display = "inline");
-				minutesCounter > 59 && (minutesCounter -= 60, hoursCounter++, $("showHours").style.display = "inline");
-				hoursCounter > 23 && (hoursCounter -= 24, daysCounter++, $("showDays").style.display = "inline");
-				daysCounter > 364 && (daysCounter -= 365, yearsCounter++, $("showYears").style.display = "inline");
-				yearsCounter > 9 && (yearsCounter -= 10, decadesCounter++, $("showDecades").style.display = "inline");
-				decadesCounter === 1 ? $("showDecades").innerHTML = `1 Decade, ` : $("showDecades").innerHTML = `${decadesCounter} Decades, `;
-				yearsCounter === 1 ? $("showYears").innerHTML = `1 Year, `: $ ("showYears").innerHTML = `${yearsCounter} Years, `;
-				daysCounter === 1 ? $("showDays").innerHTML = `1 Day, ` : $("showDays").innerHTML = `${daysCounter} Days, `;
-				hoursCounter === 1 ? $("showHours").innerHTML = `1 Hour, ` : $("showHours").innerHTML =`${hoursCounter} Hours, `;
-				minutesCounter === 1 ? $("showMinutes").innerHTML = `1 Minute, ` : $("showMinutes").innerHTML = `${minutesCounter} Minutes, `;
-				secondsCounter === 1 ? $("showSeconds").innerHTML = `1 Second` : $("showSeconds").innerHTML = `${secondsCounter} Seconds`;
-				if (number === c) {
-					$("end").innerHTML="Done";
-					$("end").style.display="block";
-					return clearInterval(intervalId);
-				}
-				secondsCounter++;
-				c++;
+				return clearInterval(intervalId);
 			}
-		};
+			secondsCounter > 59 && (secondsCounter -= 60, minutesCounter++, $("showMinutes").style.display = "inline");
+			minutesCounter > 59 && (minutesCounter -= 60, hoursCounter++, $("showHours").style.display = "inline");
+			hoursCounter > 23 && (hoursCounter -= 24, daysCounter++, $("showDays").style.display = "inline");
+			daysCounter > 364 && (daysCounter -= 365, yearsCounter++, $("showYears").style.display = "inline");
+			yearsCounter > 9 && (yearsCounter -= 10, decadesCounter++, $("showDecades").style.display = "inline");
+			decadesCounter === 1 ? $("showDecades").innerHTML = `1 Decade, ` : $("showDecades").innerHTML = `${decadesCounter} Decades, `;
+			yearsCounter === 1 ? $("showYears").innerHTML = `1 Year, `: $("showYears").innerHTML = `${yearsCounter} Years, `;
+			daysCounter === 1 ? $("showDays").innerHTML = `1 Day, ` : $("showDays").innerHTML = `${daysCounter} Days, `;
+			hoursCounter === 1 ? $("showHours").innerHTML = `1 Hour, ` : $("showHours").innerHTML =`${hoursCounter} Hours, `;
+			minutesCounter === 1 ? $("showMinutes").innerHTML = `1 Minute, ` : $("showMinutes").innerHTML = `${minutesCounter} Minutes, `;
+			secondsCounter === 1 ? $("showSeconds").innerHTML = `1 Second` : $("showSeconds").innerHTML = `${secondsCounter} Seconds`;
+			if (number === c) {
+				$("end").innerHTML = "Done";
+				$("end").style.display = "block";
+				return clearInterval(intervalId);
+			}
+			secondsCounter++;
+			c++;
+		}; // end of printMessage
 		$("startButton").addEventListener("click", () => {
 			this.intervalId = setInterval(printMessage, 1e3);
 			$("br").style.display = "none";
