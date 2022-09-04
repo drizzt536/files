@@ -1,10 +1,10 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Trig Functions</title>
-	<style>
+	<style type="text/css">
 		input, button, textarea {
 			background: #A0A0A0;
 		}
@@ -45,13 +45,12 @@
 		}
 	</style>
 </head>
-<body>
-	<div style="display: none;"><!--important--></div>
+<body dir="ltr">
+	<div style="display: none;"><!--important, do not delete--></div>
 	<div class="wrapper">
 		<input type="text" id="angleRad" placeholder="angle in radians">
 		<input type="text" id="angleDeg" placeholder="angle in degrees">
-		<br />
-		<br />
+		<br /> <br />
 		<input type="text" id="x" placeholder="x coordinate">
 		<input type="text" id="y" placeholder="y coordinate">
 		<button id="submit" type="submit">submit</button>
@@ -61,9 +60,9 @@
 		<p id="xy2">(x, 0)</p>
 		<p>(0, 0)</p>
 	</div>
-	<script>
-		var $ = e => document.getElementById(e);
-		var Q = () => eval($("angleRad").value.replace(/pi/gi,"*Math.PI").replace(/^\*/,""))%6.283185307179586;
+	<script type="text/javascript">
+		var $ = e => document.getElementById(e)
+		, Q = () => eval($("angleRad").value.replace(/pi/gi,"*Math.PI").replace(/^\*/,""))%6.283185307179586;
 		String.prototype.R = function() {
 			return this.valueOf().replace(1,"").replace(/^0|( \/ 1)$/g,"").replace(/0\./g,".");
 		};
@@ -122,7 +121,7 @@
 			if (x === 0) sec = tan = void 0;
 			if (y === 0) cot = csc = void 0;
 			return `radius: ${r}\nsin: ${sin}\ncos: ${cos}\ntan: ${tan}\ncsc: ${csc}\nsec: ${sec}\ncot: ${cot}`;
-		}
+		};
 	</script>
 </body>
 </html>
