@@ -5,6 +5,8 @@
 // TODO: Make functions of the same name able to be tested with separate inputs and outputs
 // TODO: Make different arguments take separate inputs
 (function run_tests() {
+	let dir = window.LIBRARY_VARIABLES?.dir; // in case "dir" is not globalized
+	dir ??= () => ""; // in case LIBRARY_VARIABLES is not globalized
 	// error code 0 is pass, and 1 is fail
 	// if the input is supposed to fail, put the error message as the output
 	var tmpLL = new LinkedList;
