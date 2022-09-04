@@ -46,7 +46,13 @@ void (() => { "use strict";
 		var LibSettings = {
 			onConflictOptions                   : onConflictOptions
 			, Alert_Library_Load_Finished       : "default" // false
-			, Global_Ignore_List                : ["help", "Errors", "dQuery", "getIp", "dir", "numToStrW_s"]
+			, Global_Ignore_List                : [
+				"dQuery",
+				"getIp",
+				"dir",
+				"numToStrW_s",
+				"getAllDocumentObjects",
+			]
 			, Globlize_Library_Variables_Object : "default" // true
 			, Global_Library_Object_Name        : "default" // "LIBRARY_VARIABLES". if nullish. no key will be set
 			, ON_CONFLICT                       : "default" // "debug"
@@ -58,7 +64,8 @@ void (() => { "use strict";
 			, Output_Math_Variable              : "default" // "Math"
 			, Input_Math_Variable               : "default" // "rMath" (MathObjects object key)
 			, MATH_LOG_DEFAULT_BASE             : "default" // 10. for rMath.log and rMath.logbase
-			, MATH_TEMPCONV_DEFAULT_END_SYSTEM  : "default" // "c", for rMath.tempConv (temperature converter between systems)
+			// "c", for rMath.tempConv (temperature converter between systems)
+			, MATH_TEMPCONV_DEFAULT_END_SYSTEM  : "default"
 			, aMath_Help_Argument               : "default"
 			, aMath_DegTrig_Argument            : "default"
 			, aMath_Comparatives_Argument       : "default"
@@ -125,7 +132,8 @@ void (() => { "use strict";
 				for (j = 10; j --> 0 ;)
 					divtable[i][j] = i / j;
 			var CONFLICT_ARR = [];
-			CONFLICT_ARR.push = function push(val, scope/*name*/) { return Array.prototype.push.call(
+			CONFLICT_ARR.push = function push(val, scope/*name*/) {
+				return Array.prototype.push.call(
 				this, (scope.startsWith("object ") ? scope.slice(7) : scope.startsWith("prototype ") ?
 					scope.slice(10) + ".prototype" : "window") + "." + val
 			)}; var DEFER_ARR = [] , MathObjects = {}
@@ -662,6 +670,8 @@ void (() => { "use strict";
 		}, "overwrite_call Image"() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
+			if ((_Image+"") !== 'function Image() { [native code] }')
+				throw Error("window.Image already exists and is not the built-in image.")
 			function Image(width, height, options={}) {
 				var image = new _Image(width, height);
 				for (const e of Object.keys(options)) image[e] = options[e];
@@ -1162,9 +1172,6 @@ void (() => { "use strict";
 				case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.slice(2))}`;
 				default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
 			}
-		}, "Errors"     : function customErrors(name="Error", text="") {
-			Error.prototype.name = `${name}`;
-			throw new Error(text).stack.replace(/ {4}at(.|\s)*\n/, "");
 		}, "minifyjson" : function minifyJSON(json) {
 			// removes all the unnecessary spaces and things
 			return formatjson(json, {
@@ -3646,8 +3653,6 @@ void (() => { "use strict";
 				//               Γ(m)√π
 				// β(m, 1/2) = ----------
 				//             Γ(m + 1/2)
-				// ∫_0^{π/2} sin^m(x)cos^n(x)dx = β((m+1)/2, (n+1/2))/2
-				// \frac12\int_0^{π/2}\sin^{2m-1}\theta\cos^{2n-1}d\theta=\Beta\left(m, n\right)
 				return this.gamma(m, acy, inc) * this.gamma(n, acy, inc) /
 					this.gamma(m + n, acy, inc);
 			} igammal(n, inc=.1) {
