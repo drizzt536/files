@@ -132,9 +132,9 @@ void (() => { "use strict";
 				for (j = 10; j --> 0 ;)
 					divtable[i][j] = i / j;
 			var CONFLICT_ARR = [];
-			CONFLICT_ARR.push = function push(val, scope/*name*/) {
+			CONFLICT_ARR.push = function push(val, scope /*name*/) {
 				return Array.prototype.push.call(
-				this, (scope.startsWith("object ") ? scope.slice(7) : scope.startsWith("prototype ") ?
+				this, (scope?.startsWith?.("object ") ? scope.slice(7) : scope?.startsWith?.("prototype ") ?
 					scope.slice(10) + ".prototype" : "window") + "." + val
 			)}; var DEFER_ARR = [] , MathObjects = {}
 			//////////////////////////////// START OF CONSTANTS ////////////////////////////////
@@ -319,6 +319,8 @@ void (() => { "use strict";
 						previous = scope[tmp] = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
 					} else if (s.startsWith("defer_call_local ")) {
 						if (!section) return DEFER_ARR.push(s);
+						previous = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
+					} else if (s.startsWith("call_local ") || s.startsWith("local_call ")) {
 						previous = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
 					} else if (s.startsWith("overwrite ")) {
 						previous = scope[s.slice(10)] = customValue === void 0 ?
@@ -667,16 +669,15 @@ void (() => { "use strict";
 				} Node() { return new Node(...arguments);
 				} __type__() { return "linkedlist" }
 			}
-		}, "overwrite_call Image"() {
+		}, "local_call Image"() {
 			// the function can still be used the same as before
 			var _Image = window.Image;
-			if ((_Image+"") !== 'function Image() { [native code] }')
-				throw Error("window.Image already exists and is not the built-in image.")
 			function Image(width, height, options={}) {
 				var image = new _Image(width, height);
 				for (const e of Object.keys(options)) image[e] = options[e];
 				return image;
 			}
+			define((_Image == 'function Image() { [native code] }' ? "overwrite " : "") + "Image", 0, window, Image);
 			Image._Image = _Image;
 			return Image;
 		}, "call md5"(n) {
@@ -886,41 +887,39 @@ void (() => { "use strict";
 			srcElement = null,
 			target = null,
 			timeStamp = null,
-		}={}) {
-			return document.body.dispatchEvent(
-				new KeyboardEvent({
-					isTrusted            : isTrusted // sets to false anyway
-					, key                : key
-					, code               : code
-					, ctrlKey            : ctrlKey  === void 0 ? ctrl  : ctrlKey
-					, altKey             : altKey   === void 0 ? alt   : altKey
-					, shiftKey           : shiftKey === void 0 ? shift : shiftKey
-					, view               : view
-					, which              : which
-					, bubbles            : bubbles
-					, cancelBubble       : cancelBubble
-					, cancelable         : cancelable
-					, charCode           : charCode
-					, composed           : composed
-					, currentTarget      : currentTarget
-					, defaultPrevented   : defaultPrevented
-					, detail             : detail
-					, eventPhase         : eventPhase
-					, isComposing        : isComposing
-					, keyCode            : keyCode
-					, location           : location
-					, metaKey            : metaKey
-					, path               : path
-					, repeat             : repeat
-					, returnValue        : returnValue
-					, sourceCapabilities : sourceCapabilities
-					, srcElement         : srcElement
-					, target             : target
-					, timeStamp          : timeStamp
-					, type               : type
-				})
-			);
-		}, passwordGenerator(length=18, charsToRemove=void 0, chars=characters) {
+		}={}) { return document.body.dispatchEvent(
+			new KeyboardEvent({
+				isTrusted            : isTrusted // sets to false anyway
+				, key                : key
+				, code               : code
+				, ctrlKey            : ctrlKey  === void 0 ? ctrl  : ctrlKey
+				, altKey             : altKey   === void 0 ? alt   : altKey
+				, shiftKey           : shiftKey === void 0 ? shift : shiftKey
+				, view               : view
+				, which              : which
+				, bubbles            : bubbles
+				, cancelBubble       : cancelBubble
+				, cancelable         : cancelable
+				, charCode           : charCode
+				, composed           : composed
+				, currentTarget      : currentTarget
+				, defaultPrevented   : defaultPrevented
+				, detail             : detail
+				, eventPhase         : eventPhase
+				, isComposing        : isComposing
+				, keyCode            : keyCode
+				, location           : location
+				, metaKey            : metaKey
+				, path               : path
+				, repeat             : repeat
+				, returnValue        : returnValue
+				, sourceCapabilities : sourceCapabilities
+				, srcElement         : srcElement
+				, target             : target
+				, timeStamp          : timeStamp
+				, type               : type
+			})
+		)}, passwordGenerator(length=18, charsToRemove=void 0, chars=characters) {
 			if (isNaN( length = Number(length)) || length < 0) return !1;
 			length = int(length);
 			if (type(charsToRemove, 1) === "arr") {
@@ -1212,7 +1211,7 @@ void (() => { "use strict";
 			}
 			return MutableString;
 		}, "str"        : function String(a) { return a?.toString?.call?.( [].slice.call(arguments, 1) );
-		}, async getIp()       { return (await fetch("https://api.ipify.org/")).text();
+		}, async getIp() { return (await fetch("https://api.ipify.org/")).text();
 		}, complex(re=0, im=0) { return cMath.new(re, im);
 		}, createElement : createElement
 		, getArguments   : getArguments
@@ -1586,7 +1585,8 @@ void (() => { "use strict";
 				return !s.sW("function") && !s.sW("class");
 			}, isClass() { return (this + "").sW("class");
 			}, isRegular: function isRegularFunction() { return (this + "").sW("function");
-			}
+			}, isFunction() { return this.isRegular() || this.isArrow() }
+			, isCallable() { return this.isFunction() || this.isClass() }
 		}, "prototype String": {
 			io        : String.prototype.indexOf
 			, lio     : String.prototype.lastIndexOf
@@ -4893,37 +4893,35 @@ void (() => { "use strict";
 				getNameOf : _getNameOf,
 			};
 			return new AllMath;
-		}, "defer_call Types"() {
-			return {
-				Boolean  : Boolean,
-				Number   : Number,
-				String   : String,
-				BigInt   : BigInt,
-				Function : Function,
-				Array    : Array,
-				Object(input, handle=!1) {
-					return typeof input === "object" ?
-						input :
-						handle == !0 ?
-							{ data: input } :
-							void 0
-				}, Symbol(input, handle=!1) {
-					return typeof input === "symbol" ?
-						input :
-						handle == !0 ?
-							Symbol.for(input) :
-							void 0
-				}, undefined() {},
-				null() { return null },
-				Fraction: fMath.Fraction,
-				CFraction: cfMath.CFraction,
-				Set: rMath.Set,
-				Complex: cMath.Complex,
-				dict: dict,
-				LinkedList: LinkedList,
-				MutableString: MutableString,
-			}
-		}, "defer_call_local finalize_math"() {
+		}, "defer_call Types"() { return {
+			Boolean  : Boolean,
+			Number   : Number,
+			String   : String,
+			BigInt   : BigInt,
+			Function : Function,
+			Array    : Array,
+			Object(input, handle=!1) {
+				return typeof input === "object" ?
+					input :
+					handle == !0 ?
+						{ data: input } :
+						void 0
+			}, Symbol(input, handle=!1) {
+				return typeof input === "symbol" ?
+					input :
+					handle == !0 ?
+						Symbol.for(input) :
+						void 0
+			}, undefined() {},
+			null() { return null },
+			Fraction: fMath.Fraction,
+			CFraction: cfMath.CFraction,
+			Set: rMath.Set,
+			Complex: cMath.Complex,
+			dict: dict,
+			LinkedList: LinkedList,
+			MutableString: MutableString,
+		}}, "defer_call_local finalize_math"() {
 			LibSettings.Output_Math_Variable === "default" && (LibSettings.Output_Math_Variable = "Math");
 			for (const obj of Object.values(MathObjects)) {
 				Object.keys(MathObjects).forEach(s => obj[s] = MathObjects[s]);
@@ -4948,7 +4946,7 @@ void (() => { "use strict";
 		}; if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
 			LibSettings.Global_Library_Object_Name === "default" ?
 				"LIBRARY_VARIABLES" :
-				LibSettings.Global_Library_Object_Name 
+				LibSettings.Global_Library_Object_Name
 		] = LIBRARY_VARIABLES;
 	} {// Conflict & Assignment
 
