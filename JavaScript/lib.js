@@ -1,4 +1,5 @@
 #!/usr/bin/env js
+// lib.js v1.0.0 (c) | Copyright 2022 Daniel Janusch
 
 void (() => { "use strict";
 	{// Customization & Constants
@@ -11,9 +12,7 @@ void (() => { "use strict";
 			"debugger",
 			// cry just logs every time something is overwritten instead of all at the end in one message.
 			// none just ignores the error and overwrites it anyway.
-		];
-
-		/**
+		], Settings_Help_String = `Settings Help:
 		 * OnConflict Options (ones in parentheses are aliases for the same thing):
 		   - log: console.log (default value)
 		   - throw (trw)
@@ -41,18 +40,13 @@ void (() => { "use strict";
 		   - if it is an array, the none of the corresponding elements will be globalized.
 		   - otherwise, nothing changes.
 		   - functions on the global ignore list can still be accessed through LIBRARY_VARIABLES if it is globalized
-		**/
-
+		`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "");
 		var LibSettings = {
-			onConflictOptions                   : onConflictOptions
-			, Alert_Library_Load_Finished       : "default" // false
-			, Global_Ignore_List                : [
-				"dQuery",
-				"getIp",
-				"dir",
-				"numToStrW_s",
-				"getAllDocumentObjects",
-			]
+		/////////////////////////////////////////// USER INPUT START ///////////////////////////////////////////
+			Alert_Library_Load_Finished         : "default" // false
+			, Global_Ignore_List                : [ "dir" ]
+			, Add_All_GlobalNames               : "default"
+			, Do_Document_Things_In_Node_Anyway : "default" // false, only recommended if using something like jsdom
 			, Globlize_Library_Variables_Object : "default" // true
 			, Global_Library_Object_Name        : "default" // "LIBRARY_VARIABLES". if nullish. no key will be set
 			, ON_CONFLICT                       : "default" // "debug"
@@ -101,10 +95,23 @@ void (() => { "use strict";
 			, Creepily_Watch_Every_Action       : "default" // false
 			, Freeze_Everything                 : "default" // false
 			, Freeze_Instance_Objects           : "default" // false, only matters if Freeze_Everything is not truthy
-			// developer settings
-			, Define_Fn_Previous_Getter_String  : "default" // "\\previous".
-		};
-
+		//////////////////////////////////////////// USER INPUT END ////////////////////////////////////////////
+		}; if (LibSettings.Add_All_GlobalNames) {
+			globalThis.self       ??= globalThis; // browser
+			globalThis.global     ??= globalThis; // node.js
+			globalThis.window     ??= globalThis; // browser
+			globalThis.globalThis ??= globalThis; // both
+			globalThis.frames     ??= globalThis; // browser
+		}
+		LibSettings.DOM_Ignore_list = [];
+		LibSettings.Settings_Help_String = Settings_Help_String, LibSettings.onConflictOptions = onConflictOptions;
+		LibSettings.Do_Document_Things_In_Node_Anyway = LibSettings.Do_Document_Things_In_Node_Anyway === "default" ?
+			!1 : LibSettings.Do_Document_Things_In_Node_Anyway;
+		// TODO: If running in NodeJS, don't do anything with the document unless told to in the settings
+		LibSettings.Environment_Global_String = (globalThis + "").slice(8, -1).toLowerCase();
+		LibSettings.isNodeJS  = LibSettings.Environment_Global_String === "global";
+		LibSettings.isBrowser = LibSettings.Environment_Global_String === "window";
+		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_Document_Things_In_Node_Anyway;
 		LibSettings.Clear_LocalStorage   && LibSettings.Clear_LocalStorage   !== "default" && localStorage  .clear();
 		LibSettings.Clear_SessionStorage && LibSettings.Clear_SessionStorage !== "default" && sessionStorage.clear();
 		LibSettings.MATH_LOG_DEFAULT_BASE   === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE   = 10 );
@@ -131,12 +138,14 @@ void (() => { "use strict";
 			for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 				for (j = 10; j --> 0 ;)
 					divtable[i][j] = i / j;
-			var CONFLICT_ARR = [];
-			CONFLICT_ARR.push = function push(val, scope /*name*/) {
+			var CONFLICT_ARR = []; // TODO: Update this function
+			CONFLICT_ARR.push = function push(val, scopename, list, orig_str) {
 				return Array.prototype.push.call(
-				this, (scope?.startsWith?.("object ") ? scope.slice(7) : scope?.startsWith?.("prototype ") ?
-					scope.slice(10) + ".prototype" : "window") + "." + val
-			)}; var DEFER_ARR = [] , MathObjects = {}
+					this, (list.includes("object") ? scopename : list.includes("prototype") ?
+						scopename + ".prototype" : LibSettings.Environment_Global_String) + (
+						"'`\"".includes(orig_str.at(-1)) ? `['${val}']` : "." + val )
+				);
+			}; var DEFER_ARR = [], LOCAL_DEFER_ARR = [], MathObjects = {}
 			//////////////////////////////// START OF CONSTANTS ////////////////////////////////
 			, list = Array.from
 			, int = Number.parseInt
@@ -162,7 +171,7 @@ void (() => { "use strict";
 			, π_12          = 0.26179938779914946
 			, 𝜏             = 6.283185307179586
 			, 𝑒             = 2.718281828459045
-			, ϕ             = 1.618033988749895 // -2 sin 666°
+			, ϕ             = 1.6180339887498947 // -2 sin 666°
 			, α             = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
 			, γ             = .5772156649015329
 			, Ω             = .5671432904097838 // Ωe^Ω = 1
@@ -174,6 +183,9 @@ void (() => { "use strict";
 			, emc           = γ // Euler-Mascheroni Constant
 			, omega         = Ω
 			//////////////////////////////// END OF CONSTANTS ////////////////////////////////
+			// document.all == null ????!!/? what!?!?
+			, constr = function constructorName(inpt) { return inpt==null?inpt:inpt?.constructor?.name }
+			// this.at(-1) doesn't work with all iterables. (ie: HTMLAllCollection)
 			, lastElement = function lastElement() { return this[dim(this)] }
 			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
@@ -201,7 +213,7 @@ void (() => { "use strict";
 				!snum.includes(".") && (snum += ".0");
 				return (snum[0] === "-" ? "-" : "") +
 					snum.substring( (snum[0] === "-") +
-						len(snum.match(/^-?(0+\B)/)?.[1]), // can evaluate to NaN, but it doesn't matter
+						(len(snum.match(/^-?(0+\B)/)?.[1]) || 0),
 						snum.match(/\B0+$/)?.index || Infinity
 				);
 			}, type = function type(a, specific=!1) {
@@ -246,112 +258,207 @@ void (() => { "use strict";
 									/^class/.test(a+"") ?
 										"class" :
 										"func"
-			}, strToObj = function strToObj(str, obj=window) {
+			}, strToObj = function strToObj(str, obj=globalThis) {
 				if (type(str) !== "string") return;
 				str.split(/[.[\]'"]/).filter(e=>e).forEach(e => obj = obj?.[e]);
 				return obj;
-			}, define = (function create_define(previousGetterString="\\previous") {
-				function error(val, scopename) {
-					CONFLICT_ARR.push(val/*tmp*/, scopename);
-					if (LibSettings.ON_CONFLICT === "crash") throw Error(`scope[${String(val)}] is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
-					if (LibSettings.ON_CONFLICT === "cry") console.log(`scope[${String(val)}] overwritten and LibSettings.ON_CONFLICT is set to cry.`);
-					if (LibSettings.ON_CONFLICT === "debugger") debugger;
-					if (LibSettings.ON_CONFLICT === "dont-use") return !1;
-					return !0;
+			}, define = (function create_define() {
+				// TODO: if define is called from define, put "" as the scope if there is no scope.
+				function error(name, scopename, list, orig_str, ON_CONFLICT) {
+					CONFLICT_ARR.push(name, scopename, list, orig_str);
+					if (ON_CONFLICT === "crash") throw Error(`scope[${String(name)}] is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`scope[${String(name)}] overwritten and LibSettings.ON_CONFLICT is set to cry.`);
+					if (ON_CONFLICT === "debugger") debugger;
+					else if (ON_CONFLICT === "dont-use") return !0;
+					return !1;
 				}
 				var previous = null;
 				return function define(
-					s /*key*/,
-					section /*for defer*/,
-					scope = window,
+					str, // key in LIBRARY_VARIABLES or for variable name in scope.
+					section, // for defer.
+					scope = globalThis,
 					customValue = void 0,
 					scopename = void 0,
+					ON_CONFLICT = LibSettings.ON_CONFLICT,
+					addLocalAuto = false
 				) {
-					// section 0 stores the defer functions in DEFER_ARR
-					// section 1 calls the defer functions
-					// "s" is the string for the name of the function/variable.
-					// a better name would have been "key", but that is used for the object and prototype things.
-					// the return value is whether or not the function worked.
-					// returns the new length of DEFER_ARR if it section 0 for defer variables
-					// custom values of null mean do nothing, while undefined means use LIBRARY_VARIABLES[s]
 					if (
-						typeof s !== "string" || !s || scope == null ||
+						typeof str !== "string" || !str || scope == null ||
 						(Array.isArray(LibSettings.Global_Ignore_List) ?
-							LibSettings.Global_Ignore_List.includes(s) :
-							LibSettings.Global_Ignore_List === s) ||
-						customValue === null || scope != scope /*NaN*/
-					) return !1;
-					if (!Object.hasOwn(LIBRARY_VARIABLES, s)) LIBRARY_VARIABLES[`local ${s}`] = customValue;
-					if (customValue === previousGetterString) { define(s, section, scope, previous, scopename);
-					} else if (s.indexOf(" ") < 0) {
-						if (scope[s] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(s, scopename)) return !1;
-						previous = scope[s] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
-					} else if (s.startsWith("delete ")) {
-						let tmp = s.slice(7);
-						delete scope[tmp];
-						return scope[tmp] === void 0
-					} else if (s.startsWith("literal symbol.for ")) {
-						let tmp = Symbol.for(s.slice(19));
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
-						previous = scope[Symbol.for(s.slice(19))] = customValue === void 0 ?
-							LIBRARY_VARIABLES[s] :
-							customValue;
-					} else if (s.startsWith("instance ")) {
-						let tmp = s.slice(9);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
-						previous = scope[tmp] = new (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue);
-						tmp.includes("Math") && (MathObjects[tmp] = scope[tmp]);
-					} else if (s.startsWith("defer_instance ")) {
-						if (!section) return DEFER_ARR.push(s);
-						let tmp = s.slice(15);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
-						previous = scope[tmp] = new (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue);
-						tmp.includes("Math") && (MathObjects[tmp] = scope[tmp]);
-					} else if (s.startsWith("defer ")) {
-						if (!section) return DEFER_ARR.push(s);
-						let tmp = s.slice(6);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
-						previous = scope[tmp] = customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue;
-					} else if (s.startsWith("defer_call ")) {
-						if (!section) return DEFER_ARR.push(s);
-						let tmp = s.slice(11);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
-						previous = scope[tmp] = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
-					} else if (s.startsWith("defer_call_local ")) {
-						if (!section) return DEFER_ARR.push(s);
-						previous = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
-					} else if (s.startsWith("call_local ") || s.startsWith("local_call ")) {
-						previous = (customValue === void 0 ? LIBRARY_VARIABLES[s] : customValue)();
-					} else if (s.startsWith("overwrite ")) {
-						previous = scope[s.slice(10)] = customValue === void 0 ?
-							LIBRARY_VARIABLES[s] :
-							customValue;
-					} else if (s.startsWith("overwrite_call ")) {
-						previous = scope[s.slice(15)] = (customValue === void 0 ?
-							LIBRARY_VARIABLES[s] : customValue
-						)();
-					} else if (s.startsWith("call ")) {
-						let tmp = s.slice(5);
-						if (scope[tmp] !== void 0 && LibSettings.ON_CONFLICT !== "none" && !error(tmp, scopename)) return !1;
-						previous = scope[tmp] = (customValue === void 0 ?
-							LIBRARY_VARIABLES[s] : customValue
-						)();
-					} else if (s.startsWith("object ")) {
-						let newScope = strToObj(s.slice(7), scope);
-						for (let [key, value] of Object.entries( LIBRARY_VARIABLES[s] ))
-							define(key, section, newScope, value, s);
-					} else if (s.startsWith("prototype ")) {
-						let newScope = strToObj(s.slice(10), scope).prototype;
-						for (let [key, value] of Object.entries( LIBRARY_VARIABLES[s] ))
-							define(key, section, newScope, value, s);
-					} // else { local variable, do nothing }
-					return !0;
+						LibSettings.Global_Ignore_List.includes(str) :
+						LibSettings.Global_Ignore_List === s) || scope != scope /*NaN*/
+					) return;
+					if (
+						addLocalAuto &&
+						!Object.hasOwn(LIBRARY_VARIABLES, str) &&
+						scopename === void 0
+					) {
+						if (!str.includes("auto")) str = "auto " + str;
+						if (!str.includes("local")) str = "local " + str;
+						LIBRARY_VARIABLES[str] = customValue;
+					}
+					var list = str.replace(/^\s+|\s+$/g, ""), name;
+					if ("'\"`".includes( list.at(-1) )) {
+						let char = list.at(-1), i = dim(list);
+						while (i --> 0) if (list[i] === char) break;
+						if (i < 0) throw Error("name quotation only has no beginning");
+						name = list.slice(i+1, -1), list = list.slice(0, i);
+					} else {
+						const regex = list.match(/\S+$/);
+						name = regex[0];
+						list = list.slice(0, regex.index);
+					}
+					list = Array.from( new Set(  list.split(/\s+/g).filter(e => e).map(s => s.toLowerCase())  ) );
+					if (list.includes("auto")) return;
+					var value = customValue === void 0 ? LIBRARY_VARIABLES[str] : customValue;
+					if (list.includes("ifdom") && !LibSettings.Use_Document) // return if not using the DOM
+						return LibSettings.DOM_Ignore_list.push( [name, value] );
+					if (list.includes("previous")) return define(
+						str.replace(/previous\s+/g, ""),
+						section,
+						scope,
+						previous, // this arg is different. can't just do ...arguments
+						scopename,
+						ON_CONFLICT,
+						addLocalAuto
+					); if (list.includes("math")) {
+						!list.includes("call") && !list.includes("instance") && list.push("instance");
+						!list.includes("defer") && list.push("defer");
+					} if (list.includes("symbol.for")) // Symbol instead of String.
+						name = Symbol.for(name);
+					if (list.includes("pdelete")) { // update the previous object. overwrites everything else. must be used on its own.
+						previous = scope[name];
+						delete scope[name];
+					} if (list.includes("delete")) // overwrites everything else except pdelete. must be used on its own.
+						delete scope[name];
+					if (list.includes("object")) {
+						let newScope = strToObj(name, scope);
+						for (let [key, value] of Object.entries( LIBRARY_VARIABLES[str] ))
+							define(key, section, newScope, value, str, ON_CONFLICT, addLocalAuto);
+						return;
+					} if (list.includes("prototype")) {
+						let newScope = strToObj(name, scope)?.prototype;
+						for (let [key, value] of Object.entries( LIBRARY_VARIABLES[str] ))
+							define(key, section, newScope, value, str, ON_CONFLICT, addLocalAuto);
+						return;
+					} if (list.includes("local")) {
+						if (list.includes("defer") && !section) return LibSettings.LOCAL_DEFER_ARR.push(str);
+						if (list.includes("overwrite") || list.includes("native"))
+							throw Error("overwrite and native are not supported for locals");
+						if (list.includes("instance")) previous = new value;
+						else if (list.includes("call")) previous = value();
+						else previous = value;
+						return;
+					} if (list.includes("defer") && !section) return LibSettings.DEFER_ARR.push(str);
+					if (list.includes("instance")) previous = new value;
+					else if (list.includes("call")) previous = value();
+					else previous = value;
+					if (list.includes("math")) MathObjects[name] = previous;
+					if (list.includes("native")) return define( (typeof scope[name] === "function" &&
+						(scope[name]+"").endsWith("() { [native code] }") ? "overwrite " : "") + name,
+						section, scope, previous, "", ON_CONFLICT, addLocalAuto
+					); if (list.includes("overwrite")) return scope[name] = previous;
+					if (scope[name] !== void 0 && ON_CONFLICT !== "none" && error(name, scopename, list, str, ON_CONFLICT))
+						return;
+					scope[name] = previous;
 				}
-			})(
-				LibSettings.Define_Fn_Previous_Getter_String === "default" ?
-					"\\previous" :
-					LibSettings.Define_Fn_Previous_Getter_String
-			), keyof = function keyof(obj, value) {
+			})(), stringifyMath = function stringifyMath(
+				fn/*function or string*/,
+				variable = "x",
+				defaultArgValue = '"1.0"',
+				precision = 18
+			) {
+				// "^" means exponent
+				// "//" means fdiv
+				if (type(variable) !== "string" || !len(variable)) return !1;
+				defaultArgValue = String(defaultArgValue);
+				var code = (typeof fn === "function" ? fn.code() : fn).replace([
+						/^\s*return\s*/,
+						/(\d*\.\d+|\d+\.\d*)/g,
+						/\[/g,
+						/\]/g,
+						/\b\s*([-+/*^%]+)\s*\b/g
+					], [
+						"",
+						'"$1"',
+						"(",
+						")",
+						" $1 "
+					]
+				);
+				while (!0) {
+					// stringify non-stringified number literals
+					let m = code.match(/(?<!")(\b(?<!\.)\d+(?!\.)\b)(?!")/);
+					if (m === null) break;
+					code = code.slc(0, m.index) + `"${m[0]}"` + code.slc(m.index + len(m[0]));
+				}
+				// replace things like 5x with sMath.mul["5",x]
+				code = `(${code.replace(RegExp(`(\\d+\\.?\\d*)${variable}`, "g"), `sMath.mul["$1",${variable}]`)})`;
+
+				while (code.io("⌈") !== -1 || code.io("⌊") !== -1) {
+					// find the cases for flooring, ceiling, and rounding, and parentheses errors
+					let i = rMath.min([code.io("⌈"), code.io("⌊")].filter(e => e !== -1));
+					let index = i + 1, count = 1;
+					for (; count ; index++) {
+						if (index === code.length) throw Error(`parentheses starting at index ${i} not closed.`);
+						if ( "(⌈⌊".incl(code[index]) ) count++;
+						else if ( ")⌉⌋".incl(code[index]) ) count--;
+					}
+					index--;
+					if (code[index] === ")") throw Error(`invalid parentheses at indexes ${i} through ${index}`);
+					code = `${code.slc(0, i)}sMath.${
+						code[i] === "⌈" ?
+							code[index] === "⌉" ?
+								"ceil" :
+								"round" :
+							code[index] === "⌋" ?
+								"floor" :
+								"round"
+					}[(${code.slc(i + 1, index).strip()})]${code.slc(index + 1)}`;
+				}
+				while (code.io("(") !== -1) {
+					for (var index = 0, i = 0, n = len(code), p = 0, highest = 0; i < n; i++) {
+						// find the deepest parentheses
+						if (code[i] === "(") p++; else
+						if (code[i] === ")") p--;
+						if (p > highest) highest = p, index = i;
+					}
+					var arr = code.slc(index, ")", 0, 1).replace(/([^\s()]+)/g, "($1)")
+						.slc(1, -1).strip().split(/(?=\()/g).map(e => e.strip().slc(1, -1));
+					if (len(arr) === 1) {
+						code = code.replace(
+							code.slc(index, ")", -1, 1).toRegex(),
+							`[${arr}]`
+						)
+					}
+					if (len(arr) > 3) {
+						var i = rMath.min([ arr.io("**"), arr.io("^") ].filter(e => e !== -1));
+						if (i === Infinity) {
+							i = rMath.min([ arr.io("*"), arr.io("/"), arr.io("%"), arr.io("//") ].filter(e => e !== -1));
+							if (i === Infinity) {
+								i = rMath.min([ arr.io("+"), arr.io("-") ].filter(e => e !== -1));
+								if (i === Infinity) throw Error("Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.");
+							}
+						}
+						code = code.replace(
+							code.slc(index + 1, ")").toRegex(),
+							`${arr.slc(0, i-1).join(" ")} (${
+								arr.slc(i - 1, i + 2).join(" ")
+							}) ${arr.slc(i + 2).join(" ")}`.strip()
+						);
+						continue;
+					}
+					let tmp = `sMath.${sMath[arr[1]].name}[${arr[0]},${arr[2]}`;
+					tmp.sW("sMath.div") && (tmp += `,"${precision}"`);
+					code = code.replace(code.slc(index, ")", 0, 1).toRegex(), tmp + "]");
+				}
+				return Function(
+					variable + (defaultArgValue === "" ? "" : " = " + defaultArgValue),
+					`\treturn ${
+						code.replace([/\[/g, /\]/g], ["(", ")"])
+					};`.replace(/,/g, ", ")
+				);
+			}, keyof = function keyof(obj, value) {
 				for (const key of Object.keys(obj))
 					if (obj[key] === value) return key;
 				return null;
@@ -412,42 +519,6 @@ void (() => { "use strict";
 					if (!count) break;
 				}
 				return fn.substring(1, i);
-			}, createElement = function createElement(element="p", options={}) {
-				var element = document.createElement(element), objects = null, click = null;
-				for (const e of Object.keys(options)) {
-					if (e === "children") {
-						type(options[e], 1) === "arr" ?
-							options[e].forEach(c => element.appendChild(c)) :
-							element.appendChild(options[e]);
-					} else if (e === "onClick") { // not "onclick"
-						typeof options[e] === "function" ?
-							element.ael("click", options[e]) :
-							element.ael("click", ...options[e]);
-					} else if (e === "on") {
-						e.listener ??= e.handler;
-						element.ael( e.type, e.listener, {
-							capture : e.capture ,
-							passive : e.passive ,
-							once    : e.once    ,
-						});
-
-					} else if (["object", "objects"].includes(e)) {
-						objects = options[e];
-					} else if (e === "style") {
-						for (const stl of Object.keys(options[e]))
-							element.style[stl] = options[e][stl];
-					} else if (e === "click") {
-						click = options[e];
-					} else element[e] = options[e];
-				}
-				if (objects !== null) {
-					if (objects instanceof Array)
-						for (var i = len(objects); i --> 0 ;)
-							object[i].appendChild(element);
-					else object.appendChild(element);
-				}
-				element.click(click);
-				return element;
 			}, numToStrW_s = function numberToStringWithUnderscores(number) {
 				for (var i = 0, str2 = "", str = `${number}`.reverse(); i < len(str); i++) {
 					(!(i % 3) && i) && (str2 += "_");
@@ -584,30 +655,64 @@ void (() => { "use strict";
 				function dict(obj={}) { return new Dictionary(obj) }
 				dict.fromEntries = function fromEntries(entries=[]) { return this( Object.fromEntries(entries) ) }
 				return dict;
-			})();
+			})(); if (LibSettings.Use_Document) var createElement = function createElement(element="p", options={}) {
+				var element = document.createElement(element)
+					, objects = null
+					, clicks = null;
+				for (const e of Object.keys(options)) {
+					if (e === "children") {
+						type(options[e], 1) === "arr" ?
+							options[e].forEach(c => element.appendChild(c)) :
+							element.appendChild(options[e]);
+					} else if (e === "onClick") { // not "onclick"
+						typeof options[e] === "function" ?
+							element.ael("click", options[e]) :
+							element.ael("click", ...options[e]);
+					} else if (e === "on") {
+						e.listener ??= e.handler;
+						element.ael( e.type, e.listener, {
+							capture : e.capture ,
+							passive : e.passive ,
+							once    : e.once    ,
+						});
 
-			--> Interval things
+					} else if (["object", "objects"].includes(e)) {
+						objects = options[e];
+					} else if (e === "style") {
+						for (const stl of Object.keys(options[e]))
+							element.style[stl] = options[e][stl];
+					} else if (e === "click") {
+						clicks = options[e];
+					} else element[e] = options[e];
+				}
+				if (objects !== null) {
+					if (objects instanceof Array)
+						for (var i = len(objects); i --> 0 ;)
+							object[i].appendChild(element);
+					else object.appendChild(element);
+				}
+				element.click(clicks);
+				return element;
+			};
 
-			let intervals = dict()
-				, _setInterval = window.setInterval
-				, _clearInterval = window.clearInterval;
-			var setInterval = function setInterval(/*arguments*/) {
-				var interval = _setInterval.apply(window, arguments);
+			let _setInterval = globalThis.setInterval
+			, _clearInterval = globalThis.clearInterval;
+			var intervals = dict()
+			, setInterval = function setInterval(/*arguments*/) {
+				var interval = _setInterval.apply(globalThis, arguments);
 				intervals[interval] = arguments;
 				return interval;
 			}, clearInterval = function clearInterval(/*code*/) {
-				_clearInterval.apply(window, arguments);
+				_clearInterval.apply(globalThis, arguments);
 				delete intervals[code];
-			}
-			setInterval._setInterval = _setInterval;
-			clearInterval._clearInterval = _clearInterval;
-
-			LibSettings.DEFER_ARR = DEFER_ARR;
+			};
+			setInterval._setInterval = _setInterval, clearInterval._clearInterval = _clearInterval;
+			LibSettings.DEFER_ARR = DEFER_ARR, LibSettings.LOCAL_DEFER_ARR = LOCAL_DEFER_ARR;
 			LibSettings.CONFLICT_ARR = CONFLICT_ARR;
 		} // variables to be globalized:
 		var LIBRARY_VARIABLES = {
-		"literal symbol.for <0x200b>": "​" // zero width space
-		, "literal symbol.for <0x08>": "" // \b
+		"symbol.for <0x200b>": "​" // zero width space
+		, "symbol.for <0x08>": "" // \b
 		, "call LinkedList"() {
 			class Node {
 				constructor(value, next=null) {
@@ -669,15 +774,14 @@ void (() => { "use strict";
 				} Node() { return new Node(...arguments);
 				} __type__() { return "linkedlist" }
 			}
-		}, "local_call Image"() {
+		}, "ifdom call native Image"() {
 			// the function can still be used the same as before
-			var _Image = window.Image;
+			var _Image = globalThis.Image;
 			function Image(width, height, options={}) {
 				var image = new _Image(width, height);
 				for (const e of Object.keys(options)) image[e] = options[e];
 				return image;
 			}
-			define((_Image == 'function Image() { [native code] }' ? "overwrite " : "") + "Image", 0, window, Image);
 			Image._Image = _Image;
 			return Image;
 		}, "call md5"(n) {
@@ -854,7 +958,7 @@ void (() => { "use strict";
 			return str ?
 				["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] [ans] :
 				ans;
-		}, simulateKeypress({
+		}, "ifdom simulateKeypress": function simulateKeypress({
 			key = "",
 			code = "",
 			ctrl = false,
@@ -864,7 +968,7 @@ void (() => { "use strict";
 			altKey = undefined,
 			shiftKey = undefined,
 			type = "keypress",
-			view = window,
+			view = globalThis,
 			isTrusted = true,
 			path = [],
 			bubbles = true,
@@ -937,119 +1041,17 @@ void (() => { "use strict";
 			for (var i = length, password = ""; i --> 0 ;)
 				password += chars.rand();
 			return password;
-		}, getAllDocumentObjects() {
+		}, "ifdom getAllDocumentObjects": function getAllDocumentObjects() {
 			var objs = [document];
 			document.doctype && objs.push(document.doctype);
 			objs.union(document.all);
 			return objs;
-		}, dQuery(selector="*", {doctype=true, one=false, oneIndex=0}={}) {
-			if (selector?.constructor?.name === "dQuery") return selector;
-			if (type(selector) !== "string") throw TypeError("dQuery() requires a string or dQuery object for the first argument");
-			try {
-				var values = list(document.querySelectorAll(selector));
-				doctype && document.doctype && values.unshift(document.doctype);
-			} catch { throw Error(`Invalid selector (in single quotes): '${selector}'`) }
-			return one ?
-			values[oneIndex] :
-			new (class dQuery extends Array {
-				constructor(values, selector, previous) {
-					values === void 0 ?
-						super() :
-						isIterable(values) ?
-							super(...values) :
-							super(values);
-					if (values !== document) {
-						this.previous = previous?.constructor?.name === "dQuery" ?
-							previous :
-							new dQuery(document);
-					}
-					selector !== void 0 && (this.selector = selector);
-				}
-			})(values, selector, void 0);
-		}, css(text="", options={}, append=true) {
+		}, "ifdom css": function css(text="", options={}, append=true) {
 			options.innerHTML ??= text;
 			options.type ??= "text/css";
 			var element = createElement("style", options);
 			if (append) document.head.appendChild(element);
 			return element;
-		}, stringifyMath(fn/*function or string*/, variable="x", defaultArgValue='"1.0"', precision=18) {
-			// ^ means exponent now.
-			if (type(variable) !== "string" || !len(variable)) return !1;
-			defaultArgValue = String(defaultArgValue);
-			var code = (type(fn) === "function" ? fn.code() : fn).remove(/^\s*return\s*/)
-				.replace([/(\d*\.\d+|\d+\.\d*)/g, /\[/g, /\]/g], ['"$1"', "(", ")"]);
-			while (!0) {
-				// stringify non-stringified number literals
-				let m = code.match(/(?<!")(\b(?<!\.)\d+(?!\.)\b)(?!")/);
-				if (m === null) break;
-				code = code.slc(0, m.index) + `"${m[0]}"` + code.slc(m.index + len(m[0]));
-			}
-			// replace things line 5x with (5 * x)
-			code = `(${code.replace(RegExp(`(\\d+\\.?\\d*)${variable}`, "g"), `sMath.mul[$1,${variable}]`)})`;
-
-			while (code.io("⌈") !== -1 || code.io("⌊") !== -1) {
-				// find the cases for flooring, ceiling, and rounding, and parentheses errors
-				let i = rMath.min([code.io("⌈"), code.io("⌊")].filter(e => e !== -1));
-				let index = i + 1, count = 1;
-				for (; count ; index++) {
-					if (index === code.length) throw Error(`parentheses starting at ${i} not closed.`);
-					if ( "(⌈⌊".incl(code[index]) ) count++;
-					else if ( ")⌉⌋".incl(code[index]) ) count--;
-				}
-				index--;
-				if (code[index] === ")") throw Error(`invalid parentheses set at ${i} through ${index}`);
-				code = `${code.slc(0, i)}sMath.${
-					code[i] === "⌈" ?
-						code[index] === "⌉" ?
-							"ceil" :
-							"round" :
-						code[index] === "⌋" ?
-							"floor" :
-							"round"
-				}[(${code.slc(i + 1, index).strip()})]${code.slc(index + 1)}`;
-			}
-			while (code.io("(") !== -1) {
-				for (var index = 0, i = 0, n = len(code), p = 0, highest = 0; i < n; i++) {
-					// find the deepest parentheses
-					if (code[i] === "(") p++; else
-					if (code[i] === ")") p--;
-					if (p > highest) highest = p, index = i;
-				}
-				var arr = code.slc(index, ")", 0, 1).replace(/([^\s()]+)/g, "($1)")
-					.slc(1, -1).strip().split(/(?=\()/g).map(e => e.strip().slc(1, -1));
-				if (len(arr) === 1) {
-					code = code.replace(
-						code.slc(index, ")", -1, 1).toRegex(),
-						`[${arr}]`
-					)
-				}
-				if (len(arr) > 3) {
-					var i = rMath.min([ arr.io("**"), arr.io("^") ].filter(e => e !== -1));
-					if (i === Infinity) {
-						i = rMath.min([ arr.io("*"), arr.io("/"), arr.io("%"), arr.io("//") ].filter(e => e !== -1));
-						if (i === Infinity) {
-							i = rMath.min([ arr.io("+"), arr.io("-") ].filter(e => e !== -1));
-							if (i === Infinity) throw Error("Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.");
-						}
-					}
-					code = code.replace(
-						code.slc(index + 1, ")").toRegex(),
-						`${arr.slc(0, i-1).join(" ")} (${
-							arr.slc(i - 1, i + 2).join(" ")
-						}) ${arr.slc(i + 2).join(" ")}`.strip()
-					);
-					continue;
-				}
-				let tmp = `sMath.${sMath[arr[1]].name}[${arr[0]},${arr[2]}`;
-				tmp.sW("sMath.div") && (tmp += `,"${precision}"`);
-				code = code.replace(code.slc(index, ")", 0, 1).toRegex(), tmp + "]");
-			}
-			return Function(
-				variable + " = " + defaultArgValue,
-				`\treturn ${
-					code.replace([/\[/g, /\]/g], ["(", ")"])
-				};`.replace(/,/g, ", ")
-			);
 		}, *genzip(gen1, gen2) {
 			// generator zip
 			gen1 = toGenerator(gen1); gen2 = toGenerator(gen2);
@@ -1088,10 +1090,7 @@ void (() => { "use strict";
 			for (var i = Math.min(len(s1), len(s2)); i --> 0 ;)
 				if (s1[i] !== s2[i]) return i;
 			return -1;
-		}, "constr"     : function constructorName(input, name=true) {
-			if (input === null || input === void 0) return input; // document.all == null ????!!/? what!?!?
-			return input?.constructor?.name;
-		}, "dir"        : function currentDirectory(loc=new Error().stack) {
+		}, "dir"        : function currentDirectory(loc = globalThis.Error().stack) {
 			// sometimes doesn't work
 			return `${loc}`
 				.slice(13)
@@ -1182,7 +1181,7 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : !1,
 				arrayOneLineSpace  : "",
 			})
-		}, "defer_call MutableString"() {
+		}, "defer call MutableString"() {
 			// TODO: Make safety things for the functions so the user doesn't add non-character things
 			var MutStr = class MutableString extends Array {
 				constructor() {
@@ -1214,8 +1213,10 @@ void (() => { "use strict";
 		}, async getIp() { return (await fetch("https://api.ipify.org/")).text();
 		}, complex(re=0, im=0) { return cMath.new(re, im);
 		}, createElement : createElement
+		, stringifyMath  : stringifyMath
 		, getArguments   : getArguments
 		, bisectRight    : bisectRight
+		, MathObjects    : MathObjects
 		, numToStrW_s    : numToStrW_s
 		, isIterable     : isIterable
 		, bisectLeft     : bisectLeft
@@ -1225,6 +1226,7 @@ void (() => { "use strict";
 		, randint        : randint
 		, strMul         : strMul
 		, bisect         : bisect
+		, constr         : constr
 		, arrzip         : arrzip
 		, qsort          : qsort
 		, msort          : msort
@@ -1254,11 +1256,14 @@ void (() => { "use strict";
 		, γ              : γ
 		, 𝑒              : 𝑒
 		, 𝜏              : 𝜏
+		, "native clearInterval": clearInterval
+		, "native setInterval": setInterval
 		, "local base62Numbers": base62Numbers
 		, "local LibSettings": LibSettings
 		, "local characters": characters
 		, "local alphabetL": alphabetL
 		, "local alphabetU": alphabetU
+		, "local intervals": intervals
 		, "local alphabet": alphabet
 		, "local numbers": numbers
 		, "local π_2": π_2
@@ -1287,7 +1292,6 @@ void (() => { "use strict";
 		, "local emc": γ
 		, "local omega": Ω
 		, "local define": define
-		, "MathObjects": MathObjects
 		, "object Object": {
 			copy : copy,
 			keyof: keyof
@@ -1381,8 +1385,8 @@ void (() => { "use strict";
 				}
 				return a;
 			}, toLList: function toLinkedList() {
-				if (window.LinkedList == null) throw Error("window.LinkedList == null");
-				let a = new window.LinkedList();
+				if (globalThis.LinkedList == null) throw Error(`${LibSettings.Environment_Global_String}.LinkedList == null`);
+				let a = new globalThis.LinkedList();
 				for (const e of this.rev()) a.insertFirst(e);
 				return a;
 			}, toGen: function* toGenerator() {
@@ -1412,7 +1416,7 @@ void (() => { "use strict";
 				return list(new Set(this));
 				// probably changes the order of the array
 			}, random() { return this[ randint(0, dim(this)) ];
-			}, rand: "\\previous"
+			}, "previous rand": null
 			, insrand: function insertRandomLocation(thing) {
 				this.splice(randint(len(this)), 0, thing);
 				return this;
@@ -1425,7 +1429,7 @@ void (() => { "use strict";
 					0,
 					thing
 				);
-			}, insertSorted: "\\previous"
+			}, "previous insertSorted": null
 			, insSorteds: function insertThingsSorted(...things) {
 				for (let thing of things)
 					this.insSorted(thing);
@@ -1507,12 +1511,12 @@ void (() => { "use strict";
 					else return this.concat(Array(length).fill(filler));
 				}
 				/*else */return a;
-			}, sW: function startsWith(item) { return this[0] === item;
-			}, startsW: "\\previous"
-			, sW: "\\previous"
+			}, startsWith: function startsWith(item) { return this[0] === item;
+			}, "previous startsW": null
+			, "previous sW": null
 			, endsWith(item) { return this.last() === item }
-			, eW: "\\previous"
-			, endsW: "previous"
+			, "previous eW": null
+			, "previous endsW": null
 			, flatten() { return this.flat(Infinity);
 			}, "overwrite sort": (function create_sort() {
 				const _sort = Array.prototype.sort;
@@ -1531,7 +1535,7 @@ void (() => { "use strict";
 						arr2.splice(randint(len(arr2)), 0, arr.pop());
 				return arr2;
 			}, isNaN(strict=false) {
-				const fn = (strict ? window : rMath).isNaN;
+				const fn = (strict ? globalThis : rMath).isNaN;
 				for (const val of list(this))
 					if (fn(val)) return !0;
 				return !1;
@@ -1546,12 +1550,12 @@ void (() => { "use strict";
 			}, bisectRight: function bisectRightArray(x, low=0, high=null) { return bisectRight(this, x, low, high);
 			}, bisect: function bisectArray(x, orientation="left", low=0, high=null) { return bisect(this, x, orientation, low, high);
 			},
-		}, "prototype NodeList": { last: lastElement
-		}, "prototype HTMLCollection": { last: lastElement
-		}, "prototype HTMLAllCollection": { last: lastElement
+		}, "prototype ifdom NodeList": { last: lastElement
+		}, "prototype ifdom HTMLCollection": { last: lastElement
+		}, "prototype ifdom HTMLAllCollection": { last: lastElement
 		}, "prototype Function": {
-			args: function getArguments() { return window.getArguments(this);
-			}, code() {
+			args: function getArgs() { return getArguments(this);
+			}, code: function getCode() {
 				var s = this + "";
 				if (s.sW("class")) return false;
 				else if (s.sW("function")) {
@@ -1586,18 +1590,29 @@ void (() => { "use strict";
 			}, isClass() { return (this + "").sW("class");
 			}, isRegular: function isRegularFunction() { return (this + "").sW("function");
 			}, isFunction() { return this.isRegular() || this.isArrow() }
-			, isCallable() { return this.isFunction() || this.isClass() }
+			, isCallable() { return typeof this === "function" }
+		}, "object Function": {
+			"overwrite args": function getArgs(fn) { return getArguments(fn);
+			}, "overwrite code": function getCode(fn) { return typeof fn === "function" ? fn.code() : "";
+			}, "overwrite isArrow": function isArrowFunction(fn) { return typeof fn === "function" ? fn.isArrow() : !1;
+			}, "overwrite isClass"(fn) { return typeof fn === "function" ? fn.isClass() : !1;
+			}, "overwrite isRegular": function isRegularFunction(fn) { return typeof fn === "function" ? fn.isRegular() : !1;
+			}, "overwrite isFunction"(fn) { return typeof fn === "function" ? fn.isFunction() : !1;
+			}, "overwrite isCallable"(fn) { return typeof fn === "function";
+			}
 		}, "prototype String": {
-			io        : String.prototype.indexOf
-			, lio     : String.prototype.lastIndexOf
-			, strip   : String.prototype.trim
-			, lstrip  : String.prototype.trimLeft
-			, rstrip  : String.prototype.trimRight
-			, startsW : String.prototype.startsWith
-			, sW      : "\\previous"
-			, endsW   : String.prototype.endsWith
-			, eW      : "\\previous"
-			, last    : lastElement
+			io              : String.prototype.indexOf
+			, lio           : String.prototype.lastIndexOf
+			, strip         : String.prototype.trim
+			, lstrip        : String.prototype.trimLeft
+			, rstrip        : String.prototype.trimRight
+			, startsW       : String.prototype.startsWith
+			, "previous sW" : null
+			, endsW         : String.prototype.endsWith
+			, "previous eW" : null
+			, last          : lastElement
+			, splitIndex(index) { return [this.slice(0, index), this.slice(index)];
+			}, "previous splitI": null
 			, "overwrite replace" : (function create_replace() {
 				const _replace = String.prototype.replace;
 				return function replace(search, replacer) {
@@ -1609,12 +1624,13 @@ void (() => { "use strict";
 					return output;
 				}
 			})(), startsLike(strOrArr="", position=0) { // TODO: Finish
+				throw Error("Not Implemented");
 				if (!["str", "mutstr", "arr"].incl(type(strOrArr, 1))) return !1;
 				if (type(strOrArr) === "string") {
 
 				}
-			}, startsL: "\\previous"
-			, sL      : "\\previous"
+			}, "previous startsL" : null
+			, "previous sL"       : null
 			, shuffle(times=1) { return this.split("").shuffle(times).join("");
 			}, ios: function indexesOf(chars="") {
 				return type(chars) === "string" ?
@@ -1667,7 +1683,7 @@ void (() => { "use strict";
 					this.substr(0, start) +
 						this.substring(start, end).toLowerCase() +
 						this.substr(end);
-			}, toObj(obj=window) { return strToObj(this, obj);
+			}, toObj(obj=globalThis) { return strToObj(this, obj);
 			}, hasDupesA: function hasDuplicatesAll() { return /(.|\n)\1/.in( this.split("").sort().join("") );
 			}, hasDupesL: function hasDuplicateLetters() { return /(\w)\1/.in( this.split("").sort().join("") );
 			}, reverse() { return this.split("").reverse().join("");
@@ -1702,7 +1718,7 @@ void (() => { "use strict";
 				else return RegExp(this, f);
 				return RegExp(b, f);
 			}, toNumber() { return +this;
-			}, toNum: "\\previous"
+			}, "previous toNum": null
 			, toBigInt() {
 				try { return BigInt(this) }
 				catch { throw TypeError(`Cannot convert input to BigInt. input: '${this}'`) }
@@ -1739,7 +1755,7 @@ void (() => { "use strict";
 				for (var i = len(a); i --> 1 ;)
 					if (a[i] !== "0") return !1;
 				return !0;
-			}, isInt: "\\previous"
+			}, "previous isInt": null
 			, exists() { return this !== "";
 			}, line(index=Infinity) {
 				if (rMath.isNaN(index)) return false;
@@ -1765,7 +1781,7 @@ void (() => { "use strict";
 			}, shr(num) { return this >> Number(num);
 			}, shr2(num) { return this >>> Number(num);
 			}, isInteger() { return this === int(this);
-			}, isInt: "\\previous"
+			}, "previous isInt": null
 			, add(arg) { return this + Number(arg);
 			}, sub(arg) { return this - Number(arg);
 			}, mul(arg) { return this * Number(arg);
@@ -1806,8 +1822,8 @@ void (() => { "use strict";
 			}, mod(arg) { return this % BigInt(arg);
 			}, pow(arg) { return this ** BigInt(arg);
 			}, length(n=0) { return dim(`${this}`, n);
-			}, isInteger() { return true}
-			, isInt: "\\previous"
+			}, isInteger() { return !0 }
+			, "previous isInt": null
 		}, "instance Logic": class Logic {
 			constructor(
 				bitwise = LibSettings.Logic_BitWise_Argument,
@@ -1817,10 +1833,8 @@ void (() => { "use strict";
 				bitwise === "default" && (bitwise = "bit");
 				comparatives === "default" && (comparatives = null);
 				help === "default" && (help = "help");
-
-				if (bitwise != null) {
-					// TODO: Add the other logic gates to bitwise
-					this[bitwise] = {
+				// TODO: Add the other logic gates to bitwise
+				if (bitwise != null) this[bitwise] = {
 						shr: (a, b) => a >> b,
 						shr2: (a, b) => a >>> b,
 						shl: (a, b) => a << b,
@@ -1873,10 +1887,7 @@ void (() => { "use strict";
 						},
 						imply: null,
 						nimply: null,
-					}
-				}
-				if (comparatives != null) {
-					this[comparatives] = {
+				}; if (comparatives != null) this[comparatives] = {
 						gt: (a, b) => a > b,
 						lt: (a, b) => a < b,
 						get: (a, b) => a >= b,
@@ -1885,9 +1896,7 @@ void (() => { "use strict";
 						seq: (a, b) => a === b,
 						lneq: (a, b) => a != b,
 						sneq: (a, b) => a !== b,
-					}
-				}
-				if (help != null) {
+				}; if (help != null) {
 					// TODO: finish Logic help text
 					this[help] = {
 						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
@@ -2098,7 +2107,7 @@ void (() => { "use strict";
 					!0 :
 					!1;
 			}
-		}, "defer_instance bMath": class BigIntRealMath {
+		}, "math bMath": class BigIntRealMath {
 			constructor(
 				help = LibSettings.bMath_Help_Argument,
 				degTrig = LibSettings.bMath_DegTrig_Argument,
@@ -2124,7 +2133,7 @@ void (() => { "use strict";
 			sub(a, b) { return a - b }
 			mul(a, b) { return a * b }
 			div(a, b) { return a / b }
-		}, "defer_instance sMath": class stringRealMath {
+		}, "math sMath": class stringRealMath {
 			constructor(
 				help = LibSettings.sMath_Help_Argument,
 				degTrig = LibSettings.sMath_DegTrig_Argument,
@@ -2133,8 +2142,8 @@ void (() => { "use strict";
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
-				this.zero = "0.0"; // cannonical format for 0.
-				this.one = "1.0"; // cannonical format for 1.
+				this.zero = "0.0"; // canonical format for 0.
+				this.one = "1.0"; // canonical format for 1.
 				if (help) this.help = {
 					add: "Takes 2 string number arguments (a and b). returns a + b as a string with maximum precision and no floating point errors",
 					sub: "Takes 2 string number arguments (a and b). returns a - b as a string with maximum precision and no floating point errors",
@@ -2158,22 +2167,22 @@ void (() => { "use strict";
 					square: "Takes 1 string number argument. squares the argument and returns it.",
 					cube: "Takes 1 string number argument. cubes the argument and returns it.",
 					tesseract: "Takes 1 string number argument. raises it the the fourth power and returns it.",
-					norm: "Takes 1 string number argument. calls window.numStrNorm(argument). normalizes the number, ie: remove leading zeros, remove trailing decimal zeros.",
+					norm: `Takes 1 string number argument. calls ${LibSettings.Environment_Global_String}.numStrNorm(argument). normalizes the number, ie: remove leading zeros, remove trailing decimal zeros.`,
 					decr: "Takes 1 string number argument (x). returns x - 1 as a string, more efficiently (I think), than sub(x, 1) would. see incr, sub",
 					incr: "Takes 1 string number argument (x). as of aug 4, 2022, this function just calls add(x, 1). see decr, add",
 					isNaN: "Takes 1 string number argument. returns true, if it is NOT a number, and false if it is a number. the cases that it will return false in are if it has characters outside of the decimal numerals (and period), it has multiple periods, or it is't a string all together",
 					isInt: "Takes 1 string number argument. returns whether or not the input is an integer. It does not assume the argument is normalized.",
-					isIntN: "Takes 1 string number argument. returns whether or not the input is an integer. It assumes the argument is correct and normalized as per sMath.norm or window.numStrNorm (they're the same function). In this case it is faster to use this function than the regular isInt",
+					isIntN: `Takes 1 string number argument. returns whether or not the input is an integer. It assumes the argument is correct and normalized as per sMath.norm or ${LibSettings.Environment_Global_String}.numStrNorm (they're the same function). In this case it is faster to use this function than the regular isInt`,
 					isFloat: "Takes 1 string number argument. returns whether or not the input has non-zero decimal places. It does not assume the argument is normalized.",
-					isFloatN: "Takes 1 string number argument. returns whether or not the input has non-zero decimal places. It assumes the argument is correct and normalized as per sMath.norm or window.numStrNorm (they're the same function). In this case it is faster to use this function than the regular isFloat",
+					isFloatN: `Takes 1 string number argument. returns whether or not the input has non-zero decimal places. It assumes the argument is correct and normalized as per sMath.norm or ${LibSettings.Environment_Global_String}.numStrNorm (they're the same function). In this case it is faster to use this function than the regular isFloat`,
 					min: "Takes any amount of string number arguments. the arguments can be passed in via an array or directly. the minimum value will be returned. if no arguments are given, the default return value is 0, or more specificly, \"0.0\". see sMath.zero, max",
 					max: "Takes any amount of string number arguments. the arguments can be passed in via an array or directly. the maximum value will be returned. if no arguments are given, the default return value is 0, or more specificly, \"0.0\". see sMath.zero, min",
-					_lmgf: "This function is used internally to act as both gcf/gcd and lcm in one function. Takes 1 named argument for either lcm or gcf/gcd. the rest of the arguments should be string numbers that are normalized with either sMath.norm or window.numStrNorm.",
+					_lmgf: `This function is used internally to act as both gcf/gcd and lcm in one function. Takes 1 named argument for either lcm or gcf/gcd. the rest of the arguments should be string numbers that are normalized with either sMath.norm or ${LibSettings.Environment_Global_String}.numStrNorm.`,
 					floor: "Takes 1 string number argument. returns the floored version of it. (round towards negative infinity)",
 					ceil: "Takes 1 string number argument. returns the ceilinged version of it. (round towards positive infinity)",
 					round: "Takes 1 string number argument. returns number rounded to the nearest integer.",
 					trunc: "takes 1 string number argument. returns the truncated version. same as Math.trunc, but for strings. rounds towards zero. see ipart, floor, ceil, round",
-					new: "Takes 1 numerical argument. returns the input in the canonical string form. It also works if the input isn't a number. In this case, it just returns (input+\"\")",
+					new: "Takes 1 numerical argument. returns the input in the canonical string form. It also works if the input isn't a number. In this case, it just returns String(input)",
 					lcm: null,
 					gcf: null,
 					gcd: null,
@@ -2229,7 +2238,8 @@ void (() => { "use strict";
 						}
 						return !1;
 					}, ge(a="0.0", b="0.0") {// >=
-						return this.gt(a, b) || this.eq(a, b);
+						return this.gt(a, b) ||
+							this.eq(a, b);
 					}, lt(a="0.0", b="0.0") {// <
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a += ""; !a.incl(".") && ( a += ".0" );
@@ -2266,8 +2276,10 @@ void (() => { "use strict";
 							if (Number(a[i]) > Number(b[i])) return !1;
 						}
 						return !1;
-					}, le(a="0.0", b="0.0") {/* <= */ return this.lt(a, b) || this.eq(a, b) },
-					eq(a="0.0", b="0.0") { // strict equal to. infinite decimal places
+					}, le(a="0.0", b="0.0") {// <=
+						return this.lt(a, b) ||
+							this.eq(a, b);
+					}, eq(a="0.0", b="0.0") { // strict equal to. infinite decimal places
 						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 						a += ""; !a.incl(".") && ( a += ".0" );
 						b += ""; !b.incl(".") && ( b += ".0" );
@@ -2340,7 +2352,7 @@ void (() => { "use strict";
 						return !0;
 					}, nz(snum="0.0") {
 						// x != 0
-						for (var i = 0, n = len(snum); i < n; i++)
+						for (var i = 0; i < snum.length; i++)
 							if (snum[i] !== "0" && snum[i] !== ".") return !0;
 						return !1;
 					}, ng(snum="0.0") { /*x < 0*/ return snum[0] === "-" },
@@ -2480,7 +2492,7 @@ void (() => { "use strict";
 					ansString += `${j}`;
 				}
 				ansString.io(".") < 0 && (ansString += ".0");
-				return sgn === -1 ? `-${ansString}` : ansString;
+				return sign === -1 ? `-${ansString}` : ansString;
 			} fdiv(num="0.0", denom="1.0") {
 				// floor division
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
@@ -2502,10 +2514,58 @@ void (() => { "use strict";
 					tmp1 = tmp3;
 					ans++;
 				}
-				return `${sign === -1 && this.mul10( this.sub(num, this.mul(ans, denom)) ) ?
+				return `${sign === -1 && this.eq.nz( this.sub(num, this.mul(ans, denom)) ) ?
 					-++ans :
 					ans
 				}.0`;
+			} cdiv(num="0.0", denom="1.0") {
+				// ceiling division
+				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
+				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
+				if ( this.eq.ez(denom) )
+					return this.eq.ez(num) ?
+						NaN :
+						Infinity;
+				if ( this.eq.ez(num) ) return "0.0";
+				num = this.norm( num+"" ); denom = this.norm( denom+"" );
+				const sign = this.sgn(num) * this.sgn(denom);
+				num = this.abs(num); denom = this.abs(denom);
+				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
+				num = this.mul10(num, exponent); denom = this.mul10(denom, exponent);
+
+				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
+				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
+				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
+					tmp1 = tmp3;
+					ans++;
+				}
+				return `${(
+					sign == 1 && this.eq.nz( this.sub(num, this.mul(ans, denom)) ) ?
+						++ans :
+						-ans
+				)}.0`;
+			} tdiv(num="0.0", denom="1.0") {
+				// truncated division
+				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
+				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
+				if ( this.eq.ez(denom) )
+					return this.eq.ez(num) ?
+						NaN :
+						Infinity;
+				if ( this.eq.ez(num) ) return "0.0";
+				num = this.norm( num+"" ); denom = this.norm( denom+"" );
+				const sign = this.sgn(num) * this.sgn(denom);
+				num = this.abs(num); denom = this.abs(denom);
+				let exponent = rMath.max(len(this.fpart(num)), len(this.fpart(denom))) - 2;
+				num = this.mul10(num, exponent); denom = this.mul10(denom, exponent);
+
+				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
+				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
+				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
+					tmp1 = tmp3;
+					ans++;
+				}
+				return `${ BigInt(sign) * ans}.0`;
 			} div10(snum="0.0", x=1) {
 				if (rMath.isNaN(snum)) return NaN;
 				if (isNaN( x = int(Number(x)) )) return NaN;
@@ -2572,7 +2632,9 @@ void (() => { "use strict";
 						0 :
 						1;
 			} sign(snum="0.0") {
-				return this.sgn(snum);
+				return this.sgn(
+					snum
+				);
 			} ssgn(snum="0.0") {
 				// string sign. sMath.ssgn("-0") => "-1.0"
 				return snum[0] === "-" ?
@@ -2581,7 +2643,9 @@ void (() => { "use strict";
 						"0.0" :
 						"1.0";
 			} ssign(snum="0.0") {
-				return this.ssgn(snum);
+				return this.ssgn(
+					snum
+				);
 			} abs(snum="0.0") {
 				return snum[0] === "-" ?
 					snum.slice(1) :
@@ -2618,7 +2682,7 @@ void (() => { "use strict";
 				// the drawback is there is more string manipulation, which is probably slower.
 				if ("0-.".incl(snum[0])) return this.sub(snum, "1.0");
 				var i1 = snum.io("."), i2;
-				if (i1 < 0) throw Error("sMath.decrp's argument had no '.'");
+				if (i1 < 0) throw Error("sMath.decr's argument had no '.'");
 				for (i2 = i1; snum[--i1] === "0" ;);
 				snum = snum.slc(0, i1) + (Number(snum[i1])-1) + snum.slc(i1+1);
 				for (; ++i1 < i2 ;)
@@ -2737,8 +2801,40 @@ void (() => { "use strict";
 			} lcm(...snums) { return this._lmgf("lcm", ...snums);
 			} gcd(...snums) { return this._lmgf("gcd", ...snums);
 			} gcf(...snums) { return this._lmgf("gcf", ...snums);
+			} int(n="0.0") { return this.ipart(n);
+			} trunc(n="0.0") { return this.ipart(n);
+			} truncate(n="0.0") { return this.ipart(n);
+			} ifact(n = "1.0") {
+				if (this.isNaN(n)) return NaN;
+				n = this.ipart(n);
+				if (this.eq.ez(n)) return "1.0";
+				if (this.eq.ng(n)) return NaN;
+				for (var ans = "1.0", cur = "1.0"; this.eq.le(cur, n); cur = this.incr(cur))
+					ans = this.mul(ans, cur);
+				return ans;
+			} sum(n, last, fn=n=>n, inc="1.0") {
+				if (this.isNaN( n = this.norm(last) )) return NaN;
+				if (this.isNaN( last = this.norm(last) ) ) return NaN;
+				if (type(fn, 1) !== "func") return NaN;
+				if ( /\+-\*\/%!\^/.test(fn.code()) ) fn = stringifyMath(fn);
+				if (this.isNaN( inc = this.norm(inc) )) return NaN;
+				for (var total = "0.0"; this.eq.le(n, last); n = this.add(n, inc))
+					total = this.add(total, fn(n));
+				return total;
+			} atanh(x, n="100.0", divPrecision=18) {
+				return this.isNaN(x) ?
+					NaN :
+					this.sum(0, n, k => sMath.div( sMath.ipow( x, sMath.incr(sMath.mul(2, k)) ),
+						sMath.incr(sMath.mul(2, k)), divPrecision
+						), "1.0"
+					)
+			} ln(x, n="100.0", divPrecision=18) {
+				return this.atanh(
+					(x - 1) / (x + 1),
+					n, divPrecision
+				);
 			}
-		}, "defer_instance rMath": class RealMath {
+		}, "math rMath": class RealMath {
 			constructor(
 				degTrig = LibSettings.rMath_DegTrig_Argument,
 				help = LibSettings.rMath_Help_Argument,
@@ -3050,7 +3146,7 @@ void (() => { "use strict";
 					round: "returns round(argument)",
 					floor: "returns floor(argument)",
 					ceil: "returns ceil(argument)",
-					rand: "0 arguments. returns window.rand(), which is the original Math.random",
+					rand: `0 arguments. returns ${LibSettings.Environment_Global_String}.rand(), which is the original Math.random`,
 					random: "returns a random number in the range [0,1)",
 					pow: "Takes two arguments (a,b). similar to a**b.",
 					nthrt: "Takes 2 parameters (x, n). returns x**(1/n). the root defaults to 2.",
@@ -4405,7 +4501,7 @@ void (() => { "use strict";
 			// coulomb
 			// electrical things
 			// p-adic integers
-		}, "defer_instance cMath": class ComplexMath {
+		}, "math cMath": class ComplexMath {
 			constructor(degTrig=LibSettings.cMath_DegTrig_Argument, help=LibSettings.cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
@@ -4770,7 +4866,7 @@ void (() => { "use strict";
 				if (type(z, 1) !== "complex") return NaN;
 				throw Error("Not Implemented");
 			}
-		}, "defer_instance fMath": class FractionalStringMath {
+		}, "math fMath": class FractionalStringMath {
 			// TODO: Make the functions convert numbers into fractions if they are inputed instead
 			constructor(help=LibSettings.fMath_Help_Argument, degTrig=LibSettings.fMath_DegTrig_Argument) {
 				help === "default" && (help = !0);
@@ -4827,7 +4923,7 @@ void (() => { "use strict";
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
 				return this.simp( this.new(sMath.mul(a.numer, b.denom), sMath.mul(a.denom, b.numer)) );
 			}
-		}, "defer_instance cfMath": class ComplexFractionalStringMath {
+		}, "math cfMath": class ComplexFractionalStringMath {
 			constructor(help=LibSettings.cfMath_Help_Argument) {
 				help === "default" && (help = !0);
 				this.CFraction = class ComplexFraction {
@@ -4844,8 +4940,8 @@ void (() => { "use strict";
 			}
 			new(re=fMath.one, im=fMath.one) { return new this.CFraction(re, im);
 			}
-		}, "defer_call aMath"() {
-			var _getNameOf = obj => keyof(window.MathObjects, obj)
+		}, "math call aMath"() {
+			var _getNameOf = obj => keyof(globalThis.MathObjects, obj)
 			, protoProps = e => Object.getOwnPropertyNames(e.constructor.prototype)
 			, fns = {
 				bigint   : bMath, complex  : cMath, fraction : fMath, num      : rMath,
@@ -4857,19 +4953,19 @@ void (() => { "use strict";
 				if (fn) return fn.apply( fns[typ], args );
 				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
 				/*else*/
-				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
+				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see ${LibSettings.Environment_Global_String}.MathObjects for all Math objects`);
 			} function _call_attr(fname, attr, typ=null, ...args) {
 				typ === null && (typ = type(args[0], 1));
 				var fn = fns?.[typ?.lower?.()]?.[attr]?.[fname];
 				if (fn) return fn.apply( fns[typ], args );
 				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
 				/*else*/
-				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see window.MathObjects for all Math objects`);
+				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see ${LibSettings.Environment_Global_String}.MathObjects for all Math objects`);
 			}
 
 			class AllMath { // aMath will call the correct function based upon the inputs' types
 				constructor() {
-					if (LibSettings.aMath_Help_Argument) this.help = "see the help attributes of the other math functions, which you can find at 'window.MathObjects'.  this.internals.call, this.internals.call_eq, and this.internals.call_deg just call functions from the correct math object. call_eq uses the eq attribute of the math object, and call_deg uses the deg attribute of the math object.  not all the functions are guaranteed to work for all types.";
+					if (LibSettings.aMath_Help_Argument) this.help = `see the help attributes of the other math functions, which you can find at '${LibSettings.Environment_Global_String}.MathObjects'.  this.internals.call, this.internals.call_eq, and this.internals.call_deg just call functions from the correct math object. call_eq uses the eq attribute of the math object, and call_deg uses the deg attribute of the math object.  not all the functions are guaranteed to work for all types.`;
 				}
 			}
 			for (const fname of Object.values(MathObjects).map(e => protoProps(e)).flat().remrep().remove("constructor"))
@@ -4893,7 +4989,7 @@ void (() => { "use strict";
 				getNameOf : _getNameOf,
 			};
 			return new AllMath;
-		}, "defer_call Types"() { return {
+		}, "defer call Types"() { return {
 			Boolean  : Boolean,
 			Number   : Number,
 			String   : String,
@@ -4921,22 +5017,26 @@ void (() => { "use strict";
 			dict: dict,
 			LinkedList: LinkedList,
 			MutableString: MutableString,
-		}}, "defer_call_local finalize_math"() {
+		}}, "defer call local finalize_math"() {
 			LibSettings.Output_Math_Variable === "default" && (LibSettings.Output_Math_Variable = "Math");
 			for (const obj of Object.values(MathObjects)) {
 				Object.keys(MathObjects).forEach(s => obj[s] = MathObjects[s]);
 				obj["+"]  = obj.add;  obj["-"]  = obj.sub;
 				obj["*"]  = obj.mul;  obj["/"]  = obj.div;
-				obj["**"] = obj.pow;  obj["e^"] = obj.exp;
+				obj["**"] = obj["^"] = obj.pow;
 				obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
 				obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
-				obj.Σ = obj.sum; obj.Π = obj.prod; obj.Γ = obj.gamma;
+				obj["e^"] = obj.exp; obj["!"] = obj.ifact;
+				obj.Σ = obj.sum;
+				obj.Π = obj.prod;
+				obj.Γ = obj.gamma;
 			}
 			sMath["//"] = sMath.fdiv;
 			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
+			sMath["^"] = sMath.ipow;
 			rMath.ℙ = rMath.P; // power set
 			define( (LibSettings.Alert_Conflict_For_Math !== "default" &&
-				LibSettings.Alert_Conflict_For_Math ? "" : "overwrite ") + LibSettings.Output_Math_Variable, 0, window,
+				LibSettings.Alert_Conflict_For_Math ? "" : "overwrite ") + LibSettings.Output_Math_Variable, 0, globalThis,
 				MathObjects[ LibSettings.Input_Math_Variable === "default" ?
 					"rMath" :
 					LibSettings.Input_Math_Variable ]
@@ -4952,180 +5052,184 @@ void (() => { "use strict";
 
 		--> assignment and conflict things
 
-		for (const key of Object.keys(LIBRARY_VARIABLES)) define(key, 0);
+		for (const key of Object.keys(LIBRARY_VARIABLES))
+			define(key, 0);
 
 		--> document things
+		if (LibSettings.Use_Document) {
+			let _ael = EventTarget.prototype.addEventListener
+			, _rel = EventTarget.prototype.removeEventListener
+			, listeners = dict()
+			, _click = HTMLElement.prototype.click;
 
-		let _ael = EventTarget.prototype.addEventListener
-		, _rel = EventTarget.prototype.removeEventListener
-		, listeners = dict()
-		, _click = HTMLElement.prototype.click;
+			function addEventListener(Type, listener=null, options={
+				capture  : false,
+				passive  : false,
+				once     : false,
+				type     : arguments[0],
+				listener : arguments[1] }) {
 
-		function addEventListener(Type, listener=null, options={
-			capture  : false,
-			passive  : false,
-			once     : false,
-			type     : arguments[0],
-			listener : arguments[1] }) {
+				typeof options === "boolean" && (options = {
+					capture  : options,
+					passive  : !1,
+					once     : !1,
+					type     : Type,
+					listener : listener
+				});
+				_ael.call(this, Type, listener, options);
+				if (listeners[Type] === void 0) listeners[Type] = [];
+				listeners[Type].push({
+					object   : this,
+					capture  : options.capture,
+					passive  : options.passive,
+					once     : options.once,
+					type     : options.type,
+					listener : options.listener
+				});
+				return this;
+			} function removeEventListener(Type, listener=null, options={
+				capture  : false,
+				passive  : false,
+				once     : false,
+				type     : arguments[0],
+				listener : arguments[1] }) {
 
-			typeof options === "boolean" && (options = {
-				capture  : options,
-				passive  : !1,
-				once     : !1,
-				type     : Type,
-				listener : listener
-			});
-			_ael.call(this, Type, listener, options);
-			if (listeners[Type] === void 0) listeners[Type] = [];
-			listeners[Type].push({
-				object   : this,
-				capture  : options.capture,
-				passive  : options.passive,
-				once     : options.once,
-				type     : options.type,
-				listener : options.listener
-			});
-			return this;
-		} function removeEventListener(Type, listener=null, options={
-			capture  : false,
-			passive  : false,
-			once     : false,
-			type     : arguments[0],
-			listener : arguments[1] }) {
-
-			typeof options === "boolean" && (options = {
-				capture  : options,
-				passive  : !1,
-				once     : !1,
-				type     : Type,
-				listener : listener
-			});
-			_rel.call(this, Type, listener, options);
-			for (var i = listeners[Type]?.length; i --> 0 ;) {
-				if (listeners[Type][i].capture  === options.capture  &&
-					listeners[Type][i].passive  === options.passive  &&
-					listeners[Type][i].once     === options.once     &&
-					listeners[Type][i].type     === options.type     &&
-					listeners[Type][i].listener === options.listener
-				) listeners[Type].splice(i, 1);
+				typeof options === "boolean" && (options = {
+					capture  : options,
+					passive  : !1,
+					once     : !1,
+					type     : Type,
+					listener : listener
+				});
+				_rel.call(this, Type, listener, options);
+				for (var i = listeners[Type]?.length; i --> 0 ;) {
+					if (listeners[Type][i].capture  === options.capture  &&
+						listeners[Type][i].passive  === options.passive  &&
+						listeners[Type][i].once     === options.once     &&
+						listeners[Type][i].type     === options.type     &&
+						listeners[Type][i].listener === options.listener
+					) listeners[Type].splice(i, 1);
+				}
+				return this;
+			} function getEventListeners() { return listeners; // gets all event listeners for all objects.
+			} function getMyEventListeners() {
+				// gets all event listeners on the current EventTarget object the function is called from
+				return dict.fromEntries(
+					listeners.entries().map( e => {
+						const value = e[1].filter(e => e.object === (this || globalThis));
+						return len(value) ? [e[0], value] : [];
+					}).filter(e => len(e))
+				);
+			} function click(times=1) {
+				if (isNaN( times = Number(times) )) times = 1;
+				while (times --> 0) _click.call(this);
+				return this;
 			}
-			return this;
-		} function getEventListeners() { return listeners; // gets all event listeners for all objects.
-		} function getMyEventListeners() {
-			// gets all event listeners on the current EventTarget object the function is called from
-			return dict.fromEntries(
-				listeners.entries().map( e => {
-					const value = e[1].filter(e => e.object === (this || window));
-					return len(value) ? [e[0], value] : [];
-				}).filter(e => len(e))
-			);
-		} function click(times=1) {
-			if (isNaN( times = Number(times) )) times = 1;
-			while (times --> 0) _click.call(this);
-			return this;
+
+			addEventListener._ael = _ael; // doesn't actually work. just for storing purposes
+			removeEventListener._rel = _rel; // doesn't actually work. just for storing purposes
+			click._click = _click; // doesn't actually work. just for storing purposes
+
+			EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener    ;
+			EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener ;
+			EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners   ;
+			EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners ;
+			HTMLElement.prototype.click = click;
+			// window should probably work fine here because there is no document anyway in NodeJS, but it doesn't hurt
+			Document.prototype.click = function click(times=1) { return globalThis.document.head.click(times) }
+			// document.all == null for some reason.
+			document.doctype && document.all !== void 0 && (document.all.doctype = document.doctype);
+
+			if (LibSettings.Creepily_Watch_Every_Action && LibSettings.Creepily_Watch_Every_Action !== "default") {
+				let log = console.log;
+				document.ael("click"            , e => { log(e.type); this[e.type] = e });
+				document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
+				document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
+				document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
+				document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
+				document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
+				document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
+				document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
+				document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
+				document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
+				document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
+				document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
+				document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
+				document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
+				document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
+				document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
+				document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
+				document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
+				document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
+				document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
+				document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
+				document.ael("drag"             , e => { log(e.type); this[e.type] = e });
+				document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
+				document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
+				document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
+				document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
+				document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
+				document.ael("drop"             , e => { log(e.type); this[e.type] = e });
+				document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
+				document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
+				document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
+				document.ael("copy"             , e => { log(e.type); this[e.type] = e });
+				document.ael("paste"            , e => { log(e.type); this[e.type] = e });
+				document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
+				document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
+				document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
+				document.ael("input"            , e => { log(e.type); this[e.type] = e });
+				document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
+				document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
+				document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
+				document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
+				document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
+				document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
+				document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
+				document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
+				this    .ael("load"             , e => { log(e.type); this[e.type] = e });
+				this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
+				this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
+				this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
+			} if (LibSettings.Run_KeyLogger === "default" ? !1 : LibSettings.Run_KeyLogger) {
+				let debug = LibSettings.KeyLogger_Debug_Argument === "default" ?
+					!1 : LibSettings.KeyLogger_Debug_Argument
+				, variable = LibSettings.KeyLogger_Variable_Argument === "default" ?
+					Symbol.for('keys') :
+					LibSettings.KeyLogger_Variable_Argument
+				, copy_object = LibSettings.KeyLogger_Copy_Obj_Argument === "default" ?
+					!0 : LibSettings.KeyLogger_Copy_Obj_Argument
+				, type = LibSettings.KeyLogger_Type_Argument === "default" ?
+					"keydown" : LibSettings.KeyLogger_Type_Argument;
+				const handler = e => {
+					globalThis[variable] += e.key;
+					debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${globalThis[variable]}\`\nKeyboardEvent Object: %o`, e);
+					copy_object && (globalThis.keypressObj = e);
+				};
+				define("stopKeylogger", 0, globalThis, function stopKeylogger() {
+					var alert =  LibSettings.KeyLogger_Alert_Start_Stop || LibSettings.KeyLogger_Debug_Argument
+					, type = LibSettings.KeyLogger_Debug_Argument;
+					type === "default" && (type = "keydown");
+					alert && console.log("keylogger manually terminated.");
+					document.body.removeEventListener(type, handler);
+					return !0;
+				});
+				(function key_logger_v3() {
+					if (globalThis[variable] !== void 0) return debug &&
+						console.log(`${LibSettings.Environment_Global_String}[${variable}] is already defined.\nkeylogger launch failed`);
+					globalThis[variable] = "";
+					document.body.ael(type, handler);
+					(debug || LibSettings.KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${LibSettings.KeyLogger_Debug_Argument}${LibSettings.KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${LibSettings.KeyLogger_Variable_Argument === "default" ? `default (${LibSettings.Environment_Global_String}[Symbol.for('keys')])` : `${LibSettings.Environment_Global_String}[${LibSettings.KeyLogger_Variable_Argument}]`}\n\tcopy obj to ${LibSettings.Environment_Global_String}.keypressObj: ${LibSettings.KeyLogger_Copy_Obj_Argument}${LibSettings.KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${LibSettings.KeyLogger_Type_Argument}${LibSettings.KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
+				})();
+			} else if (LibSettings.KeyLogger_Alert_Unused && LibSettings.KeyLogger_Alert_Unused !== "default")
+				console.log("keylogger launch failed due to library settings");
 		}
-		addEventListener._ael = _ael; // doesn't actually work. just for storing purposes
-		removeEventListener._rel = _rel; // doesn't actually work. just for storing purposes
-		click._click = _click; // doesn't actually work. just for storing purposes
-
-		EventTarget.prototype.ael   = EventTarget.prototype.addEventListener    = addEventListener    ;
-		EventTarget.prototype.rel   = EventTarget.prototype.removeEventListener = removeEventListener ;
-		EventTarget.prototype.gel   = EventTarget.prototype.getEventListeners   = getEventListeners   ;
-		EventTarget.prototype.gml   = EventTarget.prototype.getMyEventListeners = getMyEventListeners ;
-		HTMLElement.prototype.click = click;
-		Document.prototype.click = function click(times=1) { return window.document.head.click(times) }
-		// document.all == null for some reason.
-		document.doctype && document.all !== void 0 && (document.all.doctype = document.doctype);
-
-		if (LibSettings.Creepily_Watch_Every_Action && LibSettings.Creepily_Watch_Every_Action !== "default") {
-			let log = console.log;
-			document.ael("click"            , e => { log(e.type); this[e.type] = e });
-			document.ael("dblclick"         , e => { log(e.type); this[e.type] = e });
-			document.ael("auxclick"         , e => { log(e.type); this[e.type] = e });
-			document.ael("contextmenu"      , e => { log(e.type); this[e.type] = e });
-			document.ael("mousemove"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mousedown"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseup"          , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseover"        , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseout"         , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseenter"       , e => { log(e.type); this[e.type] = e });
-			document.ael("mouseleave"       , e => { log(e.type); this[e.type] = e });
-			document.ael("wheel"            , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerover"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerout"       , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerenter"     , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerleave"     , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerdown"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointerup"        , e => { log(e.type); this[e.type] = e });
-			document.ael("pointermove"      , e => { log(e.type); this[e.type] = e });
-			document.ael("pointercancel"    , e => { log(e.type); this[e.type] = e });
-			document.ael("gotpointercapture", e => { log(e.type); this[e.type] = e });
-			document.ael("drag"             , e => { log(e.type); this[e.type] = e });
-			document.ael("dragstart"        , e => { log(e.type); this[e.type] = e });
-			document.ael("dragend"          , e => { log(e.type); this[e.type] = e });
-			document.ael("dragover"         , e => { log(e.type); this[e.type] = e });
-			document.ael("dragenter"        , e => { log(e.type); this[e.type] = e });
-			document.ael("dragleave"        , e => { log(e.type); this[e.type] = e });
-			document.ael("drop"             , e => { log(e.type); this[e.type] = e });
-			document.ael("keypress"         , e => { log(e.type); this[e.type] = e });
-			document.ael("keydown"          , e => { log(e.type); this[e.type] = e });
-			document.ael("keyup"            , e => { log(e.type); this[e.type] = e });
-			document.ael("copy"             , e => { log(e.type); this[e.type] = e });
-			document.ael("paste"            , e => { log(e.type); this[e.type] = e });
-			document.ael("beforecopy"       , e => { log(e.type); this[e.type] = e });
-			document.ael("beforepaste"      , e => { log(e.type); this[e.type] = e });
-			document.ael("beforecut"        , e => { log(e.type); this[e.type] = e });
-			document.ael("input"            , e => { log(e.type); this[e.type] = e });
-			document.ael("devicemotion"     , e => { log(e.type); this[e.type] = e });
-			document.ael("deviceorientation", e => { log(e.type); this[e.type] = e });
-			document.ael("DOMContentLoaded" , e => { log(e.type); this[e.type] = e });
-			document.ael("scroll"           , e => { log(e.type); this[e.type] = e });
-			document.ael("touchstart"       , e => { log(e.type); this[e.type] = e });
-			document.ael("touchmove"        , e => { log(e.type); this[e.type] = e });
-			document.ael("touchend"         , e => { log(e.type); this[e.type] = e });
-			document.ael("touchcancel"      , e => { log(e.type); this[e.type] = e });
-			this    .ael("load"             , e => { log(e.type); this[e.type] = e });
-			this    .ael("focus"            , e => { log(e.type); this[e.type] = e });
-			this    .ael("resize"           , e => { log(e.type); this[e.type] = e });
-			this    .ael("blur"             , e => { log(e.type); this.blurevt = e });
-		} if (LibSettings.Run_KeyLogger === "default" ? !1 : LibSettings.Run_KeyLogger) {
-			let debug = LibSettings.KeyLogger_Debug_Argument === "default" ?
-				!1 : LibSettings.KeyLogger_Debug_Argument
-			, variable = LibSettings.KeyLogger_Variable_Argument === "default" ?
-				Symbol.for('keys') :
-				LibSettings.KeyLogger_Variable_Argument
-			, copy_object = LibSettings.KeyLogger_Copy_Obj_Argument === "default" ?
-				!0 : LibSettings.KeyLogger_Copy_Obj_Argument
-			, type = LibSettings.KeyLogger_Type_Argument === "default" ?
-				"keydown" : LibSettings.KeyLogger_Type_Argument;
-			const handler = e => {
-				window[variable] += e.key;
-				debug && console.log(`${typ} detected: \`${e.key}\`\nkeys: \`${window[variable]}\`\nKeyboardEvent Object: %o`, e);
-				copy_object && (window.keypressObj = e);
-			};
-			define("stopKeylogger", 0, window, function stopKeylogger() {
-				var alert =  LibSettings.KeyLogger_Alert_Start_Stop || LibSettings.KeyLogger_Debug_Argument
-				, type = LibSettings.KeyLogger_Debug_Argument;
-				type === "default" && (type = "keydown");
-				alert && console.log("keylogger manually terminated.");
-				document.body.removeEventListener(type, handler);
-				return !0;
-			});
-			(function key_logger_v3() {
-				if (window[variable] !== void 0) return debug &&
-					console.log("window[${variable}] is already defined.\nkeylogger launch failed");
-				window[variable] = "";
-				document.body.ael(type, handler);
-				(debug || LibSettings.KeyLogger_Alert_Start_Stop) && console.log(`Keylogger started\nSettings:\n\tdebug: ${LibSettings.KeyLogger_Debug_Argument}${LibSettings.KeyLogger_Debug_Argument === "default" ? ` (${debug})` : ""}\n\tvariable: ${LibSettings.KeyLogger_Variable_Argument === "default" ? "default (window[Symbol.for('keys')])" : `window[${LibSettings.KeyLogger_Variable_Argument}]`}\n\tcopy obj to window.keypressObj: ${LibSettings.KeyLogger_Copy_Obj_Argument}${LibSettings.KeyLogger_Copy_Obj_Argument === "default" ? ` (${copy_object})` : ""}\n\ttype: ${LibSettings.KeyLogger_Type_Argument}${LibSettings.KeyLogger_Type_Argument === "default" ? ` (${type})` : ""}`);
-			})();
-		} else if (LibSettings.KeyLogger_Alert_Unused && LibSettings.KeyLogger_Alert_Unused !== "default")
-			console.log("keylogger launch failed due to library settings");
 	} {// Error Handling & Exiting
 		for (const s of DEFER_ARR) define(s, 1);
 		if (LibSettings.Freeze_Everything && LibSettings.Freeze_Everything !== "default") {
 			for (let name of Object.keys(LIBRARY_VARIABLES)) {
 				console.log(name);
-				Object.freeze(window[ name.match(/\S+$/)?.[0] || "" ]);
+				Object.freeze(globalThis[ name.match(/\S+$/)?.[0] || "" ]);
 			}
 		} else if (LibSettings.Freeze_Instance_Objects && LibSettings.Freeze_Instance_Objects !== "default") {
 			Object.freeze(Types);
@@ -5135,6 +5239,7 @@ void (() => { "use strict";
 		}
 
 		delete CONFLICT_ARR.push;
+		// if (CONFLICT_ARR.push != null) debugger;
 
 		if (LibSettings.Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
 			switch (LibSettings.ON_CONFLICT) {
@@ -5174,7 +5279,6 @@ void (() => { "use strict";
 		return 0;
 	}
 })();
-
 /*
 	var piApprox = (function create_piApprox() {
 		var a = n => n ? (a(n-1) + b(n-1)) / 2 : 1
