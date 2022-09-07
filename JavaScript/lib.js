@@ -10,29 +10,29 @@ void (() => { "use strict";
 			"inf", "assert", "ast", "alert" , "alt", "none" ,
 			"crash", "cry", "dont-use", "warning", "default",
 			"debugger",
-			// cry just logs every time something is overwritten instead of all at the end in one message.
 			// none just ignores the error and overwrites it anyway.
 		], Settings_Help_String = `Settings Help:
 		 * OnConflict Options (ones in parentheses are aliases for the same thing):
 		   - log: console.log (default value)
-		   - throw (trw)
-		   - return (ret)
+		   - throw (trw): throw an error at the end of the main functon if there were any variable naming conflicts
+		   - return (ret): returns frrom the main function
 		   - error (err): console.error
 		   - warning (warn, wrn): console.warn
 		   - debug (dbg, default): console.debug
 		   - debugger: causes a debugger where the overwrite happens. then it acts the same as cry
-		   - info (inf)
-		   - assert (ast)
-		   - alert (alt)
-		   - crash
-		   - cry
-		   - dont-use: doesn't overwrite anything
-		   - none: ignores the error and overwrites the value anyway
+		   - info (inf): console.info
+		   - assert (ast): console.assert
+		   - alert (alt): window.alert(). if in node and the Do_DOM_Things_In_Node_Anyway is falsy, none gets used instead.
+		   - crash: throw an error at the first variable naming conflict
+		   - cry: console.logs every time something is overwritten instead of all at the end in one message.
+		   - dont-use: doesn't overwrite anything but also doesn't throw an error. similar to none.
+		   - none: ignores the error and overwrites the value anyway. not recommended
 		 * Library Settings:
+		   - LibSettings can be accessed at LIBRARY_VARIABLES["local LibSettings"]
 		   - The defaults are the boolean value true, unless otherwise noted on the same line in a comment
 		   - if there is a comment that is not on the same line as a variable, it is for the variable directly below it
 		   - All alerts happen using console.log except for conflict stuff.
-		 * ignore list
+		 * global ignore list
 		   - should be an array of strings that corresponds with keys in LIBRARY_VARIABLES
 		   - LIBRARY_VARIABLES is defined in the next section of the code.
 		   - for each item in the ignore list, the function will NOT be added to the global scope
@@ -40,13 +40,70 @@ void (() => { "use strict";
 		   - if it is an array, the none of the corresponding elements will be globalized.
 		   - otherwise, nothing changes.
 		   - functions on the global ignore list can still be accessed through LIBRARY_VARIABLES if it is globalized
+		 * LIBRARY_VARIABLES["local define"] string syntax for first argument:
+		   - if the last character is ', ", or \` the name will start at the next of the same quote going backwards
+		     > example: if the string ends with 'asdf asdf ', the name will be "asdf asdf "
+		     > if the string ends with 'asdf asdf ", it will throw an error because the quote has no beginning.
+		     > if you want the name to be "asdf 1234" you need the quotes or else "asdf" will be one of the parameters to how it executes the code, and only "1234" will be the name
+		   - starting here, they are in the order that define() checks for them in.
+		   - auto
+		     > auto doesn't do anything and its only purpose is to distinguish variables that are dynamically created
+		     > auto acts like local but if it has "call" or "instance" etc as one of the parameters, it won't do it.
+		     > returns from the function immediately
+		   - archive
+		     > archive is similar to auto and it has the exact same functionality, that is, none.
+		     > archive is for if you are overwriting something and you want a (shallow probably) copy of the original
+		     > returns from the function immediately
+		   - ifdom
+		     > if LibSettings.Use_Document is falsy it adds the name and value to the dom ignore list and returns.
+		     > LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
+		       ~ LibSettings.isBrowser = String(globalThis).slice(8, -1).toLowerCase() === "window"
+		   - previous
+		     > previous sets the value to be whatever the previous value was.
+		   - math
+		     > if neither call nor instance are active, instance is activated.
+		     > if defer is not active, it is activated.
+		   	 > the value gets added to the MathObjects object.
+		   - symbol.for
+		     > the name of the function becomes Symbol.for(name)
+		     > example: if symbol.for is active and the name is "12345", the name becomes Symbol.for("12345")
+		   - pdelete
+		     > deletes the variable from the scope which is the 3rd argument then updated the previous value to what was just deleted
+		   - delete
+		     > deletes the variable from the scope which is the 3rd argument. doesn not update the previous value.
+		   - object
+		     > if object is active, then for each key in the value, it will be defined in the new subscope.
+		     > example: "object Array": { asdf: 3 }. this will set Array.asdf to 3
+		   - prototype
+		   	 > prototype is similar to object but adds the values to the prototype instead of the object itself
+		   - local
+		     > doesn't globalize the variable.
+		     > if overwrite or native are active, it throws an error because there is nothing to overwrite because it's a local variable
+		     > if instance or call are active, it will call it in case something important happens inside it, but it wont set anything to that value, it just discards it.
+		   - defer
+		     > if section (the second parameter) is 0, then the string gets added to either DEFER_ARR or LOCAL_DEFER_ARR depending on if local is active or not.
+		     > if section is anything else, the function proceeds as normal
+		   - overwrite
+		     > ignores what ON_CONFLICT is set to and acts as if it is set to "none".
+		     > it just overwrites the value anyway.
+		     > no errors happen if there is nothing to overwrite. it just changes it from undefined to the new value.
+		   - native
+		     > an extension of overwrite
+		     > if the thing you are overwriting is a native function then it overwrites it, otherwise what happens depends on what ON_CONFLICT is set to.
+		   - instance
+		     > creates a new instance of the value with the "new" keyword
+		     > similar to call
+		   - call
+		     > calls the value as if it is a function assuming it is a function.
+		     > will throw an error if the value is not a function
+		     > similar to instance
 		`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "");
 		var LibSettings = {
 		/////////////////////////////////////////// USER INPUT START ///////////////////////////////////////////
 			Alert_Library_Load_Finished         : "default" // false
 			, Global_Ignore_List                : [ "dir" ]
 			, Add_All_GlobalNames               : "default"
-			, Do_Document_Things_In_Node_Anyway : "default" // false, only recommended if using something like jsdom
+			, Do_DOM_Things_In_Node_Anyway      : "default" // false, only recommended if using something like jsdom
 			, Globlize_Library_Variables_Object : "default" // true
 			, Global_Library_Object_Name        : "default" // "LIBRARY_VARIABLES". if nullish. no key will be set
 			, ON_CONFLICT                       : "default" // "debug"
@@ -83,6 +140,8 @@ void (() => { "use strict";
 			, Logic_BitWise_Argument            : "default"
 			, Logic_Comparatives_Argument       : "default"
 			, Logic_Help_Argument               : "default"
+			// Keylogger is automatically off if LibSettings.Use_Document is false which is defined
+			// somewhere further down in the same section of the code
 			, Run_KeyLogger                     : "default" // false
 			, KeyLogger_Debug_Argument          : "default" // false
 			, KeyLogger_Alert_Start_Stop        : "default"
@@ -105,13 +164,14 @@ void (() => { "use strict";
 		}
 		LibSettings.DOM_Ignore_list = [];
 		LibSettings.Settings_Help_String = Settings_Help_String, LibSettings.onConflictOptions = onConflictOptions;
-		LibSettings.Do_Document_Things_In_Node_Anyway = LibSettings.Do_Document_Things_In_Node_Anyway === "default" ?
-			!1 : LibSettings.Do_Document_Things_In_Node_Anyway;
+		LibSettings.Do_DOM_Things_In_Node_Anyway = LibSettings.Do_DOM_Things_In_Node_Anyway === "default" ?
+			!1 : LibSettings.Do_DOM_Things_In_Node_Anyway;
 		// TODO: If running in NodeJS, don't do anything with the document unless told to in the settings
 		LibSettings.Environment_Global_String = (globalThis + "").slice(8, -1).toLowerCase();
 		LibSettings.isNodeJS  = LibSettings.Environment_Global_String === "global";
 		LibSettings.isBrowser = LibSettings.Environment_Global_String === "window";
-		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_Document_Things_In_Node_Anyway;
+		LibSettings.isUnknownLocation = !(LibSettings.isNodeJS || LibSettings.isBrowser);
+		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
 		LibSettings.Clear_LocalStorage   && LibSettings.Clear_LocalStorage   !== "default" && localStorage  .clear();
 		LibSettings.Clear_SessionStorage && LibSettings.Clear_SessionStorage !== "default" && sessionStorage.clear();
 		LibSettings.MATH_LOG_DEFAULT_BASE   === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE   = 10 );
@@ -192,7 +252,13 @@ void (() => { "use strict";
 			, copy = function copy(object) { return json.parse( json.stringify(object) ) }
 			, dim = function dim(e, n=1) { return e?.length - n }
 			, len = function length(e) { return e?.length }
-			, range = function* range(start, stop, step=1) {
+			, sizeof = function	sizeof(obj) {
+				if (obj == null) return 0;
+				var length = obj.length;
+				if (length != null) return length;
+				if (obj?.constructor?.name === "Object") return Object.keys(obj).length;
+				return 0;
+			}, range = function* range(start, stop, step=1) {
 				stop == null ? [stop, start] = [start, 0] : stop++;
 				for (var i = start; i < stop; i += step) yield i;
 			}, isIterable = function isIterable(arg) {
@@ -263,7 +329,6 @@ void (() => { "use strict";
 				str.split(/[.[\]'"]/).filter(e=>e).forEach(e => obj = obj?.[e]);
 				return obj;
 			}, define = (function create_define() {
-				// TODO: if define is called from define, put "" as the scope if there is no scope.
 				function error(name, scopename, list, orig_str, ON_CONFLICT) {
 					CONFLICT_ARR.push(name, scopename, list, orig_str);
 					if (ON_CONFLICT === "crash") throw Error(`scope[${String(name)}] is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
@@ -309,7 +374,7 @@ void (() => { "use strict";
 						list = list.slice(0, regex.index);
 					}
 					list = Array.from( new Set(  list.split(/\s+/g).filter(e => e).map(s => s.toLowerCase())  ) );
-					if (list.includes("auto")) return;
+					if (list.includes("auto") || list.includes("archive")) return;
 					var value = customValue === void 0 ? LIBRARY_VARIABLES[str] : customValue;
 					if (list.includes("ifdom") && !LibSettings.Use_Document) // return if not using the DOM
 						return LibSettings.DOM_Ignore_list.push( [name, value] );
@@ -693,12 +758,7 @@ void (() => { "use strict";
 				}
 				element.click(clicks);
 				return element;
-			};
-
-			let _setInterval = globalThis.setInterval
-			, _clearInterval = globalThis.clearInterval;
-			var intervals = dict()
-			, setInterval = function setInterval(/*arguments*/) {
+			}, intervals = dict(), setInterval = function setInterval(/*arguments*/) {
 				var interval = _setInterval.apply(globalThis, arguments);
 				intervals[interval] = arguments;
 				return interval;
@@ -706,7 +766,7 @@ void (() => { "use strict";
 				_clearInterval.apply(globalThis, arguments);
 				delete intervals[code];
 			};
-			setInterval._setInterval = _setInterval, clearInterval._clearInterval = _clearInterval;
+			setInterval._setInterval = globalThis.setInterval, clearInterval._clearInterval = globalThis.clearInterval;
 			LibSettings.DEFER_ARR = DEFER_ARR, LibSettings.LOCAL_DEFER_ARR = LOCAL_DEFER_ARR;
 			LibSettings.CONFLICT_ARR = CONFLICT_ARR;
 		} // variables to be globalized:
@@ -866,12 +926,6 @@ void (() => { "use strict";
 						v(n) :
 						h(v(n));
 			}
-		}, sizeof(obj) {
-			if (obj == null) return 0;
-			var length = len(obj);
-			if (length != null) return length;
-			if (obj?.constructor?.name === "Object") return len( Object.keys(obj) );
-			return 0;
 		}, enumerate(iterable) {
 			if (!isIterable(iterable)) return [0, iterable];
 			return arrzip( Object.keys(iterable).map(e => +e), iterable );
@@ -890,7 +944,7 @@ void (() => { "use strict";
 			} try {
 				var fn = eval(str);
 				if (typeof fn === "function") {
-					if (`${fn}`.incl(/\(\) { \[native code\] }/)) {
+					if (`${fn}`.endsWith("() { [native code] }")) {
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
 						return "native function. arguments can't be retrieved";
 					}
@@ -1224,6 +1278,7 @@ void (() => { "use strict";
 		, formatjson     : formatjson
 		, strToObj       : strToObj
 		, randint        : randint
+		, sizeof         : sizeof
 		, strMul         : strMul
 		, bisect         : bisect
 		, constr         : constr
@@ -1256,6 +1311,9 @@ void (() => { "use strict";
 		, γ              : γ
 		, 𝑒              : 𝑒
 		, 𝜏              : 𝜏
+		, "archive clearInterval": clearInterval._clearInterval
+		, "archive setInterval": setInterval._setInterval
+		, "archive Math": globalThis.Math
 		, "native clearInterval": clearInterval
 		, "native setInterval": setInterval
 		, "local base62Numbers": base62Numbers
@@ -1311,7 +1369,7 @@ void (() => { "use strict";
 			in: RegExp.prototype.test
 			, all(str="") {
 				var a = `${this}`;
-				return RegExp(`^(${a.substr(1, len(a) - 2)})$`, "").in(str);
+				return RegExp(`^(${a.substr(1, dim(a, 2))})$`, "").in(str);
 			}, toRegex() { return this;
 			},
 		}, "prototype Array": {
@@ -1324,7 +1382,7 @@ void (() => { "use strict";
 			, any: (function create_any() {
 				var _some = Array.prototype.some;
 				return function any(callback=e=>e, thisArg=void 0) { return _some.call(this, callback, thisArg) }
-			})(), "overwrite some": function some(fn) {
+			})(), "native some": function some(fn) {
 				// "some" implies that it has to be plural. use any for any. some != any
 				var num = 0;
 				for (var i = len(this); i --> 0 ;) {
@@ -1764,7 +1822,7 @@ void (() => { "use strict";
 				return line;
 			},
 		}, "prototype Number": {
-			bitLength() { return len(str(abs(this), 2));
+			bitLength() { return len( str(abs(this), 2) );
 			}, isPrime() {// can probably be optimized
 				var n = int(this);
 				if (this !== n) return !1;
@@ -2452,6 +2510,7 @@ void (() => { "use strict";
 				total = (total.substr(0, len(total) - dec) + "." + total.slice(len(total) - dec)).replace(/\.$/, ".0");
 				return sign === -1 ? this.neg( total ) : total;
 			} mul10(snum="0.0", x=1) {
+				// multiplies snum by 10^x
 				if (rMath.isNaN(snum)) return NaN;
 				if (isNaN( x = int(Number(x)) )) return NaN;
 				if (!x) return snum;
@@ -2518,6 +2577,9 @@ void (() => { "use strict";
 					-++ans :
 					ans
 				}.0`;
+			} rdiv(num="0.0", denom="1.0") {
+				// rounded division
+				throw Error("Not Implemented");
 			} cdiv(num="0.0", denom="1.0") {
 				// ceiling division
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
@@ -2567,6 +2629,7 @@ void (() => { "use strict";
 				}
 				return `${ BigInt(sign) * ans}.0`;
 			} div10(snum="0.0", x=1) {
+				// divide snum by 10^x
 				if (rMath.isNaN(snum)) return NaN;
 				if (isNaN( x = int(Number(x)) )) return NaN;
 				if (!x) return snum;
@@ -2578,6 +2641,7 @@ void (() => { "use strict";
 				return this.norm((output[0] == "." ? "0" : "") + output);
 			} idiv(num="0.0", denom="1.0", precision=18) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
+				// should be faster than div when applicable
 				if ( this.eq.ez(denom) )
 					return this.eq.ez(num) ?
 						NaN :
@@ -2802,7 +2866,6 @@ void (() => { "use strict";
 			} gcd(...snums) { return this._lmgf("gcd", ...snums);
 			} gcf(...snums) { return this._lmgf("gcf", ...snums);
 			} int(n="0.0") { return this.ipart(n);
-			} trunc(n="0.0") { return this.ipart(n);
 			} truncate(n="0.0") { return this.ipart(n);
 			} ifact(n = "1.0") {
 				if (this.isNaN(n)) return NaN;
@@ -5018,11 +5081,11 @@ void (() => { "use strict";
 			LinkedList: LinkedList,
 			MutableString: MutableString,
 		}}, "defer call local finalize_math"() {
-			LibSettings.Output_Math_Variable === "default" && (LibSettings.Output_Math_Variable = "Math");
 			for (const obj of Object.values(MathObjects)) {
 				Object.keys(MathObjects).forEach(s => obj[s] = MathObjects[s]);
 				obj["+"]  = obj.add;  obj["-"]  = obj.sub;
 				obj["*"]  = obj.mul;  obj["/"]  = obj.div;
+				obj["//"] = obj.fdiv;
 				obj["**"] = obj["^"] = obj.pow;
 				obj["%"]  = obj.mod;  obj["∫"]  = obj.int;
 				obj["√"]  = obj.sqrt; obj["∛"] = obj.cbrt;
@@ -5031,15 +5094,14 @@ void (() => { "use strict";
 				obj.Π = obj.prod;
 				obj.Γ = obj.gamma;
 			}
-			sMath["//"] = sMath.fdiv;
+			MathObjects.Math = MathObjects.rMath.Math;
 			sMath["**"] = sMath.ipow; // TODO: remove this after sMath.pow exists
 			sMath["^"] = sMath.ipow;
 			rMath.ℙ = rMath.P; // power set
-			define( (LibSettings.Alert_Conflict_For_Math !== "default" &&
-				LibSettings.Alert_Conflict_For_Math ? "" : "overwrite ") + LibSettings.Output_Math_Variable, 0, globalThis,
-				MathObjects[ LibSettings.Input_Math_Variable === "default" ?
-					"rMath" :
-					LibSettings.Input_Math_Variable ]
+			define( (LibSettings.Alert_Conflict_For_Math !== "default" && LibSettings.Alert_Conflict_For_Math ?
+				"" : "overwrite ") + (LibSettings.Output_Math_Variable === "default" ?
+					"Math" : LibSettings.Output_Math_Variable), 0, globalThis, MathObjects[ LibSettings.
+				Input_Math_Variable === "default" ? "rMath" : LibSettings.Input_Math_Variable ]
 			);
 			return void 0;
 		}
@@ -5226,6 +5288,7 @@ void (() => { "use strict";
 		}
 	} {// Error Handling & Exiting
 		for (const s of DEFER_ARR) define(s, 1);
+		for (const s of LOCAL_DEFER_ARR) define(s, 1);
 		if (LibSettings.Freeze_Everything && LibSettings.Freeze_Everything !== "default") {
 			for (let name of Object.keys(LIBRARY_VARIABLES)) {
 				console.log(name);
@@ -5257,7 +5320,9 @@ void (() => { "use strict";
 				case "error": console.error("Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "log": console.log("Global Variables Overwritten: %o", CONFLICT_ARR); break;
 				case "alt":
-				case "alert": alert(`Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`); break;
+				case "alert":
+					LibSettings.Use_Document && alert(`Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`);
+					break;
 				case "ret":
 				case "return": return `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
 				case "trw":
