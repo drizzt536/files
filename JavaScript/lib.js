@@ -64,9 +64,9 @@ void (() => { "use strict";
 		     > if neither call nor instance are active, instance is activated.
 		     > if defer is not active, it is activated.
 		   	 > the value gets added to the MathObjects object.
-		   - symbol.for
+		   - symbol
 		     > the name of the function becomes Symbol.for(name)
-		     > example: if symbol.for is active and the name is "12345", the name becomes Symbol.for("12345")
+		     > example: if symbol is active and the name is "12345", the name becomes Symbol.for("12345")
 		   - pdelete
 		     > deletes the variable from the scope which is the 3rd argument then updated the previous value to what was just deleted
 		   - delete
@@ -198,36 +198,32 @@ void (() => { "use strict";
 			for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 				for (j = 10; j --> 0 ;)
 					divtable[i][j] = i / j;
-			var CONFLICT_ARR = []; // TODO: Update this function
-			CONFLICT_ARR.push = function push(val, scopename, list, orig_str) {
-				return Array.prototype.push.call(
-					this, (list.includes("object") ? scopename : list.includes("prototype") ?
-						scopename + ".prototype" : LibSettings.Environment_Global_String) + (
-						"'`\"".includes(orig_str.at(-1)) ? `['${val}']` : "." + val )
+			var stringifyScope = function stringifyScope(val, scopename, list, orig_str) {
+				const prototype = list.includes("prototype"), object = list.includes("object");
+				return LibSettings.Environment_Global_String + ( object || prototype ? "." : "" ) + (
+					object ? scopename : prototype ? scopename + ".prototype" :"") + ( "'`\"".includes(
+						orig_str.at(-1)) ? `['${val}']` : "." + val
 				);
-			}; var DEFER_ARR = [], LOCAL_DEFER_ARR = [], MathObjects = {}
+			}, CONFLICT_ARR = { push(val, scopename, list, orig_str) { return Array.prototype.push.call(
+				this,
+				stringifyScope(...arguments)
+			) } }, DEFER_ARR = [], LOCAL_DEFER_ARR = [], MathObjects = {}
 			//////////////////////////////// START OF CONSTANTS ////////////////////////////////
-			, list = Array.from
-			, int = Number.parseInt
-			, abs = Math.abs
-			, sgn = Math.sign
-			, rand = Math.random
-			, json = JSON
 			, alphabetL     = "abcdefghijklmnopqrstuvwxyz"
 			, alphabet      = alphabetL
 			, alphabetU     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			, numbers       = "0123456789"
 			, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			, characters    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
-			, π             = 3.141592653589793   , π_2           = 1.5707963267948966
-			, π_3           = 1.0471975511965979  , π2_3          = 2.0943951023931957
-			, π_4           = 0.7853981633974483  , π3_4          = 2.356194490192345
-			, π5_4          = 3.9269908169872414  , π7_4          = 5.497787143782138
-			, π_5           = 0.6283185307179586  , π_6           = 0.5235987755982989
-			, π5_6          = 2.6179938779914944  , π7_6          = 3.6651914291880923
-			, π11_6         = 5.759586531581288   , π_7           = 0.4487989505128276
-			, π_8           = 0.39269908169872414 , π_9           = 0.3490658503988659
-			, π_10          = 0.3141592653589793  , π_11          = 0.28559933214452665
+			, π             = 3.141592653589793   , π_2   = 1.5707963267948966
+			, π_3           = 1.0471975511965979  , π2_3  = 2.0943951023931957
+			, π_4           = 0.7853981633974483  , π3_4  = 2.356194490192345
+			, π5_4          = 3.9269908169872414  , π7_4  = 5.497787143782138
+			, π_5           = 0.6283185307179586  , π_6   = 0.5235987755982989
+			, π5_6          = 2.6179938779914944  , π7_6  = 3.6651914291880923
+			, π11_6         = 5.759586531581288   , π_7   = 0.4487989505128276
+			, π_8           = 0.39269908169872414 , π_9   = 0.3490658503988659
+			, π_10          = 0.3141592653589793  , π_11  = 0.28559933214452665
 			, π_12          = 0.26179938779914946
 			, 𝜏             = 6.283185307179586
 			, 𝑒             = 2.718281828459045
@@ -242,9 +238,27 @@ void (() => { "use strict";
 			, foia          = α
 			, emc           = γ // Euler-Mascheroni Constant
 			, omega         = Ω
+			, json = JSON
+			, list = Array.from
+			, int = Number.parseInt
+			, rand = Math.random
 			//////////////////////////////// END OF CONSTANTS ////////////////////////////////
+			, sgn = x => typeof x === "number" ?
+				x === 0 ?
+					x :
+					x < 0 ? -1 : 1 :
+				typeof x === "bigint" ?
+					x === 0n ?
+						x :
+						x < 0n ?
+							-1n :
+							1n :
+					LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
+						cMath.sgn(x) :
+						NaN
+			, abs = x => x * sgn(x)
 			// document.all == null ????!!/? what!?!?
-			, constr = function constructorName(inpt) { return inpt==null?inpt:inpt?.constructor?.name }
+			, constr = function constructorName(inpt) { return inpt == null ? inpt : inpt?.constructor?.name }
 			// this.at(-1) doesn't work with all iterables. (ie: HTMLAllCollection)
 			, lastElement = function lastElement() { return this[dim(this)] }
 			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
@@ -253,6 +267,7 @@ void (() => { "use strict";
 			, dim = function dim(e, n=1) { return e?.length - n }
 			, len = function length(e) { return e?.length }
 			, sizeof = function	sizeof(obj) {
+				// gets the size of an object
 				if (obj == null) return 0;
 				var length = obj.length;
 				if (length != null) return length;
@@ -282,7 +297,7 @@ void (() => { "use strict";
 						(len(snum.match(/^-?(0+\B)/)?.[1]) || 0),
 						snum.match(/\B0+$/)?.index || Infinity
 				);
-			}, type = function type(a, specific=!1) {
+			}, type = function type(a, specific=false) {
 				return specific == !1 || typeof a === "bigint" || typeof a === "symbol" ?
 					/^type\(\){return("|'|`)mutstr\1}$/.test(`${a?.type}`.replace(/\s|;/g, "")) ?
 						"string" :
@@ -302,17 +317,17 @@ void (() => { "use strict";
 										"regex" :
 										a === null ?
 											"null" :
-											/^type\(\){return("|'|`)linkedlist\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
+											/^__type__\(\){return("|'|`)linkedlist\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 												"linkedlist" :
-												/^type\(\){return("|'|`)complex\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
+												/^__type__\(\){return("|'|`)complex\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 													"complex" :
-													/^type\(\){return("|'|`)fraction\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
+													/^__type__\(\){return("|'|`)fraction\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 														"fraction" :
-														/^type\(\){return("|'|`)set\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
+														/^__type__\(\){return("|'|`)set\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 															"set" :
-															/^type\(\){return("|'|`)dict\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
+															/^__type__\(\){return("|'|`)dict\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 																"dict" :
-																/^type\(\){return("|'|`)mutstr\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
+																/^__type__\(\){return("|'|`)mutstr\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 																	"mutstr" :
 																	isArr(a) ?
 																		"arr" :
@@ -329,10 +344,16 @@ void (() => { "use strict";
 				str.split(/[.[\]'"]/).filter(e=>e).forEach(e => obj = obj?.[e]);
 				return obj;
 			}, define = (function create_define() {
-				function error(name, scopename, list, orig_str, ON_CONFLICT) {
-					CONFLICT_ARR.push(name, scopename, list, orig_str);
-					if (ON_CONFLICT === "crash") throw Error(`scope[${String(name)}] is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
-					if (ON_CONFLICT === "cry") console.log(`scope[${String(name)}] overwritten and LibSettings.ON_CONFLICT is set to cry.`);
+				function error(name, scopename, orig_str, ON_CONFLICT) {
+					const args = [
+						String(name),
+						(scopename || "").replace(/(object|prototype)\s*/, ""),
+						scopename?.replace?.(/\s*\w+\s*$/, "")?.split?.(/\s+/g) || [],
+						orig_str,
+					];
+					CONFLICT_ARR.push(...args);
+					if (ON_CONFLICT === "crash") throw Error(`${stringifyScope(...args)} is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
+					if (ON_CONFLICT === "cry") console.log(`${stringifyScope(...args)} overwritten and LibSettings.ON_CONFLICT is set to cry.`);
 					if (ON_CONFLICT === "debugger") debugger;
 					else if (ON_CONFLICT === "dont-use") return !0;
 					return !1;
@@ -389,7 +410,7 @@ void (() => { "use strict";
 					); if (list.includes("math")) {
 						!list.includes("call") && !list.includes("instance") && list.push("instance");
 						!list.includes("defer") && list.push("defer");
-					} if (list.includes("symbol.for")) // Symbol instead of String.
+					} if (list.includes("symbol")) // Symbol instead of String.
 						name = Symbol.for(name);
 					if (list.includes("pdelete")) { // update the previous object. overwrites everything else. must be used on its own.
 						previous = scope[name];
@@ -421,9 +442,10 @@ void (() => { "use strict";
 					if (list.includes("math")) MathObjects[name] = previous;
 					if (list.includes("native")) return define( (typeof scope[name] === "function" &&
 						(scope[name]+"").endsWith("() { [native code] }") ? "overwrite " : "") + name,
-						section, scope, previous, "", ON_CONFLICT, addLocalAuto
-					); if (list.includes("overwrite")) return scope[name] = previous;
-					if (scope[name] !== void 0 && ON_CONFLICT !== "none" && error(name, scopename, list, str, ON_CONFLICT))
+						section, scope, previous, scopename || "", ON_CONFLICT, addLocalAuto
+					);
+					if (list.includes("overwrite")) return scope[name] = previous;
+					if (scope[name] !== void 0 && ON_CONFLICT !== "none" && error(name, scopename, str, ON_CONFLICT))
 						return;
 					scope[name] = previous;
 				}
@@ -720,7 +742,38 @@ void (() => { "use strict";
 				function dict(obj={}) { return new Dictionary(obj) }
 				dict.fromEntries = function fromEntries(entries=[]) { return this( Object.fromEntries(entries) ) }
 				return dict;
-			})(); if (LibSettings.Use_Document) var createElement = function createElement(element="p", options={}) {
+			})(), intervals = dict(), setInterval = function setInterval(/*arguments*/) {
+				var interval = _setInterval.apply(globalThis, arguments);
+				intervals[interval] = arguments;
+				return interval;
+			}, clearInterval = function clearInterval(/*code*/) {
+				_clearInterval.apply(globalThis, arguments);
+				delete intervals[code];
+			}, getDocstring = function getDocstring(fn) {
+				if (!Function.isFunction(fn)) return ""; // not a function, no docstring
+				fn = fn.code();
+				for (var i = 0; i < fn.length; i++) {
+					if (fn[i] === "/") {
+						if (fn[i+1] === "/") {
+							while (fn[++i] !== "\n");
+								return fn.slice(0, i);
+						} else if (fn[i+1] === "*") {
+							for (var inString = null; i < fn.length; i++) {
+								if ( "'\"`".includes(fn[i]) ) inString = inString === fn[i] ?
+									null : // end of string
+									fn[i]; // start of string
+								else if (inString === null && fn[i] === "/" && fn[i-1] === "*")
+									return fn.slice(0, i+1);
+							}
+							// impossible, multilined-comment not terminated.
+							// there is a bug in code above if this is debugger reached
+							debugger;
+							return fn + "*/";
+						} else return ""; // regular expression or syntax error
+					} else if ( !/\s/.in(fn[i]) ) return ""; // not a whitespace character, not a comment. no docstring
+				}
+				return ""; // empty function, empty docstring
+			}; if (LibSettings.Use_Document) var createElement = function createElement(element="p", options={}) {
 				var element = document.createElement(element)
 					, objects = null
 					, clicks = null;
@@ -758,22 +811,12 @@ void (() => { "use strict";
 				}
 				element.click(clicks);
 				return element;
-			}, intervals = dict(), setInterval = function setInterval(/*arguments*/) {
-				var interval = _setInterval.apply(globalThis, arguments);
-				intervals[interval] = arguments;
-				return interval;
-			}, clearInterval = function clearInterval(/*code*/) {
-				_clearInterval.apply(globalThis, arguments);
-				delete intervals[code];
-			};
-			setInterval._setInterval = globalThis.setInterval, clearInterval._clearInterval = globalThis.clearInterval;
+			}; setInterval._setInterval = globalThis.setInterval, clearInterval._clearInterval = globalThis.clearInterval;
 			LibSettings.DEFER_ARR = DEFER_ARR, LibSettings.LOCAL_DEFER_ARR = LOCAL_DEFER_ARR;
 			LibSettings.CONFLICT_ARR = CONFLICT_ARR;
 		} // variables to be globalized:
 		var LIBRARY_VARIABLES = {
-		"symbol.for <0x200b>": "​" // zero width space
-		, "symbol.for <0x08>": "" // \b
-		, "call LinkedList"() {
+		"call LinkedList"() {
 			class Node {
 				constructor(value, next=null) {
 					this.value = value;
@@ -946,14 +989,14 @@ void (() => { "use strict";
 				if (typeof fn === "function") {
 					if (`${fn}`.endsWith("() { [native code] }")) {
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
-						return "native function. arguments can't be retrieved";
+						return "native function. arguments/docstring can't be retrieved. use the official JS documentation";
 					}
-					return `Function: arguments = ${getArguments(fn)}`;
+					return console.log(`${getDocstring(fn)}`), `Function: arguments = ${getArguments(fn)}`;
 				}
 			} catch {}
 			try { return "Variable: value = " + Function(`return ${str}`)() }
 			catch { return "Variable not Found" }	
-		}, findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0){
+		}, findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0) {
 			// dd-mm-yyyy makes more sense in the current context. 
 			if (isNaN( day = Number(day) ) || !isFinite(day))
 				throw TypeError(`argument 1 either isn't finite or isn't a number`);
@@ -1268,6 +1311,7 @@ void (() => { "use strict";
 		}, complex(re=0, im=0) { return cMath.new(re, im);
 		}, createElement : createElement
 		, stringifyMath  : stringifyMath
+		, getDocstring   : getDocstring
 		, getArguments   : getArguments
 		, bisectRight    : bisectRight
 		, MathObjects    : MathObjects
@@ -1281,8 +1325,8 @@ void (() => { "use strict";
 		, sizeof         : sizeof
 		, strMul         : strMul
 		, bisect         : bisect
-		, constr         : constr
 		, arrzip         : arrzip
+		, constr         : constr
 		, qsort          : qsort
 		, msort          : msort
 		, round          : round
@@ -1311,6 +1355,8 @@ void (() => { "use strict";
 		, γ              : γ
 		, 𝑒              : 𝑒
 		, 𝜏              : 𝜏
+		, "symbol <0x200b>": "​" // zero width space
+		, "symbol <0x08>": "" // \b
 		, "archive clearInterval": clearInterval._clearInterval
 		, "archive setInterval": setInterval._setInterval
 		, "archive Math": globalThis.Math
@@ -1608,12 +1654,17 @@ void (() => { "use strict";
 			}, bisectRight: function bisectRightArray(x, low=0, high=null) { return bisectRight(this, x, low, high);
 			}, bisect: function bisectArray(x, orientation="left", low=0, high=null) { return bisect(this, x, orientation, low, high);
 			},
-		}, "prototype ifdom NodeList": { last: lastElement
-		}, "prototype ifdom HTMLCollection": { last: lastElement
-		}, "prototype ifdom HTMLAllCollection": { last: lastElement
+		}, "ifdom prototype NodeList": { last: lastElement
+		}, "ifdom prototype HTMLCollection": { last: lastElement
+		}, "ifdom prototype HTMLAllCollection": { last: lastElement
 		}, "prototype Function": {
 			args: function getArgs() { return getArguments(this);
 			}, code: function getCode() {
+				// TODO: Fix
+				// async function () {}
+				// async function *() {}
+				// async a => 3
+				// ({method() {}}).method
 				var s = this + "";
 				if (s.sW("class")) return false;
 				else if (s.sW("function")) {
@@ -1664,16 +1715,42 @@ void (() => { "use strict";
 			, strip         : String.prototype.trim
 			, lstrip        : String.prototype.trimLeft
 			, rstrip        : String.prototype.trimRight
-			, startsW       : String.prototype.startsWith
-			, "previous sW" : null
-			, endsW         : String.prototype.endsWith
-			, "previous eW" : null
+			, toRegex: function toRegularExpression(flags="", form="escaped") {
+				if (form === "escaped" || form === "escape" || form === "e")
+					for (var i = 0, b = "", l = this.length; i < l; i++)
+						b += "$^()+*\\|[]{}?.".includes(this[i]) ?
+							`\\${this[i]}` :
+							this[i];
+				else return RegExp(this, flags);
+				return RegExp(b, flags);
+			}, "native call startsWith"() {
+				function startsWith(input, index=0, flags="") {
+					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
+					return type(input, 1) === "arr" ?
+						input.map( e => this.startsWith(e, index, flags) ) :
+						RegExp("^" + `${ type(input, 1) === "regex" ? input.source : input
+						}`.toRegex(flags).source ).in( this.slice(index) );
+				}
+				startsWith._startsWith = String.prototype.startsWith;
+				return startsWith;
+			}, "previous sW" : null
+			, "native call endsWith"() {
+				function endsWith(input, index=0, flags="") {
+					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
+					return type(input, 1) === "arr" ?
+						input.map( e => this.endsWith(e, index, flags) ) :
+						RegExp( `${ type(input, 1) === "regex" ? input.source : input
+						}`.toRegex(flags).source+"$" ).in( this.slice(index) );
+				}
+				endsWith._endsWith = String.prototype.endsWith;
+				return endsWith;
+			}, "previous eW" : null
 			, last          : lastElement
 			, splitIndex(index) { return [this.slice(0, index), this.slice(index)];
 			}, "previous splitI": null
-			, "overwrite replace" : (function create_replace() {
-				const _replace = String.prototype.replace;
-				return function replace(search, replacer) {
+			, "native call replace"() {
+				let _replace = String.prototype.replace;
+				function replace(search, replacer) {
 					!isArr(search) && (search = [search]);
 					!isArr(replacer) && (replacer = [replacer]);
 					var output = this;
@@ -1681,14 +1758,12 @@ void (() => { "use strict";
 						output = _replace.call(output, a, b);
 					return output;
 				}
-			})(), startsLike(strOrArr="", position=0) { // TODO: Finish
-				throw Error("Not Implemented");
-				if (!["str", "mutstr", "arr"].incl(type(strOrArr, 1))) return !1;
-				if (type(strOrArr) === "string") {
-
-				}
-			}, "previous startsL" : null
-			, "previous sL"       : null
+				replace._replace = _replace;
+				return replace;
+			}, startsLike(input="", index=0) { return this.startsWith(input, index, "i");
+			}, "previous sL": null
+			, endsLike(input="", index=0) { return this.endsWith(input, index, "i");
+			}, "previous eL"       : null
 			, shuffle(times=1) { return this.split("").shuffle(times).join("");
 			}, ios: function indexesOf(chars="") {
 				return type(chars) === "string" ?
@@ -1767,14 +1842,6 @@ void (() => { "use strict";
 			}, toFun: function toNamelessFunction() {
 				var f = () => Function(this).call(this)
 				return () => f();
-			}, toRegex: function toRegularExpression(f="", form="escaped") {
-				if (form === "escaped" || form === "escape" || form === "e")
-					for (var i = 0, b = "", l = len(this); i < l; i++)
-						b += /[$^()+*\\|[\]{}?.]/.in(this[i]) ?
-							`\\${this[i]}` :
-							this[i];
-				else return RegExp(this, f);
-				return RegExp(b, f);
 			}, toNumber() { return +this;
 			}, "previous toNum": null
 			, toBigInt() {
@@ -2421,7 +2488,7 @@ void (() => { "use strict";
 			} add(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = this.norm( a+"" ); b = this.norm( b+"" );
-				if (a.startsW("-") && b.startsW("-"))
+				if (a.sW("-") && b.sW("-"))
 					return this.neg( this.add(a.slice(1), b.slice(1)) );
 				if (a.sW("-")  && !b.sW("-")) return this.sub(b, a.slice(1));
 				if (!a.sW("-") &&  b.sW("-")) return this.sub(a, b.slice(1));
@@ -2875,26 +2942,30 @@ void (() => { "use strict";
 				for (var ans = "1.0", cur = "1.0"; this.eq.le(cur, n); cur = this.incr(cur))
 					ans = this.mul(ans, cur);
 				return ans;
-			} sum(n, last, fn=n=>n, inc="1.0") {
-				if (this.isNaN( n = this.norm(last) )) return NaN;
+			} sum(n, last, fn=n=>n, inc="1.0", divPrecision=18) {
+				if (this.isNaN( n = this.norm(n) )) return NaN;
 				if (this.isNaN( last = this.norm(last) ) ) return NaN;
 				if (type(fn, 1) !== "func") return NaN;
-				if ( /\+-\*\/%!\^/.test(fn.code()) ) fn = stringifyMath(fn);
+				if ( /[-+*/%!^]/.in(fn.code()) ) fn = stringifyMath(fn, fn.args(), "", divPrecision);
 				if (this.isNaN( inc = this.norm(inc) )) return NaN;
 				for (var total = "0.0"; this.eq.le(n, last); n = this.add(n, inc))
 					total = this.add(total, fn(n));
 				return total;
 			} atanh(x, n="100.0", divPrecision=18) {
+				x = this.norm(x);
 				return this.isNaN(x) ?
 					NaN :
-					this.sum(0, n, k => sMath.div( sMath.ipow( x, sMath.incr(sMath.mul(2, k)) ),
+					this.sum("0.0", n, k => sMath.div( sMath.ipow( x, sMath.incr(sMath.mul(2, k)) ),
 						sMath.incr(sMath.mul(2, k)), divPrecision
 						), "1.0"
 					)
 			} ln(x, n="100.0", divPrecision=18) {
-				return this.atanh(
-					(x - 1) / (x + 1),
-					n, divPrecision
+				x = this.norm(x);
+				return this.mul(
+					this.atanh(
+						this.div( this.decr(x), this.incr(x), divPrecision ),
+						n, divPrecision
+					), "2.0"
 				);
 			}
 		}, "math rMath": class RealMath {
@@ -3525,7 +3596,7 @@ void (() => { "use strict";
 				args = args.flatten();
 				for (var total = 0, i = len(args); i --> 0 ;)
 					total += args[i]**2;
-				return this.sqrt(a);
+				return this.sqrt(total);
 			} log(x, base=LibSettings.MATH_LOG_DEFAULT_BASE, number=true) {
 				// really slow for large Xs
 				if (isNaN(x = Number(x)) || isNaN(base = Number(base)) || base <= 0 || x <= 0 || base == 1) return NaN;
@@ -4578,10 +4649,10 @@ void (() => { "use strict";
 					} __type__() { return "complex";
 					} isComplex() { return !!this.im;
 					} toPolar(doubleStar=false) { return `${cMath.abs(this)}e${doubleStar?"**":"^"}(${this.arg()}i)`;
-					} toString( {polar=false, char="i", parens=true}={} ) {
+					} toString( {polar=false, char="i", parens=false, doubleStar=false, exp=false}={} ) {
 						char = char[0] || "i";
 						return polar ?
-							`${cMath.abs(this)}e^${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}`.remove(
+							`${cMath.abs(this)}${exp ? "exp(" : "e"}${exp ? "" : doubleStar ? "**" : "^"}${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}${exp ? ")" : ""}`.remove(
 								new RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
 							).start("1").replace([/^0.*/, /0\./g], ["0", "."]) :
 							this.re ? // rectangular
@@ -5301,32 +5372,30 @@ void (() => { "use strict";
 				Object.freeze(o);
 		}
 
-		delete CONFLICT_ARR.push;
-		// if (CONFLICT_ARR.push != null) debugger;
-
-		if (LibSettings.Alert_Conflict_OverWritten && len(CONFLICT_ARR)) {
+		const CONFLICT_ARR2 = list(CONFLICT_ARR);
+		if (LibSettings.Alert_Conflict_OverWritten && len(CONFLICT_ARR2)) {
 			switch (LibSettings.ON_CONFLICT) {
 				case "crash": throw Error("there was a conflict and the program hasn't crashed yet.");
 				case "ast":
-				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "assert": console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR2); break;
 				case "dbg":
-				case "debug": console.debug("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "debug": console.debug("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
 				case "inf":
-				case "info": console.info("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "info": console.info("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
 				case "wrn":
 				case "warning":
-				case "warn": console.warn("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "warn": console.warn("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
 				case "err":
-				case "error": console.error("Global Variables Overwritten: %o", CONFLICT_ARR); break;
-				case "log": console.log("Global Variables Overwritten: %o", CONFLICT_ARR); break;
+				case "error": console.error("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
+				case "log": console.log("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
 				case "alt":
 				case "alert":
-					LibSettings.Use_Document && alert(`Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`);
+					LibSettings.Use_Document && alert(`Global Variables Overwritten: ${CONFLICT_ARR2.join(", ")}`);
 					break;
 				case "ret":
-				case "return": return `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
+				case "return": return `Global Variables Overwritten: ${CONFLICT_ARR2.join(", ")}`;
 				case "trw":
-				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR.join(", ")}`;
+				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR2.join(", ")}`;
 				// case "ignore": break;
 				// case "cry": break;
 				// case "debugger": break;
@@ -5343,8 +5412,7 @@ void (() => { "use strict";
 		)( LibSettings.Library_Startup_Message === "default" ? "lib.js loaded" : LibSettings.Library_Startup_Message );
 		return 0;
 	}
-})();
-/*
+})();/*
 	var piApprox = (function create_piApprox() {
 		var a = n => n ? (a(n-1) + b(n-1)) / 2 : 1
 		, b = n => n ? (a(n-1) * b(n-1))**.5 : Math.SQRT1_2
