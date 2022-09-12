@@ -3,7 +3,6 @@
 
 void (() => { "use strict";
 	{// Customization & Constants
-
 		const onConflictOptions = [
 			"log", "throw" , "trw", "return", "ret", "error",
 			"err", "warn"  , "wrn", "debug" , "dbg", "info" ,
@@ -97,11 +96,15 @@ void (() => { "use strict";
 		     > calls the value as if it is a function assuming it is a function.
 		     > will throw an error if the value is not a function
 		     > similar to instance
+		   - deprecated
+		     > if LibSettings.Define_Deprecated_Functions is falsy or the value is not a function, it acts as if "archive" or "auto" were active. ie (it returns immediately and doesn't define anything).
+		     > it logs to the console via console.warn that a deprecated function is being defined when it is defined
+		     > it logs to the console via console.warn that a deprecated function is being called whenever it is called
 		`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "");
 		var LibSettings = {
 		/////////////////////////////////////////// USER INPUT START ///////////////////////////////////////////
 			Alert_Library_Load_Finished         : "default" // false
-			, Global_Ignore_List                : [ "dir" ]
+			, Global_Ignore_List                : "default" // []
 			, Add_All_GlobalNames               : "default"
 			, Do_DOM_Things_In_Node_Anyway      : "default" // false, only recommended if using something like jsdom
 			, Globlize_Library_Variables_Object : "default" // true
@@ -109,6 +112,8 @@ void (() => { "use strict";
 			, ON_CONFLICT                       : "default" // "debug"
 			, Alert_Conflict_For_Math           : "default" // false
 			, Alert_Conflict_OverWritten        : "default"
+			, Define_Deprecated_Functions       : true // false
+			, Warn_Deprecated_Use               : "default" // true
 			, Library_Startup_Message           : "default" // "lib.js loaded"
 			// console.log. function for logging that the startup finished without any errors.
 			, Library_Startup_Function          : "default"
@@ -162,7 +167,9 @@ void (() => { "use strict";
 			globalThis.globalThis ??= globalThis; // both
 			globalThis.frames     ??= globalThis; // browser
 		}
+		LibSettings.Define_Deprecated_Functions === "default" && (LibSettings.Define_Deprecated_Functions = !1);
 		LibSettings.DOM_Ignore_list = [];
+		LibSettings.Global_Ignore_List === "default" && (LibSettings.Global_Ignore_List = []);
 		LibSettings.Settings_Help_String = Settings_Help_String, LibSettings.onConflictOptions = onConflictOptions;
 		LibSettings.Do_DOM_Things_In_Node_Anyway = LibSettings.Do_DOM_Things_In_Node_Anyway === "default" ?
 			!1 : LibSettings.Do_DOM_Things_In_Node_Anyway;
@@ -172,14 +179,17 @@ void (() => { "use strict";
 		LibSettings.isBrowser = LibSettings.Environment_Global_String === "window";
 		LibSettings.isUnknownLocation = !(LibSettings.isNodeJS || LibSettings.isBrowser);
 		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
-		LibSettings.Clear_LocalStorage   && LibSettings.Clear_LocalStorage   !== "default" && localStorage  .clear();
-		LibSettings.Clear_SessionStorage && LibSettings.Clear_SessionStorage !== "default" && sessionStorage.clear();
+		LibSettings.Clear_LocalStorage && LibSettings.Clear_LocalStorage !== "default" &&
+			localStorage.clear();
+		LibSettings.Clear_SessionStorage && LibSettings.Clear_SessionStorage !== "default" &&
+			sessionStorage.clear();
 		LibSettings.MATH_LOG_DEFAULT_BASE   === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE   = 10 );
 		LibSettings.MATH_DEFAULT_END_SYSTEM === "default" && (LibSettings.MATH_DEFAULT_END_SYSTEM = "c");
 
 		onConflictOptions.includes(LibSettings.ON_CONFLICT) || (LibSettings.ON_CONFLICT = "dbg");
 		LibSettings.ON_CONFLICT === "default" && (LibSettings.ON_CONFLICT = "dbg");
 		LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
+		LibSettings.LIBRARY_NAME = "lib.js";
 		// TODO: clear cookies and caches if the library user wants
 	} {// Variables & Functions definitions
 		{// Local Variables (may also be global)
@@ -215,29 +225,29 @@ void (() => { "use strict";
 			, numbers       = "0123456789"
 			, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			, characters    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
-			, π             = 3.141592653589793   , π_2   = 1.5707963267948966
-			, π_3           = 1.0471975511965979  , π2_3  = 2.0943951023931957
-			, π_4           = 0.7853981633974483  , π3_4  = 2.356194490192345
-			, π5_4          = 3.9269908169872414  , π7_4  = 5.497787143782138
-			, π_5           = 0.6283185307179586  , π_6   = 0.5235987755982989
-			, π5_6          = 2.6179938779914944  , π7_6  = 3.6651914291880923
-			, π11_6         = 5.759586531581288   , π_7   = 0.4487989505128276
-			, π_8           = 0.39269908169872414 , π_9   = 0.3490658503988659
-			, π_10          = 0.3141592653589793  , π_11  = 0.28559933214452665
-			, π_12          = 0.26179938779914946
-			, 𝜏             = 6.283185307179586
-			, 𝑒             = 2.718281828459045
-			, ϕ             = 1.6180339887498947 // -2 sin 666°
-			, α             = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
-			, γ             = .5772156649015329
-			, Ω             = .5671432904097838 // Ωe^Ω = 1
-			, pi            = π
-			, tau           = 𝜏
-			, e             = 𝑒
-			, phi           = ϕ
-			, foia          = α
-			, emc           = γ // Euler-Mascheroni Constant
-			, omega         = Ω
+			, π      = 3.141592653589793   , π_2   = 1.5707963267948966
+			, π_3    = 1.0471975511965979  , π2_3  = 2.0943951023931957
+			, π_4    = 0.7853981633974483  , π3_4  = 2.356194490192345
+			, π5_4   = 3.9269908169872414  , π7_4  = 5.497787143782138
+			, π_5    = 0.6283185307179586  , π_6   = 0.5235987755982989
+			, π5_6   = 2.6179938779914944  , π7_6  = 3.6651914291880923
+			, π11_6  = 5.759586531581288   , π_7   = 0.4487989505128276
+			, π_8    = 0.39269908169872414 , π_9   = 0.3490658503988659
+			, π_10   = 0.3141592653589793  , π_11  = 0.28559933214452665
+			, π_12   = 0.26179938779914946
+			, 𝜏      = 6.283185307179586
+			, 𝑒      = 2.718281828459045
+			, ϕ      = 1.6180339887498947 // -2 sin 666°
+			, α      = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
+			, γ      = .5772156649015329
+			, Ω      = .5671432904097838 // Ωe^Ω = 1
+			, pi     = π
+			, tau    = 𝜏
+			, e      = 𝑒
+			, phi    = ϕ
+			, foia   = α
+			, emc    = γ // Euler-Mascheroni Constant
+			, omega  = Ω
 			, json = JSON
 			, list = Array.from
 			, int = Number.parseInt
@@ -256,10 +266,15 @@ void (() => { "use strict";
 					LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
 						cMath.sgn(x) :
 						NaN
-			, abs = x => x * sgn(x)
+			, abs = x => LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
+						x.mul( cMath.sgn(x) ) :
+						x * sgn(x)
 			// document.all == null ????!!/? what!?!?
-			, constr = function constructorName(inpt) { return inpt == null ? inpt : inpt?.constructor?.name }
-			// this.at(-1) doesn't work with all iterables. (ie: HTMLAllCollection)
+			, constr = function constructorName(input) {
+				return input == null ?
+					input :
+					input?.constructor?.name;
+			} // this.at(-1) doesn't work with all iterables. (ie: HTMLAllCollection)
 			, lastElement = function lastElement() { return this[dim(this)] }
 			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
@@ -397,6 +412,20 @@ void (() => { "use strict";
 					list = Array.from( new Set(  list.split(/\s+/g).filter(e => e).map(s => s.toLowerCase())  ) );
 					if (list.includes("auto") || list.includes("archive")) return;
 					var value = customValue === void 0 ? LIBRARY_VARIABLES[str] : customValue;
+					if (list.includes("deprecated")) {
+						if (!LibSettings.Define_Deprecated_Functions || typeof value !== "function") return;
+						let deprectedScopeStr = stringifyScope(
+							name,
+							(scopename || "").replace(/(object|prototype)\s*/, ""),
+							scopename?.replace?.(/\s*\w+\s*$/, "")?.split?.(/\s+/g) || [],
+							str,
+						);
+						let fn = value;
+						value = function fn(/*arguments*/) {
+							LibSettings.Warn_Deprecated_Use && console.warn(`deprecated function '${deprectedScopeStr}' is being called`);
+							return fn.apply(scope, arguments);
+						};
+					}
 					if (list.includes("ifdom") && !LibSettings.Use_Document) // return if not using the DOM
 						return LibSettings.DOM_Ignore_list.push( [name, value] );
 					if (list.includes("previous")) return define(
@@ -1027,12 +1056,11 @@ void (() => { "use strict";
 					}
 				}
 			}
-			day += !day - 1;
-			month += !month - 1;
-			const LEAP = !(year % 4);
+			day += !day - 1, month += !month - 1;
+			const LEAP = !(year % 4)
 			// 'days' is the number of days in the month
 			// 'offset' is the offset from the beginning of the year to the beginning of the month in days
-			const Months = [
+			, Months = [
 				{ days: 31,        offset: 0   },
 				{ days: 28 + LEAP, offset: 31  },
 				{ days: 31, offset: 59  + LEAP },
@@ -1046,8 +1074,7 @@ void (() => { "use strict";
 				{ days: 30, offset: 304 + LEAP },
 				{ days: 31, offset: 334 + LEAP }
 			];
-			for (; day > Months[month % 12].days; month++)
-				day -= Months[month % 12].days;
+			for (; day > Months[month % 12].days; month++) day -= Months[month % 12].days;
 			let ans = (1 + (year += floor(month / 12) - 1) % 4 * 5 +
 				year % 100 * 4 + year % 400 * 6 + day +
 				Months[month % 12].offset
@@ -1156,8 +1183,7 @@ void (() => { "use strict";
 			while (!a.done && !b.done) {
 				let output = [a.value, b.value];
 				yield output;
-				a = gen1.next();
-				b = gen2.next();
+				a = gen1.next(), b = gen2.next();
 			}
 		}, "call toGenerator"() {
 			function *Generator() {
@@ -1165,12 +1191,13 @@ void (() => { "use strict";
 					for (const e of thing)
 						yield e;
 				else yield thing;
-			} return function toGenerator(thing) {
+			} function toGenerator(thing) {
 				return thing?.constructor?.prototype?.[Symbol.toStringTag] === "Generator" ?
 					thing :
 					Generator(thing);
-			}
-		}, "fstrdiff"   : function firstStringDifferenceIndex(s1, s2) {
+			} toGenerator.Generator = Generator;
+			return toGenerator;
+		}, fstrdiff         : function firstStringDifferenceIndex(s1, s2) {
 			// returns the index of the first difference in two strings.
 			// returns NaN if either input is not a string.
 			// it is considered a string if it is the built-in string or...
@@ -1180,28 +1207,23 @@ void (() => { "use strict";
 			for (var i = 0, n = Math.min(len(s1), len(s2)) - 1 ; i < n; i++)
 				if (s1[i] !== s2[i]) return i;
 			return -1;
-		}, "lstrdiff"   : function lastStringDifferenceIndex(s1, s2) {
+		}, lstrdiff         : function lastStringDifferenceIndex(s1, s2) {
 			// returns the index of the last difference in two strings.
 			// otherwise, same rules as fstrdiff(a, b)
 			if (type(s1) !== "string" || type(s2) !== "string") return NaN;
 			for (var i = Math.min(len(s1), len(s2)); i --> 0 ;)
 				if (s1[i] !== s2[i]) return i;
 			return -1;
-		}, "dir"        : function currentDirectory(loc = globalThis.Error().stack) {
-			// sometimes doesn't work
-			return `${loc}`
-				.slice(13)
-				.remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
-		}, "nsub"       : function substituteNInBigIntegers(num, n=1) {
+		}, nsub             : function substituteNInBigIntegers(num, n=1) {
 			return typeof num === "bigint" ?
 				n * Number(num) :
 				num;
-		}, "revLList"   : function reverseLinkedList(list) {
+		}, revLList         : function reverseLinkedList(list) {
 			for (let cur = list.head, prev = null, next; current ;) 
 				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
 			list.head = prev || list.head;
 			return list;
-		}, "numToWords" : function numberToWords(number, fancyInfinity=true) {
+		}, numToWords       : function numberToWords(number, fancyInfinity=true) {
 			if (abs(number) === Infinity) return `${number<0?"negative ":""}${fancyInfinity?"apeirogintillion":"infinity"}`;
 			// TODO: Update to use a loop or something to expand to as close to infinity as possible
 			if (rMath.isNaN(number)) throw Error(`Expected a number, and found a(n) ${type(number)}`);
@@ -1267,7 +1289,7 @@ void (() => { "use strict";
 				case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.slice(2))}`;
 				default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
 			}
-		}, "minifyjson" : function minifyJSON(json) {
+		}, minifyjson       : function minifyJSON(json) {
 			// removes all the unnecessary spaces and things
 			return formatjson(json, {
 				objectNewline      : !0, // less conditionals are checked if this is set to true
@@ -1278,6 +1300,9 @@ void (() => { "use strict";
 				arrayAlwaysOneLine : !1,
 				arrayOneLineSpace  : "",
 			})
+		}, "deprecated dir" : function currentDirectory(loc = globalThis.Error().stack) {
+			// sometimes doesn't work
+			return `${loc}`.slice(13).remove(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g);
 		}, "defer call MutableString"() {
 			// TODO: Make safety things for the functions so the user doesn't add non-character things
 			var MutStr = class MutableString extends Array {
@@ -1306,7 +1331,7 @@ void (() => { "use strict";
 				return this (isArr(code) ? code.map(e => chr(e)) : chr(code));
 			}
 			return MutableString;
-		}, "str"        : function String(a) { return a?.toString?.call?.( [].slice.call(arguments, 1) );
+		}, str: function String(a) { return a?.toString?.call?.( [].slice.call(arguments, 1) );
 		}, async getIp() { return (await fetch("https://api.ipify.org/")).text();
 		}, complex(re=0, im=0) { return cMath.new(re, im);
 		}, createElement : createElement
@@ -1359,6 +1384,7 @@ void (() => { "use strict";
 		, "symbol <0x08>": "" // \b
 		, "archive clearInterval": clearInterval._clearInterval
 		, "archive setInterval": setInterval._setInterval
+		, "local stringifyScope": stringifyScope
 		, "archive Math": globalThis.Math
 		, "native clearInterval": clearInterval
 		, "native setInterval": setInterval
@@ -1601,12 +1627,13 @@ void (() => { "use strict";
 				a[i2] = a[i3];
 				a[i3] = b;
 				return a;
-			}, len: function setLength(num) {
+			}, len: function setLength(num, filler=void 0) {
 				this.length = isIterable(num) ?
 					len(num) :
 					isNaN(num = Number(num)) ?
 						NaN :
-						rMath.max(num, 0)
+						rMath.max(num, 0);
+				filler !== void 0 && this.fill(filler);
 				return this;
 			}, extend: function extend(length, filler, form="new") {
 				if (form === "new") return this.concat(Array(length).fill(filler));
@@ -3041,6 +3068,7 @@ void (() => { "use strict";
 				this.π_2 = π_2; // Math.π_2 == Math.π/2 but faster
 				this.Math = Math;
 				/*
+					␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟␡
 					G = 6.67m³/(10¹¹ kg s²)
 					∑∏Δ×∙÷±∓∀∃∄∤⌈⌉⌊⌋⋯〈〉√∛∜≤≥≠≈≋≍≔≟≡≢≶≷⋚⋛⁽°⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁾∞
 					∫∬∭⨌∮∯∰∱∲∳⨍⨎⨏⨐⨑⨒⨓⨔⨕⨖⨗⨘⨙⨚⨛⨜⌀∠∡⦜∢⦝⦞⦟⟂∟∥∦△□▭▱○◊⋄
@@ -5403,13 +5431,13 @@ void (() => { "use strict";
 				// default: break;
 			}
 			if (LibSettings.ON_CONFLICT !== "cry" && LibSettings.ON_CONFLICT !== "debugger") {
-				LibSettings.ON_CONFLICT !== "none" && console.debug("lib.js encountered variable conflicts");
+				LibSettings.ON_CONFLICT !== "none" && console.debug(`${LibSettings.LIBRARY_NAME} encountered variable conflicts`);
 				return 1;
 			}
 		}
 		LibSettings.Alert_Library_Load_Finished && LibSettings.Alert_Library_Load_Finished !== "default" && (
 			LibSettings.Library_Startup_Function === "default" ? console.log : LibSettings.Library_Startup_Function
-		)( LibSettings.Library_Startup_Message === "default" ? "lib.js loaded" : LibSettings.Library_Startup_Message );
+		)( LibSettings.Library_Startup_Message === "default" ? `${LibSettings.LIBRARY_NAME} loaded` : LibSettings.Library_Startup_Message );
 		return 0;
 	}
 })();/*
