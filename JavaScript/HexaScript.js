@@ -22,12 +22,11 @@ var Intrinsics = (() => {
 	}
 	Intrinsics.prototype.length = Object.keys(new Intrinsics()).length;
 	return new Intrinsics();
-})();
+})(),
 
-
-var SupportedChars = (() => {
-	class SupportedChars    {
-		constructor()       {
+SupportedChars = (() =>  {
+	class SupportedChars {
+		constructor()    {
 			this["\\n"]  = Symbol.for("SupportedChars.\\n"); // newline character
 			this["\\s"]  = Symbol.for("SupportedChars.\\s"); // other whitespace characters
 			this["\\w"]  = Symbol.for("SupportedChars.\\w"); // alphanumeric charcters
@@ -53,10 +52,16 @@ var SupportedChars = (() => {
 })();
 
 
-
 // Compile HexaScript to a JavaScript function
 
-function compileProgram(str, argnames=[], form="function", download=false, downloadFile="file.js", debug=false) {
+function compileProgram(
+	str,
+	argnames = [],
+	form = "function",
+	download = false,
+	downloadFile = "file.js",
+	debug = false
+) {
 	if (type(argnames) !== "string") argnames = [argnames];
 	if (type(str) !== "string") throw `argument 1 in compileProgram() is not a string`;
 	if (type(download, 1) !== "bool") throw `argument 3 in compileProgram() is not a boolean`;
@@ -331,7 +336,6 @@ function compileProgram(str, argnames=[], form="function", download=false, downl
 }
 
 
-
 // Compile HexaScript to a JavaScript function and run it.
 
 function interpretProgram(
@@ -346,7 +350,6 @@ function interpretProgram(
 	const OUTPUT = compileProgram(str, argnames, form, download, downloadFile, debug);
 	try { return OUTPUT(...args) } catch { return OUTPUT }
 }
-
 
 
 // Error line/token goto stuff
@@ -443,7 +446,6 @@ function compileJSToHex(...input) {
 	}
 	return "hx:" + input.join("3b"); // link the files with a semicolon.
 }
-
 
 
 // Compiles JavaScript to decimal-HexaScript and links them together if there are multiple inputs.
