@@ -1,6 +1,5 @@
 #!/usr/bin/env js
 // lib.js v1.0.0 (c) | Copyright 2022 Daniel Janusch
-
 void (() => { "use strict";
 	{// Customization & Constants
 		const onConflictOptions = [
@@ -3906,7 +3905,7 @@ void (() => { "use strict";
 				// β(m, n) = β(n, m)
 				// β(x, 0) = 1
 				// β(x, 1) = 1/x
-				// β(m, -n) = undefined
+				// β(m, -n) = und.
 
 				//               Γ(m)√π
 				// β(m, 1/2) = ----------
@@ -3919,7 +3918,7 @@ void (() => { "use strict";
 				if ( n.isInt() ) return this.ifact(n-1);
 				if (isNaN( inc = Number(inc) )) return NaN;
 				n--;
-				var ans = this.int(0, n, t=>t**n/𝑒**t, inc);
+				var ans = this.int(0, n, t => t**n / 𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			} igammau(n, acy=1000, inc=.1) {
 				// upper incomplete gamma function
@@ -3928,7 +3927,7 @@ void (() => { "use strict";
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
 				n--;
-				var ans = this.int(n, acy, t=>t**n/𝑒**t, inc);
+				var ans = this.int(n, acy, t => t**n / 𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			} isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
 			} pascal(row, col) {
@@ -4032,21 +4031,21 @@ void (() => { "use strict";
 				return form === Array ?
 					[a, b, c] :
 					{ a: a, b: b, c: c };
-			} neg(num=0, number=false) { return number ? -num : num[0] === "-" ? num.slice(1) : `-${num}`; // negate
+			} neg(n=0, num=false) { return num ? -n : n[0] === "-" ? n.slice(1) : `-${n}`; // negate
 			} ssgn(snum="0.0") { return snum[0] === "-" ? -1 : +!/0+\.?0*/.in(snum); // string sign
 			} ssign(snum="0.0") { return this.ssgn(snum); // string sign
 			} sabs(snum="0.0") { return snum[0] === "-" ? snum.slice(1) : snum; // string absolute value
-			} add(a="0.0", b="0.0", number=true) { return number ? Number(sMath.add(a, b)) : sMath.add(a, b);
-			} sub(a="0.0", b="0.0", number=true) { return number ? Number(sMath.sub(a, b)) : sMath.sub(a, b);
-			} mul(a="0.0", b="0.0", number=true) { return number ? Number(sMath.mul(a, b)) : sMath.mul(a, b);
+			} add(a="0.0", b="0.0", number=true) { return number ? Number(sMath.add(a,b)) : sMath.add(a,b);
+			} sub(a="0.0", b="0.0", number=true) { return number ? Number(sMath.sub(a,b)) : sMath.sub(a,b);
+			} mul(a="0.0", b="0.0", number=true) { return number ? Number(sMath.mul(a,b)) : sMath.mul(a,b);
 			} div(num="0.0", denom="1.0", number=true, precision=18) {
 				return number ?
 					Number(sMath.div(a, b, precision)) :
 					sMath.div(a, b, precision);
-			} cdiv(num="0.0", denom="1.0", number=true) { return this.ceil ( this.div( num, denom, number, 1 ) );
-			} fdiv(num="0.0", denom="1.0", number=true) { return this.floor( this.div( num, denom, number, 1 ) );
-			} rdiv(num="0.0", denom="1.0", number=true) { return this.round( this.div( num, denom, number, 1 ) );
-			} tdiv(num="0.0", denom="1.0", number=true) { return this.trunc( this.div( num, denom, number, 1 ) );
+			} cdiv(num="0.0", denom="1.0", number=true) { return this.ceil(this.div(num, denom, number, 1));
+			} fdiv(num="0.0", denom="1.0", number=true) { return this.floor(this.div(num, denom, number,1));
+			} rdiv(num="0.0", denom="1.0", number=true) { return this.round(this.div(num, denom, number,1));
+			} tdiv(num="0.0", denom="1.0", number=true) { return this.trunc(this.div(num, denom, number,1));
 			} mod(a, n=1, k=0) {
 				// a modₖ n
 				// modulo using the formula
@@ -4091,7 +4090,7 @@ void (() => { "use strict";
 			} isAN(e) { return !this.isNaN(e); // is a number
 			} isaN(e) { return this.isAN(e); // is a number
 			} isNNaN(e) { return this.isAN(e); // is not not a number. isaN, isAN
-			} imul(a, b) { return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ? NaN : this.Math.imul(a, b);
+			} imul(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : this.Math.imul(a,b);
 			} fround(n) { return isNaN( n = Number(n) ) ? n : this.Math.fround(n);
 			} sqrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2);
 			} cbrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3);
@@ -4121,15 +4120,31 @@ void (() => { "use strict";
 						abs(x - (ans + tmp)**rt) < abs(x - ans**rt) ? tmp : 0)
 				);
 				return this.copysign(ans, x);
-			} square(n) { return isNaN( n = Number(n) ) ? NaN : n ** 2;
-			} cube(n) { return isNaN( n = Number(n) ) ? NaN : n ** 3;
-			} tesseract(n) { return isNaN( n = Number(n) ) ? NaN : n ** 4;
-			} findPrimes(l=100, s=Infinity) {
-				if (isNaN( l = Number(l) )) return NaN;
-				if (isNaN( s = Number(s) )) return NaN;
-				for (var i = 3, primes = [2]; len(primes) < l && i <= s; i += 2)
-					i.isPrime() && primes.push(i);
+			} square(n) { return isNaN( n = Number(n) ) ? n : n ** 2;
+			} cube(n) { return isNaN( n = Number(n) ) ? n : n ** 3;
+			} tesseract(n) { return isNaN( n = Number(n) ) ? n : n ** 4;
+			} findPrimesRange(a=2, b=100) {
+				// find primes in the range [a, b]
+				if (isNaN( a = int(Number(a)) )) return NaN;
+				if (isNaN( b = int(Number(b)) )) return NaN;
+				if (a < 2) a = 2;
+				if (a > b) return [];
+				var primes = a === 2 ? [2] : [];
+				for (a % 2 ? (a.isPrime() && primes.push(a), a += 2) : a++; a <= b; a += 2)
+					a.isPrime() && primes.push(a);
 				return primes;
+			} findPrimesLen(a=2, l=100) {
+				// find the next "l" (lowercase L) primes greater than or equal to "a"
+				if (isNaN( a = int(Number(a)) )) return NaN;
+				if (isNaN( l = int(Number(l)) )) return NaN;
+				if (a < 2) a = 2;
+				var primes = a === 2 ? [2] : [];
+				for (a % 2 ? (a.isPrime() && primes.push(a), a += 2) : a++; len(primes) < l; a += 2)
+					a.isPrime() && primes.push(a);
+				return primes;
+			} findPrimes(a=2, b=100) {
+				// find primes in the range [a, b]
+				return this.findPrimesRange.apply(this, arguments);
 			} li(x, incOrAcy=.001, form=1) {
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( incOrAcy = Number(incOrAcy) )) return NaN;
@@ -4246,7 +4261,7 @@ void (() => { "use strict";
 			} ahcvers(x) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x);
 			} hcverc(θ) { return isNaN( θ = Number(θ) ) ? θ : this.cverc(θ) / 2;
 			} ahcverc(x) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1);
-			} //// HYPERBOLIC TRIG
+			} /////////// HYPERBOLIC TRIGONOMETRY
 			sinh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2;
 			} cosh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x + 𝑒**-x) / 2;
 			} tanh(x) { return isNaN( x = Number(x) ) ? x : this.sinh(x) / this.cosh(x);
@@ -5449,9 +5464,7 @@ void (() => { "use strict";
 		return piApprox;
 	})();
 
-
 	// sMath.sqrt, sMath.pow
-
 
 
 	var piApproxStr = (function create_piApproxStr() {
