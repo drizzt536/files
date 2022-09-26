@@ -32,6 +32,7 @@ __variables__ = (
     "dict_items (useless)",
     "realnum (float | int)",
     "number (realnum | complex)",
+    "void",
     "__variables__",
     "__functions__",
     "__all__"
@@ -55,10 +56,13 @@ __all__ = __variables__ + __functions__
 
 # functions
 
+def void(*args) -> None:
+    pass
+
 def monitors() -> list[dict["top", "left", "width", "height"], ...]:
     """
         None  ->  list[ dict["top", "left", "width", "height"], ... ]
-        
+
         returns a list of all connected monitors.
     """
     from ctypes.wintypes import RECT
