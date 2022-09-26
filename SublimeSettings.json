@@ -1,0 +1,19 @@
+{
+	// C:/Users/[user]/AppData/Roaming/Sublime Text/Packages/User/Preferences.sublime-settings
+	"settings": {
+		"font_size": 16,
+		"save_on_focus_lost": true,
+		"word_wrap": true,
+		"match_brackets_content": false,
+		"move_to_limit_on_up_down": true,
+		"control_character_style": "names",
+	},
+	// C:/Users/[user]/AppData/Roaming/Sublime Text/Packages/User/Default (Windows).sublime-keymap
+	"keybinds": [
+		{ "keys": ["f1"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
+		{ "keys": ["shift+backspace"], "command": "right_delete" },
+		{ "keys": ["insert"], "command": "" },
+	]
+	// ctrl+shift+l = break selection into lines
+	// ctrl+l = expand selection into one block
+}
