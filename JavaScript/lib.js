@@ -2219,7 +2219,7 @@ void (() => { "use strict";
 				return a ? !!b : !0;
 			} nimply(a, b) {// not (P --> Q)
 				// +---+---+---------+
-				// | p | q | p ->/ q |
+				// | p | q | p -/> q |
 				// +---+---+---------+
 				// | T | T |    F    |
 				// | T | F |    T    |
@@ -4648,6 +4648,8 @@ void (() => { "use strict";
 			} nextAfter(x=0, y=Infinity) { return x === y ? x : x > y ? this.nextDown(x) : this.nextUp(x);
 			} ulp(x=1) { return x < 0 ? this.nextUp(x) - x : x - this.nextDown(x);
 			} midpoint([x1, y1], [x2, y2]) { return [(x1+x2)/2, (y1+y2)/2];
+			} δ(x) { return this.isNaN(x) ? NaN : x == 0 ? Infinity : 0; // dirac delta function
+			} dirac(x) { return this.isNaN(x) ? NaN : x == 0 ? Infinity : 0; // dirac delta function
 			}
 			// piApprox
 			// simplify sin(nx)
