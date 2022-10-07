@@ -17,9 +17,6 @@ JavaScript/network.js
 # not actually passwords.
 Python/passwords.py
 
-notes.*
 test.*
-
 *.exe
-*.pdf
 *.o
