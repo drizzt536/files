@@ -3,18 +3,15 @@
 # or they are temporary, not original (ie jQuery.js), a joke (ie 3quine.html), or something else
 # executables and object files are ignored because I didn't write them, the compiler did
 
-/C#
-/C++
-/Java
-/PowerShell
-/txt
-/TypeScript
-/Haskell
 /Graphviz
+/Haskell
+/ignore
+/npmServer
 
 HTML/3quine.html
 HTML/calculator.html
 HTML/BlackJack.html
+JavaScript/network.js
 
 
 # not actually passwords.
@@ -22,7 +19,7 @@ Python/passwords.py
 
 notes.*
 test.*
-testing.*
+
 *.exe
 *.pdf
 *.o
