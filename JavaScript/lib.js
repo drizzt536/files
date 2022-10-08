@@ -979,7 +979,11 @@ void (() => { "use strict";
 					u += e.charAt(r >>> 4 & 15) + e.charAt(15 & r);
 				return u
 			} function l(n) { return unescape(encodeURIComponent(n))
-			} function v(n) { return function(n) { return i(f(a(n), 8 * n.length)) }(l(n))
+			}
+			var ff = f, ii = i;
+			function v(n) {
+				n = l(n);
+				return ii(ff(a(n), 8 * n.length));
 			} function d(n, r) {
 				return function(n, r) {
 					var t, e, u = a(n), o = [], c = [];
@@ -1380,7 +1384,7 @@ void (() => { "use strict";
 		, 𝑒              : 𝑒
 		, 𝜏              : 𝜏
 		, "symbol <0x200b>": "​" // zero width space
-		, "symbol <0x08>": "" // \b
+		// , "symbol <0x08>": "" // \b
 		, "archive clearInterval": clearInterval._clearInterval
 		, "archive setInterval": setInterval._setInterval
 		, "local stringifyScope": stringifyScope
@@ -1736,13 +1740,14 @@ void (() => { "use strict";
 			}, "overwrite isCallable"(fn) { return typeof fn === "function";
 			}
 		}, "prototype String": {
-			io              : String.prototype.indexOf
-			, lio           : String.prototype.lastIndexOf
-			, strip         : String.prototype.trim
-			, lstrip        : String.prototype.trimLeft
-			, rstrip        : String.prototype.trimRight
+			io       : String.prototype.indexOf
+			, lio    : String.prototype.lastIndexOf
+			, strip  : String.prototype.trim
+			, lstrip : String.prototype.trimLeft
+			, rstrip : String.prototype.trimRight
+			, mul    : String.prototype.repeat
 			, toRegex: function toRegularExpression(flags="", form="escaped") {
-				if (form === "escaped" || form === "escape" || form === "e")
+				if (form === "escaped" || form === "escape" || form === "e" || form === "esc")
 					for (var i = 0, b = "", l = this.length; i < l; i++)
 						b += "$^()+*\\|[]{}?.".includes(this[i]) ?
 							`\\${this[i]}` :
@@ -1759,7 +1764,7 @@ void (() => { "use strict";
 				}
 				startsWith._startsWith = String.prototype.startsWith;
 				return startsWith;
-			}, "previous sW" : null
+			}, "previous sW": null
 			, "native call endsWith"() {
 				function endsWith(input, index=0, flags="") {
 					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
@@ -1770,8 +1775,8 @@ void (() => { "use strict";
 				}
 				endsWith._endsWith = String.prototype.endsWith;
 				return endsWith;
-			}, "previous eW" : null
-			, last          : lastElement
+			}, "previous eW": null
+			, last: lastElement
 			, splitIndex(index) { return [this.slice(0, index), this.slice(index)];
 			}, "previous splitI": null
 			, "native call replace"() {
@@ -1789,7 +1794,7 @@ void (() => { "use strict";
 			}, startsLike(input="", index=0) { return this.startsWith(input, index, "i");
 			}, "previous sL": null
 			, endsLike(input="", index=0) { return this.endsWith(input, index, "i");
-			}, "previous eL"       : null
+			}, "previous eL": null
 			, shuffle(times=1) { return this.split("").shuffle(times).join("");
 			}, ios: function indexesOf(chars="") {
 				return type(chars) === "string" ?
@@ -1843,8 +1848,8 @@ void (() => { "use strict";
 						this.substring(start, end).toLowerCase() +
 						this.substr(end);
 			}, toObj(obj=globalThis) { return strToObj(this, obj);
-			}, hasDupesA: function hasDuplicatesAll() { return /(.|\n)\1/.in( this.split("").sort().join("") );
-			}, hasDupesL: function hasDuplicateLetters() { return /(\w)\1/.in( this.split("").sort().join("") );
+			}, hasDupesA:function hasDuplicatesAll() { return/(.|\n)\1/.in(this.split("").sort().join(""))
+			}, hasDupesL:function hasDuplicateLetters() { return/(\w)\1/.in(this.split("").sort().join(""))
 			}, reverse() { return this.split("").reverse().join("");
 			}, remove(arg) { return this.replace(arg, "");
 			}, remrep: function removeRepeats() {
@@ -1913,6 +1918,8 @@ void (() => { "use strict";
 				for (var line = 1, i = 0; i < this.length; this[i] === "\n" && line++, i++)
 					if (i === index) return line;
 				return line;
+			}, rotr: function rotateRight(n=1) { return this.split("").rotr(n).join("")
+			}, rotl: function rotateLeft(n=1) { return this.split("").rotl(n).join("")
 			},
 		}, "prototype Number": {
 			bitLength() { return len( str(abs(this), 2) );
@@ -5220,8 +5227,7 @@ void (() => { "use strict";
 				Input_Math_Variable === "default" ? "rMath" : LibSettings.Input_Math_Variable ]
 			);
 			return void 0;
-		}
-		}; if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
+		}}; if (LibSettings.Global_Library_Object_Name != null) LIBRARY_VARIABLES [
 			LibSettings.Global_Library_Object_Name === "default" ?
 				"LIBRARY_VARIABLES" :
 				LibSettings.Global_Library_Object_Name
@@ -5477,3 +5483,78 @@ void (() => { "use strict";
 		return piApproxStr;
 	})();
 */
+function encrypt( // probably not secure, but idk
+	// things used:
+	// floor, ceil, round, trunc, plus, minus, times, divide, modulo, sin, length, bitwise or...
+	// bitwise and, bitwise xor, logical or, bitwise left shift, bitwise right shift, caesar shift...
+	// indexed based shift, exponentiation, equality checking, max, ln, abs
+	str = "",
+	times = 1,
+	maxV = 127,
+	minV = 32,
+	dfVal = 0 // default value for gcc() instead of NaN. use NaN for normal usage.
+) {
+	if (
+		typeof str !== "string" || typeof maxV !== "number" ||
+		typeof minV !== "number" || typeof dfVal !== "number"
+	) throw Error("Invalid arguments for encrypt()");
+	const fcc = i => String.fromCharCode( // from char code
+		minV + round(i) % (maxV-minV)
+	), gcc = (i, a=1) => ( // get char code
+		i = a == 1 ?
+			str.charCodeAt(i % str.length) :
+			(str.at(i) || "").charCodeAt(),
+		isNaN(i) ? dfVal : i
+	), sin = Math.Math.sin
+	, trunc = Math.Math.trunc
+	, max = Math.Math.max
+	, ln = Math.Math.log;
+	for (var out = "", i, length = str.length; times --> 0 ;) {
+		for (i = 0, out = ""; i < str.length; i++) out += fcc(1
+			- ceil((i+1) / 2) * (gcc(i-1) === gcc(i))
+			+ (gcc(i+8) & gcc((i+173) % str.length) )
+			+ (gcc(i-7) ^ gcc((46 ^ i) % str.length))
+			+ (i-2) * (gcc(i-4) === gcc(i + 4))
+			+ (gcc(i*4) || gcc(i * 2 - 1))
+			+ trunc(i ** 2 % (.4*i - 2.7))
+			+ (gcc(i) + (gcc(i+1) ^ 63))
+			- ((i >> 2) | (i - 1 & 34))
+			+ max( 0, ln(1 + abs(i)) )
+			+ (str.length % gcc(i-6) || 0)
+			+ ((gcc(i-1) || 0) | 273)
+			+ ((gcc(i+2) || 0) & 665)
+			+ (2 ^ round( sin(i) ))
+			+ gcc(i-3)
+			+ gcc(i/2)
+			- gcc(-1)
+			+ gcc(0)
+			+ 18 * i
+		);
+		str = out;
+		if (str.length) {
+			for (var i = 0, out = ""; i < str.length; i += 2) out += fcc(2
+				+ (gcc(61 % i) >> 2)
+				+ (gcc(i / 2) ^ 54)
+				+ (gcc(i+1) & 135)
+				+ (gcc(i) | 231)
+			);
+			str = out;
+		}
+	}
+	return str;
+}
+
+var str = "aaasdfae3";
+var out = encrypt(str);
+
+function test(str="") {
+	var i = 0, stt = str, list = [];
+	do i++,
+		list.push(str),
+		str = encrypt(str);
+	while (
+		str !== stt &&
+		!list.incl(str)
+	);
+	return list.incl(str) ? [Infinity, i] : i;
+}
