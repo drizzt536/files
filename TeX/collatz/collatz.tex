@@ -1,0 +1,48 @@
+% file for pdflatex.exe
+
+\documentclass[12pt]{article}
+\usepackage{amssymb,latexsym,amsmath}
+
+\addtolength{\evensidemargin}{-1in}
+\addtolength{\oddsidemargin}{0in}
+\addtolength{\topmargin}{-1.75in}
+
+\begin{document}
+\title{Collatz Conjecture Proof (Work in Progress)}\author{Daniel E. Janusch}\maketitle
+
+\noindent preface:\\
+\indent0~\in\mathbb N\\
+\indent$$a~\text{mod}_k~b\equiv a-b\left\lfloor\frac ab\right\rfloor+k$$\\
+\indent a\bmod b\equiv a~\text{mod}_0~b$$
+
+\noindent pf:\\
+\indent let $n,m,k,p$ \in\mathbb N,~~f(x)=\begin{cases}
+	3x+1,~x\bmod2\equiv1\\
+	\frac x2,~x\bmod2\equiv0\\
+	\text{undef, otherwise}~~(x\notin\mathbb Z)
+\end{cases}\\
+\indent3^p\ne2^k\foralln\ne2^m
+
+therefore multiplying by 3 has no effect on the ability to reach $2^n$.
+
+neither does dividing by 2.\\
+\indent$3n+1\stackrel?=2^k$~\therefore~\text{adding does have an effect.}\\
+\indent\log_2x\in\mathbb N\Longleftrightarrow1\text{ is reached after $\log_2x$ iterations.}\\
+\indent\left|\mathbb N\right|=\infty\Longleftrightarrow\left|2^\mathbb N\right|=\infty~~(\text{there are infinite $2^n$s.})
+
+one of the $2^n$s will always be reached because iterating through $f$
+
+will add 1 every time it is odd.
+\\\indent\blacksquare?
+
+\noindent footnotes:
+
+will only prove for $x\in\mathbb N$.
+
+the formulas for $f$ or mod have to change for $x\in\mathbb I,\mathbb C$
+
+\indent\indent ie: $3i\bmod2=i\notin\{1,0\}$.
+
+the conjecture does not hold $\forall x\in-\mathbb N$ because $x=-5$ loops.
+
+\end{document}
