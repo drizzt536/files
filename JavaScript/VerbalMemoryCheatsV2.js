@@ -31,5 +31,16 @@ var x = 50_000; // input
 W=[];(t=>{$$("button").forEach((a,c,b)=>2==b.length&&a.click());for(var a,[c,d]=$$("button").slice(1);t--;)a=$(".word").innerHTML,W.includes(a)?c.click():(d.click(),W.push(a))})(x)
 
 
-// extremely minified version. now you have to start it yourself. 121 characters
-W=[],[c,d]=$$("button").slice(1);(t=>{for(;t--;)a=$(".word").innerHTML,W.includes(a)?c.click():(d.click(),W.push(a))})(x)
+// extremely minified version. now you have to start it yourself. 115 characters
+W=[],t=x,[c,d]=$$("button").slice(1);for(;t--;)a=$(".word").innerHTML,W.includes(a)?c.click():(d.click(),W.push(a))
+
+
+// maximumly minified version. requires the next few lines of variables to work. 68 characters
+for(W=[],[c,d]=K(G).a(1);x--;)a=$(F).b(),W.b(a)?c.a():(d.a(),W.c(a))
+
+Array.prototype.a = Array.prototype.slice;
+Array.prototype.b = Array.prototype.includes;
+Array.prototype.c = Array.prototype.push;
+EventTarget.prototype.a = EventTarget.prototype.click;
+EventTarget.prototype.b = function () { return this.innerHTML };
+var G = "button", F = ".word", K = $$;
