@@ -1,0 +1,35 @@
+ƒ(x) := x²
+
+a. find ƒ'(x)
+	2x
+b. prove part a
+lim[h→0,
+	ƒ(x+h) - ƒ(x)
+	-------------
+	      h
+ 	  (x+h)² - x²
+	= -----------
+	       h
+	= 2x + h
+]
+= 2x
+c. prove part b
+
+
+lim[x→a,ƒ(x)] = L  ⇔  ∀ ℇ>0, ∃ δ>0 ∋ 0<|x-a|<δ ⇒ |ƒ(x)-L|<ℇ
+-- for all epsilon > 0, there exists delta > 0 such that 0<|x - a|<delta ==> |f(x) - L|<epsilon
+-- ℇδyx, δℇxy
+pf:
+let ℇ>0
+choose δ := [leave blank for now] [changed to ℇ] **
+suppose 0<|h - 0|<δ *
+check
+      | ƒ(x+h) - ƒ(x)      |
+check | ------------- - 2x |
+      |       h            |
+= |2x + h - 2x|
+
+      *    **
+= |h| < δ  =  ℇ
+
+Q.E.D.
