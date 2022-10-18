@@ -6,12 +6,10 @@
 /Graphviz
 /Haskell
 /ignore
-/npmServer
 
 HTML/3quine.html
 HTML/calculator.html
 HTML/BlackJack.html
-JavaScript/network.js
 
 
 # not actually passwords.
