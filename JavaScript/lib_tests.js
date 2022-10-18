@@ -4,8 +4,9 @@
 
 // TODO: Make functions of the same name able to be tested with separate inputs and outputs
 // TODO: Make different arguments take separate inputs
+// TODO: Remove this function when the other one is finished
 (function run_tests() {
-	let dir = window.LIBRARY_VARIABLES?.dir; // in case "dir" is not globalized
+	let dir = globalThis.LIBRARY_VARIABLES?.dir; // in case "dir" is not globalized
 	dir ??= () => ""; // in case LIBRARY_VARIABLES is not globalized
 	// error code 0 is pass, and 1 is fail
 	// if the input is supposed to fail, put the error message as the output
@@ -132,7 +133,7 @@
 			exit = true;
 		} if (exit) return false;
 		for (const obj of objs) {
-			if (!obj || obj?.constructor?.name !== "Object" && obj !== window)
+			if (!obj || obj?.constructor?.name !== "Object" && obj !== globalThis)
 				throw Error(`object in 'objs' object property is missing or invalid for '${name}' in lib_tests.js run_tests()\n\tobjs: ${JSON.stringify(objs)}\n`);
 		} let fs = [];
 		// test all the functions with the same name in different namespaces
@@ -254,7 +255,7 @@
 		isIterable: {
 			fn: fn,
 			args: 1,
-			objs: [window],
+			objs: [globalThis],
 			inputs: inputs,
 			outputs: [
 				O(true , 0),O(true , 0),O(true , 0),O(true , 0),O(true , 0),O(true , 0),O(true , 0),
@@ -272,7 +273,7 @@
 		}, isArr: {
 			fn: fn,
 			args: 1,
-			objs: [window],
+			objs: [globalThis],
 			inputs: inputs,
 			outputs: [
 				O( true, 0),O( true, 0),O(false, 0),O(false, 0),O(false, 0),O(false, 0),O(false, 0),
@@ -290,7 +291,7 @@
 		}, sizeof: {
 			fn: fn,
 			args: 1,
-			objs: [window],
+			objs: [globalThis],
 			inputs: [
 				2, undefined, "asdfasdf", [1, 2, 3, 4],
 				{a:1, b:2, c:3}, (()=>{}), 2n, true, false,
@@ -304,7 +305,7 @@
 		}, len: {
 			fn: fn,
 			args: 1,
-			objs: [window],
+			objs: [globalThis],
 			inputs: [
 				2, undefined, "asdfasdf", [1, 2, 3, 4],
 				{a:1, b:2, c:3}, (()=>{}), 2n, true, false,
@@ -318,7 +319,7 @@
 		}, dim: {
 			fn: fn,
 			args: 2,
-			objs: [window],
+			objs: [globalThis],
 			inputs: null,
 			outputs: null,
 			ignore: true,
@@ -339,98 +340,95 @@ If the new way is introduced, there can be 1 function to test all functions rega
 
 2 argument function
 {
-	name: name
+	name: "amogus"
 	, args: 2
-	, objs: [
-		[window, "window"], // [reference, name]. name can be whatever as long as it matches the input and output names for it
-		[rMath, "rMath"],
+	, scopes: [
+		// TODO: think of a way that it will do "global" for NodeJS
+		"window" // so it works w/ strToObj().
+		"rMath",
 	], inputs: {
 		window: [
-			[arg1, arg2],
-			[arg1, arg2],
+			// the 0th item is always the value for "this".
+			// if undefined, don't use .call() and just call the function like normal
+			[thisArg, arg1, arg2],
+			[thisArg, arg1, arg2],
 		], rMath: [
-			[arg1, arg2],
-			[arg1, arg2],
+			[thisArg, arg1, arg2],
+			[thisArg, arg1, arg2],
 		],
 	}, outputs: {
 		window: [
-			[output, error],
+			[output, error], // error is either 1 or 0, like in C. if 1, output will the error message
 			[output, error],
 		], rMath: [
 			[output, error],
 			[output, error],
 		],
-	}, ignore: false,
+	}, ignore: false, // if true, it skips the function over
 }
-if objs in [null, "default"] it should default to [window, "window"]
+if objs in null or undefined it should default to "window"
 */
 
 
-void function run_tests_v2() {
-	var tmpLL = new LinkedList;
-	tmpLL.insertLast( 0 ); tmpLL.insertLast( 1 );
-	tmpLL.insertLast( 2 ); tmpLL.insertLast( 3 );
-	var inputs = [
-		[],
-		[0, 1, 2, 3, 4],
-		MutableString("asdf"),
-		MutableString(),
-		"",
-		"13",
-		"1234123471283479128374912837489127384971829374897128937489",
-		"asdf",
-		"asdhf9q43yhihfoh934y8r23hj ih3489ryq9w8uerpo123iu4\t\n\r\f\b\vr18290u3r213r\0",
-		{}, {
-			key1: "value1",
-			key2: "value2",
-			key3: "value3",
-			key4: "value4",
-		},
-		0n,
-		-2n,
-		4n,
-		true,
-		false,
-		((a, b, c, ...args)=> 1 ),
-		(a => 1 ),
-		((a) => 1 ),
-		(a => {return 1} ),
-		((a) => {return 1} ),
-		(function() { return 2 }),
-		24.7215623492039402,
-		-26.5671432904097838,
-		0,
-		-0,
-		Infinity,
-		-Infinity,
-		NaN,
-		document.querySelector("p"), // HTMLElement
-		Symbol.for("asdf"),
-		Symbol.iterator, // idk what this is but whatever
-		Symbol("asdf"),
-		undefined,
-		null,
-		document.getElementsByClassName("script"), // HTMLCollection
-		document.querySelectorAll("script"), // NodeList
-		tmpLL, // LinkedList
-		cMath.new(1.5, Infinity),
-		cMath.new(1.5, 1.5),
-		cMath.new(1.5, 0),
-		cMath.new(1.5, -0),
-		cMath.new(1.5, -1.5),
-		cMath.new(1.5, -Infinity),
-		cMath.new(0, Infinity),
-		cMath.new(0, 1.5),
-		cMath.new(0, 0),
-		cMath.new(0, -0),
-		cMath.new(0, -1.5),
-		cMath.new(0, -Infinity),
-		cMath.new(-1.5, Infinity),
-		cMath.new(-1.5, 1.5),
-		cMath.new(-1.5, 0),
-		cMath.new(-1.5, -0),
-		cMath.new(-1.5, -1.5),
-		cMath.new(-1.5, -Infinity),
-		/asdf(?=12){2,}\+(?<name>3-4).\/ \k<name>\\k`g<>`'~%\^/,
-	]
-}
+(function run_tests_v2(sto /* str -> obj */, sts /* symbol -> str */, zip /* array zip*/) {
+	return "Not Finished"; // TODO: Remove this line when finished.
+
+	function TestingError(msg, debug=false) {
+		if (debug) debugger;
+		const prevname = Error.prototype.name;
+		try {
+			Error.prototype.name = "TestingError";
+			return this instanceof TestingError ? // shouldn't matter
+				new Error(msg) :
+				Error(msg);
+		} finally { Error.prototype.name = prevname } // in case the error is caught
+	}
+
+	function testFunction(obj, debug=false) {
+		// obj is the object with the testing information. ie: function name, scopes, inputs, outputs, etc.
+		if (obj.ignore) return;
+		if (obj.scopes == null) throw TestingError(`function ${obj.name} does not have a "scopes" attribute`, debug);
+		if (!obj.scopes.length) throw TestingError(`function ${obj.name} does not have any scopes`, debug);
+		for (const scope of obj.scopes) {
+			// make sure the scope is valid
+			if (!["string", "symbol", "number", "bigint"].nincl(typeof scope))
+				throw TestingError(`function "${obj.name
+				}" has an invalid scope "${scope}" and needs to be a string or symbol`);
+			if (obj.inputs[scope]?.length !== obj.outputs[scope]?.length)
+				throw TestingError(`function ${obj.name} scope ${scope} has different lengths for #o/ inputs and outputs`);
+			// loop through the inputs and check against the outputs for the specific scope
+			for (const [inputs, outputs] of zip(obj.inputs, obj.outputs)) {
+				// do the testing things
+				// TODO: Finish
+				try {
+					sto(scope)
+				}
+			}
+		}
+	}
+})(globalThis.strToObj == null ? globalThis.LIBRARY_VARIABLES.strToObj == null ?
+	function strToObj(str, obj=globalThis) {
+		if (typeof str !== "string") return;
+		str.split(/[.[\]'"`]/).filter(e=>e).forEach(e => obj = obj?.[e]);
+		return obj;
+	} : globalThis.LIBRARY_VARIABLES.strToObj :
+	globalThis.strToObj,
+	globalThis.symbToStr == null ? globalThis.LIBRARY_VARIABLES.symbToStr == null ?
+	function symbToStr(symbol) {
+		if (typeof symbol !== "symbol") throw Error("argument to symbToStr() is not a symbol");
+		return `Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})`;
+	} : globalThis.LIBRARY_VARIABLES.symbToStr :
+	globalThis.symbToStr,
+	globalThis.arrzip == null ? globalThis.LIBRARY_VARIABLES.arrzip == null ?
+	function arrzip(arr1, arr2) {
+		// array zip. basically just zip() from python but not as extensive
+		// ie: it only works with arrays and finite generators
+		function isIterable(thing) { try { for (const e of thing) break } catch { return !1 } return !0 }
+		if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = Array.from(arr1);
+		if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr2 = Array.from(arr2);
+		if (!isIterable(arr1) || !isIterable(arr2)) return [arr1, arr2];
+		for (var output = [], length = Math.min(arr1.length, arr2.length), i = 0; i < length; i++)
+			output.push([ arr1[i] , arr2[i] ]);
+		return output;
+	} : globalThis.LIBRARY_VARIABLES.arrzip :
+globalThis.arrzip);
