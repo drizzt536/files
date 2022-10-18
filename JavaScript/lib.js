@@ -291,8 +291,9 @@ void (() => { "use strict";
 				stop == null ? [stop, start] = [start, 0] : stop++;
 				for (var i = start; i < stop; i += step) yield i;
 			}, isIterable = function isIterable(arg) {
-				try { for (const e of arg) break; return !0 }
+				try { for (const e of arg) break }
 				catch { return !1 }
+				return !0
 			}, arrzip = function arrzip(arr1, arr2) {
 				// array zip
 				if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator") arr1 = list(arr1);
@@ -355,7 +356,7 @@ void (() => { "use strict";
 										"func"
 			}, strToObj = function strToObj(str, obj=globalThis) {
 				if (type(str) !== "string") return;
-				str.split(/[.[\]'"]/).filter(e=>e).forEach(e => obj = obj?.[e]);
+				str.split(/[.[\]'"`]/).filter(e=>e).forEach(e => obj = obj?.[e]);
 				return obj;
 			}, define = (function create_define() {
 				function error(name, scopename, orig_str, ON_CONFLICT) {
@@ -802,31 +803,39 @@ void (() => { "use strict";
 				}
 				return ""; // empty function, empty docstring
 			}; if (LibSettings.Use_Document) var createElement = function createElement(element="p", options={}) {
+				if (typeof element !== "string") {
+					if (element === null) throw Error("undefined element name");
+					options = element, element = element.element;
+					delete options.element;
+				}
+				if (typeof element !== "string") throw Error("element name is not a string");
 				var element = document.createElement(element)
 					, objects = null
 					, clicks = null;
 				for (const e of Object.keys(options)) {
 					if (e === "children") {
 						type(options[e], 1) === "arr" ?
-							options[e].forEach(c => element.appendChild(c)) :
+							options[e].forEach(child => element.appendChild(child)) :
 							element.appendChild(options[e]);
 					} else if (e === "onClick") { // not "onclick"
 						typeof options[e] === "function" ?
 							element.ael("click", options[e]) :
 							element.ael("click", ...options[e]);
 					} else if (e === "on") {
-						e.listener ??= e.handler;
-						element.ael( e.type, e.listener, {
-							capture : e.capture ,
-							passive : e.passive ,
-							once    : e.once    ,
-						});
-
-					} else if (["object", "objects"].includes(e)) {
+						type(options[e], 1) !== "arr" && (options[e] = [options[e]]);
+						for (let obj of options[e]) {
+							obj.listener ??= obj.handler;
+							element.ael( obj.type, obj.listener, {
+								capture : obj.capture ,
+								passive : obj.passive ,
+								once    : obj.once    ,
+							});
+						}
+					} else if (["object", "objects"].incl(e)) {
 						objects = options[e];
 					} else if (e === "style") {
-						for (const stl of Object.keys(options[e]))
-							element.style[stl] = options[e][stl];
+						for (const style of Object.keys(options[e]))
+							element.style[style] = options[e][style];
 					} else if (e === "click") {
 						clicks = options[e];
 					} else element[e] = options[e];
@@ -834,8 +843,8 @@ void (() => { "use strict";
 				if (objects !== null) {
 					if (objects instanceof Array)
 						for (var i = len(objects); i --> 0 ;)
-							object[i].appendChild(element);
-					else object.appendChild(element);
+							objects[i].appendChild(element);
+					else objects.appendChild(element);
 				}
 				element.click(clicks);
 				return element;
@@ -1021,7 +1030,7 @@ void (() => { "use strict";
 				if (typeof fn === "function") {
 					if (`${fn}`.endsWith("() { [native code] }")) {
 						open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
-						return "native function. arguments/docstring can't be retrieved. use the official JS documentation";
+						return "Native Function. arguments/docstring can't be retrieved. Use the official JS documentation";
 					}
 					return console.log(`${getDocstring(fn)}`), `Function: arguments = ${getArguments(fn)}`;
 				}
@@ -1188,6 +1197,50 @@ void (() => { "use strict";
 				yield output;
 				a = gen1.next(), b = gen2.next();
 			}
+		}, YTThumbnail: function getYoutubeThumbnails(
+			URLArray = [],
+			resolution = "max",
+			alwaysReturnArray = false,
+			secureURL = true
+		) {
+			typeof URLArray === "string" && (URLArray = [URLArray]);
+			if (type(URLArray, 1) !== "arr") return alwaysReturnArray ? [] : null;
+
+			const isShort = url => /^https:\/\/www\.youtube\.com\/shorts\//.in(url),
+				outputArray = [];
+
+			for (const url of URLArray)
+				outputArray.push(`http${
+					secureURL ? "s" : ""
+				}://img.youtube.com/vi/${url.match(/[^/=]+$/)[0]}/${{
+					small: "",
+					medium: "mq",
+					large: "hq",
+					max: "maxres"
+				}[resolution]}default.jpg`);
+			return alwaysReturnArray || dim(outputArray) ? outputArray : outputArray[0];
+		}, getNewGlobals: function getNewGlobalVariableNames(extras=[]) {
+			// gets the namess of all global variables that are not built in.
+			return Object.keys(globalThis).filter(e => globalThis[e] != null && !([
+				"window", "global", "globalThis", "self", "frames", "0", "1", "2"
+				, "webkitResolveLocalFileSystemURL", "webkitRequestAnimationFrame", "createImageBitmap"
+				, "webkitCancelAnimationFrame", "webkitRequestFileSystem", "personalbar", "performance"
+				, "requestAnimationFrame", "cancelAnimationFrame", "requestIdleCallback", "locationbar"
+				, "crossOriginIsolated", "cancelIdleCallback", "originAgentCluster", "getComputedStyle"
+				, "clientInformation", "webkitStorageInfo", "devicePixelRatio", "scheduler", "external"
+				, "getScreenDetails", "queryLocalFonts", "speechSynthesis", "structuredClone", "moveBy"
+				, "isSecureContext", "customElements", "sessionStorage", "queueMicrotask", "scrollbars"
+				, "visualViewport", "clearInterval", "releaseEvents", "navigator", "history", "menubar"
+				, "captureEvents", "defaultStatus", "defaultstatus", "postMessage", "indexedDB", "open"
+				, "localStorage", "openDatabase", "clearTimeout", "trustedTypes", "screenLeft", "print"
+				, "getSelection", "innerHeight", "pageXOffset", "reportError", "setInterval", "toolbar"
+				, "cookieStore", "pageYOffset", "outerHeight", "outerWidth", "innerWidth", "matchMedia"
+				, "styleMedia", "navigation", "setTimeout", "screenTop", "statusbar", "caches", "fetch"
+				, "document", "location", "resizeBy", "close", "scrollTo", "focus", "alert", "scrollBy"
+				, "scrollX", "screenX", "scrollY", "screenY", "confirm", "atob", "blur", "btoa", "find"
+				, "closed", "length", "parent", "origin", "screen", "crypto", "moveTo", "prompt", "top"
+				, "resizeTo", "chrome", "scroll", "status", "name", "stop"
+			].concat(extras)).includes(e));
 		}, "call toGenerator"() {
 			function *Generator() {
 				if (isIterable(thing))
@@ -1217,6 +1270,9 @@ void (() => { "use strict";
 			for (var i = Math.min(len(s1), len(s2)); i --> 0 ;)
 				if (s1[i] !== s2[i]) return i;
 			return -1;
+		}, symbToStr        : function symbolToString(symbol) {
+			if (typeof symbol !== "symbol") throw Error("argument to symbToStr() is not a symbol");
+			return `Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})`
 		}, nsub             : function substituteNInBigIntegers(num, n=1) {
 			return typeof num === "bigint" ?
 				n * Number(num) :
@@ -1425,7 +1481,10 @@ void (() => { "use strict";
 		, "local emc": γ
 		, "local omega": Ω
 		, "local define": define
-		, "object Object": {
+		, "ifdom prototype NodeList": { last: lastElement
+		}, "ifdom prototype HTMLCollection": { last: lastElement
+		}, "ifdom prototype HTMLAllCollection": { last: lastElement
+		}, "object Object": {
 			copy : copy,
 			keyof: keyof
 		}, "prototype Object": {
@@ -1454,6 +1513,7 @@ void (() => { "use strict";
 			, lio: Array.prototype.lastIndexOf
 			, incl: Array.prototype.includes
 			, last: lastElement
+			, nincl: function doesntInclude() { return !this.incl(...arguments) }
 			, any: (function create_any() {
 				var _some = Array.prototype.some;
 				return function any(callback=e=>e, thisArg=void 0) { return _some.call(this, callback, thisArg) }
@@ -1684,9 +1744,6 @@ void (() => { "use strict";
 			}, bisectRight: function bisectRightArray(x, low=0, high=null) { return bisectRight(this, x, low, high);
 			}, bisect: function bisectArray(x, orientation="left", low=0, high=null) { return bisect(this, x, orientation, low, high);
 			},
-		}, "ifdom prototype NodeList": { last: lastElement
-		}, "ifdom prototype HTMLCollection": { last: lastElement
-		}, "ifdom prototype HTMLAllCollection": { last: lastElement
 		}, "prototype Function": {
 			args: function getArgs() { return getArguments(this);
 			}, code: function getCode() {
@@ -1889,7 +1946,8 @@ void (() => { "use strict";
 									(s => "\\u" + strMul("0", 4 - len(s)) + s)(ord(e).toString(16))
 				).join("");
 			}, incl: function includes(input) { return input.toRegex().in(this);
-			}, start(start="") { return this || `${start}`;// if the string is empty it returns the argument
+			}, nincl: function doesntInclude(input) { return !this.incl(input) }
+			, start(start="") { return this || `${start}`;// if the string is empty it returns the argument
 			}, begin(text="") { return `${text}${this}`; // basically Array.unshift2 for strings
 			}, splitn: function splitNTimes(input, times=1, joinUsingInput=true, customJoiner="") {
 				var joiner = joinUsingInput ? input : customJoiner;
@@ -2274,6 +2332,8 @@ void (() => { "use strict";
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
+
+				this.googol = 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n;
 
 				if (help) this.help = {
 				}; if (degTrig) this.deg = {
@@ -3071,15 +3131,21 @@ void (() => { "use strict";
 				this.sqrt2    = 1.4142135623730951  ; this.logpi10  = 2.0114658675880609 ;
 				this.sqrt5    = 2.2360679774997894  ; this.logtaupi = .62285443720447269 ;
 				this.dtor     = .017453292519943295 ; this.rtod     = 57.29577951308232  ;
-				this.π_2 = π_2; // Math.π_2 == Math.π/2 but faster
+				this.sqrtpi = 1.772453850905516; this.sqrtpi_2 = 0.886226925452758;
+				this.sqrttau = 2.5066282746310007;
+				this.π_2 = π_2; // Math.π_2 === Math.π/2 but faster
 				this.Math = Math;
-				/*
-					␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟␡
-					G = 6.67m³/(10¹¹ kg s²)
-					∑∏Δ×∙÷±∓∀∃∄∤⌈⌉⌊⌋⋯〈〉√∛∜≤≥≠≈≋≍≔≟≡≢≶≷⋚⋛⁽°⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁾∞
-					∫∬∭⨌∮∯∰∱∲∳⨍⨎⨏⨐⨑⨒⨓⨔⨕⨖⨗⨘⨙⨚⨛⨜⌀∠∡⦜∢⦝⦞⦟⟂∟∥∦△□▭▱○◊⋄
-					→↛⇒⇔⇋⇏⊕⊝∧⋀∨⋁⋂⋃¬∴∵∶∷∼⊨⊽⊻⊯⊮⊭⊬⊫⊪⋎⋏
-					ℵƒ∂𝜕ℶℕℝℚℙℤℍℂ∅∁∈∉∋∌∖∩∪⊂⊃⊄⊅⊆⊇⊈⊉⊊⊋⊍⊎⋐⋑⋒⋓⋔⋲⋳⋴⋵⋶⋷⋹⋺⋻⋼⋽⋾
+				/* G = 6.67m³/(10¹¹ kg s²)
+					"–" !== "-"
+					roman numerals 1:ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩⅪⅫⅬⅭⅮⅯ
+					roman numerals 2:ⅰⅱⅲⅳⅴⅵⅶⅷⅸⅹⅺⅻⅼⅽⅾⅿ
+
+					control characters:␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟␡
+					superscript:⁽°⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼ⁿ⁾
+					∑∏Δ×∙÷±∓∀∃∄∤⌈⌉⌊⌋⋯〈〉√∛∜≤≥≠≈≉≋≔⩴≟≝⩮⩯≡≢→↛⇒⇔⇋⇏⊕⊝∧∨⋀⋁⋂⋃∞¬∴∵∶∷∼⊨⊽⊻∫∬∭⨌
+					∠⟂∥∦⊯⊮⊭⊬⊫⊪∈∉∋∌∖∕⅟∩∪⊂⊃⊄⊅⊆⊇⊈⊉℉℃ℵƒ∅∂ℷℎℏ℮Ω℧ℕℝℚℙℤℍℂℼℿℽℾ𝕋⅀ⅅⅆⅇⅈⅉ⩵⩶≶≷
+					
+					∮∯∰∱∲∳⨍⨎⨏⨐⨑⨒⨓⨔⨕⨖⨗⨘⨙⨚⨛⨜⌀∡⦜∢⦝⦞⦟∟△□▭▱○◊⋄≍⋚⋛⊊⊋⊍⊎⋐⋑⋒⋓⋔⋲⋳⋴⋵⋶⋷⋹⋺⋻⋼⋽⋾𝜕ℶ∁∇⋎⋏Ↄ
 				*/// TODO: Update rMath.help
 				if (help) this.help = {
 					null: "If a value is null or missing, then you should just directly check what the function does.",
@@ -3430,50 +3496,134 @@ void (() => { "use strict";
 					}, sneq(a="0.0", b="0.0") { return sMath.eq.ne(a, b);
 					},
 				}; if (constants) {
-					this.foia = this.α = α                             ;
-					this.ɡ = this.gravity = 9.80665                    ;
-					this.avogadro = 6.02214076e+23                     ;
-					this.bohrMagneton = 9.2740100783e-24               ;
-					this.bohrRadius = 5.29177210903e-11                ;
-					this.boltzmann = 1.380649e-23                      ;
-					this.classicalElectronRadius = 2.8179403262e-15    ;
-					this.deuteronMass = 3.3435830926e-27               ;
-					this.efimovFactor = 22.7                           ;
-					this.electronMass = 9.1093837015e-31               ;
-					this.electronicConstant = 8.8541878128e-12         ;
-					this.faraday = 96485.33212331001                   ;
-					this.fermiCoupling = 454379605398214.1             ;
-					this.fineStructure = 0.0072973525693               ;
-					this.firstRadiation = 3.7417718521927573e-16       ;
-					this.gasConstant = 8.31446261815324                ;
-					this.inverseConductanceQuantum = 12906.403729652257;
-					this.klitzing = 25812.807459304513                 ;
-					this.loschmidt = 2.686780111798444e+25             ;
-					this.magneticConstant = 0.00000125663706212        ;
-					this.magneticFluxQuantum = 2.0678338484619295e-15  ;
-					this.molarMass = 0.00099999999965                  ;
-					this.molarMassC12 = 0.0119999999958                ;
-					this.molarPlanckConstant = 3.990312712893431e-10   ;
-					this.molarVolume = 0.022413969545014137            ;
-					this.neutronMass = 1.6749271613e-27                ;
-					this.nuclearMagneton = 5.0507837461e-27            ;
-					this.planckCharge = 1.87554603778e-18              ;
-					this.planckConstant = 6.62607015e-34               ;
-					this.planckLength = 1.616255e-35                   ;
-					this.planckMass = 2.176435e-8                      ;
-					this.planckTemperature = 1.416785e+32              ;
-					this.planckTime = 5.391245e-44                     ;
-					this.reducedPlanckConstant = 1.0545718176461565e-34;
-					this.rydberg = 10973731.56816                      ;
-					this.sackurTetrode = -1.16487052358                ;
-					this.secondRadiation = 0.014387768775039337        ;
-					this.speedOfLight = this.c = 299_792_458           ;
-					this.stefanBoltzmann = 5.67037441918443e-8         ;
-					this.weakMixingAngle = 0.2229                      ;
-					this.solarConstants = {
-						Earth: 1380,
-						Venus: 2613,
-						Mars : 589,
+					this.foia = this.α = α                                 ;
+					this.ɡ = this.gravity = 9.80665                        ;
+					this.avogadro = 6.02214076e+23                         ;
+					this.bohrMagneton = 9.2740100783e-24                   ;
+					this.bohrRadius = 5.29177210903e-11                    ;
+					this.boltzmann = 1.380649e-23                          ;
+					this.classicalElectronRadius = 2.8179403262e-15        ;
+					this.deuteronMass = 3.3435830926e-27                   ;
+					this.efimovFactor = 22.7                               ;
+					this.electronMass = 9.1093837015e-31                   ;
+					this.electronicConstant = 8.8541878128e-12             ;
+					this.faraday = 96485.33212331001                       ;
+					this.fermiCoupling = 454379605398214.1                 ;
+					this.fineStructure = 0.007297352573756914 /*no units*/ ;
+					this.firstRadiation = 3.7417718521927573e-16           ;
+					this.gasConstant = 8.31446261815324                    ;
+					this.inverseConductanceQuantum = 12906.403729652257    ;
+					this.klitzing = 25812.807459304513                     ;
+					this.loschmidt = 2.686780111798444e+25                 ;
+					this.magneticConstant = 0.00000125663706212            ;
+					this.magneticFluxQuantum = 2.0678338484619295e-15      ;
+					this.molarMass = 0.00099999999965                      ;
+					this.molarMassC12 = 0.0119999999958                    ;
+					this.molarVolume = 0.022413969545014137                ;
+					this.neutronMass = 1.6749271613e-27                    ;
+					this.nuclearMagneton = 5.0507837461e-27                ;
+					this.planckCharge = 1.87554603778e-18                  ;
+					this.planckLength = 1.616255e-35                       ;
+					this.planckMass = 2.176435e-8                          ;
+					this.planckTemperature = 1.416785e+32                  ;
+					this.planckTime = 5.391245e-44                         ;
+					this.planckConstant = 6.62607015e-34                   ;
+					this.molarPlanckConstant = 3.990312712893431e-10       ;
+					this.reducedPlanckConstant = 1.0545718176461565e-34    ;
+					this.rydberg = 10973731.56816                          ;
+					this.sackurTetrode = -1.16487052358                    ;
+					this.secondRadiation = 0.014387768775039337            ;
+					this.speedOfLight = this.c = 299_792_458 /*m/s*/       ;
+					this.stefanBoltzmann = 5.67037441918443e-8             ;
+					this.weakMixingAngle = 0.2229                          ;
+					this.sunLuminosity = 3.828e+26 /*watts*/               ;
+					this.EarthMass = 5.9722e+24 /* ± 6e20. kilograms. */   ;
+					this.googol = 1e+100                                   ;
+					this.centillion = 1e+303                               ;
+					this.EarthMasses = {
+						Moon: 0.0123000371,
+						Sun: 332_946.0487 /* ± 0.0007 */,
+						Mercury: 0.0553,
+						Venus: 0.815,
+						Earth: 1,
+						Mars: 0.107,
+						Jupiter: 317.8,
+						Saturn: 95.2,
+						Uranus: 14.5,
+						Neptune: 17.1,
+						Pluto: 0.0025,
+						Eris: 0.0027,
+						Gliese667Cc: 3.8,
+						Kepler442b: 4.6 // estimate, 1.0 – 8.2
+					}; this.EarthRadius = {
+						m : 6_378_100, // 6.35 million give or take up to 50_000
+						km: 6367.445, // 6357 to 6378
+						mi: 3956.547, // 3950 to 3963
+					}; this.planck = {
+						charge: this.planckCharge,
+						length: this.planckLength,
+						mass: this.planckMass,
+						temperature: this.planckTemperature,
+						time: this.planckTime,
+						constant: this.planckConstant,
+						reducedConstant: this.reducedPlanckConstant,
+						molarConstant: this.molarPlanckConstant,
+					}; this.solarConstants = {
+						// TABLE 2. Solar Irradiance at the Planets
+						// Planet Solar Irradiance, W/m-2
+						// perihelion : close :: aphelion (apsis) : far
+						Mercury: {
+							mean: 9116.4,
+							perihelion: 14_447.5,
+							aphelion:  6271.1,
+						}, Venus: {
+							mean: 2611.0,
+							perihelion: 2646.4,
+							aphelion:  2575.7,
+						}, Earth: {
+							mean: 1366.1,
+							perihelion: 1412.5,
+							aphelion:  1321.7,
+						}, Mars: {
+							mean: 588.6,
+							perihelion: 715.9,
+							aphelion:  491.7,
+						}, Jupiter: {
+							mean: 50.5,
+							perihelion: 55.7,
+							aphelion:  45.9,
+						}, Saturn: {
+							mean: 15.04,
+							perihelion: 16.76,
+							aphelion:  13.53,
+						}, Uranus: {
+							mean: 3.72,
+							perihelion: 4.11,
+							aphelion: 3.37,
+						}, Neptune: {
+							mean: 1.510,
+							perihelion: 1.515,
+							aphelion:  1.507,
+						}, Pluto: {
+							mean: 0.878,
+							perihelion: 1.571,
+							aphelion:  0.560,
+						},
+					}; this.dragCoefficient = { // C_D
+						// link 1:  https://bit.ly/3TufCLt
+						// link 2:  https://bit.ly/3T8jthf
+						// DragCoefficient = 2*DragForce   /   MassDensity*FlowSpeed²Area
+						sphere: 0.47,
+						halfSphere: 0.42,
+						spheroid3to4: 0.59,
+						cone60degrees: 0.5,
+						cube: 1.65,
+						angledCube: 1.05, // 45° rotation
+						bullet: 0.2, // 0.1 – 0.3
+						longCylinder: 0.82,
+						shortCylinder: 1.15,
+						streamlinedBody: 0.04, // idk, look at the picture in link 1
+						streamlinedHalfBody: 0.09,
 					};
 				};
 			} Ω(x=Math.E, i=10_000) {
@@ -3566,18 +3716,19 @@ void (() => { "use strict";
 				return len( (strMul("0", 32 - len(n)) + n).remove(/1.*/) );
 			} cebz(x) {
 				// count ending binary zeros
-				// log2(x & -x)  for |x| < 2^32
+				// log2(x & -x) for |x| < 2^32
 				if (this.isNaN(x)) return NaN;
 				x = BigInt(x).toString(2);
 				return dim(x) - x.lio("1");
 			} sgn(n) { return isNaN( n = Number(n) ) ? NaN : !n ? n : n < 0 ? -1 : 1;
 			} abs(n) { return isNaN( n = Number(n) ) ? NaN : this.sgn(n) * n;
 			} cabs(cnum) { return cMath.abs(cnum);
-			} sum(n, last, fn=n=>n, inc=1) {
+			} sum(n /*start, first*/, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( last = Number(last) )) return NaN;
 				if (type(fn, 1) !== "func") return NaN;
 				if (isNaN( inc = Number(inc) )) return NaN;
+				if (inc === 0) throw Error("increment to rMath.sum() cannot be 0.");
 				var total = 0;
 				if (last === Infinity) {
 					for (var prev; n <= last; n += inc) {
@@ -3590,7 +3741,13 @@ void (() => { "use strict";
 				return total;
 			} total(...args) { return args.flatten().reduce((t, e) => t + e, 0);
 			} product(...args) {return args.flatten().reduce((t, e) => t * e, 1);
-			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) { return this.sum(start, Infinity, fn, inc);
+			} infsum(start=0/*, last=Infinity*/, fn=n=>1/n, inc=1) {
+				return this.sum(
+					start,
+					Infinity,
+					fn,
+					inc
+				);
 			} prod(n, last, fn=n=>n, inc=1) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( last = Number(last) )) return NaN;
@@ -3766,8 +3923,7 @@ void (() => { "use strict";
 				return (this.Q1(args) + this.Q3(args)) / 2;
 			} MS(...args) {
 				// mean square
-				args = args.flatten();
-				return args.reduce((t, e) => t + e**2, 0) / len(args);
+				return args = args.flatten(), args.reduce((t, e) => t + e**2, 0) / len(args);
 			} RMS(...args) { return this.sqrt( this.MS(args) ); // root mean square
 			} MAE(Ys, Xs) {
 				// mean absolute error
@@ -3784,12 +3940,14 @@ void (() => { "use strict";
 				list = list.flatten();
 				probabilities = probabilities.flatten();
 				return list.reduce((t, e, i) => t + (probabilities[i] === void 0 ? 1 : probabilities[i]) * e, 0);
+			} PE(/*arguments*/) { return this.percentError.apply(this, arguments);
 			} SD(...args) { return this.sqrt( this.var(args) ); // standard deviation
 			} SE(...args) {
 				// standard error
 				args = args.flatten();
 				return this.SD(args) / this.sqrt( len(args) );
 			} var(...args) {
+				// NOTE: I'm pretty sure this is completely wrong
 				args = args.flatten();
 				const MEAN = this.mean(args);
 				return this.sum(0, dim(args), n => (args[n] - MEAN)**2, 1) / dim(args);
@@ -3814,7 +3972,9 @@ void (() => { "use strict";
 			} cubicmean(...args) { return this.cbrt( args.reduce((t, e) => t + e**3, 0) / len(args) );
 			} quarticmean(...args) { return this.nthrt( args.reduce((t, e) => t + e**4, 0) / len(args), 4 );
 			} quinticmean(...args) { return this.nthrt( args.reduce((t, e) => t + e**5, 0) / len(args), 5 );
-			} powmean(power, ...args) { return this.nthrt( args.reduce((t, e) => t + e**power, 0) / len(args), power );
+			} powmean(power, ...args) { return this.nthrt(
+					args.reduce((t, e) => t + e**power, 0) / len(args), power
+				);
 			} linReg(xs, ys, Return="obj") {
 				// linear regression
 				xs = xs.tofar(); ys = ys.tofar();
@@ -3845,14 +4005,39 @@ void (() => { "use strict";
 					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
 					// 2 / sqrt(pi) * ...
 				// erf(x) ≈ 3126/3125 sgn(x)sqrt(1-exp(-x^2))
+			} erfinv(z, acy=10) {
+				// compositional inverse of erf(x)
+				// \lim_{y->\infty} erf( erfinv(x,y) ) = x
+				return this.sum( 0, acy, k => this.erfinvC(k) / (2*k+1) * (this.sqrtpi_2*z)**(2*k+1) );
+			} erfinvC(k=0) { return isNaN(k = Number(k)) || k < 0 ?
+				// constants for erf⁻¹(x) and erfi⁻¹(x) Maclaurin series
+				NaN :
+				!k ?
+					1 :
+					this.sum( 0, k-1, m => (this.erfinvC(m)*this.erfinvC(k-m-1)) / ((m+1)*(2*m+1)) );
 			} erfc(z) {
 				return isNaN( z = Number(z) ) ?
 					NaN :
 					1 - this.erf(z);
-			} nCr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.nPr(n, k) / this.fact(k);
-			} comb(n, k) { return this.nCr(n, k); // combination
-			} nPr(n, k) { return isNaN( n = Number(n) ) || isNaN( k = Number(k) ) ? NaN : this.fact(n) / this.fact(n - k);
-			} perm(n, k) { return this.nPr(n, k); // permuation
+			} erfcinv(z, acy=10) {
+				// compositional inverse of erfc(x)
+				// \lim_{y->\infty} erfc( erfcinv(x,y) ) = x
+				return this.erfinv(z, acy) / (1 - z)
+			} erfiinv(z, acy=10) {
+				// compositional inverse of erfi(x)
+				// \lim_{y->\infty} erfi( erfiinv(x,y) ) = x
+				return this.sum( 0, acy, k => (-1)**k * this.erfinvC(k) / (2*k+1) * (this.sqrtpi_2*z)**(2*k+1) );
+			} nCr(n=1, k=1) {
+				return isNaN( n = Number(n) ) ||
+					isNaN( k = Number(k) ) ?
+					NaN : this.nPr(n, k) / this.fact(k);
+			} comb(n=1, k=1) { return this.nCr(n, k); // combination
+			} nPr(n=1, k=1) {
+				return isNaN( n = Number(n) ) ||
+					isNaN( k = Number(k) ) ?
+					NaN : this.fact(n) /
+						this.fact(n - k);
+			} perm(n=1, k=1) { return this.nPr(n, k); // permuation
 			} ifact(n) {
 				if (isNaN( n = Number(n) )) return NaN;
 				if (!n) return 1;
@@ -3861,7 +4046,11 @@ void (() => { "use strict";
 					ans *= cur;
 				return ans;
 			} fact(x, acy=1e3, inc=.1) {
-				// TODO: Fix for negative non-integer numbers
+				// TODO: implement the following formula, and maybe a lookup table for the integral values
+				//       / ∫_0^∞ exp(xlnt-t) dt               , 0 ≤ x ≤ 1
+				// x! = <| (x % 1)! / Π_{k=1}^{-⌊x⌋} (x + k) , x < 0
+				//       \ (x % 1)! Π_{k=1}^{⌊x⌋} (x%1 + k)  , x > 1
+				// (x-⌊x⌋-1)!(x-⌊x⌋)^{\overline{1+⌊x⌋}}
 				if (isNaN( x = Number(x) )) return NaN;
 				if (isNaN( acy = Number(acy) )) return NaN;
 				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
@@ -3895,6 +4084,9 @@ void (() => { "use strict";
 				while (args[1]) args = [args[1], this.mod(...args)];
 				return args[0];
 			} gcf() { return this.gcd.apply(this, arguments);
+			} percentError(expected, actual, times100=true) {
+				return this.abs(actual - expected) / this.abs(expected) * (times100 ? 100 : 1);
+				// |experimental - theoretical| / |theoretical| * 100
 			}
 			//////////////////////////////////////// STATISTICS END ////////////////////////////////////////
 			gamma(n, acy=1e3, inc=.1) {
@@ -3936,7 +4128,7 @@ void (() => { "use strict";
 				n--;
 				var ans = this.int(n, acy, t => t**n / 𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
-			} isPrime(n) { return this.isNaN(n) ? NaN : n?.isPrime?.();
+			} isPrime(n) { return this.isNaN(n) ? NaN : n.isPrime();
 			} pascal(row, col) {
 				// pascal's triangle
 				if (isNaN( row = Number(row) )) return NaN;
@@ -4049,10 +4241,10 @@ void (() => { "use strict";
 				return number ?
 					Number(sMath.div(a, b, precision)) :
 					sMath.div(a, b, precision);
-			} cdiv(num="0.0", denom="1.0", number=true) { return this.ceil(this.div(num, denom, number, 1));
-			} fdiv(num="0.0", denom="1.0", number=true) { return this.floor(this.div(num, denom, number,1));
-			} rdiv(num="0.0", denom="1.0", number=true) { return this.round(this.div(num, denom, number,1));
-			} tdiv(num="0.0", denom="1.0", number=true) { return this.trunc(this.div(num, denom, number,1));
+			} cdiv(num="0.0", denom="1.0", number=true) { return this.ceil (this.div(num, denom, number, 1));
+			} fdiv(num="0.0", denom="1.0", number=true) { return this.floor(this.div(num, denom, number, 1));
+			} rdiv(num="0.0", denom="1.0", number=true) { return this.round(this.div(num, denom, number, 1));
+			} tdiv(num="0.0", denom="1.0", number=true) { return this.trunc(this.div(num, denom, number, 1));
 			} mod(a, n=1, k=0) {
 				// a modₖ n
 				// modulo using the formula
@@ -4190,22 +4382,35 @@ void (() => { "use strict";
 					Switch: Switch,
 					number: number
 				});
-			} hyper0(n) { return isNaN(n = Number(n)) ? NaN : this.add(n, 1);
-			} hyper1(a, n) { return isNaN(a = Number(a)) || isNaN(n = Number(n)) ? NaN : this.add(a, n);
-			} hyper2(a, n) { return isNaN(a = Number(a)) || isNaN(n = Number(n)) ? NaN : this.mul(a, n);
-			} hyper3(a, n) { return isNaN(a = Number(a)) || isNaN(n = Number(n)) ? NaN : a ** n;
-			} hyper4(a, n, {Switch=false, number=false}={}) {
-				// a ↑↑ n = a^^n = a^a^a^... n times = ⁿa = a ↑² n
+			} hyper0(/*a, */b) { return isNaN(b = Number(b)) ? NaN : this.add(b, 1);
+			} hyper1(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : this.add(a, b);
+			} hyper2(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : this.mul(a, b);
+			} hyper3(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : a ** b;
+			} hyper4(a, b) {
+				// tetration.  a ↑↑ b = a^^b = a^a^a^... (b times) = ⁿa = a ↑² b
 				if (this.isNaN( a = BigInt(a) )) return NaN;
-				if (this.isNaN( n = BigInt(n) )) return NaN;
-				if (Switch) return this.hyper4(n, a, {
-					Switch: !1,
-					number: number
-				});
-				const A = a;
-				while ( n --> 1 )
-					a = A ** a;
-				return number ? Number(a) : a;
+				if (this.isNaN( b = BigInt(b) )) return NaN;
+				for (var A = a; b --> 1 ;) a = A ** a;
+				return a;
+			} hyperN(a, n=2n, b) {
+				// a ↑ⁿ b == a ↑ⁿ⁻¹ [a ↑ⁿ (b-1)]
+				// a [n] b = a [n-1] ( a [n] (b-1) )
+				// a [n] 0 = 1 if n >= 3
+				
+				// a[n]1 == a[n-1]1 if n>=3
+				// a[2]1 == a
+				// a[1]1 == a+1
+				// a[0]1 == 2
+
+				// a[n]b = a ↑ⁿ⁻² b
+
+				if (this.isNaN( a = BigInt(a) ) ||
+					this.isNaN( n = BigInt(n) ) ||
+					this.isNaN( b = BigInt(b) )) return NaN;
+				if (n === 3n) return a ** b;
+				for (var A = a; b --> 1 ;)
+					a = this.hyperN(A, n-1, a);
+				return a;
 			}
 			////////////////////////////////////// TRIGONOMETRY START //////////////////////////////////////
 			sin(θ) {
@@ -4312,6 +4517,8 @@ void (() => { "use strict";
 			} ahcversh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x);
 			} hcverch(x) { return isNaN( x = Number(x) ) ? x : this.cverch(x) / 2;
 			} ahcverch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1);
+			} degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod;
+			} radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor;
 			} // integral trig functions
 			Si(x, inc=.001) {
 				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
@@ -4362,13 +4569,10 @@ void (() => { "use strict";
 				return isNaN( x = Number(x) ) || abs(x) >= π_2 ?
 					NaN :
 					this.int(0, x, t => this.sec(t), inc);
-			} degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod;
-			} radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor;
 			}
 			/////////////////////////////////////// TRIGONOMETRY END ///////////////////////////////////////
 			H(x, form=1) {
-				// Heaveside step function
-				// Heaveside theta function
+				// Heaveside step function, Heaveside theta function
 				if (isNaN( x = Number(x) )) return NaN;
 				if (form === 1) return this.sgn( this.sgn(x) + 1 )
 				if (form === 2) return (1 + this.sgn(x)) / 2
@@ -4389,7 +4593,7 @@ void (() => { "use strict";
 					return total;
 				}
 			} productLog(/*x, acy*/) { return this.W.apply(this, arguments);
-			} deriv(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
+			} deriv/*ative*/(f=x=>2*x+1, x=1, Δx=1/1_073_741_824) {
 				if (type(f) === "string") {
 					if (f.io(":") < 0) f = `x:${f}`; // just assume x is used as the variable
 					const VARIABLE = f.slc(0, ":").remove(/\s+/g);
@@ -4504,23 +4708,63 @@ void (() => { "use strict";
 						table[i][j] = i * j;
 				return table;
 			} cosNxSimplify(str="cos(x)") {
+				// TODO: make cosNxSimplify() as good as sinNxSimplify()
 				typeof str === "number" && !(str % 1) && (str = `cos(${str}x)`);
 				if (typeof str !== "string") return "";
 				if (/^cos\d+x$/.in(str)) str = `cos(${str.match(/\d+/)[0]}x)`;
 
 				for (var tmp; /\(\d+x\)/.in(str) ;) {
-					str = str.replace(/\(-?1x\)/g, "(x)");
-					str = str.replace(/cos\(-?0x\)/g, "1");
+					str = str.replace(/\(-?1x\)/g, "(x)"); // only for cos
+					str = str.replace(/cos\(-?0x\)/g, "1"); // only for cos
+					// str = str.replace(/cos\(-?0x\)/g, "0"); // only for sin
 					tmp = /cos\((\d+)x\)/.exec(str);
-					if (tmp[1])str = str.replace(/cos\((\d+)x\)/, `[2cosxcos(${+tmp[1]-1}x)-cos(${+tmp[1]-2}x)]`);
+					if (tmp?.[1]) str = str.replace(/cos\((\d+)x\)/, `[2cosxcos(${+tmp[1]-1}x)-cos(${+tmp[1]-2}x)]`);
 					str = str.replace(/\(-?1x\)/g, "(x)").replace(/cos\(-?0x\)/g, "1");
 				}
-				str = str.replace(/\(x\)/g, "x").replace(/cosxcosx/g, "cos^2x");
+				str = str.replace(/\(x\)/g, "x").replace(/cosxcosx/g, "cos²x");
 				return str.substring( 1, dim(str) ).replace(/^os$/, "cosx");
+			} sinNxSimplify(str="sinx") {
+				(typeof str === "number" && !(str % 1) || typeof str === "bigint") && (str = `sin${str}x`);
+				if (typeof str !== "string") return "";
+
+				str = str.replace([
+					/sin\((-?\d+)x\)/g,
+					/(?<!\d)1x/g,
+					/sin-?0x/g
+				], [
+					"sin$1x",
+					"x",
+					"0"
+				]);
+
+				for (var tmp; /-?\d+x|-x/.in(str) ;) {
+					multiply: {
+						let tmp2 = /(-?\d*)sin-(\d*)x/g.exec(str);
+						if (tmp2 === null) break multiply;
+						str = tmp2[1] === "" ?
+							str.replace(/sin-(\d*)x/g, "-sin$1x") :
+							str.replace(/(-?\d+)sin-(\d*)x/g, `${sMath.mul(tmp2[1], -1).remove(/\.0+$/)}sin$2x`);
+					}
+
+					tmp = /sin(\d+)x/.exec(str);
+					if (tmp) str = str.replace(/sin(\d+)x/, `[2cosxsin${+tmp[1]-1 === 1 ? "" : +tmp[1]-1}x${
+						+tmp[1]-2 === 0 ? "" :
+						+tmp[1]-2 === 1 ? `-sinx` :
+						`-sin${+tmp[1]-2}x`
+					}]`);
+					str = str.replace(/sin-?0x/g, "0");
+				}
+				multiplyConstants: {
+					// TODO: Do something about 0 constants
+					let tmp2 = /^(-?\d+\.?\d*)\*?\[(-?\d+)/.exec(str);
+					if (tmp2 === null) break multiplyConstants;
+					str = str.replace(/^(-?\d+\.?\d*)\*?\[(-?\d+)/, sMath.mul( tmp2[1], tmp2[2] ).remove(/\.0+$/)+"[");
+				}
+
+				return str.replace(/2cosx\[2cosxsinx]/g, "4cos²xsinx").replace(/\[2cosxsinx]/g, "2sinxcosx");
 			} heron(a=1, b=1, c=1) {
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( b = Number(b) )) return NaN;
-				if (isNaN( c = Number(c) )) return NaN;
+				if (isNaN( a = Number(a) ) || isNaN( b = Number(b) ) || isNaN( c = Number(c) ))
+					return NaN;
 				const s = (a + b + c) / 2;
 				return this.sqrt(s * (s-a) * (s-b) * (s-c));
 			} tempConv(value=0, startSystem="f", endSystem=LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM) {
@@ -4597,6 +4841,7 @@ void (() => { "use strict";
 			////////////////////////////////////// SET OPERATIONS END //////////////////////////////////////
 			harmonic(n=1, decimals=18) {
 				// harmonic series
+				// TODO: Expand to the real numbers
 				return this.sum(
 					1,
 					int(n),
@@ -4622,6 +4867,7 @@ void (() => { "use strict";
 				}
 				return i === infinity ? Infinity : i;
 			} _pow(x=0) {
+				// returns the number of multiplicaions required to take a value to the xth power using optimal methods.
 				if (!x) return [0];
 				if (fpart(x) || this.isNaN(x)) return NaN;
 				x = int(x);
@@ -4657,10 +4903,50 @@ void (() => { "use strict";
 			} midpoint([x1, y1], [x2, y2]) { return [(x1+x2)/2, (y1+y2)/2];
 			} δ(x) { return this.isNaN(x) ? NaN : x == 0 ? Infinity : 0; // dirac delta function
 			} dirac(x) { return this.isNaN(x) ? NaN : x == 0 ? Infinity : 0; // dirac delta function
+			} solveCubic(a, b, c, d) {
+				if (isNaN(a = Number(a)) || isNaN(b = Number(b)) || isNaN(c = Number(c)) || isNaN(d = Number(d)))
+					return NaN;
+				// ax³ + bx² + cx + d  =  0
+				if (a === 0) return this.solveQuadratic(b, c, d);
+				const L = -b / (3*a)
+					, E = L**3 + b*c / (6*a**2) - d / (2*a)
+					, F = c / (3*a) - L**2
+					, G = this.sqrt(E**2 + F**3);
+				return this.cbrt(E + G) + this.cbrt(E - G) + L
+			} solveQuadratic(a, b, c) {
+				// ax² + bx + c  =  0
+				return isNaN(a = Number(a)) || isNaN(b = Number(b)) || isNaN(c = Number(c)) ?
+					NaN :
+					a ?
+						(function() { a *= 2; const d = this.sqrt(b**2 - 2*a*c); return [(d-b)/a, -(b+d)/a] })() :
+						this.solveLinear(b, c);
+			} solveLinear(a, b) {
+				// ax + b  =  0
+				return isNaN(a = Number(a)) || isNaN(b = Number(b)) ?
+					NaN :
+					a ?
+						-b / a :
+						b ?
+							NaN : // No Solution, real or complex
+							"All Real";
+			} fix() { return this.trunc.apply(this, arguments);
+			} binom(n=1, k=1) { return this.nCr(n, k);
+			} pronic(n) {
+				// pronic numbers
+				return isNaN(n = Number(n)) ?
+					NaN :
+					n * (n + 1);
+				// P(-n) = P(n-1)
 			}
+			// polygonal numbers
+			// figurate numbers
+			// nth dimentional triangular numbers
+			// basil functions
 			// piApprox
-			// simplify sin(nx)
+			// solveQuartic
 			// simplify tan(nx)
+			// quantile
+			// inverse factorial
 			// bell numbers
 			// pell numbers
 			// polylogarithms
@@ -4677,16 +4963,17 @@ void (() => { "use strict";
 			// determinant
 			// line intersection
 			// scalar operations
-			// eigs
-			// fix (round towards zero)
-			// matrix identity thing
-			// inverse of matrix
-			// Kullback-Leibler (KL) divergence  between two distributions.
+			// eigs matrix, eigs value
+			// class Matrix
+			// matrix identity
+			// matrix inverse
+			// Kullback-Leibler (KL) divergence between two distributions.
 			// kronecker product of 2 matrices or vectors.
 			// nthrts, probably for cMath
 			// coulomb
 			// electrical things
 			// p-adic integers
+			// pisano period
 		}, "math cMath": class ComplexMath {
 			constructor(degTrig=LibSettings.cMath_DegTrig_Argument, help=LibSettings.cMath_Help_Argument) {
 				degTrig === "default" && (degTrig = !0);
@@ -5127,34 +5414,35 @@ void (() => { "use strict";
 			new(re=fMath.one, im=fMath.one) { return new this.CFraction(re, im);
 			}
 		}, "math call aMath"() {
-			var _getNameOf = obj => keyof(globalThis.MathObjects, obj)
-			, protoProps = e => Object.getOwnPropertyNames(e.constructor.prototype)
-			, fns = {
-				bigint   : bMath, complex  : cMath, fraction : fMath, num      : rMath,
-				number   : rMath, str      : sMath, string   : sMath, mutstr   : sMath,
-			};
-			function _call(fname, typ=null, ...args) {
+			var _getNameOf = obj => keyof(globalThis.MathObjects, obj) // name of math object
+			, _protoProps = e => Object.getOwnPropertyNames(e.constructor.prototype) // get prototype's properties
+			, _typeToObj = {
+				// use type(x, anythingOtherThanUndefined)
+				num : rMath, bigint : bMath, fraction : fMath, // string : sMath,
+				str : sMath, mutstr : sMath, complex  : cMath, // number : rMath,
+			}; function _call(fname, typ=null, ...args) {
 				typ === null && (typ = type(args[0], 1));
-				var fn = fns?.[typ?.lower?.()]?.[fname];
-				if (fn) return fn.apply( fns[typ], args );
-				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				var fn = _typeToObj?.[typ?.lower?.()]?.[fname];
+				if (fn) return fn.apply( _typeToObj[typ], args );
+				if (_typeToObj[typ] !== void 0) throw Error(`${_getNameOf(_typeToObj[typ])}["${fname}"] doesn't exist`);
 				/*else*/
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see ${LibSettings.Environment_Global_String}.MathObjects for all Math objects`);
 			} function _call_attr(fname, attr, typ=null, ...args) {
 				typ === null && (typ = type(args[0], 1));
-				var fn = fns?.[typ?.lower?.()]?.[attr]?.[fname];
-				if (fn) return fn.apply( fns[typ], args );
-				if (fns[typ] !== void 0) throw Error(`${_getNameOf(fns[typ])}["${fname}"] doesn't exist`);
+				var fn = _typeToObj?.[typ?.lower?.()]?.[attr]?.[fname];
+				if (fn) return fn.apply( _typeToObj[typ], args );
+				if (_typeToObj[typ] !== void 0) throw Error(`${_getNameOf(_typeToObj[typ])}["${fname}"] doesn't exist`);
 				/*else*/
 				throw Error(`there is no Math object for type '${typ}'. (type(x, 1) was used). see ${LibSettings.Environment_Global_String}.MathObjects for all Math objects`);
 			}
 
 			class AllMath { // aMath will call the correct function based upon the inputs' types
 				constructor() {
-					if (LibSettings.aMath_Help_Argument) this.help = `see the help attributes of the other math functions, which you can find at '${LibSettings.Environment_Global_String}.MathObjects'.  this.internals.call, this.internals.call_eq, and this.internals.call_deg just call functions from the correct math object. call_eq uses the eq attribute of the math object, and call_deg uses the deg attribute of the math object.  not all the functions are guaranteed to work for all types.`;
+					if (LibSettings.aMath_Help_Argument) this.help = `see the help attributes of the other math functions, which you can find at '${LibSettings.Environment_Global_String}.MathObjects'.  'this' refers to the current AllMath object.  this._internals.call() and this._internals.call_attr() just call functions from the correct math object. call_attr() uses the correct attribute from the math object. not all the functions are guaranteed to work for all types. this._internals._getNameOf() gets the name of a math object given the object. this._internals._typeToObj gives the corresponding math object based on the type (the key).`;
 				}
 			}
-			for (const fname of Object.values(MathObjects).map(e => protoProps(e)).flat().remrep().remove("constructor"))
+
+			for (const fname of Object.values(MathObjects).map(e => _protoProps(e)).flat().remrep().remove("constructor"))
 				AllMath.prototype[fname] = function () { return _call(fname, null, ...arguments) }
 			if (LibSettings.aMath_DegTrig_Argument) {
 				AllMath.prototype.deg = {};
@@ -5169,10 +5457,12 @@ void (() => { "use strict";
 					Object.getOwnPropertyNames(bMath.deg),
 				)) AllMath.prototype.eq[fname] = function () { return _call_attr(fname, "eq", null, ...arguments) }
 			}
-			if (LibSettings.aMath_Internals_Argument) AllMath.prototype.internals = {
-				call      : _call,
-				call_attr : _call_attr,
-				getNameOf : _getNameOf,
+			if (LibSettings.aMath_Internals_Argument) AllMath.prototype._internals = {
+				  _call       : _call
+				, _call_attr  : _call_attr
+				, _getNameOf  : _getNameOf
+				, _protoProps : _protoProps
+				, _typeToObj  : _typeToObj
 			};
 			return new AllMath;
 		}, "defer call Types"() { return {
@@ -5454,7 +5744,8 @@ void (() => { "use strict";
 				// default: break;
 			}
 			if (LibSettings.ON_CONFLICT !== "cry" && LibSettings.ON_CONFLICT !== "debugger") {
-				LibSettings.ON_CONFLICT !== "none" && console.debug(`${LibSettings.LIBRARY_NAME} encountered variable conflicts`);
+				LibSettings.ON_CONFLICT !== "none" &&
+					console.debug(`${LibSettings.LIBRARY_NAME} encountered variable conflicts`);
 				return 1;
 			}
 		}
@@ -5482,8 +5773,15 @@ void (() => { "use strict";
 		, piApproxStr = n => sMath.div(sMath.square(a(n+1)), t(n));
 		return piApproxStr;
 	})();
-*/
-function encrypt( // probably not secure, but idk
+
+                    1                             1     x     5
+   ----------------------------------- ≈ tan(x), --- ≤ --- ≤ ---
+     √12         /  3       3  \                  6     π     6
+    ----- cos ⁻¹ | --- x - --- | - √3
+      π          \  π       2  /
+
+	cos⁻¹(-x) = π - cos⁻¹(x)
+*/ function encrypt( // probably not secure, but idk, that wasn't the point
 	// things used:
 	// floor, ceil, round, trunc, plus, minus, times, divide, modulo, sin, length, bitwise or...
 	// bitwise and, bitwise xor, logical or, bitwise left shift, bitwise right shift, caesar shift...
@@ -5542,19 +5840,4 @@ function encrypt( // probably not secure, but idk
 		}
 	}
 	return str;
-}
-
-var str = "aaasdfae3";
-var out = encrypt(str);
-
-function test(str="") {
-	var i = 0, stt = str, list = [];
-	do i++,
-		list.push(str),
-		str = encrypt(str);
-	while (
-		str !== stt &&
-		!list.incl(str)
-	);
-	return list.incl(str) ? [Infinity, i] : i;
 }
