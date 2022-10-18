@@ -1,2 +1,38 @@
-% pdflatex%
-\documentclass[12pt]{article}\usepackage{amssymb,latexsym,amsmath}\usepackage[margin=1in,footskip=0.5in]{geometry}\begin{document}\addtolength{\topmargin}{-1in}\title{Point Rotation Formula Proof}\author{Daniel E. Janusch}\maketitle\noindent preface: $\tan^{-1}(y,x)$\\\\pf:\\\\goal: rotate $(a,b)~\theta$ units around the point $(h,k)$\\$A_1:=(a,b)$\\$B_1:=(a,k)$\\$C_1:=(h,k)$\\\\\text{shift everything by $(-h,-k)$}\\$A_2:=(a-h,b-k)$\\$B_2:=(a-h,0)$\\$C_2:=(0,0)$\\\\$m\angle A_1B_1C_1=m\angle A_2B_2C_2$\\\\$t:=\tan^{-1}\left(b-k,a-h\right)$~~~~(the angle that $(a,b)$ would have if $(h,k)$ was the origin)\\\\$\theta_2:=t+\theta$ (the new angle)\\$(\cos\theta_2,\sin\theta_2)$ has the right angle with the distance scaled to 1\\\\$d:=\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}$ (the distance between $(a,b)$ and $(h,k)$)\\\\the point would then be $(d\cos\theta_2,d\sin\theta_2)$\\\\after shifting by $(h,k)$ to counteract the shift from before it becomes $(h+d\cos\theta_2,k+d\sin\theta_2)$\\$=\left(\begin{aligned}h+\cos\left(\tan^{-1}\left(b-k,a-h\right)+\theta\right)\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}~,\\k+\sin\left(\tan^{-1}\left(b-k,a-h\right)+\theta\right)\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}\end{aligned}\right)$\\\\\blacksquare\end{document}
+% pdflatex %
+\documentclass[12pt]{article}
+\usepackage{amssymb,latexsym,amsmath}
+\usepackage[margin=1in,footskip=0.5in]{geometry}
+\begin{document}
+\addtolength{\topmargin}{-1in}
+\title{Point Rotation Formula Proof}
+\author{Daniel E. Janusch}
+\maketitle
+\noindent preface: $\tan^{-1}(y,x)$\\
+
+\noindent pf:\\
+
+\noindent goal: rotate $(a,b)~\theta$ units around the point $(h,k)$\\
+$A_1:=(a,b)$\\
+$B_1:=(a,k)$\\
+$C_1:=(h,k)$\\
+\\
+\text{shift everything by $(-h,-k)$}\\
+$A_2:=(a-h,b-k)$\\
+$B_2:=(a-h,0)$\\
+$C_2:=(0,0)$\\
+\\
+$m\angle A_1B_1C_1=m\angle A_2B_2C_2$\\
+\\
+$t:=\tan^{-1}\left(b-k,a-h\right)$~~~~(the angle that $(a,b)$ would have if $(h,k)$ was the origin)\\
+\\
+$\theta_2:=t+\theta$ (the new angle)\\$(\cos\theta_2,\sin\theta_2)$ has the right angle with the distance scaled to 1\\
+\\
+$d:=\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}$ (the distance between $(a,b)$ and $(h,k)$)\\
+\\
+the point would then be $(d\cos\theta_2,d\sin\theta_2)$\\
+\\
+after shifting by $(h,k)$ to counteract the shift from before it becomes $(h+d\cos\theta_2,k+d\sin\theta_2)$\\$=\left(\begin{aligned}h+\cos\left(\tan^{-1}\left(b-k,a-h\right)+\theta\right)\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}~,\\
+k+\sin\left(\tan^{-1}\left(b-k,a-h\right)+\theta\right)\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}\end{aligned}\right)$\\
+\\
+\blacksquare
+\end{document}
