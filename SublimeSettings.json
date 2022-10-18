@@ -4,6 +4,7 @@
 		"font_size": 16,
 		"save_on_focus_lost": true,
 		"word_wrap": true,
+		"light_color_scheme": "Mariana.sublime-color-scheme", // dark theme
 		"match_brackets_content": false,
 		"move_to_limit_on_up_down": true,
 		"control_character_style": "names",
@@ -13,7 +14,8 @@
 		{ "keys": ["f1"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
 		{ "keys": ["shift+backspace"], "command": "right_delete" },
 		{ "keys": ["insert"], "command": "" },
+		{ "keys": ["ctrl+k", "ctrl+t"], "command": "title_case" },
+		{ "keys": ["ctrl+u"], "command": "upper_case" },
+		{ "keys": ["ctrl+shift+u"], "command": "lower_case" },
 	]
-	// ctrl+shift+l = break selection into lines
-	// ctrl+l = expand selection into one block
 }
