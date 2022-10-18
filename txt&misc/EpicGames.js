@@ -67,6 +67,7 @@ var OwnedGames = {
 	, "Black Widow: Recharged": 9.99
 	, "Black Widow": 0 // duplicate
 	, "Blair Witch": 29.99
+	, "Blankos Block Party": 0
 	, "Borderlands 2": 19.99
 	, "Borderlands 3": 59.99
 	, "Borderlands: The Pre-Sequel": 39.99
@@ -110,6 +111,7 @@ var OwnedGames = {
 	, "Darksiders 2": 0 // duplicate
 	, "Darksiders Warmastered Edition": 19.99
 	, "Darksiders": 0 // duplicate
+	, "Darkwood": 13.99
 	, "DARQ: Complete Edition": 19.99
 	, "DARQ": 0 // duplicate
 	, "Days of War Editor": 0
@@ -418,6 +420,10 @@ var OwnedGames = {
 	, "theHunter": 0 // duplicate
 	, "Thunder Tier One Modding Tool": 0
 	, "Ticket to Ride": 9.99
+	, "ToeJam & Earl: Back in the Groove!": 14.99
+	, "ToeJam and Earl: Back in the Groove!": 0 // duplicate
+	, "ToeJam & Earl": 0 // duplicate
+	, "ToeJam and Earl": 0 // duplicate
 	, "Tomb Raider GAME OF THE YEAR EDITION": 19.99
 	, "Tomb Raider": 0 // duplicate
 	, "Torchlight II": 19.99
@@ -461,7 +467,7 @@ var OwnedGames = {
 },
 
 account_worth = `$${Object.values(OwnedGames).filter(
-	e => e && ["number", "bigint"].incl(typeof e) // in case I decide to change how the duplicates ...
+	e => e && ["number","bigint"].incl(typeof e) // in case I decide to change how the duplicates ...
 	// ... are displayed, and instead make them a string or something.
 ).reduce(
 	(t, x) => sMath.add(t, x),
