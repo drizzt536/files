@@ -26,6 +26,8 @@ var OwnedGames = {
 	, "AER Memories of Old": 14.99
 	, "Against The Storm Royal Woodlands Demo": 0
 	, "Alan Wake's American Nightmare": 8.99
+	, "Alba - A Wildlife Adventure": 16.99
+	, "Alba": 0 // duplicate
 	, "Amnesia: A Machine for Pigs": 19.99
 	, "Among The Sleep - Enhanced Edition": 16.99
 	, "Among Us": 4.99
@@ -138,9 +140,13 @@ var OwnedGames = {
 	, "Europa Universalis IV": 39.99
 	, "Europa Universalis 4": 0 // duplicate
 	, "EVE Online": 0
+	, "Evoland Legendary Edition": 19.99
+	, "Evoland": 0 // duplicate
 	, "Eyes in the Dark Demo": 0
 	, "Faeria": 19.99
 	, "Fall Guys": 0
+	, "Fallout 3: Game of the Year Edition": 19.99
+	, "Fallout 3": 0 // duplicate
 	, "Farming Simulator 19": 19.99
 	, "Fault: Elder Orb": 0
 	, "FTL: Faster Than Light": 9.99
@@ -325,6 +331,7 @@ var OwnedGames = {
 	, "Saints Row Boss Factory": 0
 	, "Saints Row The Third Remastered": 39.99
 	, "Saints Row The Third": 0 // duplicate
+	, "Saturnalia": 19.99
 	, "SAMURAI SHODOW NEOGEO COLLECTION": 39.99
 	, "Scavengers": 0
 	, "Second Extinction™": 24.99
@@ -445,6 +452,10 @@ var OwnedGames = {
 	, "Warframe": 0
 	, "Wargame: Red Dragon": 29.99
 	, "Wargame": 0 // duplicate
+	, "Warhammer 40,000: Mechanicus": 29.99
+	, "Warhammer 40,000": 0 // duplicate
+	, "Warhammer 40000": 0 // duplicate
+	, "Warhammer": 0 // duplicate
 	, "Watch Dogs 2: Standard Edition": 59.99
 	, "Watch Dogs 2": 0 // duplicate
 	, "Wheels of Aurelia": 14.99
@@ -467,7 +478,7 @@ var OwnedGames = {
 },
 
 account_worth = `$${Object.values(OwnedGames).filter(
-	e => e && ["number","bigint"].incl(typeof e) // in case I decide to change how the duplicates ...
+	e => e && ["number", "bigint"].incl(typeof e) // in case I decide to change how the duplicates ...
 	// ... are displayed, and instead make them a string or something.
 ).reduce(
 	(t, x) => sMath.add(t, x),
