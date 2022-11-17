@@ -1,0 +1,248 @@
+% file for pdflatex.exe
+
+\documentclass[12pt]{article}
+\usepackage{amssymb,latexsym,amsmath}
+
+\begin{document}
+
+% \title{Trigonometric Functions in Terms of Gamma} % old title
+\title{The Gamma Function, Its Inverse, And Its Relationship With Trigonometry}
+\author{Daniel E. Janusch}
+\date{November 16, 2022, 8:32pm MST}
+\maketitle
+
+\begin{section}{Definitions}
+
+	\begin{equation}
+		0\in\mathbb N
+	\end{equation}
+
+	\begin{equation}
+		\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}
+	\end{equation}
+
+	\begin{equation}
+		\tau:=2\pi
+	\end{equation}
+
+	\begin{equation}
+		\Gamma(x):=\int_0^\infty\dfrac{t^{x-1}dt}{\exp\left(t\right)}=(x-1)!~\forall x>0
+	\end{equation}
+
+	\begin{equation}
+		\zeta(x):=\sum_{n=0}^\infty\dfrac1{n^x}\forall x>1
+	\end{equation}
+
+	\begin{equation}
+		\eta(x):=\Gamma^{-1}(x)
+	\end{equation}
+
+	\begin{equation}
+		\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x
+	\end{equation}
+
+	(6) is the compositional inverse rather than the fractional inverse.
+
+	The set of all natural numbers, $\mathbb N$, is defined by (1) and (2).
+
+	(5) describes the Riemann Zeta Function.
+
+	``$\ni$" means ``such that".
+\end{section}
+
+\pagebreak
+\begin{section}{Riemann Zeta Function}
+	claim: $\zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}$\\
+	This proof is important for part 3.\\
+	Proof:\\
+	know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)\\
+
+	\begin{equation}
+		\zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma\left(1-x\right)\zeta\left(1-x\right)
+	\end{equation}
+
+	\begin{equation}
+		\zeta(x)=2\cdot2^{x-1}\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)
+	\end{equation}
+
+	\begin{equation}
+		\zeta(x)=2\cdot\tau^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)
+	\end{equation}
+
+	\begin{equation}
+		\zeta(x)=2\cdot\tau^{x-1}\cos\left(\dfrac\pi2(1-x)\right)\Gamma(1-x)\zeta(1-x)
+	\end{equation}
+
+	\begin{equation}
+		\zeta(x)=\dfrac2{\tau^{1-x}}\cos\left(\dfrac\pi2(1-x)\right)\Gamma(1-x)\zeta(1-x)
+	\end{equation}
+
+	\begin{equation}
+		\zeta(1-x)=\dfrac2{\tau^x}\cos\left(\dfrac{\pi x}2\right)\Gamma(x)\zeta(x)
+	\end{equation}
+
+	\begin{equation}
+		\dfrac{\zeta(1-x)\tau^x}{2\cos\left(\dfrac{\pi x}2\right)\Gamma(x)}=\zeta(x)
+	\end{equation}
+
+	\begin{equation}
+		\zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
+	\end{equation}
+
+	\noindent\blacksquare
+\end{section}
+
+\pagebreak
+\begin{section}{Cosecant}
+	claim: $\csc x$ can be written in terms of $\Gamma(x)$
+
+	\noindent Proof:
+
+	\noindent know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)\\
+	
+	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}\\
+
+	\begin{equation}
+		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
+	\end{equation}
+
+	\begin{equation}
+		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x)=\dfrac{\tau^x}{2\,\Gamma(x)}
+	\end{equation}
+
+	\begin{equation}
+		4\cdot\tau^{x-1}\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x)=\dfrac{\tau^x}{\Gamma(x)}
+	\end{equation}
+
+	\begin{equation}
+		2\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x)=\dfrac{\pi}{\Gamma(x)}
+	\end{equation}
+
+	\begin{equation}
+		\Gamma(1-x)\Gamma(x)\sin\pi x=\pi
+	\end{equation}
+
+	\begin{equation}
+		\Gamma(1-x)\Gamma(x)=\pi\csc\pi x
+	\end{equation}
+
+	\begin{equation}
+		\csc x=\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)
+	\end{equation}
+
+	\noindent\blacksquare
+\end{section}
+
+\pagebreak
+\begin{section}{The Remaining Functions}
+	
+	\noindent claim: The rest of the trig functions can be written in terms of cosecant
+
+	\noindent Proof:
+
+	\begin{equation}\sin x=\dfrac1{\csc x}\end{equation}
+
+	\begin{equation}\cos x=\dfrac1{\csc\left(\dfrac\pi2-x\right)}\end{equation}
+
+	\begin{equation}\tan x=\dfrac{\csc\left(\dfrac\pi2-x\right)}{\csc x}\end{equation}
+
+	% \begin{equation}\csc x=\csc x\end{equation}
+	
+	\begin{equation}\sec x=\csc\left(\dfrac\pi2-x\right)\end{equation}
+
+	\begin{equation}\cot x=\dfrac{\csc x}{\csc\left(\dfrac\pi2-x\right)}\end{equation}
+
+
+	\begin{equation}\sinh x=-\dfrac i{\csc x}\end{equation}
+
+	\begin{equation}\cosh x=\dfrac1{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
+
+	\begin{equation}\tanh x=-\dfrac{i\csc\left(\dfrac\pi2-ix\right)}{\csc ix}\end{equation}
+
+	\begin{equation}\text{csch}\,x=i\csc ix\end{equation}
+
+	\begin{equation}\text{sech}\,x=\csc\left(\dfrac\pi2-ix\right)\end{equation}
+
+	\begin{equation}\coth x=\dfrac{i\csc ix}{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
+
+	Therefore, all the trigonometric functions can be written in terms of $\Gamma(x)$.
+
+	\noindent\blacksquare
+\end{section}
+
+\pagebreak
+\begin{section}{Inverse Gamma Function}
+	
+	claim: $\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))$\\
+	Proof:\\
+	know: $\Gamma(x)\Gamma(1-x)=\pi\csc\pi x~~~$(equation 21)
+
+	\begin{equation}
+		\pi\csc\pi x=\Gamma(x)\Gamma(1-x)
+	\end{equation}
+
+	\begin{equation}
+		\pi\csc\pi\eta(x)=x\Gamma(1-\eta(x))
+	\end{equation}
+
+	\begin{equation}
+		\csc\pi\eta(x)=\dfrac x\pi\Gamma(1-\eta(x))
+	\end{equation}
+
+	\begin{equation}
+		\pi\eta(x)=\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))
+	\end{equation}
+
+	\begin{equation}
+		\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))
+	\end{equation}
+
+	\noindent\blacksquare
+
+	There are 2 conditions to where $\eta(x)$ is defined.
+
+	$\eta(x)$ is not defined over the real numbers such that the following is true:
+
+	\begin{equation}
+		|x\,\Gamma(1-\eta(x))|<\pi~~\text{or}~~|x|<\sim3.547373963...
+	\end{equation}
+
+	I assume that this value is transcendental or at least algebraic.
+
+	$\eta(x)$ is guaranteed to be defined if (39) is false and $x$ is negative.
+
+	$\eta(x)$ is defined for all integers and around the integers.
+
+	The area around the integer that is defined gets smaller as $x$ increases,
+
+	though I do not know why this is the case.
+
+	If you are recursing $\eta(x)$ and you change the $\dfrac x\pi$ to $\dfrac{x^n}\pi$,
+
+	for some $n\in\mathbb N_2$, it either gets defined for more values,
+
+	or there is a bug in Desmos' graphing calculations.
+
+	These extra values are just expanded ranges around the positive integers.
+
+	It doesn't change the rule described in (39), however.
+
+	See reference 2 for more information.
+
+	going a different way after (35) gives the following equation:
+
+	\begin{equation}
+		\eta(x)=1-\eta\left(\dfrac\pi x\csc\pi\eta(x)\right)
+	\end{equation}
+
+\end{section}
+
+\pagebreak
+\begin{section}{References}
+	- https://mathworld.wolfram.com/RiemannZetaFunction.html (equation 8)\\
+	- https://www.desmos.com/calculator/ieu6ebnfn8 (part 5)\\
+	- https://www.github.com/drizzt536/files
+\end{section}
+
+
+\end{document}\
