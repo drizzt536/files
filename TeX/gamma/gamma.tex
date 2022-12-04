@@ -2,13 +2,12 @@
 
 \documentclass[12pt]{article}
 \usepackage{amssymb,latexsym,amsmath}
-
 \begin{document}
 
 % \title{Trigonometric Functions in Terms of Gamma} % old title
-\title{The Gamma Function, Its Inverse, And Its Relationship With Trigonometry}
+\title{The Gamma Function, Its Inverse, and Its Relationship With Trigonometry}
 \author{Daniel E. Janusch}
-\date{November 16, 2022} % 8:56pm MST
+\date{December 3, 2022} % ~11:51pm MST
 \maketitle
 
 \begin{section}{Definitions}
@@ -18,7 +17,7 @@
 	\end{equation}
 
 	\begin{equation}
-		\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}
+		\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}\forall\,k
 	\end{equation}
 
 	\begin{equation}
@@ -26,11 +25,11 @@
 	\end{equation}
 
 	\begin{equation}
-		\Gamma(x):=\int_0^\infty\dfrac{t^{x-1}dt}{\exp\left(t\right)}=(x-1)!~\forall x>0
+		\Gamma(x):=\int_0^\infty\dfrac{t^{x-1}}{\exp t}\text dt=(x-1)!~\forall x>0
 	\end{equation}
 
 	\begin{equation}
-		\zeta(x):=\sum_{n=0}^\infty\dfrac1{n^x}\forall x>1
+		\zeta(x):=\sum_{n=1}^\infty\dfrac1{n^x}\forall x>1
 	\end{equation}
 
 	\begin{equation}
@@ -43,11 +42,9 @@
 
 	(6) is the compositional inverse rather than the fractional inverse.
 
-	The set of all natural numbers, $\mathbb N$, is defined by (1) and (2).
+	The set of all natural numbers, $\mathbb N$, is defined by equations (1) and (2).
 
 	(5) describes the Riemann Zeta Function.
-
-	``$\ni$" means ``such that".
 \end{section}
 
 \pagebreak
@@ -55,7 +52,7 @@
 	claim: $\zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}$\\
 	This proof is important for part 3.\\
 	Proof:\\
-	know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)\\
+	know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)~~~(\text{reference }1)\\
 
 	\begin{equation}
 		\zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma\left(1-x\right)\zeta\left(1-x\right)
@@ -98,9 +95,9 @@
 
 	\noindent Proof:
 
-	\noindent know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)\\
+	\noindent know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)~~~(\text{reference }1)\\
 	
-	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}\\
+	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}~~~(\text{equation }15)\\
 
 	\begin{equation}
 		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
@@ -130,11 +127,17 @@
 		\csc x=\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)
 	\end{equation}
 
+	\begin{equation}
+		\sin\pi x\ne0\Longrightarrow\zeta(1-x)\ne0
+	\end{equation}
+
+	\text{Therefore, the domains also match.}
+
 	\noindent\blacksquare
 \end{section}
 
 \pagebreak
-\begin{section}{The Remaining Functions}
+\begin{section}{Trig Functions In Terms of Cosecant}
 	
 	\noindent claim: The rest of the trig functions can be written in terms of cosecant
 
@@ -165,9 +168,56 @@
 
 	\begin{equation}\coth x=\dfrac{i\csc ix}{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
 
-	Therefore, all the trigonometric functions can be written in terms of $\Gamma(x)$.
-
 	\noindent\blacksquare
+\end{section}
+
+\pagebreak
+\begin{section}{Trig Functions In Terms of Gamma}
+	
+	\noindent These equations are just the previous ones with Gamma plugged in for csc.
+
+	\begin{equation}\sin x=\pi\big/\,\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\end{equation}
+
+	\begin{equation}
+		\cos x=\pi\big/\,\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)
+	\end{equation}
+
+	\begin{equation}
+		\tan x=\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)\big/\,\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)
+	\end{equation}
+	
+	\begin{equation}\csc x=\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\big/\,\pi\end{equation}
+
+	\begin{equation}\sec x=\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)\big/\,\pi\end{equation}
+
+	\begin{equation}
+		\cot x=\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)
+	\end{equation}
+
+
+	\begin{equation}\sinh x=-\pi i\big/\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\end{equation}
+
+	\begin{equation}
+		\cosh x=\pi\big/\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
+	\end{equation}
+
+	\begin{equation}
+		\tanh x=-i\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\big/\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)
+	\end{equation}
+
+	\begin{equation}
+		\text{csch}\,x=i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\big/\,\pi
+	\end{equation}
+
+	\begin{equation}
+		\text{sech}\,x=\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\big/\,\pi
+	\end{equation}
+
+	\begin{equation}
+		\coth x=i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac {ix}\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac {ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
+	\end{equation}
+
+	\noindent where ``$\big/$" means divide everything on the left by everything on the right.
 \end{section}
 
 \pagebreak
@@ -175,73 +225,51 @@
 	
 	claim: $\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))$\\
 	Proof:\\
-	know: $\Gamma(x)\Gamma(1-x)=\pi\csc\pi x~~~$(equation 21)
+	know: $\Gamma(x)\,\Gamma(1-x)=\pi\csc\pi x~~~$(equation 21)
 
-	\begin{equation}
-		\pi\csc\pi x=\Gamma(x)\Gamma(1-x)
-	\end{equation}
+	\begin{equation}\pi\csc\pi x=\Gamma(x)\,\Gamma(1-x)\end{equation}
 
-	\begin{equation}
-		\pi\csc\pi\eta(x)=x\Gamma(1-\eta(x))
-	\end{equation}
+	\begin{equation}\pi\csc\pi\eta(x)=x\,\Gamma(1-\eta(x))\end{equation}
 
-	\begin{equation}
-		\csc\pi\eta(x)=\dfrac x\pi\Gamma(1-\eta(x))
-	\end{equation}
+	\begin{equation}\csc\pi\eta(x)=\dfrac x\pi\Gamma(1-\eta(x))\end{equation}
 
-	\begin{equation}
-		\pi\eta(x)=\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))
-	\end{equation}
+	\begin{equation}\pi\eta(x)=\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))\end{equation}
 
-	\begin{equation}
-		\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))
-	\end{equation}
+	\begin{equation}\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))\end{equation}
 
 	\noindent\blacksquare
 
-	There are 2 conditions to where $\eta(x)$ is defined.
-
-	$\eta(x)$ is not defined over the real numbers such that the following is true:
-
+	\noindent There are 2 conditions to where this $\eta(x)$ is defined.\\
+	$\eta(x)$ is \textbf{not} defined (over the real numbers) such that the following is true:\\
 	\begin{equation}
-		|x\,\Gamma(1-\eta(x))|<\pi~~\text{or}~~|x|<\sim3.547373963...
-	\end{equation}
-
-	I assume that this value is transcendental or at least algebraic.
-
-	$\eta(x)$ is guaranteed to be defined if (39) is false and $x$ is negative.
-
-	$\eta(x)$ is defined for all integers and around the integers.
-
-	The area around the integer that is defined gets smaller as $x$ increases,
-
-	though I do not know why this is the case.
-
-	If you are recursing $\eta(x)$ and you change the $\dfrac x\pi$ to $\dfrac{x^n}\pi$,
-
-	for some $n\in\mathbb N_2$, it either gets defined for more values,
-
-	or there is a bug in Desmos' graphing calculations.
-
-	These extra values are just expanded ranges around the positive integers.
-
-	It doesn't change the rule described in (39), however.
-
-	See reference 2 for more information.
-
-	going a different way after (35) gives the following equation:
-
+		|x\,\Gamma(1-\eta(x))|<\pi~~\text{or}~~|x|<3.547373963...~~(V)
+	\end{equation}\\
+	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation\\
+	(52) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small\\
+	fields around each integer. The area defined around each integer gets smaller\\
+	as $x$ increases, though it is unclear why at this time. If $\eta(x)$ is being recursed\\
+	and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either\\
+	the fields get larger, or there is a bug in Desmos' graphing calculations. See\\
+	reference 2 for more information. going a different way after (48) gives the\\
+	following equation:\\
 	\begin{equation}
-		\eta(x)=1-\eta\left(\dfrac\pi x\csc\pi\eta(x)\right)
-	\end{equation}
-
+		\eta(x)=1-\eta\left(\dfrac\pi x\csc\pi\eta(x)\right)\Longrightarrow\eta(x)=\eta(\pi\csc(\pi\csc\pi x)\sin\pi x)
+	\end{equation}\\
+	This equation seems to be less useful because it has large absolute derivatives\\
+	which gets more severe as it is recursed.
 \end{section}
 
 \pagebreak
 \begin{section}{References}
-	- https://en.wikipedia.org/wiki/Riemann\_zeta\_function (equation 8)\\
-	- https://www.desmos.com/calculator/ieu6ebnfn8 (for part 5, made by me)\\
-	- https://www.github.com/drizzt536/files/tree/main/TeX/gamma/ (me)
+
+	\noindent- \url{https://en.wikipedia.org/wiki/Riemann\_zeta\_function\#Riemann's\_functional\_equation}\\
+	\indent\text{Link for equation 8}\\
+
+	\noindent- \url{https://www.desmos.com/calculator/t51xnveadf}\\
+	\indent\text{Extra information for part 6, made by me}\\
+
+	\noindent- \url{https://www.github.com/drizzt536/files/tree/main/TeX/gamma}\\
+	\indent\text{The files for the most recent version of this pdf and the LaTeX code}
 \end{section}
 
 
