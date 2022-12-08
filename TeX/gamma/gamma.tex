@@ -4,10 +4,11 @@
 \usepackage{amssymb,latexsym,amsmath}
 \begin{document}
 
+
 % \title{Trigonometric Functions in Terms of Gamma} % old title
 \title{The Gamma Function, Its Inverse, and Its Relationship with Trigonometry}
 \author{Daniel E. Janusch}
-\date{December 3, 2022} % ~11:51pm MST
+\date{December 7, 2022} % ~11:45pm MST
 \maketitle
 
 \begin{section}{Definitions}
@@ -42,13 +43,16 @@
 
 	(6) is the compositional inverse rather than the fractional inverse.
 
-	The set of all natural numbers, $\mathbb N$, is defined by equations (1) and (2).
+	The set of all natural numbers, $\mathbb N$, is defined in part by (1) and (2).
 
 	(5) describes the Riemann Zeta Function.
+
+	``$\ni$" means ``such that".
+
+	$x$ is assumed to be a real number, but It probably doesn't matter.
 \end{section}
 
-\pagebreak
-\begin{section}{Riemann Zeta Function}
+\pagebreak\begin{section}{Riemann Zeta Function}
 	claim: $\zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}$\\
 	This proof is important for part 3.\\
 	Proof:\\
@@ -89,8 +93,7 @@
 	\noindent\blacksquare
 \end{section}
 
-\pagebreak
-\begin{section}{Cosecant}
+\pagebreak\begin{section}{Cosecant}
 	claim: $\csc x$ can be written in terms of $\Gamma(x)$
 
 	\noindent Proof:
@@ -131,13 +134,12 @@
 		\sin\pi x\ne0\Longrightarrow\zeta(1-x)\ne0
 	\end{equation}
 
-	\text{Therefore, the domains also match.}
+	\text{Therefore, due to (23), the domains also match.}
 
 	\noindent\blacksquare
 \end{section}
 
-\pagebreak
-\begin{section}{Trig Functions In Terms of Cosecant}
+\pagebreak\begin{section}{Trig Functions In Terms of Cosecant}
 	
 	\noindent claim: The rest of the trig functions can be written in terms of cosecant
 
@@ -171,8 +173,7 @@
 	\noindent\blacksquare
 \end{section}
 
-\pagebreak
-\begin{section}{Trig Functions In Terms of Gamma}
+\pagebreak\begin{section}{Trig Functions In Terms of Gamma}
 	
 	\noindent These equations are just the previous ones with Gamma plugged in for csc.
 
@@ -220,8 +221,7 @@
 	\noindent where ``$\big/$" means divide everything on the left by everything on the right.
 \end{section}
 
-\pagebreak
-\begin{section}{Inverse Gamma Function}
+\pagebreak\begin{section}{Inverse Gamma Function}
 	
 	claim: $\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))$\\
 	Proof:\\
@@ -259,8 +259,27 @@
 	which gets more severe as it is recursed.
 \end{section}
 
-\pagebreak
-\begin{section}{References}
+\pagebreak\begin{section}{Miscellaneous}
+	(39) gives the following 2 formulas after some manipulation:
+	\begin{equation}
+		\Gamma\left(x+\dfrac12\right)=\dfrac{\pi\sec\pi x}{\Gamma\left(\dfrac12-x\right)}
+	\end{equation}\\
+	replacing $x$ with $x+z$ and adjusting from gamma to factorial gives:\\
+	\begin{equation}
+		\left(x+\frac12+z\right)!=\left(2\left(z\,\text{mod}\,2\right)-1\right)\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\ni z\in\mathbb Z
+	\end{equation}\\
+	This only simplifies things if $z$ is an integer because $\sec(x+\tau)=\sec x$,\\
+	and $\sec(x+\pi)=-\sec x$.\\
+	rewriting (21) from gamma to factorial gives:
+	\begin{equation}
+		(x-1)!(-x)!=\pi\csc\pi x
+	\end{equation}\\
+	\begin{equation}
+		(-x)!=\dfrac{\pi x\csc\pi x}{x!}
+	\end{equation}
+\end{section}
+
+\pagebreak\begin{section}{References}
 
 	\noindent- \url{https://en.wikipedia.org/wiki/Riemann\_zeta\_function\#Riemann's\_functional\_equation}\\
 	\indent\text{Link for equation 8}\\
