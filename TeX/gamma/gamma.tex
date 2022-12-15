@@ -11,17 +11,17 @@
 % \title{Trigonometric Functions in Terms of Gamma} % old title
 \title{The Gamma Function, Its Inverse, and Its Relationship with Trigonometry}
 \author{Daniel E. Janusch}
-\date{December 15, 2022} % ~6:00am MST
+\date{December 15, 2022} % ~6:18am MST
 \maketitle
 
 \begin{section}{Definitions}
 
 	\begin{equation}
-		0\in\mathbb N~~(1a)\hspace{2em}\tau:=2\pi~~(1b)
+		0\in\mathbb N~~(1\text a)\hspace{2em}\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}\forall\,k~~(1\text b)
 	\end{equation}
 
 	\vspace{-0.065em}\begin{equation}
-		\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}\forall\,k
+		\tau:=2\pi
 	\end{equation}
 
 	\vspace{-0.065em}\begin{equation}
@@ -29,7 +29,7 @@
 			1,x>0\\
 			0,x=0\\
 			-1,x<0
-		\end{cases}
+		\end{cases}\hspace{-1em}=\dfrac x{|x|}~\forall x
 	\end{equation}
 
 	\vspace{-0.065em}\begin{equation}
@@ -49,15 +49,15 @@
 	\end{equation}
 
 	\vspace{-0.065em}\begin{equation}
-		\eta(x):=\Gamma^{-1}(x)~~(8a)\hspace{2em}\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x~~(8b)
+		\eta(x):=\Gamma^{-1}(x)~~(8\text a)\hspace{2em}\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x~~(8\text b)
 	\end{equation}
 
-	\noindent(8a) is the compositional inverse rather than the fractional inverse. The set of all natural numbers, $\mathbb N$, is defined in part by (1a) and (2). (7) describes the Riemann Zeta Function. $x$ is assumed to be a real number for simplicity, but It probably doesn't matter.
+	\noindent(8a) is the compositional inverse rather than the fractional inverse. The set of all natural numbers, $\mathbb N$, is defined in part by (1a) and (1b). (7) describes the Riemann Zeta Function. $x$ is assumed to be a real number for simplicity, but It probably doesn't matter.
 \end{section}
 
 \pagebreak\begin{section}{Riemann Zeta Function}
 	claim: $\zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}$\\
-	This proof is important for part 3.\\
+	This proof is important for section 3.\\
 	Proof:\\
 	know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)~~~(\text{reference }1)\\
 
@@ -103,7 +103,7 @@
 
 	\noindent know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)~~~(\text{reference }1)\\
 	
-	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}~~~(\text{equation }15)\\
+	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}~~~(\text{equation }16)\\
 
 	\begin{equation}
 		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
@@ -137,7 +137,7 @@
 		\sin\pi x\ne0\Longrightarrow\zeta(1-x)\ne0
 	\end{equation}
 
-	\text{Therefore, due to (23), the domains also match.}
+	\text{Therefore, due to (24), the domains also match.}
 
 	\noindent\blacksquare
 \end{section}
@@ -172,6 +172,8 @@
 	\begin{equation}\text{sech}\,x=\csc\left(\dfrac\pi2-ix\right)\end{equation}
 
 	\begin{equation}\coth x=\dfrac{i\csc ix}{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
+
+	\centerline{$\csc(x)=\csc(x)$ by the reflexive property.}
 
 	\noindent\blacksquare
 \end{section}
@@ -228,7 +230,7 @@
 	
 	claim: $\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))$\\
 	Proof:\\
-	know: $\Gamma(x)\,\Gamma(1-x)=\pi\csc\pi x~~~$(equation 21)
+	know: $\Gamma(x)\,\Gamma(1-x)=\pi\csc\pi x~~~$(equation 22)
 
 	\begin{equation}\pi\csc\pi x=\Gamma(x)\,\Gamma(1-x)\end{equation}
 
@@ -247,7 +249,8 @@
 	\begin{equation}
 		|x\,\Gamma(1-\eta(x))|<\pi~~\text{or}~~|x|<3.547373963...~~(V)
 	\end{equation}\\
-	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation (52) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small fields around each integer. The area defined around each integer gets smaller as $x$ increases, though it is unclear why at this time. If $\eta(x)$ is being recursed and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either the fields get larger, or there is a bug in Desmos' graphing calculations. See reference 2 for more information. going a different way after (48) gives the following equation:\\
+	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation (53) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small fields around each integer. The area defined around each integer gets smaller as $x$ increases, though it is unclear why without further inspection. If $\eta(x)$ is being recursed and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either the fields get larger, or there is a bug in Desmos' graphing calculations. See reference 2 for more information.\\
+	Going a different way after (49) gives the following equation:\\
 	\begin{equation}
 		\eta(x)=1-\eta\left(\dfrac\pi x\csc\pi\eta(x)\right)\Longrightarrow\eta(x)=\eta(\pi\csc(\pi\csc\pi x)\sin\pi x)
 	\end{equation}\\
@@ -255,7 +258,7 @@
 \end{section}
 
 \pagebreak\begin{section}{Miscellaneous}
-	(39) gives the following formulas after some manipulation:
+	(40) implies the following formula:
 	\begin{equation}
 		\Gamma\left(x+\dfrac12\right)=\dfrac{\pi\sec\pi x}{\Gamma\left(\dfrac12-x\right)}
 	\end{equation}\\
@@ -264,7 +267,7 @@
 		\left(x+\frac12+z\right)!=\left(2\left(z\,\text{mod}\,2\right)-1\right)\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\forall z\in\mathbb Z
 	\end{equation}\\
 	This only simplifies things if $z$ is an integer because $\sec(x+\tau)=\sec x$,\\
-	and $\sec(x+\pi)=-\sec x$. rewriting (21) from gamma to factorial gives:
+	and $\sec(x+\pi)=-\sec x$. rewriting (22) from gamma to factorial gives:
 	\begin{equation}
 		(x-1)!(-x)!=\pi\csc\pi x
 	\end{equation}\\
@@ -277,7 +280,11 @@
 	\begin{equation}
 		x!=(x\,\text{mod}_n\,1)\left[\prod_{k=\text{sgn}(|n-x|+n-x)}^{|\lfloor x-n\rfloor|+\text{sgn}(n-x-|n-x|)}\left(~x+\text{sgn}(n-x)k~\right)\right]^{\text{sgn}(x-n)}
 	\end{equation}\\
-	(60) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1]$.
+	(60) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1]$.\\
+	equation relating to factorials:
+	\begin{equation}
+		\lim_{x\to\infty}\int_0^x\hspace{-0.5em}\int_0^x\exp\left[\dfrac12\ln\dfrac{4t}u-t-u\right]\text d^2tu=\pi
+	\end{equation}
 	\pagebreak\\
 	Proof sine is odd using gamma:\\
 	claim: $\sin(x)=-\sin(-x)$:\\
@@ -285,7 +292,7 @@
 	\begin{equation}
 		(57)~x\mapsto-x\Longrightarrow(-x)!=\dfrac{-\pi x\csc(-\pi x)}{x!}
 	\end{equation}\\
-	\centerline{$(-x)!=\dfrac{\pi x\csc\pi x}{x!}\hspace{1.6em}(57)$}\\
+	\centerline{$(-x)!=\dfrac{\pi x\csc\pi x}{x!}\hspace{1.6em}(58)$}\\
 	\begin{equation}
 		\dfrac{\pi x\csc\pi x}{x!}=\dfrac{-\pi x\csc(-\pi x)}{x!}\Longrightarrow\csc x=-\csc(-x)\Longrightarrow\sin(x)=-\sin(-x)
 	\end{equation}\\
@@ -300,22 +307,22 @@
 	\begin{equation}
 		(-x)!=\dfrac{\pi x\csc\pi x}{x!}\Longrightarrow\left(-\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)}
 	\end{equation}\\
-	The formula for (63) comes from (57) and is trivial to convert.\\
-	(62) and (63) imply the following:\\
+	The formula for (65) comes from (58) and is trivial to convert.\\
+	(64) and (65) imply the following:\\
 	\begin{equation}
 		2\left(\dfrac12\right)=\dfrac\pi{2\left(\dfrac12\right)}\Longrightarrow4\left(\dfrac12\right)^2=\pi\Longrightarrow\left(\dfrac12\right)=\dfrac{\sqrt\pi}2
 	\end{equation}\\
-	using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. this limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (63) an odd number of times or the factorials will cancel and leave a trigonometric equation, which could be interesting later. If you apply (63) twice, you get back to where you started because everything new cancels.\\
+	using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. this limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (65) an odd number of times or the factorials will cancel and leave a trigonometric equation, which could be interesting later. If you apply (65) twice, you get back to where you started because everything new cancels.\\
 	\blacksquare
 \end{section}
 
 \pagebreak\begin{section}{References}
 
 	\noindent- \url{https://en.wikipedia.org/wiki/Riemann\_zeta\_function\#Riemann's\_functional\_equation}\\
-	\indent\text{Link for equation 8}\\
+	\indent\text{Link for equation 9}\\
 
 	\noindent- \url{https://www.desmos.com/calculator/t51xnveadf}\\
-	\indent\text{Extra information for part 6, made by me}\\
+	\indent\text{Extra information for section 6, made by me}\\
 
 	\noindent- \url{https://www.github.com/drizzt536/files/tree/main/TeX/gamma}\\
 	\indent\text{The files for the most recent version of this pdf and the LaTeX code}
