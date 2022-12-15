@@ -2,54 +2,57 @@
 
 \documentclass[12pt]{article}
 \usepackage{amssymb,latexsym,amsmath}
+\usepackage[footskip=1in]{geometry}
+\addtolength{\topmargin}{-0.5in}
+
 \begin{document}
 
 
 % \title{Trigonometric Functions in Terms of Gamma} % old title
 \title{The Gamma Function, Its Inverse, and Its Relationship with Trigonometry}
 \author{Daniel E. Janusch}
-\date{December 7, 2022} % ~11:45pm MST
+\date{December 15, 2022} % ~6:00am MST
 \maketitle
 
 \begin{section}{Definitions}
 
 	\begin{equation}
-		0\in\mathbb N
+		0\in\mathbb N~~(1a)\hspace{2em}\tau:=2\pi~~(1b)
 	\end{equation}
 
-	\begin{equation}
+	\vspace{-0.065em}\begin{equation}
 		\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}\forall\,k
 	\end{equation}
 
-	\begin{equation}
-		\tau:=2\pi
+	\vspace{-0.065em}\begin{equation}
+		\text{sgn}(x):=\begin{cases}
+			1,x>0\\
+			0,x=0\\
+			-1,x<0
+		\end{cases}
 	\end{equation}
 
-	\begin{equation}
+	\vspace{-0.065em}\begin{equation}
+		a\,\text{mod}_n\,b:=a\,\text{mod}\,b+n
+	\end{equation}
+
+	\vspace{-0.065em}\begin{equation}
+		\exp(x):=\lim_{n\to\infty}\sum_{k=0}^n\dfrac{x^k}{k!}=e^x~\forall x
+	\end{equation}
+
+	\vspace{-0.065em}\begin{equation}
 		\Gamma(x):=\int_0^\infty\dfrac{t^{x-1}}{\exp t}\text dt=(x-1)!~\forall x>0
 	\end{equation}
 
-	\begin{equation}
+	\vspace{-0.065em}\begin{equation}
 		\zeta(x):=\sum_{n=1}^\infty\dfrac1{n^x}\forall x>1
 	\end{equation}
 
-	\begin{equation}
-		\eta(x):=\Gamma^{-1}(x)
+	\vspace{-0.065em}\begin{equation}
+		\eta(x):=\Gamma^{-1}(x)~~(7a)\hspace{2em}\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x~~(7b)
 	\end{equation}
 
-	\begin{equation}
-		\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x
-	\end{equation}
-
-	(6) is the compositional inverse rather than the fractional inverse.
-
-	The set of all natural numbers, $\mathbb N$, is defined in part by (1) and (2).
-
-	(5) describes the Riemann Zeta Function.
-
-	``$\ni$" means ``such that".
-
-	$x$ is assumed to be a real number, but It probably doesn't matter.
+	\noindent(8a) is the compositional inverse rather than the fractional inverse. The set of all natural numbers, $\mathbb N$, is defined in part by (1a) and (2). (7) describes the Riemann Zeta Function. $x$ is assumed to be a real number for simplicity, but It probably doesn't matter.
 \end{section}
 
 \pagebreak\begin{section}{Riemann Zeta Function}
@@ -244,39 +247,66 @@
 	\begin{equation}
 		|x\,\Gamma(1-\eta(x))|<\pi~~\text{or}~~|x|<3.547373963...~~(V)
 	\end{equation}\\
-	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation\\
-	(52) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small\\
-	fields around each integer. The area defined around each integer gets smaller\\
-	as $x$ increases, though it is unclear why at this time. If $\eta(x)$ is being recursed\\
-	and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either\\
-	the fields get larger, or there is a bug in Desmos' graphing calculations. See\\
-	reference 2 for more information. going a different way after (48) gives the\\
-	following equation:\\
+	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation (52) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small fields around each integer. The area defined around each integer gets smaller as $x$ increases, though it is unclear why at this time. If $\eta(x)$ is being recursed and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either the fields get larger, or there is a bug in Desmos' graphing calculations. See reference 2 for more information. going a different way after (48) gives the following equation:\\
 	\begin{equation}
 		\eta(x)=1-\eta\left(\dfrac\pi x\csc\pi\eta(x)\right)\Longrightarrow\eta(x)=\eta(\pi\csc(\pi\csc\pi x)\sin\pi x)
 	\end{equation}\\
-	This equation seems to be less useful because it has large absolute derivatives\\
-	which gets more severe as it is recursed.
+	This equation seems to be less useful because it has large derivatives everywhere when absolute valued, which gets more severe as it is recursed.
 \end{section}
 
 \pagebreak\begin{section}{Miscellaneous}
-	(39) gives the following 2 formulas after some manipulation:
+	(39) gives the following formulas after some manipulation:
 	\begin{equation}
 		\Gamma\left(x+\dfrac12\right)=\dfrac{\pi\sec\pi x}{\Gamma\left(\dfrac12-x\right)}
 	\end{equation}\\
 	replacing $x$ with $x+z$ and adjusting from gamma to factorial gives:\\
 	\begin{equation}
-		\left(x+\frac12+z\right)!=\left(2\left(z\,\text{mod}\,2\right)-1\right)\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\ni z\in\mathbb Z
+		\left(x+\frac12+z\right)!=\left(2\left(z\,\text{mod}\,2\right)-1\right)\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\forall z\in\mathbb Z
 	\end{equation}\\
 	This only simplifies things if $z$ is an integer because $\sec(x+\tau)=\sec x$,\\
-	and $\sec(x+\pi)=-\sec x$.\\
-	rewriting (21) from gamma to factorial gives:
+	and $\sec(x+\pi)=-\sec x$. rewriting (21) from gamma to factorial gives:
 	\begin{equation}
 		(x-1)!(-x)!=\pi\csc\pi x
 	\end{equation}\\
 	\begin{equation}
 		(-x)!=\dfrac{\pi x\csc\pi x}{x!}
-	\end{equation}
+	\end{equation}\\
+	\begin{equation}
+		\left(x+\dfrac1c\right)=\dfrac{-\pi\csc\dfrac{cx+1}c\pi}{\left(-\dfrac{c+1}c-x\right)!}\forall c\in\mathbb R
+	\end{equation}\\
+	\begin{equation}
+		x!=(x\,\text{mod}_n\,1)\left[\prod_{k=\text{sgn}(|n-x|+n-x)}^{|\lfloor x-n\rfloor|+\text{sgn}(n-x-|n-x|)}\left(~x+\text{sgn}(n-x)k~\right)\right]^{\text{sgn}(x-n)}
+	\end{equation}\\
+	(60) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1]$.
+	\pagebreak\\
+	Proof sine is odd using gamma:\\
+	claim: $\sin(x)=-\sin(-x)$:\\
+	Proof:\\
+	\begin{equation}
+		(57)~x\mapsto-x\Longrightarrow(-x)!=\dfrac{-\pi x\csc(-\pi x)}{x!}
+	\end{equation}\\
+	\centerline{$(-x)!=\dfrac{\pi x\csc\pi x}{x!}\hspace{1.6em}(57)$}\\
+	\begin{equation}
+		\dfrac{\pi x\csc\pi x}{x!}=\dfrac{-\pi x\csc(-\pi x)}{x!}\Longrightarrow\csc x=-\csc(-x)\Longrightarrow\sin(x)=-\sin(-x)
+	\end{equation}\\
+	\blacksquare\\
+
+	\noindent Proof for the value of $\frac12$ factorial\\
+	claim: $\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2$\\
+	Proof:\\
+	\begin{equation}
+		x!=\dfrac{(x+1)!}{x+1}\Longrightarrow\left(-\dfrac12\right)!=2\left(\dfrac12\right)
+	\end{equation}\\
+	\begin{equation}
+		(-x)!=\dfrac{\pi x\csc\pi x}{x!}\Longrightarrow\left(-\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)}
+	\end{equation}\\
+	The formula for (63) comes from (57) and is trivial to convert.\\
+	(62) and (63) imply the following:\\
+	\begin{equation}
+		2\left(\dfrac12\right)=\dfrac\pi{2\left(\dfrac12\right)}\Longrightarrow4\left(\dfrac12\right)^2=\pi\Longrightarrow\left(\dfrac12\right)=\dfrac{\sqrt\pi}2
+	\end{equation}\\
+	using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. this limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (63) an odd number of times or the factorials will cancel and leave a trigonometric equation, which could be interesting later. If you apply (63) twice, you get back to where you started because everything new cancels.\\
+	\blacksquare
 \end{section}
 
 \pagebreak\begin{section}{References}
