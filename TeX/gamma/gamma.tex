@@ -52,7 +52,7 @@
 		\eta(x):=\Gamma^{-1}(x)~~(8\text a)\hspace{2em}\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x~~(8\text b)
 	\end{equation}
 
-	\noindent(8a) is the compositional inverse rather than the fractional inverse. The set of all natural numbers, $\mathbb N$, is defined in part by (1a) and (1b). (7) describes the Riemann Zeta Function. $x$ is assumed to be a real number for simplicity, but It probably doesn't matter.
+	\noindent(8a) is the compositional inverse rather than the fractional inverse. The set of all natural numbers, $\mathbb N$, is defined in part by (1a) and (1b). (7) describes the Riemann Zeta Function. $x$ is assumed to be a real number everywhere for simplicity.
 \end{section}
 
 \pagebreak\begin{section}{Riemann Zeta Function}
@@ -173,13 +173,13 @@
 
 	\begin{equation}\coth x=\dfrac{i\csc ix}{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
 
-	\centerline{$\csc(x)=\csc(x)$ by the reflexive property.}
+	\centerline{$\csc x=\csc x$ by the reflexive property.}
 
 	\noindent\blacksquare
 \end{section}
 
 \pagebreak\begin{section}{Trig Functions In Terms of Gamma}
-	
+
 	\noindent These equations are just the previous ones with Gamma plugged in for csc.
 
 	\begin{equation}\sin x=\pi\big/\,\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\end{equation}
@@ -264,7 +264,7 @@
 	\end{equation}\\
 	replacing $x$ with $x+z$ and adjusting from gamma to factorial gives:\\
 	\begin{equation}
-		\left(x+\frac12+z\right)!=\left(2\left(z\,\text{mod}\,2\right)-1\right)\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\forall z\in\mathbb Z
+		\left(x+\frac12+z\right)!=\left[2\left(z\,\text{mod}\,2\right)-1\right]\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\forall z\in\mathbb Z
 	\end{equation}\\
 	This only simplifies things if $z$ is an integer because $\sec(x+\tau)=\sec x$,\\
 	and $\sec(x+\pi)=-\sec x$. rewriting (22) from gamma to factorial gives:
@@ -275,10 +275,10 @@
 		(-x)!=\dfrac{\pi x\csc\pi x}{x!}
 	\end{equation}\\
 	\begin{equation}
-		\left(x+\dfrac1c\right)=\dfrac{-\pi\csc\dfrac{cx+1}c\pi}{\left(-\dfrac{c+1}c-x\right)!}\forall c\in\mathbb R
+		\left(x+\dfrac1c\right)!=\dfrac{\pi\csc\dfrac{cx+1}c\pi}{\left(-\dfrac{c+1}c-x\right)!}\forall c\in\mathbb R
 	\end{equation}\\
 	\begin{equation}
-		x!=(x\,\text{mod}_n\,1)\left[\prod_{k=\text{sgn}(|n-x|+n-x)}^{|\lfloor x-n\rfloor|+\text{sgn}(n-x-|n-x|)}\left(~x+\text{sgn}(n-x)k~\right)\right]^{\text{sgn}(x-n)}
+		x!=(x\,\text{mod}_n\,1)!\left[\prod_{k=\text{sgn}(|n-x|+n-x)}^{|\lfloor x-n\rfloor|+\text{sgn}(n-x-|n-x|)}\left(x+\text{sgn}(n-x)k\right)\right]^{\text{sgn}(x-n)}
 	\end{equation}\\
 	(60) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1]$.\\
 	equation relating to factorials:
@@ -302,15 +302,15 @@
 	claim: $\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2$\\
 	Proof:\\
 	\begin{equation}
-		x!=\dfrac{(x+1)!}{x+1}\Longrightarrow\left(-\dfrac12\right)!=2\left(\dfrac12\right)
+		x!=\dfrac{(x+1)!}{x+1}\Longrightarrow\left(-\dfrac12\right)!=2\left(\dfrac12\right)!
 	\end{equation}\\
 	\begin{equation}
-		(-x)!=\dfrac{\pi x\csc\pi x}{x!}\Longrightarrow\left(-\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)}
+		(-x)!=\dfrac{\pi x\csc\pi x}{x!}\Longrightarrow\left(-\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)!}
 	\end{equation}\\
-	The formula for (65) comes from (58) and is trivial to convert.\\
+	The formula for (65) is just (58).\\
 	(64) and (65) imply the following:\\
 	\begin{equation}
-		2\left(\dfrac12\right)=\dfrac\pi{2\left(\dfrac12\right)}\Longrightarrow4\left(\dfrac12\right)^2=\pi\Longrightarrow\left(\dfrac12\right)=\dfrac{\sqrt\pi}2
+		2\left(\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)!}\Longrightarrow4\left(\dfrac12\right)!^2=\pi\Longrightarrow\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2
 	\end{equation}\\
 	using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. this limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (65) an odd number of times or the factorials will cancel and leave a trigonometric equation, which could be interesting later. If you apply (65) twice, you get back to where you started because everything new cancels.\\
 	\blacksquare
