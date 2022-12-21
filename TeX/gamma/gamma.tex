@@ -11,7 +11,7 @@
 % \title{Trigonometric Functions in Terms of Gamma} % old title
 \title{The Gamma Function, Its Inverse, and Its Relationship with Trigonometry}
 \author{Daniel E. Janusch}
-\date{December 20, 2022} % ~5:20pm MST
+\date{December 20, 2022} % 9:40pm MST
 \maketitle
 
 \begin{section}{Definitions}
@@ -282,7 +282,7 @@
 		\left(x+\dfrac1c\right)!=\dfrac{\pi\csc\dfrac{cx+1}c\pi}{\left(-\dfrac{c+1}c-x\right)!}\forall c\in\mathbb R
 	\end{equation}\\
 	\begin{equation}
-		x!=(x\,\text{mod}_n\,1)!\left[\prod_{k=\text{sgn}(|n-x|+n-x)}^{|\lfloor x-n\rfloor|+\text{sgn}(n-x-|n-x|)}\left(x+\text{sgn}(n-x)k\right)\right]^{\text{sgn}(x-n)}
+		x!=\left(x\,\text{mod}_n\,1\right)!\left[\prod_{k\,=\,\text{sgn}(\left|n-x\right|+n-x)}^{\left|\left\lfloor x-n\right\rfloor\right|+\text{sgn}\left(n-x-\left|n-x\right|\right)}\left[x+k\,\text{sgn}\left(n-x\right)\right]\right]^{\text{sgn}\left(x-n\right)}
 	\end{equation}\\
 	(60) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1]$.\\
 	equation relating to factorials:
@@ -290,7 +290,6 @@
 		\lim_{x\to\infty}\int_0^x\hspace{-0.5em}\int_0^x\exp\left[\dfrac12\ln\dfrac{4t}u-t-u\right]\text d^2tu=\pi
 	\end{equation}
 	\pagebreak\\
-	Proof sine is odd using gamma:\\
 	claim: $\sin(x)=-\sin(-x)$:\\
 	Proof:\\
 	\begin{equation}
@@ -302,8 +301,7 @@
 	\end{equation}\\
 	\blacksquare\\
 
-	\noindent Proof for the value of $\frac12$ factorial\\
-	claim: $\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2$\\
+	\noindent claim: $\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2$\\
 	Proof:\\
 	\begin{equation}
 		x!=\dfrac{(x+1)!}{x+1}\Longrightarrow\left(-\dfrac12\right)!=2\left(\dfrac12\right)!
@@ -311,13 +309,16 @@
 	\begin{equation}
 		(-x)!=\dfrac{\pi x\csc\pi x}{x!}\Longrightarrow\left(-\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)!}
 	\end{equation}\\
-	The formula for (65) is just (58).\\
-	(64) and (65) imply the following:\\
+	The formula for (65) is just (58). (64) and (65) imply the following:\\
 	\begin{equation}
 		2\left(\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)!}\Longrightarrow4\left(\dfrac12\right)!^2=\pi\Longrightarrow\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2
 	\end{equation}\\
-	using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. this limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (65) an odd number of times or the factorials will cancel and leave a trigonometric equation, which could be interesting later. If you apply (65) twice, you get back to where you started because everything new cancels.\\
-	\blacksquare
+	Using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. This limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (65) an odd number of times or the factorials will cancel and leave a trigonometric equation. If you apply (65) twice, you get back to where you started because everything new cancels.\\
+	\blacksquare\\
+
+	\noindent\begin{equation}
+		\left(\dfrac12+n\right)!=\dfrac{\sqrt\pi}2\prod_{k\,=\,\text{sgn}\left(n+\left|n\right|\right)}^{\left|n\right|\,-\,\text{sgn}\left(n+\left|n\right|\right)\,+\,\text{sgn}\,n}\left(\dfrac12+k\,\text{sgn}\,n\right)^{\text{sgn}\,n}\forall n\in\mathbb Z
+	\end{equation}
 \end{section}
 
 \pagebreak\begin{section}{References}
