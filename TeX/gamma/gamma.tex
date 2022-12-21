@@ -11,7 +11,7 @@
 % \title{Trigonometric Functions in Terms of Gamma} % old title
 \title{The Gamma Function, Its Inverse, and Its Relationship with Trigonometry}
 \author{Daniel E. Janusch}
-\date{December 15, 2022} % ~6:18am MST
+\date{December 20, 2022} % ~5:20pm MST
 \maketitle
 
 \begin{section}{Definitions}
@@ -182,22 +182,26 @@
 
 	\noindent These equations are just the previous ones with Gamma plugged in for csc.
 
-	\begin{equation}\sin x=\pi\big/\,\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\end{equation}
+	\begin{equation}\sin x=\dfrac\pi{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}\end{equation}
 
 	\begin{equation}
-		\cos x=\pi\big/\,\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)
+		\cos x=\dfrac\pi{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}
 	\end{equation}
 
 	\begin{equation}
-		\tan x=\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)\big/\,\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)
+		\tan x=\dfrac{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}
+		{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}
 	\end{equation}
 	
-	\begin{equation}\csc x=\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\big/\,\pi\end{equation}
-
-	\begin{equation}\sec x=\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)\big/\,\pi\end{equation}
+	\begin{equation}\csc x=\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\end{equation}
 
 	\begin{equation}
-		\cot x=\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)
+		\sec x=\dfrac1\pi\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)
+	\end{equation}
+
+	\begin{equation}
+		\cot x=\dfrac{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}
+		{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}
 	\end{equation}
 
 
@@ -212,15 +216,15 @@
 	\end{equation}
 
 	\begin{equation}
-		\text{csch}\,x=i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\big/\,\pi
+		\text{csch}\,x=\dfrac i\pi\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)
 	\end{equation}
 
 	\begin{equation}
-		\text{sech}\,x=\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\big/\,\pi
+		\text{sech}\,x=\dfrac1\pi\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
 	\end{equation}
 
 	\begin{equation}
-		\coth x=i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac {ix}\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac {ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
+		\coth x=i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
 	\end{equation}
 
 	\noindent where ``$\big/$" means divide everything on the left by everything on the right.
