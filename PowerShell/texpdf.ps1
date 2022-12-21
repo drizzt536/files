@@ -1,10 +1,11 @@
 <#
 .synopsis
-    basically pdflatex that also deletes the log files
+    basically pdflatex that also deletes the log files and closes adobe acrobat.
 .description
-    basically pdflatex that deletes [filename].aux, [filename].log, and texput.log if it exists, which it will after an error.
+    basically pdflatex that deletes [filename].aux, [filename].log, and texput.log if it exists, which it will after an error. it also closes adobe acrobat if open.
 .example
     PS C:/> texpdf collatz $true pdflatex C:/Folder/ tex
+    closes adobe acrobat if open
     runs "pdflatex -quiet C:/Folder/collatz.tex"
     deletes C:/Folder/collatz.log
     deletes C:/Folder/collatz.aux
@@ -13,6 +14,7 @@
 .example
     PS C:/TeX> texpdf texfile $false pdftex ./ tex
     whenever it says "./", it means "C:/TeX/"
+    closes adobe acrobat if open
     runs "pdftex -quiet ./texfile.tex"
     deletes "./texfile.log" and "./texfile.aux"
     deletes ./texput.log if it exists
@@ -47,20 +49,33 @@
 .link
     N/A
 #>
-function global:texpdf {
+Function Global:texpdf {
     [CmdletBinding()]
-    param (
+    Param (
         [Parameter(position=0, mandatory=$true )] [string] $filename              ,
         [Parameter(position=1, mandatory=$false)] [ bool ] $openpdf  = $true      ,
         [Parameter(position=2, mandatory=$false)] [string] $compiler = "pdflatex" ,
         [Parameter(position=3, mandatory=$false)] [string] $path     = "./"       ,
         [Parameter(position=4, mandatory=$false)] [string] $filetype = "tex"
     )
-    process {
-        iex "$compiler -quiet '$path$filename.$filetype'"
-        rm "$path$filename.aux", "$path$filename.log"
-        if (test-path "${path}texput.log") { rm "${path}texput.log" }
-        $openpdf && iex "$path$filename.pdf"
+    Process {
+        Get-Process | Where-Object name -eq Acrobat | Stop-Process
+        Invoke-Expression "$compiler -quiet '$path$filename.$filetype'"
+        Remove-Item "$path$filename.aux", "$path$filename.log"
+        if (Test-Path "${path}texput.log") { Remove-Item "${path}texput.log" }
+        $openpdf && Invoke-Expression "$path$filename.pdf"
         return $null
+    }
+}
+
+
+function stexpdf {
+    [CmdletBinding()] param ( $fname )
+    process {
+        gps | ? name -eq Acrobat | spps
+        pdflatex -quiet "./$fname.tex"
+        rm "./$fname.aux", "./$fname.log"
+        if (test-path "./texput.log") { rm "./texput.log" }
+        iex "./$fname.pdf"
     }
 }
