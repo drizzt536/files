@@ -2,7 +2,8 @@
 --> games that say "// duplicate" are just there to make it easier to find games in the object.
 --> they are not counted either.
 --> key : value  ==>  game-name : price
-var OwnedGames = {
+--> TODO: early access means to check if the price changes after early access ends
+var OwnedApplications = {
 	"20XX": 14.99
 	, "3 out of 10, EP 1: \"Welcome To Shovelworks\"": 0
 	, "3 out of 10, EP 1": 0 // duplicate
@@ -28,6 +29,8 @@ var OwnedGames = {
 	, "Alan Wake's American Nightmare": 8.99
 	, "Alba - A Wildlife Adventure": 16.99
 	, "Alba": 0 // duplicate
+	, "Alder Choke DEMO": 0
+	, "Alder Choke Demo": 0 // duplicate
 	, "Amnesia: A Machine for Pigs": 19.99
 	, "Among The Sleep - Enhanced Edition": 16.99
 	, "Among Us": 4.99
@@ -70,11 +73,14 @@ var OwnedGames = {
 	, "Black Widow": 0 // duplicate
 	, "Blair Witch": 29.99
 	, "Blankos Block Party": 0
+	, "Blood of steel": 0
+	, "Blood of Steel": 0 // duplicate
 	, "Borderlands 2": 19.99
 	, "Borderlands 3": 59.99
 	, "Borderlands: The Pre-Sequel": 39.99
 	, "Borderlands": 0 // duplicate
 	, "Brave": 0
+	, "Brawlhalla": 0
 	, "Bridge Constructor: The Walking Dead": 9.99
 	, "Bridge Constructor": 0 // duplicate
 	, "Brothers - A Tale Of Two Sons": 14.99
@@ -84,10 +90,12 @@ var OwnedGames = {
 	, "Car Mechanic Simulator 2018": 19.99
 	, "Carcassonne": 9.99
 	, "Cave Story+": 14.99
+	, "Cave Story Plus": 0 // duplicate
 	, "Celeste": 19.99
 	, "Centipede Recharged": 9.99
 	, "Century: Age of Ashes": 0
 	, "Century": 0 // duplicate
+	, "Chimeraland": 0
 	, "Chorus Demo": 0
 	, "Cities: Skylines": 29.99
 	, "Close to the Sun": 19.99
@@ -125,11 +133,15 @@ var OwnedGames = {
 	, "DEMON'S TILT": 19.99
 	, "Destiny 2: Bungie 30th Anniversary Pack": 24.99
 	, "Destiny 2": 0
+	, "Destroy All Humans! - Clone Carnage": 0
 	, "Detroit Become Human [Demo]": 0
+	, "Detroit Become Human Demo": 0 // duplicate
 	, "Diabolical": 0
 	, "Diesel Brothers: Truck Building Simulator Editor": 0
 	, "Diesel Brothers": 0 // duplicate
 	, "Discord": 0
+	, "Dishonored - Definitive Edition": 19.99
+	, "Dishonored": 0 // duplicate
 	, "Dogfight - Demo": 0
 	, "Dogfight Demo": 0 // duplicate
 	, "DOOM 64": 4.99
@@ -137,16 +149,22 @@ var OwnedGames = {
 	, "Dungeons 3": 29.99
 	, "Elite Dangerous": 29.99
 	, "Enter the Gungeon": 14.99
+	, "Epic Cheerleader Pack": 0
 	, "Europa Universalis IV": 39.99
 	, "Europa Universalis 4": 0 // duplicate
 	, "EVE Online": 0
 	, "Evoland Legendary Edition": 19.99
 	, "Evoland": 0 // duplicate
+	, "Eximius: Seize the Frontline": 29.99
+	, "Eximius": 0 // duplicate
 	, "Eyes in the Dark Demo": 0
 	, "Faeria": 19.99
 	, "Fall Guys": 0
+	, "Fall Guys - Snowberry": 0
 	, "Fallout 3: Game of the Year Edition": 19.99
 	, "Fallout 3": 0 // duplicate
+	, "Fangs": 0 // TODO: early access
+	, "Far Cry 6 - Free Trial": 0
 	, "Farming Simulator 19": 19.99
 	, "Fault: Elder Orb": 0
 	, "FTL: Faster Than Light": 9.99
@@ -154,11 +172,17 @@ var OwnedGames = {
 	, "FTL": 0 // duplicate
 	, "Fez": 9.99
 	, "Figment": 19.99
+	, "F.I.S.T.: Forged In Shadow Torch": 29.99
+	, "FIST: Forged In Shadow Torch": 0 // duplicate
+	, "F.I.S.T.": 0 // duplicate
+	, "FIST": 0 // duplicate
 	, "Flat Heroes Demo": 0
 	, "Football Manager 2020": 54.99
 	, "Football Manager 2022 Demo": 0
+	, "Football Manager 2023 Demo": 0
 	, "For The King": 19.99
 	, "Fortnite": 0 // in-app purchases: ~$10. no save the world
+	, "Fort Triumph": 19.99
 	, "Frostpunk": 29.99
 	, "Galactic Civilizations III": 24.99
 	, "Galactic Civilizations 3": 0 // duplicate
@@ -180,6 +204,7 @@ var OwnedGames = {
 	, "God's Trigger": 14.99
 	, "Godfall": 19.99 // not ultimate. Ultimate is $34.99 and "upgrade to ultimate" is $14.99. math. - 1¢
 	, "Gods Will Fall": 14.99
+	, "GOG GALAXY": 0
 	, "Gone Home": 14.99
 	, "GoNNer": 9.99
 	, "Good Company Demo": 0
@@ -200,6 +225,7 @@ var OwnedGames = {
 	, "HITMAN - Game of the Year Edition": 59.99
 	, "HITMAN": 0 // duplicate
 	, "Hob": 19.99
+	, "Honkai Impact 3rd": 0
 	, "Hood: Outlaws & Legends": 19.99
 	, "Hood: Outlaws and Legends": 0 // duplicate
 	, "Hood": 0 // duplicate
@@ -250,6 +276,9 @@ var OwnedGames = {
 	, "LEGO Batman 3": 0 // duplicate
 	, "LEGO® Batman™ The Videogame": 19.99
 	, "LEGO Batman": 0 // duplicate
+	, "LEGO® Builder's Journey": 19.99
+	, "LEGO Builder's Journey": 0 // duplicate
+	, "LEGO Builder's Journey": 0 // duplicate
 	, "Lifeless Planet: Premier Edition": 19.99
 	, "Lifeless Planet": 0 // duplicate
 	, "Magic The Gathering Arena": 0
@@ -262,6 +291,10 @@ var OwnedGames = {
 	, "Might & Magic": 0 // duplicate
 	, "Might and Magic": 0 // duplicate
 	, "Minit": 9.99
+	, "MONOPOLY® MADNESS DEMO": 0
+	, "Monopoly® Madness Demo": 0 // duplicate
+	, "Mortal Shell": 29.99
+	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is
 	, "MudRunner": 19.99
 	, "MultiVersus": 0
 	, "N0va Desktop": 0
@@ -277,6 +310,7 @@ var OwnedGames = {
 	, "Nioh: The Complete Edition": 49.99
 	, "Nioh": 0 // duplicate
 	, "No Straight Roads Mother and Child Demo": 0
+	, "Nova Lands: Emilia's Mission Demo": 0
 	, "Nuclear Throne": 11.99
 	, "Offworld Trading Company": 29.99
 	, "OHDcore Mod Kit": 0
@@ -284,8 +318,10 @@ var OwnedGames = {
 	, "Opera GX": 0 // duplicate
 	, "Overcooked": 16.99
 	, "Overcooked! 2": 24.99
+	, "Outplayed": 0
 	, "Paladins": 0
 	, "Paradigm": 14.99
+	, "Paragon: The Overprime": 0 // TODO: early access
 	, "Path of Exile": 0
 	, "Pathway": 15.99
 	, "Phantasy Star Online 2 New Genesis": 0
@@ -297,11 +333,14 @@ var OwnedGames = {
 	, "Primordials: Battle of Gods": 0
 	, "Primordials": 0 // duplicate
 	, "Prison Architect": 29.99
+	, "PUBG BATTLEGROUNDS": 0
+	, "PUBG Founder's Pack": 0
 	, "Rage 2": 39.99
 	, "Railway Empire": 29.99
 	, "Rainbow Six Extraction Demo": 0
 	, "Ravenous Devils": 4.99
 	, "Rayman Legends": 29.99
+	, "Razer Cortex": 0
 	, "Realm Royale Reforged": 0
 	, "Rebel Galaxy": 19.99
 	, "Redout: Enhanced Edition": 19.99
@@ -323,12 +362,17 @@ var OwnedGames = {
 	, "Roller Champions": 0 // duplicate
 	, "RollerCoaster Tycoon® 3: Complete Edition": 19.99
 	, "RollerCoaster Tycoon 3": 0 // duplicate
+	, "RPG in a Box": 29.99
+	, "rpg in a Box": 0 // duplicate
 	, "Rumbleverse™": 0
 	, "Rumbleverse": 0 // duplicate
 	, "Rumbleverse™ - Boom Boxer Content Pack": 0
 	, "Rumbleverse - Boom Boxer Content Pack": 0 // duplicate
 	, "Runbow": 14.99
 	, "Saints Row Boss Factory": 0
+	, "Saints Row IV Re-Elected": 19.99
+	, "Saints Row 4 Re-Elected": 0 // duplicate
+	, "Saints Row 4": 0 // duplicate
 	, "Saints Row The Third Remastered": 39.99
 	, "Saints Row The Third": 0 // duplicate
 	, "Saturnalia": 19.99
@@ -336,6 +380,7 @@ var OwnedGames = {
 	, "Scavengers": 0
 	, "Second Extinction™": 24.99
 	, "Second Extinction": 0 // duplicate
+	, "Severed Steel": 24.99
 	, "Shadow of the Tomb Raider: Definitive Edition": 39.99
 	, "Shadow of the Tomb Raider": 0 // duplicate
 	, "Shadow Tactics: Blades of the Shogun": 39.99
@@ -376,7 +421,9 @@ var OwnedGames = {
 	, "STAR WARS Battlefront 2": 0 // duplicate
 	, "Battlefront II": 0 // duplicate
 	, "Battlefront 2": 0 // duplicate
+	, "SteelSeries© FREE Cosmetic Pack": 0
 	, "Steep": 29.99
+	, "STG Football": 0 // TODO: early access
 	, "Stick it to the Man": 7.99
 	, "Stanger Things 3: The Game": 19.99 // not available
 	, "Stubbs the Zombie in Rebel Without a Pulse": 19.99
@@ -405,6 +452,7 @@ var OwnedGames = {
 	, "The Alien Cube Demo": 0 // duplicate
 	, "The Alto Collection": 9.99
 	, "The Bridge": 9.99
+	, "The Bunny Graveyard DEMO": 0
 	, "The Captain": 19.99
 	, "The Cycle: Frontier": 0
 	, "The Cycle": 0 // duplicate
@@ -415,6 +463,7 @@ var OwnedGames = {
 	, "The Last Friend: First Bite": 14.99
 	, "The Last Friend": 0 // duplicate
 	, "The Messenger": 19.99
+	, "The Riftbreaker Prologue Demo": 0
 	, "The Spectrum Retreat": 12.99
 	, "The Stanley Parable": 14.99
 	, "The Talos Principle": 39.99
@@ -423,10 +472,16 @@ var OwnedGames = {
 	, "The Vanishing of Ethan Carter": 19.99
 	, "The Vanishing of Ethan Carter Redux": 0
 	, "The World Next Door": 9.99
+	, "the Hunter: Call of the Wild™ - New England Mountains Scout Cosmetic Pack": 0
+	, "the Hunter - New England Mountains Scout Cosmetic Pack": 0 // duplicate
+	, "the Hunter": 0 // duplicate
 	, "theHunter: Call of the Wild™": 19.99
 	, "theHunter": 0 // duplicate
+	, "theHunter - New England Mountains Scout Cosmetic Pack": 0 // duplicate
+	, "Them's Fightin' Herds": 19.99
 	, "Thunder Tier One Modding Tool": 0
 	, "Ticket to Ride": 9.99
+	, "TIDAL Music": 0
 	, "ToeJam & Earl: Back in the Groove!": 14.99
 	, "ToeJam and Earl: Back in the Groove!": 0 // duplicate
 	, "ToeJam & Earl": 0 // duplicate
@@ -446,6 +501,7 @@ var OwnedGames = {
 	, "Unreal Tournament": 0
 	, "UT Editor": 0
 	, "VALORANT": 0
+	, "Vertical Third Tech Demo": 0
 	, "Video Horror Society": 0
 	, "VR Funhouse Editor": 0
 	, "Warface": 0
@@ -461,6 +517,7 @@ var OwnedGames = {
 	, "Wheels of Aurelia": 14.99
 	, "Where the Water Tastes Like Wine": 19.99
 	, "while True: learn()": 12.99
+	, "Wildcat Gun Machine": 14.99
 	, "Wilmot's Warehouse": 14.99
 	, "Windbound": 19.99
 	, "Wolfenstein: The New Order": 19.99
@@ -477,12 +534,12 @@ var OwnedGames = {
 	, "Zorya: The Celestial Sisters Friend Pass": 0
 },
 
-account_worth = `$${Object.values(OwnedGames).filter(
-	e => e && ["number", "bigint"].incl(typeof e) // in case I decide to change how the duplicates ...
+accountWorth = `$${Object.values(OwnedApplications).filter(
+	e => e && ["num", "int"].incl(type(e,1)) // in case I decide to change how the duplicates ...
 	// ... are displayed, and instead make them a string or something.
 ).reduce(
 	(t, x) => sMath.add(t, x),
 	"0.0"
-)} USD`,
+)} USD`.replace(/\.(\d) /, ".$10 "),
 
-gamesIncludes = game => OwnedGames[game] !== void 0;
+appsInclude = app => OwnedApplications[app] ?? !1;

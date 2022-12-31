@@ -75,7 +75,8 @@ var o = dict({
 			"seems to have periods instead of semicolons",
 		],
 		"examples": null,
-	}, "Apex": {
+	}
+	, "Apex": {
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "static",
@@ -99,7 +100,8 @@ var o = dict({
 		"examples": [
 			"IN:accIdwithOpportunityMap.keyset()"
 		],
-	}, "Bicep": {
+	}
+	, "Bicep": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -120,7 +122,8 @@ var o = dict({
 			"param subnetName string = 'subnet'",
 			"param adminPassword string = '&6j*Ab/>QY(S?D,r'"
 		],
-	}, "C": {
+	}
+	, "C": {
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "strongly static",
@@ -185,7 +188,8 @@ var o = dict({
 			"#define swap(x, y) ({ typeof(x) t = x; x = (typeof(x)) y; y = (typeof(y)) t; 0ULL;})",
 			"#include <stdio.h> int main(void){printf(\"Hello World\n\");return 0;}"
 		],
-	}, "C#": {
+	}
+	, "C#": {
 		"function": "<Type>",
 		"variable": ["<Type>", "var", "const"],
 		"typing": ["static (optional)", "dynamic"],
@@ -235,7 +239,8 @@ var o = dict({
 		],
 		"misc": [],
 		"examples": [],
-	}, "C++": {
+	}
+	, "C++": {
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "static",
@@ -261,7 +266,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "CMake": {
+	}
+	, "CMake": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -313,7 +319,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "ColdFusion": {
+	}
+	, "ColdFusion": {
 		"function": null,
 		"variable": "var",
 		"typing": "dynamic?",
@@ -350,7 +357,8 @@ var o = dict({
 			"<cfdump var=#xmlDoc.sessions# />",
 			"<cfset newstr = \"#REReplace(a, \"@.*\", \"\")#\">",
 		],
-	}, "CPython": {
+	}
+	, "CPython": {
 		"function": "def",
 		"variable": "",
 		"typing": "strongly dynamic",
@@ -408,7 +416,8 @@ var o = dict({
 			"to_list = [item.strip() for item in df['Starring'].loc[0].split('\\n') if item !='']",
 			"with open(file, 'w') as file: ...",
 		],
-	}, "CSS": {
+	}
+	, "CSS": {
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": "N/A",
@@ -430,7 +439,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "Dart": {
+	}
+	, "Dart": {
 		"function": "<Type>",
 		"variable": ["var", "int", "const"],
 		"typing": null,
@@ -482,7 +492,8 @@ var o = dict({
 			"class MyHomePage extends StatefulWidget {const MyHomePage({Key? key}) : super(key: key);",
 			"return const Divider();",
 		],
-	}, "Dockerfile": {
+	}
+	, "Dockerfile": {
 		"function": null,
 		"variable": "$?",
 		"typing": null,
@@ -511,7 +522,8 @@ var o = dict({
 			"RUN apk add --no-cache wget unzip",
 			"RUN useradd -G www-data,root -u 1000 -d /home/phpuser phpuser",
 		],
-	}, "EditorConfig": {
+	}
+	, "EditorConfig": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -536,7 +548,8 @@ var o = dict({
 			"[*]\nindent_style = space\nindent_size = 2",
 			"charset = utf-8\ntrim_trailing_whitespace = true",
 		],
-	}, "Elixir": {
+	}
+	, "Elixir": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -554,7 +567,8 @@ var o = dict({
 			"{_x, :nope} = {\"this is a result from another operation\", :nope}",
 			"{:nope} = {\"string\", :nope}",
 		],
-	}, "Emacs Lisp": {
+	}
+	, "Emacs Lisp": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -580,7 +594,8 @@ var o = dict({
 			";; comment. could be one semicolon like nasm, but idk",
 		],
 		"examples": null,
-	}, "fish": {
+	}
+	, "fish": {
 		"function": "function",
 		"variable": null,
 		"typing": null,
@@ -603,7 +618,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "Fortran Free Form": {
+	}
+	, "Fortran Free Form": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -642,7 +658,8 @@ var o = dict({
 			"! comment"
 		],
 		"examples": null,
-	}, "Git Config": {
+	}
+	, "Git Config": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -674,7 +691,8 @@ var o = dict({
 			"list-config = config --list --show-origin --show-scope",
 			"list-aliases = config --global --get-regexp ^alias\\\\."
 		],
-	}, "Go": {
+	}
+	, "Go": {
 		"function": "func",
 		"variable": ["var", "const", ":="],
 		"typing": "static?",
@@ -729,7 +747,8 @@ var o = dict({
 			"a, b, c := 2, \"asdf\", true",
 			"variable := map[string]string\nvariable[\"a\"] = 3\n",
 		],
-	}, "Hack": {
+	}
+	, "Hack": {
 		"function": "function",
 		"variable": "$",
 		"typing": null,
@@ -751,7 +770,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "Haskell": {
+	}
+	, "Haskell": {
 		"function": null,
 		"variable": "let",
 		"typing": null,
@@ -801,7 +821,8 @@ var o = dict({
 			"import System.Exit (exitSuccess)",
 			"next :: WithCounter a -> (a -> WithCounter b) -> WithCounter b\nf `next` g = \i -> let (r, i') = f i\n                   in  g r i'",
 		],
-	}, "HCL": {
+	}
+	, "HCL": {
 		"function": null,
 		"variable": ["variable", ""],
 		"typing": null,
@@ -825,7 +846,8 @@ var o = dict({
 			"# comment",
 		],
 		"examples": null,
-	}, "HTML": {
+	}
+	, "HTML": {
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": "N/A",
@@ -852,7 +874,8 @@ var o = dict({
 		"examples": [
 			"<!doctype html><html><head><title>title</title></head><body><p>asdf</p></body></html>",
 		],
-	}, "HTML+Razor": {
+	}
+	, "HTML+Razor": {
 		"function": null,
 		"variable": "var",
 		"typing": null,
@@ -882,7 +905,8 @@ var o = dict({
 			"looks like HTML but with C-style code in the middle without a script tag",
 		],
 		"examples": null,
-	}, "Io": {
+	}
+	, "Io": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -899,7 +923,8 @@ var o = dict({
 			"Idk, im not convinced this language exists, but it was the right answer for one of them"
 		],
 		"examples": null,
-	}, "Java": {
+	}
+	, "Java": {
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "static",
@@ -941,7 +966,8 @@ var o = dict({
 			"import java.io.*;",
 			"System.out.println();"
 		],
-	}, "Java Properties": {
+	}
+	, "Java Properties": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -958,7 +984,8 @@ var o = dict({
 		"examples": [
 			"spring.cloud.function.scan.packages: au.com.digio.lightweightjava.springnative.functions"
 		],
-	}, "JavaScript": {
+	}
+	, "JavaScript": {
 		"function": ["function (...) { ... }", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
 		"typing": "weakly dynamic",
@@ -987,7 +1014,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "JSON with Comments": {
+	}
+	, "JSON with Comments": {
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": "N/A",
@@ -1016,7 +1044,8 @@ var o = dict({
 			"\"string\"",
 			"{\"a\":[1,2,3,{\"a\":2,\"b\":[1,2,\"123123:{}\"]}],\"b\":null}",
 		],
-	}, "JSX": {
+	}
+	, "JSX": {
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
 		"typing": "dynamic?",
@@ -1035,7 +1064,8 @@ var o = dict({
 			"has HTML looking things in the middle of the JavaScript",
 		],
 		"examples": null,
-	}, "Julia": {
+	}
+	, "Julia": {
 		"function": "function",
 		"variable": ["local", ""],
 		"typing": "dynamic?",
@@ -1064,7 +1094,8 @@ var o = dict({
 			"prepare!.(df[:, :Message2], strip_html_tags| strip_punctuation| strip_numbers)",
 			"stem!.(df[:, :Message2])",
 		],
-	}, "Kotlin": {
+	}
+	, "Kotlin": {
 		"function": "fun",
 		"variable": ["val", "var"],
 		"typing": "dynamic?",
@@ -1105,7 +1136,8 @@ var o = dict({
 			"is retrofit2.HttpException -> {\ncode = e.code()"
 		],
 		"examples": null,
-	}, "Logos": {
+	}
+	, "Logos": {
 		"function": ["<Type>", "function"],
 		"variable": ["<Type>", ""],
 		"typing": null,
@@ -1128,7 +1160,8 @@ var o = dict({
 			"function Int() closure = () -> x + y;",
 			"console.println($\"{f()}\");",
 		],
-	}, "Lua": {
+	}
+	, "Lua": {
 		"function": null,
 		"variable": "",
 		"typing": null,
@@ -1152,7 +1185,8 @@ var o = dict({
 			"lua is supposed to be fast",
 		],
 		"examples": null,
-	}, "MLIR": {
+	}
+	, "MLIR": {
 		"function": null,
 		"variable": "?",
 		"typing": "static?",
@@ -1179,7 +1213,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "NASM intel-ASM": {
+	}
+	, "NASM intel-ASM": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1227,7 +1262,8 @@ var o = dict({
 			"mov rax, 123",
 			"section.bss:\nmessage: db \"Hello World\", 10\nmessage_len: equ $ - message",
 		],
-	}, "Nginx": {
+	}
+	, "Nginx": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1252,7 +1288,8 @@ var o = dict({
 			"# comment",
 		],
 		"examples": null,
-	}, "PHP": {
+	}
+	, "PHP": {
 		"function": ["function", "fn"],
 		"variable": "$",
 		"typing": null,
@@ -1311,7 +1348,8 @@ var o = dict({
 			"some functions have apache in the name",
 		],
 		"examples": null,
-	}, "PlantUML": {
+	}
+	, "PlantUML": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1356,7 +1394,8 @@ var o = dict({
 			"export_form_before_phtml::JSajax <--> Controllers.GetFilter",
 			"Controllers.Export --> RabbitMQ",
 		],
-	}, "PowerShell": {
+	}
+	, "PowerShell": {
 		"function": ["function", "Function"],
 		"variable": ["$", "$global:"],
 		"typing": ["static (optional for function arguments)", "dynamic"],
@@ -1418,7 +1457,8 @@ var o = dict({
 			"function Get-PublicIp { return Invoke-RestMethod 'https://api.ipify.org' }",
 			"param( [Parameter(position=0, mandatory=$false)] [int] $g = 23 )",
 		],
-	}, "Q#": {
+	}
+	, "Q#": {
 		"function": "operation",
 		"variable": null,
 		"typing": null,
@@ -1438,7 +1478,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "R": {
+	}
+	, "R": {
 		"function": null,
 		"variable": "",
 		"typing": "dynamic?",
@@ -1470,7 +1511,8 @@ var o = dict({
 			"ggplot( ... )",
 			"scales::comma",
 		],
-	}, "RouterOS Script": {
+	}
+	, "RouterOS Script": {
 		"function": null,
 		"variable": null,
 		"compiled/interpreted": null,
@@ -1491,7 +1533,8 @@ var o = dict({
 			"source=\":local domainPostfix \\\".cert.rimon.net.il\\\";\\r\\",
 			"\\n:log info [:resolv (\\$pwd. \\$domainPostfix)];\""
 		],
-	}, "RMarkdown": {
+	}
+	, "RMarkdown": {
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": null,
@@ -1508,7 +1551,8 @@ var o = dict({
 			"just looks like a markdown file",
 		],
 		"examples": null,
-	}, "RPM Spec": {
+	}
+	, "RPM Spec": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1533,7 +1577,8 @@ var o = dict({
 			"gem build ../%{gem_name}-%{version}.gemspec",
 			"+ruby -Ilib:test -e 'Dir.glob \"./test/**/*_test.rb\", &method(:require)'"
 		],
-	}, "Ruby": {
+	}
+	, "Ruby": {
 		"function": "def",
 		"variable": "",
 		"typing": null,
@@ -1596,7 +1641,8 @@ var o = dict({
 		"examples": [
 			"weight = - weight if sign == \"-\"",
 		],
-	}, "Rust": {
+	}
+	, "Rust": {
 		"function": "fn",
 		"variable": "let",
 		"typing": null,
@@ -1632,7 +1678,8 @@ var o = dict({
 			"impl Add<i32> for &Counter { ... }",
 			"\tfn add(self, rhs: i32) -> Self::Output {\n\t\tlet sum = self.0 + rhs; ... }",
 		],
-	}, "Scala": {
+	}
+	, "Scala": {
 		"function": "def",
 		"variable": null,
 		"typing": null,
@@ -1653,7 +1700,8 @@ var o = dict({
 		"examples": [
 			"def test1(): Unit = assert(poorPigs(8, 1, 1) == 3)",
 		],
-	}, "SCSS": {
+	}
+	, "SCSS": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1676,7 +1724,8 @@ var o = dict({
 			"&:hover { color: $primary; }",
 			"background-color: $primary; font-family: $font-demibold;",
 		],
-	}, "Shell": {
+	}
+	, "Shell": {
 		"function": ["function", ""],
 		"variable": "$",
 		"typing": null,
@@ -1736,7 +1785,8 @@ var o = dict({
 			"scriptname=\"${0##*/}\"",
 			"projectname=\"${scriptname%.*}\"",
 		],
-	}, "ShellSession": {
+	}
+	, "ShellSession": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1757,7 +1807,8 @@ var o = dict({
 			"$ sudo certbot --nginx -d flaskapp.example.com -d www.flaskapp.example.com",
 			"$ sudo certbot --nginx -d nodeapp.example.com -d www.nodeapp.example.com",
 		],
-	}, "Solidity": {
+	}
+	, "Solidity": {
 		"function": "function",
 		"variable": null,
 		"typing": null,
@@ -1797,7 +1848,8 @@ var o = dict({
 			"pragma solidity 0.8.15;",
 			"function getContractOwnerAddress () private view returns(address) {",
 		],
-	}, "SQL": {
+	}
+	, "SQL": {
 		"function": "N/A?",
 		"variable": "SET?",
 		"typing": null,
@@ -1851,7 +1903,8 @@ var o = dict({
 			"{%- endcall -%}",
 			"{%- call statement('date_range_query', fetch_result=True) -%}",
 		],
-	}, "SubRip Text": {
+	}
+	, "SubRip Text": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1873,7 +1926,8 @@ var o = dict({
 			"4\n00:02:18,669 --> 00:02:22,874\n彼氏と隠れて\n付きあいたくない",
 			"12\n00:02:48,499 --> 00:02:49,667\n家内は―",
 		],
-	}, "Svelte": {
+	}
+	, "Svelte": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -1890,7 +1944,8 @@ var o = dict({
 			"To my knowledge, svelte is literally just html",
 		],
 		"examples": null,
-	}, "Swift": {
+	}
+	, "Swift": {
 		"function": "func",
 		"variable": ["var", "let"],
 		"typing": "dynamic?",
@@ -1935,7 +1990,8 @@ var o = dict({
 			"init(handler:@escaping (_:CGPoint) -> Void ) { super.init(delegate: _delegate) ... }",
 
 		],
-	}, "TI-BASIC-84": {
+	}
+	, "TI-BASIC-84": {
 		"function": "prgm",
 		"variable": "[value]->[variable]",
 		"typing": "static: string, complex, real, natural, image, ...",
@@ -1998,7 +2054,8 @@ var o = dict({
 			"1/gcd(abs(A),gcd(abs(B),abs(C🠒X:AX🠒A:BX🠒B:CX🠒C",
 			"2🠒I:While fPart(real(A)) or fPart(imag(A)) or fPart(real(B)) or fPart(imag(B)) or fPart(real(C)) or fPart(imag(C)):AI🠒A:BI🠒B:CI🠒C:I+1🠒I:End"
 		],
-	}, "TSQL": {
+	}
+	, "TSQL": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -2016,7 +2073,8 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}, "TSX": {
+	}
+	, "TSX": {
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
 		"typing": "dynamic?",
@@ -2035,7 +2093,8 @@ var o = dict({
 		"examples": [
 			"<CompetitionContext.Provider value={competition}>\n{children}\n</CompetitionContext.Provider>"
 		],
-	}, "TypeScript": {
+	}
+	, "TypeScript": {
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
 		"typing": ["static (optional)", "dynamic"],
@@ -2059,7 +2118,8 @@ var o = dict({
 			"uses node.js",
 		],
 		"examples": null,
-	}, "VBA": {
+	}
+	, "VBA": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -2076,7 +2136,8 @@ var o = dict({
 			"looks like a txt file"
 		],
 		"examples": null,
-	}, "Vim-Script": {
+	}
+	, "Vim-Script": {
 		"function": null,
 		"variable": "let",
 		"typing": null,
@@ -2114,7 +2175,8 @@ var o = dict({
 			"call plug#begin('~/.config/nvim/plugged')",
 			"Plug 'joshdick/onedark.vim'",
 		],
-	}, "Vue": {
+	}
+	, "Vue": {
 		"function": null,
 		"variable": null,
 		"typing": null,
@@ -2136,7 +2198,8 @@ var o = dict({
 		"examples": [
 			"<style src=\"./style.scss\" lang=\"scss\" />"
 		],
-	}, "<object format template>": {
+	}
+	, "<object format template>": {
 		// so I don't have to retype everything every time I want to add a new language
 		"function": null,
 		"variable": null,
