@@ -18,3 +18,5 @@ Python/passwords.py
 test.*
 *.exe
 *.o
+
+!JavaScript/test.js
