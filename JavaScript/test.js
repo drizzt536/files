@@ -293,7 +293,7 @@
 					catch (err) {
 						if (err instanceof TestingError._self) throw err; // bubble up error from above.
 						if (outputs[1] !== 1 && outputs[1] !== true) throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered an unexpected error.\n\terror code 11\n`);
-						if (outputs[0].stack !== err.stack || outputs[0].name !== err.name) throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered the wrong error.\n\terror code 12\n`);
+						if (outputs[0] !== err.stack) throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered the wrong error.\n\terror code 12\n`);
 					}
 				}
 			}
