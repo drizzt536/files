@@ -1,8 +1,8 @@
 --> requires ../JavaScript/lib.js for sMath.add for accurate addition
---> games that say "// duplicate" are just there to make it easier to find games in the object.
---> they are not counted either.
+--> applications that say "// duplicate" are just there to make it easier to find applications in the object.
 --> key : value  ==>  game-name : price
---> TODO: early access means to check if the price changes after early access ends
+--> "TODO: early access" is a note for me to check if the price changes after early access ends
+
 var OwnedApplications = {
 	"20XX": 14.99
 	, "3 out of 10, EP 1: \"Welcome To Shovelworks\"": 0
@@ -294,7 +294,7 @@ var OwnedApplications = {
 	, "MONOPOLY® MADNESS DEMO": 0
 	, "Monopoly® Madness Demo": 0 // duplicate
 	, "Mortal Shell": 29.99
-	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is
+	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is or where it came from
 	, "MudRunner": 19.99
 	, "MultiVersus": 0
 	, "N0va Desktop": 0
