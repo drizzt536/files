@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v1.1.2 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.4 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 void (() => { "use strict";
 	/* Customization & Constants: */ {
@@ -73,6 +73,7 @@ void (() => { "use strict";
 			, Defined_Properties_Writable       : "default" // true
 			, Property_Is_Default_Defined_Vars  : "default" // false
 			, Testing_Object_Array_Name         : "Test.js" // N/A. just set to undefined, if there is none.
+			, Create_Testing_Object             : "default" // true
 		///////////////////////////////////////// LIBRARY USER INPUT END /////////////////////////////////////////
 		////////////////////////////// LIBRARY DEVELOPER SETTINGS & VARIABLES START //////////////////////////////
 			, Environment_Global_String         : _Global_String
@@ -217,6 +218,7 @@ void (() => { "use strict";
 		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
 		LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
 		LibSettings.LIBRARY_NAME = "lib.js";
+		LibSettings.FILE_PATH = document.currentScript.src;
 		// TODO: clear cookies and caches if the library user wants
 	}
 	/* Variables & Functions definitions: */ {
@@ -307,13 +309,17 @@ void (() => { "use strict";
 			, foia   = α
 			, emc    = γ // Euler-Mascheroni Constant
 			, omega  = Ω
-			, symbToStr = function symbolToString(symbol) {
-				if (typeof symbol !== "symbol") return void 0;
-				return `Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})`
+			, symbToStr = function symbolToString(symbol, form = 1) {
+				return typeof symbol === "symbol" ?
+					form === 1 ?
+					`Symbol${ Symbol.keyFor(symbol) === void 0 ? "" : ".for"
+						}("${ symbol.description.replace(/"/g, "\\\"") }")` :
+					`Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})` :
+					void 0;
 			}
-			// TODO: Finish
 			, json = Object.create(Object.prototype, {
 				parse: {
+					// TODO: Finish
 					value: function parse(object, reviver) {
 						try { return JSON.parse(object, reviver) }
 						catch { return void 0 }
@@ -327,13 +333,13 @@ void (() => { "use strict";
 						object, {
 							space = " "
 							, spacesAtEnds = false
-							, useNonEnumerables = false
+							, onlyEnumProps = true
 						} = {}
 					)
 					{
 						switch (object == null ?
 							"nullish" :
-							object.constructor.name === "Array" ?
+							object?.constructor?.name === "Array" ?
 								"array" :
 								object.test === /1/.test ?
 									"regexp" :
@@ -341,14 +347,18 @@ void (() => { "use strict";
 						)
 						{
 							case "boolean": return `${object}`;
+							case "function":
+								const tmp = `${object}`;
+								return /(.|\n)*{ \[native code] }$/.test(tmp) ?
+									undefined :
+									tmp;
 							case "regexp": return `${object}`;
 							case "string": return `"${object}"`;
 							case "bigint": return `${object}n`;
 							case "number": return Object.is(object, -0) ? "-0" : `${object}`;
 							case "nullish": return object === null ? "null" : "undefined";
-							case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for" }("${
-									object.description.replace(/"/g, "\\\"")
-								}")`;
+							case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for"
+								}("${ object.description.replace(/"/g, "\\\"") }")`;
 							case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
 							// the "array" and "object" cases might be able to be combined due to their similarity
 							case "array":
@@ -358,24 +368,44 @@ void (() => { "use strict";
 									// can probably be a do..while, but I don't care.
 									output += stringify(
 										object[i++]
-										, space
-										, spacesAtEnds
-										, useNonEnumerables
+										, {
+											space: space
+											, spacesAtEnds: spacesAtEnds
+											, onlyEnumProps: onlyEnumProps
+										}
 									);
 									if (i < object.length) output += `,${space}`;
 									else break;
 								}
 								return output + `${spacesAtEnds ? space : ""}]`;
 							case "object":
-								var keys = Object[useNonEnumerables ? "getOwnPropertyNames" : "keys"](object);
+								var keys = Object[onlyEnumProps ? "keys" : "getOwnPropertyNames"](object);
+								// symbols always come last since they are concatonated to the end.
+
+								keys = keys.concat(
+									onlyEnumProps ?
+										Object.getOwnPropertySymbols(object)
+											.filter( key => Object.propertyIsEnumerable.call(object, key) ) :
+										Object.getOwnPropertySymbols(object)
+								);
 								if (!keys.length) return `{${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}}`;
 								for (var output = `{${spacesAtEnds ? space : ""}`, i = 0 ;;) {
 									// can probably be a do..while, but I don't care.
-									output += `"${ keys[i] }":${ space }${stringify(
+									output += `${
+										typeof keys[i] === "symbol" ? "[" : '"'
+									}${
+										typeof keys[i] === "symbol" ? symbToStr(keys[i], 1) : keys[i]
+									}${
+										typeof keys[i] === "symbol" ? "]" : '"'
+									}:${
+										space
+									}${stringify(
 										object[ keys[i] ]
-										, space
-										, spacesAtEnds
-										, useNonEnumerables
+										, {
+											space: space
+											, spacesAtEnds: spacesAtEnds
+											, onlyEnumProps: onlyEnumProps
+										}
 									)}`;
 									if (++i < keys.length) output += `,${space}`;
 									else break;
@@ -385,6 +415,12 @@ void (() => { "use strict";
 						}
 						throw Error("it is supposed to be impossible to get here.");
 					}
+					, writable: !1
+					, enumerable: !1
+					, configurable: !1
+				}
+				, _JSON: {
+					value: JSON
 					, writable: !1
 					, enumerable: !1
 					, configurable: !1
@@ -424,7 +460,7 @@ void (() => { "use strict";
 			, lastElement = function lastElement() { return this[this.length - 1] }
 			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
-			, copy = function copy(object) { return eval( json.stringify(object) ) } // safe eval.
+			, deepCopy = function deepCopy(object) { return eval( json.stringify(object) ) } // safe eval.
 			, dim = function dim(e, n=1) { return e?.length - n }
 			, len = function length(e) { return e?.length }
 			, sizeof = function	sizeof(obj, keys=true) {
@@ -435,6 +471,7 @@ void (() => { "use strict";
 						( keys ? Object.keys : Object.getOwnPropertyNames )(obj).length; // everything else
 			}
 			, range = function* range(start, stop, step=1) {
+				if ( isNaN(start = Number(start)) ) throw Error("start can't be infinity");
 				stop == null ? [stop, start] = [start, 0] : stop++;
 				for (var i = start; i < stop; i += step) yield i;
 			}
@@ -1825,6 +1862,7 @@ void (() => { "use strict";
 			};
 			return regex.prototype = _RegExp.prototype,
 				regex.prototype.constructor = regex,
+				regex._RegExp = _RegExp,
 				regex;
 		}
 		, stringifyMath  : stringifyMath
@@ -1841,6 +1879,7 @@ void (() => { "use strict";
 		, formatjson     : formatjson
 		, symbToStr      : symbToStr
 		, strToObj       : strToObj
+		, deepCopy       : deepCopy
 		, randint        : randint
 		, sizeof         : sizeof
 		, strMul         : strMul
@@ -1860,7 +1899,6 @@ void (() => { "use strict";
 		, json           : json
 		, list           : list
 		, rand           : rand
-		, copy           : copy
 		, abs            : abs
 		, sgn            : sgn
 		, int            : int
@@ -1923,15 +1961,13 @@ void (() => { "use strict";
 		, "ifdom prototype HTMLCollection": { last: lastElement }
 		, "ifdom prototype HTMLAllCollection": { last: lastElement }
 		, "object Object": {
-			"property copy" : copy,
+			"property copy" : deepCopy,
 			"property keyof": keyof,
 			"call native property create"() {
 				const _create = Object.create;
 				function create(proto, properties) {
-					return _create(
-						proto == null ? null : proto,
-						properties
-					);
+					// normally if you pass in undefined, it throws an error, but null works fine.
+					return _create(proto ?? null, properties);
 				}
 				return create._create = _create, create;
 			}
@@ -2054,7 +2090,7 @@ void (() => { "use strict";
 				return this;
 			}
 			, "property hasDupes": function hasDuplicates() {
-				for (var a = copy(this), i = a.length; i --> 0 ;)
+				for (var a = deepCopy(this), i = a.length; i --> 0 ;)
 					if (a.includes(a.pop())) return !0;
 				return !1;
 			}
@@ -2241,7 +2277,7 @@ void (() => { "use strict";
 			}
 			, "property clear": function clear() { return this.length = 0, this }
 			, "property getDupes": function getDupes() {
-				for (var arr = copy(this), dupes = [], i = arr.length, val; i --> 0 ;)
+				for (var arr = deepCopy(this), dupes = [], i = arr.length, val; i --> 0 ;)
 					arr.includes(val = arr.pop()) && dupes.push([i, val]);
 				return dupes.length ? dupes : null;
 			}
@@ -3737,6 +3773,20 @@ void (() => { "use strict";
 				help         === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
 				constants    === "default" && (constants = !0);
+				Object.defineProperties(this, {
+					[Symbol.toStringTag]: {
+						value: "rMath"
+						, writable: false
+						, enumerable: false
+						, configurable: false
+					}
+					, [Symbol.name]: {
+						value: "rMath"
+						, writable: false
+						, enumerable: false
+						, configurable: false
+					}
+				})
 
 				var HelpText = help ? (function create_HelpText() {
 					var helptext = class HelpText {
@@ -3775,6 +3825,7 @@ void (() => { "use strict";
 					return function HelpText() { return new helptext(...arguments) }
 				})() : !1;
 				if (help) this._HelpText = HelpText;
+
 
 				this.Set = class RealSet {
 					// Probably not constant time lookup.
@@ -3870,6 +3921,21 @@ void (() => { "use strict";
 					size() { return this.length }
 					clear() { this.length = 0 }
 				};
+
+				/* with (this.Set) {
+					prototype["⋃"] = prototype.union;
+					prototype["⋂"] = prototype.intersection;
+
+					prototype["⊂"] = prototype.isStrictSubset;
+					prototype["⊃"] = prototype.isStrictSuperset;
+					prototype["⊊"] = prototype.isStrictSubset;
+					prototype["⊋"] = prototype.isStrictSuperset;
+
+					prototype["⊆"] = prototype.isSubset;
+					prototype["⊇"] = prototype.isSuperset;
+
+					prototype["∈"] = prototype.has;
+				} */
 
 				this.Set.prototype["⋃"] = this.Set.prototype.union;
 				this.Set.prototype["⋂"] = this.Set.prototype.intersection;
@@ -5199,6 +5265,7 @@ void (() => { "use strict";
 					};
 				};
 			}
+			toString() { return "[object rMath]" }
 			Ω(x=Math.E, i=10_000) {
 				// Ω(x) * x^Ω(x) ≈ 1
 				// approximate because some inputs oscilate between outputs, such as Ω(349)
@@ -7985,75 +8052,6 @@ void (() => { "use strict";
 				console.log("keylogger launch failed due to library settings");
 		}
 	}
-	/* Testing Object for Test.js */ {
-		const tests = {
-			round: {
-				same: true
-				, changeThis: true
-				, args: 1
-				, scopes: ["globalThis", "rMath"]
-				, inputs: [
-					[void 0, 4.1], [void 0, -2.3], [void 0, -7.5], [void 0, 1.1234], [void 0, 0], [void 0, -0]
-					, [void 0, NaN], [void 0, 1/0], [void 0, -1/0], [void 0, "15.8"], [void 0, "-9.6"]
-					, [void 0, "asdf"], [void 0, "420n"], [void 0, Symbol("1234")], [void 0, Symbol.for("1234")]
-					, [void 0, [1, 2, 3]], [void 0, 2**-52], [void 0, 1e+58 + 1e+35], [void 0, {a: 1, b: 2}]
-					, [void 0, void 0], [void 0, null], [void 0, !0], [void 0, !1], [void 0, () => 2]
-					, [void 0, 20n], [void 0, -4n], [void 0, 0n], [void 0, /regex/]
-				]
-				, outputs: [
-					[4, 0], [-2, 0], [-8, 0], [1, 0], [0, 0], [0, 0], [NaN, 0], [1/0, 0], [- 1/0, 0], [16, 0]
-					, [-10, 0], [NaN, 0], [NaN, 0], [NaN, 0], [NaN, 0], [NaN, 0], [0, 0], [1e58, 0], [NaN, 0]
-					, [NaN, 0], [NaN, 0], [NaN, 0], [NaN, 0], [NaN, 0], [20n, 0], [-4n, 0], [0n, 0], [NaN, 0]
-				]
-			}
-			, isIterable: {
-				same: true
-				, args: 1
-				, scope: "globalThis"
-				, inputs: [
-					[void 0, 4.1], [void 0, NaN], [void 0, 1/0], [void 0, -1/0], [void 0, "asdf"]
-					, [void 0, "420n"], [void 0, Symbol("1234")], [void 0, Symbol.for("1234")]
-					, [void 0, [1, 2, 3]], [void 0, 2**-52], [void 0, 1e+58 + 1e+35], [void 0, {a: 1, b: 2}]
-					, [void 0, void 0], [void 0, null], [void 0, !0], [void 0, !1], [void 0, () => 2]
-					, [void 0, 20n], [void 0, /regex/]
-				]
-				, outputs: [
-					[!1, 0]// [void 0, 4.1]
-					, [!1, 0]// , [void 0, NaN]
-					, [!1, 0]// , [void 0, 1/0]
-					, [!1, 0]// , [void 0, -1/0]
-					, [!0, 0]// , [void 0, "asdf"]
-					, [!0, 0]// , [void 0, "420n"]
-					, [!1, 0]// , [void 0, Symbol("1234")]
-					, [!1, 0]// , [void 0, Symbol.for("1234")]
-					, [!0, 0]// , [void 0, [1, 2, 3]]
-					, [!1, 0]// , [void 0, 2**-52]
-					, [!1, 0]// , [void 0, 1e+58 + 1e+35]
-					, [!1, 0]// , [void 0, {a: 1, b: 2}]
-					, [!1, 0]// , [void 0, void 0]
-					, [!1, 0]// , [void 0, null]
-					, [!1, 0]// , [void 0, !0]
-					, [!1, 0]// , [void 0, !1]
-					, [!1, 0]// , [void 0, () => 2]
-					, [!1, 0]// , [void 0, 20n]
-					, [!1, 0]// , [void 0, /regex/]
-				]
-			}
-			// isArr
-			// sizeof
-			// len
-			// dim
-		};
-		LIBRARY_VARIABLES["local tests"] = tests;
-		let obj = globalThis[LibSettings.Testing_Object_Array_Name];
-
-		if (obj == null) obj = globalThis[LibSettings.Testing_Object_Array_Name] = {};
-
-		if (obj?.constructor?.name === "Array")
-			obj.push(tests);
-		else if (obj?.constructor?.name === "Object")
-			obj[LibSettings.LIBRARY_NAME] = tests;
-	}
 	/* Error Handling & Exiting: */ {
 		for (const s of DEFER_ARR) define(s, 1);
 		for (const s of LOCAL_DEFER_ARR) define(s, 1);
@@ -8131,8 +8129,7 @@ void (() => { "use strict";
 		, piApproxStr = n => sMath.div(sMath.square(a(n+1)), t(n));
 		return piApproxStr;
 	})();
-*/
-/*
+*//*
                     1                             1     x     5
    ----------------------------------- ≈ tan(x), --- ≤ --- ≤ ---
      √12         /  3       3  \                  6     π     6
