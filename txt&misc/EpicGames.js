@@ -257,6 +257,7 @@ var OwnedApplications = {
 	, "KARDS - The WWII Card Game": 0
 	, "KARDS - The WW2 Card Game": 0 // duplicate
 	, "KARDS": 0 // duplicate
+	, "Kerbal Space Program": 39.99
 	, "KID A MNESIA EXHIBITION": 0
 	, "Killing Floor 2": 29.99
 	, "KillingFloor2Beta": 0
@@ -385,6 +386,8 @@ var OwnedApplications = {
 	, "Shadow of the Tomb Raider": 0 // duplicate
 	, "Shadow Tactics: Blades of the Shogun": 39.99
 	, "Shadow Tactics": 0 // duplicate
+	, "Shadow Tactics - Aiko's Choice": 19.99 // standalone paid dlc
+	, "Shadow Tactics: Blades of the Shogun - Aiko's Choice": 0 // duplicate
 	, "Shadowrun Hong Kong - Extended Edition": 19.99
 	, "Shadowrun Hong Kong": 0 // duplicate
 	, "Shadowrun Returns": 14.99
