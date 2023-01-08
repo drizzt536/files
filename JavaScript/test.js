@@ -1,19 +1,21 @@
 #!/usr/bin/env js
-// test.js v1.0.1 (c) | Copyright 2023 Daniel E. Janusch
+// test.js v1.0.4 (c) | Copyright 2023 Daniel E. Janusch
 
 // the tests can be passed via a global object or ...
-// the override (2nd, 1-indexed) parameter of the run_tests() function
+// the override (2nd 1-indexed) parameter of the run_tests() function
+// this library was made to interface well with lib.js but is its own standalone library.
 
 
-// TODO: Maybe zip together the inputs and outputs so they are easier to use.
-// TODO: Fix the thing not breaking if there are different amounts of inputs and outputs.
+// TODO: Maybe zip together the inputs and outputs in the testing object so they are easier to use.
+// TODO: Maybe implement where functions can have optional arguments, but it might be better the way it is.
 
-(function run_tests(testsGlobalName, objectOverride) {
-
+(function run_tests(testsGlobalName, objectOverride, debugMode /*debugger then throw if true*/) {
 	if (testsGlobalName == null) return;
 
+	debugMode = !!debugMode; // Boolean(debugMode)
+
 	const libraryTests = objectOverride == null ? globalThis?.[testsGlobalName] : objectOverride
-	, deepCopy = basicObject => eval( objectToString(basicObject) ) // safe eval.
+	, deepCopy = (basicObject, options={}) => eval( stringify(basicObject, options) )// safe eval.
 	, stringToObject = (function create_sto() {
 		function isInvalidString(str, nextCharacter="]") {
 			// Stage 2: isInvalidString. returns [isInvalid, endBracketIndex]
@@ -159,94 +161,143 @@
 			return new testingError(...arguments);
 		}
 		return TestingError._self = testingError, TestingError;
-	})();
+	})()
+	, symbToStr = function symbolToString(symbol) {
+		return `Symbol${ Symbol.keyFor(symbol) == null ? "" : ".for"
+		}("${ symbol.description.replace(/"/g, "\\\"") }")`;
+	}
 
-	function objectToString(object, space="", spacesAtEnds=false, useNonEnumerables=true) {
+	function toRegex(str) {
+		for (var i = 0, b = ""; i < str.length; i++)
+			b += `${"$^()+*\\|[]{}?.".includes(str[i]) ? "\\" : ""}${str[i]}`;
+		return RegExp(b);
+	}
+	function stringify(
+		object, {
+			space = " "
+			, spacesAtEnds = false
+			, onlyEnumProps = true
+		} = {}
+	)
+	{
 		switch (object == null ?
 			"nullish" :
-			object.constructor.name === "Array" ?
+			object?.constructor?.name === "Array" ?
 				"array" :
 				object.test === /1/.test ?
 					"regexp" :
 					typeof object
 		)
 		{
-			case "boolean":
-			case "regexp":
-				return `${object}`;
-			case "string":
-				return `"${object}"`;
-			case "bigint":
-				return `${object}n`;
-			case "number":
-				return Object.is(object, -0) ?
-					"-0" :
-					`${object}`;
-			case "nullish":
-				return object === null ?
-					"null" :
-					"undefined";
-			case "symbol":
-				return `Symbol${
-					Symbol.keyFor(object) === void 0 ?
-						"" :
-						".for"
-				}("${
-					String.prototype.replace._replace.call(object.description, /"/g, "\\\"")
-				}")`;
+			case "boolean": return `${object}`;
 			case "function":
-				return void 0; // same output as JSON.stringify(some function)
-				// functions can't be serialized safely.
-				// maybe can be treated as an object though.
+				const tmp = `${object}`;
+				return /(.|\n)*{ \[native code] }$/.test(tmp) ?
+					undefined :
+					tmp;
+			case "regexp": return `${object}`;
+			case "string": return `"${object}"`;
+			case "bigint": return `${object}n`;
+			case "number": return Object.is(object, -0) ? "-0" : `${object}`;
+			case "nullish": return object === null ? "null" : "undefined";
+			case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for"
+				}("${ object.description.replace(/"/g, "\\\"") }")`;
+			case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
+			// the "array" and "object" cases might be able to be combined due to their similarity
 			case "array":
 				if (!object.length) return `[${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}]`;
 
 				for (var output = `[${spacesAtEnds ? space : ""}`, i = 0 ;;) {
 					// can probably be a do..while, but I don't care.
-					output += objectToString(
+					output += stringify(
 						object[i++]
-						, space
-						, spacesAtEnds
-						, useNonEnumerables
+						, {
+							space: space
+							, spacesAtEnds: spacesAtEnds
+							, onlyEnumProps: onlyEnumProps
+						}
 					);
 					if (i < object.length) output += `,${space}`;
 					else break;
 				}
 				return output + `${spacesAtEnds ? space : ""}]`;
 			case "object":
-				var keys = Object[useNonEnumerables ? "getOwnPropertyNames" : "keys"](object);
+				var keys = Object[onlyEnumProps ? "keys" : "getOwnPropertyNames"](object);
+				// symbols always come last since they are concatonated to the end.
+				keys = keys.concat(
+					onlyEnumProps ?
+						Object.getOwnPropertySymbols(object)
+							.filter( key => Object.propertyIsEnumerable.call(object, key) ) :
+						Object.getOwnPropertySymbols(object)
+				);
 				if (!keys.length) return `{${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}}`;
 				for (var output = `{${spacesAtEnds ? space : ""}`, i = 0 ;;) {
 					// can probably be a do..while, but I don't care.
-					output += `"${ keys[i] }":${ space }${objectToString(
+					output += `${
+						typeof keys[i] === "symbol" ? "[" : '"'
+					}${
+						typeof keys[i] === "symbol" ? symbToStr(keys[i]) : keys[i]
+					}${
+						typeof keys[i] === "symbol" ? "]" : '"'
+					}:${
+						space
+					}${stringify(
 						object[ keys[i] ]
-						, space
-						, spacesAtEnds
-						, useNonEnumerables
+						, {
+							space: space
+							, spacesAtEnds: spacesAtEnds
+							, onlyEnumProps: onlyEnumProps
+						}
 					)}`;
 					if (++i < keys.length) output += `,${space}`;
 					else break;
 				}
 				return output + `${spacesAtEnds ? space : ""}}`;
-			default:
-				throw Error("that type is not supposed to exist.");
+			default: throw Error("that type is not supposed to exist.");
 		}
+		throw Error("it is supposed to be impossible to get here.");
 	}
-	function testFunction(obj, name, checkNullArgs = false) {
+	function testFunction(obj, name) {
+
 		if (obj?.ignore === !0) return;
-		if (obj == null) throw TestingError(`nullish testing objects are invalid. function name "${name}".\n\tError Code: 1\n`);
+		if (obj == null) {
+			if (debugMode) debugger;
+			throw TestingError(`nullish testing objects are invalid. function name "${name}".\n\tError Code: 1\n`);
+		}
+
+		obj.same ??= !1; // be careful when using same. it can cause problems...
+		// attributes that weren't enumerable, configurable, or writable become so. (or whatever the default is).
+		// prototype attributes aren't converted except for the thisArg
+		// special classes change to default objects and may be broken.
+		// native functions don't convert and instead get set to undefined.
+		// all the problems that come with same are from deepCopy.
+		// all the problems can be avoided by not using same.
+		// same is just an ease of use tool.
+		// deepCopy will probably be expanded later to work for more edge cases.
+		obj.changeThis ??= !1;
+		obj.args ??= null;
+
+		if ( obj.same === !1 && (
+			obj.inputs?.constructor?.name === "Array" || obj.outputs?.constructor?.name === "Array"
+		) ) obj.same = !0;
 		if (["string", "symbol", "number", "bigint"].includes(typeof obj.scope)) {
 			if (obj.scopes == null) obj.scopes = [obj.scope];
 			else if (obj.scopes?.constructor?.name === "Array") obj.scopes.push(obj.scope);
 			else throw Error(`"scopes" attribute is not an array.\n\tError Code: 2\n`);
 			delete obj.scope;
 		}
-		if (obj.scopes == null) throw TestingError(`function "${name}" does not have a "scopes" attribute.\n\tError Code: 3\n`);
-		if (obj.scopes?.constructor?.name !== "Array") throw TestingError(`function "${name}" "scopes" attribute is not an array.\n\tError Code: 4\n`);
-		if (!obj.scopes.length) throw TestingError(`function "${name}" does not have any scopes.\n\tError Code: 5\n`);
-
-		obj.same ??= !1;
-		obj.changeThis ??= !1;
+		if (obj.scopes == null) {
+			if (debugMode) debugger;
+			throw TestingError(`function "${name}" does not have a "scopes" attribute.\n\tError Code: 3\n`);
+		}
+		if (obj.scopes?.constructor?.name !== "Array") {
+			if (debugMode) debugger;
+			throw TestingError(`function "${name}" "scopes" attribute is not an array.\n\tError Code: 4\n`);
+		}
+		if (!obj.scopes.length) {
+			if (debugMode) debugger;
+			throw TestingError(`function "${name}" does not have any scopes.\n\tError Code: 5\n`);
+		}
 
 		// change things that reference globalThis into globalThis
 		for (var i = 0; i < obj.scopes.length ;) {
@@ -274,7 +325,7 @@
 			obj.inputs = {}; obj.outputs = {}; // these must set to different objects.
 
 			for (const scope of obj.scopes) {
-				obj.inputs[scope] = deepCopy(tmp_inputs); // TODO: Make sure this copy function is good enough
+				obj.inputs[scope] = deepCopy(tmp_inputs, {onlyEnumProps: false});
 				obj.outputs[scope] = tmp_outputs;
 
 				if (obj.changeThis === !0)
@@ -282,43 +333,89 @@
 						obj.inputs[scope][i][0] = scope === "globalThis" ?
 							void 0 :
 							stringToObject(scope);
+				else
+					for (var i = 0; i < obj.inputs[scope].length; i++)
+						obj.inputs[scope][i][0] = tmp_inputs[i][0];
 			}
 		}
 
 		name = obj.name ?? name; // name overwrite. different from "name ??= obj.name"
 
-		if (name == null) throw TestingError("undefined objects are invalid. this is supposed to be impossible.\n\tError Code: 6\n");
-		if (obj.args == null && checkNullArgs === true) throw TestingError(`function "${name}" does not have a "args" attribute.\n\tError Code: 7\n`);
+		if (name == null) {
+			if (debugMode) debugger;
+			throw TestingError("undefined objects are invalid. this is supposed to be impossible.\n\tError Code: 6\n");
+		}
 		if (typeof obj.args === "bigint") obj.args = Number(obj.args);
-		if (typeof obj.args !== "number" || obj.args % 1 !== 0 || obj.args < 0) throw TestingError(`function "${name}" has an invalid "args" attribute.\n\tError Code: 8\n`);
-		if (obj.inputs == null) throw TestingError(`function "${name}" does not have a "inputs" attribute.\n\tError Code: 9\n`);
-		if (obj.outputs == null) throw TestingError(`function "${name}" does not have a "outputs" attribute.\n\tError Code: A\n`);
-		if (Object.keys(obj.inputs).length !== Object.keys(obj.outputs).length) throw TestingError(`function "${name}" has different amounts of scopes for inputs and outputs.\n\tError Code: B\n`);
+		if (obj.args !== null) {
+			if (typeof obj.args !== "number" || obj.args % 1 !== 0 || obj.args < 0) {
+				if (debugMode) debugger;
+				throw TestingError(`function "${name}" has an invalid "args" attribute.\n\tError Code: 7\n`);
+			}
+		}
+		if (obj.inputs == null) {
+			if (debugMode) debugger;
+			throw TestingError(`function "${name}" does not have a "inputs" attribute.\n\tError Code: 8\n`);
+		}
+		if (obj.outputs == null) {
+			if (debugMode) debugger;
+			throw TestingError(`function "${name}" does not have a "outputs" attribute.\n\tError Code: 9\n`);
+		}
+		if (Object.keys(obj.inputs).length !== Object.keys(obj.outputs).length) {
+			if (debugMode) debugger;
+			throw TestingError(`function "${name}" has different amounts of scopes for inputs and outputs.\n\tError Code: A\n`);
+		}
 
 		for (const scope of obj.scopes) {
 
-			if (!["string", "symbol", "number", "bigint"].includes(typeof scope)) throw TestingError(`function "${name}" has an invalid scope "${scope}" and needs to be a string, symbol, number, or bigint.\n\tError Code: C\n`);
-			if (obj.inputs[scope].length !== obj.outputs[scope].length) throw Error(`function "${name}" in scope "${scope} has different numbers of inputs and outputs.\n\tError Code: D\n`);
+			if (!["string", "symbol", "number", "bigint"].includes(typeof scope)) {
+				if (debugMode) debugger;
+				throw TestingError(`function "${name}" has an invalid scope "${scope}" and needs to be a string, symbol, number, or bigint.\n\tError Code: B\n`);
+			}
+			if (obj.inputs[scope].length !== obj.outputs[scope].length) {
+				if (debugMode) debugger;
+				throw Error(`function "${name}" in scope "${scope} has different numbers of inputs and outputs.\n\tError Code: C\n`);
+			}
 
 			for (var zippedObject = zip(obj.inputs[scope], obj.outputs[scope]), index = 0; index < zippedObject.length; index++) {
 				const [inputs, outputs] = zippedObject[index];
-				if (checkNullArgs !== true || obj.args != null)
-					if (inputs.length - 1 !== obj.args) throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of inputs.\n\tError Code: E\n`);
-				if (outputs.length !== 2) throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of outputs.\n\tError Code: F\n`);
+				if (obj.args !== null)
+					if (inputs.length - 1 !== obj.args) {
+						if (debugMode) debugger;
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of inputs.\n\tError Code: D\n`);
+					}
+				if (outputs.length !== 2) {
+					if (debugMode) debugger;
+					throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of outputs.\n\tError Code: E\n`);
+				}
 				const scopeObject = stringToObject(scope, globalThis, !0, !0);
 
 				try {
 					const outputValue = inputs[0] === void 0 ? scopeObject[name](...inputs.slice(1)) : scopeObject[name].call(...inputs);
-					if (outputs[1] !== 0 && outputs[1] !== !1) throw TestingError(`function "${name}" in scope "${scope}", index ${index} is supposed to have an error and did not.\n\tError Code: 10\n`);
-					if (outputs[0] !== outputValue && objectToString(outputs[0]) !== objectToString(outputValue))
+					if (outputs[1] !== 0 && outputs[1] !== !1) {
+						if (debugMode) debugger;
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} is supposed to have an error and did not.\n\tError Code: F\n`);
+					}
+					if (outputs[0] !== outputValue && stringify(outputs[0]) !== stringify(outputValue)) {
 						// TODO: Make it work for things other than primitives and regular objects.
 						// example: image HTML tags don't work. the won't be the same object, and they stringify to "{}".
-						throw TestingError(`function "${name}" in scope "${scope}", index ${index} had an incorrect output value.\n\tError Code: 11\n`);
+						// try jQuery.ext
+						if (debugMode) debugger;
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} had an incorrect output value.\n\tError Code: 10\n`);
+					}
 				}
 				catch (err) {
-					if (err instanceof TestingError._self) throw err; // bubble up error from above.
-					if (outputs[1] !== 1 && outputs[1] !== !0) throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered an unexpected error.\n\tError Code: 12\n`);
-					if (outputs[0] !== err.stack) throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered the wrong error.\n\tError Code: 13\n`);
+					if (err instanceof TestingError._self) {
+						if (debugMode) debugger;
+						throw err; // bubble up error from above.
+					}
+					if (outputs[1] !== 1 && outputs[1] !== !0) {
+						if (debugMode) debugger;
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered an unexpected error.\n\tError Code: 11\n`);
+					}
+					if (outputs[0] !== err+"") {
+						if (debugMode) debugger;
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered the wrong error.\n\tError Code: 12\n`);
+					}
 				}
 			}
 		}
@@ -337,5 +434,4 @@
 			testLibrary(tests);
 	else
 		testLibrary(libraryTests);
-
-})("Test.js", null);
+})("Test.js", null, false);
