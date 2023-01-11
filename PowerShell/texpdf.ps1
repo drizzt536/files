@@ -49,7 +49,7 @@
 .link
     N/A
 #>
-Function Global:texpdf {
+Function Global:Texpdf {
     [CmdletBinding()]
     Param (
         [Parameter(position=0, mandatory=$true )] [string] $filename              ,
@@ -65,17 +65,5 @@ Function Global:texpdf {
         if (Test-Path "${path}texput.log") { Remove-Item "${path}texput.log" }
         $openpdf && Invoke-Expression "$path$filename.pdf"
         return $null
-    }
-}
-
-
-function stexpdf {
-    [CmdletBinding()] param ( $fname )
-    process {
-        gps | ? name -eq Acrobat | spps
-        pdflatex -quiet "./$fname.tex"
-        rm "./$fname.aux", "./$fname.log"
-        if (test-path "./texput.log") { rm "./texput.log" }
-        iex "./$fname.pdf"
     }
 }
