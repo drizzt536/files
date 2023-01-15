@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% gamma.tex v5 (c) | Copyright 2022-2023 Daniel E. Janusch
+% gamma.tex v6 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 % this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and must be copied IN ITS ENTIRETY under penalty of law.
@@ -14,20 +14,20 @@
 
 
 % \title{Trigonometric Functions in Terms of Gamma} % old title
-\title{The Gamma Function, Its Inverse, and Its Relationship with Trigonometry}
+\title{The Gamma Function, Its Inverse, and Its Relationship With Trigonometry}
 \author{Daniel E. Janusch}
-\date{December 20, 2022} % 9:40pm MST
+\date{January 14, 2023} % 9:14pm MST
 \maketitle
 
 \begin{section}{Definitions}
 
 	\begin{equation}
 		0\in\mathbb N~~(1\text a)\hspace{2em}\mathbb N_k:=\left\{x+k:x\in\mathbb N\right\}\forall\,k~~(1\text b)
-	\end{equation}
+	\end{equation} % equation 1
 
 	\vspace{-0.065em}\begin{equation}
 		\tau:=2\pi
-	\end{equation}
+	\end{equation} % equation 2
 
 	\vspace{-0.065em}\begin{equation}
 		\text{sgn}(x):=\begin{cases}
@@ -35,27 +35,27 @@
 			0,x=0\\
 			-1,x<0
 		\end{cases}\hspace{-1em}=\dfrac x{|x|}~\forall x
-	\end{equation}
+	\end{equation} % equation 3
 
 	\vspace{-0.065em}\begin{equation}
 		a\,\text{mod}_n\,b:=a\,\text{mod}\,b+n
-	\end{equation}
+	\end{equation} % equation 4
 
 	\vspace{-0.065em}\begin{equation}
 		\exp(x):=\lim_{n\to\infty}\sum_{k=0}^n\dfrac{x^k}{k!}=e^x~\forall x
-	\end{equation}
+	\end{equation} % equation 5
 
 	\vspace{-0.065em}\begin{equation}
 		\Gamma(x):=\int_0^\infty\dfrac{t^{x-1}}{\exp t}\text dt=(x-1)!~\forall x>0
-	\end{equation}
+	\end{equation} % equation 6
 
 	\vspace{-0.065em}\begin{equation}
 		\zeta(x):=\sum_{n=1}^\infty\dfrac1{n^x}\forall x>1
-	\end{equation}
+	\end{equation} % equation 7
 
 	\vspace{-0.065em}\begin{equation}
 		\eta(x):=\Gamma^{-1}(x)~~(8\text a)\hspace{2em}\eta(\,\Gamma(x)\,)=\Gamma(\,\eta(x)\,)=x~~(8\text b)
-	\end{equation}
+	\end{equation} % equation 8
 
 	\noindent(8a) is the compositional inverse rather than the fractional inverse. The set of all natural numbers, $\mathbb N$, is defined in part by (1a) and (1b). (7) describes the Riemann Zeta Function. $x$ is assumed to be a real number everywhere for simplicity.
 \end{section}
@@ -66,37 +66,18 @@
 	Proof:\\
 	know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)~~~(\text{reference }1)\\
 
+	\begin{align*}
+		\zeta(x) & =2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma\left(1-x\right)\zeta\left(1-x\right)\\
+		\zeta(x) & =2\cdot2^{x-1}\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)\\
+		\zeta(x) & =2\cdot\tau^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)\\
+		\zeta(x) & =2\cdot\tau^{x-1}\cos\left(\dfrac\pi2(1-x)\right)\Gamma(1-x)\zeta(1-x)\\
+		\zeta(x) & =\dfrac2{\tau^{1-x}}\cos\left(\dfrac\pi2(1-x)\right)\Gamma(1-x)\zeta(1-x)\\
+		\zeta(1-x) & =\dfrac2{\tau^x}\cos\left(\dfrac{\pi x}2\right)\Gamma(x)\zeta(x)\\
+		\zeta(x) & =\dfrac{\zeta(1-x)\tau^x}{2\cos\left(\dfrac{\pi x}2\right)\Gamma(x)}\\
+	\end{align*}
 	\begin{equation}
-		\zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma\left(1-x\right)\zeta\left(1-x\right)
-	\end{equation}
-
-	\begin{equation}
-		\zeta(x)=2\cdot2^{x-1}\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)
-	\end{equation}
-
-	\begin{equation}
-		\zeta(x)=2\cdot\tau^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)
-	\end{equation}
-
-	\begin{equation}
-		\zeta(x)=2\cdot\tau^{x-1}\cos\left(\dfrac\pi2(1-x)\right)\Gamma(1-x)\zeta(1-x)
-	\end{equation}
-
-	\begin{equation}
-		\zeta(x)=\dfrac2{\tau^{1-x}}\cos\left(\dfrac\pi2(1-x)\right)\Gamma(1-x)\zeta(1-x)
-	\end{equation}
-
-	\begin{equation}
-		\zeta(1-x)=\dfrac2{\tau^x}\cos\left(\dfrac{\pi x}2\right)\Gamma(x)\zeta(x)
-	\end{equation}
-
-	\begin{equation}
-		\dfrac{\zeta(1-x)\tau^x}{2\cos\left(\dfrac{\pi x}2\right)\Gamma(x)}=\zeta(x)
-	\end{equation}
-
-	\begin{equation}
-		\zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
-	\end{equation}
+		\zeta(x) & =\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
+	\end{equation} % equation 9
 
 	\noindent\blacksquare
 \end{section}
@@ -108,41 +89,22 @@
 
 	\noindent know: \zeta(x)=2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)~~~(\text{reference }1)\\
 	
-	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}~~~(\text{equation }16)\\
+	\noindent know: \zeta(x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}~~~(\text{equation }9)\\
 
-	\begin{equation}
-		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x)=\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}
-	\end{equation}
-
-	\begin{equation}
-		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x)=\dfrac{\tau^x}{2\,\Gamma(x)}
-	\end{equation}
-
-	\begin{equation}
-		4\cdot\tau^{x-1}\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x)=\dfrac{\tau^x}{\Gamma(x)}
-	\end{equation}
-
-	\begin{equation}
-		2\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x)=\dfrac{\pi}{\Gamma(x)}
-	\end{equation}
-
-	\begin{equation}
-		\Gamma(1-x)\Gamma(x)\sin\pi x=\pi
-	\end{equation}
-
-	\begin{equation}
-		\Gamma(1-x)\Gamma(x)=\pi\csc\pi x
-	\end{equation}
-
-	\begin{equation}
-		\csc x=\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)
-	\end{equation}
-
-	\begin{equation}
+	\begin{align*}
+		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\Gamma(1-x)\zeta(1-x) & =\dfrac{\zeta(1-x)\tau^x\sec\left(\dfrac{\pi x}2\right)}{2\,\Gamma(x)}\\
+		2^x\pi^{x-1}\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x) & =\dfrac{\tau^x}{2\,\Gamma(x)}\\
+		4\cdot\tau^{x-1}\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x) & =\dfrac{\tau^x}{\Gamma(x)}\\
+		2\sin\left(\dfrac{\pi x}2\right)\cos\left(\dfrac{\pi x}2\right)\Gamma(1-x) & =\dfrac{\pi}{\Gamma(x)}\\
+		\Gamma(1-x)\Gamma(x)\sin\pi x & =\pi\\
+	\end{align*}
+	\begin{align} % equations 10-12
+		\Gamma(1-x)\Gamma(x)=\pi\csc\pi x\\
+		\csc x=\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\\
 		\sin\pi x\ne0\Longrightarrow\zeta(1-x)\ne0
-	\end{equation}
+	\end{align}
 
-	\text{Therefore, due to (24), the domains also match.}
+	\noindent\centerline{Therefore, due to (12), the domains also match.}
 
 	\noindent\blacksquare
 \end{section}
@@ -153,30 +115,19 @@
 
 	\noindent Proof:
 
-	\begin{equation}\sin x=\dfrac1{\csc x}\end{equation}
-
-	\begin{equation}\cos x=\dfrac1{\csc\left(\dfrac\pi2-x\right)}\end{equation}
-
-	\begin{equation}\tan x=\dfrac{\csc\left(\dfrac\pi2-x\right)}{\csc x}\end{equation}
-
-	% \begin{equation}\csc x=\csc x\end{equation}
-	
-	\begin{equation}\sec x=\csc\left(\dfrac\pi2-x\right)\end{equation}
-
-	\begin{equation}\cot x=\dfrac{\csc x}{\csc\left(\dfrac\pi2-x\right)}\end{equation}
-
-
-	\begin{equation}\sinh x=-\dfrac i{\csc x}\end{equation}
-
-	\begin{equation}\cosh x=\dfrac1{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
-
-	\begin{equation}\tanh x=-\dfrac{i\csc\left(\dfrac\pi2-ix\right)}{\csc ix}\end{equation}
-
-	\begin{equation}\text{csch}\,x=i\csc ix\end{equation}
-
-	\begin{equation}\text{sech}\,x=\csc\left(\dfrac\pi2-ix\right)\end{equation}
-
-	\begin{equation}\coth x=\dfrac{i\csc ix}{\csc\left(\dfrac\pi2-ix\right)}\end{equation}
+	\begin{align} % equations 13-23
+		\sin x & =\dfrac1{\csc x}\\
+		\cos x & =\dfrac1{\csc\left(\dfrac\pi2-x\right)}\\
+		\tan x & =\dfrac{\csc\left(\dfrac\pi2-x\right)}{\csc x}\\
+		\sec x & =\csc\left(\dfrac\pi2-x\right)\\
+		\cot x & =\dfrac{\csc x}{\csc\left(\dfrac\pi2-x\right)}\\
+		\sinh x & =-\dfrac i{\csc x}\\
+		\cosh x & =\dfrac1{\csc\left(\dfrac\pi2-ix\right)}\\
+		\tanh x & =-\dfrac{i\csc\left(\dfrac\pi2-ix\right)}{\csc ix}\\
+		\text{csch}\,x & =i\csc ix\\
+		\text{sech}\,x & =\csc\left(\dfrac\pi2-ix\right)\\
+		\coth x & =\dfrac{i\csc ix}{\csc\left(\dfrac\pi2-ix\right)}
+	\end{align}
 
 	\centerline{$\csc x=\csc x$ by the reflexive property.}
 
@@ -187,69 +138,37 @@
 
 	\noindent These equations are just the previous ones with Gamma plugged in for csc.
 
-	\begin{equation}\sin x=\dfrac\pi{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}\end{equation}
+	\begin{align} % equations 24-35
+		\sin x & =\dfrac\pi{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}\\
+		\cos x & =\dfrac\pi{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}\\
+		\tan x & =\dfrac{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}\\
+		\csc x & =\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\\
+		\sec x & =\dfrac1\pi\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)\\
+		\cot x & =\dfrac{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}\\
+		\sinh x & =-\pi i\big/\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\\
+		\cosh x & =\pi\big/\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\\
+		\tanh x & =-i\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\big/\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\\
+		\text{csch}\,x & =\dfrac i\pi\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\\
+		\text{sech}\,x & =\dfrac1\pi\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\\
+		\coth x & =i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
+	\end{align}
 
-	\begin{equation}
-		\cos x=\dfrac\pi{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}
-	\end{equation}
-
-	\begin{equation}
-		\tan x=\dfrac{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}
-		{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}
-	\end{equation}
-	
-	\begin{equation}\csc x=\dfrac1\pi\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)\end{equation}
-
-	\begin{equation}
-		\sec x=\dfrac1\pi\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)
-	\end{equation}
-
-	\begin{equation}
-		\cot x=\dfrac{\Gamma\left(\dfrac x\pi\right)\Gamma\left(1-\dfrac x\pi\right)}
-		{\Gamma\left(\dfrac12-\dfrac x\pi\right)\Gamma\left(\dfrac12+\dfrac x\pi\right)}
-	\end{equation}
-
-
-	\begin{equation}\sinh x=-\pi i\big/\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\end{equation}
-
-	\begin{equation}
-		\cosh x=\pi\big/\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
-	\end{equation}
-
-	\begin{equation}
-		\tanh x=-i\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)\big/\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)
-	\end{equation}
-
-	\begin{equation}
-		\text{csch}\,x=\dfrac i\pi\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)
-	\end{equation}
-
-	\begin{equation}
-		\text{sech}\,x=\dfrac1\pi\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
-	\end{equation}
-
-	\begin{equation}
-		\coth x=i\,\Gamma\left(\dfrac{ix}\pi\right)\Gamma\left(1-\dfrac{ix}\pi\right)\big/\,\Gamma\left(\dfrac12-\dfrac{ix}\pi\right)\Gamma\left(\dfrac12+\dfrac{ix}\pi\right)
-	\end{equation}
-
-	\noindent where ``$\big/$" means divide everything on the left by everything on the right.
+	\noindent Where ``$\big/$" means divide everything on the left by everything on the right.
 \end{section}
 
 \pagebreak\begin{section}{Inverse Gamma Function}
 	
 	claim: $\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))$\\
 	Proof:\\
-	know: $\Gamma(x)\,\Gamma(1-x)=\pi\csc\pi x~~~$(equation 22)
+	know: $\Gamma(x)\,\Gamma(1-x)=\pi\csc\pi x~~~$(equation 10)
 
-	\begin{equation}\pi\csc\pi x=\Gamma(x)\,\Gamma(1-x)\end{equation}
-
-	\begin{equation}\pi\csc\pi\eta(x)=x\,\Gamma(1-\eta(x))\end{equation}
-
-	\begin{equation}\csc\pi\eta(x)=\dfrac x\pi\Gamma(1-\eta(x))\end{equation}
-
-	\begin{equation}\pi\eta(x)=\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))\end{equation}
-
-	\begin{equation}\eta(x)=\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))\end{equation}
+	\begin{align} % equations 36-40
+		\pi\csc\pi x & =\Gamma(x)\,\Gamma(1-x)\\
+		\pi\csc\pi\eta(x) & =x\,\Gamma(1-\eta(x))\\
+		\csc\pi\eta(x) & =\dfrac x\pi\Gamma(1-\eta(x))\\
+		\pi\eta(x) & =\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))\\
+		\eta(x) & =\dfrac1\pi\csc^{-1}\dfrac x\pi\Gamma(1-\eta(x))
+	\end{align}
 
 	\noindent\blacksquare
 
@@ -257,73 +176,72 @@
 	$\eta(x)$ is \textbf{not} defined (over the real numbers) such that the following is true:\\
 	\begin{equation}
 		|x\,\Gamma(1-\eta(x))|<\pi~~\text{or}~~|x|<3.547373963...~~(V)
-	\end{equation}\\
-	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation (53) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small fields around each integer. The area defined around each integer gets smaller as $x$ increases, though it is unclear why without further inspection. If $\eta(x)$ is being recursed and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either the fields get larger, or there is a bug in Desmos' graphing calculations. See reference 2 for more information.\\
-	Going a different way after (49) gives the following equation:\\
+	\end{equation}\\ % equation 41
+	$V$ is probably transcendental. $\eta(x)$ is guaranteed to be defined if equation (41) is false and $x$ is negative. $\eta(x)$ is defined for all integers and in small fields around each integer. The area defined around each integer gets smaller as $x$ increases, though it is unclear why without further inspection. If $\eta(x)$ is being recursed and $\dfrac x\pi$ is changed to $\dfrac{x^n}\pi$ in the innermost function, for some $n\in\mathbb N_2$, either the fields get larger, or there is a bug in Desmos' graphing calculations. See reference 2 for more information.\\
+	Going a different way after (37) gives the following equation:\\
 	\begin{equation}
 		\eta(x)=1-\eta\left(\dfrac\pi x\csc\pi\eta(x)\right)\Longrightarrow\eta(x)=\eta(\pi\csc(\pi\csc\pi x)\sin\pi x)
-	\end{equation}\\
-	This equation seems to be less useful because it has large derivatives everywhere when absolute valued, which gets more severe as it is recursed.
+	\end{equation}\\ % equation 42
+	This equation seems to be less useful because it has large derivatives everywhere when absolute-valued, which gets more severe as it is recursed.
 \end{section}
 
 \pagebreak\begin{section}{Miscellaneous}
-	(40) implies the following formula:
+	(28) implies the following formula:
 	\begin{equation}
 		\Gamma\left(x+\dfrac12\right)=\dfrac{\pi\sec\pi x}{\Gamma\left(\dfrac12-x\right)}
-	\end{equation}\\
-	replacing $x$ with $x+z$ and adjusting from gamma to factorial gives:\\
+	\end{equation}\\ % equation 43
+	Replacing $x$ with $x+z$ and adjusting from gamma to factorial gives:\\
 	\begin{equation}
 		\left(x+\frac12+z\right)!=\left[2\left(z\,\text{mod}\,2\right)-1\right]\dfrac{\pi\sec\pi x}{\left(-\dfrac32-x-z\right)!}\forall z\in\mathbb Z
-	\end{equation}\\
+	\end{equation}\\ % equation 44
 	This only simplifies things if $z$ is an integer because $\sec(x+\tau)=\sec x$,\\
-	and $\sec(x+\pi)=-\sec x$. rewriting (22) from gamma to factorial gives:
+	and $\sec(x+\pi)=-\sec x$. rewriting (10) from gamma to factorial gives:
 	\begin{equation}
 		(x-1)!(-x)!=\pi\csc\pi x
-	\end{equation}\\
+	\end{equation}\\ % equation 45
 	\begin{equation}
 		(-x)!=\dfrac{\pi x\csc\pi x}{x!}
-	\end{equation}\\
+	\end{equation}\\ % equation 46
 	\begin{equation}
 		\left(x+\dfrac1c\right)!=\dfrac{\pi\csc\dfrac{cx+1}c\pi}{\left(-\dfrac{c+1}c-x\right)!}\forall c\in\mathbb R
-	\end{equation}\\
+	\end{equation}\\ % equation 47
 	\begin{equation}
 		x!=\left(x\,\text{mod}_n\,1\right)!\left[\prod_{k\,=\,\text{sgn}(\left|n-x\right|+n-x)}^{\left|\left\lfloor x-n\right\rfloor\right|+\text{sgn}\left(n-x-\left|n-x\right|\right)}\left[x+k\,\text{sgn}\left(n-x\right)\right]\right]^{\text{sgn}\left(x-n\right)}
-	\end{equation}\\
-	(60) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1]$.\\
-	equation relating to factorials:
+	\end{equation}\\ % equation 48
+	(48) is useful where $x!$ is non self-dependantly defined for $x\in[n,n+1)$.\\
 	\begin{equation}
 		\lim_{x\to\infty}\int_0^x\hspace{-0.5em}\int_0^x\exp\left[\dfrac12\ln\dfrac{4t}u-t-u\right]\text d^2tu=\pi
-	\end{equation}
+	\end{equation} % equation 49
 	\pagebreak\\
 	claim: $\sin(x)=-\sin(-x)$:\\
 	Proof:\\
 	\begin{equation}
-		(57)~x\mapsto-x\Longrightarrow(-x)!=\dfrac{-\pi x\csc(-\pi x)}{x!}
-	\end{equation}\\
-	\centerline{$(-x)!=\dfrac{\pi x\csc\pi x}{x!}\hspace{1.6em}(58)$}\\
+		(45)~x\mapsto-x\Longrightarrow(-x)!=\dfrac{-\pi x\csc(-\pi x)}{x!}
+	\end{equation}\\ % equation 50
+	\centerline{$(-x)!=\dfrac{\pi x\csc\pi x}{x!}\hspace{1.6em}(46)$}\\
 	\begin{equation}
 		\dfrac{\pi x\csc\pi x}{x!}=\dfrac{-\pi x\csc(-\pi x)}{x!}\Longrightarrow\csc x=-\csc(-x)\Longrightarrow\sin(x)=-\sin(-x)
-	\end{equation}\\
+	\end{equation}\\ % equation 51
 	\blacksquare\\
 
 	\noindent claim: $\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2$\\
 	Proof:\\
 	\begin{equation}
 		x!=\dfrac{(x+1)!}{x+1}\Longrightarrow\left(-\dfrac12\right)!=2\left(\dfrac12\right)!
-	\end{equation}\\
+	\end{equation}\\ % equation 52
 	\begin{equation}
 		(-x)!=\dfrac{\pi x\csc\pi x}{x!}\Longrightarrow\left(-\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)!}
-	\end{equation}\\
-	The formula for (65) is just (58). (64) and (65) imply the following:\\
+	\end{equation}\\ % equation 53
+	The formula for (53) is just (46). (52) and (53) imply the following:\\
 	\begin{equation}
 		2\left(\dfrac12\right)!=\dfrac\pi{2\left(\dfrac12\right)!}\Longrightarrow4\left(\dfrac12\right)!^2=\pi\Longrightarrow\left(\dfrac12\right)!=\dfrac{\sqrt\pi}2
-	\end{equation}\\
-	Using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. This limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (65) an odd number of times or the factorials will cancel and leave a trigonometric equation. If you apply (65) twice, you get back to where you started because everything new cancels.\\
+	\end{equation}\\ % equation 54
+	Using this strategy only works if $(c_1-x)=(c_2+x)$ for some integers $c_1$ and $c_2$. This limits it to $(z+\frac12)$ for integers $z$. Also, you can only apply (53) an odd number of times or the factorials will cancel and leave a trigonometric equation. If you apply (53) twice, you get back to where you started because everything new cancels.\\
 	\blacksquare\\
 
 	\noindent\begin{equation}
 		\left(\dfrac12+n\right)!=\dfrac{\sqrt\pi}2\prod_{k\,=\,\text{sgn}\left(n+\left|n\right|\right)}^{\left|n\right|\,-\,\text{sgn}\left(n+\left|n\right|\right)\,+\,\text{sgn}\,n}\left(\dfrac12+k\,\text{sgn}\,n\right)^{\text{sgn}\,n}\forall n\in\mathbb Z
-	\end{equation}
+	\end{equation} % equation 55
 \end{section}
 
 \pagebreak\begin{section}{References}
