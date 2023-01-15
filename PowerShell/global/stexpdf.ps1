@@ -10,6 +10,7 @@ function global:stexpdf { # smaller tex pdf compiler
     }
     gps | ? name -eq Acrobat | spps
     pdflatex -quiet "./$fname.tex"
+    pdflatex -quiet "./$fname.tex" # so references work
     rm "./$fname.aux", "./$fname.log"
     if (test-path "./texput.log") { rm "./texput.log" }
     iex "./$fname.pdf"
