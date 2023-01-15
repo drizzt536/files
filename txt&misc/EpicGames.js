@@ -142,6 +142,8 @@ var OwnedApplications = {
 	, "Discord": 0
 	, "Dishonored - Definitive Edition": 19.99
 	, "Dishonored": 0 // duplicate
+	, "Divine Knockout (DKO)": 0
+	, "Divine Knockout": 0 // duplicate
 	, "Dogfight - Demo": 0
 	, "Dogfight Demo": 0 // duplicate
 	, "DOOM 64": 4.99
@@ -172,6 +174,7 @@ var OwnedApplications = {
 	, "FTL": 0 // duplicate
 	, "Fez": 9.99
 	, "Figment": 19.99
+	, "First Class Trouble": 14.99
 	, "F.I.S.T.: Forged In Shadow Torch": 29.99
 	, "FIST: Forged In Shadow Torch": 0 // duplicate
 	, "F.I.S.T.": 0 // duplicate
@@ -181,13 +184,15 @@ var OwnedApplications = {
 	, "Football Manager 2022 Demo": 0
 	, "Football Manager 2023 Demo": 0
 	, "For The King": 19.99
-	, "Fortnite": 0 // in-app purchases: ~$10. no save the world
+	, "Fortnite": 0 // in-app purchases: ~$10. several battle passes. no save the world
 	, "Fort Triumph": 19.99
 	, "Frostpunk": 29.99
 	, "Galactic Civilizations III": 24.99
 	, "Galactic Civilizations 3": 0 // duplicate
 	, "Galactic Civilizations III [Test branch]": 0 // doesn't exist anymore
 	, "Galactic Civilizations 3 [Test branch]": 0 // duplicate
+	, "Gamedec - Definitive Edition": 29.99
+	, "Gamedec": 0 // duplicate
 	, "Geneforge 1: Mutagen": 19.95
 	, "Geneforge 1": 0 // duplicate
 	, "Genshin Impact": 0
