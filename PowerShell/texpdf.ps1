@@ -52,23 +52,23 @@
 Function Global:Texpdf {
     [CmdletBinding()]
     Param (
-        [Parameter(position=0, mandatory=$false)] [string] $filename = $null      ,
-        [Parameter(position=1, mandatory=$false)] [ bool ] $openpdf  = $true      ,
-        [Parameter(position=2, mandatory=$false)] [string] $compiler = "pdflatex" ,
-        [Parameter(position=3, mandatory=$false)] [string] $path     = "./"       ,
-        [Parameter(position=4, mandatory=$false)] [string] $filetype = "tex"
+        [Parameter(position=0, mandatory=$false)] [string] $FileName = $null      ,
+        [Parameter(position=1, mandatory=$false)] [ bool ] $OpenPDF  = $true      ,
+        [Parameter(position=2, mandatory=$false)] [string] $Compiler = "pdflatex" ,
+        [Parameter(position=3, mandatory=$false)] [string] $Path     = "./"       ,
+        [Parameter(position=4, mandatory=$false)] [string] $FileType = "tex"
     )
     Process {
-        if ($fname -eq $null) {
-            $fname = (Get-Location).Path
-            $fname = $fname.Substring($fname.LastIndexOf("\") + 1)
+        if ($FileName -eq $null) {
+            $FileName = (Get-Location).Path
+            $FileName = $FileName.Substring($FileName.LastIndexOf("\") + 1)
         }
-        Get-Process | Where-Object name -eq Acrobat | Stop-Process
-        Invoke-Expression "$compiler -quiet '$path$filename.$filetype'"
-        Invoke-Expression "$compiler -quiet '$path$filename.$filetype'" # so references work
-        Remove-Item "$path$filename.aux", "$path$filename.log"
-        if (Test-Path "${path}texput.log") { Remove-Item "${path}texput.log" }
-        $openpdf && Invoke-Expression "$path$filename.pdf"
+        Get-Process | Where-Object { $_.name -eq "Acrobat" } | Stop-Process
+        Invoke-Expression "$Compiler -quiet '$Path$FileName.$FileType'"
+        Invoke-Expression "$Compiler -quiet '$Path$FileName.$FileType'" # so references work
+        Remove-Item "$Path$FileName.aux", "$Path$FileName.log"
+        if (Test-Path "${Path}texput.log") { Remove-Item "${Path}texput.log" }
+        $OpenPDF && Invoke-Expression "$Path$FileName.pdf"
         return $null
     }
 }
