@@ -1,0 +1,252 @@
+% file for pdflatex.exe
+
+% countability.tex v1 (c) | Copyright 2023 Daniel E. Janusch
+
+% this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
+% and must be copied IN ITS ENTIRETY under penalty of law.
+
+\documentclass[12pt]{article}
+\usepackage{amssymb, latexsym, amsmath, amsthm}
+\usepackage[margin=1in]{geometry}
+
+\addtolength{\topmargin}{-0.5in}
+\renewcommand{\qedsymbol}{\blacksquare}
+\newtheorem{thm}{Theorem}
+
+\begin{document}
+
+
+\title{On the Continuum Hypothesis and the Correspondence of Infinite Sets With the Natural Numbers}
+\author{Daniel E. Janusch\\Dedicated to Maeby, my favorite kitty}
+\maketitle
+
+\begin{section}{Background and Theorems}\label{sec:background}
+	If a set is ``countable",  each element can be matched one to one with the natural numbers. Any
+	set that is finite will have this property, and the only question is if all infinite sets have it.
+	$|S|$ denotes the cardinality of $S$ for any set $S$. Iterated set multiplication gives ordered
+	groups with more than two elements, rather than ordered pairs of ordered pairs.\\
+	\begin{align}
+		R\times S & :=\{(r,s):r\in R\land s\in S\}\\
+		R(\vec v\,):=\left\{\sum_{n=1}^{\dim\vec v}a_n\vec v_n:a_n\in R\right\}~~~(2 & \text a)
+		\hspace{2.5em}
+		R[\vec v\,]:=\left\{\prod_{n=1}^{\dim\vec v}(a_n+\vec v_n):a_n\in R\right\}~~~(2\text b)
+	\end{align}
+
+	\begin{thm}\label{thm:finite unions}
+		\emph{Unions of Countable Sets:}\\
+		\indent\emph{If any sets $R$ and $S$ are countable, $R(a)\cup S(b)$ is countable for all $a$ and $b$.}
+	\end{thm}\begin{proof}
+		Since $R$ and $S$ are countable, $R(a)$ and $S(b)$ are as well, because this just multiplies
+		the already present elements by a constant. Since $R(a)$ and $S(b)$ are countable individually,
+		just interlace the elements of $R(a)$ with the elements of $S(b)$. If any elements are duplicates,
+		just skip them. If either of the sets runs out, meaning it is finite, just stop interlacing, and
+		only pull from one set. Similar logic works using $R[a]$ and $S[b]$.
+	\end{proof}
+
+	\begin{thm}\label{thm:multiplications}
+		\emph{Multiplications of Countable Sets:}\\
+		\indent\emph{If any sets $R$ and $S$ are countable, $R\times S$ is countable.}
+	\end{thm}\begin{proof}
+		Put ordered pairs using elements all the of $R$ and $S$ into a table as shown below. Next,
+		go along the diagonals, as shown. This will get every element in the product and not ``miss"
+		any. The numbers and colons are the indexes. The first 10 are shown.\vspace{0.5em}\\
+		\centerline{\begin{array}{|c|c|c|c|c|}
+			\hline 1:(R_1, S_1) & 2:(R_1, S_2) & 6:(R_1, S_3) & 7:(R_1, S_4) & \cdots\\
+			\hline 3:(R_2, S_1) & 5:(R_2, S_2) & 8:(R_2, S_3) & (R_2, S_4) & \cdots\\
+			\hline 4:(R_3, S_1) & 9:(R_3, S_2) & (R_3, S_3) & (R_3, S_4) & \cdots\\
+			\hline 10:(R_4, S_1) & (R_4, S_2) & (R_4, S_3) & (R_4, S_4) & \cdots\\
+			\hline \vdots & \vdots & \vdots & \vdots & \ddots\\
+			\hline
+		\end{array}}\vspace{-0.6em}\\
+	\end{proof}
+
+	\pagebreak\\
+	\begin{thm}\label{thm:subsets}
+		\emph{Subsets of Countable Sets:}\\
+		\indent\emph{If any set $R$ is countable, and a set $S\subseteq R$, $S$ is also countable.
+		(loose subset)}
+	\end{thm}\begin{proof}
+		Removing elements from a set won't make it uncountable, so just remove elements from $R$
+		until it becomes $S$. Since every set along the way is countable, so is $S$. This also
+		implies that intersections and set differences are countable because these operations
+		return subsets of the original sets.
+	\end{proof}
+
+	\begin{thm}\label{thm:rings}
+		\emph{Sum and Product Rings From Countable Sets:}\\
+		\indent\emph{If any set $R$ is countable, $R(a, b)$ and $R[a, b]$ are also countable
+		for all $a$ and $b$.}
+	\end{thm}\begin{proof}
+		Create 2 new intermediate sets $S_a := \{ar:r\in R\}$ and $S_b := \{br:r\in R\}$.
+		$S_a\times S_b$ gives a set with the same countability as $R(a,b)$, just with
+		ordered pairs instead of addition. This is countable via Theorem~\ref{thm:multiplications}.
+		Similar logic works for $R[a,b]$, swapping addition and multiplication.
+	\end{proof}
+
+	\begin{thm}\label{thm:powers}
+		\emph{Powers of Countable Sets:}\\
+		\indent\emph{If any set $R$ is countable, $R^n$ is also countable for all natural numbers $n$.}
+	\end{thm}\begin{proof}
+		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable.
+		$R^{n-1}$ can be factored as $R\times R^{n-2}$ which is countable if $R^{n-2}$ is countable,
+		et cetera. This can be simplified continuously until it becomes $R^2$ or $R\times R$, which
+		is countable via Theorem~\ref{thm:multiplications}. If $n=0$, the output set is all the groups
+		of zero elements from $R$, or just $\O$, which is countable, being finite.
+	\end{proof}
+
+	\begin{thm}\label{thm:infinite unions}
+		\emph{Infinite Unions of Countable Sets:}\\
+		\indent\emph{If all sets $R_i$ are countable, $\displaystyle\bigcup_{i=1}^{\aleph_0} R_i$ is also
+		countable, where $\aleph_0\equiv\left|\mathbb N\right|=\infty$.}
+	\end{thm}\begin{proof}
+		Putting all the elements into a table as shown below, and using the same argument as in
+		Theorem~\ref{thm:multiplications}, one can show that every element is indexed and none are
+		skipped. Every column represents a different $R_i$, and the row represents a different
+		$\left(R_i\right)_j$ or $R_{i,j}$. The number and colon is the index. The first 35 are
+		shown. 29 is one to the right of 28.\vspace{1em}\\
+		\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
+			\hline 1:R_{1,1} & 2:R_{2,1} & 6:R_{3,1} & 7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1}& \cdots\\
+			\hline 3:R_{1,2} & 5:R_{2,2} & 8:R_{3,2} & 14:R_{4,2} & 17:R_{5,2} & 27:R_{6,2}& 30:R_{7,2}& \cdots\\
+			\hline 4:R_{1,3} & 9:R_{2,3} & 13:R_{3,3} & 18:R_{4,3} & 26:R_{5,3} & 31:R_{6,3} & R_{7,3} & \cdots\\
+			\hline 10:R_{1,4} & 12:R_{2,4} & 19:R_{3,4} & 25:R_{4,4} & 32:R_{5,4} & R_{6,4} & R_{7,4} & \cdots\\
+			\hline 11:R_{1,5} & 20:R_{2,5} & 24:R_{3,5} & 33:R_{4,5} & R_{5,5} & R_{6,5} & R_{7,5} & \cdots\\
+			\hline 21:R_{1,6} & 23:R_{2,6} & 34:R_{3,6} & R_{4,6} & R_{5,6} & R_{6,6} & R_{7,6} & \cdots\\
+			\hline 22:R_{1,7} & 35:R_{2,7} & R_{3,7} & R_{4,7} & R_{5,7} & R_{6,7} & R_{7,7} & \cdots\\
+			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+			\hline
+		\end{array}}
+	\end{proof}
+\end{section}
+
+\pagebreak\begin{section}{Applications of the Theorems}\label{sec:applications}
+	\begin{subsection}{Countability of The Integers}\label{subsec:applications.integers}
+		Claim: $\mathbb Z$ is a countable set.
+		\begin{proof}
+			Let $R=\mathbb N_0$, $S=\mathbb N_1$. $R$ and $S$ are countable because they
+			\emph{are} the naturals.\\
+			$\mathbb Z\equiv R\cup S(-1)$. This is countable via Theorem~\ref{thm:finite unions}.
+		\end{proof}
+	\end{subsection}
+
+	\begin{subsection}{Countability of the Rationals}\label{subsec:applications.rationals}
+		Claim: $\mathbb Q$ is a countable set.
+		\begin{proof}
+			The rationals are really just ordered pairs of integers and naturals.\\
+			Let $R=\mathbb Z$, $S=\mathbb N_1$. $R\times S$ defines all of these pairs.
+			$R$ is countable via Subsection~\ref{subsec:applications.integers},
+			and $S$ is countable because it \emph{is} the naturals. $R\times S$ is
+			thus countable via Theorem~\ref{thm:multiplications}.
+		\end{proof}
+	\end{subsection}
+
+	\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
+		Claim: $\left\{x:x\in\mathbb R\land0\le x<1\right\}$ is a countable set.
+		\begin{proof}
+			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$
+			reversed with ``0." and the beginning and infinite trailing zeros at the
+			end, for any $i\in\mathbb N_0$. For example, $R_{246}=0.642\overline0$, and
+			$R_0=0.0\overline0=0$. This set is countable because it was defined to be
+			countable; each natural number corresponds to a single element in it. This
+			set contains every real number in the range because every possible sequence
+			of digits is in it. The sequence trends upwards, asymptoting at 1, though
+			it fluctuates wildly along the way.
+		\end{proof}
+	\end{subsection}
+
+	\begin{subsection}{Countability of the Non-Negative Reals}\label{subsec:applications.non negative reals}
+		Claim: $\mathbb R_{\ge0}$ or $\left\{x:x\in\mathbb R\land x\ge0\right\}$ is a countable set.
+		\begin{proof}
+			The set of real numbers from zero to one is countable via
+			Subsection~\ref{subsec:applications.reals 0 to 1}. Let $R$ be the same set used there.
+			The desired set is $\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where $S_i=R[i-1]$. this
+			is countable via Theorem~\ref{thm:infinite unions}. The following table shows this.
+			\vspace{0.3em}\\
+			\vspace{-0.9em}\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
+				\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
+				\hline 0.1\overline0& 1.1\overline0& 2.1\overline0& 3.1\overline0& 4.1\overline0& 5.1\overline0& \cdots\\
+				\hline 0.2\overline0& 1.2\overline0& 2.2\overline0& 3.2\overline0& 4.2\overline0& 5.2\overline0& \cdots\\
+				\hline 0.3\overline0& 1.3\overline0& 2.3\overline0& 3.3\overline0& 4.3\overline0& 5.3\overline0& \cdots\\
+				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \cdots\\
+				\hline 0.7\overline0& 1.7\overline0& 2.7\overline0& 3.7\overline0& 4.7\overline0& 5.7\overline0& \cdots\\
+				\hline 0.8\overline0& 1.8\overline0& 2.8\overline0& 3.8\overline0& 4.8\overline0& 5.8\overline0& \cdots\\
+				\hline 0.9\overline0& 1.9\overline0& 2.9\overline0& 3.9\overline0& 4.9\overline0& 5.9\overline0& \cdots\\
+				\hline 0.01\overline0&1.01\overline0&2.01\overline0&3.01\overline0&4.01\overline0&5.01\overline0&\cdots\\
+				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+				\hline
+			\end{array}}
+		\end{proof}
+	\end{subsection}
+
+	\pagebreak\begin{subsection}{Countability of the Reals}\label{subsec:applications.reals}
+		Claim: $\mathbb R$ is a countable set and $\left|\mathcal P(\mathbb N)\right|\equiv\left|\mathbb N\right|$.
+		\begin{proof}
+			$\mathbb R_{\ge 0}$ or the non-negative real numbers are countable via
+			Subsection~\ref{subsec:applications.non negative reals}.\\
+			$\mathbb R_{\ge0}(1, -1)\equiv\mathbb R$. This is countable via Theorem~\ref{thm:rings}
+			since $\mathbb R_{\ge 0}$ is countable. $\aleph_1=2^{\aleph_0}=\aleph_0$.
+		\end{proof}
+	\end{subsection}
+
+	\begin{subsection}{Miscellaneous Number Classes}\label{subsec:applications.miscellaneous}
+		\begin{subsubsection}{Algebraic Real and Transcendental Real Numbers}
+			\label{subsubsec:applications.misc.reals}
+			Claim: $\mathbb A$ and $\mathbb T$ are countable sets.
+			\begin{proof}
+				$\mathbb R$ is a countable set via Subsection~\ref{subsec:applications.reals}.
+				Since the algebraic real numbers and transcendental real numbers are both
+				subsets of the real numbers, they are countable via Theorem~\ref{thm:subsets}.
+			\end{proof}
+		\end{subsubsection}
+
+		\begin{subsubsection}{Imaginary Numbers}\label{subsubsec:applications.misc.imaginary}
+			Claim: $\mathbb I$ is a countable set.
+			\begin{proof}
+				$\mathbb R$ is a countable set via Subsection~\ref{subsec:applications.reals}.
+				$\mathbb R(\sqrt{-1})\equiv\mathbb I$. This is countable via Theorem~\ref{thm:finite unions},
+				or more precisely $R(\sqrt{-1})\cup\O$ is. Any set unioned with the null set is itself.
+			\end{proof}
+		\end{subsubsection}
+	\end{subsection}
+
+	\begin{subsection}{Countability of the Complex Numbers}\label{subsec:applications.complex}
+		Claim: $\mathbb C$ is a countable set.
+		\begin{proof}
+			$\mathbb R$ is a countable set via Subsection~\ref{subsec:applications.reals}.
+			$\mathbb R(1, \sqrt{-1})\equiv\mathbb C$. This is countable via Theorem~\ref{thm:rings}.
+			The identity used here stems from the rectangular form of complex numbers.
+		\end{proof}
+	\end{subsection}
+\end{section}
+
+\begin{section}{Cantor's Diagonal Argument}\label{sec:diagonal argument}
+	According to Georg Cantor in 1891, If someone is trying to list all the real numbers,
+	they can always find a number that is not in the list using his ``Diagonal Argument".
+	This argument is basically the same as the following: Suppose someone is trying to make
+	a set of every natural number. They first add zero to the set and the set is $\{0\}$.
+	Then they could say, well one isn't in the set. When they add one and have $\{0,1\}$,
+	they can say two isn't in the set, then three isn't in the set, four isn't in the set,
+	et cetera. No matter how many natural numbers they add, they can always find one not in
+	it. Using Cantor's same logic, this seems to be saying that the naturals cannot be
+	corresponded one to one with the naturals, which is clearly wrong, the naturals
+	\emph{are} the naturals.
+\end{section}
+
+
+\pagebreak\begin{section}{References}\label{sec:references}
+
+	\noindent- \url{https://en.wikipedia.org//wiki/Cantor's\_diagonal\_argument}\\
+	\indent\text{wikipedia page for elaboration on Section~\ref{sec:diagonal argument}}\\
+
+	\noindent- \url{https://en.wikipedia.org/wiki/Continuum_hypothesis}\\
+	\indent\text{wikipedia page for elaboration on Subsection~\ref{subsec:applications.reals}}\\
+
+	\noindent- \url{https://www.github.com/drizzt536/files/tree/main/TeX/continuum}\\
+	\indent\text{The files for the most recent version of this pdf and the \LaTeX code}
+	\\
+	\\
+	\\
+	\\
+	This document is licensed under https://github.com/drizzt536/files/blob/main/LICENSE
+	and must be copied IN ITS ENTIRETY under penalty of law.
+\end{section}
+\end{document}
