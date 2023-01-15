@@ -52,15 +52,20 @@
 Function Global:Texpdf {
     [CmdletBinding()]
     Param (
-        [Parameter(position=0, mandatory=$true )] [string] $filename              ,
+        [Parameter(position=0, mandatory=$false)] [string] $filename = $null      ,
         [Parameter(position=1, mandatory=$false)] [ bool ] $openpdf  = $true      ,
         [Parameter(position=2, mandatory=$false)] [string] $compiler = "pdflatex" ,
         [Parameter(position=3, mandatory=$false)] [string] $path     = "./"       ,
         [Parameter(position=4, mandatory=$false)] [string] $filetype = "tex"
     )
     Process {
+        if ($fname -eq $null) {
+            $fname = (Get-Location).Path
+            $fname = $fname.Substring($fname.LastIndexOf("\") + 1)
+        }
         Get-Process | Where-Object name -eq Acrobat | Stop-Process
         Invoke-Expression "$compiler -quiet '$path$filename.$filetype'"
+        Invoke-Expression "$compiler -quiet '$path$filename.$filetype'" # so references work
         Remove-Item "$path$filename.aux", "$path$filename.log"
         if (Test-Path "${path}texput.log") { Remove-Item "${path}texput.log" }
         $openpdf && Invoke-Expression "$path$filename.pdf"
