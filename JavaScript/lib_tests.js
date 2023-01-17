@@ -3,9 +3,10 @@
 // This file has to execute before Test.js does and has the tests for lib.js
 
 if (LIBRARY_VARIABLES["local LibSettings"].Create_Testing_Object) {
-	const LibSettings = LIBRARY_VARIABLES["local LibSettings"];
 
-const tests = {
+const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
+, globalTestsObject = globalThis[LibSettings.Testing_Object_Object_Name]
+, tests = {
 	symbToStr: {
 		scope: "globalThis"
 		, args: 2
@@ -223,14 +224,17 @@ const tests = {
 	}
 };
 
-LIBRARY_VARIABLES["local tests"] = tests;
-let obj = globalThis[LibSettings.Testing_Object_Array_Name];
 
-if (obj == null)
-	obj = globalThis[LibSettings.Testing_Object_Array_Name] = {};
-if (obj?.constructor?.name === "Array")
-	obj.push(tests);
-else if (obj?.constructor?.name === "Object")
-	obj[LibSettings.LIBRARY_NAME] = tests;
+
+LIBRARY_VARIABLES["local tests"] = tests;
+
+if (globalTestsObject == null)
+	globalTestsObject = globalThis[LibSettings.Testing_Object_Object_Name] = {};
+
+
+if (globalTestsObject.constructor?.name === "Array")
+	globalTestsObject.push(tests);
+else if (globalTestsObject.constructor?.name === "Object")
+	globalTestsObject[LibSettings.LIBRARY_NAME] = tests;
 
 }
