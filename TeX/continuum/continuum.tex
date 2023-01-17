@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% countability.tex v2 (c) | Copyright 2023 Daniel E. Janusch
+% countability.tex v2.1 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -193,7 +193,10 @@
 		\begin{proof}
 			$\mathbb R_{\ge 0}$ is countable via Section~\ref{subsec:applications.non negative reals}.
 			$\mathbb R_{\ge0}(1, -1)\equiv\mathbb R$. This is countable via Theorem~\ref{thm:rings}.
-			This conclusion can be further reinforced by the algorithmic methods later on.
+			This conclusion can be further reinforced by the algorithmic methods later on. For each
+			real number $x$, there exists at least 1 sequence of elements in $R$, each element with a
+			higher index than the last, where the limit of the sequence equals $x$. This is because
+			every sequence of digits is contained by $R$.
 		\end{proof}
 	\end{subsection}
 
@@ -235,13 +238,13 @@
 	According to Georg Cantor in 1891, If someone is trying to list all the real numbers,
 	they can always find a number that is not in the list using his ``Diagonal Argument".
 	This argument is basically the same as the following: Suppose someone is trying to make
-	a set of every natural number. They first add zero to the set and the set is $\{0\}$.
-	Then they could say, well one isn't in the set. When they add one and have $\{0,1\}$,
-	they can say two isn't in the set, then three isn't in the set, four isn't in the set,
-	et cetera. No matter how many natural numbers they add, they can always find one not in
-	it. Using Cantor's same logic, this seems to be saying that the naturals cannot be
-	corresponded one to one with the naturals, which is clearly wrong, the naturals
-	\emph{are} the naturals.
+	a set of every natural number. They first add zero to the set and the set is $\{0\}$,
+	then they could say, ``one isn't in the set." When they add one and have $\{0,1\}$,
+	they can say ``two isn't in the set," ``then three isn't in the set," ``four isn't in
+	the set," et cetera. No matter how many natural numbers they add, they can always find
+	one not in it. Using Cantor's same logic, this seems to be saying that the naturals
+	cannot be corresponded one to one with the naturals, which is clearly wrong. The
+	naturals \emph{are} the naturals.
 \end{section}
 
 \pagebreak\begin{section}{Counting the Reals Algorithmically}\label{sec:algorithm code}
