@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v2.1.4 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.5 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 void (() => { "use strict";
 	/* Customization & Constants: */ {
@@ -72,7 +72,7 @@ void (() => { "use strict";
 			, Defined_Properties_Enumerable     : "default" // false
 			, Defined_Properties_Writable       : "default" // true
 			, Property_Is_Default_Defined_Vars  : "default" // false
-			, Testing_Object_Array_Name         : "Test.js" // N/A. just set to undefined, if there is none.
+			, Testing_Object_Object_Name        : "Test.js" // N/A. just set to undefined, if there is none.
 			, Create_Testing_Object             : "default" // true
 		///////////////////////////////////////// LIBRARY USER INPUT END /////////////////////////////////////////
 		////////////////////////////// LIBRARY DEVELOPER SETTINGS & VARIABLES START //////////////////////////////
@@ -200,26 +200,84 @@ void (() => { "use strict";
 			`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "")
 			, isNodeJS                          : _Global_String === "global"
 			, isBrowser                         : _Global_String === "window"
+			, LIBRARY_NAME                      : "lib.js"
 		/////////////////////////////// LIBRARY DEVELOPER SETTINGS & VARIABLES END ///////////////////////////////
 		};
+
+		// Other Values:
 		LibSettings.On_Conflict_Options.includes(LibSettings.ON_CONFLICT) || (LibSettings.ON_CONFLICT = "dbg");
-
-		LibSettings.Property_Is_Default_Defined_Vars === "default" && (LibSettings.Property_Is_Default_Defined_Vars = !1);
-		LibSettings.Defined_Properties_Configurable === "default" && (LibSettings.Defined_Properties_Configurable = !1);
-		LibSettings.Defined_Properties_Enumerable === "default" && (LibSettings.Defined_Properties_Enumerable = !1);
-		LibSettings.Do_DOM_Things_In_Node_Anyway === "default" && (LibSettings.Do_DOM_Things_In_Node_Anyway = !1);
-		LibSettings.MATH_DEFAULT_END_SYSTEM === "default" && (LibSettings.MATH_DEFAULT_END_SYSTEM = "c");
-		LibSettings.MATH_LOG_DEFAULT_BASE === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE = 10 );
-		LibSettings.Global_Ignore_List === "default" && (LibSettings.Global_Ignore_List = []);
-		LibSettings.ON_CONFLICT === "default" && (LibSettings.ON_CONFLICT = "dbg");
-
-		LibSettings.Clear_SessionStorage && LibSettings.Clear_SessionStorage !== "default" && sessionStorage.clear();
-		LibSettings.Clear_LocalStorage && LibSettings.Clear_LocalStorage !== "default" && localStorage.clear();
 		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
 		LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
-		LibSettings.LIBRARY_NAME = "lib.js";
-		LibSettings.FILE_PATH = document.currentScript.src;
-		// TODO: clear cookies and caches if the library user wants
+		LibSettings.FILE_PATH = LibSettings.isNodeJS ?
+			`${__dirname.replace(/\\/g, "/")}/${__filename}` :
+			document.currentScript.src
+
+		///////////////////////////////////////////// DEFAULTS START /////////////////////////////////////////////
+
+		// with(LibSettings) ... would make this so much better
+		LibSettings.Globlize_Library_Variables_Object === "default" && (LibSettings.Globlize_Library_Variables_Object = !0);
+		LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM  === "default" && (LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM  = "c");
+		LibSettings.Use_Orig_Args_For_Deprecated_Fns  === "default" && (LibSettings.Use_Orig_Args_For_Deprecated_Fns  = !0);
+		LibSettings.Property_Is_Default_Defined_Vars  === "default" && (LibSettings.Property_Is_Default_Defined_Vars  = !1);
+		LibSettings.Defined_Properties_Configurable   === "default" && (LibSettings.Defined_Properties_Configurable   = !1);
+		LibSettings.Defined_Properties_Enumerable     === "default" && (LibSettings.Defined_Properties_Enumerable     = !1);
+		LibSettings.Do_DOM_Things_In_Node_Anyway      === "default" && (LibSettings.Do_DOM_Things_In_Node_Anyway      = !1);
+		LibSettings.KeyLogger_Variable_Argument       === "default" && (LibSettings.KeyLogger_Variable_Argument       = Symbol.for('keys'));
+		LibSettings.Alert_Library_Load_Finished       === "default" && (LibSettings.Alert_Library_Load_Finished       = !1);
+		LibSettings.Define_Deprecated_Functions       === "default" && (LibSettings.Define_Deprecated_Functions       = !0);
+		LibSettings.aMath_Comparatives_Argument       === "default" && (LibSettings.aMath_Comparatives_Argument       = !0);
+		LibSettings.bMath_Comparatives_Argument       === "default" && (LibSettings.bMath_Comparatives_Argument       = !0);
+		LibSettings.sMath_Comparatives_Argument       === "default" && (LibSettings.sMath_Comparatives_Argument       = !0);
+		LibSettings.rMath_Comparatives_Argument       === "default" && (LibSettings.rMath_Comparatives_Argument       = !0);
+		LibSettings.Logic_Comparatives_Argument       === "default" && (LibSettings.Logic_Comparatives_Argument       = !0);
+		LibSettings.KeyLogger_Copy_Obj_Argument       === "default" && (LibSettings.KeyLogger_Copy_Obj_Argument       = !0);
+		LibSettings.Creepily_Watch_Every_Action       === "default" && (LibSettings.Creepily_Watch_Every_Action       = !1);
+		LibSettings.Defined_Properties_Writable       === "default" && (LibSettings.Defined_Properties_Writable       = !0);
+		LibSettings.Global_Library_Object_Name        === "default" && (LibSettings.Global_Library_Object_Name        = "LIBRARY_VARIABLES");
+		LibSettings.Testing_Object_Object_Name        === "default" && (LibSettings.Testing_Object_Object_Name        = undefined);
+		LibSettings.Alert_Conflict_OverWritten        === "default" && (LibSettings.Alert_Conflict_OverWritten        = !0);
+		LibSettings.KeyLogger_Alert_Start_Stop        === "default" && (LibSettings.KeyLogger_Alert_Start_Stop        = !0);
+		LibSettings.Library_Startup_Function          === "default" && (LibSettings.Library_Startup_Function          = console.log);
+		LibSettings.KeyLogger_Debug_Argument          === "default" && (LibSettings.KeyLogger_Debug_Argument          = !1);
+		LibSettings.aMath_Internals_Argument          === "default" && (LibSettings.aMath_Internals_Argument          = !0);
+		LibSettings.rMath_Constants_Argument          === "default" && (LibSettings.rMath_Constants_Argument          = !0);
+		LibSettings.Library_Startup_Message           === "default" && (LibSettings.Library_Startup_Message           = `${LibSettings.LIBRARY_NAME} loaded`);
+		LibSettings.KeyLogger_Type_Argument           === "default" && (LibSettings.KeyLogger_Type_Argument           = "keydown");
+		LibSettings.Alert_Conflict_For_Math           === "default" && (LibSettings.Alert_Conflict_For_Math           = !1);
+		LibSettings.KeyLogger_Alert_Unused            === "default" && (LibSettings.KeyLogger_Alert_Unused            = !1);
+		LibSettings.aMath_DegTrig_Argument            === "default" && (LibSettings.aMath_DegTrig_Argument            = !0);
+		LibSettings.bMath_DegTrig_Argument            === "default" && (LibSettings.bMath_DegTrig_Argument            = !0);
+		LibSettings.cMath_DegTrig_Argument            === "default" && (LibSettings.cMath_DegTrig_Argument            = !0);
+		LibSettings.fMath_DegTrig_Argument            === "default" && (LibSettings.fMath_DegTrig_Argument            = !0);
+		LibSettings.sMath_DegTrig_Argument            === "default" && (LibSettings.sMath_DegTrig_Argument            = !0);
+		LibSettings.rMath_DegTrig_Argument            === "default" && (LibSettings.rMath_DegTrig_Argument            = !0);
+		LibSettings.Logic_BitWise_Argument            === "default" && (LibSettings.Logic_BitWise_Argument            = !0);
+		LibSettings.Freeze_Library_Object             === "default" && (LibSettings.Freeze_Library_Object             = !1);
+		LibSettings.MATH_LOG_DEFAULT_BASE             === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE             = 10);
+		LibSettings.Create_Testing_Object             === "default" && (LibSettings.Create_Testing_Object             = !0);
+		LibSettings.Output_Math_Variable              === "default" && (LibSettings.Output_Math_Variable              = "Math");
+		LibSettings.Clear_SessionStorage              === "default" && (LibSettings.Clear_SessionStorage              = !1);
+		LibSettings.cfMath_Help_Argument              === "default" && (LibSettings.cfMath_Help_Argument              = !0);
+		LibSettings.Input_Math_Variable               === "default" && (LibSettings.Input_Math_Variable               = "rMath");
+		LibSettings.Freeze_Math_Objects               === "default" && (LibSettings.Freeze_Math_Objects               = !1);
+		LibSettings.Warn_Deprecated_Use               === "default" && (LibSettings.Warn_Deprecated_Use               = !0);
+		LibSettings.Add_All_GlobalNames               === "default" && (LibSettings.Add_All_GlobalNames               = !0);
+		LibSettings.aMath_Help_Argument               === "default" && (LibSettings.aMath_Help_Argument               = !0);
+		LibSettings.cMath_Help_Argument               === "default" && (LibSettings.cMath_Help_Argument               = !0);
+		LibSettings.fMath_Help_Argument               === "default" && (LibSettings.fMath_Help_Argument               = !0);
+		LibSettings.bMath_Help_Argument               === "default" && (LibSettings.bMath_Help_Argument               = !0);
+		LibSettings.sMath_Help_Argument               === "default" && (LibSettings.sMath_Help_Argument               = !0);
+		LibSettings.rMath_Help_Argument               === "default" && (LibSettings.rMath_Help_Argument               = !0);
+		LibSettings.Logic_Help_Argument               === "default" && (LibSettings.Logic_Help_Argument               = !0);
+		LibSettings.Global_Ignore_List                === "default" && (LibSettings.Global_Ignore_List                = []);
+		LibSettings.Clear_LocalStorage                === "default" && (LibSettings.Clear_LocalStorage                = !1);
+		LibSettings.Run_KeyLogger                     === "default" && (LibSettings.Run_KeyLogger                     = !1);
+		LibSettings.ON_CONFLICT                       === "default" && (LibSettings.ON_CONFLICT                       = "dbg");
+
+		////////////////////////////////////////////// DEFAULTS END //////////////////////////////////////////////
+
+		LibSettings.Clear_SessionStorage && sessionStorage.clear();
+		LibSettings.Clear_LocalStorage && localStorage.clear();
 	}
 	/* Variables & Functions definitions: */ {
 		/* Local Variables (may also be global) */ {
@@ -1120,7 +1178,7 @@ void (() => { "use strict";
 				return output;
 			}
 			, bisectLeft = function bisectLeft(arr, x, lo=0, hi=null) {
-				hi === null && (hi = arr.length || 0);
+				hi ??= hi = arr?.length ?? 0;
 				if (lo < 0 || hi < lo || hi > arr.length) return false;
 				let mid;
 				while (lo != hi) {
@@ -1130,7 +1188,7 @@ void (() => { "use strict";
 				return lo;
 			}
 			, bisectRight = function bisectRight(arr, x, lo=0, hi=null) {
-				hi === null && (hi = arr.length || 0);
+				hi ??= arr?.length ?? 0;
 				if (lo < 0 || hi < lo || hi > arr.length) return false;
 				let mid;
 				while (lo != hi) {
@@ -1350,7 +1408,7 @@ void (() => { "use strict";
 				reverse() {
 					for (var cur = this.head, prev = null, next; cur ;)
 						[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
-					this.head = prev || this.head;
+					this.head = prev ?? this.head;
 					return this;
 				}
 				toArray() {
@@ -1659,7 +1717,7 @@ void (() => { "use strict";
 			// generator zip
 			gen1 = toGenerator(gen1), gen2 = toGenerator(gen2);
 			var a = gen1.next(), b = gen2.next();
-			while (!a.done && !b.done) {
+			while (!(a.done || b.done)) {
 				let output = [a.value, b.value];
 				yield output;
 				a = gen1.next(), b = gen2.next();
@@ -1733,7 +1791,7 @@ void (() => { "use strict";
 		, revLList         : function reverseLinkedList(list) {
 			for (let cur = list.head, prev = null, next; current ;) 
 				[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
-			list.head = prev || list.head;
+			list.head = prev ?? list.head;
 			return list;
 		}
 		, numToWords       : function numberToWords(number, fancyInfinity=true) {
@@ -1840,7 +1898,7 @@ void (() => { "use strict";
 			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
 
 			for (const s of Object.getOwnPropertyNames(String.prototype))
-				!protoArray.incl(s) && (MutStr.prototype[s] = String.prototype[s]);
+				protoArray.incl(s) || (MutStr.prototype[s] = String.prototype[s]);
 
 			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
 			MutableString.fromCharCode = function fromCharCode(code) {
@@ -1856,7 +1914,7 @@ void (() => { "use strict";
 				return _RegExp(
 					typeof source === "symbol" ?
 						symbToStr(source).replace(/([-+.?*^$()[\]{}\\/\|])/g, "\\$1") :
-						source?.toString?.() || "(?:)",
+						source?.toString?.() ?? "(?:)",
 					Array.from( new Set(flags?.toString?.().toLowerCase?.()) ).join("") // remove repeats
 				);
 			};
@@ -1864,6 +1922,32 @@ void (() => { "use strict";
 				regex.prototype.constructor = regex,
 				regex._RegExp = _RegExp,
 				regex;
+		}
+		, HTMLElementToString(element) {
+			if (element?.constructor?.name === "DocumentType") return `<!DOCTYPE ${element?.name ?? "html"}>`;
+			if (element?.constructor?.name === "CDATASection") return `<![CDATA[${element?.textContent ?? ""}]]>`;
+			if (element?.constructor?.name === "Comment") return `<!--${element.textContent ?? ""}-->`;
+			if (element?.constructor?.name === "Text") return element?.textContent ?? "";
+			if (["Document", "HTMLDocument"].includes(element?.constructor?.name))
+				return Array.from(element.childNodes).map(e => HTMLElementToString(e)).join("\n");
+			
+			if (/$HTML\w+/.test(element?.constructor?.name)) return element?.outerHTML ?? "";
+			return "";
+			// ShadowRoot?
+		}
+		, isHTMLElement(element) {
+			if (element == null || element.constructor == null)
+				return false;
+			const name = element.constructor.name;
+			if ( [
+				"Text"
+				, "Image"
+				, "Comment"
+				, "DocumentType"
+				, "CDATASection"
+				, "HTMLDocument", "Document"
+			].includes(element) ) return true;
+			return /$HTML\w+/.test(element.constructor.name);
 		}
 		, stringifyMath  : stringifyMath
 		, createElement  : createElement
@@ -2231,7 +2315,7 @@ void (() => { "use strict";
 					isNaN(num = Number(num)) ?
 						NaN :
 						rMath.max(num, 0);
-				filler !== void 0 && this.fill(filler);
+				filler == null || this.fill(filler); // !??
 				return this;
 			}
 			, "property extend": function extend(length, filler, form="new") {
@@ -2336,7 +2420,7 @@ void (() => { "use strict";
 			}
 			, "property isArrow": function isArrowFunction() {
 				var s = this + "";
-				return !s.sW("function") && !s.sW("class");
+				return !(s.sW("function") || s.sW("class"));
 			}
 			, "property isClass": function isClass() { return (this + "").sW("class") }
 			, "property isRegular": function isRegularFunction() { return (this + "").sW("function") }
@@ -2417,8 +2501,8 @@ void (() => { "use strict";
 			, "call native property replace"() {
 				let _replace = String.prototype.replace;
 				function replace(search, replacer) {
-					!isArr(search) && (search = [search]);
-					!isArr(replacer) && (replacer = [replacer]);
+					isArr(search) || (search = [search]);
+					isArr(replacer) || (replacer = [replacer]);
 					var output = this;
 					for (let [a, b] of arrzip(search, replacer))
 						output = _replace.call(output, a, b);
@@ -2644,20 +2728,20 @@ void (() => { "use strict";
 				return !0;
 			}
 			, "property inRange": function inRange(n1, n2=arguments[0], include=true) {
-				n2 == null && (n2 = n1);
+				n2 ??= n1; // TODO: Figure out if this line can be removed or not.
 				return include ?
 					this >= n1 && this <= n2 :
 					this > n1 && this < n2;
 			}
 			, "property toExponential": function toExponential(maxDigits=16, form=String) {
 				var a = `${this}`;
-				maxDigits < 0 && (maxDigits = 0);
-				var decimal = maxDigits && len(a) > 1 && +a.slc(1) ? "." : "",
+				maxDigits < 0 && (maxDigits = 0); // max(0, x)
+				var decimal = maxDigits && a.length > 1 && +a.slc(1) ? "." : "",
 					rest = a.substr(1, maxDigits);
 				rest = +rest ? rest : "";
-				if (["string", "str", "s", String].incl(form?.lower?.() || form))
+				if (["string", "str", "s", String].incl(form?.lower?.() ?? form))
 					return `${a[0]}${decimal}${rest}e+${dim(a)}`.replace(".e", "e");
-				else if (["number", "num", "n", Number].incl(form?.lower?.() || form))
+				else if (["number", "num", "n", Number].incl(form?.lower?.() ?? form))
 					return +`${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
 				else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
 			}
@@ -3773,6 +3857,7 @@ void (() => { "use strict";
 				help         === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
 				constants    === "default" && (constants = !0);
+
 				Object.defineProperties(this, {
 					[Symbol.toStringTag]: {
 						value: "rMath"
@@ -7160,6 +7245,7 @@ void (() => { "use strict";
 			// sets of things other than just real (non-bigint) numbers
 			// Matrix
 			// Vector
+			// integer square root
 			// OrderedPair
 			// matrix identity
 			// matrix inverse
@@ -7170,6 +7256,12 @@ void (() => { "use strict";
 			// electrical things
 			// p-adic integers
 			// pisano period
+			// perfect numbers
+			// highly composite numbers
+			// superior highly composite numbers
+			// carmichael numbers
+			// pseudoprimes
+			// Barnes G-Function
 		}
 		, "math cMath": class ComplexMath {
 			constructor(
@@ -7182,8 +7274,12 @@ void (() => { "use strict";
 
 				this.Complex = class Complex {
 					constructor(re=0, im=0) {
+						if (isNaN(re = Number(re))) re = 0;
+						if (isNaN(im = Number(im))) im = 0;
+
 						Object.is(re, -0) && (re = 0);
 						Object.is(im, -0) && (im = 0);
+
 						this.re = re;
 						this.im = im;
 					}
@@ -7200,7 +7296,7 @@ void (() => { "use strict";
 						char = char[0] || "i";
 						return polar ?
 							`${cMath.abs(this)}${exp ? "exp(" : "e"}${exp ? "" : doubleStar ? "**" : "^"}${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}${exp ? ")" : ""}`.remove(
-								new RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
+								RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
 							).start("1").replace([/^0.*/, /0\./g], ["0", "."]) :
 							this.re ? // rectangular
 								this.im ?
@@ -7218,7 +7314,7 @@ void (() => { "use strict";
 					toLList() { return this.toArr().toLList() /* to linked list */ }
 					toRegObj() {
 						// to regular object.
-						// because for...of/in doesn't work with class objects
+						// because for...of/in doesn't work with class objects ...
 						// because of the non-enumerable properties
 						return { re: this.re, im: this.im };
 					}
@@ -7352,14 +7448,10 @@ void (() => { "use strict";
 				if (help) this.help = {};
 			}
 			new(re=0, im=0) {
-				if (type(re, 1) === "complex") return re;
+				if (type(re, 1) === "complex") return this.new(re.re, re.im);
 				isArr(re) && ([re, im] = re);
 				if (rMath.isNaN(re) || rMath.isNaN(im)) return NaN;
 
-				if (typeof re === "bigint" && typeof im === "bigint") {
-					throw Error("not implemented");
-					return new this.Complex(re, im);
-				}
 				if (typeof re === "number" && typeof im === "number")
 					return new this.Complex(re, im);
 				return NaN;
@@ -7377,7 +7469,7 @@ void (() => { "use strict";
 				typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
-					this.new(a.re + b.re, a.im + b.im);
+					this.new(a.re - b.re, a.im - b.im);
 			}
 			mul(a, b)  {
 				typeof a === "number" && (a = this.new(a, 0));
@@ -7401,36 +7493,35 @@ void (() => { "use strict";
 				typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
-					this.div(a, b).floor();
+					this.floor( this.div(a, b) );
 			}
 			cdiv(a, b) {
 				typeof a === "number" && (a = this.new(a, 0));
 				typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
-					this.div(a, b).ceil();
+					this.ceil( this.div(a, b) );
 			}
 			rdiv(a, b) {
 				typeof a === "number" && (a = this.new(a, 0));
 				typeof b === "number" && (b = this.new(b, 0));
 				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
 					NaN :
-					this.div(a, b).round();
+					this.round( this.div(a, b) );
 			}
 			mod(a, b) {
 				typeof a === "number" && (a = this.new(a, 0));
 				typeof b === "number" && (b = this.new(b, 0));
-				return type(a, 1) !== "complex" && type(b, 1) !== "complex" ?
+				return type(a, 1) !== "complex" || type(b, 1) !== "complex" ?
 					NaN :
 					this.sub(
 						a,
 						this.mul(
 							b,
-							this.floor(
-								this.div(a, b).floor
-							)
+							this.floor( this.div(a, b) )
 						)
 					)
+				// a - b*floor(a/b)
 			}
 			floor(z) {
 				typeof z === "number" && (z = this.new(z, 0));
@@ -7513,12 +7604,12 @@ void (() => { "use strict";
 			}
 			exp(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				return this.pow(z, this.e)
+				return this.pow(this.e, z)
 			}
 			expi(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				const r = e ** z.re;
-				return this.new(r * rMath.cos(z.im), r * rMath.sin(z.im))
+				const r = e ** -z.im;
+				return this.new(r * rMath.cos(z.re), r * rMath.sin(z.re))
 			}
 			abs(z) {
 				typeof z === "number" && (z = this.new(z, 0));
@@ -7528,9 +7619,9 @@ void (() => { "use strict";
 			sgn(z) {
 				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") return NaN;
-				return z.div( z.abs() );
+				return this.div(z, this.abs(z) );
 				// exp(i arg num);
-				// z sgn(z) = |z| ==> sgn(z) = z/|z|
+				// |z| sgn(z) = z <==> sgn(z) = z/|z|
 			}
 			sign(z) {
 				typeof z === "number" && (z = this.new(z, 0));
@@ -8160,3 +8251,10 @@ void (() => { "use strict";
 		f(x) - f(y) = 2f([1+x±y]/2)·f([1-x±y]/2)
 		f(3x) = f(x) - 2√[ (1-f²x)·(1-f²2x) ]·sgn([x mod 2] - 1)·sgn(2[x mod 1] - 1)
 */
+
+
+document._createCDATASection = (function create__createCDATASection() {
+	const doc = new Document;
+	function createCDATASection(text="") { return doc.createCDATASection(text) }
+	return createCDATASection._document = doc, createCDATASection;
+})();
