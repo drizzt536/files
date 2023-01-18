@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% countability.tex v2.1 (c) | Copyright 2023 Daniel E. Janusch
+% countability.tex v2.3 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -20,11 +20,13 @@
 \author{Daniel E. Janusch\\Dedicated to Maeby, my favorite kitty}
 \maketitle
 
-\begin{section}{Background and Theorems}\label{sec:background}
-	If a set is ``countable,"  it is bijectable to the natural numbers or a subset of them. Any set
-	that is finite will have this property and the only question is if all infinite sets have it.
-	$|S|$ denotes the cardinality of $S$ for any set $S$. Iterated set multiplication of the first
-	kind gives ordered groups with more than two elements, rather than ordered pairs of ordered pairs.\\
+\begin{section}{Background and Countability Theorems}\label{sec:background}
+	If a set is ``countable," there exists a bijection between it and loose subset of
+	the natural numbers. Any finite set will have this property and the only question
+	is if all \emph{infinite} sets have it. $|S|$ denotes the cardinality of $S$ for
+	any set $S$. Iterated set multiplication of the first kind gives ordered groups
+	with more than two elements, rather than nested ordered pairs. In all processes
+	with infinite steps, all the steps should execute simultaneously.\vspace{-1em}\\
 	\begin{align}
 		R\times S :=\{(r,s):r\in R\land s\in S\}~~(1 & \text a)
 		\hspace{2.5em}
@@ -55,16 +57,16 @@
 		and go along the diagonals getting every element in the product and not ``missing"
 		any. The numbers and colons are the indices. The first 25 are labeled if in view.
 		Similar logic works for $R\cdot S$. This is also algorithmically viable as shown
-		in Section~\ref{sec:algorithm code}.\vspace{0.5em}\\
-		\centerline{\begin{array}{|c|c|c|c|c|}
-			\hline 1:(R_1, S_1) & 2:(R_1, S_2) & 4:(R_1, S_3) & 7:(R_1, S_4) & \cdots\\
-			\hline 3:(R_2, S_1) & 5:(R_2, S_2) & 8:(R_2, S_3) & 12:(R_2, S_4) & \cdots\\
-			\hline 6:(R_3, S_1) & 9:(R_3, S_2) & 13:(R_3, S_3) & 18:(R_3, S_4) & \cdots\\
-			\hline 10:(R_4, S_1) & 14:(R_4, S_2) & 19:(R_4, S_3) & 25:(R_4, S_4) & \cdots\\
-			\hline \vdots & \vdots & \vdots & \vdots & \ddots\\
-			\hline
-		\end{array}}\vspace{-0.8em}\\
+		in Section~\ref{sec:algorithm code}.
 	\end{proof}
+	\centerline{\begin{array}{|c|c|c|c|c|}
+		\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) & \phantom{0}7:(R_1, S_4) & \cdots\\
+		\hline \phantom{0}3:(R_2, S_1) & \phantom{0}5:(R_2, S_2) & \phantom{0}8:(R_2, S_3) & 12:(R_2, S_4) & \cdots\\
+		\hline \phantom{0}6:(R_3, S_1) & \phantom{0}9:(R_3, S_2) & 13:(R_3, S_3) & 18:(R_3, S_4) & \cdots\\
+		\hline 10:(R_4, S_1) & 14:(R_4, S_2) & 19:(R_4, S_3) & 25:(R_4, S_4) & \cdots\\
+		\hline \vdots & \vdots & \vdots & \vdots & \ddots\\
+		\hline
+	\end{array}}
 
 	\pagebreak\\
 	\begin{thm}\label{thm:subsets}
@@ -113,23 +115,22 @@
 		and the rows represent a different $\left(R_i\right)_j$ or $R_{i,j}$. The numbers before the
 		colons are the output index. The first 85 are shown if in view. Again this is algorithmically viable, even
 		though this table has a slightly different numbering than that of Theorem~\ref{thm:multiplications}.
-		\vspace{1em}\\
-		\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
-			\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} & \phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
-			\hline \phantom{0}3:R_{1,2} & \phantom{0}5:R_{2,2} & \phantom{0}8:R_{3,2} & 14:R_{4,2} & 17:R_{5,2} & 27:R_{6,2} & 30:R_{7,2} & \cdots\\
-			\hline \phantom{0}4:R_{1,3} & \phantom{0}9:R_{2,3} & 13:R_{3,3} & 18:R_{4,3} & 26:R_{5,3} & 31:R_{6,3} & 43:R_{7,3} & \cdots\\
-			\hline 10:R_{1,4} & 12:R_{2,4} & 19:R_{3,4} & 25:R_{4,4} & 32:R_{5,4} & 42:R_{6,4} & 49:R_{7,4} & \cdots\\
-			\hline 11:R_{1,5} & 20:R_{2,5} & 24:R_{3,5} & 33:R_{4,5} & 41:R_{5,5} & 50:R_{6,5} & 62:R_{7,5} & \cdots\\
-			\hline 21:R_{1,6} & 23:R_{2,6} & 34:R_{3,6} & 40:R_{4,6} & 51:R_{5,6} & 61:R_{6,6} & 72:R_{7,6} & \cdots\\
-			\hline 22:R_{1,7} & 35:R_{2,7} & 39:R_{3,7} & 52:R_{4,7} & 60:R_{5,7} & 73:R_{6,7} & 85:R_{7,7} & \cdots\\
-			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
-			\hline
-		\end{array}}
 	\end{proof}
+	\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
+		\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} & \phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
+		\hline \phantom{0}3:R_{1,2} & \phantom{0}5:R_{2,2} & \phantom{0}8:R_{3,2} & 14:R_{4,2} & 17:R_{5,2} & 27:R_{6,2} & 30:R_{7,2} & \cdots\\
+		\hline \phantom{0}4:R_{1,3} & \phantom{0}9:R_{2,3} & 13:R_{3,3} & 18:R_{4,3} & 26:R_{5,3} & 31:R_{6,3} & 43:R_{7,3} & \cdots\\
+		\hline 10:R_{1,4} & 12:R_{2,4} & 19:R_{3,4} & 25:R_{4,4} & 32:R_{5,4} & 42:R_{6,4} & 49:R_{7,4} & \cdots\\
+		\hline 11:R_{1,5} & 20:R_{2,5} & 24:R_{3,5} & 33:R_{4,5} & 41:R_{5,5} & 50:R_{6,5} & 62:R_{7,5} & \cdots\\
+		\hline 21:R_{1,6} & 23:R_{2,6} & 34:R_{3,6} & 40:R_{4,6} & 51:R_{5,6} & 61:R_{6,6} & 72:R_{7,6} & \cdots\\
+		\hline 22:R_{1,7} & 35:R_{2,7} & 39:R_{3,7} & 52:R_{4,7} & 60:R_{5,7} & 73:R_{6,7} & 85:R_{7,7} & \cdots\\
+		\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+		\hline
+	\end{array}}
 \end{section}
 
 \pagebreak\begin{section}{Applications of the Theorems}\label{sec:applications}
-	\vspace{-1em}\begin{subsection}{Countability of The Integers}\label{subsec:applications.integers}
+	\begin{subsection}{Countability of the Integers}\label{subsec:applications.integers}
 		Claim: $\mathbb Z$ is a countable set.
 		\begin{proof}
 			Let $R=\mathbb N_0$, $S=\mathbb N_1$. $R$ and $S$ are countable axiomatically,
@@ -152,14 +153,13 @@
 	\vspace{-1em}\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
 		Claim: $\left\{x:x\in\mathbb R\land0\le x<1\right\}$ is a countable set.
 		\begin{proof}
-			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$
-			reversed with ``0." at the beginning and infinite trailing zeros at the
-			end, for any $i\in\mathbb N_0$. For example, $R_{246}=0.642\overline0$ and
-			$R_0=0.0\overline0=0$. This set is countable because it was defined to be
-			countable; each natural number corresponds to a single element. This set
-			contains every real number in the range because every possible sequence
-			of digits is in it. The sequence trends upwards, asymptotically approaching 1,
-			though it fluctuates wildly along the way.
+			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$ reversed with
+			``0." at the beginning and infinite trailing zeros at the end, for any $i\in\mathbb N_0$.
+			For example, $R_{246}=0.642\overline0$ and $R_0=0.0\overline0=0$. This set is countable
+			because it was defined to be countable; each natural number corresponds to a single element.
+			This set contains every real number in the range because every possible sequence of digits
+			is in it. The sequence trends upwards, asymptotically approaching 1, though it fluctuates
+			wildly along the way.
 		\end{proof}
 	\end{subsection}
 
@@ -170,21 +170,20 @@
 			Section~\ref{subsec:applications.reals 0 to 1}. Let $R$ be the same set used in that proof.
 			$\mathbb R^+=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where $S_i:=R[i-1]$. This
 			is countable via Theorem~\ref{thm:infinite unions}. The following table illustrates this.
-			\vspace{0.3em}\\
-			\vspace{-0.9em}\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
-				\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
-				\hline 0.1\overline0& 1.1\overline0& 2.1\overline0& 3.1\overline0& 4.1\overline0& 5.1\overline0& \cdots\\
-				\hline 0.2\overline0& 1.2\overline0& 2.2\overline0& 3.2\overline0& 4.2\overline0& 5.2\overline0& \cdots\\
-				\hline 0.3\overline0& 1.3\overline0& 2.3\overline0& 3.3\overline0& 4.3\overline0& 5.3\overline0& \cdots\\
-				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \cdots\\
-				\hline 0.7\overline0& 1.7\overline0& 2.7\overline0& 3.7\overline0& 4.7\overline0& 5.7\overline0& \cdots\\
-				\hline 0.8\overline0& 1.8\overline0& 2.8\overline0& 3.8\overline0& 4.8\overline0& 5.8\overline0& \cdots\\
-				\hline 0.9\overline0& 1.9\overline0& 2.9\overline0& 3.9\overline0& 4.9\overline0& 5.9\overline0& \cdots\\
-				\hline 0.01\overline0&1.01\overline0&2.01\overline0&3.01\overline0&4.01\overline0&5.01\overline0&\cdots\\
-				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
-				\hline
-			\end{array}}
 		\end{proof}
+		\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
+			\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
+			\hline 0.1\overline0& 1.1\overline0& 2.1\overline0& 3.1\overline0& 4.1\overline0& 5.1\overline0& \cdots\\
+			\hline 0.2\overline0& 1.2\overline0& 2.2\overline0& 3.2\overline0& 4.2\overline0& 5.2\overline0& \cdots\\
+			\hline 0.3\overline0& 1.3\overline0& 2.3\overline0& 3.3\overline0& 4.3\overline0& 5.3\overline0& \cdots\\
+			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \cdots\\
+			\hline 0.7\overline0& 1.7\overline0& 2.7\overline0& 3.7\overline0& 4.7\overline0& 5.7\overline0& \cdots\\
+			\hline 0.8\overline0& 1.8\overline0& 2.8\overline0& 3.8\overline0& 4.8\overline0& 5.8\overline0& \cdots\\
+			\hline 0.9\overline0& 1.9\overline0& 2.9\overline0& 3.9\overline0& 4.9\overline0& 5.9\overline0& \cdots\\
+			\hline 0.01\overline0&1.01\overline0&2.01\overline0&3.01\overline0&4.01\overline0&5.01\overline0&\cdots\\
+			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+			\hline
+		\end{array}}
 	\end{subsection}
 
 	\pagebreak\begin{subsection}{Countability of the Reals}\label{subsec:applications.reals}
@@ -201,7 +200,7 @@
 	\end{subsection}
 
 	\begin{subsection}{Miscellaneous Number Classes}\label{subsec:applications.miscellaneous}
-		\begin{subsubsection}{Algebraic Real and Transcendental Real Numbers}
+		\begin{subsubsection}{Algebraic and Transcendental Real Numbers}
 			\label{subsubsec:applications.misc.reals}
 			Claim: $\mathbb A$ and $\mathbb T$ are countable sets.
 			\begin{proof}
@@ -234,64 +233,57 @@
 	\end{subsection}
 \end{section}
 
-\begin{section}{Cantor's Diagonal Argument}\label{sec:diagonal argument}
+\begin{section}{Addressing Cantor's Diagonal Argument}\label{sec:diagonal argument}
 	According to Georg Cantor in 1891, If someone is trying to list all the real numbers,
 	they can always find a number that is not in the list using his ``Diagonal Argument".
-	This argument is basically the same as the following: Suppose someone is trying to make
-	a set of every natural number. They first add zero to the set and the set is $\{0\}$,
-	then they could say, ``one isn't in the set." When they add one and have $\{0,1\}$,
-	they can say ``two isn't in the set," ``then three isn't in the set," ``four isn't in
-	the set," et cetera. No matter how many natural numbers they add, they can always find
-	one not in it. Using Cantor's same logic, this seems to be saying that the naturals
-	cannot be corresponded one to one with the naturals, which is clearly wrong. The
-	naturals \emph{are} the naturals.
+	This argument is basically the same as the following, though for reals instead of
+	naturals: Suppose someone is trying to make a set $S$ of every natural number. They first
+	add zero to the set and the set is $\{0\}$, then they could say, ``one isn't in the set."
+	When they add one and have $\{0,1\}$, they can say ``two isn't in the set," ``then three
+	isn't in the set," ``four isn't in the set," et cetera. No matter how many natural numbers
+	they add, they can always find one not in it; $\max(S)+1$. Using Cantor's same logic, this
+	seems to be saying that there is not a bijection between the natural numbers and themselves,
+	which is clearly wrong. Every set is bijective onto itself via the identity function.
+	$f(x) := x$. $f:X\mapsto X$.
 \end{section}
 
-\pagebreak\begin{section}{Counting the Reals Algorithmically}\label{sec:algorithm code}
-	The following Node JS code prints out every real number to the console delimited by a comma and space.
-	The only problems are that it prints out both $0$ and $-0$, and the functions return strings. Both of
-	these are easily resolvable though. There is a reference to this source code and the C version in
-	Section~\ref{sec:references}.
+\pagebreak\begin{section}{Enumerating the Real Numbers Algorithmically}\label{sec:algorithm code}
+	The following Node JS code prints out real numbers to the console delimited by a comma and space.
+	With infinite time and memory, it will have printed every real number. The only problems are that
+	it prints out both $0$ and $-0$, and the functions return strings. Both of these are easily resolvable
+	though. There is a reference to this source code and the C version in Section~\ref{sec:references}.
+	The subscripts are just so it looks nicer. If \texttt{process.stdout.write} is replaced with
+	\texttt{console.log}, then it will work in vanilla JavaScript, although \texttt{console.log} adds
+	a trailing newline character at the end of each call, which isn't ideal for printing a large quantity
+	of small strings each using an individual function call.
 
-	\noindent\texttt{function R(i, j) \{ return i < 0n || j < 0n ?\\
-		$\indent$NaN :\\
-		$\indent$\textasciigrave\$\{i\}.\textasciigrave + \textasciigrave\$\{j\}\textasciigrave.split("").reverse().join("");\\
-		\}\\
-		function sgn(x) \{ return x < 0n ? -1n : BigInt(x > 0n) \}\\
-		function triangleNumber(x) \{ return x * (x + 1n) / 2n \}\\
-		function isqrt(n) \{\\
-		$\indent$if (n < 2n) return n;\\
-		$\indent$var x0, x1 = n / 2n;\\
-		$\indent$do x0 = x1, x1 = ( x0 + n / x0 ) / 2n;\\
-		$\indent$while ( x1 < x0 );\\
-		$\indent$return x0;\\
-		\}\\
-		function greatestTriangleIndex(x) \{\\
-		$\indent$return (\\
-		$\indent$$\indent$isqrt(1n + 8n*x) +\\
-		$\indent$$\indent$sgn( 1n - sgn(1n - isqrt(1n + 8n*x) \% 2n) )\\
-		$\indent$) / 2n - 1n;\\
-		\}\\
-		function generateIndices(x) \{\\
-		$\indent$const u = greatestTriangleIndex(x), k = triangleNumber(u);\\
-		$\indent$return [x - k, u - x + k]; // these can be swapped, it doesn't matter.\\
-		\}\\
-		function getReal(index) \{\\
-		$\indent$try \{ index = BigInt(index) \} catch \{ return NaN \}\\
-		$\indent$let negative = 0;\\
-		$\indent$index \% 2n \&\& (negative = 1, index--);\\
-		$\indent$let t = generateIndices(index /= 2n);\\
-		$\indent$return (negative ? "-" : "") + R(t[0], t[1]);\\
-		\}\\
-		function generateReals(maxIndex=1n) \{\\
-		$\indent$// -1n acts as infinity.\\
-		$\indent$try \{ maxIndex = BigInt(maxIndex) \} catch \{ return \}\\
-		$\indent$for (var i = 0n; i !== maxIndex; i++) \{\\
-		$\indent$$\indent$process.stdout.write( getReal(i) );\\
-		$\indent$$\indent$i + 1n !== maxIndex \&\& process.stdout.write(", ");\\
-		$\indent$\}\\
-		\}\\
-		generateReals(-1n);
+	\noindent\texttt{\\
+	function isqrt(n) \{ // $\lfloor$$\sqrt\texttt{n}$$\rfloor$ for non-negative big integers n.\\
+	$\indent$if (n < 2) return n;\\
+	$\indent$var x$_0$, x$_1$ = n / 2n;\\\\
+	$\indent$do\\
+	$\indent\indent$x$_0$ = x$_1$,\\
+	$\indent\indent$x$_1$ = x$_0$ + n / x$_0$ >> 1n; // Newton's method for f(x) = x\textasciicircum 2+a\\
+	$\indent$while ( x$_1$ < x$_0$ );\\\\
+	$\indent$return x$_0$;\\
+	\}\\\\
+	// iterate over the natural numbers (up to 0.5*2\textasciicircum 2\textasciicircum 30)\\
+	for (var runningIndex = 0n ;;) \{\\
+	$\indent$let positive = true, currentIndex = runningIndex++;\\\\
+	$\indent$// if the current index is odd, return a negation the previous index's value\\
+	$\indent$if (currentIndex \% 2n) positive = false, currentIndex--;\\
+	$\indent$currentIndex /= 2n; // divide index by 2 so all integers can be reached\\\\
+	$\indent$const c = isqrt(1n + 8n*currentIndex) // intermediate value\\
+	$\indent$// the index the next comments refer to\\
+	$\indent\indent$, u = (c + c \% 2n) / 2n - 1n\\
+	$\indent$// the largest triangle number with an integer index that is less ...\\
+	$\indent$// than or equal to the current index. but subtracted from the current index\\
+	$\indent\indent$, k = currentIndex - u * (u + 1n) / 2n;\\\\
+	$\indent$// generate real number from indices k and u-k and print it\\
+	$\indent$process.stdout.write(\textasciigrave\$\{positive~?~""~:~"-"\}\$\{k\}.\textasciigrave~+\\
+	$\indent\indent$\textasciigrave\$\{u - k\}\textasciigrave.split("").reverse().join("") + ", "\\
+	$\indent$);\\
+	\}
 	}
 \end{section}
 
@@ -308,7 +300,7 @@
 		\text{Wikipedia page with elaboration on Section~\ref{subsec:applications.reals}}
 
 		\item\url{https://www.github.com/drizzt536/files/tree/main/TeX/continuum}\\
-		\text{The files for the most recent version of this pdf and the \LaTeX~code}
+		\text{The files for the most recent public version of this pdf and the \LaTeX~code}
 
 		\item\url{https://raw.githubusercontent.com/drizzt536/files/main/JavaScript/continuum.js}\\
 		\text{The raw JavaScript source code for the Section~\ref{sec:algorithm code}}
