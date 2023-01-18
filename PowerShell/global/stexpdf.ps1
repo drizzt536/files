@@ -13,6 +13,7 @@ function global:stexpdf { # smaller tex pdf compiler
     pdflatex -quiet "./$fname.tex" # so references work
     rm "./$fname.aux", "./$fname.log"
     if (test-path "./texput.log") { rm "./texput.log" }
+    if (test-path "./$fname.toc") { rm "./$fname.toc" }
     iex "./$fname.pdf"
     return $null
 }

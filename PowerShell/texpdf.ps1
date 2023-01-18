@@ -68,6 +68,7 @@ Function Global:Texpdf {
         Invoke-Expression "$Compiler -quiet '$Path$FileName.$FileType'" # so references work
         Remove-Item "$Path$FileName.aux", "$Path$FileName.log"
         if (Test-Path "${Path}texput.log") { Remove-Item "${Path}texput.log" }
+        if (Test-Path "./$Path$FileName.toc") { Remove-Item "./$Path$FileName.toc" }
         $OpenPDF && Invoke-Expression "$Path$FileName.pdf"
         return $null
     }
