@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% countability.tex v2.3 (c) | Copyright 2023 Daniel E. Janusch
+% countability.tex v2.4 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -21,10 +21,10 @@
 \maketitle
 
 \begin{section}{Background and Countability Theorems}\label{sec:background}
-	If a set is ``countable," there exists a bijection between it and loose subset of
-	the natural numbers. Any finite set will have this property and the only question
-	is if all \emph{infinite} sets have it. $|S|$ denotes the cardinality of $S$ for
-	any set $S$. Iterated set multiplication of the first kind gives ordered groups
+	If a set is ``countable," there exists a bijection between it and loose subset of the
+	natural numbers (equinumeral). Any finite set will have this property and the only
+	question is if all \emph{infinite} sets have it. $|S|$ denotes the cardinality of $S$
+	for any set $S$. Iterated set multiplication of the first kind gives ordered groups
 	with more than two elements, rather than nested ordered pairs. In all processes
 	with infinite steps, all the steps should execute simultaneously.\vspace{-1em}\\
 	\begin{align}
@@ -87,8 +87,8 @@
 		Create 2 new intermediate sets $S_a := \{a\cdot r:r\in R\}$ and $S_b := \{b\cdot r:r\in R\}$.
 		$S_a\times S_b$ gives a set with the same countability as $R(a,b)$, only with
 		ordered pairs instead of addition. This is countable via Theorem~\ref{thm:multiplications}.
-		Similar logic works for $R[a,b]$. They're not actually rings, it's just the same syntax for
-		a similar thing.
+		Similar logic works for $R[a,b]$. They're not actually rings, it's just similar syntax for
+		similar things.
 	\end{proof}
 
 	\begin{thm}\label{thm:powers}
@@ -101,7 +101,7 @@
 		et cetera. This can be simplified continuously until it becomes countable if $R^2$ or
 		$R\times R$ is countable, which is countable via Theorem~\ref{thm:multiplications}. If $n=0$,
 		the output set is all the groups of zero elements from $R$, or just $\O$, which is countable
-		since $\left|\O\right|$ is finite. 
+		since $\left|\O\right|$ is finite. This theorem is unused in this document.
 	\end{proof}
 
 	\begin{thm}\label{thm:infinite unions}
@@ -109,12 +109,13 @@
 		\indent\emph{If all sets $R_i$ are countable, $\displaystyle\bigcup_{i=1}^{\aleph_0} R_i$ is also
 		countable, where $\aleph_0\equiv\left|\mathbb N\right|=\infty$.}
 	\end{thm}\begin{proof}
-		Give each set a column and put all its elements in that column going down. Do this for every
-		set and using the same argument as in Theorem~\ref{thm:multiplications}, one can show that
-		every element is indexed and none are skipped. Every column represents a different $R_i$
-		and the rows represent a different $\left(R_i\right)_j$ or $R_{i,j}$. The numbers before the
-		colons are the output index. The first 85 are shown if in view. Again this is algorithmically viable, even
-		though this table has a slightly different numbering than that of Theorem~\ref{thm:multiplications}.
+		Give each set $R_i$ a column in a table and put all its elements in that column going down.
+		Do this for every set and using the same argument as in Theorem~\ref{thm:multiplications},
+		one can show that every element is indexed and none are skipped. Every column represents
+		a different $R_i$ and the rows represent a different $\left(R_i\right)_j$ or $R_{i,j}$.
+		The numbers before the colons are the output index. The first 85 are shown if in view.
+		This is algorithmically viable, even though this table has a slightly different
+		numbering than that of Theorem~\ref{thm:multiplications}.
 	\end{proof}
 	\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
 		\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} & \phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
@@ -151,15 +152,15 @@
 	\end{subsection}
 
 	\vspace{-1em}\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
-		Claim: $\left\{x:x\in\mathbb R\land0\le x<1\right\}$ is a countable set.
+		Claim: $\left\{x\in\mathbb R:0\le x<1\right\}$ is a countable set.
 		\begin{proof}
-			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$ reversed with
-			``0." at the beginning and infinite trailing zeros at the end, for any $i\in\mathbb N_0$.
-			For example, $R_{246}=0.642\overline0$ and $R_0=0.0\overline0=0$. This set is countable
-			because it was defined to be countable; each natural number corresponds to a single element.
-			This set contains every real number in the range because every possible sequence of digits
-			is in it. The sequence trends upwards, asymptotically approaching 1, though it fluctuates
-			wildly along the way.
+			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$ reversed
+			with ``0." at the beginning and infinite optional trailing zeros at the end, for
+			any $i\in\mathbb N_0$. For example, $R_{246}=0.642\overline0$ and
+			$R_0=0.0\overline0=0$. This set is countable because it was defined to be countable;
+			each natural number corresponds to a single element. This set contains every real
+			number in the range because every possible sequence of digits is in it. The sequence
+			trends upwards, asymptotically approaching 1, though it fluctuates wildly along the way.
 		\end{proof}
 	\end{subsection}
 
@@ -248,14 +249,17 @@
 \end{section}
 
 \pagebreak\begin{section}{Enumerating the Real Numbers Algorithmically}\label{sec:algorithm code}
-	The following Node JS code prints out real numbers to the console delimited by a comma and space.
-	With infinite time and memory, it will have printed every real number. The only problems are that
-	it prints out both $0$ and $-0$, and the functions return strings. Both of these are easily resolvable
-	though. There is a reference to this source code and the C version in Section~\ref{sec:references}.
-	The subscripts are just so it looks nicer. If \texttt{process.stdout.write} is replaced with
-	\texttt{console.log}, then it will work in vanilla JavaScript, although \texttt{console.log} adds
-	a trailing newline character at the end of each call, which isn't ideal for printing a large quantity
-	of small strings each using an individual function call.
+	The following Node JS code prints out real numbers to the console delimited by a comma followed
+	by a space. With infinite time and memory, it will have printed every real number. The only
+	problems are that it prints out both $0$ and $-0$, and the functions return strings. Both of
+	these are easily resolvable though. There is a reference to this source code and the C version
+	in Section~\ref{sec:references}. The subscripts are just so it looks nicer. If
+	\texttt{process.stdout.write} is replaced with \texttt{console.log}, then it will work in vanilla
+	JavaScript in versions beginning with ECMAScript 6, although \texttt{console.log} adds a trailing
+	newline character at the end of each call, which isn't ideal for printing a large quantity of small
+	strings each using an individual function call. The complexity of finding the $n$th real number
+	with this method is less than or equal to $\mathcal O\!\left(n\log^2n\right)$, but it is probably
+	less, since after over 16 million iterations on my machine, it hadn't slowed down noticably.
 
 	\noindent\texttt{\\
 	function isqrt(n) \{ // $\lfloor$$\sqrt\texttt{n}$$\rfloor$ for non-negative big integers n.\\
@@ -266,7 +270,7 @@
 	$\indent\indent$x$_1$ = x$_0$ + n / x$_0$ >> 1n; // Newton's method for f(x) = x\textasciicircum 2+a\\
 	$\indent$while ( x$_1$ < x$_0$ );\\\\
 	$\indent$return x$_0$;\\
-	\}\\\\
+	\}\\
 	// iterate over the natural numbers (up to 0.5*2\textasciicircum 2\textasciicircum 30)\\
 	for (var runningIndex = 0n ;;) \{\\
 	$\indent$let positive = true, currentIndex = runningIndex++;\\\\
@@ -285,6 +289,51 @@
 	$\indent$);\\
 	\}
 	}
+\end{section}
+
+\pagebreak\begin{section}{Further Algorithms and Conclusion}\label{sec:further algorithms}
+	The axioms of Zermelo-Fraenkel Set theory required to prove the countability of the continuum are
+	as follows: Axiom Schema of Specification, Axiom of Union, Axiom of Replacement, Axiom of Infinity,
+	and Axiom of Choice. Without the Axiom of Choice, theorems 2, 4, and 6 don't work, which are all used,
+	although the algorithm is separate from set theory and uses no axioms. The algorithm from
+	Section~\ref{sec:algorithm code} uses string manipulation to reverse the numbers and find their lengths.
+	The following equations can do the same thing without it.
+	\begin{align}
+		\text{length}\,n & := 1+\left\lfloor\log_{10}n\right\rfloor=\left\lceil\log_{10}(n+1)\right\rceil\\
+		\text{reverse}\,n & :=\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor\frac n{10^k}\right\rfloor\text{mod}\,10\right)\!10^{\text{length}\,n-k-1}\\
+		R_{i,j} & :=p\left(i+\frac{\text{reverse}\,j}{10^{\text{length}\,j}}\right)
+	\end{align}
+	Where $i$ is \texttt{k}, $p$ is \texttt{(positive~?~1~:~-1)}, and $j$ is \texttt{(u - k)}. length
+	and reverse are only defined for positive integer inputs. An interesting formula used in the
+	algorithm in Section~\ref{sec:algorithm code} is for the greatest triangle number $t=T(k)$ less
+	than or equal to a natural number $n$ with a natural number index $k$.
+	\begin{align}
+		T(n) & := \frac{n^2+n}2=\sum_{j=1}^nj\\
+		\text{sgn}\,x & := \begin{cases}
+			1,x>0\\
+			0,x=0\\
+			-1,x<0
+		\end{cases}\\
+		f(n) & := \frac{\left\lfloor\sqrt{8n+1}\right\rfloor+\left\lfloor\sqrt{8n+1}\right\rfloor\text{mod}\,2}2-1\\
+		t & = T\circ f(n)
+	\end{align}
+	Because of the bijection, there is also an inverse of Section~\ref{sec:algorithm code}'s algorithm.\\\\
+	\noindent\texttt{function inverse(string) \{ // assume valid input\\
+		$\indent$const match = /\textasciicircum(-?)($\backslash$d+)$\backslash$.($\backslash$d\+)\$/.exec(string)\\
+		$\indent\indent$, i = BigInt(match[2]) // the x coordinate index, or the integer part\\
+		$\indent\indent$, j = BigInt(match[3]); // the y coordinate index, or the decimal part\\
+		$\indent$return i*(i+1n) + (2n*i+j)*(j+1n) + BigInt(match[1] === "-");\\
+		\}
+	}\\
+	Conclusion: Since there exists a bijection between the natural numbers and the Real numbers,
+	there is no set with a cardinality strictly or loosely in between the naturals and reals (CH),
+	because they are secretly the same. This also implies that $2^{\aleph_0}=\aleph_0$ because
+	$\left|\mathbb R\right|\equiv\left|\mathcal P\left(\mathbb N_0\right)\right|$. This makes sense
+	because $2^\infty=\infty$ as well. There may not be different sizes of infinities after all. Also
+	if one takes any sequence of natural numbers and concatenates them, it will always create a new
+	natural number, meaning every element in $\mathcal P(\mathbb N)$ corresponds to a natural
+	number. It makes sense why CH is independent of ZHC and can't be disproved within it, because
+	it is true either way.
 \end{section}
 
 \pagebreak\begin{section}{References}\label{sec:references}
