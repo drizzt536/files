@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// continuum.js v1.0 (c) | Copyright 2023 Daniel E. Janusch
+// continuum.js v1.1 (c) | Copyright 2023 Daniel E. Janusch
 
 // This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 // and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -20,43 +20,30 @@ var generateReals = (function create_realNumbers() {
 			})()
 		}
 	}
-	function R(i, j) { return i < 0n || j < 0n ? NaN : `${i}.` + `${j}`.split("").reverse().join("") }
-	function sgn(x) { return x < 0n ? -1n : BigInt(x > 0n) }
-	function triangleNumber(x) { return x * (x + 1n) / 2n }
-	function floor(x) {
-		return typeof x === "number" ?
-			Number.parseInt(x) - (x<0 && x != Number.parseInt(x)) :
-			typeof x === "bigint" ?
-				x :
-				NaN;
-	}
+	// bitwise shifts are faster than division
+	function R(i, j) { return `${i}.` + `${j}`.split("").reverse().join("") }
+	function triangleNumber(x) { return x * (x + 1n) >> 1n }
 	function isqrt(n) {
 		if (n < 2n) return n;
-		var x0, x1 = n / 2n;
+		var x0, x1 = n >> 1n;
 
-		do x0 = x1, x1 = ( x0 + n / x0 ) / 2n;
+		do x0 = x1, x1 = x0 + n / x0 >> 1n;
 		while ( x1 < x0 );
 
 		return x0;
 	}
-	function greatestTriangleIndex(x) {
-		return (
-			isqrt(1n + 8n*x) +
-			sgn( 1n - sgn(1n - isqrt(1n + 8n*x) % 2n) )
-		) / 2n - 1n;
-	}
+	function greatestTriangleIndex(x) { return x = isqrt(1n + (x << 3n)), ( x + x % 2n >> 1n) - 1n }
 	function generateIndices(x) {
 		const u = greatestTriangleIndex(x)
 			, k = triangleNumber(u)
 			, t = x - k;
-		return [t, u - t]; // these can be swapped, it doesn't matter.
+		return [t, u - t]; // these can be swapped, it doesn't really matter.
 	}
 	function getReal(index) {
-		try { index = BigInt(index) } catch { return NaN }
-		let negative = 0;
-		index % 2n && (negative = 1, index--);
-		let t = generateIndices(index /= 2n);
-		return (negative ? "-" : "") + R(t[0], t[1]);
+		let positive = true;
+		index % 2n && (positive--, index--);
+		const t = generateIndices(index >> 1n);
+		return (positive ? "" : "-") + R(t[0], t[1]);
 	}
 	function generateRealsSet(maxIndex=10n) {
 		try { maxIndex = BigInt(maxIndex) } catch { return [] }
@@ -68,15 +55,13 @@ var generateReals = (function create_realNumbers() {
 		// -1n acts as infinity.
 		try { maxIndex = BigInt(maxIndex) } catch { return }
 		process.stdout.write("[");
-		for (var i = 0n; i !== maxIndex; i++) {
+		for (var i = 0n; i !== maxIndex; ++i) {
 			process.stdout.write( getReal(i) );
 			i + 1n !== maxIndex && process.stdout.write(delimiter);
 		}
 		process.stdout.write("]\n", isBrowser ? true : void 0);
 	}
-	return generateReals._floor = floor,
-		generateReals._isqrt = isqrt,
-		generateReals._sgn = sgn,
+	return generateReals._isqrt = isqrt,
 		generateReals._greatestTriangleIndex = greatestTriangleIndex,
 		generateReals._triangleNumber = triangleNumber,
 		generateReals._generateIndices = generateIndices,
@@ -85,3 +70,10 @@ var generateReals = (function create_realNumbers() {
 		generateReals._generateRealsSet = generateRealsSet,
 		generateReals;
 })();
+
+function inverse(string) { // assume valid input
+	const match = /^(-?)(\d+)\.(\d)$/.exec(string)
+		, i = BigInt(match[2]) // the x coordinate index, or the integer part
+		, j = BigInt(match[3]); // the y coordinate index, or the decimal part
+	return i*(i+1n) + ((i << 1n) + j)*(j+1n) + BigInt(match[1] === "-");
+}
