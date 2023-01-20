@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% countability.tex v2.4 (c) | Copyright 2023 Daniel E. Janusch
+% countability.tex v2.5 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -21,12 +21,11 @@
 \maketitle
 
 \begin{section}{Background and Countability Theorems}\label{sec:background}
-	If a set is ``countable," there exists a bijection between it and loose subset of the
-	natural numbers (equinumeral). Any finite set will have this property and the only
-	question is if all \emph{infinite} sets have it. $|S|$ denotes the cardinality of $S$
-	for any set $S$. Iterated set multiplication of the first kind gives ordered groups
-	with more than two elements, rather than nested ordered pairs. In all processes
-	with infinite steps, all the steps should execute simultaneously.\vspace{-1em}\\
+	If a set is ``countable," there exists a bijection between it and loose subset
+	of the natural numbers (equinumeral). Any finite set will have this property and
+	the only question is if all \emph{infinite} sets do. $|S|$ denotes the cardinality
+	of any set $S$. In all processes with infinite steps, all the steps should be
+	thought of as executing simultaneously rather than one by one in order.\vspace{-1em}\\
 	\begin{align}
 		R\times S :=\{(r,s):r\in R\land s\in S\}~~(1 & \text a)
 		\hspace{2.5em}
@@ -39,7 +38,8 @@
 
 	\begin{thm}\label{thm:finite unions}
 		\emph{Unions of Countable Sets}\\
-		\indent\emph{If any pair of sets $R$ and $S$ are countable, $R(a)\cup S(b)$ is countable for all $a$ and $b$.}
+		\indent\emph{If any sets $R$ and $S$ are countable, $R(a)\cup S(b)$ is countable
+		for all $a$ and $b$.}
 	\end{thm}\begin{proof}
 		Since $R$ and $S$ are countable, $R(a)$ and $S(b)$ are as well because this just
 		multiplies the already present elements by a constant. Interlace the elements of
@@ -50,14 +50,16 @@
 	\end{proof}
 
 	\begin{thm}\label{thm:multiplications}
-		\emph{Multiplications of Countable Sets}\\
-		\indent\emph{If any pair of sets $R$ and $S$ are countable, $R\times S$ and $R\cdot S$ are countable.}
+		\emph{Multiplications and Cartesian Products of Countable Sets}\\
+		\indent\emph{If any sets $R$ and $S$ are countable, both $R\times S$ and
+		$R\cdot S$ are countable.}
 	\end{thm}\begin{proof}
-		Put ordered pairs using elements all the of $R$ and $S$ into a table as shown below
-		and go along the diagonals getting every element in the product and not ``missing"
-		any. The numbers and colons are the indices. The first 25 are labeled if in view.
-		Similar logic works for $R\cdot S$. This is also algorithmically viable as shown
-		in Section~\ref{sec:algorithm code}.
+		Put ordered pairs using elements all the of $R$ and $S$ into a table as shown
+		below and go along the diagonals getting every element in the product and not
+		``missing" any. The numbers and colons are the output indices. The first 25
+		are labeled if in view. Similar logic works for $R\cdot S$. This is also
+		algorithmically viable as shown in Section~\ref{sec:algorithm code}. The output
+		indices relate strongly to triangle numbers.
 	\end{proof}
 	\centerline{\begin{array}{|c|c|c|c|c|}
 		\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) & \phantom{0}7:(R_1, S_4) & \cdots\\
@@ -92,20 +94,18 @@
 	\end{proof}
 
 	\begin{thm}\label{thm:powers}
-		\emph{Powers of Countable Sets}\\
-		\indent\emph{If any set $R$ is countable, $R^n$ is also countable for all natural numbers $n$
-		\,($\mathbb N_0$).}
+		\emph{Finite Natural Powers of Countable Sets}\\
+		\indent\emph{If any set $R$ is countable, $R^n$ is also countable for all natural
+		numbers ($\mathbb N_0$) $n$.}
 	\end{thm}\begin{proof}
-		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable.
-		$R^{n-1}$ can be factored as $R\times R^{n-2}$ which is countable if $R^{n-2}$ is countable,
-		et cetera. This can be simplified continuously until it becomes countable if $R^2$ or
-		$R\times R$ is countable, which is countable via Theorem~\ref{thm:multiplications}. If $n=0$,
-		the output set is all the groups of zero elements from $R$, or just $\O$, which is countable
+		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable. This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
+		countable, which is countable via Theorem~\ref{thm:multiplications}. If $n=0$, the
+		output set is all the groups of zero elements from $R$, or just $\O$, which is countable
 		since $\left|\O\right|$ is finite. This theorem is unused in this document.
 	\end{proof}
 
 	\begin{thm}\label{thm:infinite unions}
-		\emph{Countably Infinite Unions of Countable Sets}\\
+		\emph{Countably Infinite Unions of Countably Infinite Sets}\\
 		\indent\emph{If all sets $R_i$ are countable, $\displaystyle\bigcup_{i=1}^{\aleph_0} R_i$ is also
 		countable, where $\aleph_0\equiv\left|\mathbb N\right|=\infty$.}
 	\end{thm}\begin{proof}
@@ -134,9 +134,9 @@
 	\begin{subsection}{Countability of the Integers}\label{subsec:applications.integers}
 		Claim: $\mathbb Z$ is a countable set.
 		\begin{proof}
-			Let $R=\mathbb N_0$, $S=\mathbb N_1$. $R$ and $S$ are countable axiomatically,
-			being the naturals themselves. $\mathbb Z\equiv R\cup S(-1)$. This is countable
-			via Theorem~\ref{thm:finite unions}.
+			Let $R=\mathbb N_0$, $S=\mathbb N_1$. $R$ and $S$ are countable axiomatically
+			(axiom of extensionality), being the naturals themselves. $\mathbb Z\equiv R
+			\cup S(-1)$. This is countable via Theorem~\ref{thm:finite unions}.
 		\end{proof}
 	\end{subsection}
 
@@ -152,7 +152,7 @@
 	\end{subsection}
 
 	\vspace{-1em}\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
-		Claim: $\left\{x\in\mathbb R:0\le x<1\right\}$ is a countable set.
+		Claim: $\left\{x\in\mathbb R:0\leqslant x<1\right\}$ is a countable set.
 		\begin{proof}
 			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$ reversed
 			with ``0." at the beginning and infinite optional trailing zeros at the end, for
@@ -165,12 +165,15 @@
 	\end{subsection}
 
 	\vspace{-1em}\begin{subsection}{Countability of the Non-Negative Reals}\label{subsec:applications.non negative reals}
-		Claim: $\mathbb R_{\ge0}$ or equivalently $\left\{x:x\in\mathbb R\land x\ge0\right\}$ is a countable set.
+		Claim: $\mathbb R_{\geqslant0}$ or equivalently $\left\{x\in\mathbb R:
+		x\geqslant0\right\}$ is a countable set.
 		\begin{proof}
 			The set of real numbers from zero to one is countable via
-			Section~\ref{subsec:applications.reals 0 to 1}. Let $R$ be the same set used in that proof.
-			$\mathbb R^+=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where $S_i:=R[i-1]$. This
-			is countable via Theorem~\ref{thm:infinite unions}. The following table illustrates this.
+			Section~\ref{subsec:applications.reals 0 to 1}. Let $R$ be the same set
+			used in that proof.
+			$\mathbb R_{\geqslant0}=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where
+			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}.
+			The following table illustrates this.
 		\end{proof}
 		\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
 			\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
@@ -191,17 +194,19 @@
 		Claim: $\mathbb R$ is a countable set which implies
 		$\left|\mathcal P(\mathbb N)\right|\equiv\left|\mathbb N\right|$.
 		\begin{proof}
-			$\mathbb R_{\ge 0}$ is countable via Section~\ref{subsec:applications.non negative reals}.
-			$\mathbb R_{\ge0}(1, -1)\equiv\mathbb R$. This is countable via Theorem~\ref{thm:rings}.
-			This conclusion can be further reinforced by the algorithmic methods later on. For each
-			real number $x$, there exists at least 1 sequence of elements in $R$, each element with a
-			higher index than the last, where the limit of the sequence equals $x$. This is because
+			$\mathbb R_{\geqslant0}$ is countable via Section~\ref{subsec:applications.non negative reals}.
+			$\mathbb R_{\geqslant0}(1, -1)\equiv\mathbb R$. This is countable via
+			Theorem~\ref{thm:rings}. This conclusion can be further reinforced by
+			the algorithmic methods later on. For each real number $x$, there exists
+			at least 1 sequence of elements in $R$, each element with a higher index
+			than the last, where the limit of the sequence equals $x$. This is because
 			every sequence of digits is contained by $R$.
 		\end{proof}
 	\end{subsection}
 
-	\begin{subsection}{Miscellaneous Number Classes}\label{subsec:applications.miscellaneous}
-		\begin{subsubsection}{Algebraic and Transcendental Real Numbers}
+	\begin{subsection}{Countabilities of Miscellaneous Number Classes}
+	\label{subsec:applications.miscellaneous}
+		\begin{subsubsection}{Algebraic and Transcendental Numbers}
 			\label{subsubsec:applications.misc.reals}
 			Claim: $\mathbb A$ and $\mathbb T$ are countable sets.
 			\begin{proof}
@@ -238,28 +243,29 @@
 	According to Georg Cantor in 1891, If someone is trying to list all the real numbers,
 	they can always find a number that is not in the list using his ``Diagonal Argument".
 	This argument is basically the same as the following, though for reals instead of
-	naturals: Suppose someone is trying to make a set $S$ of every natural number. They first
+	naturals: Suppose someone is trying to make a set $S$ with every natural number. They first
 	add zero to the set and the set is $\{0\}$, then they could say, ``one isn't in the set."
-	When they add one and have $\{0,1\}$, they can say ``two isn't in the set," ``then three
+	When they add one and have $\{0,1\}$, they can say ``two isn't in the set," then ``three
 	isn't in the set," ``four isn't in the set," et cetera. No matter how many natural numbers
 	they add, they can always find one not in it; $\max(S)+1$. Using Cantor's same logic, this
-	seems to be saying that there is not a bijection between the natural numbers and themselves,
-	which is clearly wrong. Every set is bijective onto itself via the identity function.
-	$f(x) := x$. $f:X\mapsto X$.
+	seems to be implying that there is not a bijection between the natural numbers and
+	themselves, which is clearly wrong. Every set is bijective onto itself via the identity
+	function. $f(x) := x$ for  $f:X\mapsto X$.
 \end{section}
 
-\pagebreak\begin{section}{Enumerating the Real Numbers Algorithmically}\label{sec:algorithm code}
-	The following Node JS code prints out real numbers to the console delimited by a comma followed
-	by a space. With infinite time and memory, it will have printed every real number. The only
-	problems are that it prints out both $0$ and $-0$, and the functions return strings. Both of
-	these are easily resolvable though. There is a reference to this source code and the C version
-	in Section~\ref{sec:references}. The subscripts are just so it looks nicer. If
-	\texttt{process.stdout.write} is replaced with \texttt{console.log}, then it will work in vanilla
-	JavaScript in versions beginning with ECMAScript 6, although \texttt{console.log} adds a trailing
-	newline character at the end of each call, which isn't ideal for printing a large quantity of small
-	strings each using an individual function call. The complexity of finding the $n$th real number
-	with this method is less than or equal to $\mathcal O\!\left(n\log^2n\right)$, but it is probably
-	less, since after over 16 million iterations on my machine, it hadn't slowed down noticably.
+\pagebreak\begin{section}{Enumerating the Continuum Algorithmically}\label{sec:algorithm code}
+	The following Node JS code prints out real numbers to stdout delimited by a comma-space
+	pair. With infinite time and memory, it will have printed every real number. The only
+	problems are that it prints out both $0$ and $-0$, and the functions return strings.
+	Both of these are easily resolvable though. There is a reference to this source code and
+	the C version in Section~\ref{sec:references}. The subscripts are just so it looks nicer.
+	If \texttt{process.stdout.write} is replaced with \texttt{console.log}, then it will work
+	in vanilla JavaScript in versions beginning with ECMAScript 6. The downside being
+	\texttt{console.log} adds a trailing newline character at the end of each call, which
+	isn't ideal for printing a large quantity of small strings each using an individual
+	function call. The complexity of finding the $n$th real number with this method is less
+	than or equal to $\mathcal O\!\left(n\log^2n\right)$, emphasis on ``less", because
+	after over 16 million iterations on my machine, it hadn't slowed down noticably.
 
 	\noindent\texttt{\\
 	function isqrt(n) \{ // $\lfloor$$\sqrt\texttt{n}$$\rfloor$ for non-negative big integers n.\\
@@ -292,32 +298,29 @@
 \end{section}
 
 \pagebreak\begin{section}{Further Algorithms and Conclusion}\label{sec:further algorithms}
-	The axioms of Zermelo-Fraenkel Set theory required to prove the countability of the continuum are
-	as follows: Axiom Schema of Specification, Axiom of Union, Axiom of Replacement, Axiom of Infinity,
-	and Axiom of Choice. Without the Axiom of Choice, theorems 2, 4, and 6 don't work, which are all used,
-	although the algorithm is separate from set theory and uses no axioms. The algorithm from
-	Section~\ref{sec:algorithm code} uses string manipulation to reverse the numbers and find their lengths.
-	The following equations can do the same thing without it.
+	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability
+	of continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union,
+	Axiom of Infinity, and Axiom of Choice. Without the Axiom of Choice,
+	Theorems~\ref{thm:multiplications},~\ref{thm:rings},~and~\ref{thm:infinite unions}
+	don't work, although the algorithm from Section~\ref{sec:algorithm code} is separate
+	from set theory and assumes no axioms. The algorithm uses string manipulation to reverse
+	the numbers and find their lengths, but the following equations do the same thing
+	mathematically.
 	\begin{align}
 		\text{length}\,n & := 1+\left\lfloor\log_{10}n\right\rfloor=\left\lceil\log_{10}(n+1)\right\rceil\\
 		\text{reverse}\,n & :=\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor\frac n{10^k}\right\rfloor\text{mod}\,10\right)\!10^{\text{length}\,n-k-1}\\
 		R_{i,j} & :=p\left(i+\frac{\text{reverse}\,j}{10^{\text{length}\,j}}\right)
 	\end{align}
-	Where $i$ is \texttt{k}, $p$ is \texttt{(positive~?~1~:~-1)}, and $j$ is \texttt{(u - k)}. length
-	and reverse are only defined for positive integer inputs. An interesting formula used in the
-	algorithm in Section~\ref{sec:algorithm code} is for the greatest triangle number $t=T(k)$ less
-	than or equal to a natural number $n$ with a natural number index $k$.
+	Where $i$ is \texttt{k}, $p$ is \texttt{(positive~?~1~:~-1)}, and $j$ is \texttt{(u - k)}.
+	length() and reverse() are only defined for natural number inputs. An interesting formula
+	used in the algorithm in Section~\ref{sec:algorithm code} is for the greatest triangle
+	number $t=T(k)$ less than or equal to a natural number $n$, with a natural number index $k$.
 	\begin{align}
 		T(n) & := \frac{n^2+n}2=\sum_{j=1}^nj\\
-		\text{sgn}\,x & := \begin{cases}
-			1,x>0\\
-			0,x=0\\
-			-1,x<0
-		\end{cases}\\
-		f(n) & := \frac{\left\lfloor\sqrt{8n+1}\right\rfloor+\left\lfloor\sqrt{8n+1}\right\rfloor\text{mod}\,2}2-1\\
-		t & = T\circ f(n)
+		t & = T\left(\left\lfloor\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rfloor-1\right)
 	\end{align}
-	Because of the bijection, there is also an inverse of Section~\ref{sec:algorithm code}'s algorithm.\\\\
+	Because of the bijection, there is also an inverse of the Section~\ref{sec:algorithm code}
+	algorithm.\\\\
 	\noindent\texttt{function inverse(string) \{ // assume valid input\\
 		$\indent$const match = /\textasciicircum(-?)($\backslash$d+)$\backslash$.($\backslash$d\+)\$/.exec(string)\\
 		$\indent\indent$, i = BigInt(match[2]) // the x coordinate index, or the integer part\\
@@ -325,15 +328,15 @@
 		$\indent$return i*(i+1n) + (2n*i+j)*(j+1n) + BigInt(match[1] === "-");\\
 		\}
 	}\\
-	Conclusion: Since there exists a bijection between the natural numbers and the Real numbers,
-	there is no set with a cardinality strictly or loosely in between the naturals and reals (CH),
-	because they are secretly the same. This also implies that $2^{\aleph_0}=\aleph_0$ because
-	$\left|\mathbb R\right|\equiv\left|\mathcal P\left(\mathbb N_0\right)\right|$. This makes sense
-	because $2^\infty=\infty$ as well. There may not be different sizes of infinities after all. Also
-	if one takes any sequence of natural numbers and concatenates them, it will always create a new
-	natural number, meaning every element in $\mathcal P(\mathbb N)$ corresponds to a natural
-	number. It makes sense why CH is independent of ZHC and can't be disproved within it, because
-	it is true either way.
+	Conclusion: Since there exists a bijection between the natural numbers and the real numbers,
+	there is no set with a cardinality strictly or loosely in between the naturals and reals
+	(CH), because they are the same. This also implies that $2^{\aleph_0}=\aleph_0$. This makes sense because $2^\infty=\infty$ as well. Also if one takes any sequence of natural numbers
+	and concatenates them, it will always create a new natural number, meaning every element in
+	$\mathcal P(\mathbb N_0)$ corresponds to a natural number. This could have disasterous
+	consequences for set theory because CH is provably undecidable in some models and yet
+	provably decidable. This means either ZHC is unsound, or at least one of the proofs
+	is invalid. The entire foundation of aleph numbers and sizes of infinities cound be
+	deeply flawed to the core.
 \end{section}
 
 \pagebreak\begin{section}{References}\label{sec:references}
