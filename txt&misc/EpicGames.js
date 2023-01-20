@@ -152,6 +152,7 @@ var OwnedApplications = {
 	, "Elite Dangerous": 29.99
 	, "Enter the Gungeon": 14.99
 	, "Epic Cheerleader Pack": 0
+	, "Epistory - Typing Chronicles": 14.99
 	, "Europa Universalis IV": 39.99
 	, "Europa Universalis 4": 0 // duplicate
 	, "EVE Online": 0
