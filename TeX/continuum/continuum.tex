@@ -21,11 +21,11 @@
 \maketitle
 
 \begin{section}{Background and Countability Theorems}\label{sec:background}
-	If a set is ``countable," there exists a bijection between it and loose subset
-	of the natural numbers (equinumeral). Any finite set will have this property and
-	the only question is if all \emph{infinite} sets do. $|S|$ denotes the cardinality
-	of any set $S$. In all processes with infinite steps, all the steps should be
-	thought of as executing simultaneously rather than one by one in order.\vspace{-1em}\\
+	Any ``countable" set is equinumerous to a loose subset of the natural numbers,
+	and there exists a bijection between them. Any finite set has this property, the
+	main question being if all \emph{infinite} sets do. $|S|$ denotes the cardinality
+	of a set $S$. In all infinite processes, one should think of the steps as executing
+	simultaneously rather than separately and successively.\vspace{-1em}\\
 	\begin{align}
 		R\times S :=\{(r,s):r\in R\land s\in S\}~~(1 & \text a)
 		\hspace{2.5em}
@@ -37,16 +37,16 @@
 	\end{align}
 
 	\begin{thm}\label{thm:finite unions}
-		\emph{Unions of Countable Sets}\\
+		\emph{Single Unions of Countable Sets}\\
 		\indent\emph{If any sets $R$ and $S$ are countable, $R(a)\cup S(b)$ is countable
 		for all $a$ and $b$.}
 	\end{thm}\begin{proof}
-		Since $R$ and $S$ are countable, $R(a)$ and $S(b)$ are as well because this just
-		multiplies the already present elements by a constant. Interlace the elements of
-		$R(a)$ with the elements of $S(b)$ skipping over any duplicates. If either of the
-		sets runs out, meaning it is finite, stop interlacing and only pull elements from
-		the infinite set. Similar logic works using $R[a]$ and $S[b]$ or combinations of
-		those, $R(a)$, and $S(b)$.
+		Equations (2a) and (2b) describe what I will call ``ring operators." $R$ and $S$
+		being countable implies $R(a)$ and $S(b)$ are as well because ring operators keep
+		cardinalities the same. Interlace the elements of $R(a)$ with those of $S(b)$,
+		skipping over any duplicates. If either set is finite, append its elements to the
+		beginning of the other set sans duplicates. Similar logic works using $R[a]$
+		or $S[b]$.
 	\end{proof}
 
 	\begin{thm}\label{thm:multiplications}
@@ -54,28 +54,30 @@
 		\indent\emph{If any sets $R$ and $S$ are countable, both $R\times S$ and
 		$R\cdot S$ are countable.}
 	\end{thm}\begin{proof}
-		Put ordered pairs using elements all the of $R$ and $S$ into a table as shown
-		below and go along the diagonals getting every element in the product and not
-		``missing" any. The numbers and colons are the output indices. The first 25
-		are labeled if in view. Similar logic works for $R\cdot S$. This is also
-		algorithmically viable as shown in Section~\ref{sec:algorithm code}. The output
-		indices relate strongly to triangle numbers.
+		To create $R\times S$, put all possible ordered pairs into a table as shown.
+		One can go along the diagonals, including every element in the output, and
+		not ``missing" any, implying a bijection between $R\times S$ and $\mathbb N$.
+		The numbers and colons in the table are the output indices, the first 25 labeled if in
+		view. Similar logic works for $R\cdot S$. This method is also algorithmically
+		viable (see Section~\ref{sec:algorithm code}). The output indices relate
+		strongly to triangle numbers.\vspace{0.5em}\\
+		\centerline{\begin{array}{|c|c|c|c|c|}
+			\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) & \phantom{0}7:(R_1, S_4) & \cdots\\
+			\hline \phantom{0}3:(R_2, S_1) & \phantom{0}5:(R_2, S_2) & \phantom{0}8:(R_2, S_3) & 12:(R_2, S_4) & \cdots\\
+			\hline \phantom{0}6:(R_3, S_1) & \phantom{0}9:(R_3, S_2) & 13:(R_3, S_3) & 18:(R_3, S_4) & \cdots\\
+			\hline 10:(R_4, S_1) & 14:(R_4, S_2) & 19:(R_4, S_3) & 25:(R_4, S_4) & \cdots\\
+			\hline \vdots & \vdots & \vdots & \vdots & \ddots\\
+			\hline
+		\end{array}}\vspace{-1.1em}
 	\end{proof}
-	\centerline{\begin{array}{|c|c|c|c|c|}
-		\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) & \phantom{0}7:(R_1, S_4) & \cdots\\
-		\hline \phantom{0}3:(R_2, S_1) & \phantom{0}5:(R_2, S_2) & \phantom{0}8:(R_2, S_3) & 12:(R_2, S_4) & \cdots\\
-		\hline \phantom{0}6:(R_3, S_1) & \phantom{0}9:(R_3, S_2) & 13:(R_3, S_3) & 18:(R_3, S_4) & \cdots\\
-		\hline 10:(R_4, S_1) & 14:(R_4, S_2) & 19:(R_4, S_3) & 25:(R_4, S_4) & \cdots\\
-		\hline \vdots & \vdots & \vdots & \vdots & \ddots\\
-		\hline
-	\end{array}}
 
 	\pagebreak\\
 	\begin{thm}\label{thm:subsets}
 		\emph{Subsets, Intersections, and Differences of Countable Sets}\\
-		\indent\emph{If any set $R$ is countable, and a set $S$ is a loose subset of $R$, $S$ is also countable.}
+		\indent\emph{If any set $R$ is countable, any loose subset $S$ of $R$ is also countable.}
+
 	\end{thm}\begin{proof}
-		For each element in $R$ but not in $S$ ($x\in R\setminus S$), move its index to the beginning
+		For each element in $R$ but not in $S$ ($x\in R\smallsetminus S$), move its index to the beginning
 		of $R$ and then remove it. That way, the set is still guaranteed to be countable. Since every set
 		along the way is countable, so is $S$. This also implies that set intersections and differences
 		are countable because these operations return subsets of the original sets.
@@ -300,7 +302,7 @@
 \pagebreak\begin{section}{Further Algorithms and Conclusion}\label{sec:further algorithms}
 	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability
 	of continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union,
-	Axiom of Infinity, and Axiom of Choice. Without the Axiom of Choice,
+	Axiom of Infinity, and Axiom of Choice (for groups of 2 elements). Without the Axiom of Choice,
 	Theorems~\ref{thm:multiplications},~\ref{thm:rings},~and~\ref{thm:infinite unions}
 	don't work, although the algorithm from Section~\ref{sec:algorithm code} is separate
 	from set theory and assumes no axioms. The algorithm uses string manipulation to reverse
