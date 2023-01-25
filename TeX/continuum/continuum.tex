@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% countability.tex v3.0 (c) | Copyright 2023 Daniel E. Janusch
+% countability.tex v3.1 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -38,7 +38,7 @@
 		R(\vec v\,) & :=\left\{\sum_{n=1}^{\dim\vec v}(a_n\cdot\vec v_n):a_n\in R\right\}~(2\text a)
 		\hspace{2em}
 		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\dim\vec v}(a_n+\vec v_n):a_n\in R\right\}~(2\text b)\\
-		\aleph_0 & := |\mathbb N|~~~(3\text a)\hspace{12em}\aleph_1 := |\mathbb R|~~~(3\text b)\\
+		\aleph_0 & := |\mathbb N|\\
 		C(S) & :=\begin{cases}
 			1,\,\left[S\text{ countable}\right]\phantom{un}~~(|S|\leqslant\aleph_0)\\
 			0,\,\left[S\text{ uncountable}\right]~~(|S|>\aleph_0)\\
@@ -133,8 +133,8 @@
 	\end{thm}\begin{proof}
 		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable. This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
 		countable, which is countable via Theorem~\ref{thm:multiplications}.1. If $n=0$, the
-		output set is all the groups of zero elements from $R$, or just $\O$, which is countable
-		since $\left|\O\right|$ is finite. This theorem is unused in this document.
+		output set is all the groups of zero elements from $R$, or just $\emptyset$, which is countable
+		since $\left|\emptyset\right|$ is finite. This theorem is unused in this document.
 	\end{proof}
 
 	\begin{thm}\label{thm:infinite unions}
@@ -143,14 +143,14 @@
 			\indent If all sets $R_i$ are countable, their union is also countable.\vspace{0.4em}\\
 			\indent1. $C(R_i)\forall i\iff C\!\left(\displaystyle\bigcup_{i=1}^{\aleph_0}R_i\right)$
 		}
-	\end{thm}\begin{proof}% TODO: Continue here
-		Give each set $R_i$ a column in a table and put all its elements in that column going down.
-		Do this for every set and using the same argument as in Theorem~\ref{thm:multiplications},
-		one can show that every element is indexed and none are skipped. Every column represents
-		a different $R_i$ and the rows represent a different $\left(R_i\right)_j$ or $R_{i,j}$.
-		The numbers before the colons are the output index. The first 85 are shown if in view.
-		This is algorithmically viable, even though this table has a slightly different
-		numbering than that of Theorem~\ref{thm:multiplications}.\vspace{0.5em}
+	\end{thm}\begin{proof}
+		To create the union, give each set $R_i$ a column in a table and put all its elements
+		sequentially in that column going down. Do this for every $R_i$ and using the same
+		argument as in Theorem~\ref{thm:multiplications}, one can show that this set bijects
+		the naturals. Every column represents a different $R_i$ and the rows represent a
+		different $\left(R_i\right)_j$ or $R_{i,j}$. The numbers before the colons are the
+		output index, the first 85 shown if in view. This is algorithmically viable
+		(see Theorem~\ref{thm:multiplications}).\vspace{0.5em}
 		\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
 			\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} & \phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
 			\hline \phantom{0}3:R_{1,2} & \phantom{0}5:R_{2,2} & \phantom{0}8:R_{3,2} & 14:R_{4,2} & 17:R_{5,2} & 27:R_{6,2} & 30:R_{7,2} & \cdots\\
@@ -161,81 +161,86 @@
 			\hline 22:R_{1,7} & 35:R_{2,7} & 39:R_{3,7} & 52:R_{4,7} & 60:R_{5,7} & 73:R_{6,7} & 85:R_{7,7} & \cdots\\
 			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
 			\hline
-		\end{array}}\vspace{-1em}
+		\end{array}}
 	\end{proof}
 \end{section}
 
-\pagebreak\begin{section}{Applications of the Theorems}\label{sec:applications}
+\begin{section}{Countabilities of Common Sets Using the Theorems}\label{sec:applications}
 	\begin{subsection}{Countability of the Integers}\label{subsec:applications.integers}
-		Claim: $\mathbb Z$ is a countable set.
+		Claim: $\mathbb Z$ is a countable set.\\
+		\indent$C(\mathbb Z)\equiv1$,
+		\hspace{2em}
+		$|\mathbb Z|\equiv\aleph_0$
 		\begin{proof}
-			Let $R=\mathbb N_0$, $S=\mathbb N_1$. $R$ and $S$ are countable axiomatically
-			(axiom of extensionality), being the naturals themselves. $\mathbb Z\equiv R
-			\cup S(-1)$. This is countable via Theorem~\ref{thm:finite unions}.
+			$R:=\mathbb N_0$, $S:=\mathbb N_1$. $R$ and $S$ are countable axiomatically
+			(axiom of extensionality), being the naturals themselves. $\mathbb Z\equiv
+			R(1)\cup S(-1)$. This is countable via Theorem~\ref{thm:finite unions}.1.
 		\end{proof}
 	\end{subsection}
 
-	\vspace{-1em}\begin{subsection}{Countability of the Rationals}\label{subsec:applications.rationals}
-		Claim: $\mathbb Q$ is a countable set.
+	\begin{subsection}{Countability of the Rationals}\label{subsec:applications.rationals}
+		Claim: $\mathbb Q$ is a countable set.\\
+		\indent$C(\mathbb Q)\equiv1$
 		\begin{proof}
-			The rationals are basically just ordered pairs of integers and naturals.
-			$R:=\mathbb Z$, $S:=\mathbb N_1$. $R\times S$ defines all of these pairs.
-			$R$ is countable via Section~\ref{subsec:applications.integers} and $S$ is
-			countable axiomatically. $R\times S$ is thus countable via Theorem~\ref{thm:multiplications}.
-			This argument and Theorem~\ref{thm:multiplications} derives from Cantor's argument for the rationals.
+			$R:=\mathbb Z$, $S:=\mathbb N_1$. $\mathbb Q$ has the same countability as the set of all
+			the ordered pairs of integers with naturals. $R\times S$ defines all of these pairs. $R$
+			is countable via Section~\ref{subsec:applications.integers} and $S$ is countable
+			axiomatically. $R\times S$ is thus countable via Theorem~\ref{thm:multiplications}.1.
+			This argument and Theorem~\ref{thm:multiplications} derives from Cantor's enumeration of
+			countable collections of countable sets.
 		\end{proof}
 	\end{subsection}
 
-	\vspace{-1em}\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
-		Claim: $\left\{x\in\mathbb R:0\leqslant x<1\right\}$ is a countable set.
+	\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
+		Claim: $\{x\in\mathbb R:0\leqslant x<1\}$ is a countable set.
+		\hspace{2em}$C(\mathbb R_{0\leqslant x<1})\equiv1$
 		\begin{proof}
-			Let $R$ be some set. Each $R_i$ can be defined to be the digits of $i$ reversed
-			with ``0." at the beginning and infinite optional trailing zeros at the end, for
-			any $i\in\mathbb N_0$. For example, $R_{246}=0.642\overline0$ and
-			$R_0=0.0\overline0=0$. This set is countable because it was defined to be countable;
-			each natural number corresponds to a single element. This set contains every real
-			number in the range because every possible sequence of digits is in it. The sequence
-			trends upwards, asymptotically approaching 1, though it fluctuates wildly along the way.
+			Let $R$ be a countable set where, for any $i\in\mathbb N_0$, $R_i$ can be defined to be
+			the digits of $i$ reversed with ``0." at the beginning (see Section~\ref{sec:further algorithms}
+			for formula). For example, $R_{246}=0.642\overline0$. This set is countable because it
+			was defined to be countable, and it contains every real number in the range because every
+			possible sequence of digits is in it and indexed. The sequence trends upwards,
+			asymptotically approaching one, though it fluctuates wildly along the way.
+			Section~\ref{subsec:applications.reals} explains this further. $R$ is used throughout the
+			sections about $\mathbb R$.
 		\end{proof}
 	\end{subsection}
 
-	\vspace{-1em}\begin{subsection}{Countability of the Non-Negative Reals}\label{subsec:applications.non negative reals}
-		Claim: $\mathbb R_{\geqslant0}$ or equivalently $\left\{x\in\mathbb R:
-		x\geqslant0\right\}$ is a countable set.
+	\pagebreak\begin{subsection}{Countability of the Non-Negative Reals}
+	\label{subsec:applications.non negative reals}
+		Claim: $\mathbb R_{\geqslant0}$ or equivalently $\left\{x\in\mathbb R:x\geqslant0\right\}$,
+		is a countable set.\hspace{2em}$C(\mathbb R_{\geqslant0})\equiv1$
 		\begin{proof}
-			The set of real numbers from zero to one is countable via
-			Section~\ref{subsec:applications.reals 0 to 1}. Let $R$ be the same set
-			used in that proof.
+			$C(\mathbb R_{0\leqslant x<1})=1$ via Section~\ref{subsec:applications.reals 0 to 1}.
 			$\mathbb R_{\geqslant0}=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where
 			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}.
-			The following table illustrates this.
+			The following table illustrates this. $S$ is used in the next proof.\vspace{0.5em}\\
+			\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
+				\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
+				\hline 0.1\overline0& 1.1\overline0& 2.1\overline0& 3.1\overline0& 4.1\overline0& 5.1\overline0& \cdots\\
+				\hline 0.2\overline0& 1.2\overline0& 2.2\overline0& 3.2\overline0& 4.2\overline0& 5.2\overline0& \cdots\\
+				\hline 0.3\overline0& 1.3\overline0& 2.3\overline0& 3.3\overline0& 4.3\overline0& 5.3\overline0& \cdots\\
+				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \cdots\\
+				\hline 0.7\overline0& 1.7\overline0& 2.7\overline0& 3.7\overline0& 4.7\overline0& 5.7\overline0& \cdots\\
+				\hline 0.8\overline0& 1.8\overline0& 2.8\overline0& 3.8\overline0& 4.8\overline0& 5.8\overline0& \cdots\\
+				\hline 0.9\overline0& 1.9\overline0& 2.9\overline0& 3.9\overline0& 4.9\overline0& 5.9\overline0& \cdots\\
+				\hline 0.01\overline0&1.01\overline0&2.01\overline0&3.01\overline0&4.01\overline0&5.01\overline0&\cdots\\
+				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+				\hline
+			\end{array}}
 		\end{proof}
-		\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
-			\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
-			\hline 0.1\overline0& 1.1\overline0& 2.1\overline0& 3.1\overline0& 4.1\overline0& 5.1\overline0& \cdots\\
-			\hline 0.2\overline0& 1.2\overline0& 2.2\overline0& 3.2\overline0& 4.2\overline0& 5.2\overline0& \cdots\\
-			\hline 0.3\overline0& 1.3\overline0& 2.3\overline0& 3.3\overline0& 4.3\overline0& 5.3\overline0& \cdots\\
-			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \cdots\\
-			\hline 0.7\overline0& 1.7\overline0& 2.7\overline0& 3.7\overline0& 4.7\overline0& 5.7\overline0& \cdots\\
-			\hline 0.8\overline0& 1.8\overline0& 2.8\overline0& 3.8\overline0& 4.8\overline0& 5.8\overline0& \cdots\\
-			\hline 0.9\overline0& 1.9\overline0& 2.9\overline0& 3.9\overline0& 4.9\overline0& 5.9\overline0& \cdots\\
-			\hline 0.01\overline0&1.01\overline0&2.01\overline0&3.01\overline0&4.01\overline0&5.01\overline0&\cdots\\
-			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
-			\hline
-		\end{array}}
 	\end{subsection}
 
-	\pagebreak\begin{subsection}{Countability of the Reals}\label{subsec:applications.reals}
-		Claim: $\mathbb R$ is a countable set which implies
-		$\left|\mathcal P(\mathbb N)\right|\equiv\left|\mathbb N\right|$.
+	\begin{subsection}{Countability of the Reals}\label{subsec:applications.reals}
+		Claim: $\mathbb R$ is a countable set which implies $2^{\aleph_0}\equiv\aleph_0$.
 		\begin{proof}
 			$\mathbb R_{\geqslant0}$ is countable via Section~\ref{subsec:applications.non negative reals}.
 			$\mathbb R_{\geqslant0}(1, -1)\equiv\mathbb R$. This is countable via
-			Theorem~\ref{thm:rings}. This conclusion can be further reinforced by
-			the algorithmic methods later on. For each real number $x$, there exists
-			at least 1 sequence of elements in $R$, each element with a higher index
-			than the last, where the limit of the sequence equals $x$. This is because
-			every sequence of digits is contained by $R$.
+			Theorem~\ref{thm:rings}.1. This conclusion can be further reinforced by
+			the algorithmic methods in Section~\ref{sec:algorithm code}. For all real
+			numbers $x$, there exists at least one sequence of elements in an $S_i$,
+			each element with a higher index than the last, where the limit of the sequence
+			equals $|x|$. This is because every sequence of digits in $[i-1,i)$ is contained by $S_i$.
 		\end{proof}
 	\end{subsection}
 
@@ -243,23 +248,23 @@
 	\label{subsec:applications.miscellaneous}
 		\begin{subsubsection}{Algebraic and Transcendental Numbers}
 			\label{subsubsec:applications.misc.reals}
-			Claim: $\mathbb A$ and $\mathbb T$ are countable sets.
+			Claim: $\mathbb A$ and $\mathbb T$ are countable sets over $\mathbb R$ and $\mathbb C$.
 			\begin{proof}
 				$\mathbb R$ is a countable set via Section~\ref{subsec:applications.reals}.
 				Since the algebraic reals and transcendental reals are both subsets of the
-				reals, they are countable via Theorem~\ref{thm:subsets}. They are also
+				reals, they are countable via Theorem~\ref{thm:subsets}.1. They are also
 				countable over the complex numbers using Section~\ref{subsec:applications.complex}
 				and the same logic.
 			\end{proof}
 		\end{subsubsection}
 
 		\begin{subsubsection}{Imaginary Numbers}\label{subsubsec:applications.misc.imaginary}
-			Claim: $\mathbb I$ is a countable set.
+			Claim: $\mathbb I$ is a countable set.\hspace{2em}$C(\mathbb I)\equiv1$
 			\begin{proof}
 				$\mathbb R$ is a countable set via Section~\ref{subsec:applications.reals}.
-				$\mathbb R(\sqrt{-1})\equiv\mathbb I$. This is countable via
-				Theorem~\ref{thm:finite unions}, or more precisely $R(\sqrt{-1})\cup\O$
-				is countable. The union of any set and the null set is itself.
+				$\mathbb R(\sqrt{-1})\cup\emptyset(1)\equiv\mathbb I$. This is countable via
+				Theorem~\ref{thm:finite unions}.1 becuase the union of any set and the null set
+				is itself.
 			\end{proof}
 		\end{subsubsection}
 	\end{subsection}
@@ -268,50 +273,50 @@
 		Claim: $\mathbb C$ is a countable set.
 		\begin{proof}
 			$\mathbb R$ is a countable set via Section~\ref{subsec:applications.reals}.
-			$\mathbb R(1, \sqrt{-1})\equiv\mathbb C$. This is countable via Theorem~\ref{thm:rings}.
+			$\mathbb R(1, \sqrt{-1})\equiv\mathbb C$. This is countable via Theorem~\ref{thm:rings}.1.
 			The identity used here stems from the rectangular form of complex numbers.
 		\end{proof}
 	\end{subsection}
 \end{section}
 
-\begin{section}{Addressing Cantor's Diagonal Argument}\label{sec:diagonal argument}
-	According to Georg Cantor in 1891, If someone is trying to list all the real numbers,
-	they can always find a number that is not in the list using his ``Diagonal Argument".
-	This argument is basically the same as the following, though for reals instead of
-	naturals: Suppose someone is trying to make a set $S$ with every natural number. They first
-	add zero to the set and the set is $\{0\}$, then they could say, ``one isn't in the set."
-	When they add one and have $\{0,1\}$, they can say ``two isn't in the set," then ``three
-	isn't in the set," ``four isn't in the set," et cetera. No matter how many natural numbers
-	they add, they can always find one not in it; $\max(S)+1$. Using Cantor's same logic, this
-	seems to be implying that there is not a bijection between the natural numbers and
-	themselves, which is clearly wrong. Every set is bijective onto itself via the identity
-	function. $f(x) := x$ for  $f:X\mapsto X$.
+\begin{section}{Cantor's Diagonal Argument}\label{sec:diagonal argument}
+	According to Georg Cantor in 1891$^\text{[references \ref{ref:diagonal argument},
+	\ref{ref:cantor-1891}]}$, If someone is trying to list all the real numbers, they can
+	always find a number that is not in the list using his ``Diagonal Argument". This
+	argument basically accomplishes the same as the following, though for reals instead of
+	naturals: Suppose someone is trying to make a set $S$ with every natural number. They
+	first add zero to the set and the set is $\{0\}$, then they could say, ``one isn't in
+	the set." When they add one and have $\{0,1\}$, they can say ``two isn't in the set,"
+	then ``three isn't in the set," ``four isn't in the set," et cetera. No matter how many
+	natural numbers they add, they can always find one not in it; $\max(S)+1$. This seems
+	to be implying that there is not a bijection between the natural numbers and themselves,
+	which is clearly wrong. Every set is bijective onto itself via the identity function.
+	$f(x) := x$ for  $f:X\mapsto X$.
 \end{section}
 
-\pagebreak\begin{section}{Enumerating the Continuum Algorithmically}\label{sec:algorithm code}
+\begin{section}{Enumerating the Continuum Algorithmically}\label{sec:algorithm code}
 	The following Node JS code prints out real numbers to stdout delimited by a comma-space
-	pair. With infinite time and memory, it will have printed every real number. The only
-	problems are that it prints out both $0$ and $-0$, and the functions return strings.
+	pair. With infinite time and memory, it will have printed every real number. The problems
+	are that it prints out both positive and negative zero, and the functions return strings.
 	Both of these are easily resolvable though. There is a reference to this source code and
-	the C version in Section~\ref{sec:references}. The subscripts are just so it looks nicer.
-	If \texttt{process.stdout.write} is replaced with \texttt{console.log}, then it will work
-	in vanilla JavaScript in versions beginning with ECMAScript 6. The downside being
-	\texttt{console.log} adds a trailing newline character at the end of each call, which
-	isn't ideal for printing a large quantity of small strings each using an individual
-	function call. The complexity of finding the $n$th real number with this method is less
-	than or equal to $\mathcal O\!\left(n\log^2n\right)$, emphasis on ``less", because
-	after over 16 million iterations on my machine, it hadn't slowed down noticably.
+	the C version in Section~\ref{sec:references} References~\ref{ref:c-code}~and~\ref{ref:js-code}.
+	The subscripts are just so it looks nicer. If \texttt{process.stdout.write} is replaced with
+	\texttt{console.log}, then it will work in vanilla JavaScript in versions beginning with
+	ECMAScript 6. The downside being \texttt{console.log} adds a trailing newline character at
+	the end of each call, which isn't ideal for printing a large quantity of small strings each
+	using an individual function call. The complexity of finding the $n$th real number with this
+	method is less than or equal to $\mathcal O\!\left(n\log^2n\right)$, emphasis on ``less",
+	because after over 16 million iterations on my machine, it hadn't slowed down noticably.
 
 	\noindent\texttt{\\
 	function isqrt(n) \{ // $\lfloor$$\sqrt\texttt{n}$$\rfloor$ for non-negative big integers n.\\
 	$\indent$if (n < 2) return n;\\
 	$\indent$var x$_0$, x$_1$ = n / 2n;\\\\
-	$\indent$do\\
-	$\indent\indent$x$_0$ = x$_1$,\\
+	$\indent$do $x$_0$ = x$_1$,\\
 	$\indent\indent$x$_1$ = x$_0$ + n / x$_0$ >> 1n; // Newton's method for f(x) = x\textasciicircum 2+a\\
 	$\indent$while ( x$_1$ < x$_0$ );\\\\
 	$\indent$return x$_0$;\\
-	\}\\
+	\} // continued on next page\\
 	// iterate over the natural numbers (up to 0.5*2\textasciicircum 2\textasciicircum 30)\\
 	for (var runningIndex = 0n ;;) \{\\
 	$\indent$let positive = true, currentIndex = runningIndex++;\\\\
@@ -332,7 +337,7 @@
 	}
 \end{section}
 
-\pagebreak\begin{section}{Further Algorithms and Conclusion}\label{sec:further algorithms}
+\begin{section}{Further Algorithms}\label{sec:further algorithms}
 	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability
 	of continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union,
 	Axiom of Infinity, and Axiom of Choice (for groups of 2 elements). Without the Axiom of Choice,
@@ -340,19 +345,20 @@
 	don't work, although the algorithm from Section~\ref{sec:algorithm code} is separate
 	from set theory and assumes no axioms. The algorithm uses string manipulation to reverse
 	the numbers and find their lengths, but the following equations do the same thing
-	mathematically.
+	mathematically. length() and reverse() are only defined for natural number inputs.
 	\begin{align}
-		\text{length}\,n & := 1+\left\lfloor\log_{10}n\right\rfloor=\left\lceil\log_{10}(n+1)\right\rceil\\
-		\text{reverse}\,n & :=\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor\frac n{10^k}\right\rfloor\text{mod}\,10\right)\!10^{\text{length}\,n-k-1}\\
-		R_{i,j} & :=p\left(i+\frac{\text{reverse}\,j}{10^{\text{length}\,j}}\right)
+		\text{length}\,n & := 1+\left\lfloor\log_bn\right\rfloor=\left\lceil\log_b(n+1)\right\rceil\\
+		\text{reverse}\,n & :=\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor\frac n{b^k}\right\rfloor\text{mod}\,b\right)\!b^{\text{length}\,n-k-1}\\
+		R_{i,j} & :=p\left(i+\frac{\text{reverse}\,j}{b^{\text{length}\,j}}\right)
 	\end{align}
-	Where $i$ is \texttt{k}, $p$ is \texttt{(positive~?~1~:~-1)}, and $j$ is \texttt{(u - k)}.
-	length() and reverse() are only defined for natural number inputs. An interesting formula
-	used in the algorithm in Section~\ref{sec:algorithm code} is for the greatest triangle
+	Where $i$ is \texttt k, $p$ is \texttt{(positive~?~1~:~-1)}, $j$ is \texttt{(u - k)}, and $b$
+	is the base. An interesting formula used in the algorithm in Section~\ref{sec:algorithm code} is for
+	the greatest triangle
 	number $t=T(k)$ less than or equal to a natural number $n$, with a natural number index $k$.
 	\begin{align}
-		T(n) & := \frac{n^2+n}2=\sum_{j=1}^nj\\
-		t & = T\left(\left\lfloor\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rfloor-1\right)
+		T(n) := \frac{n^2+n}2 & = \sum_{j=1}^nj\\
+		t = T\left(\left\lceil\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rceil-1\right)
+		& = T\left(\left\lfloor\dfrac{\sqrt{8n+1}}2\right\rceil-1\right)
 	\end{align}
 	Because of the bijection, there is also an inverse of the Section~\ref{sec:algorithm code}
 	algorithm.\\\\
@@ -362,39 +368,56 @@
 		$\indent\indent$, j = BigInt(match[3]); // the y coordinate index, or the decimal part\\
 		$\indent$return i*(i+1n) + (2n*i+j)*(j+1n) + BigInt(match[1] === "-");\\
 		\}
-	}\\
-	Conclusion: Since there exists a bijection between the natural numbers and the real numbers,
-	there is no set with a cardinality strictly or loosely in between the naturals and reals
-	(CH), because they are the same. This also implies that $2^{\aleph_0}=\aleph_0$. This makes sense because $2^\infty=\infty$ as well. Also if one takes any sequence of natural numbers
-	and concatenates them, it will always create a new natural number, meaning every element in
-	$\mathcal P(\mathbb N_0)$ corresponds to a natural number. This could have disasterous
-	consequences for set theory because CH is provably undecidable in some models and yet
-	provably decidable. This means either ZHC is unsound, or at least one of the proofs
-	is invalid. The entire foundation of aleph numbers and sizes of infinities could be
-	deeply flawed to the core.
+	}
+\end{section}
+
+\begin{section}{Conclusion}\label{sec:conclusion}
+	Since there exists a bijection between the natural numbers and the real numbers, there is no set
+	with a cardinality strictly or loosely in between the naturals and reals (Continuum~Hypothesis,
+	CH), because they are the same cardinality. This also implies that $2^{\aleph_0}=\aleph_0$ and
+	(probably) $\beth_n=\beth_0$ for all natural numbers $n$, which makes sense intuitively because
+	$2^\infty=\infty$. Also if one takes any sequence of natural numbers and concatenates them, it
+	will always create a new natural number, meaning every element in $\mathcal P(\mathbb N_0)$
+	corresponds to an element in $\mathbb N_0$. This could have disasterous consequences for set
+	theory or methematics as a whole because CH is provably undecidable in some models and yet
+	provably decidable. This means either Zermelo-Fraenkel Set Theory with the axiom of choice (ZHC)
+	is unsound, the aforementioned models are invalid, or at least one of the proofs is invalid. The
+	entire foundation of aleph and beth numbers and sizes of infinities could be deeply flawed to
+	the core. This probably does not prove the Generalized Continuum Hypothesis, though it strongly
+	hints that its truth value is the same as CH. According to Reference~\ref{ref:gimel}, CH implies
+	the Gimel Hypothesis.
 \end{section}
 
 \pagebreak\begin{section}{References}\label{sec:references}
-
-	\begin{itemize}
+	\begin{enumerate}
 		\item\url{https://en.wikipedia.org/wiki/Cantor's\_diagonal\_argument}\\
-		\text{Wikipedia page with elaboration on Section~\ref{sec:diagonal argument}}
+		\label{ref:diagonal argument}
+		\text{Wikipedia page with background for Section~\ref{sec:diagonal argument}}
 
 		\item\url{https://www.digizeitschriften.de/dms/img/?PID=GDZPPN002113910&physid=phys84#navi}\\
+		\label{ref:cantor-1891}
 		\text{Georg Cantor's 1891 article with the diagonal argument. Same source as on wikipedia.}
 
 		\item\url{https://en.wikipedia.org/wiki/Continuum\_hypothesis}\\
+		\label{ref:continuum}
 		\text{Wikipedia page with elaboration on Section~\ref{subsec:applications.reals}}
 
 		\item\url{https://www.github.com/drizzt536/files/tree/main/TeX/continuum}\\
+		\label{ref:files}
 		\text{The files for the most recent public version of this pdf and the \LaTeX~code}
 
 		\item\url{https://raw.githubusercontent.com/drizzt536/files/main/JavaScript/continuum.js}\\
+		\label{ref:js-code}
 		\text{The raw JavaScript source code for the Section~\ref{sec:algorithm code}}
 
 		\item\url{https://raw.githubusercontent.com/drizzt536/files/main/C/continuum.c}\\
+		\label{ref:c-code}
 		\text{The raw C source code for the Section~\ref{sec:algorithm code}}
-	\end{itemize}
+
+
+		\item\url{https://en.wikipedia.org/wiki/Gimel\_function\#The\_gimel\_hypothesis}\\
+		\label{ref:gimel}\text{Gimel Hypothesis. For the conclusion}
+	\end{enumerate}
 	\vspace{1em}\\
 	Editors:
 	\begin{itemize}
