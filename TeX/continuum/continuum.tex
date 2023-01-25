@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% countability.tex v3.1 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v4.0 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -10,13 +10,15 @@
 \usepackage[margin=1in]{geometry}
 
 \addtolength{\topmargin}{-0.5in}
-\renewcommand{\qedsymbol}{\blacksquare}
 \newtheorem{thm}{Theorem}
+
+\renewcommand{\qedsymbol}{\blacksquare}
+\newcommand{\biject}{\leftrightarrow}
 
 \begin{document}
 
 
-\title{On the Continuum Hypothesis and the Correspondence of Infinite Sets with the Natural Numbers}
+\title{On the Continuum Hypotheses and the Correspondence of Infinite Sets with the Natural Numbers}
 \author{Daniel E. Janusch\\Dedicated to Maeby, my favorite kitty}
 \maketitle
 
@@ -134,7 +136,7 @@
 		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable. This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
 		countable, which is countable via Theorem~\ref{thm:multiplications}.1. If $n=0$, the
 		output set is all the groups of zero elements from $R$, or just $\emptyset$, which is countable
-		since $\left|\emptyset\right|$ is finite. This theorem is unused in this document.
+		since $\left|\emptyset\right|$ is finite.
 	\end{proof}
 
 	\begin{thm}\label{thm:infinite unions}
@@ -213,7 +215,7 @@
 		\begin{proof}
 			$C(\mathbb R_{0\leqslant x<1})=1$ via Section~\ref{subsec:applications.reals 0 to 1}.
 			$\mathbb R_{\geqslant0}=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where
-			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}.
+			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}.1.
 			The following table illustrates this. $S$ is used in the next proof.\vspace{0.5em}\\
 			\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
 				\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
@@ -279,6 +281,34 @@
 	\end{subsection}
 \end{section}
 
+\begin{section}{Generalized Continuum Hypothesis}\label{sec:GCH}
+	Claim: GCH has the same truth value as CH, and powersets don't change sizes of infinity.
+	\begin{proof}
+		Let $S$ be a countable set. $R_i := S^{i-1}$, and is countable via Theorem~\ref{thm:powers}.1.
+		$\displaystyle Q:=\bigcup_{i=1}^{\aleph_0}R_i$ is countable via
+		Theorem~\ref{thm:infinite unions}.1. $P :=\mathcal P(S)$. $n := |S|$. $|P|=|Q|$.
+		This is because $P$ has
+		$n^0$ elements with 0 sub-elements,
+		$n^1$ elements with 1 sub-element,
+		$n^2$ elements with 2 sub-elements, and has generally
+		$n^k$ elements with $k$ sub-elements, for $k\leqslant n$.
+
+		$S^0$ has $n^0$ elements,
+		$S^1$ has $n^1$ elements, and generally
+		$S^k$ has $n^k$ elements, and when taking the union of all of $S^i$, where
+		$0\leqslant i\leqslant n$, the resulting set has the same cardinality as $P$. This expands
+		to countably infinite sets as well, replacing $n$ with $\aleph_0$. Since $Q$ is countable,
+		$P$ is countable as well, meaning $|S|\equiv|\mathcal P(S)|$ for all countable sets $S$.
+
+		There is also no reason ``uncountable" sets can't be used for $S$, but the powerset
+		would end up having the same cardinality as $S$ anyway. This is because
+		Theorems~\ref{thm:powers}.1~and~\ref{thm:infinite unions}.1 can be adapted to biject to
+		whatever set is inputed to the theorem, instead of $\mathbb N$, This implies that
+		uncountable sets cannot be created through powersets of countable sets, and either cannot
+		be created at all, or need a much stronger method to create them.
+	\end{proof}
+\end{section}
+
 \begin{section}{Cantor's Diagonal Argument}\label{sec:diagonal argument}
 	According to Georg Cantor in 1891$^\text{[references \ref{ref:diagonal argument},
 	\ref{ref:cantor-1891}]}$, If someone is trying to list all the real numbers, they can
@@ -316,7 +346,7 @@
 	$\indent\indent$x$_1$ = x$_0$ + n / x$_0$ >> 1n; // Newton's method for f(x) = x\textasciicircum 2+a\\
 	$\indent$while ( x$_1$ < x$_0$ );\\\\
 	$\indent$return x$_0$;\\
-	\} // continued on next page\\
+	\} // code continued\\
 	// iterate over the natural numbers (up to 0.5*2\textasciicircum 2\textasciicircum 30)\\
 	for (var runningIndex = 0n ;;) \{\\
 	$\indent$let positive = true, currentIndex = runningIndex++;\\\\
@@ -338,13 +368,13 @@
 \end{section}
 
 \begin{section}{Further Algorithms}\label{sec:further algorithms}
-	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability
-	of continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union,
-	Axiom of Infinity, and Axiom of Choice (for groups of 2 elements). Without the Axiom of Choice,
-	Theorems~\ref{thm:multiplications},~\ref{thm:rings},~and~\ref{thm:infinite unions}
-	don't work, although the algorithm from Section~\ref{sec:algorithm code} is separate
-	from set theory and assumes no axioms. The algorithm uses string manipulation to reverse
-	the numbers and find their lengths, but the following equations do the same thing
+	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability of
+	continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union, Axiom
+	of Infinity, and Axiom of Choice (for creating sets of ordered pairs). Without the Axiom of
+	Choice, Theorems~\ref{thm:multiplications},~\ref{thm:rings},~and~\ref{thm:infinite unions}
+	don't work, although the algorithm from Section~\ref{sec:algorithm code} is separate from
+	set theory and assumes no axioms. The algorithm uses string manipulation to reverse the
+	numbers and find their lengths, but the following equations do the same thing
 	mathematically. length() and reverse() are only defined for natural number inputs.
 	\begin{align}
 		\text{length}\,n & := 1+\left\lfloor\log_bn\right\rfloor=\left\lceil\log_b(n+1)\right\rceil\\
@@ -368,27 +398,28 @@
 		$\indent\indent$, j = BigInt(match[3]); // the y coordinate index, or the decimal part\\
 		$\indent$return i*(i+1n) + (2n*i+j)*(j+1n) + BigInt(match[1] === "-");\\
 		\}
-	}
+	}\vspace{-1em}
 \end{section}
 
 \begin{section}{Conclusion}\label{sec:conclusion}
-	Since there exists a bijection between the natural numbers and the real numbers, there is no set
-	with a cardinality strictly or loosely in between the naturals and reals (Continuum~Hypothesis,
-	CH), because they are the same cardinality. This also implies that $2^{\aleph_0}=\aleph_0$ and
-	(probably) $\beth_n=\beth_0$ for all natural numbers $n$, which makes sense intuitively because
-	$2^\infty=\infty$. Also if one takes any sequence of natural numbers and concatenates them, it
-	will always create a new natural number, meaning every element in $\mathcal P(\mathbb N_0)$
-	corresponds to an element in $\mathbb N_0$. This could have disasterous consequences for set
-	theory or methematics as a whole because CH is provably undecidable in some models and yet
-	provably decidable. This means either Zermelo-Fraenkel Set Theory with the axiom of choice (ZHC)
-	is unsound, the aforementioned models are invalid, or at least one of the proofs is invalid. The
-	entire foundation of aleph and beth numbers and sizes of infinities could be deeply flawed to
-	the core. This probably does not prove the Generalized Continuum Hypothesis, though it strongly
-	hints that its truth value is the same as CH. CH implies the Gimel Hypothesis is true according
+	Since there exists a bijection between any infinite set and its powerset, there is no set
+	with a cardinality strictly or loosely in between the naturals and reals (CH and GCH), because
+	they are the same cardinality. This also implies that $\beth_n=\beth_0$ for all natural numbers
+	$n$, which makes sense intuitively because $2^\infty=\infty$. Also if any sequence of natural
+	numbers is concatenated, it will always create a new natural number, meaning every element in
+	$\mathcal P(\mathbb N_0)$ corresponds to an element in $\mathbb N_0$. This all could have
+	disasterous consequences for set theory or mathematics as a whole because CH is provably
+	undecidable in some models and yet provably decidable. This means either Zermelo-Fraenkel Set
+	Theory with the axiom of choice (ZHC) is unsound, the aforementioned models are invalid, or at
+	least one of the proofs is invalid. The entire foundation of aleph and beth numbers and sizes of
+	infinities could be deeply flawed to the core. CH implies the Gimel Hypothesis is true according
 	to Reference~\ref{ref:gimel}, and Wetzel's problem is false according to Reference~\ref{ref:wetzel}.
+	A truth value for CH or GCH is not asserted here bacause the specifics of CH are unclear, and they can
+	change its truth value. If the reals have to be bigger than the naturals, it is false, but if it
+	just needs there to be no set in between them, it is true.
 \end{section}
 
-\pagebreak\begin{section}{References}\label{sec:references}
+\begin{section}{References}\label{sec:references}
 	\begin{enumerate}
 		\item\url{https://en.wikipedia.org/wiki/Cantor's\_diagonal\_argument}\\
 		\label{ref:diagonal argument}
