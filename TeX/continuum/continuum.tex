@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% continuum.tex v4.0 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v4.1 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -50,7 +50,7 @@
 		\emph{
 			Singlular Unions of Countable Sets\\
 			\indent If any sets $R$ and $S$ are countable, $R(a)\cup S(b)$ is countable
-			for all $a$ and $b$.\vspace{0.4em}\\
+			for all numbers $a$ and $b$.\vspace{0.4em}\\
 			\indent1. $C(R)\land C(S)\iff C(R\left(a\right)\cup S\left(b\right))~\forall a,b$
 			\hspace{1em}
 			2. $C(R)\land C(S)\iff C(R\left(a\right)\cup S[\,b\,])~\forall a,b$\\
@@ -76,12 +76,12 @@
 		}
 	\end{thm}\pagebreak\begin{proof}
 		To create $R\times S$, put all possible ordered pairs into a table as shown.
-		One can go along the diagonals, including every element in the output, and
-		not ``missing" any, implying a bijection between $R\times S$ and $\mathbb N$.
-		The numbers and colons in the table are the output indices, the first 25 being labeled if in
-		view. Similar logic works for $R\cdot S$. This method is also algorithmically
-		viable (see Section~\ref{sec:algorithm code}). The output indices relate
-		strongly to triangle numbers.\vspace{-0.3em}\\
+		Going along the diagonals, including every element in the output, and not
+		``missing" any, one can show there is a bijection between $R\times S$ and
+		$\mathbb N$. The numbers and colons in the table are the output indices, the
+		first 25 being labeled if in view. Similar logic works for $R\cdot S$. This
+		method is also algorithmically viable (see Section~\ref{sec:algorithm code}),
+		and the output indices relate strongly to triangle numbers.\vspace{-0.3em}\\
 		\centerline{\begin{array}{|c|c|c|c|c|}
 			\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) & \phantom{0}7:(R_1, S_4) & \cdots\\
 			\hline \phantom{0}3:(R_2, S_1) & \phantom{0}5:(R_2, S_2) & \phantom{0}8:(R_2, S_3) & 12:(R_2, S_4) & \cdots\\
@@ -102,26 +102,26 @@
 			\indent3. $C(R)\land C(S)\implies C(R\smallsetminus S)$
 		}
 	\end{thm}\begin{proof}
-		To create the subset, take each element in $R$ that is not in $S$ ($x\in R\smallsetminus S$),
-		move its index to the beginning of $R$, and remove it. This way, the new $R$ has countability
-		guaranteed. With applying this recursively, $S$ must be countable. This also implies that set
-		intersections and differences are countable because these operations return subsets of the
-		inputs.
+		To create the subset, take each element in $R$ that is not in $S$ ($x\in R
+		\smallsetminus S$), move its index to the beginning of $R$, and remove it. This way, the
+		new $R$ has countability guaranteed. With applying this recursively, $S$ must be
+		countable. This also implies that set intersections and differences are countable because
+		these operations return subsets of the left input.
 	\end{proof}
 
 	\begin{thm}\label{thm:rings}
 		\emph{
 			Two Argument Ring Operators On Countable Sets\\
 			\indent If any set $R$ is countable, $R(a, b)$ and $R[a, b]$ are also countable
-			for all $a$ and $b$.\vspace{0.4em}\\
+			for all numbers $a$ and $b$.\vspace{0.4em}\\
 			\indent1. $C(R)\iff C(R(a, b))~\forall a,b$\\
 			\indent2. $C(R)\iff C(R[\,a, b\,])~\forall a,b$
 		}
 	\end{thm}\begin{proof}
-		Create 2 new intermediate sets $S_a := \{a\cdot r:r\in R\}$ and $S_b := \{b\cdot r:r\in R\}$.
-		$S:=S_a\times S_b$ gives a set with the same cardinality as $R(a,b)$, only with
-		ordered pairs instead of addition. $S$ is countable via Theorem~\ref{thm:multiplications}.1.
-		Similar logic works for $R[a,b]$.
+		Create 2 new intermediate sets $S_a := \{a\cdot r:r\in R\}$ and $S_b := \{b\cdot r:r\in
+		R\}$. $S:=S_a\times S_b$ gives a set with the same cardinality as $R(a,b)$, only with
+		ordered pairs instead of addition. $S$ is countable via Theorem~
+		\ref{thm:multiplications}.1. Similar logic works for $R[a,b]$.
 	\end{proof}
 
 	\begin{thm}\label{thm:powers}
@@ -141,14 +141,16 @@
 	\begin{thm}\label{thm:infinite unions}
 		\emph{
 			Countably Infinite Unions of Countably Infinite Sets\\
-			\indent If all sets $R_i$ are countable, their union is also countable.\vspace{0.4em}\\
-			\indent1. $C(R_i)\forall i\iff C\!\left(\displaystyle\bigcup_{i=1}^{\aleph_0}R_i\right)$
+			\indent If all sets $R_i$ are countable, their union is also countable.
+			\vspace{0.4em}\\
+			\indent1. $C(R_i)\forall i\iff C\!\left(\displaystyle\bigcup_{i=1}^{\aleph_0}R_i
+			\right)$
 		}
 	\end{thm}\begin{proof}
 		To create the union, give each set $R_i$ a column in a table and put all its elements
-		sequentially in that column going down. Do this for every $R_i$ and using the same
+		sequentially in that column going down. Do this for every $R_i$, and using the same
 		argument as in Theorem~\ref{thm:multiplications}, one can show that this set bijects
-		the naturals. Every column represents a different $R_i$ and the rows represent a
+		the naturals. Every column represents a different $R_i$ and each row represents a
 		different $\left(R_i\right)_j$ or $R_{i,j}$. The numbers before the colons are the
 		output index, the first 85 shown if in view. This is algorithmically viable
 		(see Theorem~\ref{thm:multiplications}).\vspace{0.5em}
@@ -166,7 +168,7 @@
 	\end{proof}
 \end{section}
 
-\begin{section}{Countabilities of Common Sets Using the Theorems}\label{sec:applications}
+\begin{section}{Countabilities of Common Sets}\label{sec:applications}
 	\begin{subsection}{Countability of the Integers}\label{subsec:applications.integers}
 		Claim: $\mathbb Z$ is a countable set.\\
 		\indent$C(\mathbb Z)\equiv1$,
@@ -283,9 +285,9 @@
 \begin{section}{Generalized Continuum Hypothesis}\label{sec:GCH}
 	Claim: GCH has the same truth value as CH, and powersets don't change sizes of infinity.
 	\begin{proof}
-		Let $S$ be a countable set. $R_i := S^{i-1}$, and is countable via Theorem~\ref{thm:powers}.1.
-		$\displaystyle Q:=\bigcup_{i=1}^{\aleph_0}R_i$ is countable via
-		Theorem~\ref{thm:infinite unions}.1. $P :=\mathcal P(S)$. $n := |S|$. $|P|=|Q|$.
+		Let $S$ be a countably infinite set. $R_i := S^{i-1}$, and is countable via
+		Theorem~\ref{thm:powers}.1. $\displaystyle Q:=\bigcup_{i=1}^{\aleph_0}R_i$ is countable
+		via Theorem~\ref{thm:infinite unions}.1. $P :=\mathcal P(S)$. $n := |S|$. $|P|=|Q|$.
 		This is because $P$ has
 		$n^0$ elements with 0 sub-elements,
 		$n^1$ elements with 1 sub-element,
@@ -295,16 +297,16 @@
 		$S^0$ has $n^0$ elements,
 		$S^1$ has $n^1$ elements, and generally
 		$S^k$ has $n^k$ elements, and when taking the union of all of $S^i$, where
-		$0\leqslant i\leqslant n$, the resulting set has the same cardinality as $P$. This expands
-		to countably infinite sets as well, replacing $n$ with $\aleph_0$. Since $Q$ is countable,
-		$P$ is countable as well, meaning $|S|\equiv|\mathcal P(S)|$ for all countable sets $S$.
-
-		There is also no reason ``uncountable" sets can't be used for $S$, but the powerset
-		would end up having the same cardinality as $S$ anyway. This is because
-		Theorems~\ref{thm:powers}.1~and~\ref{thm:infinite unions}.1 can be adapted to biject to
-		whatever set is inputed to the theorem, instead of $\mathbb N$, This implies that
-		uncountable sets cannot be created through powersets of countable sets, and either cannot
-		be created at all, or need a much stronger method to create them.
+		$0\leqslant i\leqslant n$, the resulting set has the same cardinality as $P$. This only
+		works for infinite sets and not finite ones. Since $Q$ is countable, $P$ is countable as
+		well, meaning $|S|\equiv|\mathcal P(S)|$ for all countable sets $S$. There is also no
+		reason ``uncountable" sets can't be used for $S$, but the powerset would end up having
+		the same cardinality as $S$ anyway. This is because Theorems~\ref{thm:powers}.1~ and~
+		\ref{thm:infinite unions}.1 can be adapted to biject to whatever set is inputed to the
+		theorem, instead of $\mathbb N$, This implies that uncountable sets cannot be created
+		through powersets of countable sets, and either cannot be created at all, or need a much
+		stronger method to create them. This also implies that Cantor's Theorem is wrong, probably
+		because of the self-referencing. Also, properties don't always stay to infinity.
 	\end{proof}
 \end{section}
 
@@ -369,21 +371,23 @@
 \begin{section}{Further Algorithms}\label{sec:further algorithms}
 	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability of
 	continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union, Axiom
-	of Infinity, and Axiom of Choice (for creating sets of ordered pairs). Without the Axiom of
-	Choice, Theorems~\ref{thm:multiplications},~\ref{thm:rings},~and~\ref{thm:infinite unions}
-	don't work, although the algorithm from Section~\ref{sec:algorithm code} is separate from
-	set theory and assumes no axioms. The algorithm uses string manipulation to reverse the
-	numbers and find their lengths, but the following equations do the same thing
-	mathematically. length() and reverse() are only defined for natural number inputs.
+	of Infinity, and Axiom of Choice (for creating sets of ordered \textit{pairs}). Without the
+	Axiom of Choice, Theorems~\ref{thm:multiplications} doesn't work, although the algorithm from
+	Section~\ref{sec:algorithm code} is separate from set theory and assumes no axioms. The
+	algorithm uses string manipulation to reverse the numbers and find their lengths, but the
+	following equations do the same thing mathematically. length() and reverse() are only defined
+	for natural number inputs.
 	\begin{align}
-		\text{length}\,n & := 1+\left\lfloor\log_bn\right\rfloor=\left\lceil\log_b(n+1)\right\rceil\\
-		\text{reverse}\,n & :=\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor\frac n{b^k}\right\rfloor\text{mod}\,b\right)\!b^{\text{length}\,n-k-1}\\
-		R_{i,j} & :=p\left(i+\frac{\text{reverse}\,j}{b^{\text{length}\,j}}\right)
+		\text{length}\,n & := 1+\lfloor\log_b|n|\rfloor=\lceil\log_b(|n|+1)\rceil
+		\text{, such that }\ln0\leqslant0\\
+		\text{reverse}\,n & :=\text{sgn}(n)\!\!\sum_{k=0}^{\text{length}\,n}\left(\dfrac1b\left\lfloor\frac{|n|}{b^k}\right\rfloor\text{mod}\,1\right)\!b^{\text{length}\,n-k}\\
+		R_{i,j} & := p\cdot\left(i+\frac{\text{reverse}\,j}{b^{\text{length}\,j}}\right)
 	\end{align}
 	Where $i$ is \texttt k, $p$ is \texttt{(positive~?~1~:~-1)}, $j$ is \texttt{(u - k)}, and $b$
-	is the base. An interesting formula used in the algorithm in Section~\ref{sec:algorithm code} is for
-	the greatest triangle
-	number $t=T(k)$ less than or equal to a natural number $n$, with a natural number index $k$.
+	is the base. $i$ and $j$ can be swapped for a different enumeration
+	(see Reference~\ref{ref:desmos real-enum}). An interesting formula used in the algorithm in
+	Section~\ref{sec:algorithm code} is for the greatest triangle number $t=T(k)\leqslant n$, where
+	$n,k\in\mathbb N_0$.
 	\begin{align}
 		T(n) := \frac{n^2+n}2 & = \sum_{j=1}^nj\\
 		t = T\left(\left\lceil\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rceil-1\right)
@@ -392,30 +396,31 @@
 	Because of the bijection, there is also an inverse of the Section~\ref{sec:algorithm code}
 	algorithm.\\\\
 	\noindent\texttt{function inverse(string) \{ // assume valid input\\
-		$\indent$const match = /\textasciicircum(-?)($\backslash$d+)$\backslash$.($\backslash$d\+)\$/.exec(string)\\
-		$\indent\indent$, i = BigInt(match[2]) // the x coordinate index, or the integer part\\
-		$\indent\indent$, j = BigInt(match[3]); // the y coordinate index, or the decimal part\\
+		$\indent$const match = /\textasciicircum(-?)($\backslash$d+)$\backslash$.($\backslash$d+)\$/.exec(string)\\
+		$\indent\indent$, i = BigInt(match[2]) // the integer part\\
+		$\indent\indent$, j = BigInt(match[3]); // the decimal part\\
 		$\indent$return i*(i+1n) + (2n*i+j)*(j+1n) + BigInt(match[1] === "-");\\
 		\}
 	}\vspace{-1em}
 \end{section}
 
 \begin{section}{Conclusion}\label{sec:conclusion}
-	Since there exists a bijection between any infinite set and its powerset, there is no set
-	with a cardinality strictly or loosely in between the naturals and reals (CH and GCH), because
-	they are the same cardinality. This also implies that $\beth_n=\beth_0$ for all natural numbers
-	$n$, which makes sense intuitively because $2^\infty=\infty$. Also if any sequence of natural
-	numbers is concatenated, it will always create a new natural number, meaning every element in
-	$\mathcal P(\mathbb N_0)$ corresponds to an element in $\mathbb N_0$. This all could have
-	disasterous consequences for set theory or mathematics as a whole because CH is provably
-	undecidable in some models and yet provably decidable. This means either Zermelo-Fraenkel Set
-	Theory with the axiom of choice (ZHC) is unsound, the aforementioned models are invalid, or at
-	least one of the proofs is invalid. The entire foundation of aleph and beth numbers and sizes of
-	infinities could be deeply flawed to the core. CH implies the Gimel Hypothesis is true according
-	to Reference~\ref{ref:gimel}, and Wetzel's problem is false according to Reference~\ref{ref:wetzel}.
-	A truth value for CH or GCH is not asserted here bacause the specifics of CH are unclear, and they can
-	change its truth value. If the reals have to be bigger than the naturals, it is false, but if it
-	just needs there to be no set in between them, it is true.
+	Since there exists a bijection between any infinite set and its powerset (GCH), there is no
+	set with a cardinality strictly or loosely in between the naturals and reals (CH), because
+	they are the same cardinality. This also implies that $\aleph_n=\beth_n=\beth_0$ for all
+	natural numbers $n$, which makes sense intuitively because $2^\infty=\infty$. Also if any
+	sequence of natural numbers is concatenated, it will always create a new natural number,
+	meaning every element in $\mathcal P(\mathbb N_0)$ corresponds to an element in
+	$\mathbb N_0$. This all could have disasterous consequences for set theory or mathematics as
+	a whole because CH is provably undecidable in some models and yet provably decidable. This
+	means either Zermelo-Fraenkel Set Theory with the axiom of choice (ZHC) is unsound, the
+	aforementioned models are invalid, or at least one of the decidability proofs is invalid. The
+	entire foundation of aleph numbers, beth numbers, and sizes of infinities could be entirely
+	flawed. CH implies the Gimel Hypothesis is true according to Reference~\ref{ref:gimel}, and
+	impliesWetzel's problem is false according to Reference~\ref{ref:wetzel}. A truth value for
+	CH or GCH is not asserted here bacause the specifics of CH are unclear, and they are
+	important for its truth value. If the reals have to be bigger than the naturals, it is false,
+	but if it just requires that there is no set in between them, it is true.
 \end{section}
 
 \begin{section}{References}\label{sec:references}
@@ -444,6 +449,14 @@
 		\label{ref:c-code}
 		\text{The raw C source code for the Section~\ref{sec:algorithm code}}
 
+		\item\url{https://www.desmos.com/calculator/wndesoagsd}\\
+		\label{ref:desmos real-enum}
+		\text{Desmos with real number enumeration formulas for Section~\ref{sec:further algorithms}}
+
+		\item\url{https://github.com/drizzt536/files/blob/main/TeX/continuum/real-enum-formula/formula.pdf}\\
+		\label{ref:pdf real-enum}
+		\text{pdf with a fully-expanded real number enumeration formula for Section~\ref{sec:further algorithms}}
+
 		\item\url{https://en.wikipedia.org/wiki/Gimel\_function\#The\_gimel\_hypothesis}\\
 		\label{ref:gimel}
 		\text{Gimel Hypothesis Wikipedia page}
@@ -451,8 +464,7 @@
 		\item\url{https://en.wikipedia.org/wiki/Wetzel's\_problem}\\
 		\label{ref:wetzel}
 		\text{Wikipedia page for Wetzel's Problem}
-	\end{enumerate}
-	\vspace{1em}\\
+	\end{enumerate}\\
 	Editors:
 	\begin{itemize}
 		\item Daniel E. Janusch
