@@ -8,10 +8,12 @@
 /GoLang
 /ignore
 
+# TypeScript version of lib.js v3.0.0
+/JavaScript/Library
+
 HTML/3quine.html
 HTML/calculator.html
 HTML/BlackJack.html
-
 
 # not actually passwords.
 Python/passwords.py
@@ -20,4 +22,5 @@ test.*
 *.exe
 *.o
 
+# JavaScript testing library
 !JavaScript/test.js
