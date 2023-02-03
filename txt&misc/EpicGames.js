@@ -24,6 +24,7 @@ var OwnedApplications = {
 	, "A Total War Saga": 0 // duplicate
 	, "Absolute Drift": 11.99
 	, "ABZU": 19.99
+	, "Adios": 17.99
 	, "AER Memories of Old": 14.99
 	, "Against The Storm Royal Woodlands Demo": 0
 	, "Alan Wake's American Nightmare": 8.99
@@ -98,6 +99,7 @@ var OwnedApplications = {
 	, "Chimeraland": 0
 	, "Chorus Demo": 0
 	, "Cities: Skylines": 29.99
+	, "City of Gangsters": 29.99
 	, "Close to the Sun": 19.99
 	, "Conan Exiles Dev Kit": 0
 	, "Conan Exiles Mod Dev Kit Test Live": 0
@@ -141,6 +143,8 @@ var OwnedApplications = {
 	, "Diesel Brothers": 0 // duplicate
 	, "Discord": 0
 	, "Dishonored - Definitive Edition": 19.99
+	, "Dishonored®: Death of the Outsider™": 29.99
+	, "Dishonored: Death of the Outsider": 0 // duplicate
 	, "Dishonored": 0 // duplicate
 	, "Divine Knockout (DKO)": 0
 	, "Divine Knockout": 0 // duplicate
@@ -219,6 +223,7 @@ var OwnedApplications = {
 	, "Heavy Rain [Demo]": 0
 	, "Heavy Rain Demo": 0 // duplicate
 	, "Helium Rain Mod Kit": 0
+	, "Hell is Others": 14.99
 	, "Hell is other demons": 9.99
 	, "Hell Is Other Demons": 0 // duplicate
 	, "Hello Mod Kit": 0
@@ -473,6 +478,8 @@ var OwnedApplications = {
 	, "The Last Friend": 0 // duplicate
 	, "The Messenger": 19.99
 	, "The Riftbreaker Prologue Demo": 0
+	, "The Sims™ 4": 0
+	, "The Sims 4": 0 // duplicate
 	, "The Spectrum Retreat": 12.99
 	, "The Stanley Parable": 14.99
 	, "The Talos Principle": 39.99
