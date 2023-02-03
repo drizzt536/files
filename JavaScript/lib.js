@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v2.1.5 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.6 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 void (() => { "use strict";
 	/* Customization & Constants: */ {
@@ -72,7 +72,7 @@ void (() => { "use strict";
 			, Defined_Properties_Enumerable     : "default" // false
 			, Defined_Properties_Writable       : "default" // true
 			, Property_Is_Default_Defined_Vars  : "default" // false
-			, Testing_Object_Object_Name        : "Test.js" // N/A. just set to undefined, if there is none.
+			, Testing_Object_Global_Name        : "Test.js" // N/A. just set to undefined, if there is none.
 			, Create_Testing_Object             : "default" // true
 		///////////////////////////////////////// LIBRARY USER INPUT END /////////////////////////////////////////
 		////////////////////////////// LIBRARY DEVELOPER SETTINGS & VARIABLES START //////////////////////////////
@@ -83,7 +83,7 @@ void (() => { "use strict";
 				"err", "warn"  , "wrn", "debug" , "dbg", "info" ,
 				"inf", "assert", "ast", "alert" , "alt", "none" ,
 				"crash", "cry", "dont-use", "warning", "default",
-				"debugger",
+				"debugger", "crash", "ignore"
 				// "none" just ignores the error and overwrites it anyway, pretending it never happened.
 			]
 			, Settings_Help_String             : `Settings Help:
@@ -214,7 +214,7 @@ void (() => { "use strict";
 
 		///////////////////////////////////////////// DEFAULTS START /////////////////////////////////////////////
 
-		// with(LibSettings) ... would make this so much better
+		// with (LibSettings) { ... } would make this so much better
 		LibSettings.Globlize_Library_Variables_Object === "default" && (LibSettings.Globlize_Library_Variables_Object = !0);
 		LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM  === "default" && (LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM  = "c");
 		LibSettings.Use_Orig_Args_For_Deprecated_Fns  === "default" && (LibSettings.Use_Orig_Args_For_Deprecated_Fns  = !0);
@@ -234,7 +234,7 @@ void (() => { "use strict";
 		LibSettings.Creepily_Watch_Every_Action       === "default" && (LibSettings.Creepily_Watch_Every_Action       = !1);
 		LibSettings.Defined_Properties_Writable       === "default" && (LibSettings.Defined_Properties_Writable       = !0);
 		LibSettings.Global_Library_Object_Name        === "default" && (LibSettings.Global_Library_Object_Name        = "LIBRARY_VARIABLES");
-		LibSettings.Testing_Object_Object_Name        === "default" && (LibSettings.Testing_Object_Object_Name        = undefined);
+		LibSettings.Testing_Object_Global_Name        === "default" && (LibSettings.Testing_Object_Global_Name        = undefined);
 		LibSettings.Alert_Conflict_OverWritten        === "default" && (LibSettings.Alert_Conflict_OverWritten        = !0);
 		LibSettings.KeyLogger_Alert_Start_Stop        === "default" && (LibSettings.KeyLogger_Alert_Start_Stop        = !0);
 		LibSettings.Library_Startup_Function          === "default" && (LibSettings.Library_Startup_Function          = console.log);
@@ -1086,8 +1086,9 @@ void (() => { "use strict";
 						NaN;
 			}
 			, getArguments = function getArguments(fn) {
+				// broken for (argName => { ... })
 				// any comments inside the argument parens act as a docstring like in python.
-				// works for all functions
+				// works for almost all functions
 				// works before library functions are defined
 				if (typeof fn !== "function") return !1;
 				fn += ""; // fn = fn.toString()
@@ -2379,6 +2380,7 @@ void (() => { "use strict";
 			"property args": function getArgs() { return getArguments(this) }
 			, "property code": function getCode() {
 				// TODO: Fix
+				// remove args, then find the code from there
 				// async function () {}
 				// async function *() {}
 				// async a => 3
@@ -2453,7 +2455,6 @@ void (() => { "use strict";
 			, "overwrite property isCallable"(fn) { return typeof fn === "function" }
 		}
 		, "prototype String": {
-			// TODO: Make the string.prototype things be properties
 			"property io"       : String.prototype.indexOf
 			, "property lio"    : String.prototype.lastIndexOf
 			, "property strip"  : String.prototype.trim
@@ -3623,12 +3624,6 @@ void (() => { "use strict";
 					t = this.div(t, a);
 				return t;
 			}
-			ifact(n="0.0") {
-				if ( this.eq.nz(this.fpart(n)) ) throw Error("no decimals allowed.");
-				for (var i = n+"", total = "1.0"; i > 0; i = this.decr(i))
-					total = this.mul(i, total);
-				return this.ipart(total);
-			}
 			neg(snum="0.0") {
 				// negate
 				return snum[0] === "-" ?
@@ -3717,16 +3712,14 @@ void (() => { "use strict";
 				if (!snums.length) return "0.0";
 				snums = snums.flatten();
 				for (var min = snums[0], i = snums.length; i --> 1 ;)
-					if (this.eq.lt(snums[i], min))
-						min = snums[i];
+					this.eq.lt(snums[i], min) && (min = snums[i]);
 				return min;
 			}
 			max(...snums) {
 				if (!snums.length) return "0.0";
 				var snums = snums.flatten();
 				for (var max = snums[0], i = snums.length; i --> 1 ;)
-					if (this.eq.gt(snums[i], max))
-						max = snums[i];
+					this.eq.gt(snums[i], max) && (max = snums[i]);
 				return max;
 			}
 			_lmgf(t="lcm", ...ns) {
@@ -3801,14 +3794,13 @@ void (() => { "use strict";
 			gcf(...snums) { return this._lmgf("gcf", ...snums) } // TODO: Change to use the same method as rMath
 			int(n="0.0") { return this.ipart(n) }
 			truncate(n="0.0") { return this.ipart(n) }
-			ifact(n = "1.0") {
-				if (this.isNaN(n)) return NaN;
-				n = this.ipart(n);
-				if (this.eq.ez(n)) return "1.0";
-				if (this.eq.ng(n)) return NaN;
-				for (var ans = "1.0", cur = "1.0"; this.eq.le(cur, n); cur = this.incr(cur))
-					ans = this.mul(ans, cur);
-				return ans;
+			ifact(n="1.0") {
+				n = this.norm(n);
+				if (this.isNaN(n) || this.eq.ng(n)) return NaN;
+				if ( this.eq.nz(this.fpart(n)) ) throw Error("No decimals allowed.");
+				for (var i = n+"", total = "1.0"; this.eq.gt(i, "0.0"); i = this.decr(i))
+					total = this.mul(i, total);
+				return total;
 			}
 			sum(n, last, fn=n=>n, inc="1.0", divPrecision=18) {
 				// if divPrecision is falsy, it won't change the function
@@ -6247,7 +6239,7 @@ void (() => { "use strict";
 				if (isNaN( a = Number(a) )) return NaN;
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( k = Number(k) )) return NaN;
-				return a - n*int(a/n) + k;
+				return a - n*int(a/n) + k; // truncate
 			}
 			isClose(n1, n2, range=Number.EPSILON) {
 				return isNaN( n1 = Number(n1) ) ||
@@ -7554,13 +7546,12 @@ void (() => { "use strict";
 					rMath.atan2(z.re, z.im) + 𝜏*int(n);
 			}
 			ln(z, n=0) {
-				if (typeof z === "number") {
-					return z < 0 ?
-						this.new( rMath.ln(-z), π ) :
-						!z ?
-							NaN :
-							this.new( rMath.ln(z), 0 );
-				}
+				if (typeof z === "number") return z < 0 ?
+					this.new( rMath.ln(-z), π ) :
+					!z ?
+						NaN :
+						this.new( rMath.ln(z), 0 );
+
 				if (type(z, 1) !== "complex") return NaN;
 				return this.new(
 					rMath.ln( this.abs(z) ),
@@ -8191,7 +8182,7 @@ void (() => { "use strict";
 				// default: break;
 			}
 			if (LibSettings.ON_CONFLICT !== "cry" && LibSettings.ON_CONFLICT !== "debugger") {
-				LibSettings.ON_CONFLICT !== "none" &&
+				LibSettings.ON_CONFLICT === "none" ||
 					console.debug(`${LibSettings.LIBRARY_NAME} encountered variable conflicts`);
 				return 1;
 			}
@@ -8252,9 +8243,75 @@ void (() => { "use strict";
 		f(3x) = f(x) - 2√[ (1-f²x)·(1-f²2x) ]·sgn([x mod 2] - 1)·sgn(2[x mod 1] - 1)
 */
 
-
 document._createCDATASection = (function create__createCDATASection() {
 	const doc = new Document;
 	function createCDATASection(text="") { return doc.createCDATASection(text) }
 	return createCDATASection._document = doc, createCDATASection;
+})();
+
+
+rMath._generateReals = (function create_realNumbers() {
+	const isBrowser = (globalThis + "").slice(8, -1).toLowerCase() === "window";
+	if (isBrowser) var process = {
+		stdout: {
+			write: (function create_write() {
+				let str = "";
+				return function write(string = "", flush = false) {
+					str += string.toString();
+					if (flush || str.length > 100) {
+						console.log.call(console, str);
+						str = "";
+					}
+				}
+			})()
+		}
+	}
+	// bitwise shifts are faster than division
+	function R(i, j) { return `${i}.` + `${j}`.split("").reverse().join("") }
+	function triangleNumber(x) { return x * (x + 1n) >> 1n }
+	function isqrt(n) {
+		if (n < 2n) return n;
+		var x0, x1 = n >> 1n;
+
+		do x0 = x1, x1 = x0 + n / x0 >> 1n;
+		while ( x1 < x0 );
+
+		return x0;
+	}
+	function greatestTriangleIndex(x) { return x = isqrt(1n + (x << 3n)), ( x + x % 2n >> 1n) - 1n }
+	function generateIndices(x) {
+		const u = greatestTriangleIndex(x)
+			, k = x - triangleNumber(u);
+		return [k, u - k]; // these can be swapped, it doesn't really matter.
+	}
+	function getReal(index) {
+		let positive = true;
+		index % 2n && (positive--, index--);
+		const t = generateIndices(index >> 1n);
+		return (positive ? "" : "-") + R(t[0], t[1]);
+	}
+	function generateRealsSet(maxIndex=10n) {
+		try { maxIndex = BigInt(maxIndex) } catch { return [] }
+		for (var i = 0n, set = []; i < maxIndex; i++)
+			set.push( getReal(i) );
+		return set;
+	}
+	function generateReals(maxIndex=1n, delimiter=", ") {
+		// -1n acts as infinity (up to max bigint value).
+		try { maxIndex = BigInt(maxIndex) } catch { return }
+		process.stdout.write("[");
+		for (var i = 0n; i !== maxIndex; ++i) {
+			process.stdout.write( getReal(i) );
+			i + 1n !== maxIndex && process.stdout.write(delimiter);
+		}
+		process.stdout.write("]\n", isBrowser ? true : void 0);
+	}
+	return generateReals._isqrt = isqrt,
+		generateReals._greatestTriangleIndex = greatestTriangleIndex,
+		generateReals._triangleNumber = triangleNumber,
+		generateReals._generateIndices = generateIndices,
+		generateReals._R = R,
+		generateReals._getReal = getReal,
+		generateReals._generateRealsSet = generateRealsSet,
+		generateReals;
 })();
