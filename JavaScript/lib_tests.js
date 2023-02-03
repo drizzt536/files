@@ -4,8 +4,8 @@
 
 if (LIBRARY_VARIABLES["local LibSettings"].Create_Testing_Object) {
 
-const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
-, globalTestsObject = globalThis[LibSettings.Testing_Object_Object_Name]
+let LibSettings = LIBRARY_VARIABLES["local LibSettings"]
+, globalTestsObject = globalThis[LibSettings.Testing_Object_Global_Name]
 , tests = {
 	symbToStr: {
 		scope: "globalThis"
@@ -50,7 +50,7 @@ const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
 			, [undefined, 0] // 16
 			, [undefined, 0] // 17
 		]
-	}
+	} // 1
 	, stringify: {
 		args: 2
 		, scope: "globalThis.json"
@@ -106,11 +106,27 @@ const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
 				, ['{"2": 4, "3": 3, "-89": 6}', 0] // 11
 			]
 		}
-	}
+	} // 2
 	, parse: {
 		ignore: true
 		, scope: "globalThis.json"
-	}
+	} // 3
+	, sgn: {
+		ignore: true
+		, args: null
+		, scopes: [
+			"globalThis"
+			, "globalThis.aMath"
+			, "globalThis.bMath"
+			, "globalThis.cMath"
+			// , "globalThis.fMath" // TODO: Add
+			, "globalThis.rMath"
+			, "globalThis.sMath"
+			// , "globalThis.cfMath" // TODO: Add
+		]
+		, inputs: {}
+		, outputs: {}
+	} // 4
 	, round: {
 		changeThis: true
 		, args: 1
@@ -175,7 +191,7 @@ const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
 			, [0n, 0] // 25
 			, [NaN, 0] // 26
 		]
-	}
+	} // 5
 	, isIterable: {
 		args: 1
 		, scope: "globalThis"
@@ -221,7 +237,7 @@ const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
 			, [false, 0] // 17
 			, [false, 0] // 18
 		]
-	}
+	} // 6
 };
 
 
@@ -229,7 +245,7 @@ const LibSettings = LIBRARY_VARIABLES["local LibSettings"]
 LIBRARY_VARIABLES["local tests"] = tests;
 
 if (globalTestsObject == null)
-	globalTestsObject = globalThis[LibSettings.Testing_Object_Object_Name] = {};
+	globalTestsObject = globalThis[LibSettings.Testing_Object_Global_Name] = {};
 
 
 if (globalTestsObject.constructor?.name === "Array")
