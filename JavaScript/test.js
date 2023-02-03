@@ -1,24 +1,44 @@
 #!/usr/bin/env js
-// test.js v1.0.4 (c) | Copyright 2023 Daniel E. Janusch
+// test.js v1.2.0 (c) | Copyright 2023 Daniel E. Janusch
 
-// the tests can be passed via a global object or ...
-// the override (2nd 1-indexed) parameter of the run_tests() function
-// this library was made to interface well with lib.js but is its own standalone library.
+/** DOCUMENTATION:
+ * The tests can be passed via a global object or the override ...
+ * (2nd 1-indexed) parameter of the run_tests() function.
+ * This library was made to interface well with lib.js but is its own standalone library.
 
+ Test object attributes default values:
+
+ * ignore = false // ignore is just for unfinished tests
+ * name = (key in the tests object)
+
+ * changeThis = false // only does anything if same === true
+ * same = false
+ *		bool | array[bool, ...]
+ * args = null // number of arguments the function(s) take(s).
+ *		number | bigint | array[number | bigint, ...]
+ * inputs // required fields
+ * outputs // required fields
+ * scope/scopes // at least one is required
+**/
 
 // TODO: Maybe zip together the inputs and outputs in the testing object so they are easier to use.
-// TODO: Maybe implement where functions can have optional arguments, but it might be better the way it is.
+// TODO: Maybe let test object have optional function arguments. It might be better the way it is.
+// TODO: Update Error Codes
 
-(function run_tests(testsGlobalName, objectOverride, debugMode /*debugger then throw if true*/) {
-	if (testsGlobalName == null) return;
+(function run_tests(
+	testsGlobalName = Symbol.for("Test.js") // the testing object is globalThis?.[testsGlobalName]
+	, debugMode = false // if true, debugger then throw on errors.
+	, objectOverride = null
+) {
 
 	debugMode = !!debugMode; // Boolean(debugMode)
 
-	const libraryTests = objectOverride == null ? globalThis?.[testsGlobalName] : objectOverride
-	, deepCopy = (basicObject, options={}) => eval( stringify(basicObject, options) )// safe eval.
+	// setup  variables and functions
+	const libraryTests = objectOverride === null ? globalThis?.[testsGlobalName] : objectOverride
+	, deepCopy = (basicObject, options={}) => eval( stringify(basicObject, options) ) // safe eval.
 	, stringToObject = (function create_sto() {
 		function isInvalidString(str, nextCharacter="]") {
-			// Stage 2: isInvalidString. returns [isInvalid, endBracketIndex]
+			// returns [isInvalid, endBracketIndex (nextCharacter)]
 			for (var i = 1; i < str.length; i++) {
 				if (str[i] === str[0]) {
 					if ( str[i-1] !== "\\" || str[i-2] === "\\")
@@ -28,6 +48,7 @@
 			}
 		}
 		function isInvalidSymbolDotFor(str="", nextCharacter="]") {
+			// returns [isInvalid, endBracketIndex (nextCharacter)]
 			let [isInvalid, endBracketIndex] = isInvalidString(str.slice(11), ")");
 			endBracketIndex += 12;
 			return [str[endBracketIndex] !== nextCharacter ? !1 : isInvalid, endBracketIndex];
@@ -128,9 +149,9 @@
 			);
 			return scope;
 		}
-		stringToObject._isInvalidString = isInvalidString;
-		stringToObject._isInvalidSymbolDotFor = isInvalidSymbolDotFor;
-		return stringToObject;
+		return stringToObject._isInvalidString = isInvalidString,
+			stringToObject._isInvalidSymbolDotFor = isInvalidSymbolDotFor,
+			stringToObject;
 	})()
 	, zip = (function create_zip() {
 		// different from enumerable
@@ -157,16 +178,13 @@
 				this.name = "TestingError";
 			}
 		}
-		function TestingError(/*message, options_Or_fileName, lineNumber*/) {
-			return new testingError(...arguments);
-		}
+		function TestingError() { return new testingError(...arguments) }
 		return TestingError._self = testingError, TestingError;
 	})()
 	, symbToStr = function symbolToString(symbol) {
 		return `Symbol${ Symbol.keyFor(symbol) == null ? "" : ".for"
-		}("${ symbol.description.replace(/"/g, "\\\"") }")`;
+		}("${ symbol.description.replace(/"/g, '\\"') }")`;
 	}
-
 	function toRegex(str) {
 		for (var i = 0, b = ""; i < str.length; i++)
 			b += `${"$^()+*\\|[]{}?.".includes(str[i]) ? "\\" : ""}${str[i]}`;
@@ -180,6 +198,8 @@
 		} = {}
 	)
 	{
+		// works better than JSON.stringify
+
 		switch (object == null ?
 			"nullish" :
 			object?.constructor?.name === "Array" ?
@@ -255,7 +275,8 @@
 				return output + `${spacesAtEnds ? space : ""}}`;
 			default: throw Error("that type is not supposed to exist.");
 		}
-		throw Error("it is supposed to be impossible to get here.");
+		debugger;
+		throw Error("It is supposed to be impossible to get here.");
 	}
 	function testFunction(obj, name) {
 
@@ -265,25 +286,35 @@
 			throw TestingError(`nullish testing objects are invalid. function name "${name}".\n\tError Code: 1\n`);
 		}
 
-		obj.same ??= !1; // be careful when using same. it can cause problems...
-		// attributes that weren't enumerable, configurable, or writable become so. (or whatever the default is).
-		// prototype attributes aren't converted except for the thisArg
-		// special classes change to default objects and may be broken.
-		// native functions don't convert and instead get set to undefined.
-		// all the problems that come with same are from deepCopy.
-		// all the problems can be avoided by not using same.
-		// same is just an ease of use tool.
-		// deepCopy will probably be expanded later to work for more edge cases.
+		name = obj.name ?? name; // name overwrite. different from "name ??= obj.name"
+		obj.ignore ??= false;
 		obj.changeThis ??= !1;
 		obj.args ??= null;
+		obj.same ??= !1;
+		/**
+		 * Idk if this comment is up to date or not.
+		 *
+		 * be careful when using same. it can cause problems...
+		 * attributes that weren't enumerable, configurable, or writable become so.
+		 * (or whatever the default is).
+		 * prototype attributes aren't converted except for the thisArg
+		 * special classes change to default objects and may be broken.
+		 * native functions don't convert and instead get set to undefined.
+		 * all the problems that come with same are from deepCopy.
+		 * all the problems can be avoided by not using same.
+		 * same is just an ease of use tool.
+		**/
 
 		if ( obj.same === !1 && (
-			obj.inputs?.constructor?.name === "Array" || obj.outputs?.constructor?.name === "Array"
+			obj.inputs ?.constructor?.name === "Array" ||
+			obj.outputs?.constructor?.name === "Array"
 		) ) obj.same = !0;
+
+		// obj.scope / obj.scopes
 		if (["string", "symbol", "number", "bigint"].includes(typeof obj.scope)) {
 			if (obj.scopes == null) obj.scopes = [obj.scope];
 			else if (obj.scopes?.constructor?.name === "Array") obj.scopes.push(obj.scope);
-			else throw Error(`"scopes" attribute is not an array.\n\tError Code: 2\n`);
+			else throw TestingError(`"scopes" attribute is not an array.\n\tError Code: 2\n`);
 			delete obj.scope;
 		}
 		if (obj.scopes == null) {
@@ -299,7 +330,7 @@
 			throw TestingError(`function "${name}" does not have any scopes.\n\tError Code: 5\n`);
 		}
 
-		// change things that reference globalThis into globalThis
+		// change scopes that reference globalThis into globalThis
 		for (var i = 0; i < obj.scopes.length ;) {
 			const scope = obj.scopes[i];
 
@@ -318,7 +349,7 @@
 			else i++;
 		}
 
-		// change the things to be the same if they are supposed to be.
+		// change the inputs for different scopes to be the same if they are supposed to be.
 		if (obj.same === !0) { // strict equals on purpose
 
 			const tmp_inputs = obj.inputs, tmp_outputs = obj.outputs;
@@ -339,68 +370,96 @@
 			}
 		}
 
-		name = obj.name ?? name; // name overwrite. different from "name ??= obj.name"
-
+		// obj.name
 		if (name == null) {
 			if (debugMode) debugger;
-			throw TestingError("undefined objects are invalid. this is supposed to be impossible.\n\tError Code: 6\n");
+			throw TestingError("undefined names are invalid.\n\tError Code: 6\n");
 		}
-		if (typeof obj.args === "bigint") obj.args = Number(obj.args);
-		if (obj.args !== null) {
-			if (typeof obj.args !== "number" || obj.args % 1 !== 0 || obj.args < 0) {
-				if (debugMode) debugger;
-				throw TestingError(`function "${name}" has an invalid "args" attribute.\n\tError Code: 7\n`);
-			}
+
+		// obj.args
+
+		if (typeof obj.args === "number") obj.args = BigInt(Math.round(obj.args));
+		if (typeof obj.args === "bigint" || obj.args === null) {
+			if (obj.args < 0n)
+				throw TestingError(`function "${name}" has an invalid "args" attribute. Must be positive.\n\tError Code: 7\n`);
+			const argsValue = obj.args;
+			obj.args = {};
+			for (const scope of obj.scopes) obj.args[scope] = argsValue;
 		}
+		else for (let [scope, value] of Object.entries(obj.args)) {
+			if (!obj.scopes.includes(scope)) throw TestingError(`function "${name}" has an args scope "${scope.toString()}" that is not in obj.scopes.\n\tError Code: 8`);
+			if (typeof value === "number") obj.args[scope] = BigInt(Math.round(value));
+			if (typeof value !== "bigint" && value !== null || value < 0n) throw TestingError(`function "${name}" has an invalid args attribute for scope "${scope.toString()}"\n\tError Code: 9`);
+		}
+
+		// obj.ignore
+		if (typeof obj.ignore === "boolean") {
+			const ignoreValue = obj.ignore;
+			obj.ignore = {};
+			for (const scope of obj.scopes) obj.ignore[scope] = ignoreValue;
+		}
+		else for (const [scope, value] of Object.entries(obj.ignore)) {
+			if (!obj.scopes.includes(scope)) throw TestingError(`function "${name}" has an "ignore" scope "${key.toString()}" that is not in obj.scopes.\n\tError Code: A`);
+			if (typeof value !== "boolean") obj.ignore[scope] = !!value; // Boolean(value)
+		}
+
+		// obj.inputs, obj.outputs
 		if (obj.inputs == null) {
 			if (debugMode) debugger;
-			throw TestingError(`function "${name}" does not have a "inputs" attribute.\n\tError Code: 8\n`);
+			throw TestingError(`function "${name}" does not have an "inputs" attribute.\n\tError Code: B\n`);
 		}
 		if (obj.outputs == null) {
 			if (debugMode) debugger;
-			throw TestingError(`function "${name}" does not have a "outputs" attribute.\n\tError Code: 9\n`);
+			throw TestingError(`function "${name}" does not have an "outputs" attribute.\n\tError Code: C\n`);
 		}
 		if (Object.keys(obj.inputs).length !== Object.keys(obj.outputs).length) {
 			if (debugMode) debugger;
-			throw TestingError(`function "${name}" has different amounts of scopes for inputs and outputs.\n\tError Code: A\n`);
+			throw TestingError(`function "${name}" has different amounts of scopes for input and output scopes.\n\tError Code: D\n`);
 		}
 
+		/*
+		for each scope:
+			foreach input-output pair:
+				test inputs against outputs
+		*/
 		for (const scope of obj.scopes) {
 
 			if (!["string", "symbol", "number", "bigint"].includes(typeof scope)) {
 				if (debugMode) debugger;
-				throw TestingError(`function "${name}" has an invalid scope "${scope}" and needs to be a string, symbol, number, or bigint.\n\tError Code: B\n`);
+				throw TestingError(`function "${name}" has an invalid scope "${scope}" and needs to be a string, symbol, number, or bigint.\n\tError Code: E\n`);
 			}
 			if (obj.inputs[scope].length !== obj.outputs[scope].length) {
 				if (debugMode) debugger;
-				throw Error(`function "${name}" in scope "${scope} has different numbers of inputs and outputs.\n\tError Code: C\n`);
+				throw Error(`function "${name}" in scope "${scope} has different numbers of inputs and outputs.\n\tError Code: F\n`);
 			}
 
-			for (var zippedObject = zip(obj.inputs[scope], obj.outputs[scope]), index = 0; index < zippedObject.length; index++) {
+			for (var zippedObject = zip(obj.inputs[scope], obj.outputs[scope]), index = 0
+				; index < zippedObject.length; index++)
+			{
 				const [inputs, outputs] = zippedObject[index];
-				if (obj.args !== null)
-					if (inputs.length - 1 !== obj.args) {
-						if (debugMode) debugger;
-						throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of inputs.\n\tError Code: D\n`);
-					}
+				if (obj.args[scope] !== null && BigInt(inputs.length)-1n !== obj.args[scope]) {
+					if (debugMode) debugger;
+					throw TestingError(`function "${name}" in scope "${scope}" index ${index} has different number of expected arguments than were provided. ${obj.args[scope]} expected and ${BigInt(inputs.length) - 1n} provided.\n\tError Code: 10\n`);
+				}
 				if (outputs.length !== 2) {
 					if (debugMode) debugger;
-					throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of outputs.\n\tError Code: E\n`);
+					throw TestingError(`function "${name}" in scope "${scope}", index ${index} doesn't have the correct amount of outputs.\n\tError Code: 11\n`);
 				}
-				const scopeObject = stringToObject(scope, globalThis, !0, !0);
+				const scopeObject = stringToObject(scope);
 
 				try {
 					const outputValue = inputs[0] === void 0 ? scopeObject[name](...inputs.slice(1)) : scopeObject[name].call(...inputs);
 					if (outputs[1] !== 0 && outputs[1] !== !1) {
 						if (debugMode) debugger;
-						throw TestingError(`function "${name}" in scope "${scope}", index ${index} is supposed to have an error and did not.\n\tError Code: F\n`);
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} is supposed to have an error and did not.\n\tError Code: 12\n`);
 					}
 					if (outputs[0] !== outputValue && stringify(outputs[0]) !== stringify(outputValue)) {
 						// TODO: Make it work for things other than primitives and regular objects.
 						// example: image HTML tags don't work. the won't be the same object, and they stringify to "{}".
 						// try jQuery.ext
+						// TODO: Figure out what the previous comment was supposed to say
 						if (debugMode) debugger;
-						throw TestingError(`function "${name}" in scope "${scope}", index ${index} had an incorrect output value.\n\tError Code: 10\n`);
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} had an incorrect output value.\n\tError Code: 13\n`);
 					}
 				}
 				catch (err) {
@@ -410,11 +469,11 @@
 					}
 					if (outputs[1] !== 1 && outputs[1] !== !0) {
 						if (debugMode) debugger;
-						throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered an unexpected error.\n\tError Code: 11\n`);
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered an unexpected error.\n\tError Code: 14\n`);
 					}
 					if (outputs[0] !== err+"") {
 						if (debugMode) debugger;
-						throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered the wrong error.\n\tError Code: 12\n`);
+						throw TestingError(`function "${name}" in scope "${scope}", index ${index} encountered the wrong error.\n\tError Code: 15\n`);
 					}
 				}
 			}
@@ -422,8 +481,8 @@
 	}
 	function testLibrary(tests={}) {
 		if (tests == null || !Object.getOwnPropertyNames(tests).length) return;
-
-		for (const key of Object.keys(tests)) testFunction(tests[key], key);
+		for (const key of Object.keys(tests))
+			testFunction(tests[key], key);
 	}
 
 	if (libraryTests?.constructor?.name === "Array")
@@ -434,4 +493,4 @@
 			testLibrary(tests);
 	else
 		testLibrary(libraryTests);
-})("Test.js", null, false);
+})("Test.js");
