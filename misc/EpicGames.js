@@ -355,6 +355,7 @@ var OwnedApplications = {
 	, "Razer Cortex": 0
 	, "Realm Royale Reforged": 0
 	, "Rebel Galaxy": 19.99
+	, "Recipe For Disaster": 16.99
 	, "Redout: Enhanced Edition": 19.99
 	, "Redout": 0 // duplicate
 	, "Relicta": 19.99
