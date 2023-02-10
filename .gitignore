@@ -3,18 +3,18 @@
 # or they are temporary, not original (ie jQuery.js), a joke (ie 3quine.html), or something else
 # executables and object files are ignored because I didn't write them, the compiler did
 
-/Graphviz
-/Haskell
-/GoLang
-/ignore
-/NASM
+/Graphviz/
+/Haskell/
+/GoLang/
+/ignore/
+/NASM/
 
 # TypeScript version of lib.js v3.0.0
-/JavaScript/Library
+/JavaScript/Library/
 
-HTML/3quine.html
-HTML/calculator.html
-HTML/BlackJack.html
+/HTML/3quine.html
+/HTML/calculator.html
+/HTML/BlackJack.html
 
 # not actually passwords.
 Python/passwords.py
