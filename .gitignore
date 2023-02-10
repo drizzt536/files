@@ -7,6 +7,7 @@
 /Haskell
 /GoLang
 /ignore
+/NASM
 
 # TypeScript version of lib.js v3.0.0
 /JavaScript/Library
