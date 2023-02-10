@@ -2,7 +2,7 @@
 // this file requires ./../JavaScript/lib.js
 
 // null means either idk or N/A. "null" means the string "null"
-// language extendors don't include keywords of the lenguages they extend
+// language extenders probably don't include keywords of the languages they extend
 // a language being mostly empty means I either know almost nothing about it, or I know it well enough to not care about documenting it for easier recognization
 /**Attributes:
  * function: keyword for defining functions
@@ -699,10 +699,10 @@ var o = dict({
 		"compiled/interpreted": "compiled",
 		"level": ["low?, it has pointers", "high? it has strings instead of arrays of chars"],
 		"alt-name": "GoLang",
-		"cur.obj": null,
+		"cur.obj": "N/A",
 		"undefined": "nil",
-		"cstyle": "usually",
-		"semicolon": "separate statements on the same line",
+		"cstyle": "mostly",
+		"semicolon": "required, but compiler puts it in if missing.",
 		"extends": null,
 		"keywords": [
 			"import",
@@ -711,7 +711,8 @@ var o = dict({
 			"switch/case/default",
 			"select/case/default",
 			"select",
-			"range",
+			"[a:b]",
+			"[]int{1, 2, 3}",
 			"type",
 			"var p *int = &intvariable",
 			"true/false",
@@ -722,8 +723,13 @@ var o = dict({
 			"func fname(varname type)",
 			"fmt.Fprintf",
 			"fmt.Println",
+			"fmt.Print",
+			"print",
+			"println",
 			"if ... { ... }",
 			"for i := 0; <condition> ; i++ { ... }",
+			"for { ... }",
+			"for k, v in range variable { ... }",
 		],
 		"misc": [
 			"functions arguments are name type instead of the more common type name",
@@ -991,7 +997,7 @@ var o = dict({
 		"typing": "weakly dynamic",
 		"compiled/interpreted": "interpreted",
 		"level": "high",
-		"alt-name": null,
+		"alt-name": "ECMAScript",
 		"cur.obj.": "this",
 		"undefined": ["null", "undefined"],
 		"cstyle": true,
@@ -1000,6 +1006,7 @@ var o = dict({
 		"keywords": [
 			"console.log",
 			"window",
+			"globalThis",
 			"document",
 			"Math",
 			"Promise",
@@ -1008,6 +1015,7 @@ var o = dict({
 			"async",
 			"await",
 			"new",
+			"function",
 			"export ...",
 			"export default ...",
 			"class ... extends ... { constructor(...) { ... } ... }",
@@ -1216,7 +1224,7 @@ var o = dict({
 	}
 	, "NASM intel-ASM": {
 		"function": null,
-		"variable": null,
+		"variable": "N/A",
 		"typing": null,
 		"compiled/interpreted": "assembled",
 		"level": "very low, like literally the computer can read it (well, kind of)",
@@ -1233,6 +1241,7 @@ var o = dict({
 			"je",
 			"%define",
 			"section",
+			"segment",
 			"section .bss",
 			"section .data",
 			"section .text",
@@ -1252,11 +1261,10 @@ var o = dict({
 			"extern",
 			"import",
 			"bits ...",
-			"global",
 		],
 		"misc": [
 			"; comment",
-			"some compilers are NASM, FASM, YASM, GAS, etc...",
+			"some other compilers are FASM, MASM, YASM, GAS, etc...",
 		],
 		"examples": [
 			"mov rax, 123",
@@ -1290,10 +1298,10 @@ var o = dict({
 		"examples": null,
 	}
 	, "PHP": {
-		"function": ["function", "fn"],
+		"function": ["function", "fn () =>"],
 		"variable": "$",
 		"typing": null,
-		"compiled/interpreted": "interpreted?",
+		"compiled/interpreted": "interpreted",
 		"level": "high",
 		"alt-name": "bad (LMAO)",
 		"cur.obj": "$this",
@@ -1396,21 +1404,22 @@ var o = dict({
 		],
 	}
 	, "PowerShell": {
-		"function": ["function", "Function"],
+		"function": ["function"],
 		"variable": ["$", "$global:"],
 		"typing": ["static (optional for function arguments)", "dynamic"],
 		"compiled/interpreted": "interpreted",
 		"level": "high",
 		"alt-name": "Windows PowerShell",
-		"cur.obj": "$this ?",
+		"cur.obj": "$this?",
 		"undefined": "$null",
 		"cstyle": "sometimes",
 		"semicolon": "not recommended",
 		"extends": ["windows cmd (kind of)", "shell (kind of, not really, but mostly not)"],
 		"keywords": [
-			"foreaach",
+			"foreach",
 			"clear",
 			"|",
+			'"${variable name}asdf$(expression ... )"',
 			"[<Type>]",
 			"[CmdletBinding()]",
 			"param ( ... )",
@@ -1421,20 +1430,21 @@ var o = dict({
 			"@( ... )",
 			"if (...) { ... }",
 			"-gt",
-			"where-object", "?",
-			"write-host",
+			"where-object",
+			"?",
+			"write-host", // write
 			"Verb-Noun"
 			"write-error",
 			"Verb-Noun",
 			"get-eventlog",
 			"out-gridview",
 			"get-host",
-			"get-process",
-			"start-process",
+			"get-process", // gps
+			"start-process", // spps
 			"set-clipboard",
 			"format-table",
 			"$_", // pipe item
-			"$$", // last item?
+			"$$", // last item
 			"-not",
 			"-in",
 			"in",
@@ -1446,9 +1456,9 @@ var o = dict({
 			"set-winhomelocation",
 		],
 		"misc": [
-			"not case sensitive",
+			"everything is case insensitive",
 			"directories can use either \"/\" or \"\\\"",
-			"# comment",
+			"# single-line comment",
 			"<# multi-line comment #>",
 			"made by Microsoft. probably has things that refer to Microsoft",
 		],
@@ -2098,7 +2108,7 @@ var o = dict({
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
 		"typing": ["static (optional)", "dynamic"],
-		"compiled/interpreted": "compiled to JavaScript",
+		"compiled/interpreted": "compiled to JavaScript, interpreted from there",
 		"level": "high",
 		"alt-name": "N/A",
 		"cur.obj": "this",
@@ -2107,17 +2117,43 @@ var o = dict({
 		"semicolon": "suggested",
 		"extends": "JavaScript",
 		"keywords": [
-			"interface",
+			"interface name { ... }",
 			": <Type>",
-			"type",
-			"keyof",
+			"<Type> | <Type>",
+			"<Type> & <Type>",
+			"name(this: <Type>, arg1name: <Type>, ... ): <Type>;",
+			": (...args: <Type>) => <Type>",
+			"type name = <Type>;",
+			": keyof ...",
+			": typeof ...",
 			"enum",
 			"require('...')",
+			": {a: <Type>; b?: <Type>;}",
+			"object!.attribute",
+			"declare var a: <Type>;",
+			"declare function asdf(value: any): any;",
+			"expression!",
+			"expression as <Type>",
+			"expression! as <Type>",
+			"function name( ... ): <Type> { ... }",
+			"( ... ): <Type> => ...",
+			": <Type>[]",
+			": [<Type>, <Type>]",
+			": <Type> as const",
+			"public classAttribute",
+			"private classAttribute",
+			"static classAttribute",
+			"readonly classAttribute",
+			"class ClassName implements InterfaceName { ... }"
 		],
 		"misc": [
 			"uses node.js",
+			"specific values can be a type. ie: const two: 2 | void; is valid but two can only be undefined or 2.",
+			"interfaces have block scope"
 		],
-		"examples": null,
+		"examples": [
+			"(object as {attribute: <Type>}).attribute"
+		],
 	}
 	, "VBA": {
 		"function": null,
@@ -2215,4 +2251,5 @@ var o = dict({
 		"keywords": null,
 		"misc": null,
 		"examples": null,
-}});
+	}
+});
