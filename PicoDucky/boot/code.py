@@ -19,6 +19,7 @@ def parseLine(A):
 	if A[:3]=="REM":0
 	elif A[:5]=="DELAY":s(float(A[6:])/1000)
 	elif A[:6]=="STRING":layout.write(A[7:])
+	elif A[:8]=="STRINGLN":layout.write(A[9:]);R(c("ENTER"))
 	elif A[:6]=="IMPORT":r(A[7:])
 	elif A[:13]=="DEFAULT_DELAY":global d;d=int(A[13:])/100
 	elif A[:3]=="LED":M.value=not M.value
