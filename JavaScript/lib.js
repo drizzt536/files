@@ -1,5 +1,16 @@
 #!/usr/bin/env js
-// lib.js v2.1.6 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.7 (c) | Copyright 2022-2023 Daniel E. Janusch
+
+/**
+ * Todo Comment Syntax:
+ * // TODO: Miscellaneous todo
+ * // TODO/ADD: add something
+ * // TODO/FIX: fix something.
+ * // TODO/FIN: finish or implement something
+ * // TODO/CHG: change something to do a different thing. Not really an update nor a fix.
+ * // TODO/UPD: update something
+*/
+
 
 void (() => { "use strict";
 	/* Customization & Constants: */ {
@@ -79,11 +90,10 @@ void (() => { "use strict";
 			, Environment_Global_String         : _Global_String
 			, DOM_Ignore_list                   : []
 			, On_Conflict_Options               : [
-				"log", "throw" , "trw", "return", "ret", "error",
-				"err", "warn"  , "wrn", "debug" , "dbg", "info" ,
-				"inf", "assert", "ast", "alert" , "alt", "none" ,
-				"crash", "cry", "dont-use", "warning", "default",
-				"debugger", "crash", "ignore"
+				"log", "throw", "return", "error", "warn",
+				"debug", "info", "assert", "alert", "none",
+				"crash", "cry", "dont-use", "default",
+				"debugger", "crash"
 				// "none" just ignores the error and overwrites it anyway, pretending it never happened.
 			]
 			, Settings_Help_String             : `Settings Help:
@@ -204,8 +214,15 @@ void (() => { "use strict";
 		/////////////////////////////// LIBRARY DEVELOPER SETTINGS & VARIABLES END ///////////////////////////////
 		};
 
+		if (LibSettings.isBrowser) {
+			var __dirname = document.currentScript.src.slice(
+				0, document.currentScript.src.lastIndexOf("/") + 1
+			)
+			, __filename = document.currentScript.src;
+		}
+
 		// Other Values:
-		LibSettings.On_Conflict_Options.includes(LibSettings.ON_CONFLICT) || (LibSettings.ON_CONFLICT = "dbg");
+		LibSettings.On_Conflict_Options.includes(LibSettings.ON_CONFLICT) || (LibSettings.ON_CONFLICT = "debug");
 		LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
 		LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
 		LibSettings.FILE_PATH = LibSettings.isNodeJS ?
@@ -272,12 +289,12 @@ void (() => { "use strict";
 		LibSettings.Global_Ignore_List                === "default" && (LibSettings.Global_Ignore_List                = []);
 		LibSettings.Clear_LocalStorage                === "default" && (LibSettings.Clear_LocalStorage                = !1);
 		LibSettings.Run_KeyLogger                     === "default" && (LibSettings.Run_KeyLogger                     = !1);
-		LibSettings.ON_CONFLICT                       === "default" && (LibSettings.ON_CONFLICT                       = "dbg");
+		LibSettings.ON_CONFLICT                       === "default" && (LibSettings.ON_CONFLICT                       = "debug");
 
 		////////////////////////////////////////////// DEFAULTS END //////////////////////////////////////////////
 
-		LibSettings.Clear_SessionStorage && sessionStorage.clear();
-		LibSettings.Clear_LocalStorage && localStorage.clear();
+		LibSettings.Clear_SessionStorage && sessionStorage?.clear?.();
+		LibSettings.Clear_LocalStorage && localStorage?.clear?.();
 	}
 	/* Variables & Functions definitions: */ {
 		/* Local Variables (may also be global) */ {
@@ -370,14 +387,15 @@ void (() => { "use strict";
 			, symbToStr = function symbolToString(symbol, form = 1) {
 				return typeof symbol === "symbol" ?
 					form === 1 ?
-					`Symbol${ Symbol.keyFor(symbol) === void 0 ? "" : ".for"
-						}("${ symbol.description.replace(/"/g, "\\\"") }")` :
-					`Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})` :
-					void 0;
+						`Symbol${ Symbol.keyFor(symbol) === void 0 ? "" : ".for"
+							}("${ symbol.description.replace(/"/g, "\\\"") }")` :
+
+						`Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})` :
+						void 0;
 			}
 			, json = Object.create(Object.prototype, {
 				parse: {
-					// TODO: Finish
+					// TODO/FIN: Finish
 					value: function parse(object, reviver) {
 						try { return JSON.parse(object, reviver) }
 						catch { return void 0 }
@@ -397,7 +415,7 @@ void (() => { "use strict";
 					{
 						switch (object == null ?
 							"nullish" :
-							object?.constructor?.name === "Array" ?
+							object instanceof Array ?
 								"array" :
 								object.test === /1/.test ?
 									"regexp" :
@@ -503,10 +521,10 @@ void (() => { "use strict";
 						-1n :
 						BigInt(x > 0n) :
 					LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
-						cMath.sgn(x) :
+						LIBRARY_VARIABLES.MathObjects.cMath.sgn(x) :
 						NaN
 			, abs = x => LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
-				cMath.abs(x) :
+				LIBRARY_VARIABLES.MathObjects.cMath.abs(x) :
 				x * sgn(x)
 			// document.all == null ????!!/? what!?!?
 			, constr = function constructorName(input) {
@@ -516,14 +534,14 @@ void (() => { "use strict";
 			}
 			// this.at(-1) doesn't work with all iterables. (ie: HTMLAllCollection)
 			, lastElement = function lastElement() { return this[this.length - 1] }
-			, isArr = function isArray(thing) { return thing?.constructor?.name === "Array" }
+			, isArr = function isArray(thing) { return thing instanceof Array }
 			, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
-			, deepCopy = function deepCopy(object) { return eval( json.stringify(object) ) } // safe eval.
+			, deepCopy = function deepCopy(object) { return eval( json.stringify(object) ) /* safe eval */  }
 			, dim = function dim(e, n=1) { return e?.length - n }
 			, len = function length(e) { return e?.length }
 			, sizeof = function	sizeof(obj, keys=true) {
 				// gets the size of an object
-				return obj == null || obj != obj ? // null, undefined, NaN
+				return obj == null || obj != obj ? // (null, undefined), NaN
 					0 :
 					obj.length ?? // arraylike object
 						( keys ? Object.keys : Object.getOwnPropertyNames )(obj).length; // everything else
@@ -533,23 +551,25 @@ void (() => { "use strict";
 				stop == null ? [stop, start] = [start, 0] : stop++;
 				for (var i = start; i < stop; i += step) yield i;
 			}
-			, isIterable = function isIterable(arg) {
-				try { for (const e of arg) break }
+			, isIterable = function isIterable(thing) {
+				try { for (const e of thing) break }
 				catch { return !1 }
 				return !0
 			}
-			, isEnumerable = function isEnumerable(arg) {
-				try { for (const e in arg) break }
+			, isEnumerable = function isEnumerable(thing) {
+				try { for (const e in thing) break }
 				catch { return !1 }
 				return !0
 			}
 			, arrzip = function arrzip(arr1, arr2) {
 				// array zip
-				// the next 2 lines break everything if they are infinite generator functions.
+				// TODO: Make a faster way of filtering out infinite generators
 				if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator")
-					arr1 = Array.from(arr1);
+					try { arr1 = Array.from(arr1) }
+					catch { throw Error("Infinite generators cannot be zipped. argument index 0") }
 				if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator")
-					arr2 = Array.from(arr2);
+					try { arr2 = Array.from(arr2) }
+					catch { throw Error("Infinite generators cannot be zipped. argument index 1") }
 				if (!isIterable(arr1) || !isIterable(arr2)) return [arr1, arr2];
 				for (var output = [], length = Math.min(arr1.length, arr2.length), i = 0; i < length; i++)
 					output.push([ arr1[i] , arr2[i] ]);
@@ -565,9 +585,9 @@ void (() => { "use strict";
 				}
 				!snum.includes(".") && (snum += ".0");
 				return (snum[0] === "-" ? "-" : "") +
-					snum.substring( (snum[0] === "-") +
-						(snum.match(/^-?(0+\B)/)?.[1]?.length || 0),
-						snum.match(/\B0+$/)?.index || Infinity
+					snum.substring( +(snum[0] === "-") +
+						(snum.match(/^-?(0+\B)/)?.[1]?.length ?? 0),
+						snum.match(/\B0+$/)?.index ?? Infinity
 				);
 			}
 			, type = function type(a/*object*/, specific=false) {
@@ -934,6 +954,15 @@ void (() => { "use strict";
 				// can take in a string or a function. returns a function.
 				// "^" means exponent
 				// "//" means floor division (fdiv)
+				// TODO/FIX: Make exponents evaluate right-to-left instead of left-to-right
+				// TODO/ADD: Add correct support for unary operators
+					// TODO/FIX: fix "-2 + 3"
+					// TODO/FIX: fix "+x + 3"
+					// TODO/FIX: fix "- x^2 + 3"
+				// TODO/CHG: change "^" to be ipow, and "**" to be pow
+				// TODO/ADD: add "\\" (double backslash) for cdiv
+				// TODO/ADD: add "!" as the factorial of whatever came before
+
 				if (type(variable) !== "string" || !variable?.length) return !1;
 				defaultArgValue = String(defaultArgValue);
 				var code = (typeof fn === "function" ? fn.code() : fn).replace(
@@ -951,19 +980,23 @@ void (() => { "use strict";
 						, " $1 "
 					]
 				);
+
+				// stringify non-stringified number literals
 				while (!0) {
-					// stringify non-stringified number literals
 					let m = code.match(/(?<!")(\b(?<!\.)\d+(?!\.)\b)(?!")/);
 					if (m === null) break;
 					code = code.slc(0, m.index) + `"${m[0]}"` + code.slc(m.index + len(m[0]));
 				}
+
 				// replace things like 5x with sMath.mul["5",x]
 				code = `(${code.replace(RegExp(`(\\d+\\.?\\d*)${variable}`, "g"), `sMath.mul["$1",${variable}]`)})`;
 
+				// sMath notation for floor, ceil, and round
 				while (code.io("⌈") !== -1 || code.io("⌊") !== -1) {
 					// find the cases for flooring, ceiling, and rounding, and parentheses errors
-					let i = rMath.min([code.io("⌈")
-						, code.io("⌊")].filter(e => e !== -1))
+					let i = rMath.min(
+						[code.io("⌈"), code.io("⌊")].filter(e => e !== -1)
+					)
 						, index = i + 1
 						, count = 1;
 					for (; count ; index++) {
@@ -983,6 +1016,9 @@ void (() => { "use strict";
 								"round"
 					}[(${code.slc(i + 1, index).strip()})]${code.slc(index + 1)}`;
 				}
+
+				// fix errors here
+
 				while (code.io("(") !== -1) {
 					for (var index = 0, i = 0, n = len(code), p = 0, highest = 0; i < n; i++) {
 						// find the deepest parentheses
@@ -992,13 +1028,13 @@ void (() => { "use strict";
 					}
 					var arr = code.slc(index, ")", 0, 1).replace(/([^\s()]+)/g, "($1)")
 						.slc(1, -1).strip().split(/(?=\()/g).map(e => e.strip().slc(1, -1));
-					if (len(arr) === 1) {
+					if (arr.length === 1) {
 						code = code.replace(
 							code.slc(index, ")", -1, 1).toRegex(),
 							`[${arr}]`
 						)
 					}
-					if (len(arr) > 3) {
+					if (arr.length > 3) {
 						var i = rMath.min([ arr.io("**"), arr.io("^") ].filter(e => e !== -1));
 						if (i === Infinity) {
 							i = rMath.min(
@@ -1012,16 +1048,18 @@ void (() => { "use strict";
 						}
 						code = code.replace(
 							code.slc(index + 1, ")").toRegex()
-							, `${arr.slc(0, i-1).join(" ")} (${
-								arr.slc(i - 1, i + 2).join(" ")
-							}) ${arr.slc(i + 2).join(" ")}`.strip()
+							, `${arr.slice(0, i-1).join(" ")} (${
+								arr.slice(i - 1, i + 2).join(" ")
+							}) ${arr.slice(i + 2).join(" ")}`.strip()
 						);
 						continue;
 					}
 					let tmp = `sMath.${sMath[arr[1]].name}[${arr[0]},${arr[2]}`;
-					tmp.sW("sMath.div") && (tmp += `,"${precision}"`);
+					tmp.sw("sMath.div") && (tmp += `,"${precision}"`);
 					code = code.replace(code.slc(index, ")", 0, 1).toRegex(), tmp + "]");
 				}
+
+				// return final output function
 				return Function(
 					variable + (defaultArgValue === "" ? "" : " = " + defaultArgValue)
 					, `\treturn ${
@@ -1306,27 +1344,24 @@ void (() => { "use strict";
 				return ""; // empty function, empty docstring
 			};
 			if (LibSettings.Use_Document)
-			var createElement = function createElement(element="p", options={}) {
+			var createElement = function createElement(element, options={}) {
 				if (typeof element !== "string") {
-					if (element === null) throw Error("undefined element name");
-					options = element, element = element.element;
+					if (element == null) throw Error("undefined element name");
+					options = element;
+					element = element.element;
 					delete options.element;
 				}
+
 				if (typeof element !== "string") throw Error("element name is not a string");
+
 				var element = document.createElement(element)
+					, appendChild = true // if false .append() is used instead of .appendChild for objects
 					, objects = null
-					, clicks = null;
+					, clicks = 0;
 				for (const e of Object.keys(options)) {
-					if (e === "children") {
-						type(options[e], 1) === "arr" ?
-							options[e].forEach(child => element.appendChild(child)) :
-							element.appendChild(options[e]);
-					} else if (e === "onClick") { // not "onclick"
-						typeof options[e] === "function" ?
-							element.ael("click", options[e]) :
-							element.ael("click", ...options[e]);
-					} else if (e === "on") {
-						type(options[e], 1) !== "arr" && (options[e] = [options[e]]);
+					if (e === "on") {
+						isArr(options.on) || ( options.on = [options.on] );
+						isArr(options.on) ? [options.on] : options.on
 						for (let obj of options[e]) {
 							obj.listener ??= obj.handler;
 							element.ael( obj.type, obj.listener, {
@@ -1335,23 +1370,43 @@ void (() => { "use strict";
 								once    : obj.once    ,
 							});
 						}
-					} else if (["object", "objects"].includes(e)) objects = options[e];
-					else if (e === "style") {
+					}
+					else if (["class", "classList"].includes(e)) element.setAttribute("class",
+						isArr(options[e]) ?
+							options[e].join(" ") :
+							options[e]
+					);
+					else if (e === "children")
+						isArr(options[e]) ?
+							options[e].forEach(child => element.appendChild(child)) :
+							element.appendChild(options[e]);
+					else if (e === "onclick")
+						typeof options[e] === "function" ?
+							element.ael("click", options[e]) :
+							element.ael("click", ...options[e]);
+					else if (e === "styles")
 						for (const style of Object.keys(options[e]))
 							element.style[style] = options[e][style];
-					} else if (e === "click") clicks = options[e];
+					else if (e === "attributes")
+						for (const key of Object.keys(options[e]))
+							element.setAttribute(key, options[e][key]);
+					else if (e === "append") objects = options[e];
+					else if (e === "appendChild") appendChild = !!options[e];
+					else if (e === "click") clicks = options[e];
 					else element[e] = options[e];
 				}
-				if (objects !== null) {
-					if (objects instanceof Array)
-						for (var i = objects.length; i --> 0 ;)
-							objects[i].appendChild(element);
-					else objects.appendChild(element);
+				if (objects != null) {
+					if ( !isArr(objects) ) objects = [objects];
+					for (var i = objects.length; i --> 0 ;)
+						appendChild ?
+							objects[i].appendChild(element) :
+							objects[i].append(element);
 				}
 				element.click(clicks);
 				return element;
 			};
-			setInterval._setInterval = globalThis.setInterval, clearInterval._clearInterval = globalThis.clearInterval;
+			setInterval._setInterval = globalThis.setInterval,
+				clearInterval._clearInterval = globalThis.clearInterval;
 			LibSettings.DEFER_ARR = DEFER_ARR, LibSettings.LOCAL_DEFER_ARR = LOCAL_DEFER_ARR;
 			LibSettings.CONFLICT_ARR = CONFLICT_ARR;
 		}
@@ -1364,7 +1419,7 @@ void (() => { "use strict";
 					this.next = next;
 				}
 			}
-			return class LinkedList {
+			class LinkedList {
 				constructor(head) {
 					this.size = 0;
 					this.head = head == null ? null : new Node(head);
@@ -1427,6 +1482,8 @@ void (() => { "use strict";
 				Node() { return new Node(...arguments) }
 				__type__() { return "linkedlist" }
 			}
+			LinkedList._Node = Node;
+			return LinkedList;
 		}
 		, "ifdom call native Image"() {
 			// the function can still be used the same as before
@@ -1707,9 +1764,30 @@ void (() => { "use strict";
 			objs.union(document.all);
 			return objs;
 		}
-		, "ifdom css": function css(text="", options={}, append=true) {
-			options.innerHTML ??= text;
+		, "ifdom css": function css(text, options, append) {
+			if (typeof text === "object") {
+				// if `text` parameter is missing, move the other arguments over 1 place
+				// ie: (options, append) --> ("", options, append)
+				append = options/* ?? !0*/; // append ??= true happens later anyway
+				options = text ?? {}; // in case of null
+				text = "";
+			}
+			else {
+				// (text, options?, append?) stays the same
+				text ??= "";
+				options ??= {};
+				// append ??= true happens later
+			}
+
+			if (typeof options === "boolean") {
+				// (text, append) --> css(text, {}, append)
+				append = options;
+				options = {};
+			}
+
+			append ??= true;
 			options.type ??= "text/css";
+			options.innerHTML ??= text;
 			var element = createElement("style", options);
 			if (append) document.head.appendChild(element);
 			return element;
@@ -1887,7 +1965,7 @@ void (() => { "use strict";
 					for (const e of arguments) {
 						// type() and not typeof so mutable strings also work
 						type(e) === "string" && this.union(e.split(""));
-						if (isArr(e) && e.every(e => type(e) === "string"))
+						if (isArr(e) && e.every(e => typeof e === "string"))
 							this.union(e);
 					}
 				}
@@ -2059,7 +2137,7 @@ void (() => { "use strict";
 		}
 		, "prototype Object": {
 			"property tofar": function toFlatArray() {
-				// TODO: Fix for 'Arguments' objects and HTML elements
+				// TODO/FIX: Fix for 'Arguments' objects and HTML elements
 				var val = this;
 				return [
 					"number"
@@ -2118,8 +2196,8 @@ void (() => { "use strict";
 				for (var arr = this.concat(array), i = arr.length; i --> 0 ;)
 					this[i] = arr[i];
 				return this;
-			}// TODO: Add Array.prototype.fconcat. basically a mixture between concat and unshift
-			// TODO: Add Array.prototype.funion. basically a mixture between union and unshift
+			}// TODO/ADD: Add Array.prototype.fconcat. basically a mixture between concat and unshift
+			// TODO/ADD: Add Array.prototype.funion. basically a mixture between union and unshift
 			, "property pop2": function pop2(num=1) {
 				while ( num --> 0 ) Array.prototype.pop.call(this);
 				return this;
@@ -2130,7 +2208,7 @@ void (() => { "use strict";
 				return c.flatten().for((e, i) => d.splice(a + i, 0, e), d);
 			}
 			, "property push2": function push2(e, ...i) {
-				// TODO: Finish implementing pushing multiple values for other methods
+				// TODO/FIN: Finish implementing pushing multiple values for other methods
 				let a = this, j, n;
 				i = i.flatten();
 				if (e === void 0) {
@@ -2328,9 +2406,9 @@ void (() => { "use strict";
 				/*else */return a;
 			}
 			, "property startsWith": function startsWith(item) { return this[0] === item }
-			, "previous property sW": null
+			, "previous property sw": null
 			, "property endsWith": function endsWith(item) { return this.last() === item }
-			, "previous property eW": null
+			, "previous property ew": null
 			, "property flatten": function flatten() { return this.flat(Infinity) }
 			, "overwrite property sort": (function create_sort() {
 				const _sort = Array.prototype.sort;
@@ -2379,7 +2457,7 @@ void (() => { "use strict";
 		, "prototype Function": {
 			"property args": function getArgs() { return getArguments(this) }
 			, "property code": function getCode() {
-				// TODO: Fix
+				// TODO/FIX: Fix function
 				// remove args, then find the code from there
 				// async function () {}
 				// async function *() {}
@@ -2390,8 +2468,8 @@ void (() => { "use strict";
 
 				*/
 				var s = this + "";
-				if (s.sW("class")) return false;
-				else if (s.sW("function")) {
+				if (s.sw("class")) return false;
+				else if (s.sw("function")) {
 					s = s.slc("(", void 0, 1);
 					for (var parenCount = 1, i = 0, n = s.length; parenCount && i < n; i++) {
 						if (s[i] === "(") parenCount++; else
@@ -2422,10 +2500,10 @@ void (() => { "use strict";
 			}
 			, "property isArrow": function isArrowFunction() {
 				var s = this + "";
-				return !(s.sW("function") || s.sW("class"));
+				return !(s.sw("function") || s.sw("class"));
 			}
-			, "property isClass": function isClass() { return (this + "").sW("class") }
-			, "property isRegular": function isRegularFunction() { return (this + "").sW("function") }
+			, "property isClass": function isClass() { return (this + "").sw("class") }
+			, "property isRegular": function isRegularFunction() { return (this + "").sw("function") }
 			, "property isFunction": function isFunction() { return this.isRegular() || this.isArrow() }
 			, "property isCallable": function isCallable() { return typeof this === "function" }
 		}
@@ -2482,7 +2560,7 @@ void (() => { "use strict";
 				startsWith._startsWith = String.prototype.startsWith;
 				return startsWith;
 			}
-			, "previous property sW": null
+			, "previous property sw": null
 			, "call native property endsWith"() {
 				function endsWith(input, index=0, flags="") {
 					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
@@ -2494,7 +2572,7 @@ void (() => { "use strict";
 				endsWith._endsWith = String.prototype.endsWith;
 				return endsWith;
 			}
-			, "previous property eW": null
+			, "previous property ew": null
 			, "property splitIndex": function splitIndex(index) {
 				return [this.slice(0, index), this.slice(index)];
 			}
@@ -2605,7 +2683,7 @@ void (() => { "use strict";
 			}
 			, "property toFunc": function toNamedFunction(name="anonymous") {
 				var s = this.valueOf();
-				if (s.sW("Symbol(") && s.eW(")")) throw Error("Can't parse Symbol().");
+				if (s.sw("Symbol(") && s.ew(")")) throw Error("Can't parse Symbol().");
 				s = (""+s).remove(/^(\s*function\s*\w*\s*\(\s*)/);
 				var args = s.slc(0, ")");
 				return (
@@ -2769,7 +2847,7 @@ void (() => { "use strict";
 				bitwise === "default" && (bitwise = "bit");
 				comparatives === "default" && (comparatives = null);
 				help === "default" && (help = "help");
-				// TODO: Add the other logic gates to bitwise
+				// TODO/ADD: Add the other logic gates to bitwise
 				if (bitwise != null) this[bitwise] = {
 					shr: (a, b) => a >> b,
 					shr2: (a, b) => a >>> b,
@@ -2836,7 +2914,7 @@ void (() => { "use strict";
 					,
 				};
 				if (help != null) {
-					// TODO: finish Logic help text
+					// TODO/FIN: finish Logic help text
 					this[help] = {
 						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
 						and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
@@ -3076,7 +3154,7 @@ void (() => { "use strict";
 				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
 
-				this.googol = 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n;
+				this.googol = 10_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000n;
 
 				if (help) this.help = {};
 				if (degTrig) this.deg = {};
@@ -3088,8 +3166,8 @@ void (() => { "use strict";
 					y < 0 ? 1n / x ** -y : x ** y;
 			}
 			isNaN(x)  { return typeof x !== "bigint" }
-			sgn(x)    { return x < 0 ? -1n : x === 0n ? 0n : 1n }
-			sign(x)   { return x < 0 ? -1n : x === 0n ? 0n : 1n }
+			sgn(x)    { return x < 0 ? -1n : BigInt(x > 0) }
+			sign(x)   { return x < 0 ? -1n : BigInt(x > 0) }
 			abs(x)    { return x * this.sgn(x) }
 			add(a, b) { return a + b }
 			sub(a, b) { return a - b }
@@ -3109,6 +3187,7 @@ void (() => { "use strict";
 
 				this.zero = "0.0"; // canonical format for 0.
 				this.one = "1.0"; // canonical format for 1.
+				this.negative_one = "-1.0"; // canonical format for -1.
 
 				if (help) this.help = {
 					add: "Takes 2 string number arguments (a and b). returns a + b as a string with maximum precision and no floating point errors",
@@ -3349,9 +3428,9 @@ void (() => { "use strict";
 			add(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = this.norm( a+"" ); b = this.norm( b+"" );
-				if (a.sW("-") && b.sW("-")) return this.neg( this.add(a.slice(1), b.slice(1)) );
-				if (a.sW("-")  && !b.sW("-")) return this.sub(b, a.slice(1));
-				if (!a.sW("-") &&  b.sW("-")) return this.sub(a, b.slice(1));
+				if (a.sw("-") && b.sw("-")) return this.neg( this.add(a.slice(1), b.slice(1)) );
+				if (a.sw("-")  && !b.sw("-")) return this.sub(b, a.slice(1));
+				if (!a.sw("-") &&  b.sw("-")) return this.sub(a, b.slice(1));
 				// do not change to +=
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
 				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
@@ -3378,9 +3457,9 @@ void (() => { "use strict";
 			sub(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = this.norm( a+"" ); b = this.norm( b+"" );
-				if (!a.sW("-") && b.sW("-")) return this.add(a, b.slice(1));
-				if (a.sW("-") && b.sW("-")) return this.sub(b.slice(1), a);
-				if (a.sW("-") && !b.sW("-")) return this.neg( this.add(a.slice(1), b) );
+				if (!a.sw("-") && b.sw("-")) return this.add(a, b.slice(1));
+				if (a.sw("-") && b.sw("-")) return this.sub(b.slice(1), a);
+				if (a.sw("-") && !b.sw("-")) return this.neg( this.add(a.slice(1), b) );
 				if (this.eq.gt(b, a)) return this.neg( this.sub(b, a) );
 				// do not change to +=
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
@@ -3789,9 +3868,9 @@ void (() => { "use strict";
 							defaultValue;
 			}
 			snum(number=1) { return this.new(number) }
-			lcm(...snums) { return this._lmgf("lcm", ...snums) } // TODO: Change to use the same method as rMath
-			gcd(...snums) { return this._lmgf("gcd", ...snums) } // TODO: Change to use the same method as rMath
-			gcf(...snums) { return this._lmgf("gcf", ...snums) } // TODO: Change to use the same method as rMath
+			lcm(...snums) { return this._lmgf("lcm", ...snums) } // TODO/CHG: Change to use the same method as rMath
+			gcd(...snums) { return this._lmgf("gcd", ...snums) } // TODO/CHG: Change to use the same method as rMath
+			gcf(...snums) { return this._lmgf("gcf", ...snums) } // TODO/CHG: Change to use the same method as rMath
 			int(n="0.0") { return this.ipart(n) }
 			truncate(n="0.0") { return this.ipart(n) }
 			ifact(n="1.0") {
@@ -3850,19 +3929,11 @@ void (() => { "use strict";
 				comparatives === "default" && (comparatives = !0);
 				constants    === "default" && (constants = !0);
 
-				Object.defineProperties(this, {
-					[Symbol.toStringTag]: {
-						value: "rMath"
-						, writable: false
-						, enumerable: false
-						, configurable: false
-					}
-					, [Symbol.name]: {
-						value: "rMath"
-						, writable: false
-						, enumerable: false
-						, configurable: false
-					}
+				Object.defineProperty(this, Symbol.toStringTag, {
+					value: "rMath"
+					, writable: false
+					, enumerable: false
+					, configurable: false
 				})
 
 				var HelpText = help ? (function create_HelpText() {
@@ -3884,7 +3955,9 @@ void (() => { "use strict";
 						{
 							this.name = name ?? null;
 							this.field = field ?? null;
-							if (isfunction) this.method = method ?? null, this.arguments = {
+							if (isfunction)
+							this.method = method ?? null,
+							this.arguments = {
 								names: args?.names ?? null
 								, defaults: args?.defaults ?? null
 								, types: args?.types ?? null
@@ -3893,6 +3966,7 @@ void (() => { "use strict";
 									args?.defaults?.length ??
 									args?.names?.length ?? null
 							};
+
 							this.description = description ?? null;
 							this.miscellaneous = miscellaneous ?? null;
 							this.see = see ?? null;
@@ -3925,7 +3999,7 @@ void (() => { "use strict";
 					delete(number=0) { return Array.prototype.remove.call(this, number) }
 					has(number=0) { return Array.prototype.includes.call(this, number) }
 					union(set, New=true) {
-						// TODO: I think this is broken, but I'm not sure
+						// TODO/FIX: I think this is broken, but I'm not sure
 						if (type(set, 1) !== "set") return this;
 						if (New) {
 							let output = new this.constructor;
@@ -3938,35 +4012,35 @@ void (() => { "use strict";
 						return this;
 					}
 					intersection(set, New=true) {
-						// TODO: Implement
+						// TODO/FIN: Implement
 						if (type(set, 1) !== "set") return this;
 						throw Error("Not Implemented");
 					}
 					difference(set, New=true) {
-						// TODO: Implement
+						// TODO/FIN: Implement
 						if (type(set, 1) !== "set") return this;
 						throw Error("Not Implemented");
 					}
 					isSuperset(set) {
-						// TODO: Implement
+						// TODO/FIN: Implement
 						// loose superset, can be the same set
 						if (type(set, 1) !== "set") return !0;
 						throw Error("Not Implemented");
 					}
 					isSubset(set) {
-						// TODO: Implement
+						// TODO/FIN: Implement
 						// loose subset, can be the same set
 						if (type(set, 1) !== "set") return !1;
 						throw Error("Not Implemented");
 					}
 					isStrictSuperset(set) {
-						// TODO: Implement
+						// TODO/FIN: Implement
 						// can't be the same set
 						if (type(set, 1) !== "set") return !0;
 						throw Error("Not Implemented");
 					}
 					isStrictSubset(set) {
-						// TODO: Implement
+						// TODO/FIN: Implement
 						// can't be the same set
 						if (type(set, 1) !== "set") return !1;
 						throw Error("Not Implemented");
@@ -5452,7 +5526,7 @@ void (() => { "use strict";
 			}
 			conjugate(x) {
 				// complex conjugate
-				// TODO: Expand to CFractions
+				// TODO/ADD: Expand to CFractions
 				return type(x, 1) === "complex" ? cMath.conjugate(x) : x;
 			}
 			sum(n /*start, first*/, last, fn=n=>n, inc=1) {
@@ -5977,7 +6051,7 @@ void (() => { "use strict";
 				return ans;
 			}
 			fact(x, acy=1e3, inc=.1) {
-				// TODO: implement the following formula, and maybe a lookup table for the integral values...
+				// TODO/FIN: implement the following formula, and maybe a lookup table for the integral values...
 				// or a regression instead of an integral.
 				//       / ∫_0^∞ exp(xlnt-t) dt              , 0 ≤ x ≤ 1
 				// x! = <| (x % 1)! / Π_{k=1}^{-⌊x⌋} (x + k) , x < 0
@@ -6177,7 +6251,7 @@ void (() => { "use strict";
 				return `${factor}${rad < 0 ? "i" : ""}√${this.abs(rad)}`.remove(/^1|√1$/);
 			}
 			PythagTriple(maxSize=1000) {
-				// TODO: Fix
+				// TODO/FIX: Fix
 				if (typeof maxSize !== "number") maxSize = 1000;
 				for (var a = 1, b = 1, c, triples = []; a < maxSize; a++) {
 					for (b = 1; b < maxSize; b++) {
@@ -6737,7 +6811,7 @@ void (() => { "use strict";
 			}
 			base10Conv(n, base, decAcy=54, numberOnly=false) {
 				// only works for base <= 10
-				// TODO: Fix
+				// TODO/FIX: Fix
 				if (isNaN( n = Number(n) )) return NaN;
 				if (isNaN( n = Number(n) ) || base < 2) return NaN;
 				if (isNaN( base = Number(base) )) return NaN;
@@ -6782,7 +6856,7 @@ void (() => { "use strict";
 				return table;
 			}
 			cosNxSimplify(str="cos(x)") {
-				// TODO: make cosNxSimplify() as good as sinNxSimplify()
+				// TODO/ADD: make cosNxSimplify() as good as sinNxSimplify()
 				typeof str === "number" && !(str % 1) && (str = `cos(${str}x)`);
 				if (typeof str !== "string") return "";
 				if (/^cos\d+x$/.test(str)) str = `cos(${str.match(/\d+/)[0]}x)`;
@@ -6922,7 +6996,7 @@ void (() => { "use strict";
 			////////////////////////////////////// SET OPERATIONS END //////////////////////////////////////
 			harmonic(n=1, decimals=18) {
 				// harmonic series
-				// TODO: Expand to the real numbers
+				// TODO/ADD: Expand to the real numbers
 				return this.sum(
 					1,
 					Number.parseInt(n),
@@ -6986,7 +7060,7 @@ void (() => { "use strict";
 			nextAfter(x=0, y=Infinity) { return x === y ? x : x > y ? this.nextDown(x) : this.nextUp(x) }
 			ulp(x=1) { return x < 0 ? this.nextUp(x) - x : x - this.nextDown(x) }
 			midpoint([x1, y1], [x2, y2]) {
-				// TODO: make this work with OrderPairs, Vectors, and Arrays once they are implemented
+				// TODO/ADD: make this work with OrderPairs, Vectors, and Arrays once they are implemented
 				return [(x1+x2)/2, (y1+y2)/2];
 			}
 			δ(x) {
@@ -7678,14 +7752,14 @@ void (() => { "use strict";
 			conjugate(z) { return type(z, 1) !== "complex" ? NaN : this.new(z.re, -z.im) }
 			inverse(z) { return type(z, 1) !== "complex" ? NaN : this.new(1/z.re, 1/z.im) }
 			isPrime(z) {
-				// TODO: implement
+				// TODO/FIN: implement
 				if (typeof z === "number") return z.isPrime();
 				if (type(z, 1) !== "complex") return NaN;
 				throw Error("Not Implemented");
 			}
 		}
 		, "math fMath": class FractionalStringMath {
-			// TODO: Make the functions convert numbers into fractions if they are inputed instead
+			// TODO: Make the functions convert numbers into fractions if they are inputed
 			constructor(
 				help = LibSettings.fMath_Help_Argument
 				, degTrig = LibSettings.fMath_DegTrig_Argument
@@ -7753,6 +7827,7 @@ void (() => { "use strict";
 		, "math cfMath": class ComplexFractionalStringMath {
 			constructor(help=LibSettings.cfMath_Help_Argument) {
 				help === "default" && (help = !0);
+
 				this.CFraction = class ComplexFraction {
 					constructor(re=fMath.one, im=fMath.one) {
 						if (type(re, 1) !== "fraction" || type(im, 1) !== "fraction")
@@ -7761,6 +7836,7 @@ void (() => { "use strict";
 						this.im = fMath.simp(im);
 					}
 				};
+
 				if (help) this.help = {
 					CFraction: null,
 				};
@@ -7773,7 +7849,7 @@ void (() => { "use strict";
 			// get prototype's properties
 			, _protoProps = e => Object.getOwnPropertyNames(e.constructor.prototype)
 			, _typeToObj = {
-				// use type(x, anything uther than undefined)
+				// use type(x, anything other than undefined)
 				num : rMath, bigint : bMath, fraction : fMath, // string : sMath,
 				str : sMath, mutstr : sMath, complex  : cMath, // number : rMath,
 			};
@@ -7798,12 +7874,17 @@ void (() => { "use strict";
 
 			class AllMath { // aMath will call the correct function based upon the inputs' types
 				constructor() {
-					if (LibSettings.aMath_Help_Argument) this.help = `see the help attributes of the other math functions, which you can find at '${
+					if (LibSettings.aMath_Help_Argument)
+					this.help = `see the help attributes of the other math functions, which are at '${
 						LibSettings.Environment_Global_String
-					}.MathObjects'.  'this' refers to the current AllMath object.  this._internals.call() and this._internals.call_attr() just call functions from the correct math object. call_attr() uses the correct attribute from the math object. not all the functions are guaranteed to work for all types. this._internals._getNameOf() gets the name of a math object given the object. this._internals._typeToObj gives the corresponding math object based on the type (the key).`;
+					}.MathObjects'.  'this' refers to the current AllMath object. this._internals.call() ${""
+					}and this._internals.call_attr() just call functions from the correct math object. ${""
+					}call_attr() uses the correct attribute from the math object. not all the functions are ${""
+					}guaranteed to work for all types. this._internals._getNameOf() gets the name of a math ${""
+					}object given the object. this._internals._typeToObj gives the corresponding math object ${""
+					}based on the type (the key).`;
 				}
 			}
-			// TODO: User Object.defineProperty
 			for (const fname of Object.values(MathObjects).map(e => _protoProps(e)).flat().remrep().remove("constructor"))
 				AllMath.prototype[fname] = function () { return _call(fname, null, ...arguments) }
 			if (LibSettings.aMath_DegTrig_Argument) {
@@ -7833,10 +7914,10 @@ void (() => { "use strict";
 			return {
 				Function  : Function
 				, Boolean : Boolean
-				, Number  : Number
 				, String  : String
-				, BigInt  : BigInt
 				, RegExp  : RegExp
+				, BigInt  : BigInt
+				, Number  : Number
 				, Array   : Array
 				,  Int8Array        : Int8Array
 				, Uint8Array        : Uint8Array
@@ -7897,7 +7978,7 @@ void (() => { "use strict";
 				, definer(obj, "Γ", obj.gamma), definer(obj, "//", obj.fdiv);
 
 			definer(MathObjects, "Math", rMath.Math, !1, !1, !1);
-			// TODO: remove "**" after sMath.pow exists
+			// TODO/FIN: remove "**" after sMath.pow exists
 			definer(sMath, "**", sMath.ipow);
 			definer(sMath, "^", sMath.ipow);
 			definer(sMath, "ℙ", sMath.P);
@@ -8152,30 +8233,20 @@ void (() => { "use strict";
 		if (LibSettings.Alert_Conflict_OverWritten && CONFLICT_ARR2.length) {
 			switch (LibSettings.ON_CONFLICT) {
 				case "crash": throw Error("there was a conflict and the program hasn't crashed yet.");
-				case "ast":
 				case "assert":
 					console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR2);
 					break;
-				case "dbg":
 				case "debug": console.debug("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
-				case "inf":
 				case "info": console.info("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
-				case "wrn":
-				case "warning":
 				case "warn": console.warn("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
-				case "err":
 				case "error": console.error("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
 				case "log": console.log("Global Variables Overwritten: %o", CONFLICT_ARR2); break;
-				case "alt":
 				case "alert":
 					LibSettings.Use_Document &&
 						alert(`Global Variables Overwritten: ${CONFLICT_ARR2.join(", ")}`);
 					break;
-				case "ret":
 				case "return": return `Global Variables Overwritten: ${CONFLICT_ARR2.join(", ")}`;
-				case "trw":
 				case "throw": throw `Global Variables Overwritten: ${CONFLICT_ARR2.join(", ")}`;
-				// case "ignore": break;
 				// case "cry": break;
 				// case "debugger": break;
 				// case "none": break;
@@ -8248,7 +8319,6 @@ document._createCDATASection = (function create__createCDATASection() {
 	function createCDATASection(text="") { return doc.createCDATASection(text) }
 	return createCDATASection._document = doc, createCDATASection;
 })();
-
 
 rMath._generateReals = (function create_realNumbers() {
 	const isBrowser = (globalThis + "").slice(8, -1).toLowerCase() === "window";
