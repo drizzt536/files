@@ -11,6 +11,8 @@
 
 # TypeScript version of lib.js v3.0.0
 /JavaScript/Library/
+# DuckyScript examples
+/PicoDucky/scripts/
 
 /HTML/3quine.html
 /HTML/calculator.html
