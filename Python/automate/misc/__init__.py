@@ -41,6 +41,7 @@ __functions__ = (
     "monitors",
     "view (view module)",
     "read",
+    "readlines",
     "write",
     "clear (reset file to empty)",
     "cmp",
@@ -60,11 +61,7 @@ def void(*args) -> None:
     pass
 
 def monitors() -> list[dict["top", "left", "width", "height"], ...]:
-    """
-        None  ->  list[ dict["top", "left", "width", "height"], ... ]
-
-        returns a list of all connected monitors.
-    """
+    """returns a list of all connected monitors."""
     from ctypes.wintypes import RECT
     from ctypes import (
         c_int as cint, c_ulong as ul, POINTER as ptr,
@@ -83,8 +80,6 @@ def monitors() -> list[dict["top", "left", "width", "height"], ...]:
 
 def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
     """
-        Module, int=1  ->  (tuple | list | set)[str, ...] | dict_keys | None
-
         function for viewing module contents.
         the first argument is the module, and the second argument is the form
         forms:
@@ -128,8 +123,6 @@ def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...]
 
 def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
     """
-        str | int  ->  str
-
         function for reading from files.
         takes 1 argument, file path.
         reads and returns the contents of the file
@@ -142,25 +135,52 @@ def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
         print("\nautomate.misc.read() failed to read the file because it does not exist")
         raise e
     except PermissionError as e:
-        print("\nautomate.misc.read() failed to read the file because the file requested is a folder or there are incorrect permissions to view the file.")
+        print("\nautomate.misc.read() failed to read the file because the file requested is a folder or there are insufficient permissions to view the file.")
         raise e
     except TypeError as e:
-        print("\nautomate.misc.read() failed to read the file was not a string or integer")
+        print("\nautomate.misc.read() failed to read the file because it was not a string or non-negative-integer")
         raise e
     except ValueError as e:
-        print("\nautomate.misc.read() failed to read the file was not a correct value")
+        print("\nautomate.misc.read() failed to read the file because it was not a valid value")
         raise e
     except OSError as e:
-        print("\nautomate.misc.read() failed to read the file was an invalid integer (ie: not 0, 1, or 2)")
+        print("\nautomate.misc.read() failed to read the file because it was an invalid integer (ie: not 0, 1, or 2)")
         raise e
     except UnsupportedOperation as e:
         print("\nautomate.misc.read() can't read from stdout")
         raise e
 
+def readlines(file_loc: str | int, /, *, encoding: str = "utf8") -> list[str, ...]:
+    """
+        function for reading from files.
+        takes 1 argument, file path.
+        reads and returns the contents of the file split into a list of lines
+    """
+    from io import UnsupportedOperation
+    try:
+        with open(file_loc, "r") as file:
+            return file.readlines()
+    except FileNotFoundError as e:
+        print("\nautomate.misc.readlines() failed to read the file because it does not exist")
+        raise e
+    except PermissionError as e:
+        print("\nautomate.misc.readlines() failed to read the file because the file requested is a folder or there are insufficient permissions to view the file.")
+        raise e
+    except TypeError as e:
+        print("\nautomate.misc.readlines() failed to read the file because it was not a string or non-negative integer")
+        raise e
+    except ValueError as e:
+        print("\nautomate.misc.readlines() failed to read the file because it was not a valid value")
+        raise e
+    except OSError as e:
+        print("\nautomate.misc.readlines() failed to read the file because it was an invalid integer (ie: not 0, 1, or 2)")
+        raise e
+    except UnsupportedOperation as e:
+        print("\nautomate.misc.readlines() can't read from stdout")
+        raise e
+
 def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: str = "utf8") -> None:
     """
-        str | int, str="", str="a"  ->  None
-
         function for writing to files.
         takes 3 arguments:
             1. file path
@@ -202,8 +222,6 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: 
 
 def clear(file_loc: str | int, /) -> bool:
     """
-        str | int  ->  bool
-
         takes one argument, the file path.  
         clears the content of the file.
         returns true on success and false on fail
@@ -217,8 +235,6 @@ def clear(file_loc: str | int, /) -> bool:
 
 def cmp(num1: realnum = 0, num2: realnum = 0, /) -> int:
     """
-        float | int=0, float | int=0  ->  int[-1, 0, 1]
-
         function for comparing floats or integers
         returns -1 if num1 < num2
         returns 0 if num1 == num2
@@ -230,8 +246,6 @@ def cmp(num1: realnum = 0, num2: realnum = 0, /) -> int:
 
 def ccmp(comp1: number = 0, comp2: number = 0, /) -> tuple[int, int]:
     """
-        complex | float | int=0, complex | float | int=0  ->  tuple[ int[-1,0,1], int[-1,0,1] ]
-
         returns a tuple of two integers
         the first integer compares the real parts and the second integer compares the imaginary parts
     """
@@ -246,8 +260,6 @@ def isntinstance(a, b: type(realnum) | type, /) -> bool:
 
 def random(return_int: bool = False, /) -> realnum:
     """
-        bool  ->  float | int
-
         returns any random float (or int, depending on the argument) in (-∞, ∞)
         more likely to return numbers closer to zero
         2^-(1 + int(log|x|)) probability that ~|x| will get returned based on its magnitude
@@ -267,8 +279,6 @@ def random(return_int: bool = False, /) -> realnum:
 
 def crandom(return_int: bool = False, /) -> complex:
     """
-        bool  -> complex
-
         returns any complex number where both the real
         and complex parts can be in (-∞, ∞)
         more likely to return numbers closer to zero.
@@ -277,8 +287,6 @@ def crandom(return_int: bool = False, /) -> complex:
 
 def addressOf(fn: function, form: type = int, /) -> str | int:
     """
-        function  ->  str
-
         function for getting the address of functions
         takes 1 function argument and returns, as a string, the address
     """
@@ -294,8 +302,6 @@ def addressOf(fn: function, form: type = int, /) -> str | int:
 
 def nameOf(fn: function, /) -> str:
     """
-        function  ->  str
-
         function for getting the name of functions
         takes 1 function argument and returns, as a string, the name
     """
