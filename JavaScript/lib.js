@@ -2,13 +2,14 @@
 // lib.js v2.1.7 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 /**
- * Todo Comment Syntax:
+ * Todo etc. Comment Syntax:
  * // TODO: Miscellaneous todo
  * // TODO/ADD: add something
  * // TODO/FIX: fix something.
  * // TODO/FIN: finish or implement something
  * // TODO/CHG: change something to do a different thing. Not really an update nor a fix.
  * // TODO/UPD: update something
+ * // DEV: temporary development thing, ie: dev break in while loop.
 */
 
 
