@@ -101,6 +101,40 @@ var o = dict({
 			"IN:accIdwithOpportunityMap.keyset()"
 		],
 	}
+	, "Batch": {
+		"function": null,
+		"variable": {
+			"set": "set [optional parameters] <name> = <value>",
+			"get": ["%<name>%", "%%<name>%%"],
+		},
+		"typing": "dynamic?",
+		"compiled/interpreted": "interpreted",
+		"level": "high",
+		"alt-name": "cmd",
+		"cur.obj": "N/A",
+		"undefined": null,
+		"cstyle": false,
+		"semicolon": "no, separates statements",
+		"extends": "N/A",
+		"keywords": [
+			"@echo off", // the @ sign is optional
+			"title among us",
+			"goto :eof",
+			"goto <labelname>",
+			":<labelname>",
+			":: comment",
+			"rem comment",
+			"if <condition> ( ... ) else ( ... )",
+			"pause",
+			"echo <string>",
+			"echo.", "echo:", "echo("
+		],
+		"misc": [
+			"both `rem` and `::` start comments, but `:` is a label",
+			"name capitalization doesn't matter",
+		],
+		"examples": null,
+	}
 	, "Bicep": {
 		"function": null,
 		"variable": null,
@@ -267,6 +301,28 @@ var o = dict({
 		"misc": null,
 		"examples": null,
 	}
+	, "Clojure": {
+		"function": ["def?", "defn?"],
+		"variable": null,
+		"typing": null,
+		"compiled/interpreted": null,
+		"level": null,
+		"alt-name": null,
+		"cur.obj": null,
+		"undefined": null,
+		"cstyle": "no?",
+		"semicolon": "no?",
+		"extends": null,
+		"keywords": [
+			"(require '[reitit.coercion.malli :as rcm])\n(require '[reitit.coercion :as coercion])\n(require '[malli.util :as mu])",
+			"(coercion/request-coercers {:body [:map [:foo :keyword]]} {})",
+			"(-> Coercion ... )"
+		],
+		"misc": [
+			"comments are either `;;` or `;`"
+		],
+		"examples": null,
+	}
 	, "CMake": {
 		"function": null,
 		"variable": null,
@@ -338,10 +394,10 @@ var o = dict({
 			"<cfif ... > ... </cfif>",
 			"<cfloop ... > ... </cfloop>",
 			"<cfoutput ... > ... </cfoutput>",
+			"<cfscript> ... </cfscript>",
 			"ArrayLen()",
 			"# ... #",
 			"\"${ ... }\"",
-			"GTE probably means 'greater than or equal to'",
 		],
 		"misc": [
 			"<!-- multi-line comment -->",
@@ -349,6 +405,7 @@ var o = dict({
 			"all the keywords' names start with cf, which probably stands for ColdFusion",
 			"seems to have something to do with xml or html",
 			"seems to be able to be just vanilla HTML",
+			"GTE probably means 'greater than or equal to'",
 		],
 		"examples": [
 			"<cfset var a = \"ah@hhs.se\" >",
@@ -356,6 +413,7 @@ var o = dict({
 			"<cfoutput>#xmlDoc.sessions[i].xmlText#</cfoutput>",
 			"<cfdump var=#xmlDoc.sessions# />",
 			"<cfset newstr = \"#REReplace(a, \"@.*\", \"\")#\">",
+			"<cfscript>\nmyvar = application.myvar ?: \"default value\";\n\nwriteOutput(myvar);\n</cfscript>"
 		],
 	}
 	, "CPython": {
@@ -506,11 +564,14 @@ var o = dict({
 		"semicolon": false,
 		"extends": "N/A?",
 		"keywords": [
-			"FROM",
-			"USER",
-			"RUN",
-			"ENV",
+			"ADD",
 			"COPY",
+			"CMD",
+			"ENV",
+			"EXPOSE",
+			"FROM",
+			"RUN",
+			"USER",
 			"WORKDIR",
 			"&&",
 		],
@@ -753,6 +814,38 @@ var o = dict({
 			"a, b, c := 2, \"asdf\", true",
 			"variable := map[string]string\nvariable[\"a\"] = 3\n",
 		],
+	}
+	, "Graphviz": {
+		"function": "N/A",
+		"variable": "N/A",
+		"typing": "dynamic?",
+		"compiled/interpreted": "compiled",
+		"level": "high?",
+		"alt-name": "Graphviz dot",
+		"cur.obj": "N/A",
+		"undefined": "N/A",
+		"cstyle": "mostly",
+		"semicolon": "optional",
+		"extends": "N/A",
+		"keywords": [
+			"graph NAME { ... }",
+			"digraph NAME { ... }",
+			"subgraph NAME { ... }",
+			"subgraph cluster_NAME { ... }",
+			"a -- b",
+			"a -- b -- c",
+			"a -- {b, c} -- d",
+			"a -- {b, c} -- d",
+			'{"1 2", "3 4"} -- {"5 6", "7 8"}',
+			"a -> b -> d",
+			"layout = neato;\noverlap = false;\nbgcolor = black;",
+			"node [color=red, shape=house];\nedge [color=green]\ngraph [labelloc = t, labeljust = c];",
+			'label = "asdf"'
+		],
+		"misc": [
+			"single quote strings are not allowed"
+		],
+		"examples": null,
 	}
 	, "Hack": {
 		"function": "function",
@@ -1170,36 +1263,45 @@ var o = dict({
 		],
 	}
 	, "Lua": {
-		"function": null,
-		"variable": "",
-		"typing": null,
+		"function": "function",
+		"variable": ["", "local"],
+		"typing": "dynamic?",
 		"compiled/interpreted": null,
-		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
-		"undefined": null,
-		"cstyle": null,
-		"semicolon": null,
-		"extends": null,
+		"level": "high?",
+		"alt-name": "N/A?",
+		"cur.obj": "self",
+		"undefined": "nil",
+		"cstyle": false,
+		"semicolon": "available? but unnecessary",
+		"extends": "N/A?",
 		"keywords": [
 			"while ... do ... end",
 			"if ... then ... else ... end",
 			"exec()",
 			"sleep()",
 			"..",
+			"local <name> = <value>",
+			"-- comment",
+			"function <name>(...) ... end",
+			"function(...) ... end -- anonymous",
+			"assert(<condition?>, <message>)",
 		],
 		"misc": [
 			"Lua is a common language and is used in text editors and even roblox",
 			"lua is supposed to be fast",
 		],
-		"examples": null,
+		"examples": [
+			"max_tokens = max_tokens or obj.max_tokens",
+			"function obj:replaceWithConfig(model, temperature, max_tokens) ... end",
+			"{ [<string>] = <value>, [<string>] = <value>, ... }"
+		],
 	}
 	, "MLIR": {
 		"function": null,
-		"variable": "?",
+		"variable": "%<number> = ...",
 		"typing": "static?",
 		"compiled/interpreted": null,
-		"level": null,
+		"level": "high?",
 		"alt-name": null,
 		"cur.obj": null,
 		"undefined": null,
@@ -1211,16 +1313,21 @@ var o = dict({
 			"outs()",
 			"into",
 			"to",
-			"^bb0",
+			"^bb<number>:",
+			"%<number> = ... : <Type>",
 			"ugt",
 			"ogt",
 			"low",
 			"high",
-			"%<number>",
-			": f32", // float32?
+			"... : f32", // float32
+			"... : i64", // int64
+			"module attributes {llvm.data_layout = ""} { ... }",
 		],
 		"misc": null,
-		"examples": null,
+		"examples": [
+			"... : !llvm.ptr<struct<(ptr<f32>, ptr<f32>, i64, array<4 x i64>, array<4 x i64>)>>",
+			"llvm.call @conv2d(%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22, %23, %25, %26, %27, %28, %29, %30, %31, %32, %33, %34, %35)"
+		],
 	}
 	, "NASM intel-ASM": {
 		"function": null,
@@ -1433,7 +1540,7 @@ var o = dict({
 			"where-object",
 			"?",
 			"write-host", // write
-			"Verb-Noun"
+			"Verb-Noun",
 			"write-error",
 			"Verb-Noun",
 			"get-eventlog",
@@ -1466,6 +1573,38 @@ var o = dict({
 			"Get-EventLog -LogName System |? {$_.EventID -in (6005,6006,6008,6009,1074,1076)} | ft TimeGenerated,EventId,Message -AutoSize –wrap",
 			"function Get-PublicIp { return Invoke-RestMethod 'https://api.ipify.org' }",
 			"param( [Parameter(position=0, mandatory=$false)] [int] $g = 23 )",
+		],
+	}
+	, "Prolog": {
+		"function": null,
+		"variable": null,
+		"typing": null,
+		"compiled/interpreted": null,
+		"level": null,
+		"alt-name": null,
+		"cur.obj": null,
+		"undefined": null,
+		"cstyle": null,
+		"semicolon": null,
+		"extends": null,
+		"keywords": [
+			"% comment",
+			"op()",
+			":-",
+			"writeln()",
+			"eval()",
+			"halt",
+			"run()",
+			"cek()",
+			'λ()'
+		],
+		"misc": null,
+		"examples": [
+			":- op(1100,yfx,$).\nv(I):- integer(I).\nv(λ(_X,_E)).",
+			"V/P/K):- atom(X),member(X->V,P).",
+			":- run(λ(x,λ(y,x+y))$10$2,R),writeln(R),R=12.",
+			"run(E,R):- eval(E/[]/[],R/_/_).",
+			"eval(CEK,CEK2):- cek(CEK,CEK1),!,eval(CEK1,CEK2).",
 		],
 	}
 	, "Q#": {
@@ -1505,7 +1644,7 @@ var o = dict({
 			"N:N",
 			"<-",
 			"::",
-			"f(arg=value, ...)"
+			"f(arg=value, ...)",
 			"for (i in N:N) {",
 			"rpt$flag",
 			"%>%",
@@ -1614,10 +1753,13 @@ var o = dict({
 			"next",
 			":key => \"value\"",
 			"class",
-			"::",
+			"::", // for member acceess or something
 			"require",
+			"require_relative",
 			"alias_method :new_name, :old_name",
 			"assert()",
+			"assert_equal",
+			"assert_raises()"
 			"puts",
 			"test",
 			"flunk()",
@@ -1650,6 +1792,8 @@ var o = dict({
 		],
 		"examples": [
 			"weight = - weight if sign == \"-\"",
+			"next if title.nil?",
+			"get_data(page: 1)"
 		],
 	}
 	, "Rust": {
@@ -1691,7 +1835,7 @@ var o = dict({
 	}
 	, "Scala": {
 		"function": "def",
-		"variable": null,
+		"variable": ["var", "val"],
 		"typing": null,
 		"compiled/interpreted": null,
 		"level": null,
@@ -1704,11 +1848,17 @@ var o = dict({
 		"keywords": [
 			"object",
 			"import",
-			"???"
+			"???",
+			": <Type>",
+			"while ... do ...",
+			"if ... then ... else if ... then ... else ..."
 		],
-		"misc": null,
+		"misc": [
+			"seems to use indents like python for blocks"
+		],
 		"examples": [
 			"def test1(): Unit = assert(poorPigs(8, 1, 1) == 3)",
+			"if arr(mid) == target then return true\nelse if arr(mid) > target then hi = mid\n else lo = mid+1 // arr(mid) < target"
 		],
 	}
 	, "SCSS": {
@@ -1820,10 +1970,10 @@ var o = dict({
 	}
 	, "Solidity": {
 		"function": "function",
-		"variable": null,
-		"typing": null,
+		"variable": "<Type>",
+		"typing": "static",
 		"compiled/interpreted": null,
-		"level": null,
+		"level": "low?",
 		"alt-name": null,
 		"cur.obj": null,
 		"undefined": null,
@@ -1851,12 +2001,25 @@ var o = dict({
 			"address",
 			"new",
 			"memory",
+			"pragma solidity [version];",
+			"pragma solidity ^[min version];",
+			"address payable[] public participants;",
+			"function name(...) public { ... }",
+			"library NAME { ... }",
+			"function name(...) public virtual { ... }",
 		],
 		"misc": null,
 		"examples": [
-			"function name(...) public { ... }",
-			"pragma solidity 0.8.15;",
 			"function getContractOwnerAddress () private view returns(address) {",
+			`function functionCall(
+				address target,
+				bytes memory data,
+				string memory errorMessage
+			) internal returns (bytes memory) {
+				return functionCallWithValue(target, data, 0, errorMessage);
+			}`,
+			"contract SadDamn is Initializable, OwnableUpgradeable { ... }",
+			" participants = new address payable[](0);",
 		],
 	}
 	, "SQL": {
@@ -1901,17 +2064,23 @@ var o = dict({
 			"VALUES",
 			"CREATE TABLE",
 			"TEXT",
-			"CREATE SCHEMA"
+			"CREATE SCHEMA",
+			"drop database if exists <Name>;",
+			"create database <Name>;",
 		],
 		"misc": [
 			"SQL: '=' means ==. idk if dynamic or static",
 			"/* multi-line comment */",
+			"capitalization doesn't matter"
 		],
 		"examples": [
 			"drop table if exists lbd_stage;",
 			"create temp table lbd_stage (like knowledge.lead_by_demand);",
 			"{%- endcall -%}",
 			"{%- call statement('date_range_query', fetch_result=True) -%}",
+			"create table Ingredient (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n\tname VARCHAR(50))\n\tENGINE=InnoDB DEFAULT CHARSET=utf8;"
+			"select r.name as \"Recipe\" ... from Recipe r",
+			"LEFT OUTER JOIN Measure mu on mu.id = measure_id;",
 		],
 	}
 	, "SubRip Text": {
@@ -1980,7 +2149,10 @@ var o = dict({
 			"import",
 			"print()",
 			"@escaping",
+			"switch/case",
+			"class",
 			"extension",
+			"enum"
 			"public",
 			"private",
 			"static",
@@ -1992,12 +2164,14 @@ var o = dict({
 			"String()!",
 		],
 		"misc": [
-			"class init method",
+			"classes use init method",
+			"object oriented",
 		],
 		"examples": [
 			"try app.register(collection: TodoController())",
 			"return req.view.render(\"index\", [\"title\": \"Hello Vapor!\"])",
 			"init(handler:@escaping (_:CGPoint) -> Void ) { super.init(delegate: _delegate) ... }",
+			"struct ScrimLoader: View {\n\t@StateObject private var viewModel = ViewModel() ... }"
 
 		],
 	}
