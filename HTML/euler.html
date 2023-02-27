@@ -12,7 +12,7 @@
 <script type="text/javascript" defer>
 // Project Euler problems
 (() => {
-	for (var i=0; this[`problem_${++i}`];);
+	for (var i = 0; this[`problem_${++i}`];);
 	document.querySelector("p").innerHTML = `${i-1} Problems completed consecutively from the start.`;
 	// This will display the wrong number i
 })();
@@ -42,18 +42,17 @@ function problem_1(input = 10) {
 		}
 	return factors[factors.length-1];
 } function problem_4() {
-	var reverseNumber = num => `${num}`.split("").reverse().join("")*1;
 	for (var num1=1, num2=1, tempAns=1, ans=1; num1 < 1000; num1++) {
 		for (num2 = 1; num2 < 1000; num2++) {
 			tempAns = num1 * num2;
-			if (reverseNumber(tempAns) === tempAns && tempAns > ans)
+			if (+`${tempAns}`.split("").reverse().join("") === tempAns && tempAns > ans)
 				ans = tempAns;
 		}
 	}
 	return ans;
 } function problem_5(input = 10) {
 	function lcm (...a) {
-		a = a.flat(Infinity).map(b=>parseInt(b)*(b<0?-1:1));
+		a = a.flat(Infinity).map( b => parseInt(b)*(b<0?-1:1) );
 		for (let c, i = Math.max(...a) ;; i++) {
 			for (let j = a.length; j --> 0;) {
 				if (i % a[j]) {
@@ -70,16 +69,17 @@ function problem_1(input = 10) {
 	return lcm(array);
 } function problem_6(end = 10) {
 	function sum(l, f=n=>n) {
-		for (var t=0, n=1; n<=l; n++)
-			t += f(n);
+		for (var t=0, n=1; n <= l ;)
+			t += f(n++);
 		return t;
 	}
 	return sum(end)**2 - sum(end, n=>n**2);
 } function problem_7(index = 10_001) {
 	function isPrime(number) {
 		if (number === 2) return true;
-		if(number % 2 === 0 || number < 2) return false;
-		for (var i = 3, n = number / 3; i <= n; i += 2) if(number % i === 0) return false;
+		if (number % 2 === 0 || number < 2) return false;
+		for (var i = 3, n = number / 3; i <= n; i += 2)
+			if (number % i === 0) return false;
 		return true;
 	}
 	for (var i = 2, j = 0;; i++) {
@@ -88,34 +88,35 @@ function problem_1(input = 10) {
 			if (j === index) return i;
 		}
 	}
-	throw Error("unreachable");
 } function problem_8(size = 9, number) {
-	number = number || "7316717653133062491922511967442657474235534919493496983520312774506326239578318016984801869478851843858615607891129494954595017379583319528532088055111254069874715852386305071569329096329522744304355766896648950445244523161731856403098711121722383113622298934233803081353362766142828064444866452387493035890729629049156044077239071381051585930796086670172427121883998797908792274921901699720888093776657273330010533678812202354218097512545405947522435258490771167055601360483958644670632441572215539753697817977846174064955149290862569321978468622482839722413756570560574902614079729686524145351004748216637048440319989000889524345065854122758866688116427171479924442928230863465674813919123162824586178664583591245665294765456828489128831426076900422421902267105562632111110937054421750694165896040807198403850962455444362981230987879927244284909188845801561660979191338754992005240636899125607176060588611646710940507754100225698315520005593572972571636269561882670428252483600823257530420752963450"
-	for(var i=number.length-size, hash=[]; i>=0; i--)
-		hash[i] = number.substr(i, size).split("").reduce((t,e)=>t*e, 1);
+	number ||=  "7316717653133062491922511967442657474235534919493496983520312774506326239578318016984801869478851843858615607891129494954595017379583319528532088055111254069874715852386305071569329096329522744304355766896648950445244523161731856403098711121722383113622298934233803081353362766142828064444866452387493035890729629049156044077239071381051585930796086670172427121883998797908792274921901699720888093776657273330010533678812202354218097512545405947522435258490771167055601360483958644670632441572215539753697817977846174064955149290862569321978468622482839722413756570560574902614079729686524145351004748216637048440319989000889524345065854122758866688116427171479924442928230863465674813919123162824586178664583591245665294765456828489128831426076900422421902267105562632111110937054421750694165896040807198403850962455444362981230987879927244284909188845801561660979191338754992005240636899125607176060588611646710940507754100225698315520005593572972571636269561882670428252483600823257530420752963450";
+	for(var i=number.length-size+1, hash=[]; i --> 0 ;)
+		hash[i] = number.substr(i, size).split("").reduce( (t,e) => t*e, 1 );
 	return [Math.max(...hash), hash];
 } function problem_9(target = 1000) {
 	for (var a = 1, b = 1, c, triples = []; a < target; a++) {
 		for (b = 1; b < target; b++) {
 			c = Math.hypot(a, b);
-			if (c===parseInt(c) && a+b+c<=target)
+			if (c === parseInt(c) && a+b+c <= target)
 				triples.push([a, b, c]);
 		}
 	}
-	for(var i = triples.length-1; i>=0; i--) {
-		if (triples[i][0]+triples[i][1]+triples[i][2]===target)
-			return triples[i][0]*triples[i][1]*triples[i][2];
+	for (var i = triples.length; i --> 0 ;) {
+		if (triples[i][0] + triples[i][1] + triples[i][2] === target)
+			return triples[i][0] * triples[i][1] * triples[i][2];
 	}
 	return null;
 } function problem_10(number = 2_000_000) {
-	//slow
+	// slow
 	function isPrime(number) {
 		if (number === 2) return true;
 		if(number % 2 === 0 || number < 2) return false;
-		for (var i = 3, n = number / 3; i <= n; i += 2) if(number % i === 0) return false;
+		for (var i = 3, n = number / 3; i <= n; i += 2)
+			if (number % i === 0) return false;
 		return true;
 	}
-	for (var i = 2, ans = 0; i < number; i++) if(isPrime(i)) ans += i;
+	for (var i = 2, ans = 0; i < number; i++)
+		if (isPrime(i)) ans += i;
 	return ans
 } function problem_11(grid) {
 	var map = [];
@@ -141,15 +142,7 @@ function problem_1(input = 10) {
 		[20, 73, 35, 29, 78, 31, 90,  1, 74, 31, 49, 71, 48, 86, 81, 16, 23, 57,  5, 54],
 		[ 1, 70, 54, 71, 83, 51, 54, 69, 16, 92, 33, 48, 61, 43, 52,  1, 89, 19, 67, 48],
 	];
-	function max(...n) {
-		//remove subarrays
-		n=((a)=>{for (var A=[];!a.every(i=>!(typeof i==="object"&&JSON.stringify(i)[0]==="["?!0:!1));a=A,A=[])for(const b of a)A=A.concat(b);
-			return a
-		})(n);
-		let m = n[0];
-		for (const i of n) m = i > m ? i : m;
-		return m
-	}
+	function max(...n) { return Math.max(...n) }
 		
 	map.length = 4;// four types of searches
 	map.fill([]);
@@ -157,34 +150,52 @@ function problem_1(input = 10) {
 	var numRows = grid.length;
 	for (var i = 0; i < numCols; ++i) {// for each column
 		for (var j = numRows-4; j >= 0; --j)  {// for each row
-			map[0].push(grid[j][i]*grid[j+1][i]*grid[j+2][i]*grid[j+3][i]);// longitudinal search
-			map[1].push(grid[i][j]*grid[i][j+1]*grid[i][j+2]*grid[i][j+3]);// horizontal search
+			map[0].push(
+				grid[j+0][i] *
+				grid[j+1][i] *
+				grid[j+2][i] *
+				grid[j+3][i]
+			); // vertical search
+			map[1].push(
+				grid[i][j+0] *
+				grid[i][j+1] *
+				grid[i][j+2] *
+				grid[i][j+3]
+			); // horizontal search
 		}
 	}
-	for (var i = numRows-4; i >= 0; --i) {// for each row
-		for (var j = numCols-4; j >= 0; --j)// for each column
-			map[2].push(grid[i][j]*grid[i+1][j+1]*grid[i+2][j+2]*grid[i+3][j+3]);// ↖ ↘ search
-		for (var j = numCols-1; j >= 3/*not a magic number*/; --j)// for each column
-			map[3].push(grid[j+0][i+0]*grid[j-1][i+1]*grid[j-2][i+2]*grid[j-3][i+3]);// ↙ ↗ search
+	for (var i = numRows-3; i --> 0 ;) {// for each row
+		for (var j = numCols-3; j --> 0 ;)// for each column
+			map[2].push(
+				grid[i+0][j+0] *
+				grid[i+1][j+1] *
+				grid[i+2][j+2] *
+				grid[i+3][j+3]
+			);// ↖ ↘ search
+		for (var j = numCols; j --> 3 /*not a magic number*/ ;) // for each column
+			map[3].push(
+				grid[j-0][i+0] *
+				grid[j-1][i+1] *
+				grid[j-2][i+2] *
+				grid[j-3][i+3]
+			);// ↙ ↗ search
 	}
-	return max(map.map(map=>max(map)));
+	return max(map.map( e => max(e) ));
 } function problem_12(target = 500) {
 	for (var i = 1, s = 0;; i++) {
 		s += i;
-		if((n => {
+		if ((n => {
 			for(var i = 2, f = [1,n], N = Math.sqrt(n); i <= N; ++i) {
 				if(n % i === 0) {
 					f.push(i), f.push(n/i);
 				}
 			}
 			return f
-		})(s).length > target) {
-			return s
-		}
-		throw Error("unreachable");
+		})(s).length > target)
+			return s;
 	}
 } function problem_13(numbers) {
-	if(numbers == null) numbers = [
+	if (numbers == null) numbers = [
 		37107287533902102798797998220837590246510135740250, 46376937677490009712648124896970078050417018260538,
 		74324986199524741059474233309513058123726617309629, 91942213363574161572522430563301811072406154908250,
 		23067588207539346171171980310421047513778063246676, 89261670696623633820136378418383684178734361726757,
@@ -239,10 +250,12 @@ function problem_1(input = 10) {
 	return`${numbers.map(e=>BigInt(e)).reduce((t,e)=>e+t,0n)}`.substr(0,10);
 } function problem_14(end = 1_000_000) {
 	function collatzLen(number) {
-		for(var i = 0; number !== 1; i++) {
-			if (number % 2 == 0) number /= 2;
-			else number = number * 3 + 1;
-		} return i
+		for (var i = 0; number !== 1; i++) {
+			if (number % 2)
+				number = 3*number + 1;
+			else number /= 2;
+		}
+		return i
 	}
 	for (var i = 1, ans = [0,0]; i < end; i++) {
 		var a = collatzLen(i);
@@ -251,7 +264,8 @@ function problem_1(input = 10) {
 	return ans[0];
 } function problem_15(gridSize = 20) {
 	function ifact(n) {
-		for (var ans = 1n, cur = 1n; cur <= n; cur++) ans *= cur;
+		for (var ans = 1n, cur = 1n; cur <= n; cur++)
+			ans *= cur;
 		return ans;
 	}
 	return Number(ifact(2 * gridSize) / ifact(gridSize)**2n);
