@@ -153,6 +153,7 @@ var OwnedApplications = {
 	, "DOOM 64": 4.99
 	, "Drawful 2": 9.99
 	, "Dungeons 3": 29.99
+	, "Duskers": 19.99
 	, "Elite Dangerous": 29.99
 	, "Enter the Gungeon": 14.99
 	, "Epic Cheerleader Pack": 0
@@ -529,6 +530,7 @@ var OwnedApplications = {
 	, "Warhammer 40,000": 0 // duplicate
 	, "Warhammer 40000": 0 // duplicate
 	, "Warhammer": 0 // duplicate
+	, "Warpips": 16.99
 	, "Watch Dogs 2: Standard Edition": 59.99
 	, "Watch Dogs 2": 0 // duplicate
 	, "Wheels of Aurelia": 14.99
