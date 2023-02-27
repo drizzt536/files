@@ -472,7 +472,7 @@
 		</div>
 		<div class="screen" id="write-settings-div">
 			<h1>Write Settings</h1>
-			<label>
+			<label id="write-corrects-label">
 				<span>correct answers until mastered</span>
 				<input type="number" placeholder="positive integer" oninput=
 				       "this.value = /^0+$/.test(this.value) ?
@@ -480,16 +480,26 @@
 						this.value.replace(/\D/g, '');
 				">
 			</label>
-			<label>
-				<span>favorites or all</span>
+			<label id="write-favorite-label">
+				<h3>Favorites or All Terms</h3>
+
+				<input type="radio" name="write-favorite-label" value="all" checked/>
+				<span>&nbsp;all terms</span>
+				<br>
+				<input type="radio" name="write-favorite-label" value="favorites"/>
+				<span>&nbsp;favorites</span>
 			</label>
+			<button onclick=
+				"{ // blockify scope
+				// let objs = JSON.parse( decodeURI(
+			}">Start</button>
 		</div>
 	</div>
 
 
 	<script type="text/javascript" defer>
 		// display correct div at the start
-		if (location.search.sw("?obj=")) // redirect
+		if (location.search.sw("?obj=")) // redirect to correct search
 			location.search = "mode=select&" + location.search.slice(1);
 
 		if      (location.search.sw("?mode=local&obj=")) $("div#local-storage").show();
