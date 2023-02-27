@@ -41,7 +41,7 @@
 			// returns [isInvalid, endBracketIndex (nextCharacter)]
 			for (var i = 1; i < str.length; i++) {
 				if (str[i] === str[0]) {
-					if ( str[i-1] !== "\\" || str[i-2] === "\\")
+					if (str[i-1] !== "\\" || str[i-2] === "\\")
 						return str[i+1] !== nextCharacter ? [!0, i] : [!1, i+1];
 				}
 				else if (str[i] === nextCharacter) return [!0, i];
@@ -74,7 +74,8 @@
 
 			// stage 2: fix the beginning part
 
-			if ( /^[^?.]/.test(str[0]) ) str = (optionalStart ? "?." : ".") + str;
+			if ( /^[^?.]/.test(str[0]) )
+				str = (optionalStart ? "?." : ".") + str;
 
 			// stage 3: split the string correctly into an array
 
@@ -196,8 +197,7 @@
 			, spacesAtEnds = false
 			, onlyEnumProps = true
 		} = {}
-	)
-	{
+	) {
 		// works better than JSON.stringify
 
 		switch (object == null ?
@@ -207,22 +207,16 @@
 				object.test === /1/.test ?
 					"regexp" :
 					typeof object
-		)
-		{
+		) {
 			case "boolean": return `${object}`;
-			case "function":
-				const tmp = `${object}`;
-				return /(.|\n)*{ \[native code] }$/.test(tmp) ?
-					undefined :
-					tmp;
 			case "regexp": return `${object}`;
-			case "string": return `"${object}"`;
+			case "string": return `"${ object.replace(/\\/g, "\\\\").replace(/"/g, '\\"') }"`;
 			case "bigint": return `${object}n`;
+			case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
 			case "number": return Object.is(object, -0) ? "-0" : `${object}`;
 			case "nullish": return object === null ? "null" : "undefined";
 			case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for"
 				}("${ object.description.replace(/"/g, "\\\"") }")`;
-			case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
 			// the "array" and "object" cases might be able to be combined due to their similarity
 			case "array":
 				if (!object.length) return `[${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}]`;
@@ -434,8 +428,7 @@
 			}
 
 			for (var zippedObject = zip(obj.inputs[scope], obj.outputs[scope]), index = 0
-				; index < zippedObject.length; index++)
-			{
+				; index < zippedObject.length; index++) {
 				const [inputs, outputs] = zippedObject[index];
 				if (obj.args[scope] !== null && BigInt(inputs.length)-1n !== obj.args[scope]) {
 					if (debugMode) debugger;
