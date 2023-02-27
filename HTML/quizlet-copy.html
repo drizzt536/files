@@ -486,13 +486,37 @@
 				<input type="radio" name="write-favorite-label" value="all" checked/>
 				<span>&nbsp;all terms</span>
 				<br>
-				<input type="radio" name="write-favorite-label" value="favorites"/>
-				<span>&nbsp;favorites</span>
+				<input type="radio" name="write-favorite-label" value="favorites" id="write-favorites-only-input"/>
+				<span>&nbsp;favorites only</span>
+				<br>
+				<input type="radio" name="write-favorite-label" value="favorites" id="write-no-favorites-input"/>
+				<span>&nbsp;all terms except favorites</span>
 			</label>
 			<button onclick=
 				"{ // blockify scope
-				// let objs = JSON.parse( decodeURI(
+				let objs;
+				try {
+					objs = JSON.parse(
+						decodeURI( location.search.slc('obj=', void 0, 4) )
+					);
+				} catch { throw Error('invalid JSON object for write mode.') }
+
+				if ( !isArr(objs) ) throw Error('invalid JSON object for write mode.');
+				// otherwise assume correct object.
+
+				if ( $('input#write-favorites-only-input')[0].checked ) objs = objs.filter(e => e.favorite);
+				if ( $('input#write-no-favorites-input')[0].checked ) objs = objs.filter(e => !e.favorite);
+
+				var write_objs = objs; // global
+				// show other div
+				$('div#write-div').show();
+				$('div#write-settings-div').hide();
+				// load first term
+
 			}">Start</button>
+		</div>
+		<div class="screen" id="write-div">
+			<!-- write div -->
 		</div>
 	</div>
 
