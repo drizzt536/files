@@ -5,11 +5,20 @@
  * Todo etc. Comment Syntax:
  * // TODO: Miscellaneous todo
  * // TODO/ADD: add something
- * // TODO/FIX: fix something.
- * // TODO/FIN: finish or implement something
  * // TODO/CHG: change something to do a different thing. Not really an update nor a fix.
+ * // TODO/FIG: figure out what something does/means/is supposed to do if there are no comments
+ * // TODO/FIN: finish or implement something
+ * // TODO/FIX: fix something, figure ou why it is broken, etc
  * // TODO/UPD: update something
- * // DEV: temporary development thing, ie: dev break in while loop.
+ * There can be multiple modifiers, and they will be in alphabetical order (as shown above)
+ * // TODO/FIN/UPD: finish updating something
+ * etc.
+ * // DEV: temporary development thing, ie: dev break in a while loop.
+ * // KEEP: keep up to date. documentation or something.
+ * there can also be no message
+ * // DEV:/ no message
+ * // KEEP:/ no message
+ * // TODO:/ no message (probably should though)
 */
 
 
@@ -303,14 +312,14 @@ void (() => { "use strict";
 			// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
 			// Array(10).fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
 			var [getOldGlobals, getNewGlobals] = (function create_get_globals() {
-				const _globals = Object.getOwnPropertyNames(globalThis);
+				const _globals = Reflect.ownKeys(globalThis);
 				return [
 					function getOldGlobals() {
 						// in case things have been deleted
-						return Object.getOwnPropertyNames(globalThis).filter( s => _globals.includes(s) );
+						return Reflect.ownKeys(globalThis).filter( s => _globals.includes(s) );
 					},
 					function getNewGlobals() {
-						return Object.getOwnPropertyNames(globalThis).filter( s => !_globals.includes(s) );
+						return Reflect.ownKeys(globalThis).filter( s => !_globals.includes(s) );
 					}
 				]
 			})();
@@ -412,8 +421,7 @@ void (() => { "use strict";
 							, spacesAtEnds = false
 							, onlyEnumProps = true
 						} = {}
-					)
-					{
+					) {
 						switch (object == null ?
 							"nullish" :
 							object instanceof Array ?
@@ -424,19 +432,14 @@ void (() => { "use strict";
 						)
 						{
 							case "boolean": return `${object}`;
-							case "function":
-								const tmp = `${object}`;
-								return /(.|\n)*{ \[native code] }$/.test(tmp) ?
-									undefined :
-									tmp;
+							case "function": return  void 0; // can't be serialized. maybe can be treated as a regular object.
 							case "regexp": return `${object}`;
-							case "string": return `"${object}"`;
+							case "string": return `"${ object.replace([/\\/g, /"/g], ["\\\\", '\\"']) }"`;
 							case "bigint": return `${object}n`;
 							case "number": return Object.is(object, -0) ? "-0" : `${object}`;
 							case "nullish": return object === null ? "null" : "undefined";
 							case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for"
 								}("${ object.description.replace(/"/g, "\\\"") }")`;
-							case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
 							// the "array" and "object" cases might be able to be combined due to their similarity
 							case "array":
 								if (!object.length) return `[${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}]`;
@@ -456,14 +459,10 @@ void (() => { "use strict";
 								}
 								return output + `${spacesAtEnds ? space : ""}]`;
 							case "object":
-								var keys = Object[onlyEnumProps ? "keys" : "getOwnPropertyNames"](object);
-								// symbols always come last since they are concatonated to the end.
-
-								keys = keys.concat(
-									onlyEnumProps ?
-										Object.getOwnPropertySymbols(object)
-											.filter( key => Object.propertyIsEnumerable.call(object, key) ) :
-										Object.getOwnPropertySymbols(object)
+								var keys = (onlyEnumProps ? Object.keys : Reflect.ownKeys)(object);
+								if (onlyEnumProps) keys = keys.concat(
+									Object.getOwnPropertySymbols(object)
+										.filter( key => Object.propertyIsEnumerable.call(object, key) )
 								);
 								if (!keys.length) return `{${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}}`;
 								for (var output = `{${spacesAtEnds ? space : ""}`, i = 0 ;;) {
@@ -545,10 +544,10 @@ void (() => { "use strict";
 				return obj == null || obj != obj ? // (null, undefined), NaN
 					0 :
 					obj.length ?? // arraylike object
-						( keys ? Object.keys : Object.getOwnPropertyNames )(obj).length; // everything else
+						( keys ? Object.keys : Reflect.ownKeys )(obj).length; // everything else
 			}
 			, range = function* range(start, stop, step=1) {
-				if ( isNaN(start = Number(start)) ) throw Error("start can't be infinity");
+				if ( Number.isNaN(start = Number(start)) ) throw Error("start can't be infinity");
 				stop == null ? [stop, start] = [start, 0] : stop++;
 				for (var i = start; i < stop; i += step) yield i;
 			}
@@ -579,17 +578,25 @@ void (() => { "use strict";
 			, numStrNorm = function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
 				if (typeof snum === "bigint") return snum + ".0";
 				if (isNaN(snum)) return defaultValue;
-				if (sMath.eq.ez(snum += "")) return "0.0";
-				{
-					const match = /e([+-]\d+)$/.exec(snum += "");
-					if ( match !== null ) snum = sMath.mul10( snum.slice(0, match.index), +match[1] );	
+
+				// 0 or -0 both return 0
+				// (-0) + "" ==> "0", but "-0.0" could be inputed for some reason
+
+				if ((snum += "")[0] === "-") {
+					if ( sMath.eq.iz(snum.slice(1)) ) return "0.0";
 				}
+				else if ( sMath.eq.iz(snum) ) return "0.0";
+
+				const match = /e([+-]\d+)$/.exec(snum);
+				if ( match !== null ) snum = sMath.mul10( snum.slice(0, match.index), +match[1] );	
+
 				!snum.includes(".") && (snum += ".0");
-				return (snum[0] === "-" ? "-" : "") +
+				snum = (snum[0] === "-" ? "-" : "") +
 					snum.substring( +(snum[0] === "-") +
 						(snum.match(/^-?(0+\B)/)?.[1]?.length ?? 0),
 						snum.match(/\B0+$/)?.index ?? Infinity
 				);
+				return (snum.sw(".") ? "0" : "") + snum + (snum.ew(".") ? "0" : "");
 			}
 			, type = function type(a/*object*/, specific=false) {
 				return specific == !1 || typeof a === "bigint" || typeof a === "symbol" ?
@@ -599,9 +606,9 @@ void (() => { "use strict";
 					a === void 0 ?
 						"und" :
 						typeof a === "number" ?
-							isNaN(a) ?
+							Number.isNaN(a) ?
 								"nan" :
-								isNaN(a - a) ?
+								Number.isNaN(a - a) ?
 									"inf" :
 									"num" :
 							typeof a === "object" ?
@@ -843,16 +850,19 @@ void (() => { "use strict";
 							, scopename?.replace?.(/\s*\w+\s*$/, "")?.split?.(/\s+/g) || []
 							, str
 						);
-						let _fn = value;
-						if (LibSettings.Warn_Deprecated_Use) value = LibSettings.Use_Orig_Args_For_Deprecated_Fns ?
+						var _fn = value;
+						if (LibSettings.Warn_Deprecated_Use)
+						value = LibSettings.Use_Orig_Args_For_Deprecated_Fns ?
 							Function(
 								getArguments(_fn) /*already a string*/
-								, `\tconsole.warn("deprecated function '${deprectedScopeStr}' is being called");\n\treturn _fn.apply(scope, arguments);`
-							) :
+								, `\tconsole.warn("deprecated function '${deprectedScopeStr}' is being called");\n\treturn this._fn.apply(this._scope, arguments);`
+							).bind({ _fn: _fn, _scope: scope }) :
 							function fn(/*arguments*/) {
 								console.warn(`deprecated function '${deprectedScopeStr}' is being called`);
 								return _fn.apply(scope, arguments);
 							};
+						value._fn = _fn;
+						value._scope = scope;
 					}
 					if (list.includes("ifdom") && !LibSettings.Use_Document)
 						// return if not using the DOM
@@ -909,7 +919,7 @@ void (() => { "use strict";
 					else if (list.includes("call")) previous = value();
 					else previous = value;
 
-					if (list.includes("math")) Object.defineProperty(MathObjects, name, {
+					if (list.includes("math")) Reflect.defineProperty(MathObjects, name, {
 							value: previous,
 							writable: !1,
 							enumerable: !1,
@@ -927,7 +937,7 @@ void (() => { "use strict";
 						(list.includes("nproperty") ||
 							!(list.includes("property") || LibSettings.Property_Is_Default_Defined_Vars) ?
 							(scope[name] = previous) :
-							Object.defineProperty(scope, name, {
+							Reflect.defineProperty(scope, name, {
 								value: previous
 								, configurable: list.includes("configurable") || !!LibSettings.Defined_Properties_Configurable
 								, enumerable: list.includes("iterable") ||
@@ -1068,13 +1078,25 @@ void (() => { "use strict";
 					};`.replace(/,/g, ", ")
 				);
 			}
-			, keyof = function keyof(obj, value) {
-				for (const key of Object.keys(obj))
-					if (obj[key] === value) return key;
+			, keyof = function keyof(
+				obj = null
+				, value = null
+				, parentDepth = Infinity
+				, compare = (a, b) => a === b
+			) {
+				if (Number.isNaN(parentDepth = Number(parentDepth))) parentDepth = Infinity;
+
+				for (; parentDepth --> 0 ;) {
+					if (obj == null) return null;
+					for (const key of Reflect.ownKeys( Object(obj) ))
+						if (compare(obj[key], value)) return key;
+					if (obj === obj.constructor) return null; // `Function` and probably others
+					obj = obj.constructor;
+				}
 				return null;
 			}
 			, ord = function ord(string) {
-				return type(string) === "string" && len(string) ?
+				return type(string) === "string" && string.length ?
 					string.length - 1 ?
 						string.split("").map(c => c.charCodeAt()) :
 						string.charCodeAt() :
@@ -1092,9 +1114,9 @@ void (() => { "use strict";
 			}
 			, round = function round(n) {
 				return typeof n === "number" ?
-					isNaN(n) ?
+					Number.isNaN(n) ?
 						NaN :
-						isNaN(n - n) ? // infinity
+						Number.isNaN(n - n) ? // infinity
 							n :
 							+sMath.int(n) + (fpart(n) >= .5) * sgn(n) :
 					typeof n === "bigint" ?
@@ -1131,7 +1153,8 @@ void (() => { "use strict";
 				// works before library functions are defined
 				if (typeof fn !== "function") return !1;
 				fn += ""; // fn = fn.toString()
-				if (/^function \w+\(\)\s*{\s*\[native code\]\s*$/.test(fn)) return "native function. can't get arguments";
+				if (/^function \w+\(\)\s*{\s*\[native code\]\s*$/.test(fn))
+					return "native function. can't get arguments";
 				if (fn.startsWith("class")) return a.slice(0, a.indexOf("{")).trim();
 				if (/^function/.test(fn) && /^\s*\(/.test(fn)) return fn.match(/^\w+/)[0]; // ??? idk
 				for (var i = 0, fn = fn.slice(fn.indexOf("(")), n = fn.length, count = 0; i < n; i++) {
@@ -1279,25 +1302,25 @@ void (() => { "use strict";
 			})()
 			, dict = (function create_dict() {
 				// So I can add prototype methods and not have it on literally every object in existance
-				var Dictionary = class dict extends Object {
+				var Dictionary = class dict extends globalThis.Object {
 					// I think "extends Object" here might be redundant, but whatever.
 					constructor(dict) {
 						super();
-						for (const e of Object.keys(dict))
+						for (const e of Reflect.ownKeys(dict))
 							this[e] = dict[e];
 					}
-					keys()            { return Object.keys(this)              }
-					keyof(thing)        { return keyof(this, thing)             }
-					values()            { return Object.values(this)            }
-					entries()           { return Object.entries(this)           }
-					freeze()            { return Object.freeze(this)            }
-					isFrozen()          { return Object.isFrozen(this)          }
-					isExtensible()      { return Object.isExtensible(this)      }
-					preventExtensions() { return Object.preventExtensions(this) }
-					seal()              { return Object.seal(this)              }
-					isSealed()          { return Object.isSealed(this)          }
-					size()              { return len(Object.keys(this))         }
-					__type__()          { return "dict";                        }
+					keys()                   { return Object.keys(this)              }
+					keyof(thing, depth, cmp) { return keyof(this, thing, depth, cmp) }
+					values()                 { return Object.values(this)            }
+					entries()                { return Object.entries(this)           }
+					freeze()                 { return Object.freeze(this)            }
+					isFrozen()               { return Object.isFrozen(this)          }
+					isExtensible()           { return Object.isExtensible(this)      }
+					preventExtensions()      { return Object.preventExtensions(this) }
+					seal()                   { return Object.seal(this)              }
+					isSealed()               { return Object.isSealed(this)          }
+					size()                   { return Object.keys(this).length       }
+					__type__()               { return "dict";                        }
 				}
 				function dict(obj={}) { return new Dictionary(obj) }
 				dict.fromEntries = function fromEntries(entries=[]) {
@@ -1618,11 +1641,11 @@ void (() => { "use strict";
 		}
 		, findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0) {
 			// dd-mm-yyyy makes more sense in the current context. 
-			if (isNaN( day = Number(day) ) || !isFinite(day))
+			if (Number.isNaN( day = Number(day) ) || !isFinite(day))
 				throw TypeError(`argument 1 either isn't finite or isn't a number`);
-			if (isNaN( month = Number(month) ) || !isFinite(month))
+			if (Number.isNaN( month = Number(month) ) || !isFinite(month))
 				throw TypeError(`argument 2 either isn't finite or isn't a number`);
-			if (isNaN( year = Number(year) ) || !isFinite(year))
+			if (Number.isNaN( year = Number(year) ) || !isFinite(year))
 				throw TypeError(`argument 3 either isn't finite or isn't a number`);
 			if (type(order) !== "string" ) throw TypeError(`argument 5 isn't a string`);
 			if (order !== "dd/mm/yyyy") {
@@ -1740,7 +1763,7 @@ void (() => { "use strict";
 			})
 		)}
 		, passwordGenerator(length=18, charsToRemove=void 0, chars=characters) {
-			if (isNaN( length = Number(length)) || length < 0) return !1;
+			if (Number.isNaN( length = Number(length)) || length < 0) return !1;
 			length = Number.parseInt(length);
 			if (type(charsToRemove, 1) === "arr") {
 				if (charsToRemove.every( e => type(e) === "string" ))
@@ -1808,8 +1831,7 @@ void (() => { "use strict";
 			resolution = "max", // options: small/low/min, medium, large/high, max
 			alwaysReturnArray = false,
 			secureURL = true
-		)
-		{
+		) {
 			typeof URLArray === "string" && (URLArray = [URLArray]);
 			if (type(URLArray, 1) !== "arr") return alwaysReturnArray ? [] : null;
 
@@ -1971,13 +1993,13 @@ void (() => { "use strict";
 					}
 				}
 				__type__() { return "mutstr" }
-				toString(arg="") { return this.join(arg) }
+				toString(joiner="") { return this.join(joiner) }
 				valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
 				concat() { return Array.prototype.concat.apply(this, arguments) }
 			};
-			let protoArray = Object.getOwnPropertyNames(MutStr.prototype);
+			let protoArray = Reflect.ownKeys(MutStr.prototype);
 
-			for (const s of Object.getOwnPropertyNames(String.prototype))
+			for (const s of Reflect.ownKeys(String.prototype))
 				protoArray.incl(s) || (MutStr.prototype[s] = String.prototype[s]);
 
 			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
@@ -1990,18 +2012,161 @@ void (() => { "use strict";
 		, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
 		, complex(re=0, im=0) { return cMath.new(re, im) }
 		, "call native RegExp"() {
-			const _RegExp = RegExp, regex = function RegExp(source="(?:)", flags="") {
-				return _RegExp(
+			const _RegExp = RegExp
+			, regex = function RegExp(source="(?:)", flags="") {
+				return /*this.*/_RegExp(
 					typeof source === "symbol" ?
 						symbToStr(source).replace(/([-+.?*^$()[\]{}\\/\|])/g, "\\$1") :
 						source?.toString?.() ?? "(?:)",
 					Array.from( new Set(flags?.toString?.().toLowerCase?.()) ).join("") // remove repeats
 				);
 			};
-			return regex.prototype = _RegExp.prototype,
-				regex.prototype.constructor = regex,
-				regex._RegExp = _RegExp,
-				regex;
+
+			// I tried both Reflect and Object.setPrototypeOf(obj, proto), neither had any effect
+			regex.prototype = _RegExp.prototype;
+
+			Reflect.defineProperty(regex, "_RegExp", {
+				get: function() { return _RegExp }
+				, set: function() { throw Error("'_RegExp' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "length", {
+				get: function() { return this._RegExp.length }
+				, set: function() { throw Error("'length' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "name", {
+				get: function() { return this._RegExp.name }
+				, set: function() { throw Error("'name' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+
+			// all of the remaining properties are deprecated.
+			Reflect.defineProperty(regex, Symbol.species, {
+				get: function() { return this._RegExp[Symbol.species] }
+				, set: function() { throw Error("`Symbol.species` property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "rightContent", {
+				get: function() { return this._RegExp.rightContent }
+				, set: function() { throw Error("'rightContent' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "leftContent", {
+				get: function() { return this._RegExp.leftContent }
+				, set: function() { throw Error("'leftContent' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "lastMatch", {
+				get: function() { return this._RegExp.lastMatch }
+				, set: function() { throw Error("'lastMatch' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "lastParen", {
+				get: function() { return this._RegExp.lastParen }
+				, set: function() { throw Error("'lastParen' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "input", {
+				get: function() { return this._RegExp.input }
+				, set: function() { throw Error("'input' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$&", {
+				get: function() { return this._RegExp["$&"] }
+				, set: function() { throw Error("'$&' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			}); // lastMatch
+			Reflect.defineProperty(regex, "$+", {
+				get: function() { return this._RegExp["$+"] }
+				, set: function() { throw Error("'$+' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			}); // lastParen
+			Reflect.defineProperty(regex, "$_", {
+				get: function() { return this._RegExp.$_ }
+				, set: function() { throw Error("'$_' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			}); // input
+			Reflect.defineProperty(regex, "$'", {
+				get: function() { return this._RegExp["$'"] }
+				, set: function() { throw Error("\"'$'\" property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			}); // rightContent
+			Reflect.defineProperty(regex, "$`", {
+				get: function() { return this._RegExp["$`"] }
+				, set: function() { throw Error("'$`' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			}); // leftContent
+			Reflect.defineProperty(regex, "$1", {
+				get: function() { return this._RegExp.$1 }
+				, set: function() { throw Error("'$1' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$2", {
+				get: function() { return this._RegExp.$2 }
+				, set: function() { throw Error("'$2' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$3", {
+				get: function() { return this._RegExp.$3 }
+				, set: function() { throw Error("'$3' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$4", {
+				get: function() { return this._RegExp.$4 }
+				, set: function() { throw Error("'$4' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$5", {
+				get: function() { return this._RegExp.$5 }
+				, set: function() { throw Error("'$5' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$6", {
+				get: function() { return this._RegExp.$6 }
+				, set: function() { throw Error("'$6' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$7", {
+				get: function() { return this._RegExp.$7 }
+				, set: function() { throw Error("'$7' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$8", {
+				get: function() { return this._RegExp.$8 }
+				, set: function() { throw Error("'$8' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "$9", {
+				get: function() { return this._RegExp.$9 }
+				, set: function() { throw Error("'$9' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+
+			return regex.prototype.constructor = regex, regex;
 		}
 		, HTMLElementToString(element) {
 			if (element?.constructor?.name === "DocumentType") return `<!DOCTYPE ${element?.name ?? "html"}>`;
@@ -2392,7 +2557,7 @@ void (() => { "use strict";
 			, "property len": function setLength(num, filler=undefined) {
 				this.length = isIterable(num) ?
 					num.length :
-					isNaN(num = Number(num)) ?
+					Number.isNaN(num = Number(num)) ?
 						NaN :
 						rMath.max(num, 0);
 				filler == null || this.fill(filler); // !??
@@ -2541,22 +2706,29 @@ void (() => { "use strict";
 			, "property rstrip" : String.prototype.trimRight
 			, "property mul"    : String.prototype.repeat
 			, "property last"   : lastElement
-			, "property toRegex": function toRegularExpression(flags="", form="escaped") {
-				if (form === "escaped" || form === "escape" || form === "e" || form === "esc")
+			, "property toRegex": function toRegularExpression(flags="", stt="", end="", form="escaped") {
+				// `stt` and `end` are not escaped in escape mode
+				if (type(stt) !== "string" || type(end) !== "string")
+					throw Error("invalid types for last two arguments of String.prototype.toRegex(). both should be string or MutableString");
+
+				if (form === "escaped" || form === "e")
 					for (var i = 0, b = "", l = this.length; i < l; i++)
 						b += "$^()+*\\|[]{}?.".includes(this[i]) ?
 							`\\${this[i]}` :
 							this[i];
-				else return RegExp(this, flags);
-				return RegExp(b, flags);
+				else if (form === "unescaped" || form === "u")
+					return RegExp(stt + this + end, flags);
+				else throw Error("invalid form (2nd) argument for String.prototype.toRegex().");
+
+				return RegExp(stt + b + end, flags); // escaped
 			}
 			, "call native property startsWith"() {
 				function startsWith(input, index=0, flags="") {
 					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
 					return type(input, 1) === "arr" ?
 						input.map( e => this.startsWith(e, index, flags) ) :
-						RegExp("^" + `${ type(input, 1) === "regex" ? input.source : input
-						}`.toRegex(flags).source ).test( this.slice(index) );
+						`${ type(input, 1) === "regex" ? input.source : input }`
+							.toRegex(flags, "^").test( this.slice(index) );
 				}
 				startsWith._startsWith = String.prototype.startsWith;
 				return startsWith;
@@ -2567,8 +2739,8 @@ void (() => { "use strict";
 					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
 					return type(input, 1) === "arr" ?
 						input.map( e => this.endsWith(e, index, flags) ) :
-						RegExp( `${ type(input, 1) === "regex" ? input.source : input
-						}`.toRegex(flags).source+"$" ).test( this.slice(index) );
+						`${ type(input, 1) === "regex" ? input.source : input }`
+							.toRegex(flags, void 0, "$").test( this.slice(index) );
 				}
 				endsWith._endsWith = String.prototype.endsWith;
 				return endsWith;
@@ -2671,16 +2843,16 @@ void (() => { "use strict";
 				// this also sorts the string. *shrugs*, whatever idc
 				return Array.from( new Set(this) ).join("");
 			}
-			, "property remove": function remove(arg) { return this.replace(arg, "") }
-			, "property removeAll": function removeAll(arg) {
-				return typeof arg === "string" ?
-					this.remove( RegExp(arg, "g") ) :
-					type(arg, 1) === "regex" ?
-						this.remove( RegExp(arg.source, (arg.flags + "g").remrep()) ) :
+			, "property remove": function remove(text) { return this.replace(text, "") }
+			, "property removeAll": function removeAll(text) {
+				return typeof text === "string" ?
+					this.remove( RegExp(text, "g") ) :
+					type(text, 1) === "regex" ?
+						this.remove( RegExp(text.source, (text.flags + "g").remrep()) ) :
 						this;
 			}
-			, "property each": function putArgBetweenEachCharacter(arg="") {
-				return this.split("").join(`${arg}`);
+			, "property each": function putArgBetweenEachCharacter(joiner="") {
+				return this.split("").join( joiner.toString() );
 			}
 			, "property toFunc": function toNamedFunction(name="anonymous") {
 				var s = this.valueOf();
@@ -2791,12 +2963,12 @@ void (() => { "use strict";
 			, "property shr2": function shiftRightUnsigned(num) { return this >>> Number(num) }
 			, "property isInteger": function isInteger() { return this === Number.parseInt(this) }
 			, "previous property isInt": null
-			, "property add": function add(arg) { return this + Number(arg) }
-			, "property sub": function subtract(arg) { return this - Number(arg) }
-			, "property mul": function multiply(arg) { return this * Number(arg) }
-			, "property div": function divide(arg) { return this / Number(arg) }
-			, "property mod": function modulo(arg) { return this % Number(arg) }
-			, "property pow": function power(arg) { return this ** Number(arg) }
+			, "property add": function add(number) { return this + Number(number) }
+			, "property sub": function subtract(number) { return this - Number(number) }
+			, "property mul": function multiply(number) { return this * Number(number) }
+			, "property div": function divide(number) { return this / Number(number) }
+			, "property mod": function modulo(number) { return this % Number(number) }
+			, "property pow": function power(number) { return this ** Number(number) }
 		}
 		, "prototype BigInt": {
 			"property isPrime": function isPrime() {
@@ -2825,14 +2997,14 @@ void (() => { "use strict";
 					return +`${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
 				else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
 			}
-			, "property shl": function shiftLeft(num) { return this << BigInt(num) }
-			, "property shr": function shiftRight(num) { return this >> BigInt(num) }
-			, "property add": function add(arg) { return this + BigInt(arg) }
-			, "property sub": function subtract(arg) { return this - BigInt(arg) }
-			, "property mul": function multiply(arg) { return this * BigInt(arg) }
-			, "property div": function divide(arg) { return this / BigInt(arg) }
-			, "property mod": function modulo(arg) { return this % BigInt(arg) }
-			, "property pow": function power(arg) { return this ** BigInt(arg) }
+			, "property shl": function shiftLeft(int) { return this << BigInt(int) }
+			, "property shr": function shiftRight(int) { return this >> BigInt(int) }
+			, "property add": function add(int) { return this + BigInt(int) }
+			, "property sub": function subtract(int) { return this - BigInt(int) }
+			, "property mul": function multiply(int) { return this * BigInt(int) }
+			, "property div": function divide(int) { return this / BigInt(int) }
+			, "property mod": function modulo(int) { return this % BigInt(int) }
+			, "property pow": function power(int) { return this ** BigInt(int) }
 			, "property length": function length(n=0) { return `${this}`.length - n }
 			, "property isInteger": function isInteger() { return !0 }
 			, "previous property isInt": null
@@ -2843,8 +3015,7 @@ void (() => { "use strict";
 				, comparatives = LibSettings.Logic_Comparatives_Argument
 				, help = LibSettings.Logic_Help_Argument
 				,
-			)
-			{
+			) {
 				bitwise === "default" && (bitwise = "bit");
 				comparatives === "default" && (comparatives = null);
 				help === "default" && (help = "help");
@@ -3149,8 +3320,8 @@ void (() => { "use strict";
 				help = LibSettings.bMath_Help_Argument
 				, degTrig = LibSettings.bMath_DegTrig_Argument
 				, comparatives = LibSettings.bMath_Comparatives_Argument
-			)
-			{
+				,
+			) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
@@ -3180,8 +3351,8 @@ void (() => { "use strict";
 				help = LibSettings.sMath_Help_Argument
 				, degTrig = LibSettings.sMath_DegTrig_Argument
 				, comparatives = LibSettings.sMath_Comparatives_Argument
-			)
-			{
+				,
+			) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
@@ -3239,7 +3410,7 @@ void (() => { "use strict";
 						le: "Takes 2 string number arguments (a, b). returns a ≤ b",
 						eq: "Takes 2 string number arguments (a, b). returns a == b",
 						ne: "Takes 2 string number arguments (a, b). returns a ≠ b",
-						ez: "Takes 1 string number argument (x). returns x == 0. using this function is more efficient than using the two argumented counterpart.",
+						iz: "Takes 1 string number argument (x). returns x == 0. using this function is more efficient than using the two argumented counterpart.",
 						nz: "Takes 1 string number argument (x). returns x ≠ 0. using this function is more efficient than using the two argumented counterpart.",
 						ng: "Takes 1 string number argument (x). returns x < 0. negative. using this function is more efficient than using the two argumented counterpart.",
 						nn: "Takes 1 string number argument (x). returns x ≥ 0. not negative. using this function is more efficient than using the two argumented counterpart.",
@@ -3248,15 +3419,19 @@ void (() => { "use strict";
 					},
 				};
 				if (degTrig) this.deg = {};
+				// TODO: update to use -0 as 0
 				if (comparatives) this.eq = {
-					gt(a="0.0", b="0.0") {
-						// >
-						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a += ""; !a.incl(".") && ( a += ".0" );
-						b += ""; !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
+					_parent: this
+					, gt: function greaterThan(a="0.0", b="0.0") {
+						// use ps(a) for a > 0
+						if (
+							Number.isNaN(a = this._parent.norm(a, NaN)) ||
+							Number.isNaN(b = this._parent.norm(b, NaN))
+						) return NaN;
+
+						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !0;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !1;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0) {
 							a = a.slice(1); b = b.slice(1);
 							if (this.eq(a, b)) return !1;
 							return !this.gt(a, b);
@@ -3288,23 +3463,24 @@ void (() => { "use strict";
 						}
 						return !1;
 					}
-					, ge(a="0.0", b="0.0") {
-						// >=
-						return this.gt(a, b) ||
-							this.eq(a, b);
+					, ge: function greaterOrEqual(a="0.0", b="0.0") {
+						// use nn(a) for a >= 0
+						return this.gt(a, b) || this.eq(a, b);
 					}
-					, lt(a="0.0", b="0.0") {
-						// <
-						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a += ""; !a.incl(".") && ( a += ".0" );
-						b += ""; !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) {
+					, lt: function lessThan(a="0.0", b="0.0") {
+						// use ng(a) for a < 0
+						if (
+							Number.isNaN(a = this._parent.norm(a, NaN)) ||
+							Number.isNaN(b = this._parent.norm(b, NaN))
+						) return NaN;
+
+						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !1;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !0;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0) {
 							a = a.slice(1); b = b.slice(1);
-							if (this.eq(a, b)) return !1;
-							return !this.lt(a, b);
+							return this.eq(a, b) ? !1 : !this.lt(a, b);
 						}
+
 						for (var a_index = 0 ;;) {
 							if (a[a_index] === "0") {
 								a_index++;
@@ -3332,19 +3508,21 @@ void (() => { "use strict";
 						}
 						return !1;
 					}
-					, le(a="0.0", b="0.0") {
-						// <=
-						return this.lt(a, b) ||
-							this.eq(a, b);
+					, le: function LessOrEqual(a="0.0", b="0.0") {
+						// use np(a) for a <= 0
+						return this.lt(a, b) || this.eq(a, b);
 					}
-					, eq(a="0.0", b="0.0") {
-						// strict equal to. infinite decimal places
-						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a += ""; !a.incl(".") && ( a += ".0" );
-						b += ""; !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !1;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !1;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) return this.eq( a.slice(1), b.slice(1) );
+					, eq: function equal(a="0.0", b="0.0") {
+						// use iz(a) for a === 0
+						if (
+							Number.isNaN(a = this._parent.norm(a, NaN)) ||
+							Number.isNaN(b = this._parent.norm(b, NaN))
+						) return NaN;
+
+						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !1;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !1;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0)
+							return this.eq( a.slice(1), b.slice(1) );
 
 						for (var a_index = 0 ;;) {
 							if (a[a_index] === "0") {
@@ -3372,14 +3550,16 @@ void (() => { "use strict";
 						}
 						return !0;
 					}
-					, ne(a="0.0", b="0.0") {
-						// strict not equal to. infinite decimal places
-						if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-						a += ""; !a.incl(".") && ( a += ".0" );
-						b += ""; !b.incl(".") && ( b += ".0" );
-						if (sMath.sgn(a) >= 0 && sMath.sgn(b) < 0) return !0;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) >= 0) return !0;
-						if (sMath.sgn(a) < 0 && sMath.sgn(b) < 0) return this.ne( a.slice(1), b.slice(1) );
+					, ne: function notEqual(a="0.0", b="0.0") {
+						// use nz(a) for a !== 0
+						if (
+							Number.isNaN(a = this._parent.norm(a, NaN)) ||
+							Number.isNaN(b = this._parent.norm(b, NaN))
+						) return NaN;
+
+						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !0;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !0;
+						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0) return this.ne( a.slice(1), b.slice(1) );
 
 						for (var a_index = 0 ;;) {
 							if (a[a_index] === "0") {
@@ -3407,25 +3587,39 @@ void (() => { "use strict";
 						}
 						return !1;
 					}
-					, ez(snum="0.0") {
-						// x == 0
+					, iz: function isZero(snum="0.0") {
+						// x == 0. subset of eq(a, b)
 						for (var i = 0, n = snum.length; i < n; i++)
 							if (snum[i] !== "0" && snum[i] !== ".") return !1;
 						return !0;
 					}
-					, nz(snum="0.0") {
-						// x != 0
+					, nz: function notZero(snum="0.0") {
+						// x != 0. subset of ne(a, b)
 						for (var i = 0; i < snum.length; i++)
 							if (snum[i] !== "0" && snum[i] !== ".") return !0;
 						return !1;
 					}
-					, ng(snum="0.0") { /*x < 0*/ return snum[0] === "-" }
-					, nn(snum="0.0") { /*x >= 0*/ return snum[0] !== "-" }
-					, ps(snum="0.0") { /*x > 0*/ return snum[0] !== "-" && this.nz(snum) }
-					, np(snum="0.0") { /*x <= 0*/ return snum[0] === "-" || this.ez(snum) }
-					,
+					, ng: function negative(snum="0.0") {
+						// x < 0. subset of lt(a, b)
+						return snum[0] === "-"; // assumes not "-0"
+					}
+					, nn: function notNegative(snum="0.0") {
+						// x >= 0. subet of ge(a, b)
+						return snum[0] !== "-";
+					}
+					, ps: function positive(snum="0.0") {
+						// x > 0. subset of gt(a, b)
+						return snum[0] !== "-" && this.nz(snum);
+					}
+					, np: function notPositive(snum="0.0") {
+						// x <= 0. subset of le(a, b)
+						return snum[0] === "-" || this.iz(snum);
+					}
 				};
 			}
+			new(snum=1n, defaultValue=NaN) { return numStrNorm(snum, defaultValue) }
+			norm/*alize*/() { return this.new.apply(this, arguments) }
+			snum() { return this.new.apply(this, arguments) }
 			add(a="0.0", b="0.0") {
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = this.norm( a+"" ); b = this.norm( b+"" );
@@ -3492,7 +3686,7 @@ void (() => { "use strict";
 				a = this.norm( a+"" ); b = this.norm( b+"" );
 				const sign = this.sgn(a) === this.sgn(b) ? 1 : -1;
 				a = this.abs(a); b = this.abs(b);
-				if (this.eq.ez(a) || this.eq.ez(b)) return "0.0";
+				if (this.eq.iz(a) || this.eq.iz(b)) return "0.0";
 
 				a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
 				var dec = 0;
@@ -3519,28 +3713,47 @@ void (() => { "use strict";
 				).replace(/\.$/, ".0");
 				return sign === -1 ? this.neg( total ) : total;
 			}
-			mul10(snum="0.0", x=1) {
-				// multiplies snum by 10^x
-				if (rMath.isNaN(snum)) return NaN;
-				if (isNaN( x = Number.parseInt(Number(x)) )) return NaN;
-				if (!x) return snum;
-				if (x < 0) return this.div10(snum, -x);
-				snum = this.norm( snum+"" );
-				let i = snum.io("."),
-					tmp = snum.slc(0, i) + snum.slc(i + 1, i + x + 1),
-					output = tmp + strMul("0", i + x - tmp.length) + "." + snum.slc(i+x+1);
-				return this.norm(output + (output.last() === "." ? "0" : ""));
+			mul10(snum="0.0", n=1) {
+				// multiplies snum by 10^int(n) (moves decimal n places to the right)
+				if (Number.isNaN( n = Number(n) ) || !Number.isInteger(n)) return NaN;
+				if (Number.isNaN( snum = this.norm(snum, NaN) )) return NaN;
+
+				if ( n === 0 ) return snum; // x * 10^0
+				if ( n < 0 ) return this.div10(snum, -n);
+
+				let i = snum.io(".")
+					, tmp = snum.slice(0, i) + snum.slice(i + 1, i + n + 1);
+				return this.norm(
+					tmp + strMul("0", i + n - tmp.length) + "." + snum.slice(i + n + 1)
+				);
+			}
+			div10(snum="0.0", n=1) {
+				// divide snum by 10^n
+				if (Number.isNaN( n = Number(n) ) || !Number.isInteger(n)) return NaN;
+				if (Number.isNaN( snum = this.norm(snum, NaN) )) return NaN;
+
+				if ( n === 0 ) return snum; // x / 10^0
+				if ( n < 0 ) return this.mul10(snum, -n);
+
+				const sign = this.sgn(snum), i = snum.io(".");
+				snum = this.abs(snum);
+
+				snum = snum.substring(0, i - n) + "." + strMul("0", n - i) +
+					snum.substring(i - n, i) + snum.substr(i+1);
+
+				return this.norm( sign < 0 ? this.neg(snum) : snum );
 			}
 			div(num="0.0", denom="1.0", precision=18) {
-				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
+				// NOTE: Will probably break the denominator is "-0"...
+				// I'm not going to fix it either, just don't input it
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				isNaN(precision = Number(precision)) && (precision = 18);
+				Number.isNaN(precision = Number(precision)) && (precision = 18);
 				num = this.norm( num+"" ); denom = this.norm( denom+"" );
-				if ( this.eq.ez(denom) )
-					return this.eq.ez(num) ?
+				if ( this.eq.iz(denom) )
+					return this.eq.iz(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.ez(num) ) return "0.0";
+				if ( this.eq.iz(num) ) return "0.0";
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
 				let exponent = rMath.max(this.fpart(num).length, this.fpart(denom).length) - 2;
@@ -3565,14 +3778,14 @@ void (() => { "use strict";
 				return sign === -1 ? `-${ansString}` : ansString;
 			}
 			fdiv(num="0.0", denom="1.0") {
-				// floor division
+				// floored division
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				if ( this.eq.ez(denom) )
-					return this.eq.ez(num) ?
+				if ( this.eq.iz(denom) )
+					return this.eq.iz(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.ez(num) ) return "0.0";
+				if ( this.eq.iz(num) ) return "0.0";
 				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
@@ -3598,11 +3811,11 @@ void (() => { "use strict";
 				// ceiling division
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				if ( this.eq.ez(denom) )
-					return this.eq.ez(num) ?
+				if ( this.eq.iz(denom) )
+					return this.eq.iz(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.ez(num) ) return "0.0";
+				if ( this.eq.iz(num) ) return "0.0";
 				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
@@ -3625,11 +3838,11 @@ void (() => { "use strict";
 				// truncated division
 				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				if ( this.eq.ez(denom) )
-					return this.eq.ez(num) ?
+				if ( this.eq.iz(denom) )
+					return this.eq.iz(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.ez(num) ) return "0.0";
+				if ( this.eq.iz(num) ) return "0.0";
 				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
@@ -3644,33 +3857,15 @@ void (() => { "use strict";
 				}
 				return `${ BigInt(sign) * ans}.0`;
 			}
-			div10(snum="0.0", x=1) {
-				// divide snum by 10^x
-				if (rMath.isNaN(snum)) return NaN;
-				if (isNaN( x = Number.parseInt(Number(x)) )) return NaN;
-				if (!x) return snum;
-				if (x < 0) return this.mul10(snum, -x);
-				snum = this.norm(snum);
-				const sign = sMath.sgn(snum);
-				snum = sMath.abs(snum);
-				var i = snum.io(".");
-				snum = snum.remove(".");
-				snum = this.norm(x - i >= 0 ?
-					"0." + strMul("0", x - i) + snum :
-					snum.slice(0, i - x) + "." + snum.slice(i - x)
-				);
-				return sign < 0 ?
-					sMath.neg(snum) :
-					snum;
-			}
 			idiv(num="0.0", denom="1.0", precision=18) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
 				// should be faster than div when applicable
-				if ( this.eq.ez(denom) )
-					return this.eq.ez(num) ?
+				// I do not remember where the "i" came from
+				if ( this.eq.iz(denom) )
+					return this.eq.iz(num) ?
 						NaN :
 						Infinity;
-				if ( this.eq.ez(num) ) return "0.0";
+				if ( this.eq.iz(num) ) return "0.0";
 				num = this.norm( num+"" ); denom = this.norm( denom+"" );
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
@@ -3694,8 +3889,8 @@ void (() => { "use strict";
 			}
 			mod(a="0.0", b="0.0") { return this.sub( a, this.mul(b, this.fdiv(a, b)) ) }
 			ipow(a="0.0", b="1.0") {
-				a = this.norm( a+"" ); b = this.norm( b+"" );
-				if ( this.eq.nz(this.fpart(b)) ) throw Error("no decimals allowed for exponent.");
+				a = this.norm(a); b = this.norm(b);
+				if (!this.isIntN(b)) return NaN;
 				var t = "1.0";
 				if (this.sgn(b) >= 0)
 					for (; b > 0; b = this.decr(b))
@@ -3706,9 +3901,11 @@ void (() => { "use strict";
 			}
 			neg(snum="0.0") {
 				// negate
-				return snum[0] === "-" ?
-					snum.slice(1) :
-					`-${snum}`;
+				return this.eq.iz(snum) ?
+					snum :
+					snum[0] === "-" ?
+						snum.slice(1) :
+						`-${snum}`;
 			}
 			sgn(snum="0.0") {
 				// string sign. sMath.sgn("-0") => -1
@@ -3729,20 +3926,26 @@ void (() => { "use strict";
 			}
 			ssign(snum="0.0") { return this.ssgn(snum) }
 			abs(snum="0.0") { return snum[0] === "-" ? snum.slice(1) : snum }
-			fpart(n="0.0") {
-				n = this.norm(n);
-				return isNaN(n) ?
+			fpart(snum="0.0") {
+				snum = this.norm(snum, NaN);
+				return Number.isNaN(snum) ?
 					NaN :
-					fpart(n, !1);
+					fpart(snum, !1);
 			}
-			ipart(n="0.0") {
-				n = this.norm(n);
-				return n.slc(0, ".") + ".0";
+			ipart(snum="0.0") {
+				snum = this.norm(snum);
+				return snum.slc(0, ".") + ".0";
 			}
 			square(n="0.0") { return this.mul(n, n) }
 			cube(n="0.0") { return this.mul(this.square(n), n) }
-			tesseract(n="0.0") { return this.square(this.square(n)) }
-			norm/*alize*/(snum="0.0") { return numStrNorm(snum) }
+			tesseract(snum="0.0") {
+				// x^4, because a tesseract is a 4d cube.
+				return this.square(this.square(snum));
+				// this.mul(this.cube(n), n);
+				// probably slower, but faster if it was a bigint for some strange reason...
+				// i * i * i * i is faster than (i ** 2) ** 2 with bigint...
+				// I ran millions of tests over ranges of values and it was faster much more often.
+			}
 			decr(snum="1.0") {
 				// probably faster than sMath.sub(x, 1) because there is less array manipulation
 				// the drawback is there is more string manipulation, which is probably slower.
@@ -3770,16 +3973,20 @@ void (() => { "use strict";
 				return !1;
 			}
 			isInt(snum="0.0") {
-				if (type(snum) !== "string") return !1;
+				if (type(snum) !== "string") return !1; // !== string | MutableString
 				var i = snum.io(".");
 				if (i === -1 || i === snum.length - 1) return !0;
 				for (var n = snum.length; ++i < n ;)
 					if (snum[i] !== "0") return !1;
 				return !0;
 			}
-			isIntN(snum="0.0") { return snum.slice(-2) === ".0" }
+			isIntN(snum="0.0") {
+				// isInt Normalized, meaning `snum` is already normalized
+				return snum.slice(-2) === ".0";
+			}
 			isFloat(snum="0.0") {
 				// not actually a float, but floats have decimals and it checks for decimals, so whatever
+				// theoretically faster than !isInt(snum)
 				if (type(snum) !== "string") return !1;
 				var i = snum.io(".");
 				if (i === -1 || i === snum.length - 1) return !1;
@@ -3787,7 +3994,10 @@ void (() => { "use strict";
 					if (snum[i] !== "0") return !0;
 				return !1;
 			}
-			isFloatN(snum="0.0") { return snum.slice(-2) !== ".0" }
+			isFloatN(snum="0.0") {
+				// isFloat Normalized, meaning `snum` is already normalized
+				return snum.slice(-2) !== ".0";
+			}
 			min(...snums) {
 				if (!snums.length) return "0.0";
 				snums = snums.flatten();
@@ -3824,8 +4034,7 @@ void (() => { "use strict";
 				for (var i = t[0] === "l" ? this.max(ns) : this.min(ns), c
 					;;
 					i = t[0] === "l" ? this.incr(i) : this.decr(i)
-				)
-				{
+				) {
 					for (var j = ns.length; j --> 0 ;) {
 						if (this.eq.nz(t[0] === "l" ? this.mod(i, ns[j]) : this.mod(ns[j], i))) {
 							c = !1;
@@ -3855,20 +4064,6 @@ void (() => { "use strict";
 					this.add(this.ipart(snum), this.sgn(snum)+"")
 			}
 			trunc(snum="0.0") { return this.ipart(snum) }
-			new(number=1, defaultValue=NaN) {
-				return typeof number === "bigint" ?
-					number + ".0" :
-					typeof number === "number" ?
-						number === Number.parseInt(number) ?
-							number + ".0" :
-							this.norm(number + "") :
-						typeof number === "string" ?
-							this.isNaN(number) ?
-								defaultValue :
-								this.norm(number) :
-							defaultValue;
-			}
-			snum(number=1) { return this.new(number) }
 			lcm(...snums) { return this._lmgf("lcm", ...snums) } // TODO/CHG: Change to use the same method as rMath
 			gcd(...snums) { return this._lmgf("gcd", ...snums) } // TODO/CHG: Change to use the same method as rMath
 			gcf(...snums) { return this._lmgf("gcf", ...snums) } // TODO/CHG: Change to use the same method as rMath
@@ -3923,19 +4118,11 @@ void (() => { "use strict";
 				, comparatives = LibSettings.rMath_Comparatives_Argument
 				, constants = LibSettings.rMath_Constants_Argument
 				,
-			)
-			{
+			) {
 				degTrig      === "default" && (degTrig = !0);
 				help         === "default" && (help = !0);
 				comparatives === "default" && (comparatives = !0);
 				constants    === "default" && (constants = !0);
-
-				Object.defineProperty(this, Symbol.toStringTag, {
-					value: "rMath"
-					, writable: false
-					, enumerable: false
-					, configurable: false
-				})
 
 				var HelpText = help ? (function create_HelpText() {
 					var helptext = class HelpText {
@@ -3952,34 +4139,33 @@ void (() => { "use strict";
 							, description = null
 							, miscellaneous = null
 							, see = null
-						}={}, isfunction = true)
-						{
+						}={}, isfunction = true) {
 							this.name = name ?? null;
 							this.field = field ?? null;
 							if (isfunction)
-							this.method = method ?? null,
-							this.arguments = {
-								names: args?.names ?? null
-								, defaults: args?.defaults ?? null
-								, types: args?.types ?? null
-								, number: args?.number ??
-									args?.types?.length ??
-									args?.defaults?.length ??
-									args?.names?.length ?? null
-							};
+								this.method = method ?? null,
+								this.arguments = {
+									names: args?.names ?? null
+									, defaults: args?.defaults ?? null
+									, types: args?.types ?? null
+									, number: args?.number ??
+										args?.types?.length ??
+										args?.defaults?.length ??
+										args?.names?.length ?? null
+								};
 
 							this.description = description ?? null;
 							this.miscellaneous = miscellaneous ?? null;
 							this.see = see ?? null;
 							this.isfunction = !!isfunction;
 						}
+						format() {
+							throw Error("Not Implemented. for now use this.getHelpString")
+						}
 					}
 					return function HelpText() { return new helptext(...arguments) }
-				})() : !1;
-				if (help) this._HelpText = HelpText;
-
-
-				this.Set = class RealSet {
+				})() : !1
+				, rSet = class RealSet {
 					// Probably not constant time lookup.
 					constructor(...args) {
 						args = args.flatten().filter(e => typeof e === "number").sort();
@@ -4074,34 +4260,78 @@ void (() => { "use strict";
 					clear() { this.length = 0 }
 				};
 
-				/* with (this.Set) {
-					prototype["⋃"] = prototype.union;
-					prototype["⋂"] = prototype.intersection;
-
-					prototype["⊂"] = prototype.isStrictSubset;
-					prototype["⊃"] = prototype.isStrictSuperset;
-					prototype["⊊"] = prototype.isStrictSubset;
-					prototype["⊋"] = prototype.isStrictSuperset;
-
-					prototype["⊆"] = prototype.isSubset;
-					prototype["⊇"] = prototype.isSuperset;
-
-					prototype["∈"] = prototype.has;
-				} */
-
-				this.Set.prototype["⋃"] = this.Set.prototype.union;
-				this.Set.prototype["⋂"] = this.Set.prototype.intersection;
-
-				this.Set.prototype["⊂"] = this.Set.prototype.isStrictSubset;
-				this.Set.prototype["⊃"] = this.Set.prototype.isStrictSuperset;
-				this.Set.prototype["⊊"] = this.Set.prototype.isStrictSubset;
-				this.Set.prototype["⊋"] = this.Set.prototype.isStrictSuperset;
-
-				this.Set.prototype["⊆"] = this.Set.prototype.isSubset;
-				this.Set.prototype["⊇"] = this.Set.prototype.isSuperset;
-
-				this.Set.prototype["∈"] = this.Set.prototype.has;
-
+				Reflect.defineProperty(this, "_HelpText", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: help ? HelpText : null
+				});
+				Reflect.defineProperty(this, Symbol.toStringTag, {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: "rMath"
+				});
+				Reflect.defineProperty(this, "Set", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: rSet
+				});
+				Reflect.defineProperty(this.Set.prototype, "⋃", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.union
+				});
+				Reflect.defineProperty(this.Set.prototype, "⋂", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.intersection
+				});
+				Reflect.defineProperty(this.Set.prototype, "⊂", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.isStrictSubset
+				});
+				Reflect.defineProperty(this.Set.prototype, "⊃", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.isStrictSuperset
+				});
+				Reflect.defineProperty(this.Set.prototype, "⊊", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.isStrictSubset
+				});
+				Reflect.defineProperty(this.Set.prototype, "⊋", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.isStrictSuperset
+				});
+				Reflect.defineProperty(this.Set.prototype, "⊆", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.isSubset
+				});
+				Reflect.defineProperty(this.Set.prototype, "⊇", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.isSuperset
+				});
+				Reflect.defineProperty(this.Set.prototype, "∈", {
+					configurable : false
+					, writable   : false
+					, enumerable : false
+					, value: this.Set.prototype.has
+				});
 
 				this.phi = this.ϕ = ϕ; this.e  = this.E  = this.𝑒 = 𝑒;
 				this.ec  = this.γ = γ; this.pi = this.PI = π;
@@ -4134,7 +4364,7 @@ void (() => { "use strict";
 
 
 					∮∯∰∱∲∳⨍⨎⨏⨐⨑⨒⨓⨔⨕⨖⨗⨘⨙⨚⨛⨜⌀∡⦜∢⦝⦞⦟∟△□▭▱○◊⋄≍⋚⋛⊊⊋⊍⊎⋐⋑⋒⋓⋔⋲⋳⋴⋵⋶⋷⋹⋺⋻⋼⋽⋾𝜕ℶ∁∇⋎⋏Ↄ
-				*/// TODO: Update rMath.help
+				*/// TODO/UPD: Update rMath.help
 				if (help) this.help = {
 					format: HelpText({
 						name: "string for official name or array of strings of names."
@@ -5196,65 +5426,65 @@ void (() => { "use strict";
 					, getHelpString: null
 				};
 				if (degTrig) this.deg = {
-					sin: θ => isNaN( θ = Number(θ) ) ? θ : this.sin(θ*this.dtor)
-					, sinc: θ => isNaN( θ = Number(θ) ) ? θ : this.sinc(θ*this.dtor)
-					, nsinc: θ => isNaN( θ = Number(θ) ) ? θ : this.nsinc(θ*this.dtor)
-					, cos: θ => isNaN( θ = Number(θ) ) ? θ : this.cos(θ*this.dtor)
-					, tan: θ => isNaN( θ = Number(θ) ) ? θ : this.deg.sin(θ) / this.deg.cos(θ)
-					, csc: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.sin(θ)
-					, sec: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.cos(θ)
-					, cot: θ => isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.tan(θ)
+					sin: θ => Number.isNaN( θ = Number(θ) ) ? θ : this.sin(θ*this.dtor)
+					, sinc: θ => Number.isNaN( θ = Number(θ) ) ? θ : this.sinc(θ*this.dtor)
+					, nsinc: θ => Number.isNaN( θ = Number(θ) ) ? θ : this.nsinc(θ*this.dtor)
+					, cos: θ => Number.isNaN( θ = Number(θ) ) ? θ : this.cos(θ*this.dtor)
+					, tan: θ => Number.isNaN( θ = Number(θ) ) ? θ : this.deg.sin(θ) / this.deg.cos(θ)
+					, csc: θ => Number.isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.sin(θ)
+					, sec: θ => Number.isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.cos(θ)
+					, cot: θ => Number.isNaN( θ = Number(θ) ) ? θ : 1 / this.deg.tan(θ)
 					// TODO: Make deg asin and atan use the same formula as the radian types
-					, asin: x => isNaN( x = Number(x) ) ? x :
+					, asin: x => Number.isNaN( x = Number(x) ) ? x :
 						x > 1 || x < -1 ? NaN :
 							this.sum(0, 80, n => this.fact(2*n) /
 								(4**n*this.fact(n)**2 * (2*n+1)) * x**(2*n+1)
 							) * this.rtod
-					, acos: x => isNaN( x = Number(x) ) ? x : 90 - this.deg.asin(x)
-					, atan: x => isNaN( x = Number(x) ) ? x : this.atan(x) * this.rtod
+					, acos: x => Number.isNaN( x = Number(x) ) ? x : 90 - this.deg.asin(x)
+					, atan: x => Number.isNaN( x = Number(x) ) ? x : this.atan(x) * this.rtod
 					, atan2: (x, y, flipArgs=false) =>
-						isNaN( x = Number(x) ) || isNaN( y = Number(y) ) ? NaN : (
+						Number.isNaN( x = Number(x) ) || Number.isNaN( y = Number(y) ) ? NaN : (
 							flipArgs ? this.atan2(y, x) : this.atan2(x, y)
 						) * this.rtod
-					, acsc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1/x)
-					, asec: x => isNaN( x = Number(x) ) ? x : this.deg.acos(1/x)
-					, acot: x => isNaN( x = Number(x) ) ? x : !x ? 90 : this.deg.atan(1/x) + 180*(x < 0)
-					, excst: x => isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.cot(x))
+					, acsc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(1/x)
+					, asec: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acos(1/x)
+					, acot: x => Number.isNaN( x = Number(x) ) ? x : !x ? 90 : this.deg.atan(1/x) + 180*(x < 0)
+					, excst: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.cot(x))
 					// aexcst: x => Error("not implemented"),
-					, exset: x => isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.tan(x))
+					, exset: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.tan(x))
 					// aexset: x => Error("not implemented"),
-					, sqvcs: x => isNaN( x = Number(x) ) ? x : this.hypot(this.deg.vrc(x), this.deg.sin(x))
+					, sqvcs: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(this.deg.vrc(x), this.deg.sin(x))
 					// avcs: x => Error("not implemented"),
-					, sq1s: x => isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.sin(x))
-					, asq1s: x => isNaN( x = Number(x) ) ? x : this.deg.asin(x**2 - 1)
+					, sq1s: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.sin(x))
+					, asq1s: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(x**2 - 1)
 					, ccvs: null
 					, accvs: null
-					, csq1s: x => isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.cos(x))
-					, acsq1s: x => isNaN( x = Number(x) ) ? x : this.deg.acos(x**2 - 1)
-					, crd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.sin(x / 2)
-					, acrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.asin(x / 2)
-					, ccrd: x => isNaN( x = Number(x) ) ? x : 2 * this.deg.cos(x / 2)
-					, accrd: x => isNaN( x = Number(x) ) ? x : π_2 - this.deg.acrd(x)
-					, exsec: x => isNaN( x = Number(x) ) ? x : this.deg.sec(x) - 1
-					, aexsec: x => isNaN( x = Number(x) ) ? x : this.deg.asec(x + 1)
-					, excsc: x => isNaN( x = Number(x) ) ? x : this.deg.csc(x) - 1
-					, aexcsc: x => isNaN( x = Number(x) ) ? x : this.deg.acsc(x + 1)
-					, vrs: x => isNaN( x = Number(x) ) ? x : 1 - this.deg.cos(x)
-					, avrs: x => isNaN( x = Number(x) ) ? x : this.deg.acos(x + 1)
-					, vrc: x => isNaN( x = Number(x) ) ? x : 1 + this.deg.cos(x)
-					, avrc: x => isNaN( x = Number(x) ) ? x : this.deg.acos(x - 1)
-					, cvs: x => isNaN( x = Number(x) ) ? x : 1 - this.deg.sin(x)
-					, acvs: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1 - x)
-					, cvrc: x => isNaN( x = Number(x) ) ? x : 1 + this.deg.sin(x)
-					, acvrc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(x - 1)
-					, hav: x => isNaN( x = Number(x) ) ? x : this.deg.vrs(x) / 2
-					, ahav: x => isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x)
-					, hvrc: x => isNaN( x = Number(x) ) ? x : this.deg.vrc(x) / 2
-					, ahvrc: x => isNaN( x = Number(x) ) ? x : this.deg.acos(2*x - 1)
-					, hcvrs: x => isNaN( x = Number(x) ) ? x : this.deg.cvs(x) / 2
-					, ahcvrs: x => isNaN( x = Number(x) ) ? x : this.deg.asin(1 - 2*x)
-					, hcc: x => isNaN( x = Number(x) ) ? x : this.deg.cvrc(x) / 2
-					, ahcc: x => isNaN( x = Number(x) ) ? x : this.deg.asin(2*x - 1)
+					, csq1s: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.cos(x))
+					, acsq1s: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acos(x**2 - 1)
+					, crd: x => Number.isNaN( x = Number(x) ) ? x : 2 * this.deg.sin(x / 2)
+					, acrd: x => Number.isNaN( x = Number(x) ) ? x : 2 * this.deg.asin(x / 2)
+					, ccrd: x => Number.isNaN( x = Number(x) ) ? x : 2 * this.deg.cos(x / 2)
+					, accrd: x => Number.isNaN( x = Number(x) ) ? x : π_2 - this.deg.acrd(x)
+					, exsec: x => Number.isNaN( x = Number(x) ) ? x : this.deg.sec(x) - 1
+					, aexsec: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asec(x + 1)
+					, excsc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.csc(x) - 1
+					, aexcsc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acsc(x + 1)
+					, vrs: x => Number.isNaN( x = Number(x) ) ? x : 1 - this.deg.cos(x)
+					, avrs: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acos(x + 1)
+					, vrc: x => Number.isNaN( x = Number(x) ) ? x : 1 + this.deg.cos(x)
+					, avrc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acos(x - 1)
+					, cvs: x => Number.isNaN( x = Number(x) ) ? x : 1 - this.deg.sin(x)
+					, acvs: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(1 - x)
+					, cvrc: x => Number.isNaN( x = Number(x) ) ? x : 1 + this.deg.sin(x)
+					, acvrc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(x - 1)
+					, hav: x => Number.isNaN( x = Number(x) ) ? x : this.deg.vrs(x) / 2
+					, ahav: x => Number.isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x)
+					, hvrc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.vrc(x) / 2
+					, ahvrc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acos(2*x - 1)
+					, hcvrs: x => Number.isNaN( x = Number(x) ) ? x : this.deg.cvs(x) / 2
+					, ahcvrs: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(1 - 2*x)
+					, hcc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.cvrc(x) / 2
+					, ahcc: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(2*x - 1)
 					,
 				};
 				if (comparatives) this.eq = {
@@ -5422,8 +5652,8 @@ void (() => { "use strict";
 				// Ω(x) * x^Ω(x) ≈ 1
 				// approximate because some inputs oscilate between outputs, such as Ω(349)
 				// "i" cannot default to Infinity due to this oscilation
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( i = Number(i) )) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( i = Number(i) )) return NaN;
 				var ans = x, prev;
 				if (x < 142) {
 					while ( i --> 0 ) {
@@ -5442,17 +5672,20 @@ void (() => { "use strict";
 				return ans;
 			}
 			ζ(s, a=0, acy=1000, gAcy=1e3, gInc=.1) {
-				return isNaN(s = Number(s)) || isNaN(a = Number(a)) || isNaN( acy = Number(acy) ) ?
-					NaN :
-				s === Infinity ?
-					1 :
-				!s ?
-					-0.5 :
-				s === 1 ?
-					Infinity :
-				s < 1 ?
-					2**s * π**(s-1) * this.sin(π_2*s) * this.gamma(1-s, gAcy, gInc) * this.ζ(1-s, a, acy) :
-				this.sum(1, acy, n => (n + a)**-s);
+				return Number.isNaN(s = Number(s)) ||
+					Number.isNaN(a = Number(a)) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						NaN :
+						s === Infinity ?
+							1 :
+							!s ?
+								-0.5 :
+								s === 1 ?
+									Infinity :
+									s < 1 ?
+										2**s * π**(s-1) * this.sin(π_2*s) *
+											this.gamma(1-s, gAcy, gInc) * this.ζ(1-s, a, acy) :
+										this.sum(1, acy, n => (n + a)**-s);
 			}
 			Rzeta(s, acy=1000, gAcy=1e3, gInc=.1) {
 				// Reimann zeta function
@@ -5463,7 +5696,7 @@ void (() => { "use strict";
 				return this.ζ(s, a, acy, gAcy, gInc);
 			}
 			π(x, form=1) {
-				if (isNaN( x = floor(Number(x)) )) return NaN;
+				if (Number.isNaN( x = floor(Number(x)) )) return NaN;
 				if (x < 2) return 0;
 				if (x === Infinity) return x;
 				if (form === 1) {
@@ -5509,7 +5742,7 @@ void (() => { "use strict";
 			}
 			clbz(n) {
 				// count leading binary zeros
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				if (n < 0 || n > 2_147_483_647) return 0; // 2^31 - 1. max uint32 value
 				return n = n.toString(2), (strMul("0", 32 - n.length) + n).remove(/1.*/).length;
 			}
@@ -5531,10 +5764,10 @@ void (() => { "use strict";
 				return type(x, 1) === "complex" ? cMath.conjugate(x) : x;
 			}
 			sum(n /*start, first*/, last, fn=n=>n, inc=1) {
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( last = Number(last) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( last = Number(last) )) return NaN;
 				if (type(fn, 1) !== "func") return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				if (inc === 0) throw Error("increment to rMath.sum() cannot be 0.");
 				var total = 0;
 				if (last === Infinity) {
@@ -5557,30 +5790,32 @@ void (() => { "use strict";
 				);
 			}
 			prod(n, last, fn=n=>n, inc=1) {
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( last = Number(last) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( last = Number(last) )) return NaN;
 				if (type(fn, 1) !== "func") return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				for (var total = 1; n <= last; n += inc)
 					total *= fn(n);
 				return total;
 			}
 			int(x/*start*/, end, f=x=>x, inc=.001) {
 				// start and end are included.
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( end = Number(end) )) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( end = Number(end) )) return NaN;
 				if (type(f, 1) !== "func") return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				let ans = 0;
 				if (end > x) {
-					if (isNaN(f(x))) {
+					if ( isNaN(f(x)) ) {
 						// if f(x) is not defined for the starting point, ev
 						let chng = Number.EPSILON;
 						while ( isNaN(f(x)) )
 							x += chng,
 							chng = this.nextUp(chng);
 					}
-					if (isNaN(f(end))) for (; x < end; x += inc) ans += (f(x) + f(x + inc)) / 2 * inc;
+					if ( isNaN(f(end)) )
+						for (; x < end; x += inc)
+							ans += (f(x) + f(x + inc)) / 2 * inc;
 					else for (; x <= end; x += inc) ans += (f(x) + f(x + inc)) / 2 * inc;
 				}
 				else if (x > end) return -this.int(end, x, f, inc);
@@ -5588,7 +5823,7 @@ void (() => { "use strict";
 			}
 			log(x, base=LibSettings.MATH_LOG_DEFAULT_BASE, number=true) {
 				// really slow for large Xs
-				if (isNaN(x = Number(x)) || isNaN(base = Number(base)) || base <= 0 || x <= 0 || base == 1) return NaN;
+				if (Number.isNaN(x = Number(x)) || Number.isNaN(base = Number(base)) || base <= 0 || x <= 0 || base == 1) return NaN;
 				if (base === Infinity) return x === Infinity  ?  NaN  :  number ? 0 : 0n;
 				if (x == base) return number ? 1 : 1n;
 				if (x === Infinity) return Infinity;
@@ -5608,7 +5843,7 @@ void (() => { "use strict";
 				return ans;
 			}
 			logbase(base, x) {
-				return isNaN( base = Number(base) ) || isNaN( x = Number(x) ) ?
+				return Number.isNaN( base = Number(base) ) || Number.isNaN( x = Number(x) ) ?
 					NaN :
 					this.log( x, base );
 			}
@@ -5616,18 +5851,18 @@ void (() => { "use strict";
 			expm(x, n=1) { return 𝑒 ** x - n }
 			expm1(x) { return this.expm(x) }
 			clz32(n) { return this.clbz(n) }
-			sgn(x) { return isNaN( x = Number(x) ) ? NaN : x < 0 ? -1 : +(x > 0) }
-			abs(x) { return isNaN( x = Number(x) ) ? NaN : this.sgn(x) * x }
+			sgn(x) { return Number.isNaN( x = Number(x) ) ? NaN : x < 0 ? -1 : +(x > 0) }
+			abs(x) { return Number.isNaN( x = Number(x) ) ? NaN : this.sgn(x) * x }
 			cabs(cnum) { return cMath.abs(cnum) }
 			plusOrMinus(x) { return x = Number(x), [+x, -x] }
 			minusOrPlus(x) { return x = Number(x), [-x, +x] }
-			ln(n) { return isNaN(n = Number(n)) ? NaN : this.log(n, e) }
+			ln(n) { return Number.isNaN(n = Number(n)) ? NaN : this.log(n, e) }
 			log2(x) { return this.log(x, 2) }
 			log10(x) { return this.log(x, 10) }
 			logpi(x) { return this.log(x, π) }
 			log1p(/*x*/) { return this.ln1p.apply(this, arguments) }
-			lnnp(x, n=1) { return isNaN( x = Number(x) ) ? x : this.ln(n + x) }
-			ln1p(x) { return isNaN( x = Number(x) ) ? x : this.ln(1 + x) }
+			lnnp(x, n=1) { return Number.isNaN( x = Number(x) ) ? x : this.ln(n + x) }
+			ln1p(x) { return Number.isNaN( x = Number(x) ) ? x : this.ln(1 + x) }
 			integral() { return this.int.apply(this, arguments) }
 			inverse(n) { 1 / Number(n) }
 			_(n) { 1 / Number(n) }
@@ -5916,9 +6151,10 @@ void (() => { "use strict";
 				return dataset = dataset.flatten(),
 					this.nthrt( dataset.reduce((t, e) => t + e**power, 0) / dataset.length, power );
 			}
-			linReg(xs, ys, Return="obj") {
+			linReg(xs=[], ys=[], Return="obj") {
 				// linear regression
-				xs = xs.tofar(), ys = ys.tofar();
+				if (!isArr(xs)) throw Error("first parameter of rMath.linReg() is not an array");
+				if (!isArr(ys)) throw Error("second parameter of rMath.linReg() is not an array");
 				if (!xs.length) throw Error("No elements given for first parameter of rMath.linReg()");
 				if (!ys.length) throw Error("No elements given for second parameter of rMath.linReg()");
 				if ( xs.isNaN() )
@@ -5927,9 +6163,12 @@ void (() => { "use strict";
 					throw TypeError(`array of numbers required for second parameter of rMath.linReg(). Inputs: ${ys}`);
 				if (xs.length === 1 || ys.length === 1) {
 					return Return === "obj" ? {
-						m: ys[0] / xs[0],
+						a: ys[0] / xs[0],
 						b: 0
-					} : `y = ${ys[0] / xs[0]}x + 0`;
+					} :
+						Return === "arr" ?
+							[ys[0] / xs[0], 0]:
+							`y = ${ys[0] / xs[0]}x + 0`;
 				}
 				if (xs.length !== ys.length) {
 					const MIN = this.min(xs.length, ys.length);
@@ -5941,13 +6180,14 @@ void (() => { "use strict";
 					this.total(xs) * this.total(ys)
 				) / (xs.length * this.total(xs.map(e => e**2)) - this.total(xs)**2),
 				b = (this.total(ys) - m * this.total(xs)) / xs.length;
-				if (Return === "obj") return {m: m, b: b};
+				if (Return === "obj") return {a: m, b: b};
+				if (Return === "arr") return [m, b];
 				return `y = ${m}x + ${b}`;
 			}
 			erf(z) {
-				return isNaN( z = Number(z) ) ?
+				return Number.isNaN( z = Number(z) ) ?
 					NaN :
-					1.1283791670955126 * this.int(0, z, t => 1 / 𝑒**t**2);
+					1.1283791670955126 * this.int(0, z, t => 1 / e**t**2);
 					// 2 / sqrt(pi) * ...
 				// erf(x) ≈ 3126/3125 sgn(x)sqrt(1-exp(-x^2))
 			}
@@ -5956,7 +6196,7 @@ void (() => { "use strict";
 				// \lim_{y->\infty} erf( erfinv(x,y) ) = x
 				return this.sum( 0, acy, k => this.erfinvC(k) / (2*k+1) * (this.sqrtpi_2*z)**(2*k+1) );
 			}
-			erfinvC(k=0) { return isNaN(k = Number(k)) || k < 0 ?
+			erfinvC(k=0) { return Number.isNaN(k = Number(k)) || k < 0 ?
 				// constants for erf⁻¹(x) and erfi⁻¹(x) Maclaurin series
 				NaN :
 				!k ?
@@ -5964,7 +6204,7 @@ void (() => { "use strict";
 					this.sum( 0, k-1, m => (this.erfinvC(m)*this.erfinvC(k-m-1)) / ((m+1)*(2*m+1)) );
 			}
 			erfc(z) {
-				return isNaN( z = Number(z) ) ?
+				return Number.isNaN( z = Number(z) ) ?
 					NaN :
 					1 - this.erf(z);
 			}
@@ -5979,13 +6219,13 @@ void (() => { "use strict";
 				return this.sum( 0, acy, k => (-1)**k * this.erfinvC(k) / (2*k+1) * (this.sqrtpi_2*z)**(2*k+1) );
 			}
 			nCr(n=1, k=1) {
-				return isNaN( n = Number(n) ) ||
-					isNaN( k = Number(k) ) ?
+				return Number.isNaN( n = Number(n) ) ||
+					Number.isNaN( k = Number(k) ) ?
 					NaN : this.nPr(n, k) / this.fact(k);
 			}
 			nPr(n=1, k=1) {
-				return isNaN( n = Number(n) ) ||
-					isNaN( k = Number(k) ) ?
+				return Number.isNaN( n = Number(n) ) ||
+					Number.isNaN( k = Number(k) ) ?
 					NaN : this.fact(n) /
 						this.fact(n - k);
 			}
@@ -6044,7 +6284,7 @@ void (() => { "use strict";
 			gcf() { return this.gcd.apply(this, arguments) }
 			//////////////////////////////////////// STATISTICS END ////////////////////////////////////////
 			ifact(n) {
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				if (!n) return 1;
 				if (n < 0) return NaN;
 				for (var ans = 1, cur = 1; cur <= n; cur++)
@@ -6058,30 +6298,35 @@ void (() => { "use strict";
 				// x! = <| (x % 1)! / Π_{k=1}^{-⌊x⌋} (x + k) , x < 0
 				//       \ (x % 1)! Π_{k=1}^{⌊x⌋} (x%1 + k)  , x > 1
 				// (x-⌊x⌋-1)!(x-⌊x⌋)^{\overline{1+⌊x⌋}}
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) ) || !inc) return NaN;
-				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x);
-				if (x < 0) return this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j => x+j);
+				if (Number.isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( acy = Number(acy) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) ) || !inc) return NaN;
+				if ( x.isInt() ) return x < 0 ? NaN : this.ifact(x); // never -0
+				if (x < 0) {
+					const ans = this.fact(this.mod(x, 1), acy, inc) / this.prod(1, -floor(x),  j => x+j);
+					return ans === 0 ? 0 : ans; // -0
+				}
 				if (x > 1) {
-					let xm1 = this.mod(x, 1);
-					return this.prod(1, floor(x), n => n + xm1) *
-						this.fact(xm1, acy, inc);
+					let x_mod_1 = this.mod(x, 1);
+					const ans = this.prod(1, floor(x), n => n + x_mod_1) *
+						this.fact(x_mod_1, acy, inc);
+					return ans === 0 ? 0 : ans; // -0
 				}
 				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
-				return type(ans, 1) === "inf" ? NaN : ans;
+				return ans === 0 ? 0 : ans; // -0
+				return /*type(ans, 1) === "inf" ? NaN : */ans;
 			}
 			factorial() { return this.fact.apply(this, arguments) }
 			risingFactorial(/*x, n*/) { return this.pochHammer.apply(this, arguments) }
 			pochHammer(x, n) {
-				if ( isNaN(n = Number(n)) ) return NaN;
-				if ( isNaN(x = Number(x)) ) return NaN;
+				if ( Number.isNaN(n = Number(n)) ) return NaN;
+				if ( Number.isNaN(x = Number(x)) ) return NaN;
 				return x * this.prod(1, n-1, k => x+k);
 			}
 			qPochHammer(x, n, q) {
-				if ( isNaN(n = Number(n)) ) return NaN;
-				if ( isNaN(x = Number(x)) ) return NaN;
-				if ( isNaN(q = Number(q)) ) return NaN;
+				if ( Number.isNaN(n = Number(n)) ) return NaN;
+				if ( Number.isNaN(x = Number(x)) ) return NaN;
+				if ( Number.isNaN(q = Number(q)) ) return NaN;
 				return n === 0 ?
 					1 :
 					n > 0 ?
@@ -6092,7 +6337,7 @@ void (() => { "use strict";
 			fallingFactorial(x, n) { return (-1)**n * this.pochHammer(-x, n) }
 			invifact(n) {
 				// compositional inverse integer factorial
-				if (isNaN(n = Number(n))) return NaN;
+				if (Number.isNaN(n = Number(n))) return NaN;
 				if (fpart(n) != 0) return this.invfact(n);
 				for (var i = 0 ;; i++) {
 					let tmp = this.ifact(i);
@@ -6106,7 +6351,7 @@ void (() => { "use strict";
 					// https://math.stackexchange.com/questions/2078997/inverse-of-a-factorial
 				// which likes to the full one here:
 					// https://math.stackexchange.com/a/2078194/13854
-				return this.exp( 1 + this.W(this.ln(x / this.sqrttau) / 𝑒) ) - 0.5;
+				return this.exp( 1 + this.W(this.ln(x / this.sqrttau) / e) ) - 0.5;
 			}
 			invgamma(x) {
 				/*
@@ -6121,9 +6366,31 @@ void (() => { "use strict";
 						this just covers that it has to be greater than like 3.6 ...
 						and doesn't account for it not being defined for all reals greater than it.
 				*/
-				var ans = this.acsc(x * this.gamma(1-x) / π) / π;
-				while (ans !== x) x = ans, ans = this.acsc(x * this.gamma(1-x) / π) / π;
-				return ans;
+				if (Number.isNaN( x = Number(x) ))
+					return NaN;
+				if (x === Infinity) return Infinity
+				if (x === -Infinity) return NaN; // every possible answer has an undefined limit.
+				// η(x) = csc⁻¹( x Γ(1-η(x)) / π ) / π
+				// η(x) = csc⁻¹( x Γ(1-x) / π ) / π
+				// csc +- Infinity ==> 0
+				// x2 is closer to the answer
+				let x2 = Number.isInteger(x) && x > 0 ?
+					0 :
+					this.acsc(x * this.gamma(1 - x) / π) / π;
+
+				// x === x
+				// x2 === eta_n(x)
+				// new x2 === eta_{n-1}(x)
+
+				while (x2 !== x)
+					[x, x2] = [x2, this.acsc(
+						x * this.gamma(1 - x2) / π
+					) / π];
+
+				return x2;
+
+
+
 			}
 			nfactorial(x, n=2) {
 				// like double factorial or triple factorial, but n. so basically just more generalized.
@@ -6131,10 +6398,10 @@ void (() => { "use strict";
 			}
 			doublefactorial(x) { return this.sqrt2 ** (1 + x) * this.fact(x / 2) / this.sqrtpi }
 			gamma(n, acy=1e3, inc=.1) {
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
+				if (Number.isNaN( acy = Number(acy) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				return this.fact(n-1, acy, inc);
 			}
 			beta(m, n, acy=1e3, inc=.1) {
@@ -6157,19 +6424,19 @@ void (() => { "use strict";
 			}
 			igammal(n, inc=.1) {
 				// lower incomplete gamma function
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( inc = Number(inc) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				n--;
 				var ans = this.int(0, n, t => t**n / 𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			}
 			igammau(n, acy=1000, inc=.1) {
 				// upper incomplete gamma function
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				if ( n.isInt() ) return this.ifact(n-1);
-				if (isNaN( acy = Number(acy) )) return NaN;
-				if (isNaN( inc = Number(inc) )) return NaN;
+				if (Number.isNaN( acy = Number(acy) )) return NaN;
+				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				n--;
 				var ans = this.int(n, acy, t => t**n / 𝑒**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
@@ -6177,7 +6444,7 @@ void (() => { "use strict";
 			isPrime(n) { return this.isNaN(n) ? NaN : n.isPrime() }
 			pascal(row, col) {
 				// pascal's triangle
-				if (isNaN( row = Number(row) )) return NaN;
+				if (Number.isNaN( row = Number(row) )) return NaN;
 				if (col !== "all") col = Number(col);
 				if (typeof col !== "number" && col !== "all") return NaN;
 				row--;
@@ -6189,20 +6456,20 @@ void (() => { "use strict";
 			fib(n=1) {
 				// nth fibonacci number
 				// "round" is needed to counteract the floating point rounding errors.
-				return isNaN( n = Number(n) ) ? NaN : round(
+				return Number.isNaN( n = Number(n) ) ? NaN : round(
 					( ϕ**n - this.Phi**n ) / this.sqrt5
 				);
 				// ⌊ ϕⁿ/√5 ⌉ ∀ n∈ℤ > -1
 			}
 			fibonacci(/*n*/) { return this.fib.apply(this, arguments) }
 			lucas(n=1) {
-				return isNaN( n = Number(n) ) ?
+				return Number.isNaN( n = Number(n) ) ?
 					NaN :
 					round( ϕ**n + this.Phi**n );
 				// ⌊ϕⁿ⌉, n ∈ ℕ>1
 			}
 			primeFactorInt(n) {
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				if ( n.isPrime() ) return n;
 				for (var i = 2, primeFactors = []; i <= n; ++i) {
 					if (!(n % i)) {
@@ -6214,13 +6481,13 @@ void (() => { "use strict";
 				return primeFactors;
 			}
 			findFactors(n) {
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				for (var i = 2, factors = [1, n], n = this.sqrt(n); i <= n; i++)
 					if (!(n % i)) factors.push(i, n / i);
 				return factors;
 			}
 			iMaxFactor(n) {
-				if (isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
 				for (var i = n;;)
 					if (!(n % --i))
 						return i;
@@ -6228,7 +6495,7 @@ void (() => { "use strict";
 			synthDiv(coeffs, /*x-*/divisor, includeRemainder=true, remainderType="string") {
 				if (type(coeffs, 1) !== "arr") return NaN;
 				if (type(remainderType) !== "string") return NaN;
-				if (isNaN( divisor = Number(divisor) )) return NaN;
+				if (Number.isNaN( divisor = Number(divisor) )) return NaN;
 				for (var coeff = coeffs[0], coeffs2 = [coeffs[0]], n = coeffs.length, i = 1; i < n; i++) {
 					coeff = coeff * divisor + coeffs[i];
 					coeffs2.push(coeff);
@@ -6243,7 +6510,7 @@ void (() => { "use strict";
 				return includeRemainder ? coeffs : coeffs.pop2();
 			}
 			simpRad(rad) {
-				if (isNaN( rad = Number(rad) )) return NaN;
+				if (Number.isNaN( rad = Number(rad) )) return NaN;
 				for (var factor = 1, i = 2, sqrt = this.sqrt(this.abs(rad)); i <= sqrt; i += 1 + (i > 2))
 					while ( !(rad % i**2) ) {
 						rad /= i**2;
@@ -6272,8 +6539,8 @@ void (() => { "use strict";
 				// (a+m) mod₀ 2 = 0  <-->  formula works
 				// (a+b) modₖ 2 = (a-b) modₖ 2
 				// a^2 + b^2 = (b+m)^2
-				if (isNaN( a = Number(a) )) return "No Solution";
-				if (isNaN( m = Number(m) )) return "No Solution";
+				if (Number.isNaN( a = Number(a) )) return "No Solution";
+				if (Number.isNaN( m = Number(m) )) return "No Solution";
 				if (fpart(a) || fpart(m))   return "No Solution";
 				if (this.mod(a+m, 2))       return "No Solution";
 
@@ -6303,75 +6570,80 @@ void (() => { "use strict";
 			mod(a, n=1, k=0) {
 				// a modₖ n
 				// modulo using the formula
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( k = Number(k) )) return NaN;
+				if (Number.isNaN( a = Number(a) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( k = Number(k) )) return NaN;
 				return a - n*floor(a/n) + k;
 			}
 			rem(a, n=1, k=0) {
 				// a remₖ n
 				// different from mod()
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( k = Number(k) )) return NaN;
+				if (Number.isNaN( a = Number(a) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( k = Number(k) )) return NaN;
 				return a - n*int(a/n) + k; // truncate
 			}
 			isClose(n1, n2, range=Number.EPSILON) {
-				return isNaN( n1 = Number(n1) ) ||
-					isNaN( n2 = Number(n2) ) ||
-					isNaN( range = Number(range) ) ?
+				return Number.isNaN( n1 = Number(n1) ) ||
+					Number.isNaN( n2 = Number(n2) ) ||
+					Number.isNaN( range = Number(range) ) ?
 						NaN :
 						n1 > n2 - range && n1 < n2 + range;
 			}
 			dist(x1=0, y1=0, x2=0, y2=0) {
-				if (isNaN( x1 = Number(x1) )) return NaN;
-				if (isNaN( y1 = Number(y1) )) return NaN;
-				if (isNaN( x2 = Number(x2) )) return NaN;
-				if (isNaN( y2 = Number(y2) )) return NaN;
+				if (Number.isNaN( x1 = Number(x1) )) return NaN;
+				if (Number.isNaN( y1 = Number(y1) )) return NaN;
+				if (Number.isNaN( x2 = Number(x2) )) return NaN;
+				if (Number.isNaN( y2 = Number(y2) )) return NaN;
 				return this.hypot(x2-x1, y2-y1);
 			}
 			dist2(x_0, y_0, a, b, c) {
 				// minimum distance from a line to a point
 				// (x₀, y₀) , ax+by=c
-				if (isNaN( x_0 = Number(x_0) )) return NaN;
-				if (isNaN( y_0 = Number(y_0) )) return NaN;
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( b = Number(b) )) return NaN;
-				if (isNaN( c = Number(c) )) return NaN;
+				if (Number.isNaN( x_0 = Number(x_0) )) return NaN;
+				if (Number.isNaN( y_0 = Number(y_0) )) return NaN;
+				if (Number.isNaN( a = Number(a) )) return NaN;
+				if (Number.isNaN( b = Number(b) )) return NaN;
+				if (Number.isNaN( c = Number(c) )) return NaN;
 				return this.abs(a*x_0 + b*y_0 + c) / this.hypot(a, b);
 			}
 			copysign(a, b) {
-				return isNaN( a = Number(a) ) || isNaN( b = Number(b) ) ?
+				return Number.isNaN( a = Number(a) ) || Number.isNaN( b = Number(b) ) ?
 					NaN :
 					this.abs(a) * this.sgn(b);
 			}
 			remainder(/*a, n, k*/) { return this.rem.apply(this, arguments) }
 			parity(x=0) { return x % 2 ? "odd" : "even" }
-			trunc(n) { return isNaN( n = Number(n) ) ? n : Number.parseInt(n) }
+			trunc(n) { return Number.isNaN( n = Number(n) ) ? n : Number.parseInt(n) }
 			truncate(n) { return this.trunc.apply(this, arguments) }
-			isNaN(e) { return isNaN( Number(e) ) /* is not a number */ }
+			isNaN(e) { return isNaN( Number(e) ) /* is not a number */ } // TODO/FIG: idk what it does
 			isAN(e) { return !this.isNaN(e) /* is a number */ }
 			isaN(e) { return this.isAN(e) /* is a number */ }
 			isNNaN(e) { return this.isAN(e) /* is not not a number. isaN, isAN */ }
-			fround(n) { return isNaN( n = Number(n) ) ? n : this.Math.fround(n) }
-			sqrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 2) }
-			cbrt(n) { return isNaN( n = Number(n) ) ? n : this.nthrt(n, 3) }
-			sign(n) { return isNaN( n = Number(n) ) ? n : this.sgn(n) }
-			exp(n, x=𝑒) { return isNaN( n = Number(n) ) || isNaN( x = Number(x) ) ? NaN : x ** n }
+			fround(n) { return Number.isNaN( n = Number(n) ) ? n : this.Math.fround(n) }
+			sqrt(n) { return Number.isNaN( n = Number(n) ) ? n : this.nthrt(n, 2) }
+			cbrt(n) { return Number.isNaN( n = Number(n) ) ? n : this.nthrt(n, 3) }
+			sign(n) { return Number.isNaN( n = Number(n) ) ? n : this.sgn(n) }
+			exp(n, x=𝑒) {
+				return Number.isNaN( n = Number(n) ) ||
+					Number.isNaN( x = Number(x) ) ?
+					NaN :
+					x ** n;
+			}
 			round(n) { return round(n) }
-			floor(n) { return isNaN( n = Number(n) ) ? n : floor(n) }
-			ceil(n) { return isNaN( n = Number(n) ) ? n : ceil(n) }
+			floor(n) { return Number.isNaN( n = Number(n) ) ? n : floor(n) }
+			ceil(n) { return Number.isNaN( n = Number(n) ) ? n : ceil(n) }
 			rand() { return rand() }
 			random() { return rand() }
 			imul(a, b) {
-				return isNaN(a = Number(a)) || isNaN(b = Number(b)) ?
+				return Number.isNaN(a = Number(a)) || Number.isNaN(b = Number(b)) ?
 					NaN :
 					this.Math.imul(a, b);
 			}
 			pow(a=1, b=1) {
 				// TODO: Make "pow" and "nthrt" faster
-				if (isNaN( a = Number(a) )) return NaN;
-				if (isNaN( b = Number(b) )) return NaN;
+				if (Number.isNaN( a = Number(a) )) return NaN;
+				if (Number.isNaN( b = Number(b) )) return NaN;
 				for (var y = 1, c = b, d = a ;; a *= a) {
 					b & 1 && (y *= a);
 					b >>= 1;
@@ -6379,7 +6651,11 @@ void (() => { "use strict";
 				}
 			}
 			nthrt(x, rt=2) {
-				if (isNaN( x = Number(x) ) || isNaN( rt = Number(rt) )) return NaN;
+				if (
+					Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( rt = Number(rt) )
+				) return NaN;
+
 				if (rt < 0) return this.pow(x, rt);
 				if (!rt || !(rt % 2) && x < 0) return NaN;
 				if (!x) return 0;
@@ -6389,13 +6665,13 @@ void (() => { "use strict";
 				);
 				return this.copysign(ans, x);
 			}
-			square(n) { return isNaN( n = Number(n) ) ? n : n ** 2 }
-			cube(n) { return isNaN( n = Number(n) ) ? n : n ** 3 }
-			tesseract(n) { return isNaN( n = Number(n) ) ? n : n ** 4 }
+			square(n) { return Number.isNaN( n = Number(n) ) ? n : n ** 2 }
+			cube(n) { return Number.isNaN( n = Number(n) ) ? n : n ** 3 }
+			tesseract(n) { return Number.isNaN( n = Number(n) ) ? n : n ** 4 }
 			findPrimesRange(a=2, b=100) {
 				// find primes in the range [a, b]
-				if (isNaN( a = Number.parseInt(Number(a)) )) return NaN;
-				if (isNaN( b = Number.parseInt(Number(b)) )) return NaN;
+				if (Number.isNaN( a = Number.parseInt(Number(a)) )) return NaN;
+				if (Number.isNaN( b = Number.parseInt(Number(b)) )) return NaN;
 				if (a < 2) a = 2;
 				if (a > b) return [];
 				var primes = a === 2 ? [2] : [];
@@ -6405,8 +6681,8 @@ void (() => { "use strict";
 			}
 			findPrimesLen(a=2, l=100) {
 				// find the next "l" (lowercase L) primes greater than or equal to "a"
-				if (isNaN( a = Number.parseInt(Number(a)) )) return NaN;
-				if (isNaN( l = Number.parseInt(Number(l)) )) return NaN;
+				if (Number.isNaN( a = Number.parseInt(Number(a)) )) return NaN;
+				if (Number.isNaN( l = Number.parseInt(Number(l)) )) return NaN;
 				if (a < 2) a = 2;
 				var primes = a === 2 ? [2] : [];
 				for (a % 2 ? (a.isPrime() && primes.push(a), a += 2) : a++; primes.length < l; a += 2)
@@ -6418,8 +6694,8 @@ void (() => { "use strict";
 				return this.findPrimesRange.apply(this, arguments);
 			}
 			li(x, incOrAcy=.001, form=1) {
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( incOrAcy = Number(incOrAcy) )) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( incOrAcy = Number(incOrAcy) )) return NaN;
 				if (x < 0) return NaN;
 				if (form === 3) { // fast mode uses the following: li(x) ~ π(x)
 					// not 100% accurate, but with large values,
@@ -6438,7 +6714,7 @@ void (() => { "use strict";
 						this.sum(1, incOrAcy, n=>((-1)**(n-1) * this.ln(x)**n) / (this.fact(n) * 2**(n-1)) * 
 							this.sum(0, floor( (n-1) / 2), k=>1/(2*k+1), 1), 1),
 						ans = f(x);
-					while (isNaN(ans)) {
+					while ( isNaN(ans) ) {
 						incOrAcy /= 2;
 						ans = f(x);
 					}
@@ -6446,12 +6722,16 @@ void (() => { "use strict";
 				}
 			}
 			Li(x, incOrAcy=.001, form=1) {
-				return isNaN( x = Number(x) ) || isNaN( incOrAcy = Number(incOrAcy) ) ?
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( incOrAcy = Number(incOrAcy) ) ?
 					NaN :
-					this.li.apply(this, arguments) - 1.045163780117493;
+					this.li.apply(this, arguments) -
+						1.045163780117493;
 			}
 			Ei(x, incOrAcy=.001, form=1) {
-				return isNaN( x = Number(x) ) ? NaN : this.li(e**x, incOrAcy, form);
+				return Number.isNaN( x = Number(x) ) ?
+					NaN :
+					this.li(e**x, incOrAcy, form);
 				// Exponential integral
 				// Ei(x) = li(e^x) ∀ -π < Im(x) ≤ π
 			}
@@ -6461,10 +6741,20 @@ void (() => { "use strict";
 					number: number
 				});
 			}
-			hyper0(/*a, */b) { return isNaN(b = Number(b)) ? NaN : this.add(b, 1) }
-			hyper1(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : this.add(a, b) }
-			hyper2(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : this.mul(a, b) }
-			hyper3(a, b) { return isNaN(a = Number(a)) || isNaN(b = Number(b)) ? NaN : a ** b }
+			hyper0(/*a, */b) { return Number.isNaN(b = Number(b)) ? NaN : this.add(b, 1) }
+			hyper1(a, b) {
+				return Number.isNaN(a = Number(a)) ||
+					Number.isNaN(b = Number(b)) ?
+					NaN :
+					this.add(a, b);
+			}
+			hyper2(a, b) {
+				return Number.isNaN(a = Number(a)) ||
+					Number.isNaN(b = Number(b)) ?
+						NaN :
+						this.mul(a, b);
+				}
+			hyper3(a, b) { return Number.isNaN(a = Number(a)) || Number.isNaN(b = Number(b)) ? NaN : a ** b }
 			hyper4(a, b) {
 				// tetration.  a ↑↑ b = a^^b = a^a^a^... (b times) = ⁿa = a ↑² b
 				if (this.isNaN( a = BigInt(a) )) return NaN;
@@ -6484,44 +6774,86 @@ void (() => { "use strict";
 
 				// a[n]b = a ↑ⁿ⁻² b
 
-				if (this.isNaN( a = BigInt(a) ) ||
+				if (
+					this.isNaN( a = BigInt(a) ) ||
 					this.isNaN( n = BigInt(n) ) ||
-					this.isNaN( b = BigInt(b) )) return NaN;
-				if (n === 3n) return a ** b;
-				for (var A = a; b --> 1 ;)
-					a = this.hyperN(A, n-1, a);
+					this.isNaN( b = BigInt(b) )
+				) return NaN;
+
+				if (n === 0n) return b + 1;
+				else if (n === 1n) return a + b;
+				else if (n === 2n) return a * b;
+				else if (n === 3n) return a ** b;
+
+				for (var _a = a; b --> 1 ;)
+					a = this.hyperN(_a, n-1, a);
+
 				return a;
 			}
 			////////////////////////////////////// TRIGONOMETRY START //////////////////////////////////////
 			sin(θ, acy=25) {
 				return this.cos(π_2 - θ, acy);
-				// return isNaN( θ = Number(θ) ) || isNaN( acy = Number(acy) ) ?
+				// return Number.isNaN( θ = Number(θ) ) || Number.isNaN( acy = Number(acy) ) ?
 				// 	θ : this.sum(0, acy, n => (-1)**n / this.ifact(2*n+1)*(θ%𝜏)**(2*n+1) );
 			}
 			cos(θ, acy=25) {
-				return isNaN( θ = Number(θ) ) || isNaN( acy = Number(acy) ) ?
-					θ : this.sum(0, acy, n => (-1)**n / this.ifact(2*n)*(θ%𝜏)**(2*n) );
+				return Number.isNaN( θ = Number(θ) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						θ :
+						this.sum(0, acy, n => (-1)**n /
+							this.ifact(2*n)*(θ%𝜏)**(2*n) );
 			}
 			tan(θ, acy=25) { return this.sin(θ, acy) / this.cos(θ, acy) }
-			sinc(x, acy=25) { return isNaN( x = Number(x) ) ? x : x === 0 ? 1 : this.sin(x, acy) / x }
-			nsinc(x, acy=25) { return isNaN( x = Number(x) ) ? x : x === 0 ? 1 : this.sin(π*x, acy) / (x*π) }
-			cosc(x, acy=25) { return isNaN( x = Number(x) ) ? x : this.cos(x) / x }
-			ncosc(x, acy=25) { return isNaN( x = Number(x) ) ? x : this.cos(π*x) / (x*π) }
-			tanc(x, acy=25) { return isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.tan(x, acy) / x }
-			ntanc(x, acy=25) { return isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.tan(π*x, acy)/x/π }
-			csc(θ, acy=25) { return isNaN( θ = Number(θ) ) || isNaN( acy = Number(acy) ) ? θ : 1 / this.sin(θ) }
-			sec(θ, acy=25) { return isNaN( θ = Number(θ) ) || isNaN( acy = Number(acy) ) ? θ : 1 / this.cos(θ) }
-			cot(θ, acy=25) { return isNaN( θ = Number(θ) ) || isNaN( acy = Number(acy) ) ? θ : 1 / this.tan(θ) }
-			asin(x, acy=100) {
-				return isNaN( x = Number(x) ) || x > 1 || x < -1 ? NaN :
-					this.atan(x / this.sqrt(1 - x**2), acy)
-					// this.sum(0, acy, n=>this.ifact(2*n) / (4**n*this.ifact(n)**2 * (2*n+1))*(x**(2*n+1)));
+			sinc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? x : x === 0 ? 1 : this.sin(x, acy) / x }
+			nsinc(x, acy=25) {
+				return Number.isNaN( x = Number(x) ) ?
+					x :
+					x === 0 ?
+						1 :
+						this.sin(π*x, acy) / (x*π);
 			}
-			acos(x, acy=100) { return isNaN( x = Number(x) ) ? z : π_2 - this.asin(x, acy) }
+			cosc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? x : this.cos(x) / x }
+			ncosc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? x : this.cos(π*x) / (x*π) }
+			tanc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.tan(x, acy) / x }
+			ntanc(x, acy=25) {
+				return Number.isNaN( x = Number(x) ) ?
+					NaN :
+					x === 0 ?
+						1 :
+						this.tan(π*x, acy) / (x*π);
+			}
+			csc(θ, acy=25) {
+				return Number.isNaN( θ = Number(θ) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						θ :
+						1 / this.sin(θ);
+			}
+			sec(θ, acy=25) {
+				return Number.isNaN( θ = Number(θ) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						θ :
+						1 / this.cos(θ);
+			}
+			cot(θ, acy=25) {
+				return Number.isNaN( θ = Number(θ) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						θ :
+						1 / this.tan(θ);
+			}
+			asin(x, acy=100) {
+				return Number.isNaN( x = Number(x) ) || x > 1 || x < -1 ? NaN :
+					this.atan(x / this.sqrt(1 - x**2), acy)
+					// this.sum(0, acy, n=>this.ifact(2*n) /
+						// (4**n*this.ifact(n)**2 *
+						// (2*n+1))*(x**(2*n+1)));
+			}
+			acos(x, acy=100) { return Number.isNaN( x = Number(x) ) ? z : π_2 - this.asin(x, acy) }
 			atan(x, acy=100) {
-				// arctan(x) = sgn(x) (|x|>1) π/2 - arctan( 2x/(x²-1) ) / 2
-				if (isNaN(x = Number(x))) return NaN;
-				if (x === 0 || acy <= 0) return x;
+				// 2 arctan(x) = sgn(x)(|x|>1)π - arctan( 2x/(x²-1) )
+				if (Number.isNaN(x = Number(x))) return NaN;
+				if (Number.isNaN(acy = Number(acy))) acy = 100;
+				if (acy <= 0) return x;
+				if (x === 0) return 0; // -0
 
 				acy = floor(acy);
 				for (var denom = sgn(x), ans = 0; acy --> 0 ;) {
@@ -6531,12 +6863,12 @@ void (() => { "use strict";
 					x = sgn(next) * next;
 				}
 				return ans;
-				// return isNaN(x = Number(x)) ? z : this.asin(x / this.hypot(x, 1));
+				// return Number.isNaN(x = Number(x)) ? z : this.asin(x / this.hypot(x, 1));
 			}
 			atan2(x, y, acy=100, flipArgs=false) {
 				// most places use atan2(y, x), but that is stupid.
-				if (isNaN( x = Number(x) )) return NaN;
-				if (isNaN( y = Number(y) )) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( y = Number(y) )) return NaN;
 				if (flipArgs) return this.atan2(y, x, acy, !1);
 				const output = this.atan(y / x, acy);
 				return x > 0 ?
@@ -6545,160 +6877,196 @@ void (() => { "use strict";
 						this.sgn(y)**2 / this.sgn(y) * π_2 :
 						y >= 0 ? output + π : output - π;
 			}
-			acsc(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asin(1/x, acy) }
-			asec(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acos(1/x, acy) }
-			acot(x, acy=100) { return isNaN( x = Number(x) ) ? x : !x ? π_2 : this.atan(1/x, acy) + π*(x < 0) }
+			acsc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asin(1/x, acy) }
+			asec(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.acos(1/x, acy) }
+			acot(x, acy=100) {
+				return Number.isNaN( x = Number(x) ) ?
+					x :
+					!x ?
+						π_2 :
+						this.atan(1/x, acy) +
+							π*(x < 0);
+			}
 			excst(θ, acy1=25, acy2=25) {
-				return isNaN( θ = Number(θ) ) ? θ : this.hypot(
+				return Number.isNaN( θ = Number(θ) ) ? θ : this.hypot(
 					this.exsec(θ, acy1),
 					this.cot(θ, acy2)
 				)
 			}
 			exset(θ, acy1=25, acy2=25) {
-				return isNaN( θ = Number(θ) ) ? θ : this.hypot(
+				return Number.isNaN( θ = Number(θ) ) ? θ : this.hypot(
 					this.exsec(θ, acy1),
 					this.tan(θ, acy2)
 				);
 			}
 			sqvcs(θ, acy1=25, acy2=25) {
-				return isNaN( θ = Number(θ) ) ? θ : this.hypot(
+				return Number.isNaN( θ = Number(θ) ) ? θ : this.hypot(
 					this.vrc(θ, acy1),
 					this.sin(θ, acy2)
 				);
 			}
-			sq1s(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( 1, this.sin(θ, acy) ) }
-			asq1s(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asin( this.sqrt(x**2 - 1), acy ) }
+			sq1s(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.hypot( 1, this.sin(θ, acy) ) }
+			asq1s(x, acy=100) {
+				return Number.isNaN( x = Number(x) ) ?
+					x :
+					this.asin( this.sqrt(x**2 - 1), acy );
+			}
 			// ccvs
 			// accvs
-			csq1s(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.hypot( 1, this.cos(θ, acy) ) }
-			acsq1s(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acos( this.sqrt(x**2 - 1), acy ) }
-			crd(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : 2 * this.sin(θ/2, acy) }
-			acrd(x, acy=100) { return isNaN( x = Number(x) ) ? x : 2 * this.asin(x/2, acy) }
-			ccrd(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : 2 * this.cos(θ/2, acy) }
-			accrd(x, acy=100) { return isNaN( x = Number(x) ) ? x : π_2 - this.acrd(x, acy) }
-			exsec(x, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.sec(θ, acy) - 1 }
-			aexsec(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asec(x+1, acy) }
-			excsc(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.csc(θ, acy) - 1 }
-			aexcsc(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acsc(x+1, acy) }
-			vrs(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : 1 - this.cos(θ, acy) }
-			avrs(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acos(x+1, acy) }
-			vrc(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : 1 + this.cos(θ, acy) }
-			avrc(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acos(x-1, acy) }
-			cvs(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : 1 - this.sin(θ, acy) }
-			acvs(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asin(1 - x, acy) }
-			cvrc(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : 1 + this.sin(θ, acy) }
-			acvrc(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asin(x - 1, acy) }
-			hav(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.vrs(θ, acy) / 2 }
-			ahav(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x, acy) }
-			hvrc(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.vrc(θ, acy) / 2 }
-			ahvrc(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.acos(2*x - 1, acy) }
-			hcvrs(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.cvs(θ, acy) / 2 }
-			ahcvrs(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x, acy) }
-			hcc(θ, acy=25) { return isNaN( θ = Number(θ) ) ? θ : this.cvrc(θ, acy) / 2 }
-			ahcc(x, acy=100) { return isNaN( x = Number(x) ) ? x : this.asin(2*x - 1, acy) }
+			csq1s(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.hypot( 1, this.cos(θ, acy) ) }
+			acsq1s(x, acy=100) {
+				return Number.isNaN( x = Number(x) ) ?
+					x :
+					this.acos(
+						this.sqrt(x**2 - 1)
+						, acy
+					);
+			}
+			crd(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : 2 * this.sin(θ/2, acy) }
+			acrd(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : 2 * this.asin(x/2, acy) }
+			ccrd(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : 2 * this.cos(θ/2, acy) }
+			accrd(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : π_2 - this.acrd(x, acy) }
+			exsec(x, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.sec(θ, acy) - 1 }
+			aexsec(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asec(x+1, acy) }
+			excsc(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.csc(θ, acy) - 1 }
+			aexcsc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.acsc(x+1, acy) }
+			vrs(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : 1 - this.cos(θ, acy) }
+			avrs(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.acos(x+1, acy) }
+			vrc(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : 1 + this.cos(θ, acy) }
+			avrc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.acos(x-1, acy) }
+			cvs(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : 1 - this.sin(θ, acy) }
+			acvs(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asin(1 - x, acy) }
+			cvrc(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : 1 + this.sin(θ, acy) }
+			acvrc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asin(x - 1, acy) }
+			hav(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.vrs(θ, acy) / 2 }
+			ahav(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.acos(1 - 2*x, acy) }
+			hvrc(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.vrc(θ, acy) / 2 }
+			ahvrc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.acos(2*x - 1, acy) }
+			hcvrs(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.cvs(θ, acy) / 2 }
+			ahcvrs(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asin(1 - 2*x, acy) }
+			hcc(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.cvrc(θ, acy) / 2 }
+			ahcc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asin(2*x - 1, acy) }
 			/////////// HYPERBOLIC TRIGONOMETRY
-			sinh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2 }
-			cosh(x) { return isNaN( x = Number(x) ) ? x : (𝑒**x + 𝑒**-x) / 2 }
-			tanh(x) { return isNaN( x = Number(x) ) ? x : this.sinh(x) / this.cosh(x) }
-			sinhc(x, acy=25) { return isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.sinh(x) / x }
-			coshc(x, acy=25) { return isNaN( x = Number(x) ) ? x : this.cosh(x) / x }
-			tanhc(x, acy=25) { return isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.tanh(x) / x }
-			csch(x) { return isNaN( x = Number(x) ) ? x : 1 / this.sinh(x) }
-			sech(x) { return isNaN( x = Number(x) ) ? x : 1 / this.cosh(x) }
-			coth(x) { return isNaN( x = Number(x) ) ? x : 1 / this.tanh(x) }
-			asinh(x) { return isNaN( x = Number(x) ) ? x : this.ln( x + this.hypot(x, 1) ) }
-			acosh(x) { return isNaN( x = Number(x) ) ? x : this.ln( x + this.sqrt(x**2-1) ) }
-			atanh(x) { return isNaN( x = Number(x) ) ? x : this.ln( (x+1) / (1-x) ) / 2 }
-			acsch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1/x) }
-			asech(x) { return isNaN( x = Number(x) ) ? x : this.acosh(1/x) }
-			acoth(x) { return isNaN( x = Number(x) ) ? x : this.atanh(1/x) }
-			excsth(x) { return isNaN( x = Number(x) ) ? x : this.hypot( this.coth(x), this.exsech(x) ) }
-			exseth(x) { return isNaN( x = Number(x) ) ? x : this.hypot( this.exsech(x), this.tanh(x) ) }
-			vcsh(x) { return isNaN( x = Number(x) ) ? x : this.hypot( this.vrch(x), this.sinh(x) ) }
-			sq1sh(x) { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.sinh(x) ) }
-			sq1sh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(x**2 - 1) }
-			csq1sh(x) { return isNaN( x = Number(x) ) ? x : this.hypot( 1, this.cosh(x) ) }
-			acsq1sh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(x**2 - 1) }
+			sinh(x) { return Number.isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2 }
+			cosh(x) { return Number.isNaN( x = Number(x) ) ? x : (𝑒**x + 𝑒**-x) / 2 }
+			tanh(x) { return Number.isNaN( x = Number(x) ) ? x : this.sinh(x) / this.cosh(x) }
+			sinhc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.sinh(x) / x }
+			coshc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? x : this.cosh(x) / x }
+			tanhc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.tanh(x) / x }
+			csch(x) { return Number.isNaN( x = Number(x) ) ? x : 1 / this.sinh(x) }
+			sech(x) { return Number.isNaN( x = Number(x) ) ? x : 1 / this.cosh(x) }
+			coth(x) { return Number.isNaN( x = Number(x) ) ? x : 1 / this.tanh(x) }
+			asinh(x) { return Number.isNaN( x = Number(x) ) ? x : this.ln( x + this.hypot(x, 1) ) }
+			acosh(x) { return Number.isNaN( x = Number(x) ) ? x : this.ln( x + this.sqrt(x**2-1) ) }
+			atanh(x) { return Number.isNaN( x = Number(x) ) ? x : this.ln( (x+1) / (1-x) ) / 2 }
+			acsch(x) { return Number.isNaN( x = Number(x) ) ? x : this.asinh(1/x) }
+			asech(x) { return Number.isNaN( x = Number(x) ) ? x : this.acosh(1/x) }
+			acoth(x) { return Number.isNaN( x = Number(x) ) ? x : this.atanh(1/x) }
+			excsth(x) { return Number.isNaN( x = Number(x) ) ? x : this.hypot( this.coth(x), this.exsech(x) ) }
+			exseth(x) { return Number.isNaN( x = Number(x) ) ? x : this.hypot( this.exsech(x), this.tanh(x) ) }
+			vcsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.hypot( this.vrch(x), this.sinh(x) ) }
+			sq1sh(x) { return Number.isNaN( x = Number(x) ) ? x : this.hypot( 1, this.sinh(x) ) }
+			sq1sh(x) { return Number.isNaN( x = Number(x) ) ? x : this.asinh(x**2 - 1) }
+			csq1sh(x) { return Number.isNaN( x = Number(x) ) ? x : this.hypot( 1, this.cosh(x) ) }
+			acsq1sh(x) { return Number.isNaN( x = Number(x) ) ? x : this.acosh(x**2 - 1) }
 			// ccvsh
 			// accvsh
-			crdh(x) { return isNaN( x = Number(x) ) ? x : 2*this.sinh(x / 2) }
-			acrdh(x) { return isNaN( x = Number(x) ) ? x : 2*this.asinh(x / 2) }
-			ccrdh(x) { return isNaN( x = Number(x) ) ? x : 2*this.cosh(x / 2) }
-			accrdh(x) { return isNaN( x = Number(x) ) ? x : π_2 - 2*this.asinh(x / 2) }
-			exsech(x) { return isNaN( x = Number(x) ) ? x : this.sech(x) - 1 }
-			aexsech(x) { return isNaN( x = Number(x) ) ? x : this.asech(x + 1) }
-			excsch(x) { return isNaN( x = Number(x) ) ? x : this.csch(x) - 1 }
-			aexcsch(x) { return isNaN( x = Number(x) ) ? x : this.acsch(x + 1) }
-			vrsh(x) { return isNaN( x = Number(x) ) ? x : 1 - this.cosh(x) }
-			avrsh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(x + 1) }
-			vrch(x) { return isNaN( x = Number(x) ) ? x : 1 + this.cosh(x) }
-			avrch(x) { return isNaN( x = Number(x) ) ? x : this.acosh(x - 1) }
-			cvsh(x) { return isNaN( x = Number(x) ) ? x : 1 - this.sinh(x) }
-			acvsh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - x) }
-			cvrch(x) { return isNaN( x = Number(x) ) ? x : 1 + this.sinh(x) }
-			acvrch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(x - 1) }
-			hvrsh(x) { return isNaN( x = Number(x) ) ? x : this.vrsh(x) / 2 }
-			ahvrsh(x) { return isNaN( x = Number(x) ) ? x : this.acosh(1 - 2*x) }
-			hvrch(x) { return isNaN( x = Number(x) ) ? x : this.vrch(x) / 2 }
-			ahvrch(x) { return isNaN( x = Number(x) ) ? x : this.acosh(2*x - 1) }
-			hcvrsh(x) { return isNaN( x = Number(x) ) ? x : this.cvsh(x) / 2 }
-			ahcvrsh(x) { return isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x) }
-			hcvrch(x) { return isNaN( x = Number(x) ) ? x : this.cvrch(x) / 2 }
-			ahcvrch(x) { return isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1) }
-			degrees(n) { return isNaN( n = Number(n) ) ? n : n * this.rtod }
-			radians(n) { return isNaN( n = Number(n) ) ? n : n * this.dtor }
+			crdh(x) { return Number.isNaN( x = Number(x) ) ? x : 2*this.sinh(x / 2) }
+			acrdh(x) { return Number.isNaN( x = Number(x) ) ? x : 2*this.asinh(x / 2) }
+			ccrdh(x) { return Number.isNaN( x = Number(x) ) ? x : 2*this.cosh(x / 2) }
+			accrdh(x) { return Number.isNaN( x = Number(x) ) ? x : π_2 - 2*this.asinh(x / 2) }
+			exsech(x) { return Number.isNaN( x = Number(x) ) ? x : this.sech(x) - 1 }
+			aexsech(x) { return Number.isNaN( x = Number(x) ) ? x : this.asech(x + 1) }
+			excsch(x) { return Number.isNaN( x = Number(x) ) ? x : this.csch(x) - 1 }
+			aexcsch(x) { return Number.isNaN( x = Number(x) ) ? x : this.acsch(x + 1) }
+			vrsh(x) { return Number.isNaN( x = Number(x) ) ? x : 1 - this.cosh(x) }
+			avrsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.acosh(x + 1) }
+			vrch(x) { return Number.isNaN( x = Number(x) ) ? x : 1 + this.cosh(x) }
+			avrch(x) { return Number.isNaN( x = Number(x) ) ? x : this.acosh(x - 1) }
+			cvsh(x) { return Number.isNaN( x = Number(x) ) ? x : 1 - this.sinh(x) }
+			acvsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.asinh(1 - x) }
+			cvrch(x) { return Number.isNaN( x = Number(x) ) ? x : 1 + this.sinh(x) }
+			acvrch(x) { return Number.isNaN( x = Number(x) ) ? x : this.asinh(x - 1) }
+			hvrsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.vrsh(x) / 2 }
+			ahvrsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.acosh(1 - 2*x) }
+			hvrch(x) { return Number.isNaN( x = Number(x) ) ? x : this.vrch(x) / 2 }
+			ahvrch(x) { return Number.isNaN( x = Number(x) ) ? x : this.acosh(2*x - 1) }
+			hcvrsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.cvsh(x) / 2 }
+			ahcvrsh(x) { return Number.isNaN( x = Number(x) ) ? x : this.asinh(1 - 2*x) }
+			hcvrch(x) { return Number.isNaN( x = Number(x) ) ? x : this.cvrch(x) / 2 }
+			ahcvrch(x) { return Number.isNaN( x = Number(x) ) ? x : this.asinh(2*x - 1) }
+			degrees(n) { return Number.isNaN( n = Number(n) ) ? n : n * this.rtod }
+			radians(n) { return Number.isNaN( n = Number(n) ) ? n : n * this.dtor }
 			// integral trig functions
 			Si(x, inc=.001, acy=25) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) )  || isNaN( acy = Number(acy) ) ?
-					NaN :
-					this.int(0, x, t => this.sinc(t, acy), inc);
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						NaN :
+						this.int(0, x, t => this.sinc(t, acy), inc);
 			}
 			si(x, inc=.001, acy=25) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(acy) ) || isNaN( inc = Number(acy) ) ?
-					NaN :
-					this.Si(x, inc, acy) - π_2;
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(acy) ) ||
+					Number.isNaN( inc = Number(acy) ) ?
+						NaN :
+						this.Si(x, inc, acy) - π_2;
 			}
 			nSi(x, inc=.001, acy=25) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) || isNaN( acy = Number(acy) ) ?
-					NaN :
-					this.int(0, x, t => this.nsinc(t, acy), inc);
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						NaN :
+						this.int(0, x, t => this.nsinc(t, acy), inc);
 			}
 			nsi(x, inc=.001, acy=25) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) || isNaN( acy = Number(acy) ) ?
-					NaN :
-					this.nSi(x, inc, acy) - π_2;
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						NaN :
+						this.nSi(x, inc, acy) - π_2;
 			}
 			Cin(x, inc=.001, acy=25) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) || isNaN( acy = Number(acy) ) ?
-					NaN :
-					this.int(0, x, t => ( 1 - this.cos(t, acy) ) / t, inc );
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						NaN :
+						this.int(0, x, t => ( 1 - this.cos(t, acy) ) / t, inc );
 			}
 			Ci(x, inc=.001, acy=25) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) || isNaN( acy = Number(acy) ) ?
-					NaN :
-					γ + this.ln(x) - this.Cin(x, inc, acy);
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ||
+					Number.isNaN( acy = Number(acy) ) ?
+						NaN :
+						γ + this.ln(x) -
+							this.Cin(x, inc, acy);
 			}
 			ci() { return this.Ci.apply(this, arguments) }
 			Shi(x, inc=.001) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
-					NaN :
-					this.int(0, x, t => this.sinhc(t), inc);
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ?
+						NaN :
+						this.int(0, x, t => this.sinhc(t), inc);
 			}
 			Chi(x, inc=.001) {
-				return isNaN( x = Number(x) ) || isNaN( inc = Number(inc) ) ?
-					NaN :
-					γ + this.ln(x) + this.int(0, x, t => (this.cosh(t) - 1) / t, inc );
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ?
+						NaN :
+						γ + this.ln(x) +
+							this.int(0, x, t =>
+								(this.cosh(t) - 1) / t, inc
+							);
 			}
 			gd(x, inc=.001) {
-				return isNaN( x = Number(x) ) ? x : this.int(0, x, t => this.sech(t), inc);
+				return Number.isNaN( x = Number(x) ) ? x : this.int(0, x, t => this.sech(t), inc);
 				// gudermannian function
 			}
 			lam(x, inc=.001, acy=25) {
 				// inverse gudermannian function
 				// Lambertian function
-				return isNaN( x = Number(x) ) ||
-					isNaN( inc = Number(inc) ) ||
-					isNaN( acy = Number(acy) ) ||
+				return Number.isNaN( x = Number(x) ) ||
+					Number.isNaN( inc = Number(inc) ) ||
+					Number.isNaN( acy = Number(acy) ) ||
 					abs(x) >= π_2 ?
 					NaN :
 					this.int(0, x, t => this.sec(t, acy), inc);
@@ -6706,14 +7074,14 @@ void (() => { "use strict";
 			/////////////////////////////////////// TRIGONOMETRY END ///////////////////////////////////////
 			H(x, form=1) {
 				// Heaveside step function, Heaveside theta function
-				if (isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
 				if (form === 1) return this.sgn( this.sgn(x) + 1 )
 				if (form === 2) return (1 + this.sgn(x)) / 2
 				return +(x > 0);
 			}
 			W(x, acy=Infinity) {
 				// Lambert W function, product log
-				if (isNaN( x = Number(x) )) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
 				if (x < -1 / e) return NaN;
 				if (x < e) {
 					if (acy === Infinity) {
@@ -6813,9 +7181,9 @@ void (() => { "use strict";
 			base10Conv(n, base, decAcy=54, numberOnly=false) {
 				// only works for base <= 10
 				// TODO/FIX: Fix
-				if (isNaN( n = Number(n) )) return NaN;
-				if (isNaN( n = Number(n) ) || base < 2) return NaN;
-				if (isNaN( base = Number(base) )) return NaN;
+				if (Number.isNaN( n = Number(n) )) return NaN;
+				if (Number.isNaN( n = Number(n) ) || base < 2) return NaN;
+				if (Number.isNaN( base = Number(base) )) return NaN;
 				if (base < 2) throw Error("Base must be greater than 2");
 				if (base > 10) throw Error("base x > 10 is not supported yet");
 				var iPart = sMath.ipart(`${n}`),
@@ -6914,8 +7282,12 @@ void (() => { "use strict";
 				return str.replace(/2cosx\[2cosxsinx]/g, "4cos²xsinx").replace(/\[2cosxsinx]/g, "2sinxcosx");
 			}
 			heron(a=1, b=1, c=1) {
-				if (isNaN( a = Number(a) ) || isNaN( b = Number(b) ) || isNaN( c = Number(c) ))
-					return NaN;
+				if (
+					Number.isNaN( a = Number(a) ) ||
+					Number.isNaN( b = Number(b) ) ||
+					Number.isNaN( c = Number(c) )
+				) return NaN;
+
 				const s = (a + b + c) / 2;
 				return this.sqrt(s * (s-a) * (s-b) * (s-c));
 			}
@@ -7043,13 +7415,17 @@ void (() => { "use strict";
 				return arr;
 			}
 			nextUp(x=0) {
-				if (isNaN(x)) return NaN;
+				if (Number.isNaN( x = Number(x) )) return NaN;
 				if (x === -Infinity) return -Number.MAX_VALUE;
 				if (x === Infinity) return Infinity;
 				if (x === Number.MAX_VALUE) return Infinity;
 				var y = x * (x < 0 ? 1 - Number.EPSILON / 2 : 1 + Number.EPSILON);
 				if (y === x)
-					y = x + Number.MIN_VALUE * (Number.MIN_VALUE * Number.EPSILON > 0 ? Number.EPSILON : 1);
+					y = x + Number.MIN_VALUE *
+						(Number.MIN_VALUE *
+							Number.EPSILON > 0 ?
+							Number.EPSILON : 1
+						);
 				if (y === Infinity) y = Number.MAX_VALUE;
 				var b = x + (y - x) / 2;
 				if (x < b && b < y) y = b;
@@ -7079,10 +7455,10 @@ void (() => { "use strict";
 			dirac(x) { return this.isNaN(x) ? NaN : x == 0 ? Infinity : 0; /* dirac delta function */ }
 			solveCubic(a, b, c, d) {
 				if (
-					isNaN(a = Number(a)) ||
-					isNaN(b = Number(b)) ||
-					isNaN(c = Number(c)) ||
-					isNaN(d = Number(d))
+					Number.isNaN(a = Number(a)) ||
+					Number.isNaN(b = Number(b)) ||
+					Number.isNaN(c = Number(c)) ||
+					Number.isNaN(d = Number(d))
 				) return NaN;
 				// ax³ + bx² + cx + d  =  0
 				if (a === 0) return this.solveQuadratic(b, c, d);
@@ -7094,7 +7470,9 @@ void (() => { "use strict";
 			}
 			solveQuadratic(a, b, c) {
 				// ax² + bx + c  =  0
-				return isNaN(a = Number(a)) || isNaN(b = Number(b)) || isNaN(c = Number(c)) ?
+				return Number.isNaN(a = Number(a)) ||
+					Number.isNaN(b = Number(b)) ||
+					Number.isNaN(c = Number(c)) ?
 					NaN :
 					a ?
 						(function() {
@@ -7106,19 +7484,22 @@ void (() => { "use strict";
 			}
 			solveLinear(a, b) {
 				// ax + b  =  0
-				return isNaN(a = Number(a)) || isNaN(b = Number(b)) ?
-					NaN :
-					a ?
-						-b / a :
-						b ?
-							NaN : // No Solution, real or complex
-							"All Real"; // maybe this should return like 0 or something instead of a string.
+				return Number.isNaN(a = Number(a)) ||
+					Number.isNaN(b = Number(b)) ?
+						NaN :
+						a ?
+							-b / a :
+							b ?
+				// No Solution, real or complex
+								NaN :
+				// maybe this should return like 0 or something instead of a string.
+								"All Real";
 			}
 			fix() { return this.trunc.apply(this, arguments) }
 			binom(n=1, k=1) { return this.nCr(n, k) }
 			pronic(n) {
 				// pronic numbers
-				return isNaN(n = Number(n)) ?
+				return Number.isNaN(n = Number(n)) ?
 					NaN :
 					n * (n + 1);
 				// P(-n) = P(n-1)
@@ -7164,7 +7545,7 @@ void (() => { "use strict";
 				, obj = str.replace([/\[/g, /]/g], [".", ""]).split(".").
 					reduce((obj, key) => obj?.[key], helpObject), text = "";
 				if (typeof obj === "string") {
-					if (["c.l", "cl", "l", "p", "log", "print", "console.log", console.log, 2].incl(format))
+					if (["l", "log", console.log, 2].incl(format))
 						console.log(`${prefixText}Description:\n\t` + obj.
 							remove(/\n+$/).replace(/\n(?!\t)/g, "\n\t")
 						);
@@ -7174,7 +7555,7 @@ void (() => { "use strict";
 				else if (obj === void 0) return "The requested help text is for a deleted object or doesn't exist. try waiting? or crying?";
 				else if (obj != obj) return "The requested help text hasn't been written due to lack of knowledge. try waiting?"
 				if (constr(obj) !== "HelpText") return "The requested help text doesn't exist. try something else?";
-				if (["o", "obj", "object", "Object", Object, 0].incl(format)) return obj;
+				if (["o", "obj", "object", Object, 0].incl(format)) return obj;
 				// format help object
 				text += `Name${type(obj.name, 1) === "arr" && obj.name.length > 1 ? "s" : ""}:`;
 				if (["str", "mutstr"].incl( type(obj.name, 1) )) text += `\n\t${obj.name}`;
@@ -7334,15 +7715,15 @@ void (() => { "use strict";
 			constructor(
 				degTrig = LibSettings.cMath_DegTrig_Argument
 				, help = LibSettings.cMath_Help_Argument
-			)
-			{
+				,
+			) {
 				degTrig === "default" && (degTrig = !0);
 				help === "default" && (help = !0);
 
 				this.Complex = class Complex {
 					constructor(re=0, im=0) {
-						if (isNaN(re = Number(re))) re = 0;
-						if (isNaN(im = Number(im))) im = 0;
+						if (Number.isNaN(re = Number(re))) re = 0;
+						if (Number.isNaN(im = Number(im))) im = 0;
 
 						Object.is(re, -0) && (re = 0);
 						Object.is(im, -0) && (im = 0);
@@ -7523,7 +7904,7 @@ void (() => { "use strict";
 					return new this.Complex(re, im);
 				return NaN;
 			}
-			complex(re=0, im=0) { return this.new(re, im) }
+			complex(/*re=0, im=0*/) { return this.new.apply(this, arguments) }
 			add(a, b) {
 				typeof a === "number" && (a = this.new(a, 0));
 				typeof b === "number" && (b = this.new(b, 0));
@@ -7615,9 +7996,10 @@ void (() => { "use strict";
 				);
 			}
 			arg(z, n=0, form="rad") {
+				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") return NaN;
-				return form === "degrees" || form === "deg" || form === "degree" ?
-					rMath.deg.atan2(z.re, z.im) + 𝜏*int(n) :
+				return form === "degrees" || form === "deg" || form === "d" ?
+					rMath.deg.atan2(z.re, z.im) + 360*int(n) :
 					rMath.atan2(z.re, z.im) + 𝜏*int(n);
 			}
 			ln(z, n=0) {
@@ -7657,7 +8039,7 @@ void (() => { "use strict";
 
 				if (!z1.im && !z2.im) {
 					let pow = z1.re ** z2.re;
-					if (isNaN(pow)) return this.new(0, (-z1.re) ** z2.re);
+					if (Number.isNaN(pow)) return this.new(0, (-z1.re) ** z2.re);
 					return this.new(z1.re ** z2.re, 0);
 				}
 				if (type(z1, 1) !== "complex") return NaN;
@@ -7670,15 +8052,17 @@ void (() => { "use strict";
 			}
 			exp(z) {
 				typeof z === "number" && (z = this.new(z, 0));
-				return this.pow(this.e, z)
+				return this.pow(this.e, z);
 			}
 			expi(z) {
 				typeof z === "number" && (z = this.new(z, 0));
+				if (type(z, 1) !== "complex") return NaN;
 				const r = e ** -z.im;
-				return this.new(r * rMath.cos(z.re), r * rMath.sin(z.re))
+				return this.new( r*rMath.cos(z.re), r*rMath.sin(z.re) );
 			}
+			cis(/*z*/) { return this.expi.apply(this, arguments) }
 			abs(z) {
-				typeof z === "number" && (z = this.new(z, 0));
+				if (typeof z === "number") return rMath.abs(z);
 				if (type(z, 1) !== "complex") return NaN;
 				return rMath.hypot(z.re, z.im);
 			}
@@ -7710,7 +8094,11 @@ void (() => { "use strict";
 					rMath.nthrt( this.abs(z), rt )
 				);
 			}
-			sqrt(z) { return typeof z !== "number" && type(z, 1) !== "complex" ? NaN : this.nthrt(z, 2) }
+			sqrt(z) {
+				return typeof z !== "number" && type(z, 1) !== "complex" ?
+					NaN :
+					this.nthrt(z, 2);
+			}
 			cbrt(z) {
 				typeof z === "number" && (z = this.new(z, 0));
 				if (type(z, 1) !== "complex") return NaN;
@@ -7739,7 +8127,11 @@ void (() => { "use strict";
 				typeof inc === "number" && (inc = this.new(inc, 0));
 				// complex less than or equal to
 				// comp let
-				const complet = (a, b) => !a.im && !b.im ? a.re <= b.re : this.abs(a) <= this.abs(b);
+				const complet = (a, b) => !a.im && !b.im ?
+					a.re <= b.re :
+					!a.re && !b.re ?
+					a.im <= b.im :
+					this.abs(a) <= this.abs(b);
 				
 				if (type(n, 1) !== "complex") return NaN;
 				if (type(last, 1) !== "complex") return NaN;
@@ -7764,17 +8156,17 @@ void (() => { "use strict";
 			constructor(
 				help = LibSettings.fMath_Help_Argument
 				, degTrig = LibSettings.fMath_DegTrig_Argument
-			)
-			{
+				,
+			) {
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 
 				this.Fraction = class Fraction {
 					constructor(numerator="1.0", denominator="1.0") {
-						if (isNaN(numerator = sMath.new(numerator, NaN)) ||
-							isNaN(denominator = sMath.new(denominator, NaN)))
+						if (Number.isNaN(numerator = sMath.new(numerator, NaN)) ||
+							Number.isNaN(denominator = sMath.new(denominator, NaN)))
 							throw Error("fMath.Fraction() requires string number arguments.");
-						if (sMath.eq.ez(denominator)) throw Error("fMath.Fraction() cannot have a zero denominator");
+						if (sMath.eq.iz(denominator)) throw Error("fMath.Fraction() cannot have a zero denominator");
 						var gcd = sMath.gcd(numerator, denominator);
 						this.numer = sMath.div(numerator, gcd);
 						this.denom = sMath.div(denominator, gcd);
@@ -7796,7 +8188,10 @@ void (() => { "use strict";
 				if ( sMath.isNaN(fraction.numer) ) return NaN;
 				if ( sMath.isNaN(fraction.denom) ) return NaN;
 				var gcd = sMath.gcd(fraction.numer, fraction.denom);
-				return this.new( sMath.div(fraction.numer, gcd), sMath.div(fraction.denom, gcd) );
+				return this.new(
+					sMath.idiv(fraction.numer, gcd),
+					sMath.idiv(fraction.denom, gcd),
+				);
 			}
 			add(a, b) {
 				if (type(a, 1) !== "fraction" || type(b, 1) !== "fraction") return NaN;
@@ -7826,13 +8221,13 @@ void (() => { "use strict";
 			}
 		}
 		, "math cfMath": class ComplexFractionalStringMath {
-			constructor(help=LibSettings.cfMath_Help_Argument) {
+			constructor( help = LibSettings.cfMath_Help_Argument ) {
 				help === "default" && (help = !0);
 
 				this.CFraction = class ComplexFraction {
 					constructor(re=fMath.one, im=fMath.one) {
 						if (type(re, 1) !== "fraction" || type(im, 1) !== "fraction")
-							throw ValueError("cfMath.CFraction requires 2 fractional arguments.");
+							throw TypeError("cfMath.CFraction requires 2 fractional arguments.");
 						this.re = fMath.simp(re);
 						this.im = fMath.simp(im);
 					}
@@ -7846,11 +8241,11 @@ void (() => { "use strict";
 		}
 		, "math call aMath"() {
 			// name of math object
-			var _getNameOf = obj => keyof(globalThis.MathObjects, obj)
+			var _getNameOf = obj => keyof(globalThis.MathObjects, obj, 1, (a, b) => a === b)
 			// get prototype's properties
-			, _protoProps = e => Object.getOwnPropertyNames(e.constructor.prototype)
+			, _protoProps = e => Reflect.ownKeys(e.constructor.prototype) // e.__proto__
 			, _typeToObj = {
-				// use type(x, anything other than undefined)
+				// use type(x, thing!)
 				num : rMath, bigint : bMath, fraction : fMath, // string : sMath,
 				str : sMath, mutstr : sMath, complex  : cMath, // number : rMath,
 			};
@@ -7890,15 +8285,15 @@ void (() => { "use strict";
 				AllMath.prototype[fname] = function () { return _call(fname, null, ...arguments) }
 			if (LibSettings.aMath_DegTrig_Argument) {
 				AllMath.prototype.deg = {};
-				for (const fname of Object.getOwnPropertyNames(rMath.deg))
+				for (const fname of Reflect.ownKeys(rMath.deg))
 					AllMath.prototype.deg[fname] = function () { return _call_attr(fname, "deg", null, ...arguments) }
 			}
 			if (LibSettings.aMath_Comparatives_Argument) {
 				AllMath.prototype.eq = {};
 				for (const fname of [].concat(
-					Object.getOwnPropertyNames(rMath.deg)
-					, Object.getOwnPropertyNames(sMath.deg)
-					, Object.getOwnPropertyNames(bMath.deg)
+					Reflect.ownKeys(rMath.deg)
+					, Reflect.ownKeys(sMath.deg)
+					, Reflect.ownKeys(bMath.deg)
 					,
 				)) AllMath.prototype.eq[fname] = function () { return _call_attr(fname, "eq", null, ...arguments) }
 			}
@@ -7960,15 +8355,15 @@ void (() => { "use strict";
 		}
 		, "defer call local finalize_math"() {
 			function definer(obj, name, value, writable=!0, enumerable=!1, configurable=!0) {
-				return Object.defineProperty(obj, name, {
+				return Reflect.defineProperty(obj, name, {
 					value: value
 					, writable: writable
 					, enumerable: enumerable
 					, configurable: configurable
-				})
+				});
 			}
-			for (let obj of Object.getOwnPropertyNames(MathObjects).map(s => MathObjects[s]))
-				Object.getOwnPropertyNames(MathObjects).forEach( s => definer(obj, s, MathObjects[s]) )
+			for (let obj of Reflect.ownKeys(MathObjects).map(s => MathObjects[s]))
+				Reflect.ownKeys(MathObjects).forEach( s => definer(obj, s, MathObjects[s]) )
 				, definer(obj, "+", obj.add), definer(obj, "-", obj.sub)
 				, definer(obj, "*", obj.mul), definer(obj, "/", obj.div)
 				, definer(obj, "^", obj.pow), definer(obj, "%", obj.mod)
@@ -8003,7 +8398,7 @@ void (() => { "use strict";
 
 		--> assignment and conflict things
 
-		for (const key of Object.keys(LIBRARY_VARIABLES))
+		for (const key of Reflect.ownKeys(LIBRARY_VARIABLES))
 			define(key, 0);
 
 		--> document things
@@ -8088,7 +8483,7 @@ void (() => { "use strict";
 				);
 			}
 			function click(times=1) {
-				if (isNaN( times = Number(times) )) times = 1;
+				if (Number.isNaN( times = Number(times) )) times = 1;
 				while (times --> 0) _click.call(this);
 				return this;
 			}
@@ -8321,7 +8716,7 @@ document._createCDATASection = (function create__createCDATASection() {
 	return createCDATASection._document = doc, createCDATASection;
 })();
 
-rMath._generateReals = (function create_realNumbers() {
+Reflect.defineProperty(rMath, "_generateReals", (function create_realNumbers() {
 	const isBrowser = (globalThis + "").slice(8, -1).toLowerCase() === "window";
 	if (isBrowser) var process = {
 		stdout: {
@@ -8385,4 +8780,4 @@ rMath._generateReals = (function create_realNumbers() {
 		generateReals._getReal = getReal,
 		generateReals._generateRealsSet = generateRealsSet,
 		generateReals;
-})();
+})());
