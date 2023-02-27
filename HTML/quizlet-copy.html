@@ -443,16 +443,16 @@
 				setTimeout(() => this.innerHTML = 'Copy Formatted Set Object', 1_450);
 			">Copy Formatted Set Object</button>
 			<br>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'local')">Save Object to Local Storage</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'flashcards')">FlashCards</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'multiplechoice')">Multiple Choice</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'write')">Write</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'learn')">Learn</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'gravity')">Gravity</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'test')">Test</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'local')">Go To Local Storage</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'flash-cards')">Flash Cards (Not Implemented)</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'multiple-choice')">Multiple Choice (Not Implemented)</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'write')">Write (Not Implemented)</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'learn')">Learn (Not Implemented)</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'gravity')">Gravity (Not Implemented)</button>
+			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'test')">Test (Not Implemented)</button>
 		</div>
-		<div class="screen" id="save-to-local-storage">
-			<h1>Save To Local Storage</h1>
+		<div class="screen" id="local-storage">
+			<h1>Local Storage</h1>
 		</div>
 		<div class="screen" id="flashcards-div">
 			<h1>Flashcards</h1>
@@ -478,10 +478,10 @@
 
 	<script type="text/javascript" defer>
 		// display correct div at the start
-		if      (location.search.sw("?mode=local&obj=")) $("div#save-to-local-storage").show();
+		if      (location.search.sw("?mode=local&obj=")) $("div#local-storage").show();
 		else if (location.search.sw("?mode=select&obj=")) $("div#select-learn-type").show();
-		else if (location.search.sw("?mode=flashcards&obj=")) $("div#flashcards-div").show();
-		else if (location.search.sw("?mode=multiplechoice&obj=")) $("div#multiple-choice-div").show();
+		else if (location.search.sw("?mode=flash-cards&obj=")) $("div#flashcards-div").show();
+		else if (location.search.sw("?mode=multiple-choice&obj=")) $("div#multiple-choice-div").show();
 		else if (location.search.sw("?mode=learn&obj=")) $("div#learn-div").show();
 		else if (location.search.sw("?mode=test&obj=")) $("div#test-div").show();
 		else if (location.search.sw("?mode=gravity&obj=")) $("div#gravity-div").show();
