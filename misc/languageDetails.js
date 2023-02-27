@@ -1786,6 +1786,9 @@ var o = dict({
 			"unless",
 			"initialize",
 			"tap",
+			"interface!",
+			"sealed!",
+			"def self.<Name>(<Arguments>) <Body> end",
 		],
 		"misc": [
 			"implemented in C",	
@@ -1793,7 +1796,9 @@ var o = dict({
 		"examples": [
 			"weight = - weight if sign == \"-\"",
 			"next if title.nil?",
-			"get_data(page: 1)"
+			"get_data(page: 1)",
+			"module Result\n\textend T::Sig\n\textend T::Helpers\n\textend T::Generic",
+			"def unwrap; end",
 		],
 	}
 	, "Rust": {
@@ -2067,6 +2072,11 @@ var o = dict({
 			"CREATE SCHEMA",
 			"drop database if exists <Name>;",
 			"create database <Name>;",
+			"varchar(<integer>)",
+			"<value> NOT NULL",
+			"PRIMARY KEY",
+			"CREATE TYPE",
+			"ALTER TABLE ...",
 		],
 		"misc": [
 			"SQL: '=' means ==. idk if dynamic or static",
@@ -2081,6 +2091,9 @@ var o = dict({
 			"create table Ingredient (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n\tname VARCHAR(50))\n\tENGINE=InnoDB DEFAULT CHARSET=utf8;"
 			"select r.name as \"Recipe\" ... from Recipe r",
 			"LEFT OUTER JOIN Measure mu on mu.id = measure_id;",
+			"CREATE TYPE phone_type AS ENUM ('landline', 'mobile');",
+			"ALTER TABLE TableName NOCHECK CONSTRAINT ALL",
+			"ALTER TABLE TableName CHECK CONSTRAINT ALL",
 		],
 	}
 	, "SubRip Text": {
@@ -2385,6 +2398,30 @@ var o = dict({
 			"call plug#begin('~/.config/nvim/plugged')",
 			"Plug 'joshdick/onedark.vim'",
 		],
+	}
+	, "Visual Basic .NET": {
+		// so I don't have to retype everything every time I want to add a new language
+		"function": null,
+		"variable": ["", "Const"],
+		"typing": null,
+		"compiled/interpreted": null,
+		"level": null,
+		"alt-name": null,
+		"cur.obj": null,
+		"undefined": null,
+		"cstyle": null,
+		"semicolon": null,
+		"extends": null,
+		"keywords": [
+			"Function <Name>(thestring As String) ... End Function",
+		],
+		"misc": [
+			"Capitalized first letters, whether by convention or force, idk",
+			"Dim B As String * 1",
+			"Dim i As Integer",
+			"For i = 1 To len(chars) ... Next", // at least I think `Next` ends the loop
+		],
+		"examples": null,
 	}
 	, "Vue": {
 		"function": null,
