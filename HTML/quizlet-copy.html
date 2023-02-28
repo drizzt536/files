@@ -5,30 +5,30 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="author" content="Daniel Janusch">
 	<title>Quizlet Copy</title>
+	<!-- /*show everything */$(":not(script):not(style):not(meta):not(title)").show(); -->
 	<script type="text/javascript" src="D:/ExtF/CodeFiles/JavaScript/lib.js"></script>
-	<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.3.js"></script>
 	<style type="text/css">
 		:root {
 			--screen-side-padding: 3rem;
 			--button-active-bgcolor: #1A2164;
-
-			--input-bgcolor: ;
-
+			--input-bgcolor: #2E3856;
 			--button-bg-red: 66;
 			--button-bg-green: 85;
 			--button-bg-blue: 255;
 		}
-		:not(code) {
+		*:not(code) {
 			color: #C9C9C9;
 			font-family: cursive;
 		}
-		input, textarea {
-			background-color: #2E3856;
+		input, textarea, select {
+			background-color: var(--input-bgcolor);
 			padding: 0.15rem 0.4rem;
 			font-family: monospace;
 			border-radius: 1rem;
 			border: none;
 		}
+		select { font-family: cursive }
 		textarea { padding-top: 0.25rem }
 		button {
 			background-color: rgb(
@@ -55,7 +55,7 @@
 			background-color: var(--button-active-bgcolor);
 			transition: none;
 		}
-		.screen {
+		div.screen {
 			display: none;
 			padding-left: var(--screen-side-padding);
 			padding-right: var(--screen-side-padding);
@@ -63,7 +63,7 @@
 		.centered { text-align: center }
 		.bordered { border: 3px solid dimgray }
 		.rounded { border-radius: 0.5rem }
-		.select-divider {
+		hr.select-divider {
 			--sides: 2vw;
 
 			position: absolute;
@@ -75,11 +75,16 @@
 			margin-top: -16px;
 			border-radius: 3px;
 		}
-		.non-disruptive {
+		div.non-disruptive {
 			padding: 0;
 			margin: 0;
 			color: inherit;
 			font-size: inherit;
+		}
+		span.write-settings-header {
+			margin: 0;
+			margin-top: 0.375rem;
+			display: inline-block;
 		}
 	</style>
 	<script type="text/javascript">
@@ -94,6 +99,74 @@
 		function csvtojson(string) {
 			throw Error("Not Implemented");
 		}
+		function Write_Continue_On_Click() {
+			// onclick for button#write-continue-button
+			// throw Error('next() Not Implemented');
+
+			// hide answer-related things
+
+			$('button#write-override-button, button#write-continue-button, button#write-show-answer').hide();
+			$('p#write-outcome-text').hide().html('').css({ "font-size": "1rem" });
+
+			// clear input
+
+			$('input#write-answer-text').val('');
+
+			// set default attributes
+
+			write_objs[write_index].times ??= 0;
+			write_objs[write_index].mastered ??= false;
+
+			// update score
+
+			if (write_current_is_correct)
+				write_objs[write_index].times++;
+			else if (write_objs[write_index].times || write_allow_subzero_mastery)
+				write_objs[write_index].times--;
+
+			// update masteries
+
+			if (write_objs[write_index].times >= write_correct_until_mastered) {
+				write_objs[write_index].mastered = true;
+
+				const old = $('span#write-current-mastery-index')
+					, mastery = 1 + +old.html(); // increment by 1
+
+				old.html(`${mastery}`);
+
+				if (mastery === write_objs.length) {
+					$("button#write-submit-button").hide();
+					$('p#write-outcome-text')
+						.html('Set Completed')
+						.css({ "font-size": "2rem" })
+						.show();
+					return;
+				}
+
+			}
+
+			// update index to next un-mastered one
+
+			do {
+				write_index++;
+				if (write_index === write_objs.length)
+					write_index = 0;
+
+			}
+			while ( write_objs[write_index].mastered );
+
+			// update question text
+
+			$('span#write-question-text').html(
+				write_answer_with_defs ?
+					write_objs[write_index].term :
+					write_objs[write_index].definitions[0]
+			);
+
+			// refocus input
+
+			$('input#write-answer-text').focus()
+		}
 		var uploadJSONString = (function create_uploadJSONString() {
 			function normalize(str) {
 
@@ -101,6 +174,7 @@
 					if ( /\s/.test(out[i]) ) // whitespace
 						out.splice(i--, 1);
 					else if (out[i] === '"' || out[i] === "/") {
+						// if (out[i] === "/") debugger;
 						let startIndex = i
 							, find = out[i] === '"' ? '"' : "/"
 							, regex = RegExp(`\\\\*(?=${find}$)`);
@@ -110,10 +184,16 @@
 						let flags = out[i] === '"' ? "" : out.slice(i+1).join("").match(/^\w*/)?.[0] ?? ""
 							, length = i - startIndex + flags.length + 1
 							, replacementString = `{"source":"${
-							out.slice(startIndex + 1, i).join("").replace(
-								find === "/" ? /"/g : /(\W)/g
-								, find === "/" ? '\\"' : "\\$1"
-							).replace(/\\/, "\\\\")
+							out.slice(startIndex + 1, i).join("")
+							.replace(
+								...(find === "/" ? [ // regex
+									[/\\/g, /"/g],
+									["\\\\", '\\"']
+								] : [ // string
+									[/\\(?!")/g, /([^"\w\\])/g],
+									["\\\\", '\\\\$1']
+								])
+							)
 						}","flags":"${flags}"}`;
 
 						if (find === "/" || !/^\s*:/.test( out.slice(i+1).join("") )) {
@@ -126,6 +206,7 @@
 			}
 			function uploadJSONString(text) {
 				let endValue = normalize(text);
+				globalThis.endValueJSON = endValue;
 
 				// change regex to normal objects
 				// find regular expressions and convert to regular objects
@@ -144,9 +225,11 @@
 					obj.term = obj.term?.source?.replace?.(/\\(\W)/g, "$1");
 					if (typeof obj.term !== "string")
 						throw Error(`JSON text object index ${i} has an invalid term attribute`);
+					if (obj.favorite === void 0) obj.favorite = false;
 					if (typeof obj.favorite !== "boolean")
 						throw Error(`JSON text object index ${i} has an invalid favorite attribute`);
 
+					if (obj.mcwacs === void 0) obj.mcwacs = [];
 					if (!isArr(obj.mcwacs))
 						throw Error(`JSON text object index ${i} mcwacs attribute is not an array`);
 					for (var j = obj.mcwacs.length; j --> 0 ;) {
@@ -166,7 +249,7 @@
 							typeof obj.definitions[j].flags !== "string"
 						)
 							throw Error(`invalid regex at object ${i} definition ${j}.`);
-						delete obj.definitions[j].flags;
+						obj.definitions[j].flags;
 					}
 
 					if (obj.definitions[0]?.constructor !== Object) // nullish or other object type
@@ -198,6 +281,49 @@
 				}
 				, function onClick() { isLoaded && uploadJSONString(fr.result) }
 			];
+		})()
+		, Write_Submit_On_Click = (function create_Write_Submit_On_Click() {
+			function answer(is_correct) {
+				write_current_is_correct = is_correct;
+
+				let mastery = write_objs[write_index].times ?? 0;
+
+				mastery += is_correct - !is_correct;
+
+				if (!write_allow_subzero_mastery && mastery < 0)
+					mastery = 0;
+
+				$("p#write-outcome-text").html(`${is_correct ? "" : "in"}correct<br>${mastery}/${write_correct_until_mastered} mastery`).show();
+
+				write_allow_override && $("button#write-override-button").show();
+				$("button#write-continue-button, button#write-show-answer").show();
+			}
+			function Write_Submit_On_Click() {
+				// submit onclick
+				if ( !$('p#write-outcome-text').is(':hidden') )
+					return; // no changing answers
+
+				const user_answer = $("input#write-answer-text").val();
+
+				if (write_answer_with_defs) {
+					if (user_answer === write_objs[write_index].definitions[0])
+						return answer(true);
+
+					if (!write_main_answer_only)
+
+						for (const { source, flags } of write_objs[write_index].definitions.slice(1) )
+							if ( RegExp(source, flags).test(user_answer) )
+								return answer(true);
+
+					return answer(false);
+				}
+				return user_answer === write_objs[write_index].term ?
+					answer(true) :
+					answer(false);
+			}
+
+			Write_Submit_On_Click._answer = answer;
+			return Write_Submit_On_Click;
 		})();
 	</script>
 </head>
@@ -267,10 +393,11 @@
 					placeholder="Paste set here"
 				></textarea>
 			</form>
-			<button id="quizlet-submit" onclick="{// blockify scope
+			<button id="quizlet-submit" onclick="
+				// no longer runs in the global scope
 				// TODO/UPD: update to match new object format
 				throw Error('not up to date.');
-				let str = $('#import-quizlet-form > textarea').val()
+				var str = $('#import-quizlet-form > textarea').val()
 					, i = 0
 					, output = []
 					, start = 0
@@ -279,6 +406,7 @@
 					, finished = false;
 				if (str.length === 0) return;
 				if (str.at(-1) !== '\n') str += '\n';
+
 				for (; i < str.length ; i++) {
 					if (str[i] === '\t') {
 						finished &&= !!(definition = term = null); // false
@@ -296,7 +424,7 @@
 					}
 				}
 				location.search = 'obj=' + JSON.stringify(output);
-			}">Submit (Not Implemented)</button>
+			">Submit (Not Implemented)</button>
 		</div>
 		<div class="screen" id="import-csv">
 			<hr class="select-divider"/>
@@ -392,7 +520,7 @@
 				<button id="submit-json-text" onclick="uploadJSONString(this.previousElementSibling.value)">Submit</button>
 			</div>
 			<div id="import-json-file-div" class="non-disruptive">
-				<input type="file" accept=".json,.txt" onchange="JSON_File_Input_On_Change(this);">
+				<input type="file" accept=".json,.txt,.js" onchange="JSON_File_Input_On_Change(this);">
 				<button id="submit-json-file" onclick="Submit_JSON_File_On_Click()">Submit</button>
 			</div>
 		</div>
@@ -443,13 +571,27 @@
 				setTimeout(() => this.innerHTML = 'Copy Formatted Set Object', 1_450);
 			">Copy Formatted Set Object</button>
 			<br>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'local')">Go To Local Storage</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'flash-cards')">Flash Cards (Not Implemented)</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'multiple-choice')">Multiple Choice (Not Implemented)</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'write')">Write (Not Implemented)</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'learn')">Learn (Not Implemented)</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'gravity')">Gravity (Not Implemented)</button>
-			<button onclick="location.search = location.search.replace(/(?<=^\?mode=)select/, 'test')">Test (Not Implemented)</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'local');
+			">Go To Local Storage</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'flash-cards');
+			">Flash Cards (Not Implemented)</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'multiple-choice');
+			">Multiple Choice (Not Implemented)</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'write');
+			">Write</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'learn');
+			">Learn (Not Implemented)</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'gravity');
+			">Gravity (Not Implemented)</button>
+			<button onclick="
+				location.search = location.search.replace(/(?<=^\?mode=)select/, 'test');
+			">Test (Not Implemented)</button>
 		</div>
 		<div class="screen" id="local-storage">
 			<h1>Local Storage</h1>
@@ -470,60 +612,193 @@
 		<div class="screen" id="gravity-div">
 			<h1>Gravity</h1>
 		</div>
-		<div class="screen" id="write-settings-div">
+		<div class="screen" id="write-settings-div" onkeyup="event.key === 'Enter' && $(`button#write-${
+				$('button#write-continue-write-button').is(':hidden') ?
+					'start' :
+					'continue-write'
+			}-button`).click();
+		">
 			<h1>Write Settings</h1>
-			<label id="write-corrects-label">
-				<span>correct answers until mastered</span>
-				<input type="number" placeholder="positive integer" oninput=
-				       "this.value = /^0+$/.test(this.value) ?
-						'0' :
-						this.value.replace(/\D/g, '');
-				">
-			</label>
-			<label id="write-favorite-label">
-				<h3>Favorites or All Terms</h3>
+			<hr class="select-divider"/>
 
-				<input type="radio" name="write-favorite-label" value="all" checked/>
-				<span>&nbsp;all terms</span>
-				<br>
-				<input type="radio" name="write-favorite-label" value="favorites" id="write-favorites-only-input"/>
-				<span>&nbsp;favorites only</span>
-				<br>
-				<input type="radio" name="write-favorite-label" value="favorites" id="write-no-favorites-input"/>
-				<span>&nbsp;all terms except favorites</span>
-			</label>
-			<button onclick=
-				"{ // blockify scope
-				let objs;
+			<label>
+				<span>Correct Until Mastered:</span>
+				<input type="number" placeholder="positive integer" value="3" min="1" step="1" oninput=
+					"value = value.remove(/\D/g);
+					value = value.remove(/^0+(?!$)/g);
+					value === '0' && (value = '1'); // has to be separate statement.
+					BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER) && (value = `${Number.MAX_SAFE_INTEGER}`);
+				" id="write-correct-until-mastered-input">
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-shuffle-checkbox" value="true" checked/>
+				<span>Shuffle Terms</span>
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-allow-answer-override-checkbox" value="true" checked/>
+				<span>Allow Correctness Override</span>
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-allow-subzero-mastery-checkbox" value="true"/>
+				<span>Allow Zubzero Mastery</span>
+			</label><br/>
+
+			<span class="write-settings-header">Include</span>
+			<select id="write-favorite-select">
+				<option value="all-terms">All Terms</option>
+				<option value="favorites-only">Favorite Terms Only</option>
+				<option value="no-favorites">All Except Favorite Terms</option>
+			</select><br/>
+
+			<span class="write-settings-header">Answer With</span>
+			<select id="write-answer-select">
+				<option value="definition">Definition</option>
+				<option value="term">Term</option>
+			</select><br/>
+
+			<span class="write-settings-header">Allow</span>
+			<select id="write-strictness-select">
+				<option value="all">All Answers</option>
+				<option value="main-only">Main Answer Only</option>
+			</select>
+			<span class="write-settings-header">(only applicable with definition answers)</span>
+			<br/>
+
+			<button id="write-start-button" onclick="
+				// no longer runs in the global scope
+				var objs;
 				try {
 					objs = JSON.parse(
 						decodeURI( location.search.slc('obj=', void 0, 4) )
 					);
 				} catch { throw Error('invalid JSON object for write mode.') }
-
 				if ( !isArr(objs) ) throw Error('invalid JSON object for write mode.');
-				// otherwise assume correct object.
 
-				if ( $('input#write-favorites-only-input')[0].checked ) objs = objs.filter(e => e.favorite);
-				if ( $('input#write-no-favorites-input')[0].checked ) objs = objs.filter(e => !e.favorite);
+				if ( $('select#write-favorite-select').val() === 'favorites' )
+					objs = objs.filter(e => e.favorite);
+				else if ( $('select#write-favorite-select').val() === 'no-favorites' )
+					objs = objs.filter(e => !e.favorite);
 
-				var write_objs = objs; // global
-				// show other div
-				$('div#write-div').show();
+				$('input#write-shuffle-checkbox')[0].checked && objs.shuffle();
+
+				// global variables
+				globalThis.write_objs = objs;
+				globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox')[0].checked;
+				globalThis.write_correct_until_mastered =+ $('input#write-correct-until-mastered-input').val();
+				globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
+				globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
+				globalThis.write_index = 0; // zero-indexed
+				globalThis.write_current_is_correct = null;
+				globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
+
+				$('span#write-total-objects').html(`${objs.length}`);
+				$('span#write-current-mastery-index').html('0');
+
+
+				// hide things that are't visible at the start
+				$('button#write-override-button, button#write-continue-button, button#write-show-answer').hide();
+				$('p#write-outcome-text').hide().html('').css({ 'font-size': '1rem' });
+
+				// clear input
+				$('input#write-answer-text').val('');
+
+				$('button#write-continue-write-button').click();
+			">Start</button>
+			<button id="write-continue-write-button" style="display: none" onclick="
+				// update variables
+				globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox')[0].checked;
+				globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
+				globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
+				globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
+
+				// load term
+				$('span#write-question-text').html(
+					write_answer_with_defs ?
+						write_objs[write_index].term :
+						write_objs[write_index].definitions[0]
+				);
+
+				// switch screens
 				$('div#write-settings-div').hide();
-				// load first term
+				$('div#write-div').show();
 
-			}">Start</button>
+				// focus input
+				$('input#write-answer-text').focus();
+			">Continue (Updates the last 2 settings of each section)</button>
 		</div>
 		<div class="screen" id="write-div">
-			<!-- write div -->
-		</div>
+			<h1>Write | <span style="font-weight: normal;">mastered: <span id="write-current-mastery-index"></span>/<span id="write-total-objects"></span></span></h1>
+			<hr class="select-divider"/>
+			<div style=
+				"margin: 0;
+				padding: 0;
+				padding-top: 2rem;
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				overflow: auto;
+			">
+				<div style=
+					"border: 0.125rem solid dimgray;
+					width: 60vw;
+					margin-bottom: 4rem;
+					min-height: 50vh;
+					padding-bottom: 0.5rem;
+					text-align: center;
+				">
+					<div style=
+						"border-bottom: 0.125rem solid dimgray;
+						margin-bottom: 0.4rem;
+					">
+						<span id="write-question-text" style=
+							"display: inline-block;
+							margin-top: 0.2rem;
+							margin-bottom: 0.2rem;
+						"></span>
+					</div>
+					<input id="write-answer-text"
+						type="text"
+						placeholder="type answer here"
+						style="width: 90%;"
+						onkeyup="event.key === 'Enter' && ($(`button#write-${
+							$('p#write-outcome-text').is(':hidden') ?
+								'submit' :
+								'continue'
+						}-button`)).click();"
+					/>
+					<button id="write-submit-button" onclick="Write_Submit_On_Click()">Submit Answer</button>
+					<button onclick=
+						"$('button#write-continue-write-button').show();
+						$('button#write-start-button').html('Start Over');
+						$('div#write-div').hide();
+						$('div#write-settings-div').show();
+					">Back to Settings</button>
+					<br>
+					<button id="write-override-button" style="display: none;" onclick=
+						"write_current_is_correct = !write_current_is_correct;
+						$('button#write-continue-button').click();
+					">Override and Continue</button>
+					<button id="write-continue-button" style="display: none;" onclick="Write_Continue_On_Click()">Continue</button>
+					<button id="write-show-answer" style="display: none;" onclick="
+						// no longer global
+						var tmp = $('select#write-answer-select');
+						tmp.val(tmp.val() === 'definition' ? 'term' : 'definition');
+						$('button#write-continue-write-button').click();
+					">Show Main Answer</button>
+					<p id="write-outcome-text" style="display: none;"></p>
+				</div> <!-- card div -->
+			</div> <!-- write screen below main separator rule -->
+		</div> <!-- main write screen div -->
 	</div>
 
+	<!-- main script to load the correct page -->
 
 	<script type="text/javascript" defer>
 		// display correct div at the start
-		if (location.search.sw("?obj=")) // redirect to correct search
+		if (location.search.sw("?obj=")) // redirect to use correct search
 			location.search = "mode=select&" + location.search.slice(1);
 
 		if      (location.search.sw("?mode=local&obj=")) $("div#local-storage").show();
@@ -533,10 +808,16 @@
 		else if (location.search.sw("?mode=learn&obj=")) $("div#learn-div").show();
 		else if (location.search.sw("?mode=test&obj=")) $("div#test-div").show();
 		else if (location.search.sw("?mode=gravity&obj=")) $("div#gravity-div").show();
-		else if (location.search.sw("?mode=write&obj=")) $("div#write-settings-div").show();
+		else if (location.search.sw("?mode=write&obj=")) {
+			$("div#write-settings-div").show();
+			$("input#write-correct-until-mastered-input").focus();
+		}
 		else {
+			if (location.search === "" && location.href.at(-1) === "?")
+				location.href = location.href.slice(0, -1);
 			if (location.search !== "")
 				location.href = location.href.slice(0, -location.search.length);
+
 			$("div#select-set-input").show();
 		}
 	</script>
