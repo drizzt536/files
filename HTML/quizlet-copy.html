@@ -6,8 +6,8 @@
 	<meta name="author" content="Daniel Janusch">
 	<title>Quizlet Copy</title>
 	<!-- /*show everything */$(":not(script):not(style):not(meta):not(title)").show(); -->
-	<script type="text/javascript" src="D:/ExtF/CodeFiles/JavaScript/lib.js"></script>
 	<script src="https://code.jquery.com/jquery-3.6.3.js"></script>
+	<script type="text/javascript" src="D:/ExtF/CodeFiles/JavaScript/lib.js"></script>
 	<style type="text/css">
 		:root {
 			--screen-side-padding: 3rem;
@@ -86,6 +86,7 @@
 			margin-top: 0.375rem;
 			display: inline-block;
 		}
+		button.write-end-screen-button { display: none }
 	</style>
 	<script type="text/javascript">
 		// functions for `onclick` etc
@@ -105,12 +106,12 @@
 
 			// hide answer-related things
 
-			$('button#write-override-button, button#write-continue-button, button#write-show-answer').hide();
-			$('p#write-outcome-text').hide().html('').css({ "font-size": "1rem" });
+			$("button#write-override-button, button#write-continue-button, button#write-show-answer").hide();
+			$("p#write-outcome-text").hide().html("").css({ "font-size": "1rem" });
 
 			// clear input
 
-			$('input#write-answer-text').val('');
+			$("input#write-answer-text").val("");
 
 			// set default attributes
 
@@ -129,35 +130,39 @@
 			if (write_objs[write_index].times >= write_correct_until_mastered) {
 				write_objs[write_index].mastered = true;
 
-				const old = $('span#write-current-mastery-index')
+				const old = $("span#write-current-mastery-index")
 					, mastery = 1 + +old.html(); // increment by 1
 
 				old.html(`${mastery}`);
 
 				if (mastery === write_objs.length) {
 					$("button#write-submit-button").hide();
-					$('p#write-outcome-text')
-						.html('Set Completed')
+					$("p#write-outcome-text")
+						.html("Set Completed")
 						.css({ "font-size": "2rem" })
+						.add("button.write-end-screen-button")
 						.show();
 					return;
 				}
-
 			}
+
+			// update number of incorrect answers
+
+			write_objs[write_index].incorrect ??= 0;
+
+			if (!write_current_is_correct)
+				write_objs[write_index].incorrect++;
+				// for mastery ranking at the end
 
 			// update index to next un-mastered one
 
-			do {
-				write_index++;
-				if (write_index === write_objs.length)
-					write_index = 0;
-
-			}
+			do ++write_index === write_objs.length &&
+				(write_index = 0);
 			while ( write_objs[write_index].mastered );
 
 			// update question text
 
-			$('span#write-question-text').html(
+			$("span#write-question-text").html(
 				write_answer_with_defs ?
 					write_objs[write_index].term :
 					write_objs[write_index].definitions[0]
@@ -165,10 +170,15 @@
 
 			// refocus input
 
-			$('input#write-answer-text').focus()
+			$("input#write-answer-text").focus();
+			if (write_show_answer_clicked) {
+				$("button#write-show-answer").click();
+				write_show_answer_clicked = false;
+			}
 		}
 		var uploadJSONString = (function create_uploadJSONString() {
 			function normalize(str) {
+				// find strings and regular expressions and convert to regular objects with a source and flags
 
 				for (var i = 0, out = str.split(""), isKey = false; i < out.length; i++) {
 					if ( /\s/.test(out[i]) ) // whitespace
@@ -205,18 +215,28 @@
 				return out.join("");
 			}
 			function uploadJSONString(text) {
+				text = text.remove(/[\t ]*\/\/[\w\t. ]*(?=\n)/g); // remove single lined comments
+
+				// handle direct passage inputs
+				if ( $("input#import-json-direct-load-input")[0].checked ) {
+					if (text[0] !== "[" || text.at(-1) !== "]")
+						// only checks one edge case.
+						throw Error("JSON text input for direct passage is not an array");
+					globalThis.location.search = `mode=select&obj=${ encodeURIComponent(text) }`;
+				}
+
 				let endValue = normalize(text);
-				globalThis.endValueJSON = endValue;
+				// globalThis.endValueJSON = endValue; // for debugger
 
 				// change regex to normal objects
-				// find regular expressions and convert to regular objects
+				
 				let objs;
 				try { objs = JSON.parse(endValue) }
 				catch { throw Error("JSON text input is not valid JSON.") }
 
-				if (objs == null) throw Error("Could not parse as JSON because it is not valid");
-				if (!isArr(objs)) throw Error("JSON text is not an array");
-				if (!objs.length) throw Error("JSON text array cannot be empty");
+				if (objs == null) throw Error("Could not parse as JSON, undefined returned. Or the JSON object was 'null'.");
+				if (!isArr(objs)) throw Error("JSON object is not an array");
+				if (!objs.length) throw Error("JSON array cannot be empty");
 
 				for (var i = objs.length; i --> 0 ;) {
 					const obj = objs[i]; // const obj of objs, with index
@@ -260,7 +280,9 @@
 					if (typeof obj.definitions[0] !== "string") throw Error(`invalid element 0 of definitions`);
 				}
 
-				location.search = `mode=select&obj=${JSON.stringify(objs)}`;
+				location.search = `mode=select&obj=${
+					encodeURIComponent( JSON.stringify(objs) )
+				}`;
 			}
 			uploadJSONString._normalize = normalize;
 
@@ -507,9 +529,14 @@
 					$('#import-json-text-div').hide();
 					$('#import-json-file-div').show();
 				">File Upload</button>
+				<label>
+				<input type="checkbox" id="import-json-direct-load-input" value="true">
+				<span>Load JSON Input Directly</span>
+			</label>
 			</div>
 
-			<p>Array elements should follow the following format: (backslashes should not be escaped, unlike in normal JSON)<br><code>{<br>&nbsp;&nbsp;&nbsp;&nbsp;"term": string,<br>&nbsp;&nbsp;&nbsp;&nbsp;"mcwacs": string[], // multiple choice wrong answer choices<br>&nbsp;&nbsp;&nbsp;&nbsp;"definitions": (string | regex)[], /* the first is the main answer and must be a string for flashcards and the correct answer for multiple choice */<br>&nbsp;&nbsp;&nbsp;&nbsp;"favorite": boolean<br>}</code></p>
+
+			<p>Array elements should follow the following format:<br><code>{<br>&nbsp;&nbsp;&nbsp;&nbsp;"term": string,<br>&nbsp;&nbsp;&nbsp;&nbsp;"mcwacs": string[], // multiple choice wrong answer choices<br>&nbsp;&nbsp;&nbsp;&nbsp;"definitions": (string | regex)[], /* the first is the main answer and must be a string for flashcards and the correct answer for multiple choice */<br>&nbsp;&nbsp;&nbsp;&nbsp;"favorite": boolean<br>}</code><br/>If 'Load JSON Input Directly' is active, replace regular expressions with <code>{"source":"...","flags":"..."}</code>.<br/>backslashes should be escaped in strings but not regular expressions.</p>
 			<div id="import-json-text-div" class="non-disruptive">
 				<textarea
 					style="width: 90vw;"
@@ -555,62 +582,85 @@
 			<button onclick="
 				// the object is always last in the search
 				navigator.clipboard.writeText(
-					decodeURI( location.search.slc('obj=', void 0, 4) )
+					decodeURIComponent( location.search.slc('obj=', void 0, 4) )
 				);
 				this.innerHTML = 'Text Copied';
-				setTimeout(() => this.innerHTML = 'Copy Minified Set Object', 1_450);
-			">Copy Minified Set Object</button>
+				setTimeout(() => this.innerHTML = 'Copy Minified JSON', 1_450);
+			">Copy Minified JSON</button>
 			<button onclick="
 				// the object is always last in the search
 				navigator.clipboard.writeText(
 					formatjson(
-						decodeURI( location.search.slc('obj=', void 0, 4) )
+						decodeURIComponent( location.search.slc('obj=', void 0, 4) )
 					)
 				);
 				this.innerHTML = 'Text Copied';
-				setTimeout(() => this.innerHTML = 'Copy Formatted Set Object', 1_450);
-			">Copy Formatted Set Object</button>
-			<br>
+				setTimeout(() => this.innerHTML = 'Copy Formatted JSON', 1_450);
+			">Copy Formatted JSON</button>
+			<button onclick="
+				// the object is always last in the search
+				navigator.clipboard.writeText( location.search.slc('obj=', void 0, 4) );
+				this.innerHTML = 'Text Copied';
+				setTimeout(() => this.innerHTML = 'Copy Search Object', 1_450);
+			">Copy Search Object</button>
+			<button onclick="
+				var blob = new Blob([
+					decodeURIComponent( location.search.slc('obj=', void 0, 4) )
+				], {
+					type: 'application/json'
+					, endings: 'transparent'
+				});
+				var url = globalThis.URL.createObjectURL(blob);
+				globalThis.createElement('a', { attr: {href: url, download: 'set.json'} }).click();
+				globalThis.URL.revokeObjectURL(url);
+			">Download Minified JSON</button>
+			<br/>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'local');
 			">Go To Local Storage</button>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'flash-cards');
-			">Flash Cards (Not Implemented)</button>
+			">Flash Cards</button>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'multiple-choice');
-			">Multiple Choice (Not Implemented)</button>
+			">Multiple Choice</button>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'write');
 			">Write</button>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'learn');
-			">Learn (Not Implemented)</button>
+			">Learn</button>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'gravity');
-			">Gravity (Not Implemented)</button>
+			">Gravity</button>
 			<button onclick="
 				location.search = location.search.replace(/(?<=^\?mode=)select/, 'test');
-			">Test (Not Implemented)</button>
+			">Test</button>
 		</div>
 		<div class="screen" id="local-storage">
 			<h1>Local Storage</h1>
+			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="flashcards-div">
 			<h1>Flashcards</h1>
+			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="multiple-choice-div">
 			<h1>Multiple Choice</h1>
+			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="learn-div">
 			<h1>Learn</h1>
+			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="test-div">
-			<!-- test like exam, not like dev thing -->
+			<!-- test like exam, not like the dev thing -->
 			<h1>Test</h1>
+			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="gravity-div">
 			<h1>Gravity</h1>
+			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="write-settings-div" onkeyup="event.key === 'Enter' && $(`button#write-${
 				$('button#write-continue-write-button').is(':hidden') ?
@@ -618,17 +668,22 @@
 					'continue-write'
 			}-button`).click();
 		">
-			<h1>Write Settings</h1>
+			<h1>Write | Settings</h1>
 			<hr class="select-divider"/>
 
 			<label>
-				<span>Correct Until Mastered:</span>
+				<span>Non-Consecutive Correct Until Mastered:</span>
 				<input type="number" placeholder="positive integer" value="3" min="1" step="1" oninput=
 					"value = value.remove(/\D/g);
 					value = value.remove(/^0+(?!$)/g);
 					value === '0' && (value = '1'); // has to be separate statement.
 					BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER) && (value = `${Number.MAX_SAFE_INTEGER}`);
 				" id="write-correct-until-mastered-input">
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-allow-subzero-mastery-checkbox" value="true"/>
+				<span>Allow Zubzero Mastery</span>
 			</label><br/>
 
 			<label>
@@ -642,8 +697,23 @@
 			</label><br/>
 
 			<label>
-				<input type="checkbox" id="write-allow-subzero-mastery-checkbox" value="true"/>
-				<span>Allow Zubzero Mastery</span>
+				<input type="checkbox" id="write-case-sensitive-checkbox" value="true" checked/>
+				<span>Case Sensitive Answers (Not Implemented)</span>
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-trim-edge-whitespace-checkbox" value="true" checked/>
+				<span>Trim Edge Whitespace (Not Implemented)</span>
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-backtick-accents-checkbox" value="true" checked/>
+				<span>Allow 'e`' for 'é' etc. (Not Implemented)</span>
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-backtick-accents-checkbox" value="true" checked/>
+				<span>Allow 'n~' for 'ñ' etc. (Not Implemented)</span>
 			</label><br/>
 
 			<span class="write-settings-header">Include</span>
@@ -667,14 +737,20 @@
 			<span class="write-settings-header">(only applicable with definition answers)</span>
 			<br/>
 
+			<button onclick="location.search = '?mode=select' + location.search.slc('&obj=');">Back to Mode Select</button>
 			<button id="write-start-button" onclick="
 				// no longer runs in the global scope
 				var objs;
-				try {
-					objs = JSON.parse(
-						decodeURI( location.search.slc('obj=', void 0, 4) )
-					);
-				} catch { throw Error('invalid JSON object for write mode.') }
+				if (globalThis._write_objs)
+					objs = globalThis._write_objs;
+				else {
+					try {
+						objs = JSON.parse(
+							decodeURIComponent( location.search.slc('obj=', void 0, 4) )
+						);
+					}
+					catch { throw Error('invalid JSON object for write mode.') }
+				}
 				if ( !isArr(objs) ) throw Error('invalid JSON object for write mode.');
 
 				if ( $('select#write-favorite-select').val() === 'favorites' )
@@ -684,23 +760,34 @@
 
 				$('input#write-shuffle-checkbox')[0].checked && objs.shuffle();
 
-				// global variables
+				// global variables. commented ones also happen in the continue button onclick
+				// globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox')[0].checked;
+				// globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
+				// globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
+				// globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
+				// globalThis._write_objs = null;
 				globalThis.write_objs = objs;
-				globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox')[0].checked;
+				// TODO/UPD: change this next variable to update on continue as well as start.
 				globalThis.write_correct_until_mastered =+ $('input#write-correct-until-mastered-input').val();
-				globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
-				globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
 				globalThis.write_index = 0; // zero-indexed
 				globalThis.write_current_is_correct = null;
-				globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
+				globalThis.write_show_answer_clicked = false;
 
 				$('span#write-total-objects').html(`${objs.length}`);
 				$('span#write-current-mastery-index').html('0');
 
 
 				// hide things that are't visible at the start
-				$('button#write-override-button, button#write-continue-button, button#write-show-answer').hide();
+				$(`button#write-override-button,
+					button#write-continue-button,
+					button#write-show-answer,
+					button.write-end-screen-button
+				`).hide();
+
 				$('p#write-outcome-text').hide().html('').css({ 'font-size': '1rem' });
+
+				// re-show the submit button in case the set was previously completed
+				$('button#write-submit-button').show();
 
 				// clear input
 				$('input#write-answer-text').val('');
@@ -713,6 +800,7 @@
 				globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
 				globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
 				globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
+				globalThis._write_objs = null;
 
 				// load term
 				$('span#write-question-text').html(
@@ -727,10 +815,10 @@
 
 				// focus input
 				$('input#write-answer-text').focus();
-			">Continue (Updates the last 2 settings of each section)</button>
+			">Continue (Some Settings Are changed)</button>
 		</div>
 		<div class="screen" id="write-div">
-			<h1>Write | <span style="font-weight: normal;">mastered: <span id="write-current-mastery-index"></span>/<span id="write-total-objects"></span></span></h1>
+			<h1>Write | <span style="font-weight: normal;">mastered: <span id="write-current-mastery-index">0</span>/<span id="write-total-objects">0</span></span></h1>
 			<hr class="select-divider"/>
 			<div style=
 				"margin: 0;
@@ -757,17 +845,17 @@
 							"display: inline-block;
 							margin-top: 0.2rem;
 							margin-bottom: 0.2rem;
-						"></span>
+						">[placeholder question]</span>
 					</div>
 					<input id="write-answer-text"
 						type="text"
 						placeholder="type answer here"
 						style="width: 90%;"
-						onkeyup="event.key === 'Enter' && ($(`button#write-${
+						onkeyup="event.key === 'Enter' && $(`button#write-${
 							$('p#write-outcome-text').is(':hidden') ?
 								'submit' :
 								'continue'
-						}-button`)).click();"
+						}-button`).click();"
 					/>
 					<button id="write-submit-button" onclick="Write_Submit_On_Click()">Submit Answer</button>
 					<button onclick=
@@ -777,24 +865,41 @@
 						$('div#write-settings-div').show();
 					">Back to Settings</button>
 					<br>
-					<button id="write-override-button" style="display: none;" onclick=
-						"write_current_is_correct = !write_current_is_correct;
+					<button id="write-override-button" style="display: none;" onclick="
+						write_current_is_correct = !write_current_is_correct;
 						$('button#write-continue-button').click();
 					">Override and Continue</button>
 					<button id="write-continue-button" style="display: none;" onclick="Write_Continue_On_Click()">Continue</button>
 					<button id="write-show-answer" style="display: none;" onclick="
 						// no longer global
+						write_show_answer_clicked = true;
 						var tmp = $('select#write-answer-select');
 						tmp.val(tmp.val() === 'definition' ? 'term' : 'definition');
 						$('button#write-continue-write-button').click();
 					">Show Main Answer</button>
-					<p id="write-outcome-text" style="display: none;"></p>
+					<p id="write-outcome-text" style="display: none;">[placeholder outcome text]</p>
+					<button class="write-end-screen-button" onclick="$('button#write-start-button').click()">Start Over</button>
+					<button class="write-end-screen-button" onclick="
+						globalThis._write_objs = write_objs.filter(e => e.incorrect > 0);
+
+						if (!_write_objs.length)
+							return $('p#write-outcome-text').
+							html('Set Completed<br>No Struggled Words');
+
+						for (let i = _write_objs.length; i --> 0 ;)
+							delete _write_objs[i].incorrect
+								, _write_objs[i].mastered
+								, _write_objs[i].times;
+
+						$('button#write-start-button').click();
+					">Start Over With Struggled Words</button>
+					<button class="write-end-screen-button" onclick="throw Error('Not Implemented')">See Results (Not Implemented)</button>
 				</div> <!-- card div -->
 			</div> <!-- write screen below main separator rule -->
 		</div> <!-- main write screen div -->
 	</div>
 
-	<!-- main script to load the correct page -->
+	<!-- main script to load the correct screem div -->
 
 	<script type="text/javascript" defer>
 		// display correct div at the start
