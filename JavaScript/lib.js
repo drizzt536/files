@@ -1382,6 +1382,7 @@ void (() => { "use strict";
 					, appendChild = true // if false .append() is used instead of .appendChild for objects
 					, objects = null
 					, clicks = 0;
+
 				for (const e of Object.keys(options)) {
 					if (e === "on") {
 						isArr(options.on) || ( options.on = [options.on] );
@@ -1411,7 +1412,7 @@ void (() => { "use strict";
 					else if (e === "styles")
 						for (const style of Object.keys(options[e]))
 							element.style[style] = options[e][style];
-					else if (e === "attributes")
+					else if (e === "attributes" || e === "attr")
 						for (const key of Object.keys(options[e]))
 							element.setAttribute(key, options[e][key]);
 					else if (e === "append") objects = options[e];
@@ -2591,12 +2592,13 @@ void (() => { "use strict";
 				return sort._sort = _sort, sort;
 			})()
 			, "property shuffle": function shuffle(times=1) {
+				// I think this is a slightly different Fisher-Yates shuffle...
+				// but I do not know or care.
 				var arr = this;
-				for (var i = times; i --> 0 ;)
-					for (var j = 0, n = arr.length, arr2 = []; j < n; j++)
-						// arr2.splice(round(rand() * len(arr2)), 0, arr.pop());
-						arr2.splice(randint(arr2.length), 0, arr.pop());
-				return arr2;
+				for (; times --> 0 ;)
+					for (var i = arr.length, arr2 = []; i --> 1 ;)
+						arr2.push( arr.splice(randint(i), 1)[0] )
+				return this.union(arr2); // put the elements back in the array
 			}
 			, "property isNaN": function isNaN(strict=false) {
 				const fn = (strict ? globalThis : rMath).isNaN;
@@ -8781,3 +8783,11 @@ Reflect.defineProperty(rMath, "_generateReals", (function create_realNumbers() {
 		generateReals._generateRealsSet = generateRealsSet,
 		generateReals;
 })());
+
+try {
+	jQuery.fn.merge = function merge(second) { return jQuery.merge(this, second) }
+	jQuery.fn.mergeRight = function mergeRight(first) { return jQuery.merge(first, this) }
+}
+catch {
+	// jQuery is not defined.
+}
