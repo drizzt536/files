@@ -204,7 +204,7 @@
 			"nullish" :
 			object?.constructor?.name === "Array" ?
 				"array" :
-				object.test === /1/.test ?
+				object instanceof RegExp ?
 					"regexp" :
 					typeof object
 		) {
