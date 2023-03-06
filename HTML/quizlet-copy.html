@@ -9,50 +9,31 @@
 	<script src="https://code.jquery.com/jquery-3.6.3.js"></script>
 	<script type="text/javascript" src="D:/ExtF/CodeFiles/JavaScript/lib.js"></script>
 	<style type="text/css">
-		:root {
-			--screen-side-padding: 3rem;
-			--button-active-bgcolor: #1A2164;
-			--input-bgcolor: #2E3856;
-			--button-bg-red: 66;
-			--button-bg-green: 85;
-			--button-bg-blue: 255;
-		}
+		:root { --screen-side-padding: 3rem }
 		*:not(code) {
 			color: #C9C9C9;
 			font-family: cursive;
 		}
 		input, textarea, select {
-			background-color: var(--input-bgcolor);
+			background-color: #2E3856;
 			padding: 0.15rem 0.4rem;
 			font-family: monospace;
 			border-radius: 1rem;
 			border: none;
 		}
-		select { font-family: cursive }
+		select { font-family: cursive !important }
 		textarea { padding-top: 0.25rem }
 		button {
-			background-color: rgb(
-				var(--button-bg-red),
-				var(--button-bg-green),
-				var(--button-bg-blue)
-			);
+			background-color: #4255FF;
 			border-radius: 0.5rem;
 			padding: 10px;
 			margin-top: 1ex;
 			margin-bottom: 1ex;
 			transition: 0.095s;
 		}
-		button:hover {
-			--bgcolor-offset: 50;
-
-			background-color: rgb(
-				calc( var(--button-bg-red) - var(--bgcolor-offset) ),
-				calc( var(--button-bg-green) - var(--bgcolor-offset) ),
-				calc( var(--button-bg-blue) - var(--bgcolor-offset) )
-			);
-		}
+		button:hover { background-color: #1023CD /* offeset 50 from normal */ }
 		button:active {
-			background-color: var(--button-active-bgcolor);
+			background-color: #1A2164;
 			transition: none;
 		}
 		div.screen {
@@ -162,6 +143,11 @@
 
 			// update question text
 
+			if (write_show_answer_clicked) {
+				$("button#write-show-answer").click();
+				write_show_answer_clicked = false;
+			}
+
 			$("span#write-question-text").html(
 				write_answer_with_defs ?
 					write_objs[write_index].term :
@@ -171,10 +157,6 @@
 			// refocus input
 
 			$("input#write-answer-text").focus();
-			if (write_show_answer_clicked) {
-				$("button#write-show-answer").click();
-				write_show_answer_clicked = false;
-			}
 		}
 		var uploadJSONString = (function create_uploadJSONString() {
 			function normalize(str) {
@@ -218,7 +200,7 @@
 				text = text.remove(/[\t ]*\/\/[\w\t. ]*(?=\n)/g); // remove single lined comments
 
 				// handle direct passage inputs
-				if ( $("input#import-json-direct-load-input")[0].checked ) {
+				if ( $("input#import-json-direct-load-input").checked() ) {
 					if (text[0] !== "[" || text.at(-1) !== "]")
 						// only checks one edge case.
 						throw Error("JSON text input for direct passage is not an array");
@@ -319,6 +301,8 @@
 
 				write_allow_override && $("button#write-override-button").show();
 				$("button#write-continue-button, button#write-show-answer").show();
+
+				$("button#write-continue-button").focus()
 			}
 			function Write_Submit_On_Click() {
 				// submit onclick
@@ -654,20 +638,14 @@
 			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="test-div">
-			<!-- test like exam, not like the dev thing -->
-			<h1>Test</h1>
+			<h1>Test Mode</h1>
 			<p>Not Implemented</p>
 		</div>
 		<div class="screen" id="gravity-div">
 			<h1>Gravity</h1>
 			<p>Not Implemented</p>
 		</div>
-		<div class="screen" id="write-settings-div" onkeyup="event.key === 'Enter' && $(`button#write-${
-				$('button#write-continue-write-button').is(':hidden') ?
-					'start' :
-					'continue-write'
-			}-button`).click();
-		">
+		<div class="screen" id="write-settings-div">
 			<h1>Write | Settings</h1>
 			<hr class="select-divider"/>
 
@@ -678,6 +656,11 @@
 					value = value.remove(/^0+(?!$)/g);
 					value === '0' && (value = '1'); // has to be separate statement.
 					BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER) && (value = `${Number.MAX_SAFE_INTEGER}`);
+				" onkeyup="event.shiftKey || event.key === 'Enter' && $(`button#write-${
+					$('button#write-continue-write-button').is(':hidden') ?
+						'start' :
+						'continue-write'
+					}-button`).click();
 				" id="write-correct-until-mastered-input">
 			</label><br/>
 
@@ -708,12 +691,17 @@
 
 			<label>
 				<input type="checkbox" id="write-backtick-accents-checkbox" value="true" checked/>
-				<span>Allow 'e`' for 'é' etc. (Not Implemented)</span>
+				<span>Allow 'e`' for 'é' (vowels). (Not Implemented)</span>
 			</label><br/>
 
 			<label>
-				<input type="checkbox" id="write-backtick-accents-checkbox" value="true" checked/>
+				<input type="checkbox" id="write-tilde-accents-checkbox" value="true" checked/>
 				<span>Allow 'n~' for 'ñ' etc. (Not Implemented)</span>
+			</label><br/>
+
+			<label>
+				<input type="checkbox" id="write-colon-accents-checkbox" value="true" checked/>
+				<span>Allow 'u:' for 'ü' etc. (Not Implemented)</span>
 			</label><br/>
 
 			<span class="write-settings-header">Include</span>
@@ -758,11 +746,11 @@
 				else if ( $('select#write-favorite-select').val() === 'no-favorites' )
 					objs = objs.filter(e => !e.favorite);
 
-				$('input#write-shuffle-checkbox')[0].checked && objs.shuffle();
+				$('input#write-shuffle-checkbox').checked() && objs.shuffle();
 
 				// global variables. commented ones also happen in the continue button onclick
-				// globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox')[0].checked;
-				// globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
+				// globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox').checked();
+				// globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox').checked();
 				// globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
 				// globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
 				// globalThis._write_objs = null;
@@ -796,8 +784,8 @@
 			">Start</button>
 			<button id="write-continue-write-button" style="display: none" onclick="
 				// update variables
-				globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox')[0].checked;
-				globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox')[0].checked;
+				globalThis.write_allow_override = $('input#write-allow-answer-override-checkbox').checked();
+				globalThis.write_allow_subzero_mastery = $('input#write-allow-subzero-mastery-checkbox').checked();
 				globalThis.write_main_answer_only = $('select#write-strictness-select').val() === 'main';
 				globalThis.write_answer_with_defs = $('select#write-answer-select').val() === 'definition';
 				globalThis._write_objs = null;
@@ -851,7 +839,7 @@
 						type="text"
 						placeholder="type answer here"
 						style="width: 90%;"
-						onkeyup="event.key === 'Enter' && $(`button#write-${
+						onkeyup="event.shiftKey || event.key === 'Enter' && $(`button#write-${
 							$('p#write-outcome-text').is(':hidden') ?
 								'submit' :
 								'continue'
@@ -869,7 +857,12 @@
 						write_current_is_correct = !write_current_is_correct;
 						$('button#write-continue-button').click();
 					">Override and Continue</button>
-					<button id="write-continue-button" style="display: none;" onclick="Write_Continue_On_Click()">Continue</button>
+					<button
+						id="write-continue-button"
+						style="display: none;"
+						onmouseup="debugger; if (button !== 0) return; Write_Continue_On_Click()"
+						onkeyup="event.shiftKey || event.key === 'Enter' && Write_Continue_On_Click()"
+					>Continue</button>
 					<button id="write-show-answer" style="display: none;" onclick="
 						// no longer global
 						write_show_answer_clicked = true;
