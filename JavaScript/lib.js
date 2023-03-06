@@ -139,15 +139,15 @@ void (() => { "use strict";
 				   - if the last character is ', ", or \` the name will start at the next of the same quote going backwards
 				     > example: if the string ends with 'asdf asdf ', the name will be "asdf asdf "
 				     > if the string ends with 'asdf asdf ", it will throw an error because the quote has no beginning.
-				     > if you want the name to be "asdf 1234" you need the quotes or else "asdf" will be one of the parameters to how it executes the code, and only "1234" will be the name
+				     > for the name to be "asdf 1234", the quotes are required or "asdf" will be one of the parameters, and only "1234" will be the name
 				   - starting here, they are in the order that define() checks for them in.
 				   - auto
 				     > auto doesn't do anything and its only purpose is to distinguish variables that are dynamically created
 				     > auto acts like local but if it has "call" or "instance" etc as one of the parameters, it won't do it.
 				     > returns from the function immediately
-				   - archive
-				     > archive is similar to auto and it has the exact same functionality, that is, none.
-				     > archive is for if you are overwriting something and you want a (shallow probably) copy of the original
+				   - archived
+				     > archived is similar to auto and it has the exact same functionality, that is, none.
+				     > archived is for if you are overwriting something and you want a (shallow probably) copy of the original
 				     > returns from the function immediately
 				   - ifdom
 				     > if LibSettings.Use_Document is falsy it adds the name and value to the dom ignore list and returns.
@@ -174,9 +174,9 @@ void (() => { "use strict";
 				   - local
 				     > doesn't globalize the variable.
 				     > if overwrite or native are active, it throws an error because there is nothing to overwrite because it's a local variable
-				     > if instance or call are active, it will call it in case something important happens inside it, but it wont set anything to that value, it just discards it.
+				     > if instance or call are active, it will call it in case something important happens inside it, but otherwise just discards it.
 				   - defer
-				     > if section (the second parameter) is 0, then the string gets added to either DEFER_ARR or LOCAL_DEFER_ARR depending on if local is active or not.
+				     > if the section argument is 0, then the string gets added to either DEFER_ARR or LOCAL_DEFER_ARR depending on if local is active or not.
 				     > if section is anything else, the function proceeds as normal
 				   - overwrite
 				     > ignores what ON_CONFLICT is set to and acts as if it is set to "none".
@@ -184,7 +184,7 @@ void (() => { "use strict";
 				     > no errors happen if there is nothing to overwrite. it just changes it from undefined to the new value.
 				   - native
 				     > an extension of overwrite
-				     > if the thing you are overwriting is a native function then it overwrites it, otherwise what happens depends on what ON_CONFLICT is set to.
+				     > if the thing being overwritten is a native function, then it overwrites it, otherwise what happens depends on ON_CONFLICT.
 				   - instance
 				     > creates a new instance of the value with the "new" keyword
 				     > similar to call
@@ -193,9 +193,9 @@ void (() => { "use strict";
 				     > will throw an error if the value is not a function
 				     > similar to instance
 				   - deprecated
-				     > if LibSettings.Define_Deprecated_Functions is falsy or the value is not a function, it acts as if "archive" or "auto" were active. ie (it returns immediately and doesn't define anything).
+				     > if LibSettings.Define_Deprecated_Functions is falsy or the value is not a function, it returns immediately.
 				     > it logs to the console via console.warn that a deprecated function is being defined when it is defined
-				     > if LibSettings.Warn_Deprecated_Use is truthy, it logs to the console via console.warn that a deprecated function is being called whenever it is called
+				     > if LibSettings.Warn_Deprecated_Use is truthy, whenever called, it warns to the console that a deprecated function was used
 				   - ignore
 				     > The property gets completely skipped over and ignored.
 				   - property
@@ -217,6 +217,9 @@ void (() => { "use strict";
 				     > if the property flag is given, it changes the writable argument to false, otherwise nothing changes
 				   - nproperty
 				     > if property is set as the default in the settings, anything with the nproperty flag is never a property
+				   - try
+				     > if the scope is nullish, then an error is not thrown and define() just returns undefined.
+				     > the main use cases are if the 'object' or 'prototype' flags are set.
 			`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "")
 			, isNodeJS                          : _Global_String === "global"
 			, isBrowser                         : _Global_String === "window"
@@ -312,14 +315,14 @@ void (() => { "use strict";
 			// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
 			// Array(10).fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
 			var [getOldGlobals, getNewGlobals] = (function create_get_globals() {
-				const _globals = Reflect.ownKeys(globalThis);
+				const old_globals = Reflect.ownKeys(globalThis);
 				return [
 					function getOldGlobals() {
 						// in case things have been deleted
-						return Reflect.ownKeys(globalThis).filter( s => _globals.includes(s) );
+						return Reflect.ownKeys(globalThis).filter( s => old_globals.includes(s) );
 					},
 					function getNewGlobals() {
-						return Reflect.ownKeys(globalThis).filter( s => !_globals.includes(s) );
+						return Reflect.ownKeys(globalThis).filter( s => !old_globals.includes(s) );
 					}
 				]
 			})();
@@ -342,6 +345,7 @@ void (() => { "use strict";
 			for (var i = 10, j, divtable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 				for (j = 10; j --> 0 ;)
 					divtable[i][j] = i / j;
+
 			var stringifyScope = function stringifyScope(val, scopename, list, orig_str) {
 				const prototype = list.includes("prototype"), object = list.includes("object");
 				return LibSettings.Environment_Global_String + ( object || prototype ? "." : "" ) + (
@@ -371,29 +375,24 @@ void (() => { "use strict";
 			, alphabetU = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			, characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
-			, π      = 3.141592653589793   , π_2   = 1.5707963267948966
+			, π      = 3.1415926535897932  , π_2   = 1.5707963267948966
 			, π_3    = 1.0471975511965979  , π2_3  = 2.0943951023931957
-			, π_4    = 0.7853981633974483  , π3_4  = 2.356194490192345
-			, π5_4   = 3.9269908169872414  , π7_4  = 5.497787143782138
-			, π_5    = 0.6283185307179586  , π_6   = 0.5235987755982989
-			, π5_6   = 2.6179938779914944  , π7_6  = 3.6651914291880923
-			, π11_6  = 5.759586531581288   , π_7   = 0.4487989505128276
-			, π_8    = 0.39269908169872414 , π_9   = 0.3490658503988659
-			, π_10   = 0.3141592653589793  , π_11  = 0.28559933214452665
-			, π_12   = 0.26179938779914946
-			, ϕ      = 1.6180339887498947 // -2 sin 666°
-			, 𝜏      = 6.283185307179586
-			, 𝑒      = 2.718281828459045
-			, α      = 1.187452351126501 // wikipedia.org/wiki/Foias_constant
-			, γ      = .5772156649015329
-			, Ω      = .5671432904097838 // Ωe^Ω = 1
+			, π_4    = 0.7853981633974483  , π3_4  = 2.3561944901923449
+			, π5_4   = 3.9269908169872414  , π7_4  = 5.4977871437821382
+			, π_5    = 0.6283185307179586  , π7_6  = 3.6651914291880923
+			, π5_6   = 2.6179938779914944  , π11_6 = 5.7595865315812876
+			, π_6    = .52359877559829887  , π_7   = .44879895051282761
+			, π_8    = .39269908169872414  , π_9   = .34906585039886592
+			, π_10   = .31415926535897932  , π_11  = .28559933214452665
+			, π_12   = .26179938779914946
+			, omega  = .56714329040978387 // Ωe^Ω = 1
+			, emc    = .57721566490153286 // Euler-Mascheroni Constant
+			, phi    = 1.6180339887498947 // -2 sin 666°
+			, foia1  = 2.2931662874118610 // Foia's first constant
+			, foia2  = 1.1874523511265010 // Foia's second constant. exact form
+			, e      = 2.7182818284590452
+			, tau    = 6.2831853071795864
 			, pi     = π
-			, tau    = 𝜏
-			, e      = 𝑒
-			, phi    = ϕ
-			, foia   = α
-			, emc    = γ // Euler-Mascheroni Constant
-			, omega  = Ω
 			, symbToStr = function symbolToString(symbol, form = 1) {
 				return typeof symbol === "symbol" ?
 					form === 1 ?
@@ -426,11 +425,10 @@ void (() => { "use strict";
 							"nullish" :
 							object instanceof Array ?
 								"array" :
-								object.test === /1/.test ?
+								object instanceof RegExp ?
 									"regexp" :
 									typeof object
-						)
-						{
+						) {
 							case "boolean": return `${object}`;
 							case "function": return  void 0; // can't be serialized. maybe can be treated as a regular object.
 							case "regexp": return `${object}`;
@@ -616,7 +614,7 @@ void (() => { "use strict";
 									"nodelist" :
 									a === null ?
 										"null" :
-										a?.test === /a/.test ?
+										a instanceof RegExp ?
 											"regex" :
 											/^__type__\(\){return("|'|`)linkedlist\1}$/.test(`${a.__type__}`.replace(/\s|;/g, "")) ?
 												"linkedlist" :
@@ -789,12 +787,14 @@ void (() => { "use strict";
 						, name;
 					if ("'\"`".includes( list[list.length - 1] )) {
 						let char = list.at(-1)
-							, i = list.length - 1;
+							, i = list.length - 1; // this `- 1` is intentional
 						while (i --> 0) if (list[i] === char) break;
 						if (i < 0) throw Error("name quotation only has no beginning");
+
 						name = list.slice(i+1);
 						list = list.slice(0, i);
-					} else {
+					}
+					else {
 						const regex = list.match(/\S+$/);
 						name = regex[0];
 						list = list.slice(0, regex.index);
@@ -815,9 +815,7 @@ void (() => { "use strict";
 					scopename = undefined,
 					ON_CONFLICT = LibSettings.ON_CONFLICT,
 					addLocalAuto = false
-				)
-				{
-
+				) {
 					if (
 						typeof str !== "string" ||
 						!str ||
@@ -840,9 +838,10 @@ void (() => { "use strict";
 						LIBRARY_VARIABLES[str] :
 						customValue;
 
-					if (list.includes("auto") || list.includes("archive") || list.includes("ignore")) return;
-
+					if (list.includes("auto") || list.includes("archived") || list.includes("ignore"))
+						return;
 					if (list.includes("deprecated")) {
+						// doesn't work with functions that use `this`
 						if (!LibSettings.Define_Deprecated_Functions || typeof value !== "function") return;
 						let deprectedScopeStr = stringifyScope(
 							name
@@ -854,7 +853,7 @@ void (() => { "use strict";
 						if (LibSettings.Warn_Deprecated_Use)
 						value = LibSettings.Use_Orig_Args_For_Deprecated_Fns ?
 							Function(
-								getArguments(_fn) /*already a string*/
+								getArguments(_fn) /* already a string */
 								, `\tconsole.warn("deprecated function '${deprectedScopeStr}' is being called");\n\treturn this._fn.apply(this._scope, arguments);`
 							).bind({ _fn: _fn, _scope: scope }) :
 							function fn(/*arguments*/) {
@@ -864,6 +863,7 @@ void (() => { "use strict";
 						value._fn = _fn;
 						value._scope = scope;
 					}
+
 					if (list.includes("ifdom") && !LibSettings.Use_Document)
 						// return if not using the DOM
 						return LibSettings.DOM_Ignore_list.push( [name, value] );
@@ -884,21 +884,42 @@ void (() => { "use strict";
 						// Symbol instead of String.
 						name = Symbol.for(name);
 					if (list.includes("pdelete")) {
+						if ( scope == null && list.includes("try") )
+							return;
+
 						// update the previous object. overwrites everything else. must be used on its own.
 						previous = scope[name];
 						delete scope[name];
 					}
-					if (list.includes("delete"))
+					if (list.includes("delete")) {
+						if ( scope == null && list.includes("try") )
+							return;
+
 						// overwrites everything else except pdelete. must be used on its own.
-						delete scope[name];
+						delete scope[name]
+					}
 					if (list.includes("object")) {
-						let newScope = strToObj(name, scope);
+						let newScope;
+
+						if ( list.includes("try") ) {
+							try { newScope = strToObj(name, scope) }
+							catch { return }
+						}
+						else newScope = strToObj(name, scope);
+
 						for (let [key, val] of Object.entries( value ))
 							define(key, section, newScope, val, str, ON_CONFLICT, addLocalAuto);
 						return;
 					}
 					if (list.includes("prototype")) {
-						let newScope = strToObj(name, scope)?.prototype;
+						let newScope;
+
+						if ( list.includes("try") ) {
+							try { newScope = strToObj(name, scope)?.prototype }
+							catch { return }
+						}
+						else newScope = strToObj(name, scope)?.prototype;
+
 						for (let [key, val] of Object.entries( value ))
 							define(key, section, newScope, val, str, ON_CONFLICT, addLocalAuto);
 						return;
@@ -913,22 +934,29 @@ void (() => { "use strict";
 						else previous = value;
 						return;
 					}
-					if (list.includes("defer") && !section) return LibSettings.DEFER_ARR.push(str);
+					if (list.includes("defer") && !section)
+						return LibSettings.DEFER_ARR.push(str);
 
-					if (list.includes("instance")) previous = new value;
-					else if (list.includes("call")) previous = value();
-					else previous = value;
+					if (list.includes("instance"))
+						previous = new value;
+					else if (list.includes("call"))
+						previous = value();
+					else
+						previous = value;
 
 					if (list.includes("math")) Reflect.defineProperty(MathObjects, name, {
-							value: previous,
-							writable: !1,
-							enumerable: !1,
-							configurable: !1,
-						});
+						value: previous,
+						writable: !1,
+						enumerable: !1,
+						configurable: !1,
+					});
 					if (list.includes("native")) return define( (typeof scope[name] === "function" &&
 						(scope[name]+"").endsWith("() { [native code] }") ? "overwrite " : "") + name,
 						section, scope, previous, scopename || "", ON_CONFLICT, addLocalAuto
 					);
+
+					if ( scope == null && list.includes("try") )
+						return;
 
 					return list.includes("overwrite") || !(scope[name] !== void 0 &&
 						ON_CONFLICT !== "none" &&
@@ -960,8 +988,7 @@ void (() => { "use strict";
 				variable = "x",
 				defaultArgValue = '"1.0"',
 				precision = 18
-			)
-			{
+			) {
 				// can take in a string or a function. returns a function.
 				// "^" means exponent
 				// "//" means floor division (fdiv)
@@ -1196,8 +1223,7 @@ void (() => { "use strict";
 				arrayOneLine = true,
 				// arrayAlwaysOneLine = false, // doesn't do anything yet
 				arrayOneLineSpace = " ", // if " ", [ ITEM ]. if "\t", [\tITEM\t]. etc
-			}={})
-			{
+			}={}) {
 				if (type(code) !== "string") throw TypeError("formatjson() requires a string");
 				try { JSON.parse(code) } catch { throw TypeError("formatjson() requires a JSON string") }
 				if (code.remove(/\s/g) === "{}") return "{}";
@@ -1329,7 +1355,7 @@ void (() => { "use strict";
 				return dict;
 			})()
 			, intervals = dict()
-			, setInterval = function setInterval(/*arguments*/) {
+			, setInterval = function setInterval() {
 				var interval = _setInterval.apply(globalThis, arguments);
 				intervals[interval] = arguments;
 				return interval;
@@ -2236,20 +2262,15 @@ void (() => { "use strict";
 		, len            : len
 		, chr            : chr
 		, ord            : ord // idk, it's called "ord" in python.
-		, Ω              : Ω
 		, π              : π
-		, ϕ              : ϕ
-		, α              : α
-		, γ              : γ
-		, 𝑒              : 𝑒
-		, 𝜏              : 𝜏
 		, "symbol <0x200b>": "​" // zero width space
+		, "symbol <0xfeff>": "﻿" // byte order mark
 		, "ignore getOldGlobals": getOldGlobals
 		, "native clearInterval": clearInterval
 		, "native setInterval": setInterval
-		, "archive clearInterval": clearInterval._clearInterval
-		, "archive Math": globalThis.Math
-		, "archive setInterval": setInterval._setInterval
+		, "archived clearInterval": clearInterval._clearInterval
+		, "archived Math": globalThis.Math
+		, "archived setInterval": setInterval._setInterval
 		, "local numToStrW_s": numToStrW_s
 		, "local stringifyScope": stringifyScope
 		, "local base62Numbers": base62Numbers
@@ -2279,12 +2300,13 @@ void (() => { "use strict";
 		, "local π_11": π_11
 		, "local π_12": π_12
 		, "local pi": pi
-		, "local tau": 𝜏
-		, "local e": 𝑒
-		, "local phi": ϕ
-		, "local foia": α
-		, "local emc": γ
-		, "local omega": Ω
+		, "local tau": tau
+		, "local e": e
+		, "local phi": phi
+		, "local foia1": foia1
+		, "local foia2": foia2
+		, "local emc": emc
+		, "local omega": omega
 		, "local define": define
 		// the built-in methods are enumerable for the next three
 		, "ifdom prototype NodeList": { last: lastElement }
@@ -2302,8 +2324,21 @@ void (() => { "use strict";
 				return create._create = _create, create;
 			}
 		}
+		, "try object jQuery.fn": {
+			merge: function ( second ) {
+				return jQuery.merge( this, second );
+			}
+			, mergeRight: function ( first ) {
+				return jQuery.merge( first, this );
+			}
+			, checked: function ( value=false ) {
+				return value ?
+					this.attr( "checked" ) === "checked" :
+					this.attr( "checked", "checked" );
+			}
+		}
 		, "prototype Object": {
-			"property tofar": function toFlatArray() {
+			"archived property tofar": function toFlatArray() {
 				// TODO/FIX: Fix for 'Arguments' objects and HTML elements
 				var val = this;
 				return [
@@ -2424,15 +2459,15 @@ void (() => { "use strict";
 					if (a.includes(a.pop())) return !0;
 				return !1;
 			}
-			, "property mod": function modify(indexes, func) {
-				indexes = indexes.tofar();
-				let a = this, n = indexes.length;
+			, "property mod": function modify(indices, func) {
+				indices = indices.flatten();
+				let a = this, n = indices.length;
 				if (type(func, 1) === "arr") func = func.flatten();
 				else func = [].len(n).fill(func);
-				func = func.extend(indexes.length - func.length, e => e);
+				func = func.extend(indices.length - func.length, e => e);
 
 				for (var i = 0; i < n; i++)
-					a[indexes[i]] = func[i](a[indexes[i]], indexes[i]);
+					a[indices[i]] = func[i](a[indices[i]], indices[i]);
 				return a;
 			}
 			, "property remrep": function removeRepeats() { return Array.from(new Set(this)) }
@@ -3036,8 +3071,8 @@ void (() => { "use strict";
 					or: function or(a, b) { return this.xor([a, b], [1, 2]) },
 					nor: function nor(...b) { return this.xor(b, [0]) },
 					xor: (ns, range=[1]) => {
-						if (isNaN( (ns = ns.tofar()).join("") )) throw TypeError("numbers req. for 1st parameter");
-						if (isNaN( (range = range.tofar()).join("") )) throw TypeError("numbers req. for 2nd parameter");
+						if (isNaN( (ns = ns.flatten()).join("") )) throw TypeError("numbers req. for 1st parameter");
+						if (isNaN( (range = range.flatten()).join("") )) throw TypeError("numbers req. for 2nd parameter");
 						// fix range
 						const min = rMath.min(range), max = rMath.max(range);
 						range = [
@@ -4335,9 +4370,11 @@ void (() => { "use strict";
 					, value: this.Set.prototype.has
 				});
 
-				this.phi = this.ϕ = ϕ; this.e  = this.E  = this.𝑒 = 𝑒;
-				this.ec  = this.γ = γ; this.pi = this.PI = π;
-				this.tau = this.𝜏 = 𝜏;
+				this.phi = phi;
+				this.tau = tau;
+				this.emc = this.ec = emc;
+				this.e   = this.E = e;
+				this.pi  = this.PI = π;
 				this.Phi     = -.6180339887498949  ; this.sqrt3    = 1.7320508075688772 ;
 				this.omega   = 0.5671432904097838  ; this.LN2      = 0.6931471805599453 ;
 				this.ln2     = .69314718055994531  ; this.LN10     = 2.3025850929940450 ;
@@ -4360,7 +4397,7 @@ void (() => { "use strict";
 	
 					control characters:␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟␡
 					superscript:⁽°⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼ⁿ⁾ᒻᒽᒼ
-					subscript:₀₁₂₃
+					subscript:₀₁₂₃˷
 					∑∏Δ×∙÷±∓∀∃∄∤⌈⌉⌊⌋⋯〈〉√∛∜≤≥≠≈≉≋≔⩴≟≝⩮⩯≡≢→↦↛⇒⇔⇋⇏⊕⊝∧∨⋀⋁⋂⋃∞¬∴∵∶∷∼⊨⊽⊻∫∬∭⨌
 					∠⟂∥∦⊯⊮⊭⊬⊫⊪∈∉∋∌∖∕⅟∩∪⊂⊃⊄⊅⊆⊇⊈⊉℉℃ℵƒ∅∂ℷℎℏ℮Ω℧ℕℝℚ𝕀ℙℤℍℂℼℿℽℾ𝕋⅀ⅅⅆⅇⅈⅉ⩵⩶≶≷π
 
@@ -4989,8 +5026,8 @@ void (() => { "use strict";
 					}
 					, const: /*not done*/ {
 						self: "help text for constants on the rMath object."
-						, foia: "foia's constant. see const.α"
-						, α: "foia's constant. see const.foia"
+						, foia1: "foia's first constant."
+						, foia2: "foia's second constant."
 						, ɡ: "gravitational constant. 9.80665 m/s². see const.gravity"
 						, gravity: "gravitational constant. 9.80665 m/s². see const.ɡ (not a regular g)"
 						, avogadro: "Avogadro's number; Avogadro's constant. the number of particles in one mole."
@@ -5023,7 +5060,7 @@ void (() => { "use strict";
 						, planckTemperature: "The largest temperature possible"
 						, planckTime: "The smallest time frame possible"
 						, planckConstant: "The relationship between a photon's energy and frequency"
-						, reducedPlanckConstant: "ħ := h/𝜏"
+						, reducedPlanckConstant: "ħ := h/tau"
 						, speedOfLight: "The speed of light in a vacuum in meters per second"
 						, molarPlanckConstant: NaN
 						, rydberg: NaN
@@ -5042,16 +5079,13 @@ void (() => { "use strict";
 						, dragCoefficient: "Drag coefficients of common objects"
 						// Guaranteed Constants
 						, phi: null
-						, ϕ: null
 						, e: null
 						, E: null
-						, 𝑒: null
-						, ec: "Euler-Mascheroni constant; Euler's constant; lowercase gamma. see const.γ"
-						, γ: "Euler-Mascheroni constant; Euler's constant; lowercase gamma. see const.ec"
+						, ec: "Euler-Mascheroni constant; Euler's constant; lowercase gamma. see const.emc"
+						, emc: "Euler-Mascheroni constant; Euler's constant; lowercase gamma. see const.ec"
 						, pi: null
 						, PI: null
 						, tau: null
-						, 𝜏: null
 						, Phi: null
 						, sqrt3: "the principle square root of three. approximately 1.7321"
 						, omega: null
@@ -5180,7 +5214,7 @@ void (() => { "use strict";
 							, see: ["eq.seq", "eq.lneq"]
 						}
 					}
-					, Ω: null
+					, Omega: null
 					, ζ: null
 					, Rzeta: null
 					, Hzeta: null
@@ -5501,7 +5535,8 @@ void (() => { "use strict";
 					,
 				};
 				if (constants) {
-					this.foia = this.α = α                                 ;
+					this.foia1 = foia1                                     ;
+					this.foia2 = foia2                                     ;
 					this.ɡ = this.gravity = 9.80665                        ;
 					this.avogadro = 6.02214076e+23                         ;
 					this.bohrMagneton = 9.2740100783e-24                   ;
@@ -5650,7 +5685,7 @@ void (() => { "use strict";
 				};
 			}
 			toString() { return "[object rMath]" }
-			Ω(x=Math.E, i=10_000) {
+			Omega(x=Math.E, i=10_000) {
 				// Ω(x) * x^Ω(x) ≈ 1
 				// approximate because some inputs oscilate between outputs, such as Ω(349)
 				// "i" cannot default to Infinity due to this oscilation
@@ -5850,7 +5885,7 @@ void (() => { "use strict";
 					this.log( x, base );
 			}
 			primeCount(x, form=1) { return this.π(x, form) }
-			expm(x, n=1) { return 𝑒 ** x - n }
+			expm(x, n=1) { return e ** x - n }
 			expm1(x) { return this.expm(x) }
 			clz32(n) { return this.clbz(n) }
 			sgn(x) { return Number.isNaN( x = Number(x) ) ? NaN : x < 0 ? -1 : +(x > 0) }
@@ -6314,7 +6349,7 @@ void (() => { "use strict";
 						this.fact(x_mod_1, acy, inc);
 					return ans === 0 ? 0 : ans; // -0
 				}
-				var ans = this.int(0, acy, t=>t**x/𝑒**t, inc);
+				var ans = this.int(0, acy, t=>t**x/e**t, inc);
 				return ans === 0 ? 0 : ans; // -0
 				return /*type(ans, 1) === "inf" ? NaN : */ans;
 			}
@@ -6430,7 +6465,7 @@ void (() => { "use strict";
 				if ( n.isInt() ) return this.ifact(n-1);
 				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				n--;
-				var ans = this.int(0, n, t => t**n / 𝑒**t, inc);
+				var ans = this.int(0, n, t => t**n / e**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			}
 			igammau(n, acy=1000, inc=.1) {
@@ -6440,7 +6475,7 @@ void (() => { "use strict";
 				if (Number.isNaN( acy = Number(acy) )) return NaN;
 				if (Number.isNaN( inc = Number(inc) )) return NaN;
 				n--;
-				var ans = this.int(n, acy, t => t**n / 𝑒**t, inc);
+				var ans = this.int(n, acy, t => t**n / e**t, inc);
 				return type(ans, 1) === "inf" ? NaN : n;
 			}
 			isPrime(n) { return this.isNaN(n) ? NaN : n.isPrime() }
@@ -6459,7 +6494,7 @@ void (() => { "use strict";
 				// nth fibonacci number
 				// "round" is needed to counteract the floating point rounding errors.
 				return Number.isNaN( n = Number(n) ) ? NaN : round(
-					( ϕ**n - this.Phi**n ) / this.sqrt5
+					( phi**n - this.Phi**n ) / this.sqrt5
 				);
 				// ⌊ ϕⁿ/√5 ⌉ ∀ n∈ℤ > -1
 			}
@@ -6467,7 +6502,7 @@ void (() => { "use strict";
 			lucas(n=1) {
 				return Number.isNaN( n = Number(n) ) ?
 					NaN :
-					round( ϕ**n + this.Phi**n );
+					round( phi**n + this.Phi**n );
 				// ⌊ϕⁿ⌉, n ∈ ℕ>1
 			}
 			primeFactorInt(n) {
@@ -6626,7 +6661,7 @@ void (() => { "use strict";
 			sqrt(n) { return Number.isNaN( n = Number(n) ) ? n : this.nthrt(n, 2) }
 			cbrt(n) { return Number.isNaN( n = Number(n) ) ? n : this.nthrt(n, 3) }
 			sign(n) { return Number.isNaN( n = Number(n) ) ? n : this.sgn(n) }
-			exp(n, x=𝑒) {
+			exp(n, x=e) {
 				return Number.isNaN( n = Number(n) ) ||
 					Number.isNaN( x = Number(x) ) ?
 					NaN :
@@ -6712,7 +6747,7 @@ void (() => { "use strict";
 							1.045163780117493 + this.int(2, x, t => 1/this.ln(t), incOrAcy);
 				}
 				else if (form === 2) { // uses accuracy for infinite summation
-					const f = x => this.γ + this.ln(this.ln(x)) + this.sqrt(x) * 
+					const f = x => emc + this.ln(this.ln(x)) + this.sqrt(x) * 
 						this.sum(1, incOrAcy, n=>((-1)**(n-1) * this.ln(x)**n) / (this.fact(n) * 2**(n-1)) * 
 							this.sum(0, floor( (n-1) / 2), k=>1/(2*k+1), 1), 1),
 						ans = f(x);
@@ -6796,14 +6831,14 @@ void (() => { "use strict";
 			sin(θ, acy=25) {
 				return this.cos(π_2 - θ, acy);
 				// return Number.isNaN( θ = Number(θ) ) || Number.isNaN( acy = Number(acy) ) ?
-				// 	θ : this.sum(0, acy, n => (-1)**n / this.ifact(2*n+1)*(θ%𝜏)**(2*n+1) );
+				// 	θ : this.sum(0, acy, n => (-1)**n / this.ifact(2*n+1)*(θ%tau)**(2*n+1) );
 			}
 			cos(θ, acy=25) {
 				return Number.isNaN( θ = Number(θ) ) ||
 					Number.isNaN( acy = Number(acy) ) ?
 						θ :
 						this.sum(0, acy, n => (-1)**n /
-							this.ifact(2*n)*(θ%𝜏)**(2*n) );
+							this.ifact(2*n)*(θ%tau)**(2*n) );
 			}
 			tan(θ, acy=25) { return this.sin(θ, acy) / this.cos(θ, acy) }
 			sinc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? x : x === 0 ? 1 : this.sin(x, acy) / x }
@@ -6949,8 +6984,8 @@ void (() => { "use strict";
 			hcc(θ, acy=25) { return Number.isNaN( θ = Number(θ) ) ? θ : this.cvrc(θ, acy) / 2 }
 			ahcc(x, acy=100) { return Number.isNaN( x = Number(x) ) ? x : this.asin(2*x - 1, acy) }
 			/////////// HYPERBOLIC TRIGONOMETRY
-			sinh(x) { return Number.isNaN( x = Number(x) ) ? x : (𝑒**x - 𝑒**-x) / 2 }
-			cosh(x) { return Number.isNaN( x = Number(x) ) ? x : (𝑒**x + 𝑒**-x) / 2 }
+			sinh(x) { return Number.isNaN( x = Number(x) ) ? x : (e**x - e**-x) / 2 }
+			cosh(x) { return Number.isNaN( x = Number(x) ) ? x : (e**x + e**-x) / 2 }
 			tanh(x) { return Number.isNaN( x = Number(x) ) ? x : this.sinh(x) / this.cosh(x) }
 			sinhc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? NaN : x === 0 ? 1 : this.sinh(x) / x }
 			coshc(x, acy=25) { return Number.isNaN( x = Number(x) ) ? x : this.cosh(x) / x }
@@ -7040,7 +7075,7 @@ void (() => { "use strict";
 					Number.isNaN( inc = Number(inc) ) ||
 					Number.isNaN( acy = Number(acy) ) ?
 						NaN :
-						γ + this.ln(x) -
+						emc + this.ln(x) -
 							this.Cin(x, inc, acy);
 			}
 			ci() { return this.Ci.apply(this, arguments) }
@@ -7054,7 +7089,7 @@ void (() => { "use strict";
 				return Number.isNaN( x = Number(x) ) ||
 					Number.isNaN( inc = Number(inc) ) ?
 						NaN :
-						γ + this.ln(x) +
+						emc + this.ln(x) +
 							this.int(0, x, t =>
 								(this.cosh(t) - 1) / t, inc
 							);
@@ -7516,7 +7551,7 @@ void (() => { "use strict";
 				// A = | ----- sin 2 --- | such that y = π for radians, or 180°.
 				//     |   2          s  |
 
-				return this.abs(  r**2 * s/2 * this.sin(𝜏 / s)  );
+				return this.abs(  r**2 * s/2 * this.sin(tau / s)  );
 			}
 			areaEllipse(a=1, b=1, r=1) {
 				//  /  x - h  \ 2    /  y - k  \ 2
@@ -7890,9 +7925,9 @@ void (() => { "use strict";
 				this.lnNeg1       = this.new(0, π);
 				this.lni          = this.new(0, π_2);
 				this.i            = this.new(0, 1);
-				this.e   = this.𝑒 = this.new(e, 0);
 				this.pi  = this.π = this.new(π, 0);
-				this.tau = this.𝜏 = this.new(𝜏, 0);
+				this.tau = this.new(tau, 0);
+				this.e   = this.new(e, 0);
 
 				if (degTrig) this.deg = {};
 				if (help) this.help = {};
@@ -8002,7 +8037,7 @@ void (() => { "use strict";
 				if (type(z, 1) !== "complex") return NaN;
 				return form === "degrees" || form === "deg" || form === "d" ?
 					rMath.deg.atan2(z.re, z.im) + 360*int(n) :
-					rMath.atan2(z.re, z.im) + 𝜏*int(n);
+					rMath.atan2(z.re, z.im) + tau*int(n);
 			}
 			ln(z, n=0) {
 				if (typeof z === "number") return z < 0 ?
@@ -8784,10 +8819,24 @@ Reflect.defineProperty(rMath, "_generateReals", (function create_realNumbers() {
 		generateReals;
 })());
 
-try {
-	jQuery.fn.merge = function merge(second) { return jQuery.merge(this, second) }
-	jQuery.fn.mergeRight = function mergeRight(first) { return jQuery.merge(first, this) }
-}
-catch {
-	// jQuery is not defined.
-}
+function removeAmlaut(str) { return str.replace(/ü/g, "u").replace(/Ü/g, "U") }
+function removeTilde(str) { return str.replace(/ñ/g, "n").replace(/Ñ/g, "N") }
+var removeAcuteAccents = (function create_removeAcuteAccents() {
+	const map = {
+		A: "Á" , a: "á" ,
+		E: "É" , e: "é" ,
+		I: "Í" , i: "í" ,
+		O: "Ó" , o: "ó" ,
+		U: "Ú" , u: "ú" ,
+	}
+	, keys = Reflect.ownKeys(map)
+
+	function removeAcuteAccents(str) {
+		return keys.reduce((curStr, curMap) => curStr.replaceAll(map[curMap], curMap), str);
+	}
+
+	removeAcuteAccents._map = map;
+	removeAcuteAccents._keys = keys;
+
+	return removeAcuteAccents;
+})();
