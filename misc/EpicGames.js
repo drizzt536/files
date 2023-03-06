@@ -349,6 +349,7 @@ var OwnedApplications = {
 	, "PUBG BATTLEGROUNDS": 0
 	, "PUBG Founder's Pack": 0
 	, "Rage 2": 39.99
+	, "Rise of Industry": 29.99
 	, "Railway Empire": 29.99
 	, "Rainbow Six Extraction Demo": 0
 	, "Ravenous Devils": 4.99
