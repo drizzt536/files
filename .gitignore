@@ -1,13 +1,14 @@
 # most ignored files are just for testing/notes, and are not actually projects...
 # or they are incomplete to the point where they don't yet serve their purpose...
-# or they are temporary, not original (ie jQuery.js), a joke (ie 3quine.html), or something else
-# executables and object files are ignored because I didn't write them, the compiler did
+# or they are temporary, not original (ie jQuery.js), a joke (ie 3quine.html), etc
+# executables and object files are ignored because I didn't write them
 
+/GoLang/
 /Graphviz/
 /Haskell/
-/GoLang/
 /ignore/
 /NASM/
+/Wolfram/
 
 /TeX/JSAANLFE/
 # TypeScript version of lib.js v3.0.0
