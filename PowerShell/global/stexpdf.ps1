@@ -19,7 +19,7 @@ function global:stexpdf { # smaller tex pdf compiler
     if (test-path "./$fname.out") { rm "./$fname.out" }
     if (test-path "./texput.log") { rm "./texput.log" }
     try { iex "./$fname.pdf" } catch {
-        write-host "pdf not created"
+        echo "pdf not created"
         throw Error
     }
     return $null
