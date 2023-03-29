@@ -26,7 +26,8 @@ def password(length: int = 10, shuffles: int = 6) -> str:
 		print(f"Password (in single quotes):\n'{psw}'\n")
 		if input("Again?: ").lower() in {"yes", "y", "1", "true", "t"}:
 			system("cls" if sysname == "nt" else "clear")
-			return password( print() or abs(int(input("length: ") or 10)), abs(int(input("# shuffles: ")) or 6) )
+			return password( print() or abs(int(input("length: ") or 14)), abs(int(input("# shuffles: ") or 6)) )
 	return psw
 
-__name__ == "__main__" and password( print() or abs(int(input("length: ") or 10)), abs(int(input("# shuffles: ")) or 6) )
+__name__ == "__main__" and password( print() or abs(int(input("length: ") or 14)), abs(
+	int(input("# shuffles: ") or 6)) )
