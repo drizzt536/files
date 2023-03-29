@@ -31,7 +31,6 @@ var OwnedApplications = {
 	, "Alba - A Wildlife Adventure": 16.99
 	, "Alba": 0 // duplicate
 	, "Alder Choke DEMO": 0
-	, "Alder Choke Demo": 0 // duplicate
 	, "Amnesia: A Machine for Pigs": 19.99
 	, "Among The Sleep - Enhanced Edition": 16.99
 	, "Among Us": 4.99
@@ -74,8 +73,7 @@ var OwnedApplications = {
 	, "Black Widow": 0 // duplicate
 	, "Blair Witch": 29.99
 	, "Blankos Block Party": 0
-	, "Blood of steel": 0
-	, "Blood of Steel": 0 // duplicate
+	, "Blood of Steel": 0
 	, "Borderlands 2": 19.99
 	, "Borderlands 3": 59.99
 	, "Borderlands: The Pre-Sequel": 39.99
@@ -87,6 +85,7 @@ var OwnedApplications = {
 	, "Brothers - A Tale Of Two Sons": 14.99
 	, "Brothers": 0 // duplicate
 	, "Bus Simulator 21 - Modding Kit": 0
+	, "Call of the Sea": 19.99
 	, "Bus Simulator 21 Modding Kit": 0 // duplicate
 	, "Car Mechanic Simulator 2018": 19.99
 	, "Carcassonne": 9.99
@@ -96,6 +95,7 @@ var OwnedApplications = {
 	, "Centipede Recharged": 9.99
 	, "Century: Age of Ashes": 0
 	, "Century": 0 // duplicate
+	, "Chess Ultra": 12.99
 	, "Chimeraland": 0
 	, "Chorus Demo": 0
 	, "Cities: Skylines": 29.99
@@ -226,7 +226,6 @@ var OwnedApplications = {
 	, "Helium Rain Mod Kit": 0
 	, "Hell is Others": 14.99
 	, "Hell is other demons": 9.99
-	, "Hell Is Other Demons": 0 // duplicate
 	, "Hello Mod Kit": 0
 	, "Hello Neighbor Mod Kit": 0 // duplicate
 	, "Hello Neighbor Hide and Seek Demo": 0
@@ -305,7 +304,6 @@ var OwnedApplications = {
 	, "Might and Magic": 0 // duplicate
 	, "Minit": 9.99
 	, "MONOPOLY® MADNESS DEMO": 0
-	, "Monopoly® Madness Demo": 0 // duplicate
 	, "Mortal Shell": 29.99
 	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is or where it came from
 	, "MudRunner": 19.99
@@ -378,7 +376,6 @@ var OwnedApplications = {
 	, "RollerCoaster Tycoon® 3: Complete Edition": 19.99
 	, "RollerCoaster Tycoon 3": 0 // duplicate
 	, "RPG in a Box": 29.99
-	, "rpg in a Box": 0 // duplicate
 	, "Rumbleverse™": 0
 	, "Rumbleverse": 0 // duplicate
 	, "Rumbleverse™ - Boom Boxer Content Pack": 0
@@ -528,9 +525,11 @@ var OwnedApplications = {
 	, "Wargame: Red Dragon": 29.99
 	, "Wargame": 0 // duplicate
 	, "Warhammer 40,000: Mechanicus": 29.99
-	, "Warhammer 40,000": 0 // duplicate
-	, "Warhammer 40000": 0 // duplicate
-	, "Warhammer": 0 // duplicate
+	, "Warhammer 40,000: Gladius - Relics of War": 39.99
+	, "Warhammer Mechanicus": 0 // duplicate
+	, "Warhammer Gladius": 0 // duplicate
+	, "Mechanicus": 0 // duplicate
+	, "Gladius": 0 // duplicate
 	, "Warpips": 16.99
 	, "Watch Dogs 2: Standard Edition": 59.99
 	, "Watch Dogs 2": 0 // duplicate
@@ -546,6 +545,9 @@ var OwnedApplications = {
 	, "Wonder Boy": 0 // duplicate
 	, "World of Goo": 14.99
 	, "World of Warships": 0
+	, "World of Warships — Starter Pack: Ishizuchi": 23.47
+	, "World of Warships - Starter Pack: Ishizuchi": 0 // duplicate
+	, "World of Warships Starter Pack: Ishizuchi": 0 // duplicate
 	, "World War Z": 19.99
 	, "XCOM® 2": 59.99
 	, "XCOM 2": 0 // duplicate
@@ -562,4 +564,12 @@ accountWorth = `$${Object.values(OwnedApplications).filter(
 	"0.0"
 )} USD`.replace(/\.(\d) /, ".$10 "),
 
-appsInclude = app => OwnedApplications[app] ?? !1;
+appsInclude = (() => {
+	const keys = Reflect.ownKeys(OwnedApplications)
+		.map(e => e.lower())
+		.remrep();
+
+	return app => keys.includes( app.lower() );
+})();
+
+
