@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v2.1.7 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.9 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 /**
  * Todo etc. Comment Syntax:
@@ -71,7 +71,7 @@ void (() => { "use strict";
 			, rMath_Comparatives_Argument       : "default" // true
 			, rMath_Constants_Argument          : "default" // true
 			, cfMath_Help_Argument              : "default" // true
-			, Logic_BitWise_Argument            : "default" // true
+			, Logic_Bitwise_Argument            : "default" // true
 			, Logic_Comparatives_Argument       : "default" // true
 			, Logic_Help_Argument               : "default" // true
 			// Keylogger is automatically off if LibSettings.Use_Document is false which is defined
@@ -137,89 +137,89 @@ void (() => { "use strict";
 				   - functions on the global ignore list can still be accessed through LIBRARY_VARIABLES if it is globalized
 				 * LIBRARY_VARIABLES["local define"] string syntax for first argument:
 				   - if the last character is ', ", or \` the name will start at the next of the same quote going backwards
-				     > example: if the string ends with 'asdf asdf ', the name will be "asdf asdf "
-				     > if the string ends with 'asdf asdf ", it will throw an error because the quote has no beginning.
-				     > for the name to be "asdf 1234", the quotes are required or "asdf" will be one of the parameters, and only "1234" will be the name
+					 > example: if the string ends with 'asdf asdf ', the name will be "asdf asdf "
+					 > if the string ends with 'asdf asdf ", it will throw an error because the quote has no beginning.
+					 > for the name to be "asdf 1234", the quotes are required or "asdf" will be one of the parameters, and only "1234" will be the name
 				   - starting here, they are in the order that define() checks for them in.
 				   - auto
-				     > auto doesn't do anything and its only purpose is to distinguish variables that are dynamically created
-				     > auto acts like local but if it has "call" or "instance" etc as one of the parameters, it won't do it.
-				     > returns from the function immediately
+					 > auto doesn't do anything and its only purpose is to distinguish variables that are dynamically created
+					 > auto acts like local but if it has "call" or "instance" etc as one of the parameters, it won't do it.
+					 > returns from the function immediately
 				   - archived
-				     > archived is similar to auto and it has the exact same functionality, that is, none.
-				     > archived is for if you are overwriting something and you want a (shallow probably) copy of the original
-				     > returns from the function immediately
+					 > archived is similar to auto and it has the exact same functionality, that is, none.
+					 > archived is for if you are overwriting something and you want a (shallow probably) copy of the original
+					 > returns from the function immediately
 				   - ifdom
-				     > if LibSettings.Use_Document is falsy it adds the name and value to the dom ignore list and returns.
-				     > LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
-				       ~ LibSettings.isBrowser = String(globalThis).slice(8, -1).toLowerCase() === "${_Global_String}"
+					 > if LibSettings.Use_Document is falsy it adds the name and value to the dom ignore list and returns.
+					 > LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
+					   ~ LibSettings.isBrowser = String(globalThis).slice(8, -1).toLowerCase() === "${_Global_String}"
 				   - previous
-				     > previous sets the value to be whatever the previous value was.
+					 > previous sets the value to be whatever the previous value was.
 				   - math
-				     > if neither call nor instance are active, instance is activated.
-				     > if defer is not active, it is activated.
-				   	 > the value gets added to the MathObjects object.
+					 > if neither call nor instance are active, instance is activated.
+					 > if defer is not active, it is activated.
+					 > the value gets added to the MathObjects object.
 				   - symbol
-				     > the name of the function becomes Symbol.for(name)
-				     > example: if symbol is active and the name is "12345", the name becomes Symbol.for("12345")
+					 > the name of the function becomes Symbol.for(name)
+					 > example: if symbol is active and the name is "12345", the name becomes Symbol.for("12345")
 				   - pdelete
-				     > deletes the variable from the scope which is the 3rd argument then updated the previous value to what was just deleted
+					 > deletes the variable from the scope which is the 3rd argument then updated the previous value to what was just deleted
 				   - delete
-				     > deletes the variable from the scope which is the 3rd argument. doesn not update the previous value.
+					 > deletes the variable from the scope which is the 3rd argument. doesn not update the previous value.
 				   - object
-				     > if object is active, then for each key in the value, it will be defined in the new subscope.
-				     > example: "object Array": { asdf: 3 }. this will set Array.asdf to 3
+					 > if object is active, then for each key in the value, it will be defined in the new subscope.
+					 > example: "object Array": { asdf: 3 }. this will set Array.asdf to 3
 				   - prototype
-				   	 > prototype is similar to object but adds the values to the prototype instead of the object itself
+					 > prototype is similar to object but adds the values to the prototype instead of the object itself
 				   - local
-				     > doesn't globalize the variable.
-				     > if overwrite or native are active, it throws an error because there is nothing to overwrite because it's a local variable
-				     > if instance or call are active, it will call it in case something important happens inside it, but otherwise just discards it.
+					 > doesn't globalize the variable.
+					 > if overwrite or native are active, it throws an error because there is nothing to overwrite because it's a local variable
+					 > if instance or call are active, it will call it in case something important happens inside it, but otherwise just discards it.
 				   - defer
-				     > if the section argument is 0, then the string gets added to either DEFER_ARR or LOCAL_DEFER_ARR depending on if local is active or not.
-				     > if section is anything else, the function proceeds as normal
+					 > if the section argument is 0, then the string gets added to either DEFER_ARR or LOCAL_DEFER_ARR depending on if local is active or not.
+					 > if section is anything else, the function proceeds as normal
 				   - overwrite
-				     > ignores what ON_CONFLICT is set to and acts as if it is set to "none".
-				     > it just overwrites the value anyway.
-				     > no errors happen if there is nothing to overwrite. it just changes it from undefined to the new value.
+					 > ignores what ON_CONFLICT is set to and acts as if it is set to "none".
+					 > it just overwrites the value anyway.
+					 > no errors happen if there is nothing to overwrite. it just changes it from undefined to the new value.
 				   - native
-				     > an extension of overwrite
-				     > if the thing being overwritten is a native function, then it overwrites it, otherwise what happens depends on ON_CONFLICT.
+					 > an extension of overwrite
+					 > if the thing being overwritten is a native function, then it overwrites it, otherwise what happens depends on ON_CONFLICT.
 				   - instance
-				     > creates a new instance of the value with the "new" keyword
-				     > similar to call
+					 > creates a new instance of the value with the "new" keyword
+					 > similar to call
 				   - call
-				     > calls the value as if it is a function assuming it is a function.
-				     > will throw an error if the value is not a function
-				     > similar to instance
+					 > calls the value as if it is a function assuming it is a function.
+					 > will throw an error if the value is not a function
+					 > similar to instance
 				   - deprecated
-				     > if LibSettings.Define_Deprecated_Functions is falsy or the value is not a function, it returns immediately.
-				     > it logs to the console via console.warn that a deprecated function is being defined when it is defined
-				     > if LibSettings.Warn_Deprecated_Use is truthy, whenever called, it warns to the console that a deprecated function was used
+					 > if LibSettings.Define_Deprecated_Functions is falsy or the value is not a function, it returns immediately.
+					 > it logs to the console via console.warn that a deprecated function is being defined when it is defined
+					 > if LibSettings.Warn_Deprecated_Use is truthy, whenever called, it warns to the console that a deprecated function was used
 				   - ignore
-				     > The property gets completely skipped over and ignored.
+					 > The property gets completely skipped over and ignored.
 				   - property
-				   	 > uses Object.defineProperty() instead of direct assignment
-				   	 > the arguments are defined in the LibSettings
-				   	   ~ Defined_Properties_Configurable, default is false
-				   	   ~ Defined_Properties_Enumerable, default is false
-				   	   ~ Defined_Properties_Writable, default is true
-				   	 > if local is active, nothing changes and having property is useless.
+					 > uses Object.defineProperty() instead of direct assignment
+					 > the arguments are defined in the LibSettings
+					   ~ Defined_Properties_Configurable, default is false
+					   ~ Defined_Properties_Enumerable, default is false
+					   ~ Defined_Properties_Writable, default is true
+					 > if local is active, nothing changes and having property is useless.
 				   - iterable
-				     > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
-				     > does the same thing as the enumerable flag
+					 > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
+					 > does the same thing as the enumerable flag
 				   - enumerable
-				     > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
-				     > does the same thing as the iterable flag
+					 > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
+					 > does the same thing as the iterable flag
 				   - configurable
-				     > if the property flag is given, it changes the configurable argument to true, otherwise nothing changes
+					 > if the property flag is given, it changes the configurable argument to true, otherwise nothing changes
 				   - nwritable
-				     > if the property flag is given, it changes the writable argument to false, otherwise nothing changes
+					 > if the property flag is given, it changes the writable argument to false, otherwise nothing changes
 				   - nproperty
-				     > if property is set as the default in the settings, anything with the nproperty flag is never a property
+					 > if property is set as the default in the settings, anything with the nproperty flag is never a property
 				   - try
-				     > if the scope is nullish, then an error is not thrown and define() just returns undefined.
-				     > the main use cases are if the 'object' or 'prototype' flags are set.
+					 > if the scope is nullish, then an error is not thrown and define() just returns undefined.
+					 > the main use cases are if the 'object' or 'prototype' flags are set.
 			`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "")
 			, isNodeJS                          : _Global_String === "global"
 			, isBrowser                         : _Global_String === "window"
@@ -259,7 +259,7 @@ void (() => { "use strict";
 		LibSettings.bMath_Comparatives_Argument       === "default" && (LibSettings.bMath_Comparatives_Argument       = !0);
 		LibSettings.sMath_Comparatives_Argument       === "default" && (LibSettings.sMath_Comparatives_Argument       = !0);
 		LibSettings.rMath_Comparatives_Argument       === "default" && (LibSettings.rMath_Comparatives_Argument       = !0);
-		LibSettings.Logic_Comparatives_Argument       === "default" && (LibSettings.Logic_Comparatives_Argument       = !0);
+		LibSettings.Logic_Comparatives_Argument       === "default" && (LibSettings.Logic_Comparatives_Argument       = null);
 		LibSettings.KeyLogger_Copy_Obj_Argument       === "default" && (LibSettings.KeyLogger_Copy_Obj_Argument       = !0);
 		LibSettings.Creepily_Watch_Every_Action       === "default" && (LibSettings.Creepily_Watch_Every_Action       = !1);
 		LibSettings.Defined_Properties_Writable       === "default" && (LibSettings.Defined_Properties_Writable       = !0);
@@ -281,7 +281,7 @@ void (() => { "use strict";
 		LibSettings.fMath_DegTrig_Argument            === "default" && (LibSettings.fMath_DegTrig_Argument            = !0);
 		LibSettings.sMath_DegTrig_Argument            === "default" && (LibSettings.sMath_DegTrig_Argument            = !0);
 		LibSettings.rMath_DegTrig_Argument            === "default" && (LibSettings.rMath_DegTrig_Argument            = !0);
-		LibSettings.Logic_BitWise_Argument            === "default" && (LibSettings.Logic_BitWise_Argument            = !0);
+		LibSettings.Logic_Bitwise_Argument            === "default" && (LibSettings.Logic_Bitwise_Argument            = "bit");
 		LibSettings.Freeze_Library_Object             === "default" && (LibSettings.Freeze_Library_Object             = !1);
 		LibSettings.MATH_LOG_DEFAULT_BASE             === "default" && (LibSettings.MATH_LOG_DEFAULT_BASE             = 10);
 		LibSettings.Create_Testing_Object             === "default" && (LibSettings.Create_Testing_Object             = !0);
@@ -298,7 +298,7 @@ void (() => { "use strict";
 		LibSettings.bMath_Help_Argument               === "default" && (LibSettings.bMath_Help_Argument               = !0);
 		LibSettings.sMath_Help_Argument               === "default" && (LibSettings.sMath_Help_Argument               = !0);
 		LibSettings.rMath_Help_Argument               === "default" && (LibSettings.rMath_Help_Argument               = !0);
-		LibSettings.Logic_Help_Argument               === "default" && (LibSettings.Logic_Help_Argument               = !0);
+		LibSettings.Logic_Help_Argument               === "default" && (LibSettings.Logic_Help_Argument               = "help");
 		LibSettings.Global_Ignore_List                === "default" && (LibSettings.Global_Ignore_List                = []);
 		LibSettings.Clear_LocalStorage                === "default" && (LibSettings.Clear_LocalStorage                = !1);
 		LibSettings.Run_KeyLogger                     === "default" && (LibSettings.Run_KeyLogger                     = !1);
@@ -544,11 +544,86 @@ void (() => { "use strict";
 					obj.length ?? // arraylike object
 						( keys ? Object.keys : Reflect.ownKeys )(obj).length; // everything else
 			}
-			, range = function* range(start, stop, step=1) {
-				if ( Number.isNaN(start = Number(start)) ) throw Error("start can't be infinity");
-				stop == null ? [stop, start] = [start, 0] : stop++;
-				for (var i = start; i < stop; i += step) yield i;
-			}
+			, range = (function create_range() {
+				function* Range(start, stop, step=1) {
+					for (var i = start; i < stop; i += step)
+						yield i;
+				}
+				Range.prototype.toArray = range.prototype.toArr = function toArray() {
+					throw Error`Not Implemented`;
+				};
+				Range.prototype.next = (function () {
+					var _next = Range.prototype.next;
+					return function next() {
+						var out = _next.call(this);
+
+						this.yield++;
+						this.last = out.value;
+						out.done && (this.done = true);
+
+						return out;
+					}
+				})();
+				Range.prototype.getYields = function getYields() {
+					return 1 + (this.last - this.start) / this.step;
+				}
+				function range(start, stop /* while i < stop ... */, step=1) {
+					if ( Number.isNaN(start = Number(start)) ) throw Error`start must be a number`;
+					if ( !Number.isFinite(start) ) throw Error`start must be finite`;
+
+					stop == null ? [start, stop] = [0, start] : stop++;
+
+					var a = Range(start, stop, step);
+
+					Reflect.defineProperty(a, "start", {
+						value: start
+						, writable: false
+						, configurable: false
+						, enumerable: false
+					});
+					Reflect.defineProperty(a, "stop", {
+						value: stop
+						, writable: false
+						, configurable: false
+						, enumerable: false
+					});
+					Reflect.defineProperty(a, "step", {
+						value: step
+						, writable: false
+						, configurable: false
+						, enumerable: false
+					});
+					Reflect.defineProperty(a, "yield", {
+						value: 0
+						, writable: true
+						, configurable: false
+						, enumerable: false
+					});
+					(function() {
+						var last_variable = undefined;
+
+						Reflect.defineProperty(a, "last", {
+							get: function last() { return last_variable }
+							, set: function last(value) {
+								// last.caller === this.next &&
+									(last_variable = value);
+							}
+							, configurable: false
+							, enumerable: false
+						});
+					})()
+					Reflect.defineProperty(a, "last", {
+						value: undefined
+						, writable: true
+						, configurable: false
+						, enumerable: false
+					});
+					a.done = false;
+
+					return a;
+				}
+				return range;
+			})()
 			, isIterable = function isIterable(thing) {
 				try { for (const e of thing) break }
 				catch { return !1 }
@@ -1298,7 +1373,7 @@ void (() => { "use strict";
 						arr[j] < pivot && ( i++, [arr[i], arr[j]] = [arr[j], arr[i]] );
 					return i++, [arr[i], arr[high]] = [arr[high], arr[i]], i;
 				}
-				function qsort(arr, low=0, high=arguments[0].length-1) {
+				function qsort(arr, low=0, high=arr.length - 1) {
 					// does affect original variable, unlike msort
 					if (low >= high) return arr;
 					const pi = partition(arr, low, high); // partition index
@@ -2265,6 +2340,7 @@ void (() => { "use strict";
 		, π              : π
 		, "symbol <0x200b>": "​" // zero width space
 		, "symbol <0xfeff>": "﻿" // byte order mark
+		, "symbol <0x00a0>": " " // non-(line-)breaking space
 		, "ignore getOldGlobals": getOldGlobals
 		, "native clearInterval": clearInterval
 		, "native setInterval": setInterval
@@ -2281,24 +2357,24 @@ void (() => { "use strict";
 		, "local intervals": intervals
 		, "local alphabet": alphabet
 		, "local numbers": numbers
-		, "local π_2": π_2
-		, "local π_3": π_3
-		, "local π2_3": π2_3
-		, "local π_4": π_4
-		, "local π3_4": π3_4
-		, "local π5_4": π5_4
-		, "local π7_4": π7_4
-		, "local π_5": π_5
-		, "local π_6": π_6
-		, "local π5_6": π5_6
-		, "local π7_6": π7_6
-		, "local π11_6": π11_6
-		, "local π_7": π_7
-		, "local π_8": π_8
-		, "local π_9": π_9
-		, "local π_10": π_10
-		, "local π_11": π_11
-		, "local π_12": π_12
+		, "local pi_2": π_2
+		, "local pi_3": π_3
+		, "local pi2_3": π2_3
+		, "local pi_4": π_4
+		, "local pi3_4": π3_4
+		, "local pi5_4": π5_4
+		, "local pi7_4": π7_4
+		, "local pi_5": π_5
+		, "local pi_6": π_6
+		, "local pi5_6": π5_6
+		, "local pi7_6": π7_6
+		, "local pi11_6": π11_6
+		, "local pi_7": π_7
+		, "local pi_8": π_8
+		, "local pi_9": π_9
+		, "local pi_10": π_10
+		, "local pi_11": π_11
+		, "local pi_12": π_12
 		, "local pi": pi
 		, "local tau": tau
 		, "local e": e
@@ -2374,18 +2450,21 @@ void (() => { "use strict";
 				return any._some = _some, any;
 			}
 			, "native property some": function some(fn) {
-				// "some" implies that it has to be plural. use any for any. some != any
+				// "some" implies plurality. use "any" for any. some != any
 				var num = 0;
+
 				for (var i = this.length; i --> 0 ;) {
 					num += !!fn(this);
 					if (num > 1) return !0;
 				}
+
 				return !1;
 			}
 			, "property for": function forEachReturn(f=(e, i, a)=>e, ret) {
 				// don't change order from ltr to rtl
 				for (var a = this, i = 0, n = a.length; i < n ;)
 					f(a[i], i++, a);
+
 				return ret;
 			}
 			, "property shift2": function shift2(num=1) {
@@ -2464,7 +2543,7 @@ void (() => { "use strict";
 				let a = this, n = indices.length;
 				if (type(func, 1) === "arr") func = func.flatten();
 				else func = [].len(n).fill(func);
-				func = func.extend(indices.length - func.length, e => e);
+				func = func.extend(indices.length - func.length, e => e, "new");
 
 				for (var i = 0; i < n; i++)
 					a[indices[i]] = func[i](a[indices[i]], indices[i]);
@@ -2600,10 +2679,13 @@ void (() => { "use strict";
 				return this;
 			}
 			, "property extend": function extend(length, filler, form="new") {
-				if (form === "new") return this.concat(Array(length).fill(filler));
+				if (form === "new")
+					return this.concat( Array(length).fill(filler) );
+				else if (form === "add")
+					return this.union( Array(length).fill(filler) );
 				else if (form === "total") {
 					if (length <= this.length) return this;
-					else return this.concat(Array(length).fill(filler));
+					else return this.concat( Array(length).fill(filler) );
 				}
 				/*else */return a;
 			}
@@ -2981,43 +3063,43 @@ void (() => { "use strict";
 		, "prototype Number": {
 			"property bitLength": function bitLength() { return abs(this).toString(2).length }
 			, "property isPrime": function isPrime() {
-				// can probably be optimized
-				var n = Number.parseInt(this);
-				if (this !== n) return !1;
-				if (n === 2) return !0;
-				if (n < 2 || !(n % 2)) return !1;
-				for (var i = 3, a = n / 3; i <= a; i += 2)
-					if (!(n % i)) return !1;
+				if (!Number.isInteger(this)) return !1;
+				if (this === 2) return !0;
+				if (this < 2 || !(this % 2)) return !1;
+
+				for (var i = 3, max = rMath.isqrt(this); i <= max; i += 2)
+					if (!(this % i)) return !1;
+
 				return !0;
 			}
-			, "property inRange": function inRange(n1, n2=arguments[0], include=true) {
+			, "property inRange": function inRange(n1, n2=n1, include=true) {
 				return include ?
 					this >= n1 && this <= n2 :
 					this > n1 && this < n2;
 			}
 			, "property shl": function shiftLeft(num) { return this << Number(num) }
 			, "property shr": function shiftRight(num) { return this >> Number(num) }
-			, "property shr2": function shiftRightUnsigned(num) { return this >>> Number(num) }
+			, "property shru": function shiftRightUnsigned(num) { return this >>> Number(num) }
 			, "property isInteger": function isInteger() { return this === Number.parseInt(this) }
 			, "previous property isInt": null
-			, "property add": function add(number) { return this + Number(number) }
-			, "property sub": function subtract(number) { return this - Number(number) }
-			, "property mul": function multiply(number) { return this * Number(number) }
-			, "property div": function divide(number) { return this / Number(number) }
-			, "property mod": function modulo(number) { return this % Number(number) }
-			, "property pow": function power(number) { return this ** Number(number) }
+			, "property add": function add(number = 0) { return this + Number(number) }
+			, "property sub": function subtract(number = 0) { return this - Number(number) }
+			, "property mul": function multiply(number = 0) { return this * Number(number) }
+			, "property div": function divide(number = 0) { return this / Number(number) }
+			, "property mod": function modulo(number = 0) { return this % Number(number) }
+			, "property pow": function power(number = 0) { return this ** Number(number) }
 		}
 		, "prototype BigInt": {
 			"property isPrime": function isPrime() {
-				var n = this.valueOf();
-				if (n === 2n) return !0;
-				if (n < 2n || !(n % 2n)) return !1;
-				for (var i = 3n, a = n / 3n; i <= a; i += 2n)
-					if (!(n % i)) return !1;
+				if (this === 2n) return !0;
+				if (this < 2n || !(this % 2n)) return !1;
+
+				for (var i = 3n, sqrt = bMath.sqrt(this); i <= sqrt; i += 2n)
+					if (!(this % i)) return !1;
+
 				return !0;
 			}
-			, "property inRange": function inRange(n1, n2=arguments[0], include=true) {
-				n2 ??= n1; // TODO: Figure out if this line can be removed or not.
+			, "property inRange": function inRange(n1, n2=n1, include=true) {
 				return include ?
 					this >= n1 && this <= n2 :
 					this > n1 && this < n2;
@@ -3028,38 +3110,36 @@ void (() => { "use strict";
 				var decimal = maxDigits && a.length > 1 && +a.slc(1) ? "." : "",
 					rest = a.substr(1, maxDigits);
 				rest = +rest ? rest : "";
-				if (["string", "str", "s", String].incl(form?.lower?.() ?? form))
+				if (form === String)
 					return `${a[0]}${decimal}${rest}e+${dim(a)}`.replace(".e", "e");
-				else if (["number", "num", "n", Number].incl(form?.lower?.() ?? form))
+				else if (form === Number)
 					return +`${a[0]}.${a.substr(1, 50)}e+${dim(a)}`;
-				else throw Error`Invalid second argument to BigInt.prototype.toExponential`;
+				else throw Error`Invalid second argument to BigInt.prototype.toExponential()`;
 			}
-			, "property shl": function shiftLeft(int) { return this << BigInt(int) }
-			, "property shr": function shiftRight(int) { return this >> BigInt(int) }
-			, "property add": function add(int) { return this + BigInt(int) }
-			, "property sub": function subtract(int) { return this - BigInt(int) }
-			, "property mul": function multiply(int) { return this * BigInt(int) }
-			, "property div": function divide(int) { return this / BigInt(int) }
-			, "property mod": function modulo(int) { return this % BigInt(int) }
-			, "property pow": function power(int) { return this ** BigInt(int) }
-			, "property length": function length(n=0) { return `${this}`.length - n }
+			, "property shl": function shiftLeft(int = 0n) { return this << BigInt(int) }
+			, "property shr": function shiftRight(int = 0n) { return this >> BigInt(int) }
+			, "property add": function add(int = 0n) { return this + BigInt(int) }
+			, "property sub": function subtract(int = 0n) { return this - BigInt(int) }
+			, "property mul": function multiply(int = 0n) { return this * BigInt(int) }
+			, "property div": function divide(int = 0n) { return this / BigInt(int) }
+			, "property mod": function modulo(int = 0n) { return this % BigInt(int) }
+			, "property pow": function power(int = 0n) { return this ** BigInt(int) }
+			, "property length": function length(n = 0) { return `${this}`.length - n }
 			, "property isInteger": function isInteger() { return !0 }
 			, "previous property isInt": null
 		}
-		, "instance Logic": class Logic {
+		, "archive instance Logic": class Logic {
+			// archive doesn't work
 			constructor(
-				bitwise = LibSettings.Logic_BitWise_Argument
+				bitwise = LibSettings.Logic_Bitwise_Argument
 				, comparatives = LibSettings.Logic_Comparatives_Argument
 				, help = LibSettings.Logic_Help_Argument
 				,
 			) {
-				bitwise === "default" && (bitwise = "bit");
-				comparatives === "default" && (comparatives = null);
-				help === "default" && (help = "help");
 				// TODO/ADD: Add the other logic gates to bitwise
-				if (bitwise != null) this[bitwise] = {
+				if (bitwise) this.bit = {
 					shr: (a, b) => a >> b,
-					shr2: (a, b) => a >>> b,
+					shru: (a, b) => a >>> b,
 					shl: (a, b) => a << b,
 					not: (...a) => len(a = a.flatten()) == 1 ? ~a[0] : a.map(b => ~b),
 					and: function and(...a) {
@@ -3111,57 +3191,56 @@ void (() => { "use strict";
 					imply: null,
 					nimply: null,
 				};
-				if (comparatives != null) this[comparatives] = {
-					gt: (a, b) => a > b
+				if (comparatives) this.eq = {
+					  gt: (a, b) => a > b
 					, lt: (a, b) => a < b
-					, get: (a, b) => a >= b
-					, let: (a, b) => a <= b
+					, ge: (a, b) => a >= b
+					, le: (a, b) => a <= b
 					, leq: (a, b) => a == b
+					, lne: (a, b) => a != b
 					, seq: (a, b) => a === b
-					, lneq: (a, b) => a != b
-					, sneq: (a, b) => a !== b
+					, sne: (a, b) => a !== b
 					,
 				};
-				if (help != null) {
-					// TODO/FIN: finish Logic help text
-					this[help] = {
-						not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
-						and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
-						nand: "Takes any number of arguments either directly or in an array. returns true as long as not all the arguments coerce to true",
-						or: "takes any amount of arguments either directly or in an array. returns true if any of the arguments coerce to true. Logical OR gate",
-						nor: "Takes any amount of arguments either directly or in an array. returns true if all the inputs are false. Logical NOR gate",
-						xor: "Takes any amount of arguments either directly or in an array.  returns true if half of the arguments coerce to true. Logical XOR gate.",
-						xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
-						nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
-						iff: "Takes 2 arguments. returns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
-						if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
-						imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
-						nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
-						xnor: "returns false",
-						is: "Takes any number of arguments. returns true if all the inputs are exactly equal to the first argument, although, objects can be different objects with the same values",
-						isnt: "Takes any number of arguments. returns true as long as any of the arguments is different from any other",
-						near: "Takes 3 paramaters.  1: fist number.  2: second number.  3?: range.  returns true if the numbers are in the range of eachother. the default range is ±3e-16, which should be enough to account for rounding errors. the same as python's math.isclose() function but with a different default range.",
-						bitwise: {
-							xor: "adds up the numbers in the first array bitwise, and returns 1 for bits in range of, or equal to the second array, returns zero for the others, and returns the answer in base 10. xor([a,b])==a^b.",
-							not:    "if there is one argument, returns ~argument.  if there is more than 1 argument, returns an array. example: Logic.bit.not(4,5,-1) returns [~4,~5,~-1]",
-							nil:    "if all of the inputs are zero for a given bit, it outputs one. Inverse &.",
-							and:    "a & b",
-							or:     "a | b",
-							left:   "a << b",
-							right:  "a >> b",
-							right2: "a >>> b",
-						},
-						equality: {
-							gt: "greater than (>)",
-							get: "greater than or equal to (>=)",
-							lt: "less than (<)",
-							let: "less than or equal to (<=)",
-							leq: "loose equality (==)",
-							seq: "strict equality (===)",
-							lneq: "loose non-equality (!=)",
-							sneq: "strict non-equality (!==)"
-						}
+				// TODO/FIN: finish Logic help text
+				if (help) this.help = {
+					not: "Logical NOT gate. takes any amount of arguments either directly or in an array. if there is only 1 argument, it returns !arg, otherwise it returns an array, where each element is not of the corresponding argument.",
+					and: "Takes any number of arguments either directly or in an array. returns true if all of the arguments coerce to true. Logical AND gate",
+					nand: "Takes any number of arguments either directly or in an array. returns true as long as not all the arguments coerce to true",
+					or: "takes any amount of arguments either directly or in an array. returns true if any of the arguments coerce to true. Logical OR gate",
+					nor: "Takes any amount of arguments either directly or in an array. returns true if all the inputs are false. Logical NOR gate",
+					xor: "Takes any amount of arguments either directly or in an array.  returns true if half of the arguments coerce to true. Logical XOR gate.",
+					xor2: "Takes any amount of arguments either directly or in an array.  returns true if an odd number of the arguments coerce to true. Logical XOR gate.",
+					nxor: "Takes any amount of arguments either directly or in an array. returns false if half of the arguments coerce to true, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
+					nxor2: "Takes any amount of arguments either directly or in an array. returns false if an odd number of the inputs coerce to false, otherwise it returns true. Boolean Algebra 'if and only if'. Logical XNOR gate.",
+					iff: "Takes 2 arguments. returns true if both arguments coerce to the same boolean value, otherwise it returns false. ",
+					if: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
+					imply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra if. Logical IMPLY gate.",
+					nimply: "Takes 2 arguments. returns false if the first argument coerces to true, and the second argument coerces to false, otherwise returns true. Boolean Algebra '-->/'. Logical NIMPLY gate.",
+					xnor: "returns false",
+					is: "Takes any number of arguments. returns true if all the inputs are exactly equal to the first argument, although, objects can be different objects with the same values",
+					isnt: "Takes any number of arguments. returns true as long as any of the arguments is different from any other",
+					near: "Takes 3 paramaters.  1: fist number.  2: second number.  3?: range.  returns true if the numbers are in the range of eachother. the default range is ±3e-16, which should be enough to account for rounding errors. the same as python's math.isclose() function but with a different default range.",
+					bit: {
+						xor: "adds up the numbers in the first array bitwise, and returns 1 for bits in range of, or equal to the second array, returns zero for the others, and returns the answer in base 10. xor([a,b])==a^b.",
+						not:    "if there is one argument, returns ~argument.  if there is more than 1 argument, returns an array. example: Logic.bit.not(4,5,-1) returns [~4,~5,~-1]",
+						nil:    "if all of the inputs are zero for a given bit, it outputs one. Inverse &.",
+						and:    "a & b",
+						or:     "a | b",
+						left:   "a << b",
+						right:  "a >> b",
+						right2: "a >>> b",
+					},
+					eq: {
+						self: "equality"
+						, gt: "greater than (>)"
+						, ge: "greater than or equal to (>=)"
+						, lt: "less than (<)"
+						, le: "less than or equal to (<=)"
+						, leq: "loose equality (==)"
+						, seq: "strict equality (===)"
+						, lne: "loose non-equality (!=)"
+						, sne: "strict non-equality (!==)"
 					}
 				}
 			}
@@ -3374,14 +3453,49 @@ void (() => { "use strict";
 					NaN :
 					y < 0 ? 1n / x ** -y : x ** y;
 			}
-			isNaN(x)  { return typeof x !== "bigint" }
-			sgn(x)    { return x < 0 ? -1n : BigInt(x > 0) }
-			sign(x)   { return x < 0 ? -1n : BigInt(x > 0) }
-			abs(x)    { return x * this.sgn(x) }
-			add(a, b) { return a + b }
-			sub(a, b) { return a - b }
-			mul(a, b) { return a * b }
-			div(a, b) { return a / b }
+			isBigInt(x) { return typeof x === "bigint" }
+			isNaN(x)    { return typeof x !== "bigint" }
+			sgn(x)      { return x < 0 ? -1n : BigInt(x > 0) }
+			sign(x)     { return x < 0 ? -1n : BigInt(x > 0) }
+			abs(x)      { return x * this.sgn(x) }
+			add(a, b)   { return a + b }
+			sub(a, b)   { return a - b }
+			mul(a, b)   { return a * b }
+			div(a, b)   { return a / b }
+			sqrt(x=1n)  {
+				if (x < 0) throw Error("non-negative value required");
+				if (x < 2) return x;
+
+				var x1 = x >> 1n, x0; // current, previous
+
+				do [x1, x0] = [x1 + x / x1 >> 1n, x1];
+				while (x1 < x0);
+				// `while  x1 !== x0` doesn't work...
+				// sqrt(24n) ends up in a loop between 4n and 5n and...
+				// adding a second lookbehind seems like a temporary solution
+
+				return x0; // last accurate value
+			}
+			isqrt(x) { return this.sqrt.apply(this, arguments) }
+			prime(n=1n, a=0n) {
+				// nth prime >= a
+				// out >= a
+				if (typeof n !== "bigint" ||
+					typeof a !== "bigint" ||
+					n < 1n
+				) throw Error`Invalid inputs to bMath.prime`;
+
+				a < 1n && (a = 1n);
+
+				if (n === 1n && a <= 2n) return 2n;
+				a += BigInt( !(a % 2n) ); // next odd number, has to be after 2 check
+
+				for (var k = a, i = BigInt(a <= 2n);
+					( i += BigInt(k.isPrime()) ) < n
+				;) k += 2n;
+
+				return k;
+			}
 		}
 		, "math sMath": class stringRealMath {
 			constructor(
@@ -3657,13 +3771,21 @@ void (() => { "use strict";
 			new(snum=1n, defaultValue=NaN) { return numStrNorm(snum, defaultValue) }
 			norm/*alize*/() { return this.new.apply(this, arguments) }
 			snum() { return this.new.apply(this, arguments) }
-			add(a="0.0", b="0.0") {
+			add(...snums) {
+				snums[0] instanceof Array && (snums = snums[0]);
+				if (snums.length > 2) return this.add(
+					this.add( snums[0], snums[1] ),
+					...snums.slice(2),
+				);
+
+				var [a, b] = snums;
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = this.norm( a+"" ); b = this.norm( b+"" );
-				if (a.sw("-") && b.sw("-")) return this.neg( this.add(a.slice(1), b.slice(1)) );
-				if (a.sw("-")  && !b.sw("-")) return this.sub(b, a.slice(1));
+				a = this.norm( a ); b = this.norm( b );
+				if ( a.sw("-") &&  b.sw("-")) return "-" + this.add(a.slice(1), b.slice(1));
+				if ( a.sw("-") && !b.sw("-")) return this.sub(b, a.slice(1));
 				if (!a.sw("-") &&  b.sw("-")) return this.sub(a, b.slice(1));
-				// do not change to +=
+
+				// do not change to use +=
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
 				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
 				a = a.split("."); b = b.split(".");
@@ -3686,13 +3808,20 @@ void (() => { "use strict";
 				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
 				return this.norm( c.incl(".") ? c : `${c}.0` );
 			}
-			sub(a="0.0", b="0.0") {
+			sub(...snums) {
+				snums[0] instanceof Array && (snums = snums[0]);
+				if (snums.length > 2) return this.sub(
+					this.sub( snums[0], snums[1] ),
+					...snums.slice(2),
+				);
+				var [a, b] = snums;
+
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = this.norm( a+"" ); b = this.norm( b+"" );
-				if (!a.sw("-") && b.sw("-")) return this.add(a, b.slice(1));
-				if (a.sw("-") && b.sw("-")) return this.sub(b.slice(1), a);
-				if (a.sw("-") && !b.sw("-")) return this.neg( this.add(a.slice(1), b) );
-				if (this.eq.gt(b, a)) return this.neg( this.sub(b, a) );
+				a = this.norm( a ); b = this.norm( b );
+				if (!a.sw("-") &&  b.sw("-")) return this.add(a, b.slice(1));
+				if ( a.sw("-") &&  b.sw("-")) return this.sub(b.slice(1), a.slice(1));
+				if ( a.sw("-") && !b.sw("-")) return "-" + this.add(a.slice(1), b);
+				if (this.eq.gt(b, a)) return "-" + this.sub(b, a);
 				// do not change to +=
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
 				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
@@ -3718,9 +3847,17 @@ void (() => { "use strict";
 				c = c.map( e => e.join("") ).join(".");
 				return this.norm( c.incl(".") ? c : `${c}.0` );
 			}
-			mul(a="0.0", b="0.0") {
+			mul(...snums) {
+				snums[0] instanceof Array && (snums = snums[0]);
+				if (snums.length > 2) return this.mul(
+					this.mul( snums[0], snums[1] ),
+					...snums.slice(2),
+				);
+				var [a, b] = snums;
+
+				
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = this.norm( a+"" ); b = this.norm( b+"" );
+				a = this.norm( a ); b = this.norm( b );
 				const sign = this.sgn(a) === this.sgn(b) ? 1 : -1;
 				a = this.abs(a); b = this.abs(b);
 				if (this.eq.iz(a) || this.eq.iz(b)) return "0.0";
@@ -3781,8 +3918,6 @@ void (() => { "use strict";
 				return this.norm( sign < 0 ? this.neg(snum) : snum );
 			}
 			div(num="0.0", denom="1.0", precision=18) {
-				// NOTE: Will probably break the denominator is "-0"...
-				// I'm not going to fix it either, just don't input it
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
 				Number.isNaN(precision = Number(precision)) && (precision = 18);
 				num = this.norm( num+"" ); denom = this.norm( denom+"" );
@@ -3816,7 +3951,7 @@ void (() => { "use strict";
 			}
 			fdiv(num="0.0", denom="1.0") {
 				// floored division
-				// NOTE: Will probably break the denominator is "-0". I'm not going to fix it either
+				// NOTE: Will break the denominator is "-0". I'm not going to fix it either
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
 				if ( this.eq.iz(denom) )
 					return this.eq.iz(num) ?
@@ -3988,6 +4123,7 @@ void (() => { "use strict";
 				// the drawback is there is more string manipulation, which is probably slower.
 				if ("0-.".incl(snum[0])) return this.sub(snum, "1.0");
 				var i1 = snum.io("."), i2;
+
 				if (i1 < 0) throw Error("sMath.decr's argument had no '.'");
 				for (i2 = i1; snum[--i1] === "0" ;);
 				snum = snum.slc(0, i1) + Number(snum[i1])-1 + snum.slc(i1+1);
@@ -5885,6 +6021,27 @@ void (() => { "use strict";
 					this.log( x, base );
 			}
 			primeCount(x, form=1) { return this.π(x, form) }
+			prime(n=1, a=0) {
+				// nth prime >= a
+				// out >= a
+				// prime(a, b) === findPrimesLen(b, a).last()
+				// prime(1, n) === findPrimesLen(n, 1)[0]
+				if (Number.isNaN( n = Number(n) ) ||
+					Number.isNaN( a = Number(a) ) ||
+					n < 1 || n % 1
+				) return NaN;
+
+				a = ceil(a);
+				a < 1 && (a = 1);
+
+				if (n == 1 && a <= 2) return 2;
+				a += !(a % 2); // next odd number, has to be after 2 check
+
+				for (var k = a, i =+ (a <= 2); (i += k.isPrime()) < n ;)
+					k += 2;
+
+				return k;
+			}
 			expm(x, n=1) { return e ** x - n }
 			expm1(x) { return this.expm(x) }
 			clz32(n) { return this.clbz(n) }
@@ -6126,6 +6283,7 @@ void (() => { "use strict";
 			}
 			svar(...dataset) {
 				// sample variance
+				// var(X + Y) == var X + var Y
 				const MEAN = this.mean(dataset = dataset.flatten());
 				return dataset.reduce((t, v) => (v - MEAN)**2, 0) / (dataset.length - 1);
 			}
@@ -6659,6 +6817,18 @@ void (() => { "use strict";
 			isNNaN(e) { return this.isAN(e) /* is not not a number. isaN, isAN */ }
 			fround(n) { return Number.isNaN( n = Number(n) ) ? n : this.Math.fround(n) }
 			sqrt(n) { return Number.isNaN( n = Number(n) ) ? n : this.nthrt(n, 2) }
+			isqrt(x = 1)     {
+				if (Number.isNaN(x = Number(x)) || x < 0) return NaN;
+				x = floor(x);
+				if (x < 2) return x;
+
+				var x1 = floor(x / 2), x0; // current, previous
+
+				do [x1, x0] = [floor((x1 + x / x1) / 2), x1];
+				while (x1 < x0);
+
+				return x0; // last accurate value
+			}
 			cbrt(n) { return Number.isNaN( n = Number(n) ) ? n : this.nthrt(n, 3) }
 			sign(n) { return Number.isNaN( n = Number(n) ) ? n : this.sgn(n) }
 			exp(n, x=e) {
@@ -7703,6 +7873,33 @@ void (() => { "use strict";
 				return "The requested format doesn't exist";
 			}
 
+			CHSolutionFunctions = (function create_CHSF() {
+				// Continuum Hypothesis Solution Functions
+				function indexToReal(n = 1n) {
+					if (typeof n !== "bigint")
+						throw Error`bigint argument is required for indexToReal()`;
+					const a = bMath.sqrt(1n + 4n*n) + 1n >> 1n
+						, b = n - a*(a - 1n) >> 1n;
+					return `${n % 2n ? "-" : ""}${b}.` + `${a - b - 1n}`.reverse();
+				}
+				function realToIndex(string) {
+					if (typeof string !== "string") throw Error`string argument required`;
+					const match = /^-??(\d+)\.(\d+)$/.exec(string);
+					if (match == null) throw Error`string number argument required`;
+					const x = BigInt(match[1]), y = BigInt(match[2].reverse());
+
+					return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-")
+				}
+
+				indexToReal.inverse = realToIndex;
+				realToIndex.inverse = indexToReal;
+
+				return {
+					getReal : indexToReal,
+					inverse : realToIndex,
+				};
+			})()
+
 			// Things planned to be implemented:
 
 			// polygonal numbers
@@ -7717,7 +7914,6 @@ void (() => { "use strict";
 			// bell numbers
 			// pell numbers
 			// polylogarithms
-			// Beta function
 			// Bernoulli numbers
 			// K-function
 			// vector dot product
@@ -7730,7 +7926,6 @@ void (() => { "use strict";
 			// sets of things other than just real (non-bigint) numbers
 			// Matrix
 			// Vector
-			// integer square root
 			// OrderedPair
 			// matrix identity
 			// matrix inverse
@@ -8716,11 +8911,11 @@ void (() => { "use strict";
 		return piApproxStr;
 	})();
 *//*
-                    1                             1     x     5
+					1                             1     x     5
    ----------------------------------- ≈ tan(x), --- ≤ --- ≤ ---
-     √12         /  3       3  \                  6     π     6
-    ----- cos ⁻¹ | --- x - --- | - √3
-      π          \  π       2  /
+	 √12         /  3       3  \                  6     π     6
+	----- cos ⁻¹ | --- x - --- | - √3
+	  π          \  π       2  /
 
 	cos⁻¹(-x) = π - cos⁻¹(x)
 
@@ -8747,80 +8942,147 @@ void (() => { "use strict";
 		f(3x) = f(x) - 2√[ (1-f²x)·(1-f²2x) ]·sgn([x mod 2] - 1)·sgn(2[x mod 1] - 1)
 */
 
+///// experimental things
+
 document._createCDATASection = (function create__createCDATASection() {
 	const doc = new Document;
 	function createCDATASection(text="") { return doc.createCDATASection(text) }
 	return createCDATASection._document = doc, createCDATASection;
 })();
+var _printCallStack = (function create_printCallStack() {
+	function demargin(fn) {
+		var code = fn + "", tabs = code.match(/\n(\s*)}$/)?.[1];
 
-Reflect.defineProperty(rMath, "_generateReals", (function create_realNumbers() {
-	const isBrowser = (globalThis + "").slice(8, -1).toLowerCase() === "window";
-	if (isBrowser) var process = {
-		stdout: {
-			write: (function create_write() {
-				let str = "";
-				return function write(string = "", flush = false) {
-					str += string.toString();
-					if (flush || str.length > 100) {
-						console.log.call(console, str);
-						str = "";
-					}
-				}
-			})()
+		return tabs == null ?
+			code :
+			code.remove( RegExpg("(?<=\n)" + tabs, "g") );
+	}
+
+	function printCallStack() {
+		for (var current = arguments[0] === true ? arguments.callee : arguments.callee.caller, i = 1;
+			current !== null;
+			current = current.caller
+		) console.log(
+			"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
+			i++,
+			current.name,
+			Array.from(current.arguments),
+			demargin(current)
+		);
+		console.log(null);
+	}
+	printCallStack._demargin = demargin;
+
+	return printCallStack;
+})();
+
+Reflect.defineProperty(rMath, "_primeFactor", {
+	value: (function create_primeFactor() {
+		// prime factor by base conversion
+
+		function intlen(str) {
+			// bigint length
+			// len(str) % 3 === 0.
+			if (str == null) return 0n;
+			for (var i = 0n; str[i] != null ;) i += 3n;
+			return i;
 		}
-	}
-	// bitwise shifts are faster than division
-	function R(i, j) { return `${i}.` + `${j}`.split("").reverse().join("") }
-	function triangleNumber(x) { return x * (x + 1n) >> 1n }
-	function isqrt(n) {
-		if (n < 2n) return n;
-		var x0, x1 = n >> 1n;
 
-		do x0 = x1, x1 = x0 + n / x0 >> 1n;
-		while ( x1 < x0 );
+		function convertBase(n, b = 2n) {
+			// base 10 --> base b
 
-		return x0;
-	}
-	function greatestTriangleIndex(x) { return x = isqrt(1n + (x << 3n)), ( x + x % 2n >> 1n) - 1n }
-	function generateIndices(x) {
-		const u = greatestTriangleIndex(x)
-			, k = x - triangleNumber(u);
-		return [k, u - k]; // these can be swapped, it doesn't really matter.
-	}
-	function getReal(index) {
-		let positive = true;
-		index % 2n && (positive--, index--);
-		const t = generateIndices(index >> 1n);
-		return (positive ? "" : "-") + R(t[0], t[1]);
-	}
-	function generateRealsSet(maxIndex=10n) {
-		try { maxIndex = BigInt(maxIndex) } catch { return [] }
-		for (var i = 0n, set = []; i < maxIndex; i++)
-			set.push( getReal(i) );
-		return set;
-	}
-	function generateReals(maxIndex=1n, delimiter=", ") {
-		// -1n acts as infinity (up to max bigint value).
-		try { maxIndex = BigInt(maxIndex) } catch { return }
-		process.stdout.write("[");
-		for (var i = 0n; i !== maxIndex; ++i) {
-			process.stdout.write( getReal(i) );
-			i + 1n !== maxIndex && process.stdout.write(delimiter);
+			if (!n) return "2:";
+
+			var m = [];
+
+			while (n !== 0n)
+				m.push(n % b),
+				n /= b;
+
+			return `${b}:(${ m.reverse().join(")(") })`;
 		}
-		process.stdout.write("]\n", isBrowser ? true : void 0);
-	}
-	return generateReals._isqrt = isqrt,
-		generateReals._greatestTriangleIndex = greatestTriangleIndex,
-		generateReals._triangleNumber = triangleNumber,
-		generateReals._generateIndices = generateIndices,
-		generateReals._R = R,
-		generateReals._getReal = getReal,
-		generateReals._generateRealsSet = generateRealsSet,
-		generateReals;
-})());
 
-function removeAmlaut(str) { return str.replace(/ü/g, "u").replace(/Ü/g, "U") }
-function removeTilde(str) { return str.replace(/ñ/g, "n").replace(/Ñ/g, "N") }
+		function convertBase2(n, b = 2n) {
+			// base a --> base b
+			if (typeof n === "number") {
+				if (n === 0) return "2:";
+
+				var m = [];
+
+				while (n !== 0n)
+					m.push(n % b),
+					n /= b;
+
+				return `${b}:(${ m.reverse().join(")(") })`;
+			}
+
+		}
+
+		function convert10(number) {
+			// number as returned from convert_base()
+			// base-b string --> base-10 number
+			if (/\d+:/.all(number)) return 0n;
+
+			var b = BigInt( number.slc(0, ":") );
+
+			return number.split(/(?=\()/g)
+				.slice(1)
+				.reverse()
+				.map( (d, i) => b**BigInt(i) * BigInt(d.slice(1, -1)) )
+				.reduce((t, n) => t + n, 0n);
+		}
+
+		function primeFactor(number) {
+			// 0n and -1n are included in prime factors when applicable.
+			if (typeof number !== "bigint")
+				try { number = BigInt(number) }
+				catch { throw Error`only bigints and numbers can be prime factored` }
+
+			if (abs(number) === 1n || number === 0n)
+				return [number];
+				// `-0n` is not a thing
+
+			var factorList = [], base = 1n;
+
+			if (number < 0n)
+				factorList.push(-1n),
+				number *= -1n;
+
+			while (number !== 1n) {
+
+				base = bMath.prime(1n, base + 1n), number = convertBase(number, base);
+
+				for (var i = intlen(number.match(/(?:\(0\))+$/)?.[0]) / 3n; i --> 0n ;)
+					factorList.push(base);
+
+				number = convert10( number.remove(/(?:\(0\))+$/) );
+			}
+
+			/*do {
+				base = bMath.prime(1n, base + 1n), number = convertBase2(number, base);
+
+				for (var i = intlen(number.match(/(?:\(0\))+$/)?.[0]) / 3n; i --> 0n ;)
+					factorList.push(base);
+
+				number = number.remove(/(?:\(0\))+$/);
+
+			} while ( !/^\d+:(\(1\))$/.test(number) );*/
+
+			return factorList;
+		}
+
+		return primeFactor._convertBase = convertBase,
+			primeFactor._convert10 = convert10,
+			primeFactor._intlen = intlen,
+			primeFactor;
+	})()
+	, writable: true
+	, enumerable: true
+	, configurable: true
+});
+
+void function removeAmlaut(str) { return str.replace([/ü/g, /Ü/g], ["u", "U"]) }
+void function removeTilde(str) { return str.replace([/ñ/g, /Ñ/g], ["n", "N"]) }
 var removeAcuteAccents = (function create_removeAcuteAccents() {
 	const map = {
 		A: "Á" , a: "á" ,
@@ -8835,8 +9097,76 @@ var removeAcuteAccents = (function create_removeAcuteAccents() {
 		return keys.reduce((curStr, curMap) => curStr.replaceAll(map[curMap], curMap), str);
 	}
 
-	removeAcuteAccents._map = map;
-	removeAcuteAccents._keys = keys;
+	// removeAcuteAccents._map = map;
+	// removeAcuteAccents._keys = keys;
 
 	return removeAcuteAccents;
+})();
+
+
+(function () {
+	function findEndParentheses(str, i) {
+		if ( !"([{".includes(str[i]) ) return i;
+
+		const sttparen = str[i], endparen = String.fromCharCode(
+			sttparen.charCodeAt() + (sttparen.charCodeAt() > 40) + 1
+		);
+
+		for (var parens = 1; parens; ) {
+			if (i === str.length) throw Error`invalid input string`;
+			parens += str[++i] == endparen ? -1 : str[i] == sttparen ? 1 : 0;
+		}
+		return i;
+	}
+
+	return function asdf(str) {
+		str = str.remove(/\s/g);
+	}
+})();
+
+var validFlags = (function getValidRegexFlags() {
+	var validFlags = "";
+
+	for (var char of LIBRARY_VARIABLES["local alphabetL"])
+		try { RegExp("", char); validFlags += char } catch {}
+
+	return validFlags;
+})();
+
+msort_test = (function create_mergeSortTest() {
+	var compare_less_than = (function () {
+		var i = 0;
+
+		var compare_less_than = (a, b) => (i++, a < b);
+		compare_less_than.get = () => i;
+		compare_less_than.reset = () => i = 0;
+
+		return compare_less_than;
+	})();
+	function merge(left, right) {
+		let arr = [];
+		while (left.length && right.length)
+			arr.push( (
+				compare_less_than(left[0], right[0]) ? left : right
+			).shift() );
+		return [ ...arr, ...left, ...right ];
+	}
+	function msort(arr, last=true) {
+		last && compare_less_than.reset();
+		// doesn't affect original variable, unlike qsort
+		const out = arr.length < 2 ?
+			arr :
+			merge(
+				msort( arr.slice(0, arr.length / 2), false ), // slice(a, b) ⩶ slice(⌊a⌋, ⌊b⌋)
+				msort( arr.slice(arr.length / 2), false )
+			);
+		return last ? compare_less_than.get() : out;
+	}
+	return a => (
+		+ msort(a) + msort(a)
+		+ msort(a) + msort(a)
+		+ msort(a) + msort(a)
+		+ msort(a) + msort(a)
+		+ msort(a) + msort(a)
+	) / 10;
 })();
