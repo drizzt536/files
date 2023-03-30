@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% continuum.tex v4.1 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v4.2 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -27,18 +27,18 @@
 	question being if all \emph{infinite} sets do. In all infinite processes, one should
 	think of the steps as executing simultaneously rather than separately and successively.
 	$|S|$ and $C(S)$ denote the cardinality and countability of a set $S$ respectively.
-	Equations (2a) and (2b) describe what I will call ``sum ring operators," ``product
+	Equations (2a) and (2b) describe what will be called ``sum ring operators," ``product
 	ring operators," and collectively ``ring operators." Most Theorems use ``$\iff$"
 	instead of ``$\implies$" because Theorem~\ref{thm:subsets}.1 works as an inversion.
 	\vspace{-1em}\\
 	\begin{align}
-		R\times S & :=\{(r,s):r\in R\land s\in S\}~~~\,(1\text a)
+		R\times S & :=\left\{(r,s):r\in R\land s\in S\right\}~~~\,(1\text a)
 		\hspace{2em}
-		R\cdot S:=\{r\cdot s:r\in R\land s\in S\}~~~~~~\,(1\text b)
+		R\cdot S:=\left\{r\cdot s:r\in R\land s\in S\right\}~~~~~~\,(1\text b)
 		\\
-		R(\vec v\,) & :=\left\{\sum_{n=1}^{\dim\vec v}(a_n\cdot\vec v_n):a_n\in R\right\}~(2\text a)
+		R(\vec v\,) & :=\left\{\sum_{n=1}^{\text{len}\,\vec v}(a_n\cdot\vec v_n):a_n\in R\right\}~(2\text a)
 		\hspace{2em}
-		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\dim\vec v}(a_n+\vec v_n):a_n\in R\right\}~(2\text b)\\
+		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\text{len}\,\vec v}(a_n+\vec v_n):a_n\in R\right\}~(2\text b)\\
 		\aleph_0 & := |\mathbb N|\\
 		C(S) & :=\begin{cases}
 			1,\,\left[S\text{ countable}\right]\phantom{un}~~(|S|\leqslant\aleph_0)\\
@@ -60,15 +60,15 @@
 		}
 	\end{thm}\begin{proof}
 		$R$ and $S$ being countable implies $R(a)$ and $S(b)$ are countable as well
-		because ring operators keep cardinalities the same. Interlace the elements of
+		because ring operators keep cardinalities the same. (case 1) Interlace the elements of
 		$R(a)$ with those of $S(b)$, skipping over any duplicates. If either set is
 		finite, append its elements to the beginning of the other set sans duplicates.
-		Similar logic works using $R[\,a\,]$ or $S[\,b\,]$.
+		Similar logic works with the other cases.
 	\end{proof}
 
 	\begin{thm}\label{thm:multiplications}
 		\emph{
-			Multiplications and Cartesian Products of Countable Sets\\
+			Cartesian Products and Element-wise Multiplications of Countable Sets\\
 			\indent If any sets $R$ and $S$ are countable, both $R\times S$ and
 			$R\cdot S$ are countable.\vspace{0.4em}\\
 			\indent1. $C(R)\land C(S)\iff C(R\times S)$\\
@@ -99,25 +99,27 @@
 			\vspace{0.4em}\\
 			\indent1. $C(R)\land S\subseteq R\implies C(S)$\\
 			\indent2. $C(R)\land C(S)\implies C(R\cap S)$\\
-			\indent3. $C(R)\land C(S)\implies C(R\smallsetminus S)$
+			\indent3. $C(R)\implies C(R\smallsetminus S)$
 		}
 	\end{thm}\begin{proof}
-		To create the subset, take each element in $R$ that is not in $S$ ($x\in R
-		\smallsetminus S$), move its index to the beginning of $R$, and remove it. This way, the
-		new $R$ has countability guaranteed. With applying this recursively, $S$ must be
-		countable. This also implies that set intersections and differences are countable because
-		these operations return subsets of the left input.
+		Since subsets of $\mathbb N$ are countable and $R$ is countable, all subsets of $R$
+		must also be countable due to the bijection between $R$ and $\mathbb N$. This also
+		implies that set intersections and differences are countable because these operations
+		return subsets of the left input. Case 3 doesn't require $S$ to be countable because
+		it is uncountable and $R$ is countable, then it is just more likely that the output
+		will be the empty set.
 	\end{proof}
 
 	\begin{thm}\label{thm:rings}
 		\emph{
-			Two Argument Ring Operators On Countable Sets\\
+			Two-Argument Ring Operators on Countable Sets\\
 			\indent If any set $R$ is countable, $R(a, b)$ and $R[a, b]$ are also countable
 			for all numbers $a$ and $b$.\vspace{0.4em}\\
 			\indent1. $C(R)\iff C(R(a, b))~\forall a,b$\\
 			\indent2. $C(R)\iff C(R[\,a, b\,])~\forall a,b$
 		}
 	\end{thm}\begin{proof}
+		% TODO: explain why better
 		Create 2 new intermediate sets $S_a := \{a\cdot r:r\in R\}$ and $S_b := \{b\cdot r:r\in
 		R\}$. $S:=S_a\times S_b$ gives a set with the same cardinality as $R(a,b)$, only with
 		ordered pairs instead of addition. $S$ is countable via Theorem~
@@ -132,7 +134,7 @@
 			\indent1. $C(R)\iff C(R^n)~~\forall n\in\mathbb N_0<\infty$
 		}
 	\end{thm}\begin{proof}
-		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable. This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
+		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable (Theorem~\ref{thm:multiplications}.1). This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
 		countable, which is countable via Theorem~\ref{thm:multiplications}.1. If $n=0$, the
 		output set is all the groups of zero elements from $R$, or just $\emptyset$, which is countable
 		since $\left|\emptyset\right|$ is finite.
@@ -293,7 +295,6 @@
 		$n^1$ elements with 1 sub-element,
 		$n^2$ elements with 2 sub-elements, and has generally
 		$n^k$ elements with $k$ sub-elements, for $k\leqslant n$.
-
 		$S^0$ has $n^0$ elements,
 		$S^1$ has $n^1$ elements, and generally
 		$S^k$ has $n^k$ elements, and when taking the union of all of $S^i$, where
