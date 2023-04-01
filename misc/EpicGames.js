@@ -478,6 +478,7 @@ var OwnedApplications = {
 	, "The Last Friend": 0 // duplicate
 	, "The Messenger": 19.99
 	, "The Riftbreaker Prologue Demo": 0
+	, "The Silent Age": 9.99
 	, "The Sims™ 4": 0
 	, "The Sims 4": 0 // duplicate
 	, "The Spectrum Retreat": 12.99
@@ -512,6 +513,7 @@ var OwnedApplications = {
 	, "Trackmania": 0
 	, "Tropico 5": 19.99
 	, "True Fear: Forsaken Souls Part 1 Demo": 0
+	, "Tunche": 19.99
 	, "UnMetal Demo": 0
 	, "Unrailed!": 19.99
 	, "Unreal Tournament": 0
