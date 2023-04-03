@@ -1,9 +1,11 @@
 % file for pdflatex.exe
 
-% continuum.tex v4.2 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v5-pre-1 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
+% only updated to v5.0 up until Section 4: Cantor's Diagonal Argument
+
 
 \documentclass[12pt]{article}
 \usepackage{amssymb, latexsym, amsmath, amsthm}
@@ -22,23 +24,22 @@
 \maketitle
 
 \begin{section}{Introduction and Countability Theorems}\label{sec:background}
-	Any ``countable" set is equinumerous to a loose subset of the natural numbers, and
+	Any ``countable" set is equinumerous to a improper subset of the natural numbers, and
 	there exists a bijection between them. Any finite set has this property, the main
 	question being if all \emph{infinite} sets do. In all infinite processes, one should
 	think of the steps as executing simultaneously rather than separately and successively.
 	$|S|$ and $C(S)$ denote the cardinality and countability of a set $S$ respectively.
-	Equations (2a) and (2b) describe what will be called ``sum ring operators," ``product
-	ring operators," and collectively ``ring operators." Most Theorems use ``$\iff$"
-	instead of ``$\implies$" because Theorem~\ref{thm:subsets}.1 works as an inversion.
+	Equations (2a) and (2b) describe what will be called sum amd product ``ring operators."
+	Most theorems use ``$\iff$" instead of ``$\implies$" because Theorem~\ref{thm:subsets}.1
+	works as an inversion. Equation~(1a) doesn't nest groups but flattens them.
 	\vspace{-1em}\\
 	\begin{align}
-		R\times S & :=\left\{(r,s):r\in R\land s\in S\right\}~~~\,(1\text a)
+		R\times S & :=\left\{(r,s):r\in R\land s\in S\right\}~~~~(1\text a)
 		\hspace{2em}
-		R\cdot S:=\left\{r\cdot s:r\in R\land s\in S\right\}~~~~~~\,(1\text b)
-		\\
-		R(\vec v\,) & :=\left\{\sum_{n=1}^{\text{len}\,\vec v}(a_n\cdot\vec v_n):a_n\in R\right\}~(2\text a)
-		\hspace{2em}
-		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\text{len}\,\vec v}(a_n+\vec v_n):a_n\in R\right\}~(2\text b)\\
+		R\cdot S:=\left\{r\cdot s:r\in R\land s\in S\right\}~~~~~\,(1\text b)\\
+		R(\vec v\,) & :=\left\{\sum_{n=1}^{\text{len}\,\vec v}(r_n\cdot\vec v_n):r_k\in R\right\}~~~(2\text a)
+		\hspace{2.1em}
+		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\text{len}\,\vec v}(r_n+\vec v_n):r_k\in R\right\}~~(2\text b)\\
 		\aleph_0 & := |\mathbb N|\\
 		C(S) & :=\begin{cases}
 			1,\,\left[S\text{ countable}\right]\phantom{un}~~(|S|\leqslant\aleph_0)\\
@@ -113,17 +114,23 @@
 	\begin{thm}\label{thm:rings}
 		\emph{
 			Two-Argument Ring Operators on Countable Sets\\
-			\indent If any set $R$ is countable, $R(a, b)$ and $R[a, b]$ are also countable
-			for all numbers $a$ and $b$.\vspace{0.4em}\\
+			\indent If any set $R$ is countable, $R(a, b)$ and $R[a, b]$ are also
+			countable for any constants $a, b$.\vspace{0.4em}\\
 			\indent1. $C(R)\iff C(R(a, b))~\forall a,b$\\
 			\indent2. $C(R)\iff C(R[\,a, b\,])~\forall a,b$
 		}
 	\end{thm}\begin{proof}
-		% TODO: explain why better
-		Create 2 new intermediate sets $S_a := \{a\cdot r:r\in R\}$ and $S_b := \{b\cdot r:r\in
-		R\}$. $S:=S_a\times S_b$ gives a set with the same cardinality as $R(a,b)$, only with
-		ordered pairs instead of addition. $S$ is countable via Theorem~
-		\ref{thm:multiplications}.1. Similar logic works for $R[a,b]$.
+		$R(a,b)$ can be tabulated with axes $n$ and $k$, where the corresponding
+		table box is $aR_n + bR_k$. This is countable in the same way as
+		Theorem~\ref{thm:multiplications}. Similar logic works for $R[a,b]$.\\
+		\centerline{\begin{array}{|c|c|c|c|c|c|} % 6 columns
+			\hline aR_1 + bR_1 & aR_1 + bR_2 & aR_1 + bR_3 & aR_1 + bR_4 & aR_1 + bR_5 & \cdots\\
+			\hline aR_2 + bR_1 & aR_2 + bR_2 & aR_2 + bR_3 & aR_2 + bR_4 & aR_2 + bR_5 & \cdots\\
+			\hline aR_3 + bR_1 & aR_3 + bR_2 & aR_3 + bR_3 & aR_3 + bR_4 & aR_3 + bR_5 & \cdots\\
+			\hline aR_4 + bR_1 & aR_4 + bR_2 & aR_4 + bR_3 & aR_4 + bR_4 & aR_4 + bR_5 & \cdots\\
+			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+			\hline
+		\end{array}}
 	\end{proof}
 
 	\begin{thm}\label{thm:powers}
@@ -134,7 +141,7 @@
 			\indent1. $C(R)\iff C(R^n)~~\forall n\in\mathbb N_0<\infty$
 		}
 	\end{thm}\begin{proof}
-		$R^n$ can be factored as $R\times R^{n-1}$ which is countable if $R^{n-1}$ is countable (Theorem~\ref{thm:multiplications}.1). This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
+		$R^n$ can be factored as $R\times R^{n-1}$ (eqn.~1a flattens outputs), which is countable if $R^{n-1}$ is countable (Theorem~\ref{thm:multiplications}.1). This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
 		countable, which is countable via Theorem~\ref{thm:multiplications}.1. If $n=0$, the
 		output set is all the groups of zero elements from $R$, or just $\emptyset$, which is countable
 		since $\left|\emptyset\right|$ is finite.
@@ -151,11 +158,11 @@
 	\end{thm}\begin{proof}
 		To create the union, give each set $R_i$ a column in a table and put all its elements
 		sequentially in that column going down. Do this for every $R_i$, and using the same
-		argument as in Theorem~\ref{thm:multiplications}, one can show that this set bijects
+		method as in Theorem~\ref{thm:multiplications}, one can show that this set bijects
 		the naturals. Every column represents a different $R_i$ and each row represents a
 		different $\left(R_i\right)_j$ or $R_{i,j}$. The numbers before the colons are the
 		output index, the first 85 shown if in view. This is algorithmically viable
-		(see Theorem~\ref{thm:multiplications}).\vspace{0.5em}
+		(see Section~\ref{sec:algorithm code}).\vspace{0.5em}
 		\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
 			\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} & \phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
 			\hline \phantom{0}3:R_{1,2} & \phantom{0}5:R_{2,2} & \phantom{0}8:R_{3,2} & 14:R_{4,2} & 17:R_{5,2} & 27:R_{6,2} & 30:R_{7,2} & \cdots\\
@@ -172,80 +179,70 @@
 
 \begin{section}{Countabilities of Common Sets}\label{sec:applications}
 	\begin{subsection}{Countability of the Integers}\label{subsec:applications.integers}
-		Claim: $\mathbb Z$ is a countable set.\\
-		\indent$C(\mathbb Z)\equiv1$,
-		\hspace{2em}
-		$|\mathbb Z|\equiv\aleph_0$
+		Claim: $\mathbb Z$ is a countable set; $C(\mathbb Z)\equiv1$.
 		\begin{proof}
 			$R:=\mathbb N_0$, $S:=\mathbb N_1$. $R$ and $S$ are countable axiomatically
 			(axiom of extensionality), being the naturals themselves. $\mathbb Z\equiv
-			R(1)\cup S(-1)$. This is countable via Theorem~\ref{thm:finite unions}.1.
+			R(1)\cup S(-1)$; this is countable via Theorem~\ref{thm:finite unions}.1.
 		\end{proof}
 	\end{subsection}
 
 	\begin{subsection}{Countability of the Rationals}\label{subsec:applications.rationals}
-		Claim: $\mathbb Q$ is a countable set.\\
-		\indent$C(\mathbb Q)\equiv1$
+		Claim: $\mathbb Q$ is a countable set; $C(\mathbb Q)\equiv1$.
 		\begin{proof}
-			$R:=\mathbb Z$, $S:=\mathbb N_1$. $\mathbb Q$ has the same countability as the set of all
-			the ordered pairs of integers with naturals. $R\times S$ defines all of these pairs. $R$
-			is countable via Section~\ref{subsec:applications.integers} and $S$ is countable
-			axiomatically. $R\times S$ is thus countable via Theorem~\ref{thm:multiplications}.1.
-			This argument and Theorem~\ref{thm:multiplications} derives from Cantor's enumeration of
-			countable collections of countable sets.
+			$\mathbb Q$ has the same countability as $\mathbb Z\times \mathbb N_1$.
+			$C(\mathbb Z)\equiv1$ via Section~\ref{subsec:applications.integers} and
+			$C(\mathbb N_1)\equiv1$ axiomatically. Thus $C(\mathbb Z\times \mathbb N_1)\equiv1$
+			via Theorem~\ref{thm:multiplications}.1. This and Theorem~\ref{thm:multiplications} derive
+			from Cantor's enumeration of countable collections of countable sets.
 		\end{proof}
 	\end{subsection}
 
 	\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
-		Claim: $\{x\in\mathbb R:0\leqslant x<1\}$ is a countable set.
-		\hspace{2em}$C(\mathbb R_{0\leqslant x<1})\equiv1$
+		Claim: $\{x\in\mathbb R:0\leqslant x<1\}$ is a countable set;
+		$C(\mathbb R_{0\leqslant x<1})\equiv1$.
 		\begin{proof}
-			Let $R$ be a countable set where, for any $i\in\mathbb N_0$, $R_i$ can be defined to be
-			the digits of $i$ reversed with ``0." at the beginning (see Section~\ref{sec:further algorithms}
-			for formula). For example, $R_{246}=0.642\overline0$. This set is countable because it
-			was defined to be countable, and it contains every real number in the range because every
-			possible sequence of digits is in it and indexed. The sequence trends upwards,
-			asymptotically approaching one, though it fluctuates wildly along the way.
-			Section~\ref{subsec:applications.reals} explains this further. $R$ is used throughout the
-			sections about $\mathbb R$.
+			Let $R$ be a set where $\forall i\in\mathbb N_0$, $R_i := $ (``0." $+$ reversed digits
+			of $i$), ie: $R_{2760}=0.0672$ (see Section~\ref{sec:further algorithms} for formula). $R$
+			is countable by definition, and contains every possible sequence of digits in $[0,1)$. The
+			sequence trends towards different values with different sub-series;
+			Section~\ref{subsec:applications.reals} explains this further. $R$ is used in the next proof.
 		\end{proof}
 	\end{subsection}
 
 	\pagebreak\begin{subsection}{Countability of the Non-Negative Reals}
 	\label{subsec:applications.non negative reals}
 		Claim: $\mathbb R_{\geqslant0}$ or equivalently $\left\{x\in\mathbb R:x\geqslant0\right\}$,
-		is a countable set.\hspace{2em}$C(\mathbb R_{\geqslant0})\equiv1$
+		is a countable set; $C(\mathbb R_{\geqslant0})\equiv1$.
 		\begin{proof}
-			$C(\mathbb R_{0\leqslant x<1})=1$ via Section~\ref{subsec:applications.reals 0 to 1}.
+			$C(\mathbb R_{0\leqslant x<1})\equiv1$ via Section~\ref{subsec:applications.reals 0 to 1}.
 			$\mathbb R_{\geqslant0}=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where
-			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}.1.
-			The following table illustrates this. $S$ is used in the next proof.\vspace{0.5em}\\
-			\centerline{\begin{array}{|c|c|c|c|c|c|c|} % 7 columns
-				\hline 0.\overline0 & 1.\overline0 & 2.\overline0 & 3.\overline0 & 4.\overline0 & 5.\overline0 & \cdots\\
-				\hline 0.1\overline0& 1.1\overline0& 2.1\overline0& 3.1\overline0& 4.1\overline0& 5.1\overline0& \cdots\\
-				\hline 0.2\overline0& 1.2\overline0& 2.2\overline0& 3.2\overline0& 4.2\overline0& 5.2\overline0& \cdots\\
-				\hline 0.3\overline0& 1.3\overline0& 2.3\overline0& 3.3\overline0& 4.3\overline0& 5.3\overline0& \cdots\\
-				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \cdots\\
-				\hline 0.7\overline0& 1.7\overline0& 2.7\overline0& 3.7\overline0& 4.7\overline0& 5.7\overline0& \cdots\\
-				\hline 0.8\overline0& 1.8\overline0& 2.8\overline0& 3.8\overline0& 4.8\overline0& 5.8\overline0& \cdots\\
-				\hline 0.9\overline0& 1.9\overline0& 2.9\overline0& 3.9\overline0& 4.9\overline0& 5.9\overline0& \cdots\\
-				\hline 0.01\overline0&1.01\overline0&2.01\overline0&3.01\overline0&4.01\overline0&5.01\overline0&\cdots\\
-				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}; the following
+			table illustrates this. $\forall x\in\mathbb R_{\geqslant0}$,
+			there exists a sequence of $s_i\in S_{\lceil x\rceil}$, with increasing indices, where
+			$\displaystyle\lim_{i\in\mathbb N\to\infty}s_i=x$. This is because $S_n$ contains every
+			sequence of digits in $[n-1,n)$.
+			$S$ is used in the next proof.\vspace{0.5em}\\
+			\centerline{\begin{array}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|} % 13 columns
+				\hline 0 & 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 & 0.7 & 0.8 & 0.9 & 0.01 & 0.11 & 0.21 & \cdots\\
+				\hline 1 & 1.1 & 1.2 & 1.3 & 1.4 & 1.5 & 1.6 & 1.7 & 1.8 & 1.9 & 1.01 & 1.11 & 0.21 & \cdots\\
+				\hline 2 & 2.1 & 2.2 & 2.3 & 2.4 & 2.5 & 2.6 & 2.7 & 2.8 & 2.9 & 2.01 & 2.11 & 0.21 & \cdots\\
+				\hline 3 & 3.1 & 3.2 & 3.3 & 3.4 & 3.5 & 3.6 & 3.7 & 3.8 & 3.9 & 3.01 & 3.11 & 0.21 & \cdots\\
+				\hline 4 & 4.1 & 4.2 & 4.3 & 4.4 & 4.5 & 4.6 & 4.7 & 4.8 & 4.9 & 4.01 & 4.11 & 0.21 & \cdots\\
+				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
 				\hline
 			\end{array}}
+			
 		\end{proof}
 	\end{subsection}
 
 	\begin{subsection}{Countability of the Reals}\label{subsec:applications.reals}
-		Claim: $\mathbb R$ is a countable set which implies $2^{\aleph_0}\equiv\aleph_0$.
+		Claim: $\mathbb R$ is a countable set which implies $2^{\aleph_0}=\aleph_0$.
 		\begin{proof}
 			$\mathbb R_{\geqslant0}$ is countable via Section~\ref{subsec:applications.non negative reals}.
 			$\mathbb R_{\geqslant0}(1, -1)\equiv\mathbb R$. This is countable via
 			Theorem~\ref{thm:rings}.1. This conclusion can be further reinforced by
-			the algorithmic methods in Section~\ref{sec:algorithm code}. For all real
-			numbers $x$, there exists at least one sequence of elements in an $S_i$,
-			each element with a higher index than the last, where the limit of the sequence
-			equals $|x|$. This is because every sequence of digits in $[i-1,i)$ is contained by $S_i$.
+			the algorithmic methods in Section~\ref{sec:algorithm code}.
 		\end{proof}
 	\end{subsection}
 
@@ -253,7 +250,7 @@
 	\label{subsec:applications.miscellaneous}
 		\begin{subsubsection}{Algebraic and Transcendental Numbers}
 			\label{subsubsec:applications.misc.reals}
-			Claim: $\mathbb A$ and $\mathbb T$ are countable sets over $\mathbb R$ and $\mathbb C$.
+			Claim: $\mathbb A$ and $\mathbb T$ are countable sets over both $\mathbb R$ and $\mathbb C$.
 			\begin{proof}
 				$\mathbb R$ is a countable set via Section~\ref{subsec:applications.reals}.
 				Since the algebraic reals and transcendental reals are both subsets of the
@@ -264,7 +261,7 @@
 		\end{subsubsection}
 
 		\begin{subsubsection}{Imaginary Numbers}\label{subsubsec:applications.misc.imaginary}
-			Claim: $\mathbb I$ is a countable set.\hspace{2em}$C(\mathbb I)\equiv1$
+			Claim: $\mathbb I$ is a countable set; $C(\mathbb I)\equiv1$.
 			\begin{proof}
 				$\mathbb R$ is a countable set via Section~\ref{subsec:applications.reals}.
 				$\mathbb R(\sqrt{-1})\cup\emptyset(1)\equiv\mathbb I$. This is countable via
@@ -275,11 +272,12 @@
 	\end{subsection}
 
 	\begin{subsection}{Countability of the Complex Numbers}\label{subsec:applications.complex}
-		Claim: $\mathbb C$ is a countable set.
+		Claim: $\mathbb C$ is a countable set; $C(\mathbb C)\equiv1$.
 		\begin{proof}
-			$\mathbb R$ is a countable set via Section~\ref{subsec:applications.reals}.
-			$\mathbb R(1, \sqrt{-1})\equiv\mathbb C$. This is countable via Theorem~\ref{thm:rings}.1.
-			The identity used here stems from the rectangular form of complex numbers.
+			$\mathbb R$ and $\mathbb I$ are countable sets via Sections \ref{subsec:applications.reals}
+			and \ref{subsubsec:applications.misc.imaginary} respectively. $\mathbb R(1, \sqrt{-1})\equiv\mathbb C$
+			is countable via Theorem~\ref{thm:rings}.1. $\mathbb R\times\mathbb I=\mathbb C$ is
+			countable via Theorem~\ref{thm:multiplications}.1.
 		\end{proof}
 	\end{subsection}
 \end{section}
@@ -287,27 +285,19 @@
 \begin{section}{Generalized Continuum Hypothesis}\label{sec:GCH}
 	Claim: GCH has the same truth value as CH, and powersets don't change sizes of infinity.
 	\begin{proof}
-		Let $S$ be a countably infinite set. $R_i := S^{i-1}$, and is countable via
-		Theorem~\ref{thm:powers}.1. $\displaystyle Q:=\bigcup_{i=1}^{\aleph_0}R_i$ is countable
-		via Theorem~\ref{thm:infinite unions}.1. $P :=\mathcal P(S)$. $n := |S|$. $|P|=|Q|$.
-		This is because $P$ has
-		$n^0$ elements with 0 sub-elements,
-		$n^1$ elements with 1 sub-element,
-		$n^2$ elements with 2 sub-elements, and has generally
-		$n^k$ elements with $k$ sub-elements, for $k\leqslant n$.
-		$S^0$ has $n^0$ elements,
-		$S^1$ has $n^1$ elements, and generally
-		$S^k$ has $n^k$ elements, and when taking the union of all of $S^i$, where
-		$0\leqslant i\leqslant n$, the resulting set has the same cardinality as $P$. This only
-		works for infinite sets and not finite ones. Since $Q$ is countable, $P$ is countable as
-		well, meaning $|S|\equiv|\mathcal P(S)|$ for all countable sets $S$. There is also no
-		reason ``uncountable" sets can't be used for $S$, but the powerset would end up having
-		the same cardinality as $S$ anyway. This is because Theorems~\ref{thm:powers}.1~ and~
-		\ref{thm:infinite unions}.1 can be adapted to biject to whatever set is inputed to the
-		theorem, instead of $\mathbb N$, This implies that uncountable sets cannot be created
-		through powersets of countable sets, and either cannot be created at all, or need a much
-		stronger method to create them. This also implies that Cantor's Theorem is wrong, probably
-		because of the self-referencing. Also, properties don't always stay to infinity.
+		Let $S$ be a countably infinite set; it cannot be finite or this proof does not work.
+		$S^i$ is countable via Theorem~\ref{thm:powers}. $P :=\mathcal P(S)$. Let $R_k$ denote
+		the set of elements in $P$ with $k$ sub-elements; these are countable via
+		Theorem~\ref{thm:powers}. Observe that $P$ has $\aleph_0^0$ elements with 0 sub-elements,
+		$\aleph_0^1$ elements with 1 sub-element, et cetera, and has generally $\aleph_0^k$
+		elements with $k$ sub-elements, for $k\leqslant \aleph_0$. Imagine a $k$-dimensioned
+		table of integers and listing them in a $k$-dimensional spiral, or recursively combining
+		two table dimensions into one using the Theorem~\ref{thm:multiplications} table method
+		until the table gets to one dimension. $\displaystyle\bigcup_{i=1}^{\aleph_0}R_{i-1}$ is
+		countable via Theorem~\ref{thm:infinite unions}. This contradicts Cantor's Diagonal
+		Argument (see Section~\ref{sec:diagonal argument}) and implies that uncountable sets
+		cannot be created through powersets of countable sets, and either cannot be created at
+		all, or need a much stronger method to create them.
 	\end{proof}
 \end{section}
 
