@@ -1,8 +1,10 @@
 #!/usr/bin/env js
-// continuum.js v1.2 (c) | Copyright 2023 Daniel E. Janusch
+// continuum.js v1.3 (c) | Copyright 2023 Daniel E. Janusch
 
 // This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 // and may only be copied IN ITS ENTIRETY under penalty of law.
+
+////////////////// long form functions //////////////////
 
 var printReals = (function create_printReals() {
 	// all functions assume valid input
@@ -41,8 +43,7 @@ var printReals = (function create_printReals() {
 		// less than or equal to the input `x`.
 		// I do not remember how I derived this.
 
-		x = isqrt(1n + (x << 3n)); // some random intermediate value
-		return (x + x % 2n >> 1n) - 1n;
+		return ( isqrt(1n + (x << 3n)) + 1 >> 1n ) - 1n;
 	}
 	function triangleNumber(n) {
 		// `n` is the "triangle index"
@@ -69,9 +70,9 @@ var printReals = (function create_printReals() {
 			R( ...generateCoordinates(index >> 1n) );
 	}
 	function inverse(string) {
-		const match = /^-??(\d+)\.(\d+)$/.exec(string)
-			, i = BigInt(match[1])
-			, j = BigInt(match[2]);
+		const match = /^-??(\d+)\.(\d+)$/.exec(string);
+		const i = BigInt( match[1] );
+		const j = BigInt( match[2].split("").reverse().join("") );
 
 		return (i+j)**2n + 3n*i + j + BigInt(string[0] === "-")
 	}
@@ -109,12 +110,38 @@ var printReals = (function create_printReals() {
 		printReals;
 })();
 
+////////////////// short versions without lib.js //////////////////
 
-// short forms using lib.js
+function isqrt(n) {
+	if (n < 2n) return n;
+
+	var x1 = n >> 1n, x0; // current, previous
+
+	do [x1, x0] = [x1 + n / x1 >> 1n, x1];
+	while (x1 < x0);
+
+	return x0;
+}
+function indexToReal(n = 1n) {
+	const a = isqrt(1n + (n << 2n)) + 1n >> 1n; // usually n << 3n, but this skips a step
+	const b = n - a*(a - 1n) >> 1n; // integer part = n/2 - T(a)
+
+	return `${n % 2n ? "-" : ""}${b}.` + `${a - b - 1n}`.split("").reverse().join("");
+}
+function realToIndex(string) {
+	const match = /^-??(\d+)\.(\d+)$/.exec(string);
+	const x = BigInt(match[1]);
+	const y = BigInt(match[2].split("").reverse().join(""));
+
+	return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");
+}
+
+
+////////////////// short form versions using lib.js //////////////////
 
 function indexToReal(n = 1n) {
-	const a = bMath.sqrt(1n + 4n*n) + 1n >> 1n;
-	const b = n - a*(a - 1n) >> 1n;
+	const a = bMath.sqrt(1n + (n << 2n)) + 1n >> 1n; // usually n << 3n, but this skips a step
+	const b = n - a*(a - 1n) >> 1n; // integer part = n/2 - T(a)
 
 	return `${n % 2n ? "-" : ""}${b}.` + `${a - b - 1n}`.reverse();
 }
@@ -123,9 +150,22 @@ function realToIndex(string) {
 	const x = BigInt(match[1]);
 	const y = BigInt(match[2].reverse());
 
-	return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-")
+	return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");
 }
 
-// minified versions using lib.js.
 
-var f=n=>{var a=bMath.sqrt(1n+4n*n)+1n>>1n,b=n-a*(a-1n)>>1n;return`${n%2n?"-":""}${b}.`+`${a-b-1n}`.reverse()},i=s=>{var m=/^-?(\d+)\.(\d+)$/.exec(s),x=BigInt(m[1]),y=BigInt(m[2].reverse());return (x+y)**2n+3n*x+y+BigInt(s[0]=="-")};
+////////////////// short forms using lib.js and floating-point double-precision numbers //////////////////
+
+function indexToReal(n = 1) {
+	const a = floor( (rMath.isqrt(1 + 4*n) + 1) / 2 ); // usually n << 3n, but this skips a step
+	const b = floor( (n - a*(a - 1)) / 2 ); // integer part = n/2 - T(a)
+
+	return `${n % 2 ? "-" : ""}${b}.` + `${a - b - 1}`.reverse();
+}
+function realToIndex(string) {
+	const match = /^-??(\d+)\.(\d+)$/.exec(string);
+	const x = +match[1];
+	const y = +match[2].reverse();
+
+	return (x+y)**2 + 3*x + y + (string[0] === "-");
+}
