@@ -1,10 +1,9 @@
 % file for pdflatex.exe
 
-% continuum.tex v5-pre-1 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v5.0 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
-% only updated to v5.0 up until Section 4: Cantor's Diagonal Argument
 
 
 \documentclass[12pt]{article}
@@ -19,7 +18,7 @@
 \begin{document}
 
 
-\title{On the Continuum Hypotheses and the Correspondence of Infinite Sets with the Natural Numbers}
+\title{On the Continuum Hypotheses and the Correspondence of Infinite Sets' Elements with the Natural Numbers}
 \author{Daniel E. Janusch\\Dedicated to Maeby, my favorite kitty}
 \maketitle
 
@@ -286,113 +285,109 @@
 	Claim: GCH has the same truth value as CH, and powersets don't change sizes of infinity.
 	\begin{proof}
 		Let $S$ be a countably infinite set; it cannot be finite or this proof does not work.
-		$S^i$ is countable via Theorem~\ref{thm:powers}. $P :=\mathcal P(S)$. Let $R_k$ denote
-		the set of elements in $P$ with $k$ sub-elements; these are countable via
-		Theorem~\ref{thm:powers}. Observe that $P$ has $\aleph_0^0$ elements with 0 sub-elements,
-		$\aleph_0^1$ elements with 1 sub-element, et cetera, and has generally $\aleph_0^k$
-		elements with $k$ sub-elements, for $k\leqslant \aleph_0$. Imagine a $k$-dimensioned
-		table of integers and listing them in a $k$-dimensional spiral, or recursively combining
-		two table dimensions into one using the Theorem~\ref{thm:multiplications} table method
-		until the table gets to one dimension. $\displaystyle\bigcup_{i=1}^{\aleph_0}R_{i-1}$ is
-		countable via Theorem~\ref{thm:infinite unions}. This contradicts Cantor's Diagonal
-		Argument (see Section~\ref{sec:diagonal argument}) and implies that uncountable sets
-		cannot be created through powersets of countable sets, and either cannot be created at
-		all, or need a much stronger method to create them.
+		$P :=\mathcal P(S)$. Let $R_k$ denote the set of elements in $P$ with $k$ sub-elements
+		($S^k$); these are countable via Theorem~\ref{thm:powers}. Observe that $P$ has
+		$\aleph_0^0$ elements with 0 sub-elements, $\aleph_0^1$ elements with 1 sub-element, et
+		cetera, and generally $\aleph_0^k$ elements with $k$ sub-elements, for
+		$k\leqslant \aleph_0$. Imagine a $k$-dimensioned table of integers and listing them in
+		a $k$-dimensional spiral, or recursively combining two table dimensions into one using
+		the Theorem~\ref{thm:multiplications} table method until the table gets to one dimension.
+		$\displaystyle P=\bigcup_{i=1}^{\aleph_0}R_{i-1}$ is countable via
+		Theorem~\ref{thm:infinite unions}. This contradicts Cantor's Diagonal Argument (see
+		Section~\ref{sec:diagonal argument}) and implies that uncountable sets cannot be created
+		through powersets of countable sets, and either cannot be created at all, or need a much
+		stronger method to create them.
 	\end{proof}
 \end{section}
 
 \begin{section}{Cantor's Diagonal Argument}\label{sec:diagonal argument}
-	According to Georg Cantor in 1891$^\text{[references \ref{ref:diagonal argument},
+	According to Georg Cantor in 1891$^\text{[ref \ref{ref:diagonal argument},
 	\ref{ref:cantor-1891}]}$, If someone is trying to list all the real numbers, they can
-	always find a number that is not in the list using his ``Diagonal Argument". This
-	argument basically accomplishes the same as the following, though for reals instead of
-	naturals: Suppose someone is trying to make a set $S$ with every natural number. They
-	first add zero to the set and the set is $\{0\}$, then they could say, ``one isn't in
-	the set." When they add one and have $\{0,1\}$, they can say ``two isn't in the set,"
-	then ``three isn't in the set," ``four isn't in the set," et cetera. No matter how many
-	natural numbers they add, they can always find one not in it; $\max(S)+1$. This seems
-	to be implying that there is not a bijection between the natural numbers and themselves,
-	which is clearly wrong. Every set is bijective onto itself via the identity function.
-	$f(x) := x$ for  $f:X\mapsto X$.
+	always find a number that is not in the list using his ``Diagonal Argument" which
+	accomplishes the same as the following, though for reals instead of
+	naturals: suppose someone is trying to make a set $S$ with every natural number
+	($\mathbb N_1$). They could first skip 1 and add 2 to $S$. Then they add 3, then 4, 5, 6,
+	et cetera forever. No matter how many natural numbers they add, they can always find one
+	not in it; $\max(S)+1$. This seems to be implying that there is not a bijection between the
+	natural numbers and themselves since in the limit towards infinity time, they've used up all
+	infinity natural numbers indexing $S$ and yet not all of them are in $S$. Well of course, because
+	they \emph{skipped} 1. Due to this possibility of skipping elements, the diagonal argument doesn't always accurately depict
+	the countability of sets, and it can just as easily skip elements in the set of real numbers.
 \end{section}
 
 \begin{section}{Enumerating the Continuum Algorithmically}\label{sec:algorithm code}
-	The following Node JS code prints out real numbers to stdout delimited by a comma-space
-	pair. With infinite time and memory, it will have printed every real number. The problems
-	are that it prints out both positive and negative zero, and the functions return strings.
-	Both of these are easily resolvable though. There is a reference to this source code and
-	the C version in Section~\ref{sec:references} References~\ref{ref:c-code}~and~\ref{ref:js-code}.
-	The subscripts are just so it looks nicer. If \texttt{process.stdout.write} is replaced with
-	\texttt{console.log}, then it will work in vanilla JavaScript in versions beginning with
-	ECMAScript 6. The downside being \texttt{console.log} adds a trailing newline character at
-	the end of each call, which isn't ideal for printing a large quantity of small strings each
-	using an individual function call. The complexity of finding the $n$th real number with this
-	method is less than or equal to $\mathcal O\!\left(n\log^2n\right)$, emphasis on ``less",
-	because after over 16 million iterations on my machine, it hadn't slowed down noticably.
+	The following NodeJS code prints out real numbers to stdout up to the maximum allowed big integer
+	delimited by a comma-space pair, the problem being that it prints out both $\pm0$, though this
+	is easily resolvable. The more verbatim version as well as the C version of the source code are at
+	References~\ref{ref:js-code}~and~\ref{ref:c-code}. The complexity of finding the $n^\text{th}$ real
+	number with this method is around $\Theta(\log n)$, assuming basic operations such as bit shifts,
+	comparisons, addition, and multiplication run in $\mathcal O(1)$. isqrt($n$) is less than
+	$\mathcal O(\log_2 n)$, and contains most of the complexity of the formula. The code didn't start
+	to slow down noticably until around $10^{100}$, and at $10^{10,000}$ only took 2.4 seconds (rather
+	than 0.2ms at the start).
 
 	\noindent\texttt{\\
-	function isqrt(n) \{ // $\lfloor$$\sqrt\texttt{n}$$\rfloor$ for non-negative big integers n.\\
-	$\indent$if (n < 2) return n;\\
-	$\indent$var x$_0$, x$_1$ = n / 2n;\\\\
-	$\indent$do $x$_0$ = x$_1$,\\
-	$\indent\indent$x$_1$ = x$_0$ + n / x$_0$ >> 1n; // Newton's method for f(x) = x\textasciicircum 2+a\\
-	$\indent$while ( x$_1$ < x$_0$ );\\\\
-	$\indent$return x$_0$;\\
-	\} // code continued\\
-	// iterate over the natural numbers (up to 0.5*2\textasciicircum 2\textasciicircum 30)\\
-	for (var runningIndex = 0n ;;) \{\\
-	$\indent$let positive = true, currentIndex = runningIndex++;\\\\
-	$\indent$// if the current index is odd, return a negation the previous index's value\\
-	$\indent$if (currentIndex \% 2n) positive = false, currentIndex--;\\
-	$\indent$currentIndex /= 2n; // divide index by 2 so all integers can be reached\\\\
-	$\indent$const c = isqrt(1n + 8n*currentIndex) // intermediate value\\
-	$\indent$// the index the next comments refer to\\
-	$\indent\indent$, u = (c + c \% 2n) / 2n - 1n\\
-	$\indent$// the largest triangle number with an integer index that is less ...\\
-	$\indent$// than or equal to the current index. but subtracted from the current index\\
-	$\indent\indent$, k = currentIndex - u * (u + 1n) / 2n;\\\\
-	$\indent$// generate real number from indices k and u-k and print it\\
-	$\indent$process.stdout.write(\textasciigrave\$\{positive~?~""~:~"-"\}\$\{k\}.\textasciigrave~+\\
-	$\indent\indent$\textasciigrave\$\{u - k\}\textasciigrave.split("").reverse().join("") + ", "\\
-	$\indent$);\\
-	\}
+		const write = globalThis.toString().slice(8, -1).toLowerCase() === "global" ?\\
+		$\indent$s => process.stdout.write.call(process.stdout, s) : // NodeJS\\
+		$\indent$console.log; // Browser\\
+		\\
+		function isqrt(n) \{ // floored square root\\
+		$\indent$if (n < 2n) return n;\\
+		\\
+		$\indent$var cur = n >> 1n, prev; // current, previous\\
+		\\
+		$\indent$do [cur, prev] = [cur + n / cur >> 1n, cur];\\
+		$\indent$while (cur < prev);\\
+		\\
+		$\indent$return prev;\\
+		\}\\
+		\\
+		for (var i = 0n ;;) \{\\
+		$\indent$const k = 1n + isqrt(1n + (i << 2n)) >> 1n // T(k-1) < i/2 $\leq$ T(k)\\
+		$\indent$$\indent$, t = i + k*(1n - k) >> 1n; // i/2 - T(k-1)\\
+		\\
+		$\indent$write( // coordinates: (k, k-t-1)\\
+		$\indent$$\indent$\textasciigrave\$\{i++ \% 2n ?\;"-"\;:\;""\}\$\{t\}.\textasciigrave + // integer part\\
+		$\indent$$\indent$\textasciigrave\$\{k - t - 1n\}\textasciigrave.split("").reverse().join("") // fractional part\\
+		$\indent$)\\
+		\}
 	}
 \end{section}
 
 \begin{section}{Further Algorithms}\label{sec:further algorithms}
 	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability of
 	continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union, Axiom
-	of Infinity, and Axiom of Choice (for creating sets of ordered \textit{pairs}). Without the
-	Axiom of Choice, Theorems~\ref{thm:multiplications} doesn't work, although the algorithm from
-	Section~\ref{sec:algorithm code} is separate from set theory and assumes no axioms. The
-	algorithm uses string manipulation to reverse the numbers and find their lengths, but the
-	following equations do the same thing mathematically. length() and reverse() are only defined
-	for natural number inputs.
+	of Infinity, and Axiom of Choice (for creating sets of ordered \textit{pairs}, which is not
+	the controversial part). Without the Axiom of Choice, Theorem~\ref{thm:multiplications}
+	doesn't work, although the algorithm from Section~\ref{sec:algorithm code} is separate from
+	set theory and assumes no axioms. The previous algorithm uses string manipulation to reverse
+	the numbers and find their lengths, but the following formulas for length() and reverse() do
+	the same thing mathematically.
 	\begin{align}
-		\text{length}\,n & := 1+\lfloor\log_b|n|\rfloor=\lceil\log_b(|n|+1)\rceil
-		\text{, such that }\ln0\leqslant0\\
-		\text{reverse}\,n & :=\text{sgn}(n)\!\!\sum_{k=0}^{\text{length}\,n}\left(\dfrac1b\left\lfloor\frac{|n|}{b^k}\right\rfloor\text{mod}\,1\right)\!b^{\text{length}\,n-k}\\
-		R_{i,j} & := p\cdot\left(i+\frac{\text{reverse}\,j}{b^{\text{length}\,j}}\right)
+		\text{length}\,n & := 1+\lfloor\log_b|n|\rfloor=\lceil\log_b(|n|+1)\rceil\ni\ln0\leqslant0\\
+		\text{reverse}\,n & :=\text{sgn}(n)\!\!\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor
+		\frac{|n|}{b^k}\right\rfloor\text{mod}\,b\right)\!b^{\text{length}\,n-k-1}\\
+		R_{i,j} & := s\cdot\left(i+\frac{\text{reverse}\,j}{b^{\text{length}\,j}}\right)
 	\end{align}
-	Where $i$ is \texttt k, $p$ is \texttt{(positive~?~1~:~-1)}, $j$ is \texttt{(u - k)}, and $b$
-	is the base. $i$ and $j$ can be swapped for a different enumeration
-	(see Reference~\ref{ref:desmos real-enum}). An interesting formula used in the algorithm in
-	Section~\ref{sec:algorithm code} is for the greatest triangle number $t=T(k)\leqslant n$, where
-	$n,k\in\mathbb N_0$.
+	Where $i$ is the integer part, $s$ is the sign, $j$ is the reversed decimal part, and $b$
+	is the base. $i$ and $j$ can be swapped for a different enumeration (and inverse) (see
+	Reference~\ref{ref:desmos real-enum}). A formula for the greatest triangle number
+	$t=T(k)\leqslant n$, where $n,k\in\mathbb N_0$ (used in Section~\ref{sec:algorithm code}):\\
 	\begin{align}
 		T(n) := \frac{n^2+n}2 & = \sum_{j=1}^nj\\
 		t = T\left(\left\lceil\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rceil-1\right)
 		& = T\left(\left\lfloor\dfrac{\sqrt{8n+1}}2\right\rceil-1\right)
 	\end{align}
 	Because of the bijection, there is also an inverse of the Section~\ref{sec:algorithm code}
-	algorithm.\\\\
-	\noindent\texttt{function inverse(string) \{ // assume valid input\\
-		$\indent$const match = /\textasciicircum(-?)($\backslash$d+)$\backslash$.($\backslash$d+)\$/.exec(string)\\
-		$\indent\indent$, i = BigInt(match[2]) // the integer part\\
-		$\indent\indent$, j = BigInt(match[3]); // the decimal part\\
-		$\indent$return i*(i+1n) + (2n*i+j)*(j+1n) + BigInt(match[1] === "-");\\
+	algorithm. The simplicity and symmetry of the inverse is striking based on the complexity
+	of the original function.\\\\
+	\noindent\texttt{function inverse(string) \{\\
+		$\indent$const match = /\textasciicircum-??($\backslash$d+)$\backslash$.($\backslash$d+)\$/.exec(string)\\
+		$\indent\indent$, x = BigInt(match[1]) // integer part\\
+		$\indent\indent$, y = BigInt(match[3].split("").reverse().join("")); // decimal part\\
+		$\indent$return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");\\
 		\}
-	}\vspace{-1em}
+	}
 \end{section}
 
 \begin{section}{Conclusion}\label{sec:conclusion}
@@ -402,19 +397,19 @@
 	natural numbers $n$, which makes sense intuitively because $2^\infty=\infty$. Also if any
 	sequence of natural numbers is concatenated, it will always create a new natural number,
 	meaning every element in $\mathcal P(\mathbb N_0)$ corresponds to an element in
-	$\mathbb N_0$. This all could have disasterous consequences for set theory or mathematics as
-	a whole because CH is provably undecidable in some models and yet provably decidable. This
-	means either Zermelo-Fraenkel Set Theory with the axiom of choice (ZHC) is unsound, the
-	aforementioned models are invalid, or at least one of the decidability proofs is invalid. The
-	entire foundation of aleph numbers, beth numbers, and sizes of infinities could be entirely
-	flawed. CH implies the Gimel Hypothesis is true according to Reference~\ref{ref:gimel}, and
-	impliesWetzel's problem is false according to Reference~\ref{ref:wetzel}. A truth value for
-	CH or GCH is not asserted here bacause the specifics of CH are unclear, and they are
-	important for its truth value. If the reals have to be bigger than the naturals, it is false,
-	but if it just requires that there is no set in between them, it is true.
+	$\mathbb N_0$. This all could have disasterous consequences for set theory because CH is
+	provably undecidable in some models and yet provably decidable. This means either
+	Zermelo-Fraenkel Set Theory with the axiom of choice (ZHC) is unsound, the aforementioned
+	models are invalid, or all of the decidability proofs are invalid. The entire foundation of
+	aleph numbers, beth numbers, and sizes of infinities could be entirely flawed. CH implies
+	the Gimel Hypothesis is true according to Reference~\ref{ref:gimel}, and implies Wetzel's
+	problem is false according to Reference~\ref{ref:wetzel}. A truth value for CH or GCH is
+	not asserted here bacause the specifics of CH are unclear, and they are important for its
+	truth value. If the reals have to be bigger than the naturals, it is false, but if it just
+	requires that there is no set in between them, it is true.
 \end{section}
 
-\begin{section}{References}\label{sec:references}
+\pagebreak\begin{section}{References}\label{sec:references}
 	\begin{enumerate}
 		\item\url{https://en.wikipedia.org/wiki/Cantor's\_diagonal\_argument}\\
 		\label{ref:diagonal argument}
@@ -440,7 +435,7 @@
 		\label{ref:c-code}
 		\text{The raw C source code for the Section~\ref{sec:algorithm code}}
 
-		\item\url{https://www.desmos.com/calculator/wndesoagsd}\\
+		\item\url{https://www.desmos.com/calculator/3pmv7lehhm}\\
 		\label{ref:desmos real-enum}
 		\text{Desmos with real number enumeration formulas for Section~\ref{sec:further algorithms}}
 
