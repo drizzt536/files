@@ -59,6 +59,7 @@ var OwnedApplications = {
 	, "Batman Arkham Knight": 0 // duplicate
 	, "Battalion Dev Kit": 0
 	, "Battle Breakers": 0
+	, "Beyond Blue": 19.99
 	, "Beyond CAD": 0
 	, "Beyond Two Souls [Demo]": 0
 	, "Beyond Two Souls Demo": 0 // duplicate
@@ -80,6 +81,7 @@ var OwnedApplications = {
 	, "Borderlands": 0 // duplicate
 	, "Brave": 0
 	, "Brawlhalla": 0
+	, "Breathedge": 24.99
 	, "Bridge Constructor: The Walking Dead": 9.99
 	, "Bridge Constructor": 0 // duplicate
 	, "Brothers - A Tale Of Two Sons": 14.99
@@ -154,6 +156,8 @@ var OwnedApplications = {
 	, "Drawful 2": 9.99
 	, "Dungeons 3": 29.99
 	, "Duskers": 19.99
+	, "Dying Light Enhanced Edition": 29.99
+	, "Dying Light": 0 // duplicate
 	, "Elite Dangerous": 29.99
 	, "Enter the Gungeon": 14.99
 	, "Epic Cheerleader Pack": 0
@@ -304,6 +308,7 @@ var OwnedApplications = {
 	, "Might and Magic": 0 // duplicate
 	, "Minit": 9.99
 	, "MONOPOLY® MADNESS DEMO": 0
+	, "MORDHAU": 29.99
 	, "Mortal Shell": 29.99
 	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is or where it came from
 	, "MudRunner": 19.99
@@ -339,6 +344,7 @@ var OwnedApplications = {
 	, "Phantasy Star Online 2": 0 // duplicate
 	, "Pikuniku": 12.99
 	, "Pinball FX": 0
+	, "Poker Club": 19.99
 	, "Post Scriptum Modding SDK": 0
 	, "Prey": 39.99
 	, "Primordials: Battle of Gods": 0
@@ -380,6 +386,8 @@ var OwnedApplications = {
 	, "Rumbleverse": 0 // duplicate
 	, "Rumbleverse™ - Boom Boxer Content Pack": 0
 	, "Rumbleverse - Boom Boxer Content Pack": 0 // duplicate
+	, "Rumbleverse Boom Boxer Content Pack": 0 // duplicate
+	, "Rumbleverse Boom Boxer Pack": 0 // duplicate
 	, "Runbow": 14.99
 	, "Saints Row Boss Factory": 0
 	, "Saints Row IV Re-Elected": 19.99
@@ -405,6 +413,7 @@ var OwnedApplications = {
 	, "Shadowrun: Dragonfall - Director's Cut": 14.99
 	, "Shadowrun: Dragonfall": 0 // duplicate
 	, "Shadowrun": 0 // duplicate
+	, "shapez": 9.99
 	, "Sheltered": 14.99
 	, "Sherlock Holmes Crimes and Punishments": 29.99
 	, "Shop Titans": 0
