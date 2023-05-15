@@ -26,6 +26,7 @@ var OwnedApplications = {
 	, "ABZU": 19.99
 	, "Adios": 17.99
 	, "AER Memories of Old": 14.99
+	, "Against All Odds": 0
 	, "Against The Storm Royal Woodlands Demo": 0
 	, "Alan Wake's American Nightmare": 8.99
 	, "Alba - A Wildlife Adventure": 16.99
@@ -240,6 +241,7 @@ var OwnedApplications = {
 	, "HITMAN - Game of the Year Edition": 59.99
 	, "HITMAN": 0 // duplicate
 	, "Hob": 19.99
+	, "Honkai: Star Rail": 0
 	, "Honkai Impact 3rd": 0
 	, "Hood: Outlaws & Legends": 19.99
 	, "Hood: Outlaws and Legends": 0 // duplicate
@@ -269,6 +271,7 @@ var OwnedApplications = {
 	, "Jurassic World Evolution": 44.99
 	, "Just Cause 4": 29.99 // used from just cause 4 reloaded but minus 10
 	, "Just Die Already": 14.99
+	, "Kao the Kangaroo": 29.99
 	, "KARDS - The WWII Card Game": 0
 	, "KARDS - The WW2 Card Game": 0 // duplicate
 	, "KARDS": 0 // duplicate
@@ -489,7 +492,9 @@ var OwnedApplications = {
 	, "The Riftbreaker Prologue Demo": 0
 	, "The Silent Age": 9.99
 	, "The Sims™ 4": 0
+	, "The Sims™ 4 The Daring Lifestyle Bundle": 0
 	, "The Sims 4": 0 // duplicate
+	, "The Sims 4 The Daring Lifestyle Bundle": 0 // duplicate
 	, "The Spectrum Retreat": 12.99
 	, "The Stanley Parable": 14.99
 	, "The Talos Principle": 39.99
