@@ -240,7 +240,7 @@ void (() => { "use strict";
 		LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
 		LibSettings.FILE_PATH = LibSettings.isNodeJS ?
 			`${__dirname.replace(/\\/g, "/")}/${__filename}` :
-			document.currentScript.src
+			document.currentScript.src;
 
 		///////////////////////////////////////////// DEFAULTS START /////////////////////////////////////////////
 
@@ -669,7 +669,7 @@ void (() => { "use strict";
 						(snum.match(/^-?(0+\B)/)?.[1]?.length ?? 0),
 						snum.match(/\B0+$/)?.index ?? Infinity
 				);
-				return (snum.sw(".") ? "0" : "") + snum + (snum.ew(".") ? "0" : "");
+				return (snum[0] === "." ? "0" : "") + snum + (snum.ew(".") ? "0" : "");
 			}
 			, type = function type(a/*object*/, specific=false) {
 				return specific == !1 || typeof a === "bigint" || typeof a === "symbol" ?
@@ -1249,7 +1249,8 @@ void (() => { "use strict";
 						NaN;
 			}
 			, getArguments = function getArguments(fn) {
-				// broken for (argName => { ... })
+				// broken for (a => { ... })
+				// broken for ((a=")" ...) => { ... })
 				// any comments inside the argument parens act as a docstring like in python.
 				// works for almost all functions
 				// works before library functions are defined
@@ -2113,6 +2114,73 @@ void (() => { "use strict";
 		, str: function String(a) { return a?.toString?.call?.( [].slice.call(arguments, 1) ) }
 		, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
 		, complex(re=0, im=0) { return cMath.new(re, im) }
+		, valueCompare(
+			a = null,
+			b = null,
+			unknown = function unknownCompare(a, b) {
+				throw Error("unknown type passed to valueCompare()");
+			}
+		) {
+			// essentially a === b
+			if (Number.isNaN(a)) return Number.isNaN(a);
+			if (a === undefined) return b === undefined;
+			if (a === null) return b === null;
+
+			if (a.constructor !== b.constructor) return false;
+
+			if (
+				a.constructor === Boolean ||
+				a.constructor === Number  ||
+				a.constructor === BigInt  ||
+				a.constructor === String
+			) return a === b;
+			else if (a.constructor === Array) {
+				if (a.length !== b.length) return false;
+
+				for (var i = a.length; i --> 0 ;)
+					if ( !valueCompare(a[i], b[i]) )
+						return false;
+
+				return true;
+
+			}
+			else if (a.constructor === Object) {
+				const aKeys = Reflect.ownKeys(a);
+				const bKeys = Reflect.ownKeys(b);
+
+				if (!valueCompare(aKeys, bKeys))
+					return false;
+
+				for (var key of aKeys)
+					if ( !valueCompare(aKeys, bKeys) )
+						return false;
+
+				return true;
+			}
+			else if (a.constructor === Symbol) {
+				const keyA = Symbol.keyFor(a);
+				return keyA == null ? a === b : valueCompare(keyA, Symbol.keyFor(b));
+			}
+			else if (a.constructor === Function)
+				return valueCompare( a.functionType(), b.functionType() ) &&
+					valueCompare( a.args(), b.args() ) &&
+					valueCompare( a.code(), b.code() );
+			else if (a.constructor === RegExp)
+				return valueCompare(a.source, b.source) &&
+					valueCompare(a.flags, b.flags);
+			else if (a.constructor === fMath.Fraction)
+				return valueCompare(a.numer, b.numer) &&
+					valueCompare(a.denom, b.denom);
+			else if (a.constructor === cMath.Complex)
+				return valueCompare(a.re, b.re) &&
+					valueCompare(a.im, b.im);
+			else if (a.constructor === MutableString)
+				return valueCompare(a + "", b + "");
+			else if (a.constructor === rMath.Set)
+				return valueCompare( Array.from(a), Array.from(b) );
+			else
+				unknown(a, b);
+		}
 		, "call native RegExp"() {
 			const _RegExp = RegExp
 			, regex = function RegExp(source="(?:)", flags="") {
@@ -2407,10 +2475,10 @@ void (() => { "use strict";
 			, mergeRight: function ( first ) {
 				return jQuery.merge( first, this );
 			}
-			, checked: function ( value=false ) {
-				return value ?
-					this.attr( "checked" ) === "checked" :
-					this.attr( "checked", "checked" );
+			, checked: function ( value ) {
+				value == null ?
+					this[0]?.checked :
+					this.each( (_i, e) => (e.checked = !!value, true) );
 			}
 		}
 		, "prototype Object": {
@@ -2439,7 +2507,19 @@ void (() => { "use strict";
 			, "property io": Array.prototype.indexOf
 			, "property rev": Array.prototype.reverse
 			, "property lio": Array.prototype.lastIndexOf
-			, "property incl": Array.prototype.includes
+			, "property incl": (function create_incl() {
+				const _includes = Array.prototype.includes;
+				function includes(searchElement, fromIndex=0, compare=(a,b) => a === b) {
+					for (var i = this.length; i --> fromIndex ;) {
+						if ( compare(this[i], searchElement) )
+							return true;
+					}
+					return false;
+				}
+				includes._includes = _includes;
+				return includes;
+
+			})()
 			, "property last": lastElement
 			, "property nincl": function doesntInclude() {
 				return !Array.prototype.incl.apply(this, arguments);
@@ -2571,13 +2651,14 @@ void (() => { "use strict";
 				return this;
 			}
 			, "property slc": function slice(
-				start = 0,
-				end = Infinity,
+				start,
+				end,
 				startOffset = 0,
 				endOffset = 0,
-				includeEnd = false
-			)
-			{
+				includeEnd = false,
+			) {
+				start ??= 0; // can't be default arg value
+				end ??= Infinity; // can't be default arg value
 				// last index = end - 1
 				end < 0 && (end += this.length);
 				end += endOffset + includeEnd;
@@ -2748,6 +2829,8 @@ void (() => { "use strict";
 				// async function *() {}
 				// async a => 3
 				// ({method() {}}).method
+				// ... (a=")" ...) => ...
+				// function (a=")" ...) { ... }
 				/*
 					
 
@@ -2791,6 +2874,15 @@ void (() => { "use strict";
 			, "property isRegular": function isRegularFunction() { return (this + "").sw("function") }
 			, "property isFunction": function isFunction() { return this.isRegular() || this.isArrow() }
 			, "property isCallable": function isCallable() { return typeof this === "function" }
+			, "property functionType": function functionType() {
+				return this.isRegular() ?
+					"original" :
+					this.isClass() ?
+						"class" :
+						this.isArrow() ?
+							"arrow" :
+							"unknown";
+			}
 		}
 		, "object Function": {
 			"overwrite property args": function getArgs(fn) { return getArguments(fn) }
@@ -2814,8 +2906,17 @@ void (() => { "use strict";
 					fn.isRegular() :
 					!1;
 			}
-			, "overwrite property isFunction"(fn) { return typeof fn==="function" ? fn.isFunction() : !1 }
+			, "overwrite property isFunction"(fn) { return typeof fn === "function" ? fn.isFunction() : !1 }
 			, "overwrite property isCallable"(fn) { return typeof fn === "function" }
+			, "overwrite property functionType": function functionType(fn) {
+				return fn.isRegular() ?
+					"original" :
+					fn.isClass() ?
+						"class" :
+						fn.isArrow() ?
+							"arrow" :
+							"unknown";
+			}
 		}
 		, "prototype String": {
 			"property io"       : String.prototype.indexOf
@@ -2842,15 +2943,31 @@ void (() => { "use strict";
 				return RegExp(stt + b + end, flags); // escaped
 			}
 			, "call native property startsWith"() {
-				function startsWith(input, index=0, flags="") {
-					// input is a regex, or string, or array of arrays (circular), regexes, or strings.
-					return type(input, 1) === "arr" ?
-						input.map( e => this.startsWith(e, index, flags) ) :
-						`${ type(input, 1) === "regex" ? input.source : input }`
-							.toRegex(flags, "^").test( this.slice(index) );
+				function startsWith(input, index=0) {
+					// input is regex(es), string(s), or array of arrays of ...
+					if (typeof index === "bigint")
+						index = Number(index);
+					if (typeof index !== "number" || index % 1)
+						throw Error`index must be an integer`;
+
+					if (type(input, 1) === "arr") return input.map(
+						e => this.startsWith(e, index, flags)
+					);
+					type(input) === "string" && ( input = input.toRegex() );
+
+					if (type(input, 1) === "regex") {
+						const match = RegExp(
+							input.source, input.flags + "d"
+						).exec( this.slice(index) );
+						if (match === null) return !1;
+						return match.indices[0][0] === 0;
+					}
+
+					throw Error`invalid input`;
 				}
-				startsWith._startsWith = String.prototype.startsWith;
-				return startsWith;
+
+				return startsWith._startsWith = String.prototype.startsWith,
+					startsWith;
 			}
 			, "previous property sw": null
 			, "call native property endsWith"() {
@@ -2906,8 +3023,7 @@ void (() => { "use strict";
 				substr = false,
 				includeEnd = false,
 				outOfBoundsStringEndInfinity = false
-			)
-			{
+			) {
 				// last index = end - 1
 				if (type(start) === "string") {
 					start = this.io(start);
@@ -3781,9 +3897,9 @@ void (() => { "use strict";
 				var [a, b] = snums;
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = this.norm( a ); b = this.norm( b );
-				if ( a.sw("-") &&  b.sw("-")) return "-" + this.add(a.slice(1), b.slice(1));
-				if ( a.sw("-") && !b.sw("-")) return this.sub(b, a.slice(1));
-				if (!a.sw("-") &&  b.sw("-")) return this.sub(a, b.slice(1));
+				if (a[0] === "-" && b[0] === "-") return "-" + this.add(a.slice(1), b.slice(1));
+				if (a[0] === "-" && b[0] !== "-") return this.sub(b, a.slice(1));
+				if (a[0] !== "-" && b[0] === "-") return this.sub(a, b.slice(1));
 
 				// do not change to use +=
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
@@ -3818,9 +3934,9 @@ void (() => { "use strict";
 
 				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
 				a = this.norm( a ); b = this.norm( b );
-				if (!a.sw("-") &&  b.sw("-")) return this.add(a, b.slice(1));
-				if ( a.sw("-") &&  b.sw("-")) return this.sub(b.slice(1), a.slice(1));
-				if ( a.sw("-") && !b.sw("-")) return "-" + this.add(a.slice(1), b);
+				if (a[0] !== "-" && b[0] === "-") return this.add(a, b.slice(1));
+				if (a[0] === "-" && b[0] === "-") return this.sub(b.slice(1), a.slice(1));
+				if (a[0] === "-" && b[0] !== "-") return "-" + this.add(a.slice(1), b);
 				if (this.eq.gt(b, a)) return "-" + this.sub(b, a);
 				// do not change to +=
 				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
@@ -7942,6 +8058,7 @@ void (() => { "use strict";
 			// carmichael numbers
 			// pseudoprimes
 			// Barnes G-Function
+			// Euler's totient function #(k < n st coprime(n,k))
 		}
 		, "math cMath": class ComplexMath {
 			constructor(
@@ -9131,42 +9248,4 @@ var validFlags = (function getValidRegexFlags() {
 		try { RegExp("", char); validFlags += char } catch {}
 
 	return validFlags;
-})();
-
-msort_test = (function create_mergeSortTest() {
-	var compare_less_than = (function () {
-		var i = 0;
-
-		var compare_less_than = (a, b) => (i++, a < b);
-		compare_less_than.get = () => i;
-		compare_less_than.reset = () => i = 0;
-
-		return compare_less_than;
-	})();
-	function merge(left, right) {
-		let arr = [];
-		while (left.length && right.length)
-			arr.push( (
-				compare_less_than(left[0], right[0]) ? left : right
-			).shift() );
-		return [ ...arr, ...left, ...right ];
-	}
-	function msort(arr, last=true) {
-		last && compare_less_than.reset();
-		// doesn't affect original variable, unlike qsort
-		const out = arr.length < 2 ?
-			arr :
-			merge(
-				msort( arr.slice(0, arr.length / 2), false ), // slice(a, b) ⩶ slice(⌊a⌋, ⌊b⌋)
-				msort( arr.slice(arr.length / 2), false )
-			);
-		return last ? compare_less_than.get() : out;
-	}
-	return a => (
-		+ msort(a) + msort(a)
-		+ msort(a) + msort(a)
-		+ msort(a) + msort(a)
-		+ msort(a) + msort(a)
-		+ msort(a) + msort(a)
-	) / 10;
 })();
