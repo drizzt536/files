@@ -23,6 +23,7 @@
 
 # not actually passwords.
 Python/passwords.py
+Python/manim/
 
 test.*
 *.exe
