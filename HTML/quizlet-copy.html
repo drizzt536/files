@@ -159,6 +159,12 @@
 			$("input#write-answer-text").focus();
 		}
 		var uploadJSONString = (function create_uploadJSONString() {
+			var case_insensitive_by_default;
+			var strip_left_by_default;
+			var strip_right_by_default;
+			var strip_edges_by_default;
+			var implicit_full_string;
+
 			function normalize(str) {
 				// find strings and regular expressions and convert to regular objects with a source and flags
 
@@ -183,10 +189,16 @@
 									["\\\\", '\\"']
 								] : [ // string
 									[/\\(?!")/g, /([^"\w\\])/g],
-									["\\\\", '\\\\$1']
+									["\\\\", "\\\\$1"]
 								])
 							)
-						}","flags":"${flags}"}`;
+						}","flags":"${
+							find === "/" ?
+								case_insensitive_by_default && !flags.includes("i") ?
+									flags + "i" :
+									flags :
+								null + (case_insensitive_by_default ? "i" : "")
+						}"}`;
 
 						if (find === "/" || !/^\s*:/.test( out.slice(i+1).join("") )) {
 							out.splice(startIndex, length, ...replacementString.split(""));
@@ -196,8 +208,54 @@
 				}
 				return out.join("");
 			}
-			function uploadJSONString(text) {
-				text = text.remove(/[\t ]*\/\/[\w\t. ]*(?=\n)/g); // remove single lined comments
+			return function uploadJSONString(text) {
+				// remove single lined comments
+				text = text.remove(/[\t ]*\/\/[^}"/\]]*(?=\n)/g); // may cause errors, but shouldn't
+				// text = text.remove(/[\t ]*\/\/[\w\t. ]*(?=\n)/g); // remove single lined comments
+
+				text = text.remove(/^\n+/);
+
+				case_insensitive_by_default =
+					strip_left_by_default =
+					strip_right_by_default =
+					strip_edges_by_default =
+					implicit_full_string =
+					false;
+
+				var modifier_index = 1;
+				while (text.slice(0, 2) === "#!") {
+					var modifier = text.match(/(?<=#!\s*)\S*(?=\s*\n)/)?.[0];
+
+					switch (modifier) {
+						case "case insensitive":
+						case "/i":
+							case_insensitive_by_default = true;
+							break;
+						case "left strip":
+						case "lstrip":
+							strip_left_by_default = true;
+							throw Error("left strip modifier not implemented");
+							break;
+						case "right strip":
+						case "rstrip":
+							strip_right_by_default = true;
+							throw Error("right strip modifier not implemented");
+							break;
+						case "strip edges":
+							strip_edges_by_default = true;
+							throw Error("strip edges modifier not implemented");
+							break;
+						case "implicit full string": // for regular expressions
+						case "^..$":
+							implicit_full_string = true;
+							throw Error("implicit full string modifier not implemented");
+							break;
+						default:
+							throw Error("unknown modifier at line " + modifier_index);
+					}
+					text = text.slc("\n", null, 1);
+					modifier_index++;
+				}
 
 				// handle direct passage inputs
 				if ( $("input#import-json-direct-load-input").checked() ) {
@@ -211,7 +269,7 @@
 				// globalThis.endValueJSON = endValue; // for debugger
 
 				// change regex to normal objects
-				
+
 				let objs;
 				try { objs = JSON.parse(endValue) }
 				catch { throw Error("JSON text input is not valid JSON.") }
@@ -224,7 +282,8 @@
 					const obj = objs[i]; // const obj of objs, with index
 					if (obj == null || obj.constructor !== Object) throw Error(`JSON text object index ${i} is not a valid object`);
 
-					obj.term = obj.term?.source?.replace?.(/\\(\W)/g, "$1");
+					obj.term = obj.term.source.replace(/\\(\W)/g, "$1");
+					if (case_insensitive_by_default) obj.term = obj.term.lower();
 					if (typeof obj.term !== "string")
 						throw Error(`JSON text object index ${i} has an invalid term attribute`);
 					if (obj.favorite === void 0) obj.favorite = false;
@@ -235,7 +294,7 @@
 					if (!isArr(obj.mcwacs))
 						throw Error(`JSON text object index ${i} mcwacs attribute is not an array`);
 					for (var j = obj.mcwacs.length; j --> 0 ;) {
-						obj.mcwacs[j] = obj.mcwacs[j]?.source?.replace?.(/\\(\W)/g, "$1");
+						obj.mcwacs[j] = obj.mcwacs[j].source.replace(/\\(\W)/g, "$1");
 						if (typeof obj.mcwacs[j] !== "string") throw Error(`invalid element ${j} of mcwacs attribute`);
 					}
 
@@ -243,40 +302,45 @@
 						throw Error(`JSON text object index ${i} definitions attribute is not an array`);
 					if (!obj.definitions.length)
 						throw Error(`object ${i} definitions attribute must have at least one element`);
-					for (var j = obj.definitions.length; j --> 1 ;) {
-						let regex = obj.definitions[j];
+					for (var j = obj.definitions.length; j --> 0 ;) {
+						const regex = obj.definitions[j];
 
-						if (obj.definitions[j]?.constructor !== Object ||
-							typeof obj.definitions[j].source !== "string" ||
-							typeof obj.definitions[j].flags !== "string"
-						)
-							throw Error(`invalid regex at object ${i} definition ${j}.`);
-						obj.definitions[j].flags;
+						if (regex?.constructor !== Object ||
+							typeof regex.source !== "string" ||
+							typeof regex.flags !== "string"
+						) throw Error(`invalid regex at object ${i} definition ${j}.`);
+
+						if ( regex.flags.sw("null") ) { // convert to string
+							if (regex.flags === "nulli") {
+								regex.source = regex.source.lower();
+								j === 0 ?
+									obj.definitions.push({
+										source: regex.source,
+										flags: "i"
+									}) :
+									regex.flags = "i";
+							}
+							else if (regex.flags !== "null")
+								throw Error(`invalid regex at object ${i} definition 0. First definition must be a string.`);
+							obj.definitions[j] = regex.source.replace(/\\(\W)/g, "$1");
+						}
 					}
-
-					if (obj.definitions[0]?.constructor !== Object) // nullish or other object type
-						throw Error(`invalid regex at object ${i} definition 0.`);
-					if (obj.definitions[0].flags !== "")
-						throw Error(`invalid regex at object ${i} definition 0. First definition must be a string.`);
-					obj.definitions[0] = obj.definitions[0].source?.replace?.(/\\(\W)/g, "$1");
-					if (typeof obj.definitions[0] !== "string") throw Error(`invalid element 0 of definitions`);
+					// remove duplicate definitions
 				}
 
 				location.search = `mode=select&obj=${
 					encodeURIComponent( JSON.stringify(objs) )
 				}`;
 			}
-			uploadJSONString._normalize = normalize;
-
-			return uploadJSONString;
 		})()
 		, [JSON_File_Input_On_Change, Submit_JSON_File_On_Click] = (function create_functions() {
 			// for closure scope
 			var fr, isLoaded = false;
 
 			return [
-				function onChange(thisArg = null) {
-					if (thisArg == null) throw Error("thisArg should not be null in JSON_File_Input_On_Change()");
+				function onChange(thisArg) {
+					if (thisArg == null)
+						throw Error("thisArg should not be null in JSON_File_Input_On_Change()");
 					isLoaded = false;
 					fr = new FileReader();
 					fr.onload = () => isLoaded = true;
@@ -297,14 +361,16 @@
 				if (!write_allow_subzero_mastery && mastery < 0)
 					mastery = 0;
 
-				$("p#write-outcome-text").html(`${is_correct ? "" : "in"}correct<br>${mastery}/${write_correct_until_mastered} mastery`).show();
+				$("p#write-outcome-text").html(`${is_correct ? "" : "in"}correct<br>${
+					mastery
+				}/${write_correct_until_mastered} mastery`).show();
 
 				write_allow_override && $("button#write-override-button").show();
 				$("button#write-continue-button, button#write-show-answer").show();
 
 				$("button#write-continue-button").focus()
 			}
-			function Write_Submit_On_Click() {
+			return function Write_Submit_On_Click() {
 				// submit onclick
 				if ( !$('p#write-outcome-text').is(':hidden') )
 					return; // no changing answers
@@ -327,9 +393,6 @@
 					answer(true) :
 					answer(false);
 			}
-
-			Write_Submit_On_Click._answer = answer;
-			return Write_Submit_On_Click;
 		})();
 	</script>
 </head>
@@ -369,8 +432,8 @@
 				<button id="csv" onclick=
 					"display('import-csv');
 					$('#import-csv-text-div > textarea').val('Term,Description');
-					$('#csv-options input[type=radio]').each((_, e) => !(e.checked = false))
-					$('#csv-options input:first-child').each((_, e) => e.checked = true)
+					$('#csv-options input[type=radio]').checked(false);
+					$('#csv-options input:first-child').checked(true);
 					$('#csv-options input[type=text]').val('');
 					$('#csv-activate-text-input').click();
 				">Import from CSV</button>
@@ -585,8 +648,8 @@
 				// the object is always last in the search
 				navigator.clipboard.writeText( location.search.slc('obj=', void 0, 4) );
 				this.innerHTML = 'Text Copied';
-				setTimeout(() => this.innerHTML = 'Copy Search Object', 1_450);
-			">Copy Search Object</button>
+				setTimeout(() => this.innerHTML = 'Copy JSON URL Component', 1_450);
+			">Copy JSON URL Component</button>
 			<button onclick="
 				var blob = new Blob([
 					decodeURIComponent( location.search.slc('obj=', void 0, 4) )
