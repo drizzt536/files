@@ -1,4 +1,11 @@
 from fractions import Fraction
+from math import floor, sqrt
+
+def primeQ(n: int) -> bool:
+    for i in range(2, floor( sqrt(n) )+1):
+        if not n % i:
+            return False
+    return True
 
 def coprimeQ(a: int, b: int, /) -> bool:
     """
@@ -22,7 +29,7 @@ def main(n: int = 1, m: int = 2, /) -> tuple[str, ...]:
     for k in range(1, m+1):
         P = n**k
         for i in range(1, P):
-            if coprimeQ(P, i):
+            if (coprimeQ(P, i) if primeQ(n) else (P % i if P > n else True) ):
                 numbers.append(str( Fraction(i, P) ))
     return tuple(numbers)
 
