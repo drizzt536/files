@@ -1,3 +1,5 @@
+from fractions import Fraction
+
 def coprimeQ(a: int, b: int, /) -> bool:
     """
         returns whether or not a and b are coprime, or if gcd(a, b) = 1
@@ -12,7 +14,6 @@ def main(n: int = 1, m: int = 2, /) -> tuple[str, ...]:
         lists out real numbers in the range (0, 1).
         uses n to the first m negative powers.
     """
-    from fractions import Fraction
     if not isinstance(n, int) or not isinstance(m, int):
         raise TypeError("both arguments bust be integers")
     if n < 1 or m < 0:
