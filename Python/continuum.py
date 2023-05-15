@@ -25,4 +25,4 @@ def main(n: int = 1, m: int = 2, /) -> tuple[str, ...]:
                 numbers.append(str( Fraction(i, P) ))
     return tuple(numbers)
 
-main(2, 5)
+main(2, 5) # example
