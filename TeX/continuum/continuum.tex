@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% continuum.tex v5.0 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v6.0 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may only be copied IN ITS ENTIRETY under penalty of law.
@@ -379,7 +379,7 @@
 		& = T\left(\left\lfloor\dfrac{\sqrt{8n+1}}2\right\rceil-1\right)
 	\end{align}
 	Because of the bijection, there is also an inverse of the Section~\ref{sec:algorithm code}
-	algorithm. The simplicity and symmetry of the inverse is striking based on the complexity
+	algorithm. The simplicity and symmetry of the inverse is striking due to the complexity
 	of the original function.\\\\
 	\noindent\texttt{function inverse(string) \{\\
 		$\indent$const match = /\textasciicircum-??($\backslash$d+)$\backslash$.($\backslash$d+)\$/.exec(string)\\
@@ -388,6 +388,37 @@
 		$\indent$return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");\\
 		\}
 	}
+\end{section}
+
+\begin{section}{Second Enumeration}\label{sec:second enumeration}
+	There are more enumerations than just what was previously mentioned. A (mostly unrigorous) proof
+	will be presented for the second of the following equations, both of which derive from a similar
+	idea. Something similar works for any natural number base
+	(Reference~\ref{ref:python second enum family}: Python code,
+	Reference~\ref{ref:desmos second enum family}: desmos graph), instead of just 2, although it works
+	best with prime bases.
+	\begin{align}
+	\lim_{n,k\in\mathbb N_1\to\aleph_0}\left\{k\!\left(\dfrac{2i+1}{2^{\lfloor\log_2i\rfloor}}-3\right):i\in\mathbb N_1<2^n\right\}=\mathbb R\\
+	\bigcup_{n=1}^{\aleph_0}\dfrac{2n+1}{2^{1+\lfloor\log_2n\rfloor}}\equiv\bigcup_{n=1}^{\aleph_0}\dfrac{2n+1}{2^{\text{length}_2(n)}}=\mathbb R_{(1,2)}
+	\end{align}
+	\begin{proof} This proof will first prove that $S_{\aleph_0}$ is equivalent to $\mathbb R_{[0,1)}$,
+	and then proves that it must be countable.
+		\begin{align*}
+			& S_0:=\{0\}\\
+			& S_n:=S_{n-1}\cup\left\{x+\dfrac1{2^n}:x\in S_{n-1}\right\}=\dfrac{\{k\in\mathbb N:0\le k<2^n\}}{2^n}\\
+			& S_{\aleph_0}:=\lim_{n\in\mathbb N\to\aleph_0}S_n=\mathbb R_{[0,1)}
+		\end{align*}
+		$S_{\aleph_0}$ must equal [0,1) because 0 and 1 are its bounds and it has the same cardinality
+		as the real numbers. It starts with 0 and only adds to it conditionally so its elements never
+		go below 0, and $\displaystyle\sum_{n=1}^\infty\dfrac1{2^n}=1$, meaning it can't extend past 1.
+		$|S_n|=2^n$ which implies $|S_{\aleph_0}|=2^{\aleph_0}$, the same cardinality as
+		$|\mathcal P(\mathbb N)|$ or $|\mathbb R|$. $S_{\aleph_0}$ is countable via Cantor's Enumeration
+		of Countable Collections of Countable sets, since there are countably infinitely many countable
+		processess involved in constructing $S_{\aleph_0}$. The ``countable collection" refering to the
+		indices ``$n$," and the ``processes" being the evaluation of $S_n$ given $S_{n-1}$, each of which
+		processes is itself finite, and thus countable. The same results arise when starting with $S_0=\{1\}$
+		and subtracting subsequent inverse powers of 2 rather than adding.
+	\end{proof}
 \end{section}
 
 \begin{section}{Conclusion}\label{sec:conclusion}
@@ -437,11 +468,19 @@
 
 		\item\url{https://www.desmos.com/calculator/3pmv7lehhm}\\
 		\label{ref:desmos real-enum}
-		\text{Desmos with real number enumeration formulas for Section~\ref{sec:further algorithms}}
+		\text{Desmos with real number enumeration 1 formulas for Section~\ref{sec:further algorithms}}
 
 		\item\url{https://github.com/drizzt536/files/blob/main/TeX/continuum/real-enum-formula/formula.pdf}\\
 		\label{ref:pdf real-enum}
-		\text{pdf with a fully-expanded real number enumeration formula for Section~\ref{sec:further algorithms}}
+		\text{pdf with a fully-expanded real number enumeration 1 formula for Section~\ref{sec:further algorithms}}
+
+		\item\url{https://github.com/drizzt536/files/blob/main/Python/continuum.py}\\
+		\label{ref:python second enum family}
+		\text{second enumeration family python code}
+
+		\item\url{https://www.desmos.com/calculator/dbcdgkinga}\\
+		\label{ref:desmos second enum family}
+		\text{second enumeration family desmos graph}
 
 		\item\url{https://en.wikipedia.org/wiki/Gimel\_function\#The\_gimel\_hypothesis}\\
 		\label{ref:gimel}
