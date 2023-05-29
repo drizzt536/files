@@ -133,6 +133,7 @@ var OwnedApplications = {
 	, "DLC The Game - Track Editor": 0
 	, "DLC The Game": 0 // duplicate
 	, "Dead by Daylight": 19.99
+	, "DEATH STRANDING": 29.99
 	, "Delores: A Thimbleweed Park mini-adventure": 0
 	, "Delores": 0 // duplicate
 	, "DEMON'S TILT": 19.99
@@ -175,6 +176,9 @@ var OwnedApplications = {
 	, "Fall Guys": 0
 	, "Fall Guys - Snowberry": 0
 	, "Fallout 3: Game of the Year Edition": 19.99
+	, "Fallout: New Vegas - Ultimate Edition": 19.99
+	, "Fallout: New Vegas": 0 // duplicate
+	, "Fallout New Vegas": 0 // duplicate
 	, "Fallout 3": 0 // duplicate
 	, "Fangs": 0 // TODO: early access
 	, "Far Cry 6 - Free Trial": 0
