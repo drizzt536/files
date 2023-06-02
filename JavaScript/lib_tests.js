@@ -1,6 +1,6 @@
 #!usr/bin/env js
 
-// This file has to execute before Test.js does and has the tests for lib.js
+// This file has the tests for lib.js must execute before Test.js does
 
 if (LIBRARY_VARIABLES["local LibSettings"].Create_Testing_Object) {
 
@@ -238,6 +238,200 @@ let LibSettings = LIBRARY_VARIABLES["local LibSettings"]
 			, [false, 0] // 18
 		]
 	} // 6
+	, numStrNorm: {
+		args: 2
+		, ignore: false
+		, scope: "globalThis"
+		, name: "numStrNorm"
+		, inputs: [
+			[undefined, "000000000", NaN] // 0
+			, [undefined, "-000000.", 32] // 1
+			, [undefined, "-000000.000", -123] // 2
+			, [undefined, ".00", /asdf/] // 3
+			, [undefined, ".0", null] // 4
+			, [undefined, "-234.12", Symbol.for("aa")] // 5
+			, [undefined, ".41", NaN] // 6
+			, [undefined, "53", NaN] // 7
+			, [undefined, "", NaN] // 8
+			, [undefined, "", "61.312abc|.."] // 9
+			, [undefined, "1", undefined] // 10
+			, [undefined, [1, 2, 3], NaN] // 11
+			, [undefined, /^a\s+sdf/dim, NaN] // 12
+			, [undefined, NaN, 43] // 13
+			, [undefined, true, NaN] // 14
+			, [undefined, false, NaN] // 15
+			, [undefined, "sus amogus", ""] // 16
+			, [undefined, complex(1, 2), NaN] // 17
+			, [undefined, "complex(1, 2)", NaN] // 18
+			, [undefined, ".", 4] // 19
+			, [undefined, "--123", -12n] // 20
+			, [undefined, "true", null] // 21
+			, [undefined, "false", NaN] // 22
+			, [undefined, "NaN", NaN] // 23
+			, [undefined, "NaN.", NaN] // 24
+			, [undefined, "NaN ", NaN] // 25
+			, [undefined, "false.0", NaN] // 26
+			, [undefined, "true.", NaN] // 27
+			, [undefined, "null.", NaN] // 28
+			, [undefined, "null", NaN] // 29
+			, [undefined, "void 0", NaN] // 30
+			, [undefined, "undefined", NaN] // 31
+			, [undefined, "undefined.0", NaN] // 32
+			, [undefined, "Infinity.0", NaN] // 33
+			, [undefined, "Infinity", NaN] // 34
+			, [undefined, "-Infinity", NaN] // 35
+			, [undefined, "infinity", NaN] // 36
+			, [undefined, "-infinity", NaN] // 37
+			, [undefined, "-null", NaN] // 38
+			, [undefined, "4n", NaN] // 39
+			, [undefined, "-4n", NaN] // 40
+			, [undefined, "-4 n", NaN] // 41
+			, [undefined, "- 123", NaN] // 42
+			, [undefined, "+ 517", NaN] // 43
+			, [undefined, "+517.", NaN] // 44
+			, [undefined, "+123.12", NaN] // 45
+			, [undefined, "+456", NaN] // 46
+			, [undefined, "15.0000000000000000000000000000000000000000000000000000000000001", NaN] // 47
+			, [undefined, " 123.0 ", NaN] // 48
+			, [undefined, "1.24e+3", NaN] // 49
+			, [undefined, "12.4e+2", NaN] // 50
+			, [undefined, Symbol("asdf"), NaN] // 51
+			, [undefined, Symbol.for("qwer"), NaN] // 52
+			, [undefined, 0.3e-4, NaN] // 53
+			, [undefined, 6.123e-24, NaN] // 54
+			, [undefined, {a: 1, b: 2, c: 3}, NaN] // 55
+			, [undefined, "\n123 ", NaN] // 56
+			, [undefined, "+456.1234", NaN] // 57
+			, [undefined, /asdf$/, NaN] // 58
+			, [undefined, "- -456", NaN] // 59
+			, [undefined, "123 .456", NaN] // 60
+			, [undefined, "4.56\n78E19", NaN] // 61
+			, [undefined, 1234n, NaN] // 62
+			, [undefined, -5678n, NaN] // 63
+			, [undefined, 0n, NaN] // 64
+			, [undefined, -0n, NaN] // 65
+			, [undefined, 0, NaN] // 66
+			, [undefined, -0, NaN] // 67
+			, [undefined, "-0.0", NaN] // 68
+			, [undefined, "-0e-12", NaN] // 69
+			, [undefined, "-00.0E41", NaN] // 70
+			, [undefined, null, NaN] // 71
+			, [undefined, undefined, NaN] // 72
+			, [undefined, Infinity, NaN] // 73
+			, [undefined, -Infinity, NaN] // 74
+			, [undefined, "1.234E-9", NaN] // 75
+			, [undefined, "0.01234e-7", NaN] // 76
+			, [undefined, "1234.1234e6", NaN] // 77
+			, [undefined, "4.5678E19", NaN] // 78
+			, [undefined, 4.5678E19, NaN] // 79
+			, [undefined, -1.2698e18, NaN] // 80
+			, [undefined, 4.5678E+17, NaN] // 81
+			, [undefined, 2.65813e+16, NaN] // 82
+			, [undefined, "0x2A3F", NaN] // 83
+			, [undefined, "0x2a3F", NaN] // 84
+			, [undefined, "0x2a3f", NaN] // 85
+			, [undefined, "0b100101", NaN] // 86
+			, [undefined, "0o1234567", NaN] // 87
+			, [undefined, "01234567", NaN] // 88
+		]
+		, outputs: [
+			["0.0", 0] // 0
+			, ["0.0", 0] // 1
+			, ["0.0", 0] // 2
+			, ["0.0", 0] // 3
+			, ["0.0", 0] // 4
+			, ["-234.12", 0] // 5
+			, ["0.41", 0] // 6
+			, ["53.0", 0] // 7
+			, [NaN, 0] // 8
+			, ["61.312abc|..", 0] // 9
+			, ["1.0", 0] // 10
+			, [NaN, 0] // 11
+			, [NaN, 0] // 12
+			, [43, 0] // 13
+			, ["1.0", 0] // 14
+			, ["0.0", 0] // 15
+			, ["", 0] // 16
+			, [NaN, 0] // 17
+			, [NaN, 0] // 18
+			, [4, 0] // 19
+			, [-12n, 0] // 20
+			, ["1.0", 0] // 21
+			, ["0.0", 0] // 22
+			, [NaN, 0] // 23
+			, [NaN, 0] // 24
+			, [NaN, 0] // 25
+			, [NaN, 0] // 26
+			, [NaN, 0] // 27
+			, [NaN, 0] // 28
+			, [NaN, 0] // 29
+			, [NaN, 0] // 30
+			, [NaN, 0] // 31
+			, [NaN, 0] // 32
+			, [NaN, 0] // 33
+			, [Infinity, 0] // 34
+			, [-Infinity, 0] // 35
+			, [NaN, 0] // 36
+			, [NaN, 0] // 37
+			, [NaN, 0] // 38
+			, [NaN, 0] // 39
+			, [NaN, 0] // 40
+			, [NaN, 0] // 41
+			, [NaN, 0] // 42
+			, [NaN, 0] // 43
+			, ["517.0", 0] // 44
+			, ["123.12", 0] // 45
+			, ["456.0", 0] // 46
+			, ["15.0000000000000000000000000000000000000000000000000000000000001", 0] // 47
+			, ["123.0", 0] // 48
+			, ["1240.0", 0] // 49
+			, ["1240.0", 0] // 50
+			, [NaN, 0] // 51
+			, [NaN, 0] // 52
+			, ["0.00003", 0] // 53
+			, ["0.000000000000000000000006123", 0] // 54
+			, [NaN, 0] // 55
+			, ["123.0", 0] // 56
+			, ["456.1234", 0] // 57
+			, [NaN, 0] // 58
+			, [NaN, 0] // 59
+			, [NaN, 0] // 60
+			, [NaN, 0] // 61
+			, ["1234.0", 0] // 62
+			, ["-5678.0", 0] // 63
+			, ["0.0", 0] // 64
+			, ["0.0", 0] // 65
+			, ["0.0", 0] // 66
+			, ["0.0", 0] // 67
+			, ["0.0", 0] // 68
+			, ["0.0", 0] // 69
+			, ["0.0", 0] // 70
+			, ["0.0", 0] // 71
+			, ["0.0", 0] // 72
+			, [Infinity, 0] // 73
+			, [-Infinity, 0] // 74
+			, ["0.000000001234", 0] // 75
+			, ["0.000000001234", 0] // 76
+			, ["1234123400.0", 0] // 77
+			, ["45678000000000000000.0", 0] // 78
+			, ["45678000000000000000.0", 0] // 79
+			, ["-1269800000000000000.0", 0] // 80
+			, ["456780000000000000.0", 0] // 81
+			, ["26581300000000000.0", 0] // 82
+			, ["10815.0", 0] // 83
+			, ["10815.0", 0] // 84
+			, ["10815.0", 0] // 85
+			, ["37.0", 0] // 86
+			, ["342391.0", 0] // 87
+			, ["1234567.0", 0] // 88
+		]
+	} // 7
+	, norm: {
+		ignore: true
+		, useDifferentTestSet: "numStrNorm"
+		, scope: "globalThis.sMath"
+		, name: "norm"
+	} // 8
 };
 
 
