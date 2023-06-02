@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// test.js v1.2.0 (c) | Copyright 2023 Daniel E. Janusch
+// test.js v1.2.2 (c) | Copyright 2023 Daniel E. Janusch
 
 /** DOCUMENTATION:
  * The tests can be passed via a global object or the override ...
@@ -10,20 +10,35 @@
 
  * ignore = false // ignore is just for unfinished tests
  * name = (key in the tests object)
+ * 		string
+ * useDifferentTestSet = false // use the {name} if it is true
+ * 		false | string | symbol
+ * 		Not Implemented
+ * 		if true, just throw an error because that doesn't make any sense
+ * 		extra parameters like {name}, {args}, {ignore}, etc (any of them) will be have
+ * 		precedence over the original values in the other test set.
 
  * changeThis = false // only does anything if same === true
+ * 		changes the thisArg passed to Function.call to match each scope
  * same = false
  *		bool | array[bool, ...]
+ * 		makes all the inputs and outputs the same for each scope
  * args = null // number of arguments the function(s) take(s).
  *		number | bigint | array[number | bigint, ...]
  * inputs // required fields
  * outputs // required fields
  * scope/scopes // at least one is required
+ * 		the string value for the scope.
+ * 		ie: "globalThis.Math".
+ * 		"window", "global", "frames", etc also work but are not recommended
+ * 		the first "globalThis." is optional but recommended for clarity.
 **/
 
 // TODO: Maybe zip together the inputs and outputs in the testing object so they are easier to use.
-// TODO: Maybe let test object have optional function arguments. It might be better the way it is.
-// TODO: Update Error Codes
+// TODO: Maybe let test object have optional (function) arguments, (inputs).
+// TODO: fix for things that aren't stringifiable. or make stringifying opt-in or opt-out.
+// TODO: make it tell the arguments as well as the index on errors or something
+// TODO: maybe allow functions not reachable from the global object
 
 (function run_tests(
 	testsGlobalName = Symbol.for("Test.js") // the testing object is globalThis?.[testsGlobalName]
@@ -33,9 +48,10 @@
 
 	debugMode = !!debugMode; // Boolean(debugMode)
 
-	// setup  variables and functions
-	const libraryTests = objectOverride === null ? globalThis?.[testsGlobalName] : objectOverride
-	, deepCopy = (basicObject, options={}) => eval( stringify(basicObject, options) ) // safe eval.
+	// setup variables and functions
+	const libraryTests = objectOverride === null ?
+		globalThis?.[testsGlobalName] :
+		objectOverride
 	, stringToObject = (function create_sto() {
 		function isInvalidString(str, nextCharacter="]") {
 			// returns [isInvalid, endBracketIndex (nextCharacter)]
@@ -155,8 +171,12 @@
 			stringToObject;
 	})()
 	, zip = (function create_zip() {
-		// different from enumerable
-		function isNotIterable(thing) { try { for (const e of thing) break } catch { return !0 } return !1 }
+		function isNotIterable(thing) {
+			// different from enumerability
+			try { for (const e of thing) break }
+			catch { return !0 }
+			return !1;
+		}
 		function arrzip(arr1, arr2) {
 			if (isNotIterable(arr1) || isNotIterable(arr2)) return [arr1, arr2];
 			if (arr1.length !== arr2.length){
@@ -170,10 +190,11 @@
 
 			return output;
 		}
-		return arrzip.isIterable = isIterable, arrzip;
+		return arrzip._isNotIterable = isNotIterable,
+			arrzip;
 	})()
 	, TestingError = (function create_TestingError() {
-		const testingError = class TestingError extends globalThis.Error {
+		const testingError = class TestingError extends Error {
 			constructor() {
 				super(...arguments);
 				this.name = "TestingError";
@@ -182,97 +203,138 @@
 		function TestingError() { return new testingError(...arguments) }
 		return TestingError._self = testingError, TestingError;
 	})()
+	, stringify = (function create_stringify() {
+		function ord(string) {
+			// idk, kind of just stole it from Python, except this doesn't only accept chars.
+			return type(string) === "string" && string.length ?
+				string.length - 1 ?
+					string.split("").map(c => c.charCodeAt()) :
+					string.charCodeAt() :
+				0;
+		}
+		function unescape_string(str) {
+			return str.split("").map( e =>
+				e === "\n" ? "\\n" :
+				e === "\0" ? "\\0" :
+				e === "\t" ? "\\t" :
+				e === "\f" ? "\\f" :
+				e === "\r" ? "\\r" :
+				e === "\v" ? "\\v" :
+				e === "\b" ? "\\b" :
+				e === "\\" ? "\\\\" :
+				ord(e) < 127 && ord(e) > 31 ?
+					e :
+					ord(e) < 32 ?
+						(s => "\\x" + strMul("0", 2 - s.length) + s)(ord(e).toString(16)) :
+						(s => "\\u" + strMul("0", 4 - s.length) + s)(ord(e).toString(16))
+			).join("");
+		}
+		return function stringify(
+			object, {
+				space = " "
+				, spacesAtEnds = false
+				, onlyEnumProps = true
+			} = {}
+		) {
+			// works better than JSON.stringify except for unknown edge cases
+
+			switch (object == null ?
+				"nullish" :
+				object instanceof Array ?
+					"array" :
+					object instanceof RegExp ?
+						"regexp" :
+						typeof object
+			) {
+				case "boolean": return `${object}`;
+				case "regexp": return `${object}`;
+				case "string": return `"${ unescape_string(object).replace(/"/g, '\\"') }"`;
+				case "bigint": return `${object}n`;
+				case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
+				case "number": return Object.is(object, -0) ? "-0" : `${object}`;
+				case "nullish": return object === null ? "null" : "undefined";
+				case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for"
+					}("${ object.description.replace(/"/g, "\\\"") }")`;
+				// the "array" and "object" cases might be able to be combined due to their similarity
+				case "array":
+					if (!object.length) return `[${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}]`;
+
+					for (var output = `[${spacesAtEnds ? space : ""}`, i = 0 ;;) {
+						// can probably be a do..while, but I don't care.
+						output += stringify(
+							object[i++]
+							, {
+								space: space
+								, spacesAtEnds: spacesAtEnds
+								, onlyEnumProps: onlyEnumProps
+							}
+						);
+						if (i < object.length) output += `,${space}`;
+						else break;
+					}
+					return output + `${spacesAtEnds ? space : ""}]`;
+				case "object":
+					var keys = Object[onlyEnumProps ? "keys" : "getOwnPropertyNames"](object);
+					// symbols always come last since they are concatonated to the end.
+					keys = keys.concat(
+						onlyEnumProps ?
+							Object.getOwnPropertySymbols(object)
+								.filter( key => Object.propertyIsEnumerable.call(object, key) ) :
+							Object.getOwnPropertySymbols(object)
+					);
+					if (!keys.length) return `{${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}}`;
+					for (var output = `{${spacesAtEnds ? space : ""}`, i = 0 ;;) {
+						// can probably be a do..while, but I don't care.
+						output += `${
+							typeof keys[i] === "symbol" ? "[" : '"'
+						}${
+							typeof keys[i] === "symbol" ? symbToStr(keys[i]) : keys[i]
+						}${
+							typeof keys[i] === "symbol" ? "]" : '"'
+						}:${
+							space
+						}${stringify(
+							object[ keys[i] ]
+							, {
+								space: space
+								, spacesAtEnds: spacesAtEnds
+								, onlyEnumProps: onlyEnumProps
+							}
+						)}`;
+						if (++i < keys.length) output += `,${space}`;
+						else break;
+					}
+					return output + `${spacesAtEnds ? space : ""}}`;
+				default: throw Error("that type is not supposed to exist.");
+			}
+			debugger;
+			throw Error("It is supposed to be impossible to get here.");
+		}
+	})()
 	, symbToStr = function symbolToString(symbol) {
 		return `Symbol${ Symbol.keyFor(symbol) == null ? "" : ".for"
 		}("${ symbol.description.replace(/"/g, '\\"') }")`;
 	}
-	function toRegex(str) {
+	, toRegex = function stringToRegularExpression(str) {
 		for (var i = 0, b = ""; i < str.length; i++)
 			b += `${"$^()+*\\|[]{}?.".includes(str[i]) ? "\\" : ""}${str[i]}`;
 		return RegExp(b);
 	}
-	function stringify(
-		object, {
-			space = " "
-			, spacesAtEnds = false
-			, onlyEnumProps = true
-		} = {}
-	) {
-		// works better than JSON.stringify
+	, deepCopy = function deepCopy(object, backupOptions={}) {
+		// TODO: reset prototypes back to the original
+		// traverse through the object
+			// Reflect.setPrototypeOf(current, Reflect.getPrototypeOf(original_current));
+		var outputObject;
 
-		switch (object == null ?
-			"nullish" :
-			object?.constructor?.name === "Array" ?
-				"array" :
-				object instanceof RegExp ?
-					"regexp" :
-					typeof object
-		) {
-			case "boolean": return `${object}`;
-			case "regexp": return `${object}`;
-			case "string": return `"${ object.replace(/\\/g, "\\\\").replace(/"/g, '\\"') }"`;
-			case "bigint": return `${object}n`;
-			case "function": return void 0; // can't be serialized. maybe can be treated as a regular object.
-			case "number": return Object.is(object, -0) ? "-0" : `${object}`;
-			case "nullish": return object === null ? "null" : "undefined";
-			case "symbol": return `Symbol${ Symbol.keyFor(object) === void 0 ? "" : ".for"
-				}("${ object.description.replace(/"/g, "\\\"") }")`;
-			// the "array" and "object" cases might be able to be combined due to their similarity
-			case "array":
-				if (!object.length) return `[${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}]`;
+		try { outputObject = structuredClone(object) }
+		catch { outputObject = eval( stringify(object, {}) ) } // safe eval
+		// structuredClone can't clone window or functions
 
-				for (var output = `[${spacesAtEnds ? space : ""}`, i = 0 ;;) {
-					// can probably be a do..while, but I don't care.
-					output += stringify(
-						object[i++]
-						, {
-							space: space
-							, spacesAtEnds: spacesAtEnds
-							, onlyEnumProps: onlyEnumProps
-						}
-					);
-					if (i < object.length) output += `,${space}`;
-					else break;
-				}
-				return output + `${spacesAtEnds ? space : ""}]`;
-			case "object":
-				var keys = Object[onlyEnumProps ? "keys" : "getOwnPropertyNames"](object);
-				// symbols always come last since they are concatonated to the end.
-				keys = keys.concat(
-					onlyEnumProps ?
-						Object.getOwnPropertySymbols(object)
-							.filter( key => Object.propertyIsEnumerable.call(object, key) ) :
-						Object.getOwnPropertySymbols(object)
-				);
-				if (!keys.length) return `{${spacesAtEnds ? space : ""}${spacesAtEnds ? space : ""}}`;
-				for (var output = `{${spacesAtEnds ? space : ""}`, i = 0 ;;) {
-					// can probably be a do..while, but I don't care.
-					output += `${
-						typeof keys[i] === "symbol" ? "[" : '"'
-					}${
-						typeof keys[i] === "symbol" ? symbToStr(keys[i]) : keys[i]
-					}${
-						typeof keys[i] === "symbol" ? "]" : '"'
-					}:${
-						space
-					}${stringify(
-						object[ keys[i] ]
-						, {
-							space: space
-							, spacesAtEnds: spacesAtEnds
-							, onlyEnumProps: onlyEnumProps
-						}
-					)}`;
-					if (++i < keys.length) output += `,${space}`;
-					else break;
-				}
-				return output + `${spacesAtEnds ? space : ""}}`;
-			default: throw Error("that type is not supposed to exist.");
-		}
-		debugger;
-		throw Error("It is supposed to be impossible to get here.");
+		return outputObject;
 	}
+
 	function testFunction(obj, name) {
+		// this function is not a test. it tests functions.
 
 		if (obj?.ignore === !0) return;
 		if (obj == null) {
@@ -288,15 +350,15 @@
 		/**
 		 * Idk if this comment is up to date or not.
 		 *
-		 * be careful when using same. it can cause problems...
+		 * be careful when using `same = true`. it can cause problems...
 		 * attributes that weren't enumerable, configurable, or writable become so.
 		 * (or whatever the default is).
 		 * prototype attributes aren't converted except for the thisArg
 		 * special classes change to default objects and may be broken.
 		 * native functions don't convert and instead get set to undefined.
-		 * all the problems that come with same are from deepCopy.
-		 * all the problems can be avoided by not using same.
-		 * same is just an ease of use tool.
+		 * all the problems that come with `same` are from deepCopy.
+		 * all the problems can be avoided by not using `same`.
+		 * `same` is just an ease of use tool.
 		**/
 
 		if ( obj.same === !1 && (
@@ -478,7 +540,7 @@
 			testFunction(tests[key], key);
 	}
 
-	if (libraryTests?.constructor?.name === "Array")
+	if (libraryTests instanceof Array)
 		for (const tests of libraryTests)
 			testLibrary(tests);
 	else if (libraryTests?.constructor?.name === "Object")
@@ -486,4 +548,4 @@
 			testLibrary(tests);
 	else
 		testLibrary(libraryTests);
-})("Test.js");
+})("Test.js", false);
