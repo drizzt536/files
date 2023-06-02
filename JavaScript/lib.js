@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v2.1.9 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.10 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 /**
  * Todo etc. Comment Syntax:
@@ -22,7 +22,7 @@
 */
 
 
-void (() => { "use strict";
+void (() => {
 	/* Customization & Constants: */ {
 		const _Global_String = (globalThis + "").slice(8, -1).toLowerCase();
 
@@ -220,7 +220,7 @@ void (() => { "use strict";
 				   - try
 					 > if the scope is nullish, then an error is not thrown and define() just returns undefined.
 					 > the main use cases are if the 'object' or 'prototype' flags are set.
-			`.replace(/\t+/g, " ").replace(/^\s+|\s+$/, "")
+			`.replace(/^\t{4}/gm, "").replace(/\s+$/, "")
 			, isNodeJS                          : _Global_String === "global"
 			, isBrowser                         : _Global_String === "window"
 			, LIBRARY_NAME                      : "lib.js"
@@ -421,6 +421,8 @@ void (() => { "use strict";
 							, onlyEnumProps = true
 						} = {}
 					) {
+						// TODO: fix for "\n123 ".
+						// probably just escape special characters in strings
 						switch (object == null ?
 							"nullish" :
 							object instanceof Array ?
@@ -432,7 +434,7 @@ void (() => { "use strict";
 							case "boolean": return `${object}`;
 							case "function": return  void 0; // can't be serialized. maybe can be treated as a regular object.
 							case "regexp": return `${object}`;
-							case "string": return `"${ object.replace([/\\/g, /"/g], ["\\\\", '\\"']) }"`;
+							case "string": return `"${ object.unescape().replace(/"/g, '\\"') }"`;
 							case "bigint": return `${object}n`;
 							case "number": return Object.is(object, -0) ? "-0" : `${object}`;
 							case "nullish": return object === null ? "null" : "undefined";
@@ -648,22 +650,41 @@ void (() => { "use strict";
 					output.push([ arr1[i] , arr2[i] ]);
 				return output;
 			}
-			, numStrNorm = function NormalizeNumberString(snum="0.0", defaultValue=NaN) {
+			, numStrNorm = function NormalizeNumberString(snum=0n, defaultValue=NaN) {
 				if (typeof snum === "bigint") return snum + ".0";
-				if (isNaN(snum)) return defaultValue;
+				if (typeof snum === "boolean") return +snum + ".0";
+				if (snum === "true") return "1.0";
+				if (snum === "false" || snum == null) return "0.0";
+				if (snum === "Infinity") return Infinity;
+				if (snum === "-Infinity") return -Infinity;
+				if (snum === Infinity || snum === -Infinity) return snum;
 
-				// 0 or -0 both return 0
-				// (-0) + "" ==> "0", but "-0.0" could be inputed for some reason
-
-				if ((snum += "")[0] === "-") {
-					if ( sMath.eq.iz(snum.slice(1)) ) return "0.0";
+				try {
+					if (isNaN(snum)) return defaultValue;
+					snum += "";
 				}
-				else if ( sMath.eq.iz(snum) ) return "0.0";
+				catch { return defaultValue } /* Symbol() etc,
+					things that can't be converted to a number or string. */
+				snum = snum.strip();
+				if (snum === "") return defaultValue;
+				if (snum[0] === "+") snum = snum.slice(1);
 
-				const match = /e([+-]\d+)$/.exec(snum);
-				if ( match !== null ) snum = sMath.mul10( snum.slice(0, match.index), +match[1] );	
+				
+				if ( /^0b[01]+/.test(snum) || // binary
+					/^0o[0-7]+/.test(snum) || // octal. "0123" is still "123.0"
+					/^0x[\da-fA-F]+/.test(snum) // hexadecimal
+				) snum =+ snum, snum += ""; // base covert
 
-				!snum.includes(".") && (snum += ".0");
+				if ( sMath.eq.iz(snum) ) return "0.0"; // 0 or -0
+
+				const match = /[eE]([+-]?\d+)$/.exec(snum);
+				if ( match !== null ) snum = sMath.mul10(
+					snum.slice(0, match.index),
+					+match[1] // "123", "+123", or "-123"; (examples)
+				);
+				// debugger;
+
+				snum.includes(".") || (snum += ".0");
 				snum = (snum[0] === "-" ? "-" : "") +
 					snum.substring( +(snum[0] === "-") +
 						(snum.match(/^-?(0+\B)/)?.[1]?.length ?? 0),
@@ -1831,8 +1852,7 @@ void (() => { "use strict";
 			srcElement = null,
 			target = null,
 			timeStamp = null,
-		}={})
-		{ return document.body.dispatchEvent(
+		}={}) { return document.body.dispatchEvent(
 			new KeyboardEvent({
 				isTrusted            : isTrusted // sets to false anyway
 				, key                : key
@@ -2364,6 +2384,65 @@ void (() => { "use strict";
 			].includes(element) ) return true;
 			return /$HTML\w+/.test(element.constructor.name);
 		}
+		, demarginFunction(fn) {
+			/*
+			demarginFunction("function among_us() {\n\t\t\treturn 32;\n\t\t}"")
+			==
+			"function among_us () {\n\treturn 32;\n}".
+
+			requires equal margining across function lines,
+			including spaces vs. tabs
+			*/
+			var code = fn + "", tabs = code.match(/\n(\s*)}$/)?.[1];
+
+			return tabs == null ?
+				code :
+				code.remove( RegExp("(?<=\n)" + tabs, "g") );
+		}
+		, comprehension: (function create_comprehension() {
+			function comprehension(fn, var_, iter, cond="") {
+				// python comprehension but in JavaScript
+				// [fn(i) for i in iter if cond]
+				if (typeof fn !== "string" && type(fn, 1) !== "function")
+					throw Error`'fn' argument must be a string or function`;
+
+				if (typeof var_ !== "string")
+					throw Error`'var_' argument must be a string`;
+
+				if (typeof cond !== "string" && type(cond, 1) !== "function")
+					throw Error`'cond'(ition) argument must be a string or function`;
+
+				var array = [];
+
+				const _item = typeof fn === "string" ? Function(var_, "\treturn " + fn) : fn
+					, _cond = typeof cond === "string" ? Function(var_, "\treturn " + (cond || "true")) : cond;
+
+				for (var i of typeof iter === "string" ?
+					eval(iter) :
+					iter
+				)
+					_cond(i) && array.push( _item(i) );
+
+				return array;
+			}
+			comprehension.pythonString = function toPythonCodeString(fn, var_, iter, cond="") {
+				if (typeof fn !== "string")
+					throw Error`'fn' argument must be a string`;
+
+				if (typeof var_ !== "string")
+					throw Error`'var_' argument must be a string`;
+
+				if (typeof iter !== "string")
+					throw Error`'iter'(able) argument must be a string`;
+
+				if (typeof cond !== "string")
+					throw Error`'cond'(ition) argument must be a string`;
+
+				return `[${fn} for ${var_} in ${iter}${cond ? " if "+cond : ""}]`;
+			}
+
+			return comprehension;
+		})()
 		, stringifyMath  : stringifyMath
 		, createElement  : createElement
 		, getNewGlobals  : getNewGlobals
@@ -2453,6 +2532,39 @@ void (() => { "use strict";
 		, "local omega": omega
 		, "local define": define
 		// the built-in methods are enumerable for the next three
+		, "object console": {
+			"writable configurable enumerable property printCallStack": function printCallStack() {
+				// doesn't work in strict mode. because safety
+				// only for ease of development
+				let options = arguments[0];
+				if (options == null) options = {lastOnly: false, includeCurrent: false};
+
+				let current = arguments.callee, index = 0;
+
+				if (options?.lastOnly || !options?.includeCurrent)
+					current = current.caller
+
+				if (options?.lastOnly) return current == null ?
+				console.log(null) :
+				console.log(
+					"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
+					1,
+					current.name,
+					Array.from(current.arguments),
+					demarginFunction(current)
+				);
+
+				for (; current !== null; current = current.caller) console.log(
+					"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
+					++index,
+					current.name,
+					Array.from(current.arguments),
+					demarginFunction(current)
+				);
+
+				console.log(null);
+			}
+		}
 		, "ifdom prototype NodeList": { last: lastElement }
 		, "ifdom prototype HTMLCollection": { last: lastElement }
 		, "ifdom prototype HTMLAllCollection": { last: lastElement }
@@ -3613,7 +3725,10 @@ void (() => { "use strict";
 				return k;
 			}
 		}
-		, "math sMath": class stringRealMath {
+		, "math sMath": class StringRealMath /* abbreviated to sMath */ {
+			#maxPrecision = 20;
+			// TODO: rewrite functions to not use recursion for snums.length > 2: add, sub, mul
+
 			constructor(
 				help = LibSettings.sMath_Help_Argument
 				, degTrig = LibSettings.sMath_DegTrig_Argument
@@ -3623,6 +3738,9 @@ void (() => { "use strict";
 				help === "default" && (help = !0);
 				degTrig === "default" && (degTrig = !0);
 				comparatives === "default" && (comparatives = !0);
+
+
+				
 
 				this.zero = "0.0"; // canonical format for 0.
 				this.one = "1.0"; // canonical format for 1.
@@ -3696,6 +3814,9 @@ void (() => { "use strict";
 							Number.isNaN(b = this._parent.norm(b, NaN))
 						) return NaN;
 
+						if (a ===  Infinity || b === -Infinity) return a !== b;
+						if (a === -Infinity || b ===  Infinity) return !1;
+
 						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !0;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !1;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0) {
@@ -3740,6 +3861,9 @@ void (() => { "use strict";
 							Number.isNaN(a = this._parent.norm(a, NaN)) ||
 							Number.isNaN(b = this._parent.norm(b, NaN))
 						) return NaN;
+
+						if (a === -Infinity || b ===  Infinity) return a !== b;
+						if (a ===  Infinity || b === -Infinity) return false;
 
 						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !1;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !0;
@@ -3786,6 +3910,9 @@ void (() => { "use strict";
 							Number.isNaN(b = this._parent.norm(b, NaN))
 						) return NaN;
 
+						if (type(a, 1) === "inf" || type(b, 1) === "inf")
+							return a === b;
+
 						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !1;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !1;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0)
@@ -3824,6 +3951,9 @@ void (() => { "use strict";
 							Number.isNaN(b = this._parent.norm(b, NaN))
 						) return NaN;
 
+						if (type(a, 1) === "inf" || type(b, 1) === "inf")
+							return a !== b;
+
 						if (this._parent.sgn(a) >= 0 && this._parent.sgn(b) < 0) return !0;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) >= 0) return !0;
 						if (this._parent.sgn(a) < 0 && this._parent.sgn(b) < 0) return this.ne( a.slice(1), b.slice(1) );
@@ -3855,155 +3985,241 @@ void (() => { "use strict";
 						return !1;
 					}
 					, iz: function isZero(snum="0.0") {
-						// x == 0. subset of eq(a, b)
-						for (var i = 0, n = snum.length; i < n; i++)
+						// x === 0. subset of eq(a, b)
+						if (typeof snum !== "string") return false; // also infinity
+
+						for (var i = +(snum[0] === "-"), n = snum.length; i < n; i++)
 							if (snum[i] !== "0" && snum[i] !== ".") return !1;
 						return !0;
 					}
 					, nz: function notZero(snum="0.0") {
 						// x != 0. subset of ne(a, b)
+						snum = this._parent.norm(snum, NaN)
+						if (typeof snum !== "string") return true;
+
 						for (var i = 0; i < snum.length; i++)
 							if (snum[i] !== "0" && snum[i] !== ".") return !0;
 						return !1;
 					}
 					, ng: function negative(snum="0.0") {
 						// x < 0. subset of lt(a, b)
+						snum = this._parent.norm(snum);
+						if (snum ===  Infinity) return false;
+						if (snum === -Infinity) return true;
 						return snum[0] === "-"; // assumes not "-0"
 					}
 					, nn: function notNegative(snum="0.0") {
 						// x >= 0. subet of ge(a, b)
+						if (snum === -Infinity) return false;
+						if (snum ===  Infinity) return true;
 						return snum[0] !== "-";
 					}
 					, ps: function positive(snum="0.0") {
 						// x > 0. subset of gt(a, b)
+						if (snum === -Infinity) return false;
+						if (snum ===  Infinity) return true;
 						return snum[0] !== "-" && this.nz(snum);
 					}
 					, np: function notPositive(snum="0.0") {
 						// x <= 0. subset of le(a, b)
+						if (snum ===  Infinity) return false;
+						if (snum === -Infinity) return true;
 						return snum[0] === "-" || this.iz(snum);
 					}
 				};
 			}
-			new(snum=1n, defaultValue=NaN) { return numStrNorm(snum, defaultValue) }
+			get precision() { return this.#maxPrecision }
+			set precision(value) {
+				if (typeof value !== "number")
+					throw Error`StringRealMath.precision must be a number.`;
+				if (value % 1)
+					throw Error`StringRealMath.precision must be an integer.`;
+				if (value < 0)
+					throw Error`StringRealMath.precision must be non-negative`
+				this.#maxPrecision = value;
+			}
+			new(snum="1.0", defaultValue=NaN) { return numStrNorm(snum, defaultValue) }
 			norm/*alize*/() { return this.new.apply(this, arguments) }
 			snum() { return this.new.apply(this, arguments) }
 			add(...snums) {
 				snums[0] instanceof Array && (snums = snums[0]);
-				if (snums.length > 2) return this.add(
-					this.add( snums[0], snums[1] ),
-					...snums.slice(2),
-				);
 
-				var [a, b] = snums;
-				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = this.norm( a ); b = this.norm( b );
-				if (a[0] === "-" && b[0] === "-") return "-" + this.add(a.slice(1), b.slice(1));
-				if (a[0] === "-" && b[0] !== "-") return this.sub(b, a.slice(1));
-				if (a[0] !== "-" && b[0] === "-") return this.sub(a, b.slice(1));
+				// instead of using add( add(snums[0], snums[1]), snums.slice(2) )
+				while (snums.length > 1) { // main loop
+					var [b, a] = [snums.pop(), snums.pop()];
 
-				// do not change to use +=
-				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
-				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
-				a = a.split("."); b = b.split(".");
+					if (rMath.isNaN(a) || rMath.isNaN(b))
+						return NaN; // no point continuing.
 
-				let c = [
-					[ a[0], b[0] ],
-					[ a[1], b[1] ],
-				].map( e => e.map(f=>f.split("")) )
-				.map( o => o[0].map((e,i) => Number(e) + Number(o[1][i])) );
-				for (var i = 2; i --> 0 ;) {
-					for (var j = c[i].length, tmp; j --> 0 ;) {
-						tmp = floor( c[i][j] / 10 );
-						c[i][j] -= 10*tmp;
-						if (tmp) {
-							if (j) c[i][j-1] += tmp;
-							else i === 1 ? c[0][c[0].length - 1] += tmp : c[i].unshift(tmp);
+					a = this.norm( a );
+					b = this.norm( b );
+
+					if (a[0] === "-" && b[0] === "-") {
+						snums.push( "-" + this.add(a.slice(1), b.slice(1)) );
+						continue;
+					}
+					if (a[0] === "-" && b[0] !== "-") {
+						snums.push( this.sub(b, a.slice(1)) );
+						continue;
+					}
+					if (a[0] !== "-" && b[0] === "-") {
+						snums.push( this.sub(a, b.slice(1)) );
+						continue;
+					}
+
+					// do not change to use +=
+					a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
+					b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
+					a = a.split("."); b = b.split(".");
+
+					let c = [
+						[ a[0], b[0] ],
+						[ a[1], b[1] ],
+					].map( e => e.map(f=>f.split("")) )
+					.map( o => o[0].map((e,i) => Number(e) + Number(o[1][i])) );
+
+					for (var i = 2; i --> 0 ;) {
+						for (var j = c[i].length, tmp; j --> 0 ;) {
+							tmp = floor( c[i][j] / 10 );
+							c[i][j] -= 10*tmp;
+							if (tmp) {
+								if (j) c[i][j-1] += tmp;
+								else i === 1 ? c[0][c[0].length - 1] += tmp : c[i].unshift(tmp);
+							}
 						}
 					}
+
+					c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
+					snums.push(c.incl(".") ? c : `${c}.0`);
 				}
-				c = c.map( e => e.join("") ).join(".").remove(/\.0+$/);
-				return this.norm( c.incl(".") ? c : `${c}.0` );
+
+				return this.norm(snums[0]); // c
 			}
 			sub(...snums) {
 				snums[0] instanceof Array && (snums = snums[0]);
-				if (snums.length > 2) return this.sub(
-					this.sub( snums[0], snums[1] ),
-					...snums.slice(2),
-				);
-				var [a, b] = snums;
 
-				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = this.norm( a ); b = this.norm( b );
-				if (a[0] !== "-" && b[0] === "-") return this.add(a, b.slice(1));
-				if (a[0] === "-" && b[0] === "-") return this.sub(b.slice(1), a.slice(1));
-				if (a[0] === "-" && b[0] !== "-") return "-" + this.add(a.slice(1), b);
-				if (this.eq.gt(b, a)) return "-" + this.sub(b, a);
-				// do not change to +=
-				a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
-				b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
-				a = a.split("."); b = b.split(".");
+				// instead of using sub( sub(snums[0], snums[1]), snums.slice(2) )
+				while (snums.length > 1) {
+					var [b, a] = [snums.pop(), snums.pop()];
 
-				let c = [
-					[ a[0], b[0] ],
-					[ a[1], b[1] ],
-				].map( e => e.map(f=>f.split("")) )
-					.map( o => o[0].map((e,i) => Number(e) - Number(o[1][i])) )
-				, neg = c[0][0] < 0;
-				for (var i = 2, j, tmp; i --> 0 ;) { // c[1] then c[0]
-					for (j = c[i].length; j --> 0 ;) { // for each element in c[i]
-						tmp = rMath.abs( floor(c[i][j] / 10) );
-						while (c[i][j] < 0) {
-							i + j && (c[i][j] += 10);
-							if (j) c[i][j-1] -= tmp;
-							else if (i === 1) c[0][c[0].length - 1] -= tmp;
-							else throw Error(`Broken. End value shouldn't be negative.`);
+					if (rMath.isNaN(a) || rMath.isNaN(b))
+						return NaN; // no point continuing
+
+					a = this.norm( a );
+					b = this.norm( b );
+
+					if (a[0] !== "-" && b[0] === "-") {
+						snums.push( this.add(a, b.slice(1)) );
+						continue;
+					}
+					if (a[0] === "-" && b[0] === "-") {
+						snums.push( this.sub(b.slice(1), a.slice(1)) );
+						continue;
+					}
+					if (a[0] === "-" && b[0] !== "-") {
+						snums.push( "-" + this.add(a.slice(1), b) );
+						continue;
+					}
+					if (this.eq.gt(b, a)) {
+						snums.push( "-" + this.sub(b, a) );
+						continue;
+					}
+
+					// do not change to +=
+					a = strMul("0", b.io(".") - a.io(".")) + a + strMul("0", b.slc(".").length - a.slc(".").length);
+					b = strMul("0", a.io(".") - b.io(".")) + b + strMul("0", a.slc(".").length - b.slc(".").length);
+					a = a.split("."); b = b.split(".");
+
+					let c = [
+						[ a[0], b[0] ],
+						[ a[1], b[1] ],
+					].map( e => e.map(f=>f.split("")) )
+						.map( o => o[0].map((e,i) => Number(e) - Number(o[1][i])) )
+					, neg = c[0][0] < 0;
+
+					for (var i = 2, j, tmp; i --> 0 ;) { // c[1] then c[0]
+						for (j = c[i].length; j --> 0 ;) { // for each element in c[i]
+							tmp = rMath.abs( floor(c[i][j] / 10) );
+							while (c[i][j] < 0) {
+								i + j && (c[i][j] += 10);
+								if (j) c[i][j-1] -= tmp;
+								else if (i === 1) c[0][c[0].length - 1] -= tmp;
+								else throw Error(`Broken. End value shouldn't be negative.`);
+							}
 						}
 					}
+
+					c = c.map( e => e.join("") ).join(".");
+					snums.push(c.incl(".") ? c : `${c}.0`);
 				}
-				c = c.map( e => e.join("") ).join(".");
-				return this.norm( c.incl(".") ? c : `${c}.0` );
+
+				return this.norm(snums[0]);
 			}
 			mul(...snums) {
 				snums[0] instanceof Array && (snums = snums[0]);
-				if (snums.length > 2) return this.mul(
-					this.mul( snums[0], snums[1] ),
-					...snums.slice(2),
-				);
-				var [a, b] = snums;
 
-				
-				if (rMath.isNaN(a) || rMath.isNaN(b)) return NaN;
-				a = this.norm( a ); b = this.norm( b );
-				const sign = this.sgn(a) === this.sgn(b) ? 1 : -1;
-				a = this.abs(a); b = this.abs(b);
-				if (this.eq.iz(a) || this.eq.iz(b)) return "0.0";
+				// instead of using mul( mul(snums[0], snums[1]), snums.slice(2) )
+				while (snums.length > 1) {
+					var [b, a] = [snums.pop(), snums.pop()];
 
-				a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
-				var dec = 0;
-				a.io(".") > 0 && (dec += a.length - 1 - a.io("."));
-				b.io(".") > 0 && (dec += b.length - 1 - b.io("."));
-				a = a.remove("."); b = b.remove(".");
-				for (var i = b.length, arr = [], carryover, tmp, str, j; i --> 0 ;) {
-					for (j = a.length, str = "", carryover = 0; j --> 0 ;) {
-						tmp = multable[ b[i] ][ a[j] ] + carryover + "";
-						carryover = tmp.length - 1 ? Number(tmp[0]) : 0;
-						tmp = Number(tmp[tmp.length - 1]);
-						str = tmp + str;
-						!j && carryover && (str = carryover + str);
+					if (rMath.isNaN(a) || rMath.isNaN(b))
+						return NaN; // no point continuing
+
+					if (type(a, 1) === "inf" || type(b, 1) === "inf") {
+
+						const _out = (typeof a === "number" ? rMath.sgn(a) : this.sgn(a)) *
+							(typeof b === "number" ? rMath.sgn(b) : this.sgn(b)) *
+							Infinity;
+
+						snums.push(_out);
+						continue;
+						// return Infinity * sgn(a) * sgn(b);
 					}
-					arr.push(str);
+
+					a = this.norm(a);
+					b = this.norm(b);
+
+					const sign = this.sgn(a) * this.sgn(b);
+
+					a = this.abs(a);
+					b = this.abs(b);
+
+					if (this.eq.iz(a) || this.eq.iz(b))
+						return "0.0"; // no point continuing
+
+					a = a.remove(/\.?0+$/g); b = b.remove(/\.?0+$/g);
+
+					var dec = 0; // A2 B2 / 10^dec
+
+					a.io(".") > 0 && (dec += a.length - 1 - a.io("."));
+					b.io(".") > 0 && (dec += b.length - 1 - b.io("."));
+
+					a = a.remove(/^0/); b = b.remove(/^0/); // if a or b is 0.x, remove the zeros for each
+					a = a.remove("."); b = b.remove(".");
+
+					for (var i = b.length, arr = [], carryover, tmp, str, j; i --> 0 ;) {
+						for (j = a.length, str = "", carryover = 0; j --> 0 ;) {
+							tmp = multable[ b[i] ][ a[j] ] + carryover + "";
+							carryover = tmp.length - 1 ? Number(tmp[0]) : 0;
+							tmp = Number(tmp[tmp.length - 1]);
+							str = tmp + str;
+							!j && carryover && (str = carryover + str);
+						}
+						arr.push(str);
+					}
+
+					for (var i = arr.length; i --> 0 ;)
+						arr[i] += strMul("0", i); // account for powers of 10
+
+					var total = this.div10(this.add(arr), dec);
+
+					snums.push(sign === -1 ? this.neg(total) : total);
+
 				}
-				for (var i = arr.length; i --> 0 ;) arr[i] += strMul("0", i);
-				for (var total = "0.0", i = arr.length; i --> 0 ;)
-					total = this.add(arr[i], total).remove(/\.0+$/);
-				total = (
-					total.substr(0, total.length - dec)
-					+ "."
-					+ total.slice(total.length - dec)
-				).replace(/\.$/, ".0");
-				return sign === -1 ? this.neg( total ) : total;
+				return this.norm(snums[0])
 			}
 			mul10(snum="0.0", n=1) {
+				// essentially a base-10 left shift (<<)
 				// multiplies snum by 10^int(n) (moves decimal n places to the right)
 				if (Number.isNaN( n = Number(n) ) || !Number.isInteger(n)) return NaN;
 				if (Number.isNaN( snum = this.norm(snum, NaN) )) return NaN;
@@ -4018,6 +4234,7 @@ void (() => { "use strict";
 				);
 			}
 			div10(snum="0.0", n=1) {
+				// essentially a base-10 right shift (>>>), but not only for integers
 				// divide snum by 10^n
 				if (Number.isNaN( n = Number(n) ) || !Number.isInteger(n)) return NaN;
 				if (Number.isNaN( snum = this.norm(snum, NaN) )) return NaN;
@@ -4033,21 +4250,32 @@ void (() => { "use strict";
 
 				return this.norm( sign < 0 ? this.neg(snum) : snum );
 			}
-			div(num="0.0", denom="1.0", precision=18) {
+			div(num="0.0", denom="1.0", precision=this.precision) {
+				/* TODO: speed up things like 13_591_409 / 2
+					idea: for 13_591_409 / 2
+					do (13_591_409 / 1_000) * 500
+					this is much faster as multiplications are quick,
+					and divisions are faster when a and b are closer together
+				*/
 				if (rMath.isNaN(num) || rMath.isNaN(denom)) return NaN;
-				Number.isNaN(precision = Number(precision)) && (precision = 18);
-				num = this.norm( num+"" ); denom = this.norm( denom+"" );
+				Number.isNaN(precision = Number(precision)) && (precision = 20);
+				num = this.norm( num ); denom = this.norm( denom );
 				if ( this.eq.iz(denom) )
 					return this.eq.iz(num) ?
 						NaN :
 						Infinity;
 				if ( this.eq.iz(num) ) return "0.0";
+				if ( this.eq.eq(denom, "1.0") ) return num;
 				const sign = this.sgn(num) * this.sgn(denom);
 				num = this.abs(num); denom = this.abs(denom);
-				let exponent = rMath.max(this.fpart(num).length, this.fpart(denom).length) - 2;
+				let exponent = rMath.max(
+					this.fpart(num).remove(/0+$/).length,
+					this.fpart(denom).remove(/0+$/).length
+				) - 2; // "0." always present
 				num = this.mul10(num, exponent); denom = this.mul10(denom, exponent);
 				// return this.idiv(num, denom); // extra checks for the same cases.
-				for (var i = 10, table = []; i --> 0 ;) table[i] = this.mul(i, denom);
+				for (var i = 10, table = []; i --> 0 ;)
+					table[i] = this.mul(i, denom);
 				let tmp1 = num, tmp2 = denom, tmp3, ans = 0n;
 				while ( this.eq.nn(tmp3 = this.sub(tmp1, tmp2)) ) {
 					tmp1 = tmp3;
@@ -4063,7 +4291,9 @@ void (() => { "use strict";
 					ansString += `${j}`;
 				}
 				ansString.io(".") < 0 && (ansString += ".0");
-				return sign === -1 ? `-${ansString}` : ansString;
+
+				return this.norm(sign === -1 ? `-${ansString}` : ansString);
+				// norm() is required: div(1, 10^(n > 5), 5) has extra zeros at the end
 			}
 			fdiv(num="0.0", denom="1.0") {
 				// floored division
@@ -4145,10 +4375,10 @@ void (() => { "use strict";
 				}
 				return `${ BigInt(sign) * ans}.0`;
 			}
-			idiv(num="0.0", denom="1.0", precision=18) {
+			idiv(num="0.0", denom="1.0", precision=this.precision) {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
 				// should be faster than div when applicable
-				// I do not remember where the "i" came from
+				// I do not remember where the "i" in the name came from.
 				if ( this.eq.iz(denom) )
 					return this.eq.iz(num) ?
 						NaN :
@@ -4176,15 +4406,15 @@ void (() => { "use strict";
 				return sign === -1 ? `-${ansString}` : ansString;
 			}
 			mod(a="0.0", b="0.0") { return this.sub( a, this.mul(b, this.fdiv(a, b)) ) }
-			ipow(a="0.0", b="1.0") {
+			ipow(a="0.0", b="1.0", divPrecision=this.precision) {
 				a = this.norm(a); b = this.norm(b);
 				if (!this.isIntN(b)) return NaN;
 				var t = "1.0";
 				if (this.sgn(b) >= 0)
-					for (; b > 0; b = this.decr(b))
+					for (; this.eq.ps(b); b = this.decr(b))
 						t = this.mul(t, a);
-				else for (; b < 0; b = this.add(b, 1))
-					t = this.div(t, a);
+				else for (; this.eq.ng(b); b = this.add(b, 1))
+					t = this.div(t, a, divPrecision);
 				return t;
 			}
 			neg(snum="0.0") {
@@ -4237,6 +4467,7 @@ void (() => { "use strict";
 			decr(snum="1.0") {
 				// probably faster than sMath.sub(x, 1) because there is less array manipulation
 				// the drawback is there is more string manipulation, which is probably slower.
+				// assumes valid input
 				if ("0-.".incl(snum[0])) return this.sub(snum, "1.0");
 				var i1 = snum.io("."), i2;
 
@@ -4288,6 +4519,7 @@ void (() => { "use strict";
 				return snum.slice(-2) !== ".0";
 			}
 			min(...snums) {
+				// TODO: possibly update to use binary search.
 				if (!snums.length) return "0.0";
 				snums = snums.flatten();
 				for (var min = snums[0], i = snums.length; i --> 1 ;)
@@ -4295,12 +4527,33 @@ void (() => { "use strict";
 				return min;
 			}
 			max(...snums) {
+				// TODO: possibly update to use binary search.
+
 				if (!snums.length) return "0.0";
 				var snums = snums.flatten();
 				for (var max = snums[0], i = snums.length; i --> 1 ;)
 					this.eq.gt(snums[i], max) && (max = snums[i]);
 				return max;
 			}
+			floor(snum="0.0") {
+				snum = this.norm(snum);
+				var ans = this.ipart(snum);
+				snum[0] === "-" && this.isFloat(snum) && (ans = this.decr(ans));
+				return ans;
+			}
+			ceil(snum="0.0") {
+				snum = this.norm(snum);
+				var ans = this.ipart(snum);
+				this.eq.ps(snum) && this.isFloat(snum) && (ans = this.add(ans, 1));
+				return ans;
+			}
+			round(snum="0.0") {
+				snum = this.norm(snum);
+				return this.eq.lt(this.fpart(snum), "0.5") ?
+					this.ipart(snum) :
+					this.add(this.ipart(snum), this.sgn(snum)+"")
+			}
+			trunc(snum="0.0") { return this.ipart(snum) }
 			_lmgf(t="lcm", ...ns) {
 				// TODO: deprecate _lmgf
 				// throw Error("not implemented");
@@ -4334,70 +4587,220 @@ void (() => { "use strict";
 					if (c) return i;
 				}
 			}
-			floor(snum="0.0") {
-				snum = this.norm(snum);
-				var ans = this.ipart(snum);
-				snum[0] === "-" && this.isFloat(snum) && (ans = this.decr(ans));
-				return ans;
-			}
-			ceil(snum="0.0") {
-				snum = this.norm(snum);
-				var ans = this.ipart(snum);
-				this.eq.ps(snum) && this.isFloat(snum) && (ans = this.add(ans, 1));
-				return ans;
-			}
-			round(snum="0.0") {
-				snum = this.norm(snum);
-				return this.eq.lt(this.fpart(snum), "0.5") ?
-					this.ipart(snum) :
-					this.add(this.ipart(snum), this.sgn(snum)+"")
-			}
-			trunc(snum="0.0") { return this.ipart(snum) }
-			lcm(...snums) { return this._lmgf("lcm", ...snums) } // TODO/CHG: Change to use the same method as rMath
-			gcd(...snums) { return this._lmgf("gcd", ...snums) } // TODO/CHG: Change to use the same method as rMath
-			gcf(...snums) { return this._lmgf("gcf", ...snums) } // TODO/CHG: Change to use the same method as rMath
+			// TODO/CHG: Change lcm, gcd, and gcf to use the same method as rMath
+			lcm(...snums) { return this._lmgf("lcm", ...snums) }
+			gcd(...snums) { return this._lmgf("gcd", ...snums) }
+			gcf(...snums) { return this._lmgf("gcf", ...snums) }
 			int(n="0.0") { return this.ipart(n) }
 			truncate(n="0.0") { return this.ipart(n) }
 			ifact(n="1.0") {
-				n = this.norm(n);
-				if (this.isNaN(n) || this.eq.ng(n)) return NaN;
-				if ( this.eq.nz(this.fpart(n)) ) throw Error("No decimals allowed.");
+				if (Number.isNaN( n = this.norm(n, NaN) ))
+					throw Error`invalid input to sMath.ifact(). use a string.`;
+				if (this.eq.ng(n)) return NaN;
+				if (!this.isIntN(n)) throw Error("No decimals allowed.");
 				for (var i = n+"", total = "1.0"; this.eq.gt(i, "0.0"); i = this.decr(i))
 					total = this.mul(i, total);
 				return total;
 			}
-			sum(n, last, fn=n=>n, inc="1.0", divPrecision=18) {
+			odd(n="1") { return this.incr( this.even(n) ); /* 2n + 1 */ }
+			even(n="1") { return this.mul("2.0",n); /* 2n */ }
+			sum(n, last, fn=n=>n, inc="1.0", divPrecision=this.precision, stringifyInput=false) {
 				// if divPrecision is falsy, it won't change the function
 				if (this.isNaN( n = this.norm(n) )) return NaN;
 				if (this.isNaN( last = this.norm(last) ) ) return NaN;
 				if (type(fn, 1) !== "func") return NaN;
-				if ( divPrecision && /[-+*/%!^]/.test(fn.code()) )
+				if ( stringifyInput && divPrecision && /[-+*/%!^]/.test(fn.code()) )
 					fn = stringifyMath(fn, fn.args(), "", divPrecision);
 				if (this.isNaN( inc = this.norm(inc) )) return NaN;
 				for (var total = "0.0"; this.eq.le(n, last); n = this.add(n, inc))
 					total = this.add(total, fn(n));
 				return total;
 			}
-			atanh(x, n="100.0", divPrecision=18) {
-				x = this.norm(x);
-				if (this.isNaN(x)) return NaN;
-				const y = sMath.incr( sMath.mul(2, k) );
+			atan(x, acy="20.0", precision=8, pi=null) {
+				// TODO: get to the point where `precision=this.divPrecision` is viable.
+				// 2 arctan(x) = sgn(x)(|x|>1)π + arctan( 2x/(1-x²) )
+				// {acy} is the iterations.
+				// {precision} is the number of decimal digits returned; also given to div().
+				if (Number.isNaN( x = this.norm(x, NaN) )) return NaN;
+				if (Number.isNaN( acy = this.norm(acy, NaN) )) return NaN;
+				if (this.eq.np(acy)) return x;
+				if (this.eq.iz(x)) return "0.0";
+				const pi_2 = this.div(
+					pi ?? this.piApprox(precision, precision),
+					"2.0",
+					Infinity
+				);
+
+				acy = this.floor(acy);
+
+				for (var denom = "1.0", ans = "0.0"; this.eq.nn(acy = this.decr(acy)) ;) {
+					// next = 2x / (1 - x^2);
+					const next = this.div(
+						this.even(x),
+						this.sub(1, this.square(x)),
+						precision
+					);
+					// denom !== 0 && (ans += π_2 sgn(x) (|x| > 1) / denom);
+					if ( this.eq.nz(denom) ) ans = this.add(ans, this.mul(
+						pi_2,
+						this.sgn(x),
+						this.eq.gt(this.abs(x), 1),
+						this.div(1, denom, precision)
+					));
+					// denom *= 2 sgn(next);
+					denom = this.mul(this.sgn(next), 2);
+					// x = |next|;
+					x = this.abs(next);
+				}
+				return ans;
+			}
+			atanh(x, n="20.0", divPrecision=this.precision) {
+				// TODO: speed up by remembering the previous power and x^power.
+				if (this.isNaN( x = this.norm(x) )) return NaN;
+				if (this.eq.ge(x, "1.0")) return NaN; // Infinity;
+				if (this.eq.le(x, "-1.0")) return NaN; // -Infinity;
+
 				return this.sum(
 					"0.0" // first
 					, n // last
-					, k => sMath.div( sMath.ipow(x, y), y, divPrecision ) // function
+					, k => {
+						const power = this.odd(k);
+
+						return this.div(
+							this.ipow(x, power)
+							, power
+							, divPrecision
+						)
+					} // function
 					, "1.0" // increment
 					, divPrecision // divPrecision
 				)
 			}
-			ln(x, n="100.0", divPrecision=18) {
+			ln(x, n="20.0", divPrecision=this.precision) {
+				// TODO: Fix
 				x = this.norm(x);
-				return this.mul(
-					this.atanh(
-						this.div( this.decr(x), this.incr(x), divPrecision ),
-						n, divPrecision
-					), "2.0"
+				return this.even( this.atanh(
+					this.div(
+						this.decr(x)
+						, this.incr(x)
+						, divPrecision
+					)
+					, n
+					, divPrecision
+				) );
+			}
+			piApprox(iterations="1.0", precision=this.precision) {
+				// uses the Chudnovsky Algorithm
+
+				iterations = this.norm(iterations);
+
+				if (this.eq.lt(iterations, "1.0"))
+					return "0.0";
+
+				let summation = this.sum(
+					"0.0", // first
+					this.decr( this.floor(iterations) ), // last
+					k => this.div(
+						// numerator
+						this.mul(
+							// (6k)!
+							this.ifact( this.mul("6.0", k) ),
+							// 545140134k + 13591409
+							this.add(
+								this.mul("545140134.0", k),
+								"13591409.0"
+							)
+						),
+						// denominator
+						this.mul(
+							// (3k)!
+							this.ifact(this.mul("3.0", k)),
+							// k!^3
+							this.cube(this.ifact(k)),
+							// (-262537412640768000)^k
+							this.ipow("-262537412640768000.0", k)
+						),
+						precision
+					), // function
+					"1.0", // increment
+					void 0, // division precision for stringified things
+					false // stringify function
 				);
+
+				// 640320 ^ (3/2) / 12
+				const numerator_constant = this.mul(
+					"426880.0",
+					this.sqrt("10005.0", precision)
+				);
+
+				return this.div(numerator_constant, summation, precision);
+			}
+			sqrt(x, precision=this.precision, guess=x) {
+				// infinite precision square roots
+				// if c = sqrt(x, n),
+				// `sqrt(x, n+1, c)` is faster than `sqrt(x, n+1)`
+
+				if (this.isNaN( x = this.norm(x) )) return NaN;
+				if (this.isNaN( guess = this.norm(guess) )) return NaN;
+				if (Number.isNaN( precision = Number(precision) )) return NaN;
+				if (this.eq.ng(x)) return NaN;
+
+				precision = floor(precision);
+				const orig = x;
+				x = guess;
+
+				for (var prev;;) {
+					[prev, x] = [x, this.div(
+						this.add( x, this.div(orig, x, precision) ),
+						"2.0",
+						precision
+					)];
+
+					if (prev === x) return x;
+				}
+			}
+			acsc(x, acy, precision=this.precision) {
+				throw Error("acsc() not implemented");
+				// atan(1 / Sqrt[1-x^2])
+			}
+			stringifyMath() {
+				return LIBRARY_VARIABLES.stringifyMath.apply(null, arguments);
+			}
+			inv(snum="1.0", divPrecision=this.precision) {
+				// fractional inverse
+				return this.div("1.0", snum, divPrecision);
+			}
+			digitwiseMul(a="1.0", digit=0n) {
+				// basicaly useless. mul() with one digits is already really fast.
+				// this should technically be faster in theory though.
+
+				if ( Number.isNaN(a = this.norm(a, NaN)) ) return NaN;
+				try { digit = BigInt(digit) }
+				catch { throw Error`digit must be an integer` }
+
+				if ( digit < 0n ) return this.neg( this.digitwiseMul(a, -digit) );
+				if (digit > 9n) throw Error`digit must be a single digit`;
+				if (digit === 0n) return "0.0";
+				if (digit === 1n) return a;
+
+				digit = Number(digit);
+
+				const table = [ "000000000", "123456789", "2468", "369", "48" ];
+
+				return a.split("").map(e => {
+					if (e === "." || e === "-") return e;
+					if (table[e][digit - 1]) return table[e][digit - 1];
+
+					throw Error(`${e} can't be multiplied digitwise by ${digit}`);
+				}).join("");
+
+			}
+			digitwiseDiv(a = "1.0", b = "1.0") {
+				// TODO: implement
+				throw Error`NotImplemented`;
+				if ( Number.isNaN(a = this.norm(a, NaN)) ) return NaN;
+				if ( Number.isNaN(b = this.norm(b, NaN)) ) return NaN;
+				if (!this.isIntN(b)) throw Error`b must be an integer`;
 			}
 		}
 		, "math rMath": class RealMath {
@@ -7172,18 +7575,18 @@ void (() => { "use strict";
 			}
 			acos(x, acy=100) { return Number.isNaN( x = Number(x) ) ? z : π_2 - this.asin(x, acy) }
 			atan(x, acy=100) {
-				// 2 arctan(x) = sgn(x)(|x|>1)π - arctan( 2x/(x²-1) )
+				// 2 arctan(x) = sgn(x)(|x|>1)π + arctan( 2x/(1-x²) )
 				if (Number.isNaN(x = Number(x))) return NaN;
 				if (Number.isNaN(acy = Number(acy))) acy = 100;
 				if (acy <= 0) return x;
 				if (x === 0) return 0; // -0
 
 				acy = floor(acy);
-				for (var denom = sgn(x), ans = 0; acy --> 0 ;) {
+				for (var denom = 1, ans = 0; acy --> 0 ;) {
 					const next = 2*x / (1 - x**2);
-					ans += π_2 * (x > 1 || x <- 1) / denom;
+					denom && (ans += π_2 * sgn(x) * (x > 1 || x <- 1) / denom);
 					denom *= sgn(next) * 2;
-					x = sgn(next) * next;
+					x = abs(next);
 				}
 				return ans;
 				// return Number.isNaN(x = Number(x)) ? z : this.asin(x / this.hypot(x, 1));
@@ -7792,16 +8195,16 @@ void (() => { "use strict";
 				return this.cbrt(E + G) + this.cbrt(E - G) + L
 			}
 			solveQuadratic(a, b, c) {
-				// ax² + bx + c  =  0
+				// Solve[ax² + bx + c == 0, x]
 				return Number.isNaN(a = Number(a)) ||
 					Number.isNaN(b = Number(b)) ||
 					Number.isNaN(c = Number(c)) ?
 					NaN :
 					a ?
 						(function() {
-							a *= 2;
-							const d = this.sqrt(b**2 - 2*a*c);
-							return [(d-b)/a, -(b+d)/a];
+							a *= -2;
+							const d = this.sqrt(b**2 + 2*a*c);
+							return [(b-d)/a, (b+d)/a];
 						})() :
 						this.solveLinear(b, c);
 			}
@@ -7991,29 +8394,133 @@ void (() => { "use strict";
 
 			CHSolutionFunctions = (function create_CHSF() {
 				// Continuum Hypothesis Solution Functions
-				function indexToReal(n = 1n) {
+				function naturalToReal(n = 1n) {
 					if (typeof n !== "bigint")
 						throw Error`bigint argument is required for indexToReal()`;
 					const a = bMath.sqrt(1n + 4n*n) + 1n >> 1n
 						, b = n - a*(a - 1n) >> 1n;
 					return `${n % 2n ? "-" : ""}${b}.` + `${a - b - 1n}`.reverse();
 				}
-				function realToIndex(string) {
-					if (typeof string !== "string") throw Error`string argument required`;
+
+				function realToNatural(string = "1.0") {
+					if (typeof string === "string")
+						string = string.replace(/\s/g, "");
+					if (Number.isNaN( string = numStrNorm(string, NaN) ))
+						throw Error`string argument required`;
 					const match = /^-??(\d+)\.(\d+)$/.exec(string);
 					if (match == null) throw Error`string number argument required`;
 					const x = BigInt(match[1]), y = BigInt(match[2].reverse());
 
-					return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-")
+					return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");
 				}
 
-				indexToReal.inverse = realToIndex;
-				realToIndex.inverse = indexToReal;
+				naturalToReal.inverse = realToNatural;
+				realToNatural.inverse = naturalToReal;
 
 				return {
-					getReal : indexToReal,
-					inverse : realToIndex,
+					naturalToReal : naturalToReal,
+					realToNatural : realToNatural,
 				};
+			})()
+
+			_primeFactor = (function create_primeFactor() {
+				// prime factor by base conversion
+
+				function intlen(str) {
+					// bigint length
+					// len(str) % 3 === 0.
+					if (str == null) return 0n;
+					for (var i = 0n; str[i] != null ;) i += 3n;
+					return i;
+				}
+
+				function convertBase(n, b = 2n) {
+					// base 10 --> base b
+
+					if (!n) return "2:";
+
+					var m = [];
+
+					while (n !== 0n)
+						m.push(n % b),
+						n /= b;
+
+					return `${b}:(${ m.reverse().join(")(") })`;
+				}
+
+				function convertBase2(n, b = 2n) {
+					// base a --> base b
+					if (typeof n === "number") {
+						if (n === 0) return "2:";
+
+						var m = [];
+
+						while (n !== 0n)
+							m.push(n % b),
+							n /= b;
+
+						return `${b}:(${ m.reverse().join(")(") })`;
+					}
+
+				}
+
+				function convert10(number) {
+					// number as returned from convert_base()
+					// base-b string --> base-10 number
+					if (/\d+:/.all(number)) return 0n;
+
+					var b = BigInt( number.slc(0, ":") );
+
+					return number.split(/(?=\()/g)
+						.slice(1)
+						.reverse()
+						.map( (d, i) => b**BigInt(i) * BigInt(d.slice(1, -1)) )
+						.reduce((t, n) => t + n, 0n);
+				}
+
+				function primeFactor(number) {
+					// 0n and -1n are included in prime factors when applicable.
+					if (typeof number !== "bigint")
+						try { number = BigInt(number) }
+						catch { throw Error`only bigints and numbers can be prime factored` }
+
+					if (abs(number) === 1n || number === 0n)
+						return [number];
+						// `-0n` is not a thing
+
+					var factorList = [], base = 1n;
+
+					if (number < 0n)
+						factorList.push(-1n),
+						number *= -1n;
+
+					while (number !== 1n) {
+
+						base = bMath.prime(1n, base + 1n), number = convertBase(number, base);
+
+						for (var i = intlen(number.match(/(?:\(0\))+$/)?.[0]) / 3n; i --> 0n ;)
+							factorList.push(base);
+
+						number = convert10( number.remove(/(?:\(0\))+$/) );
+					}
+
+					/*do {
+						base = bMath.prime(1n, base + 1n), number = convertBase2(number, base);
+
+						for (var i = intlen(number.match(/(?:\(0\))+$/)?.[0]) / 3n; i --> 0n ;)
+							factorList.push(base);
+
+						number = number.remove(/(?:\(0\))+$/);
+
+					} while ( !/^\d+:(\(1\))$/.test(number) );*/
+
+					return factorList;
+				}
+
+				return primeFactor._convertBase = convertBase,
+					primeFactor._convert10 = convert10,
+					primeFactor._intlen = intlen,
+					primeFactor;
 			})()
 
 			// Things planned to be implemented:
@@ -8059,6 +8566,12 @@ void (() => { "use strict";
 			// pseudoprimes
 			// Barnes G-Function
 			// Euler's totient function #(k < n st coprime(n,k))
+			// factorials
+				// subfactorial: sum
+				// primorial
+				// super factorial
+				// exponential factorial
+				// hyper factorial
 		}
 		, "math cMath": class ComplexMath {
 			constructor(
@@ -9066,137 +9579,6 @@ document._createCDATASection = (function create__createCDATASection() {
 	function createCDATASection(text="") { return doc.createCDATASection(text) }
 	return createCDATASection._document = doc, createCDATASection;
 })();
-var _printCallStack = (function create_printCallStack() {
-	function demargin(fn) {
-		var code = fn + "", tabs = code.match(/\n(\s*)}$/)?.[1];
-
-		return tabs == null ?
-			code :
-			code.remove( RegExpg("(?<=\n)" + tabs, "g") );
-	}
-
-	function printCallStack() {
-		for (var current = arguments[0] === true ? arguments.callee : arguments.callee.caller, i = 1;
-			current !== null;
-			current = current.caller
-		) console.log(
-			"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
-			i++,
-			current.name,
-			Array.from(current.arguments),
-			demargin(current)
-		);
-		console.log(null);
-	}
-	printCallStack._demargin = demargin;
-
-	return printCallStack;
-})();
-
-Reflect.defineProperty(rMath, "_primeFactor", {
-	value: (function create_primeFactor() {
-		// prime factor by base conversion
-
-		function intlen(str) {
-			// bigint length
-			// len(str) % 3 === 0.
-			if (str == null) return 0n;
-			for (var i = 0n; str[i] != null ;) i += 3n;
-			return i;
-		}
-
-		function convertBase(n, b = 2n) {
-			// base 10 --> base b
-
-			if (!n) return "2:";
-
-			var m = [];
-
-			while (n !== 0n)
-				m.push(n % b),
-				n /= b;
-
-			return `${b}:(${ m.reverse().join(")(") })`;
-		}
-
-		function convertBase2(n, b = 2n) {
-			// base a --> base b
-			if (typeof n === "number") {
-				if (n === 0) return "2:";
-
-				var m = [];
-
-				while (n !== 0n)
-					m.push(n % b),
-					n /= b;
-
-				return `${b}:(${ m.reverse().join(")(") })`;
-			}
-
-		}
-
-		function convert10(number) {
-			// number as returned from convert_base()
-			// base-b string --> base-10 number
-			if (/\d+:/.all(number)) return 0n;
-
-			var b = BigInt( number.slc(0, ":") );
-
-			return number.split(/(?=\()/g)
-				.slice(1)
-				.reverse()
-				.map( (d, i) => b**BigInt(i) * BigInt(d.slice(1, -1)) )
-				.reduce((t, n) => t + n, 0n);
-		}
-
-		function primeFactor(number) {
-			// 0n and -1n are included in prime factors when applicable.
-			if (typeof number !== "bigint")
-				try { number = BigInt(number) }
-				catch { throw Error`only bigints and numbers can be prime factored` }
-
-			if (abs(number) === 1n || number === 0n)
-				return [number];
-				// `-0n` is not a thing
-
-			var factorList = [], base = 1n;
-
-			if (number < 0n)
-				factorList.push(-1n),
-				number *= -1n;
-
-			while (number !== 1n) {
-
-				base = bMath.prime(1n, base + 1n), number = convertBase(number, base);
-
-				for (var i = intlen(number.match(/(?:\(0\))+$/)?.[0]) / 3n; i --> 0n ;)
-					factorList.push(base);
-
-				number = convert10( number.remove(/(?:\(0\))+$/) );
-			}
-
-			/*do {
-				base = bMath.prime(1n, base + 1n), number = convertBase2(number, base);
-
-				for (var i = intlen(number.match(/(?:\(0\))+$/)?.[0]) / 3n; i --> 0n ;)
-					factorList.push(base);
-
-				number = number.remove(/(?:\(0\))+$/);
-
-			} while ( !/^\d+:(\(1\))$/.test(number) );*/
-
-			return factorList;
-		}
-
-		return primeFactor._convertBase = convertBase,
-			primeFactor._convert10 = convert10,
-			primeFactor._intlen = intlen,
-			primeFactor;
-	})()
-	, writable: true
-	, enumerable: true
-	, configurable: true
-});
 
 void function removeAmlaut(str) { return str.replace([/ü/g, /Ü/g], ["u", "U"]) }
 void function removeTilde(str) { return str.replace([/ñ/g, /Ñ/g], ["n", "N"]) }
@@ -9249,3 +9631,57 @@ var validFlags = (function getValidRegexFlags() {
 
 	return validFlags;
 })();
+
+void function _new(Class, ...args) {
+	// basically new Class(...args).
+	// if {Class} is not an argument, it saves the use of `new` each call.
+	// _new(Class) instanceof _new; // true
+	// _new(Class).ClassMethod(); // no error
+	// _new(Class).InheritedClassMethod(); // no error
+
+	return new Proxy(
+		Reflect.construct(Class, args, _new), {
+			get: (_, attr, _this) => Reflect.get(Class.prototype, attr, _this)
+			// preventExtensions
+			// getPrototypeOf
+			// setPrototypeOf
+			// isExtensible
+			// set
+			// delete            ; Reflect.deleteProperty()
+			// hasProperty       ; Reflect.has()
+			// getOwnProperty    ; Reflect.getOwnPropertyDecriptor()
+			// ownPropertyKeys   ; Reflect.ownKeys()
+			// defineOwnProperty ; Reflect.defineProperty()
+		}
+	);
+}
+
+void function __f(s) {
+	// "1  +  + + + +  +  +  +  + +  +  +  +  +  +  + +  +  +  + +  +  +  + + +  +  +  +  + +  +  +  +  +  +  + +  +  + + +  +  + + +  + +  + +  + +  +  +  + +  +  + +  +  + + +  +  + +  +  +  +  +  +  + + +  +  +  + +  + +  + + + + +  +  + + +  +  + +  +  + + +  + + +  + +  + + +  1"
+	return Array.from(
+		s .remove(/[^ +1]/g)
+			.slice(1, -1) // get rid of the ones
+			.split("+")
+			.filter(e => e.length && e.io("1") < 0)
+			.map(e => e.length - 1)
+			.join("")
+			.matchAll(/[01]{7}/g)
+		)
+			.map( e => String.fromCharCode("0b" + e[0]) )
+			.join("");
+}
+
+
+
+sMath.piApprox.digits = {}; // correct decimal places. last one not rounded.
+sMath.piApprox.digits["0"] = "3.0";
+sMath.piApprox.digits["1"] = "3.1";
+sMath.piApprox.digits["2"] = "3.14";
+sMath.piApprox.digits["3"] = "3.141";
+sMath.piApprox.digits["4"] = "3.1415";
+sMath.piApprox.digits["100"] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
+sMath.piApprox.digits["200"] = "3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196";
+sMath.piApprox.digits["300"] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273";
+sMath.piApprox.digits["600"] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132";
+sMath.piApprox.digits["1150"] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983";
+sMath.piApprox.digits["2250"] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319255060400927701671139009848824012858361603563707660104710181942955596198946767837449448255379774726847104047534646208046684259069491293313677028989152104752162056966024058038150193511253382430035587640247496473263914199272604269922796782354781636009341721641219924586315030286182974555706749838505494588586926995690927210797509302955321165344987202755960236480665499119881834797753566369807426542527862551818417574672890977772793800081647060016145249192173217214772350141441973568548161361157352552133475741849468438523323907394143334547762416862518983569485562099219222184272550254256887671790494601653466804988627232791786085784383827967976681454100953883786360950680064225125205117392984896084128488626945604241965285022210661186306744278622039194945047123713786960956364371917287467764657573962413890865832645995813390478027590099465764078951269468398352595709825822620522489407726719478268482601476990902640136394437455305068203496252451749399651431429809190659250937221696461515709858387410597885959772975498930161753928468138268683868942774155991855925245953959431049972524680"
