@@ -19,5 +19,10 @@
 		{ "keys": ["ctrl+k", "ctrl+t"], "command": "title_case" },
 		{ "keys": ["ctrl+u"], "command": "upper_case" },
 		{ "keys": ["ctrl+shift+u"], "command": "lower_case" },
-	]
+	]/*,
+	"extra syntaxes": [
+		"NASM",
+		"TI-BASIC-84",
+		"Wolfram Language"
+	]*/
 }
