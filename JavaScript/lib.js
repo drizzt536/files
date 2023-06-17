@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v2.1.10 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.1.11 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 /**
  * Todo etc. Comment Syntax:
@@ -20,7 +20,6 @@
  * // KEEP:/ no message
  * // TODO:/ no message (probably should though)
 */
-
 
 void (() => {
 	/* Customization & Constants: */ {
@@ -205,12 +204,8 @@ void (() => {
 					   ~ Defined_Properties_Enumerable, default is false
 					   ~ Defined_Properties_Writable, default is true
 					 > if local is active, nothing changes and having property is useless.
-				   - iterable
-					 > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
-					 > does the same thing as the enumerable flag
 				   - enumerable
 					 > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
-					 > does the same thing as the iterable flag
 				   - configurable
 					 > if the property flag is given, it changes the configurable argument to true, otherwise nothing changes
 				   - nwritable
@@ -373,7 +368,7 @@ void (() => {
 			, alphabetL = "abcdefghijklmnopqrstuvwxyz"
 			, alphabet  = alphabetL
 			, alphabetU = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			, base62Numbers = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			, base62Numerals = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			, characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
 			, π      = 3.1415926535897932  , π_2   = 1.5707963267948966
 			, π_3    = 1.0471975511965979  , π2_3  = 2.0943951023931957
@@ -863,7 +858,7 @@ void (() => {
 			})()
 			, define = (function create_define() {
 
-				function error(name, scopename, orig_str, ON_CONFLICT) {
+				function error(name, scopename, orig_str, ON_CONFLICT)/*: boolean*/ {
 					const args = [
 						String(name)
 						, (scopename || "").replace(/(object|prototype)\s*/, "")
@@ -873,8 +868,10 @@ void (() => {
 					CONFLICT_ARR.push(args);
 					if (ON_CONFLICT === "crash") throw Error(`${stringifyScope(...args)} is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
 					if (ON_CONFLICT === "cry") console.log(`${stringifyScope(...args)} overwritten and LibSettings.ON_CONFLICT is set to cry.`);
+
 					if (ON_CONFLICT === "debugger") debugger;
 					else if (ON_CONFLICT === "dont-use") return !0;
+
 					return !1;
 				}
 
@@ -915,6 +912,7 @@ void (() => {
 					if (
 						typeof str !== "string" ||
 						!str ||
+						str.startsWith("_called ") ||
 						scope == null ||
 						scope != scope /*NaN*/ ||
 						(Array.isArray( LibSettings.Global_Ignore_List ) ?
@@ -923,9 +921,14 @@ void (() => {
 						)
 					) return;
 
-					if (addLocalAuto && !Object.hasOwn(LIBRARY_VARIABLES, str) && scopename === void 0) {
-						if (!str.includes("auto")) str = "auto " + str;
-						if (!str.includes("local")) str = "local " + str;
+					if (addLocalAuto &&
+						!Object.hasOwn(LIBRARY_VARIABLES, str) &&
+						scopename === void 0
+					) {
+						// shouldn't this block be after creating the list?
+						throw Error`I think this is broken and don't feel like fixing it. I also don't know what it is for.`;
+						/*list?*/str.includes("auto") || (str = "auto " + str);
+						/*list?*/str.includes("local") || (str = "local " + str);
 						LIBRARY_VARIABLES[str] = customValue;
 					}
 
@@ -1046,7 +1049,8 @@ void (() => {
 						enumerable: !1,
 						configurable: !1,
 					});
-					if (list.includes("native")) return define( (typeof scope[name] === "function" &&
+					if (list.includes("native")) return define( 
+						(typeof scope[name] === "function" &&
 						(scope[name]+"").endsWith("() { [native code] }") ? "overwrite " : "") + name,
 						section, scope, previous, scopename || "", ON_CONFLICT, addLocalAuto
 					);
@@ -1054,23 +1058,51 @@ void (() => {
 					if ( scope == null && list.includes("try") )
 						return;
 
-					return list.includes("overwrite") || !(scope[name] !== void 0 &&
+					if (!list.includes("overwrite") &&
+						scope[name] !== void 0 &&
 						ON_CONFLICT !== "none" &&
 						error(name, scopename, str, ON_CONFLICT)
-					) ?
-						(list.includes("nproperty") ||
-							!(list.includes("property") || LibSettings.Property_Is_Default_Defined_Vars) ?
-							(scope[name] = previous) :
-							Reflect.defineProperty(scope, name, {
-								value: previous
-								, configurable: list.includes("configurable") || !!LibSettings.Defined_Properties_Configurable
-								, enumerable: list.includes("iterable") ||
-									list.includes("enumerable") ||
-									!!LibSettings.Defined_Properties_Enumerable
-								, writable: !(list.includes("nwritable") && !LibSettings.Defined_Properties_Writable),
-							})
-						) :
-						void 0;
+							// error(...) is true if `on conflict` is set to "dont-use"
+					) return undefined;
+
+					// not a property. `nproperty` overwrites `property`
+					if (list.includes("nproperty") ||
+						!list.includes("property") &&
+						!list.includes("get") &&
+						!list.includes("set") &&
+						!LibSettings.Property_Is_Default_Defined_Vars
+					) return scope[name] = previous;
+
+					// `get` implicitly implies `property`
+					// currently requires `configurable` if adding a setter after.
+					// adding getters and setters at the same time will probably
+						// be added at some point.
+					if (list.includes("get")) return Reflect.defineProperty(scope, name, {
+						get: previous
+						, configurable: list.includes("configurable") ||
+							!!LibSettings.Defined_Properties_Configurable
+						, enumerable: list.includes("enumerable") ||
+							!!LibSettings.Defined_Properties_Enumerable
+					});
+
+					// setter. the same things that apply to `get` also apply to `set`.
+					if (list.includes("set")) return Reflect.defineProperty(scope, name, {
+						set: previous
+						, configurable: list.includes("configurable") ||
+							!!LibSettings.Defined_Properties_Configurable
+						, enumerable: list.includes("enumerable") ||
+							!!LibSettings.Defined_Properties_Enumerable
+					});
+
+					// no getter
+					return Reflect.defineProperty(scope, name, {
+						value: previous
+						, configurable: list.includes("configurable") ||
+							!!LibSettings.Defined_Properties_Configurable
+						, enumerable: list.includes("enumerable") ||
+							!!LibSettings.Defined_Properties_Enumerable
+						, writable: !(list.includes("nwritable") && !LibSettings.Defined_Properties_Writable),
+					});
 				}
 
 				define.getPrevious = function getPrevious() { return previous };
@@ -1289,6 +1321,7 @@ void (() => {
 				return fn.substring(1, i);
 			}
 			, numToStrW_s = function numberToStringWithUnderscores(number) {
+				// TODO: make this just traverse the string backwards
 				for (var i = 0, str2 = "", str = `${number}`.reverse(); i < str.length; i++) {
 					!(i % 3) && i && (str2 += "_");
 					str2 += str[i];
@@ -1645,6 +1678,7 @@ void (() => {
 			return Image;
 		}
 		, "call md5"(n) {
+			// I did not write this one.
 			function r(n, r) {
 				var t = (65535 & n) + (65535 & r);
 				return (n >> 16) + (r >> 16) + (t >> 16) << 16 | 65535 & t
@@ -2106,29 +2140,47 @@ void (() => {
 			// TODO: Make safety things for the functions so the user doesn't add non-character things
 			var MutStr = class MutableString extends Array {
 				constructor() {
+					// TODO: fix MutableString(["1", "2", "34"]) != MutableString("1", "2", "34")
+					// TODO: fix MutableString("1", "2", ["34"]) != MutableString("1", "2", ["3", "4"])
+					// TODO: fix MutableString(["1", "2", ["34"]]) == []
 					super();
 					this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
 					for (const e of arguments) {
 						// type() and not typeof so mutable strings also work
-						type(e) === "string" && this.union(e.split(""));
+						type(e) === "string" && this.union(e.split("")); // string an mutable string
 						if (isArr(e) && e.every(e => typeof e === "string"))
 							this.union(e);
 					}
 				}
 				__type__() { return "mutstr" }
-				toString(joiner="") { return this.join(joiner) }
-				valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
-				concat() { return Array.prototype.concat.apply(this, arguments) }
-			};
-			let protoArray = Reflect.ownKeys(MutStr.prototype);
+				/*override */toString(joiner="") { return this.join(joiner) }
+				/*override */valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
+				/*override */concat() { return Array.prototype.concat.apply(this, arguments) }
+				/*override */begin(str) {
+					for (var i = this.length; i --> 0 ;)
+						this[i + str.length] = this[i];
 
+					for (var i = str.length; i --> 0 ;)
+						this[i] = str[i];
+
+					return this;
+				}
+			};
+			const prototypeKeys = Reflect.ownKeys(MutStr.prototype);
+
+			// TODO: make this use Reflect.defineProperty()
 			for (const s of Reflect.ownKeys(String.prototype))
-				protoArray.incl(s) || (MutStr.prototype[s] = String.prototype[s]);
+				prototypeKeys.includes(s) || (MutStr.prototype[s] = String.prototype[s]);
 
 			function MutableString(/*arguments*/) { return new MutStr(...arguments) }
 			MutableString.fromCharCode = function fromCharCode(code) {
-				return this (isArr(code) ? code.map(e => chr(e)) : chr(code));
+				return this(
+					code instanceof Array ?
+						code.map(e => chr(e)) :
+						chr(code)
+				);
 			}
+			MutableString._MutableString = MutStr;
 			return MutableString;
 		}
 		, str: function String(a) { return a?.toString?.call?.( [].slice.call(arguments, 1) ) }
@@ -2204,7 +2256,7 @@ void (() => {
 		, "call native RegExp"() {
 			const _RegExp = RegExp
 			, regex = function RegExp(source="(?:)", flags="") {
-				return /*this.*/_RegExp(
+				return _RegExp(
 					typeof source === "symbol" ?
 						symbToStr(source).replace(/([-+.?*^$()[\]{}\\/\|])/g, "\\$1") :
 						source?.toString?.() ?? "(?:)",
@@ -2230,6 +2282,19 @@ void (() => {
 			Reflect.defineProperty(regex, "name", {
 				get: function() { return this._RegExp.name }
 				, set: function() { throw Error("'name' property of RegExp cannot be changed or deleted.") }
+				, enumerable: false
+				, configurable: false
+			});
+			Reflect.defineProperty(regex, "validFlags", {
+				value: (function get_valid_regex_flags() {
+					var flags = "";
+
+					for (var char of alphabetL)
+						try { _RegExp("", char); flags += char } catch {}
+
+					return flags;
+				})()
+				, writable: false
 				, enumerable: false
 				, configurable: false
 			});
@@ -2356,7 +2421,8 @@ void (() => {
 				, configurable: false
 			});
 
-			return regex.prototype.constructor = regex, regex;
+			return regex.prototype.constructor = regex,
+				regex;
 		}
 		, HTMLElementToString(element) {
 			if (element?.constructor?.name === "DocumentType") return `<!DOCTYPE ${element?.name ?? "html"}>`;
@@ -2398,6 +2464,16 @@ void (() => {
 			return tabs == null ?
 				code :
 				code.remove( RegExp("(?<=\n)" + tabs, "g") );
+		}
+		, time(fn, arglist=[]) {
+			// pre bind the function.
+			let a = 1., b = 1.; // initialize so compiler knows the types etc.
+
+			a = performance.now();
+			fn(...arglist);
+			b = performance.now();
+
+			return b - a;
 		}
 		, comprehension: (function create_comprehension() {
 			function comprehension(fn, var_, iter, cond="") {
@@ -2496,7 +2572,7 @@ void (() => {
 		, "archived setInterval": setInterval._setInterval
 		, "local numToStrW_s": numToStrW_s
 		, "local stringifyScope": stringifyScope
-		, "local base62Numbers": base62Numbers
+		, "local base62Numerals": base62Numerals
 		, "local LibSettings": LibSettings
 		, "local characters": characters
 		, "local alphabetL": alphabetL
@@ -2565,9 +2641,9 @@ void (() => {
 				console.log(null);
 			}
 		}
-		, "ifdom prototype NodeList": { last: lastElement }
-		, "ifdom prototype HTMLCollection": { last: lastElement }
-		, "ifdom prototype HTMLAllCollection": { last: lastElement }
+		, "ifdom prototype NodeList": { "get last": lastElement }
+		, "ifdom prototype HTMLCollection": { "get last": lastElement }
+		, "ifdom prototype HTMLAllCollection": { "get last": lastElement }
 		, "object Object": {
 			"property copy" : deepCopy,
 			"property keyof": keyof,
@@ -2622,6 +2698,7 @@ void (() => {
 			, "property incl": (function create_incl() {
 				const _includes = Array.prototype.includes;
 				function includes(searchElement, fromIndex=0, compare=(a,b) => a === b) {
+					// just use .includes() if you are only using the first argument
 					for (var i = this.length; i --> fromIndex ;) {
 						if ( compare(this[i], searchElement) )
 							return true;
@@ -2632,7 +2709,7 @@ void (() => {
 				return includes;
 
 			})()
-			, "property last": lastElement
+			, "get last": lastElement
 			, "property nincl": function doesntInclude() {
 				return !Array.prototype.incl.apply(this, arguments);
 			}
@@ -2699,7 +2776,7 @@ void (() => {
 			, "property unshift2": function unshift2(e, ...i) {
 				let a = this, j, n;
 				i = i.flatten();
-				if (e === void 0) {
+				if (e === void 0) { // this bracket is required.
 					for (j = 0, n = i.length; j < n; j++)
 						if (typeof i[j] === "number")
 							a.unshift(a[i[j]]);
@@ -2712,17 +2789,27 @@ void (() => {
 				return a;
 			}
 			, "property toLList": function toLinkedList() {
-				if (globalThis.LinkedList == null) throw Error(`${LibSettings.Environment_Global_String}.LinkedList == null`);
-				let a = new globalThis.LinkedList();
+				// TODO: this doesn't work
+				/*
+				when `LIBRARY_VARIABLES["call LinkedList"]` defines
+				globalThis.LinkedList, it needs to also define something
+				like `LIBRARY_VARIABLES["_called LinkedList"]`, which
+				would be ignored if passed into define(...).
+				It should define the `_called` thing regardless of
+				whether or not it is globalized.
+				*/
+				throw Error`Not Implemented (correctly at least)`;
+				if (LIBRARY_VARIABLES.LinkedList == null) throw Error(`${LibSettings.Environment_Global_String}.LinkedList == null`);
+				let a = new LIBRARY_VARIABLES.LinkedList();
 				for (const e of this.rev()) a.insertFirst(e);
 				return a;
 			}
 			, "property toGen": function* toGenerator() { for (const e of this) yield e }
 			, "property remove": function remove(e) {
-				return this.incl(e) && this.splice(this.io(e), 1), this;
+				return this.includes(e) && this.splice(this.io(e), 1), this;
 			}
 			, "property removeAll": function removeAll(e) {
-				while (this.incl(e)) this.splice(this.io(e), 1);
+				while (this.includes(e)) this.splice(this.io(e), 1);
 				return this;
 			}
 			, "property hasDupes": function hasDuplicates() {
@@ -2744,11 +2831,11 @@ void (() => {
 			, "property remrep": function removeRepeats() { return Array.from(new Set(this)) }
 			, "property random": function random() { return this[ randint(0, this.length - 1) ] }
 			, "previous property rand": null
-			, "property insrand": function insertRandomLocation(thing) {
+			, "property insrand": function insertIntoRandomLocation(thing) {
 				this.splice(randint(this.length), 0, thing);
 				return this;
 			}
-			, "property insrands": function insertThingsRandomLocation(...things) {
+			, "property insrands": function insertThingsIntoRandomLocations(...things) {
 				for (const thing of things) this.insrand(thing);
 				return this;
 			}
@@ -2932,6 +3019,13 @@ void (() => {
 				return bisect(this, x, orientation, low, high);
 			},
 		}
+		, "object Array": {
+			"property range": function fromRange(/*start, stop, step=1*/) {
+				return Array.from(
+					range(...arguments)
+				);
+			}
+		}
 		, "prototype Function": {
 			"property args": function getArgs() { return getArguments(this) }
 			, "property code": function getCode() {
@@ -3037,7 +3131,7 @@ void (() => {
 			, "property lstrip" : String.prototype.trimLeft
 			, "property rstrip" : String.prototype.trimRight
 			, "property mul"    : String.prototype.repeat
-			, "property last"   : lastElement
+			, "get last"        : lastElement
 			, "property toRegex": function toRegularExpression(flags="", stt="", end="", form="escaped") {
 				// `stt` and `end` are not escaped in escape mode
 				if (type(stt) !== "string" || type(end) !== "string")
@@ -3094,8 +3188,10 @@ void (() => {
 				return endsWith;
 			}
 			, "previous property ew": null
-			, "property splitIndex": function splitIndex(index) {
-				return [this.slice(0, index), this.slice(index)];
+			, "property splitIndex": function splitAtIndex(i) {
+				i = Number(i);
+				return [this.slice(0, i), this.slice(i)];
+				// this[:i], this[i:]
 			}
 			, "previous property splitI": null
 			, "call native property replace"() {
@@ -3241,7 +3337,7 @@ void (() => {
 			}, "property nincl": function doesntInclude(input) { return !this.incl(input) }
 			, "property start": function start(start="") {
 				// if the string is empty it returns the argument
-				return this || `${start}`;
+				return this.valueOf() || `${start}`;
 			}
 			, "property begin": function begin(text="") {
 				// basically Array.unshift2 for strings
@@ -3356,8 +3452,7 @@ void (() => {
 			, "property isInteger": function isInteger() { return !0 }
 			, "previous property isInt": null
 		}
-		, "archive instance Logic": class Logic {
-			// archive doesn't work
+		, "archived instance Logic": class Logic {
 			constructor(
 				bitwise = LibSettings.Logic_Bitwise_Argument
 				, comparatives = LibSettings.Logic_Comparatives_Argument
@@ -3659,7 +3754,7 @@ void (() => {
 					!1;
 			}
 		}
-		, "math bMath": class BigIntRealMath {
+		, "math bMath": class BigIntegerMath {
 			constructor(
 				help = LibSettings.bMath_Help_Argument
 				, degTrig = LibSettings.bMath_DegTrig_Argument
@@ -3682,15 +3777,55 @@ void (() => {
 					y < 0 ? 1n / x ** -y : x ** y;
 			}
 			isBigInt(x) { return typeof x === "bigint" }
-			isNaN(x)    { return typeof x !== "bigint" }
-			sgn(x)      { return x < 0 ? -1n : BigInt(x > 0) }
-			sign(x)     { return x < 0 ? -1n : BigInt(x > 0) }
-			abs(x)      { return x * this.sgn(x) }
-			add(a, b)   { return a + b }
-			sub(a, b)   { return a - b }
-			mul(a, b)   { return a * b }
-			div(a, b)   { return a / b }
-			sqrt(x=1n)  {
+			isNaN(x) { return typeof x !== "bigint" }
+			sign(x) { return x < 0 ? -1n : BigInt(x > 0) }
+			sgn(x) { return x < 0 ? -1n : BigInt(x > 0) }
+			abs(x) { return x * this.sgn(x) }
+			add(a, b) { return a + b }
+			sub(a, b) { return a - b }
+			mul(a, b) { return a * b }
+			div(a, b) { return a / b }
+			mod(a, b) { return a - a / b * b }
+			lcm(...args) {
+				args[0] instanceof Array && (args = args[0]);
+
+				if (args.length === 0) throw Error`bMath.lcm requires arguments`;
+				if (args.length === 1) return args[0];
+				if (args.length > 2) return this.lcm(
+					this.lcm( ...args.slice(0, args.length / 2) ), // first half
+					this.lcm( ...args.slice(args.length / 2) ), // second half
+				);
+
+				const [a, b] = args;
+
+				if (typeof a !== "bigint" || typeof b !== "bigint")
+					throw Error`bMath.lcm requires bigint arguments`;
+
+				return this.abs(a * b) / this.gcf(a, b);
+			}
+			gcd() { return this.gcf.apply(this, arguments) }
+			gcf(...args) {
+				args[0] instanceof Array && (args = args[0]);
+
+				if (args.length === 0) throw Error`bMath.gcf requires arguments`;
+				if (args.length === 1) return args[0];
+				if (args.length > 2) return this.gcf(
+					this.gcf( ...args.slice(0, args.length / 2) ), // first half
+					this.gcf( ...args.slice(args.length / 2) ), // second half
+				);
+
+				var [a, b] = args;
+
+				if (typeof a !== "bigint" || typeof b !== "bigint")
+					throw Error`bMath.gcf() requires bigint arguments`;
+
+				if (a < b || a > 0n && b < 0n) [a, b] = [b, a];
+
+				while (b !== 0n) [a, b] = [b, a % b];
+
+				return a;
+			}
+			sqrt(x=1n) {
 				if (x < 0) throw Error("non-negative value required");
 				if (x < 2) return x;
 
@@ -3724,10 +3859,133 @@ void (() => {
 
 				return k;
 			}
+			factor(n) {
+				// exactly the same thing as `FactorInteger[]` from Methematica.
+				if (typeof n !== "bigint")
+					throw Error`bMath.factor() requires a bigint argument`;
+				if (n === 1n) return [[1n, 1n]];
+				if (n === -1n) return [[-1n, 1n]];
+
+				var factors = n < 0n ? [[-1n, 1n]] : []
+					, factor = 2n;
+
+				n = this.abs(n);
+
+				while (factor ** 2n <= n) {
+					if (n % factor === 0n) {
+						if (factors.at(-1)?.[0] === factor) factors.at(-1)[1]++;
+						else factors.push([factor, 1n]);
+						n /= factor;
+					} else factor += 1n + BigInt(factor > 2n); // Skip even numbers
+				}
+
+				if (n > 1n) factors.at(-1)?.[0] === n ?
+					factors.at(-1)[1]++ :
+					factors.push([n, 1n]);
+
+				return factors;
+			}
+			coprimeOrd(a, n) {
+				// discrete logarithm?
+				// mod(x) := mod(x, d)
+				// ord_n(a) := smallest integer k such that a^k mod n == 1
+				// uses the following identities to keep the values small:
+				// (1). mod(ab) == mod(mod(a) b)
+				// (2). mod(a^b) == mod(mod(a)^b)
+				if (typeof a !== "bigint" || typeof n !== "bigint")
+					throw Error`a and n must be bigints`;
+				if (this.gcf(a, n) !== 1n)
+					// if they are not coprime, it will loop infinitely
+					throw Error`a and n must be relatively prime`;
+				if (n === 1n)
+					throw Error`n cannot be 1. equation not solvable`;
+
+
+				// /^\d+[1379]$/.test(n + ""); for a = 10n
+				// x_0 = 1
+				// x_(k+1) = (10 x_k) mod n
+				// ord_n(a) < n
+
+				a %= n; // (2)
+				for (var c = a, k = 1n; c !== 1n; k++)
+					c = a*c % n; // (1)
+
+				return k;
+			}
+			inverseRepeatsAfter(n) {
+				// f(7n) is 6, so 1/7 repeats in groups of 6
+				// if `1/n` repeats in groups of `k`, `1/(2n)` and `1/(5n)` do as well,
+				// but for each factor of 10, 5, or 2 in `n`, the repeating will be
+				// delayed by one digit.
+
+				while (!( n % 10n )) n /= 10n; // optional. 2 and 5 at once.
+				while (!( n %  2n )) n /=  2n;
+				while (!( n %  5n )) n /=  5n;
+
+				if (n === 1n) return 0n;
+
+				return this.coprimeOrd(10n, n);
+			}
+			flog(n, base=10) {
+				// floored logarithm. base 10 by default
+				// only works for integer bases in [2, 36]
+				return this.length(n) - 1n;
+			}
+			length(n, base=10) {
+				// 1 + floor(log x)
+				// only works for integer bases in [2, 36]
+				return BigInt(
+					n.toString( Number(base) ).length
+				);
+			}
+			countTwoFactors(n) {
+				// returns the new number and the amount of times two divides it.
+				if (typeof n !== "bigint")
+					throw Error`argument must be of type BigInt`;
+				var x = 0n;
+
+				for (;!( n % 2n );)
+					x++, n >>= 1n;
+
+				return [n, x];
+			}
+			factorial(n) {
+				if (typeof n !== "bigint")
+					throw Error`BigInt argument required`;
+				if (n < 0n) throw Error`(-n)! is not defined`;
+
+				if (n === 0n) return 1n;
+
+				for (var total = n; n --> 1n ;)
+					total *= n;
+
+				return total;
+			}
+			total(...dataset) {
+				dataset[0] instanceof Array && (dataset = dataset[0]);
+
+				return dataset.reduce((t, e) => t + e, 0n);
+			}
+			product(...dataset) {
+				dataset[0] instanceof Array && (dataset = dataset[0]);
+
+				return dataset.reduce((t, e) => t * e, 1n);
+			}
+			fromBinary(n) {
+				try { return BigInt("0b" + n) } catch {}
+				throw Error`binary integer string required`;
+			}
+			fromOctal(n) {
+				try { return BigInt("0o" + n) } catch {}
+				throw Error`octal integer string required`;
+			}
+			fromHexadecimal(n) {
+				try { return BigInt("0x" + n) } catch {}
+				throw Error`hexadecimal integer string required`;
+			}
 		}
 		, "math sMath": class StringRealMath /* abbreviated to sMath */ {
-			#maxPrecision = 20;
-			// TODO: rewrite functions to not use recursion for snums.length > 2: add, sub, mul
+			#maxPrecision = 20; // decimal precision. not floating point precision.
 
 			constructor(
 				help = LibSettings.sMath_Help_Argument
@@ -4379,6 +4637,7 @@ void (() => {
 				// assumes correct input. (sNumber, sNumber, Positive-Integer)
 				// should be faster than div when applicable
 				// I do not remember where the "i" in the name came from.
+				// integer division maybe?
 				if ( this.eq.iz(denom) )
 					return this.eq.iz(num) ?
 						NaN :
@@ -4426,19 +4685,25 @@ void (() => {
 						`-${snum}`;
 			}
 			sgn(snum="0.0") {
-				// string sign. sMath.sgn("-0") => -1
+				// sign.. sMath.sgn("-0.0") => 0
+				if (Number.isNaN( snum = this.norm(snum, NaN) ))
+					throw Error`sMath.sgn(x) requires a normalizable argument`;
+
 				return snum[0] === "-" ?
 					-1 :
-					/0+\.?0*/.all(snum) ?
+					/^0+\.?0*$/.test(snum) ?
 						0 :
 						1;
 			}
 			sign(snum="0.0") { return this.sgn(snum) }
 			ssgn(snum="0.0") {
-				// string sign. sMath.ssgn("-0") => "-1.0"
+				// string sign. sMath.ssgn("-0") => "0.0"
+				if (Number.isNaN( snum = this.norm(snum, NaN) ))
+					throw Error`sMath.sign(x) requires a normalizable argument`;
+
 				return snum[0] === "-" ?
 					"-1.0" :
-					/0+\.?0*/.all(snum) ?
+					/^0+\.?0*$/.test(snum) ?
 						"0.0" :
 						"1.0";
 			}
@@ -4519,7 +4784,6 @@ void (() => {
 				return snum.slice(-2) !== ".0";
 			}
 			min(...snums) {
-				// TODO: possibly update to use binary search.
 				if (!snums.length) return "0.0";
 				snums = snums.flatten();
 				for (var min = snums[0], i = snums.length; i --> 1 ;)
@@ -4527,8 +4791,6 @@ void (() => {
 				return min;
 			}
 			max(...snums) {
-				// TODO: possibly update to use binary search.
-
 				if (!snums.length) return "0.0";
 				var snums = snums.flatten();
 				for (var max = snums[0], i = snums.length; i --> 1 ;)
@@ -4604,13 +4866,13 @@ void (() => {
 			}
 			odd(n="1") { return this.incr( this.even(n) ); /* 2n + 1 */ }
 			even(n="1") { return this.mul("2.0",n); /* 2n */ }
-			sum(n, last, fn=n=>n, inc="1.0", divPrecision=this.precision, stringifyInput=false) {
-				// if divPrecision is falsy, it won't change the function
+			sum(n, last, fn=n=>n, inc=1n, precision=this.precision, stringify=false) {
+				// if precision is falsy, it won't change the function
 				if (this.isNaN( n = this.norm(n) )) return NaN;
 				if (this.isNaN( last = this.norm(last) ) ) return NaN;
 				if (type(fn, 1) !== "func") return NaN;
-				if ( stringifyInput && divPrecision && /[-+*/%!^]/.test(fn.code()) )
-					fn = stringifyMath(fn, fn.args(), "", divPrecision);
+				if ( stringify && precision && /[-+*/%!^]/.test(fn.code()) )
+					fn = stringifyMath(fn, fn.args(), "", precision);
 				if (this.isNaN( inc = this.norm(inc) )) return NaN;
 				for (var total = "0.0"; this.eq.le(n, last); n = this.add(n, inc))
 					total = this.add(total, fn(n));
@@ -4689,52 +4951,6 @@ void (() => {
 					, divPrecision
 				) );
 			}
-			piApprox(iterations="1.0", precision=this.precision) {
-				// uses the Chudnovsky Algorithm
-
-				iterations = this.norm(iterations);
-
-				if (this.eq.lt(iterations, "1.0"))
-					return "0.0";
-
-				let summation = this.sum(
-					"0.0", // first
-					this.decr( this.floor(iterations) ), // last
-					k => this.div(
-						// numerator
-						this.mul(
-							// (6k)!
-							this.ifact( this.mul("6.0", k) ),
-							// 545140134k + 13591409
-							this.add(
-								this.mul("545140134.0", k),
-								"13591409.0"
-							)
-						),
-						// denominator
-						this.mul(
-							// (3k)!
-							this.ifact(this.mul("3.0", k)),
-							// k!^3
-							this.cube(this.ifact(k)),
-							// (-262537412640768000)^k
-							this.ipow("-262537412640768000.0", k)
-						),
-						precision
-					), // function
-					"1.0", // increment
-					void 0, // division precision for stringified things
-					false // stringify function
-				);
-
-				// 640320 ^ (3/2) / 12
-				const numerator_constant = this.mul(
-					"426880.0",
-					this.sqrt("10005.0", precision)
-				);
-
-				return this.div(numerator_constant, summation, precision);
-			}
 			sqrt(x, precision=this.precision, guess=x) {
 				// infinite precision square roots
 				// if c = sqrt(x, n),
@@ -4759,17 +4975,194 @@ void (() => {
 					if (prev === x) return x;
 				}
 			}
-			acsc(x, acy, precision=this.precision) {
-				throw Error("acsc() not implemented");
-				// atan(1 / Sqrt[1-x^2])
-			}
 			stringifyMath() {
-				return LIBRARY_VARIABLES.stringifyMath.apply(null, arguments);
+				return LIBRARY_VARIABLES.stringifyMath.apply(
+					null,
+					arguments
+				);
 			}
 			inv(snum="1.0", divPrecision=this.precision) {
-				// fractional inverse
-				return this.div("1.0", snum, divPrecision);
+				// fractional inverse shorthand
+				return this.div(1n, snum, divPrecision);
 			}
+			iinv(n=2n, precision=this.precision) {
+				// broken for sMath.iinv(1397537n)
+				// (Big-)Integer fractional inverse algorithm
+				// uses a faster algorithm than inv() most cases,
+				// otherwise it is the same algorithm but (slightly) slower,
+				// because of extra steps to realize it is the same case.
+
+				try { n = BigInt(n) }
+				catch { throw Error`n must be a BigInt or castable to BigInt.` }
+
+				try { precision = BigInt(precision) }
+				catch { throw Error`precision must be a BigInt or castable to BigInt.` }
+
+				if (n === 0n)
+					throw Error`zero division error: can't divide by zero.`;
+
+				const sign = n < 0n ? -1n : 1n; // never 0 anyway.
+				n *= sign;
+
+				for (var nonRepeatingCount = 0n, tens = 0n;!( n % 10n );)
+					n /= 10n,
+					nonRepeatingCount++,
+					tens++;
+
+				// calculate non repeating count
+
+				// if `n` doesn't have primefactors other than 2 or 5,
+					// just return the normal inverse
+				let c = n;
+
+				// it is only ever divisible by one or the other
+				if ((n & 1n) === 0n) { // divisible by 2
+					nonRepeatingCount++;
+					c >>= 1n;
+					while ((c & 1n) === 0n)
+						nonRepeatingCount++,
+						c >>= 1n;
+				}
+				else if (n % 5n === 0n) { // divisible by 5
+					nonRepeatingCount++;
+					c /= 5n;
+					while (c % 5n === 0n)
+						nonRepeatingCount++,
+						c /= 5n;
+				}
+
+				// `n` is only divisible by 2 and 5
+				if (c === 1n) return sMath.div10(
+					sMath.inv(n, precision), // decimal expansion terminates
+					tens
+				);
+
+				const repeatLength = bMath.inverseRepeatsAfter(c);
+				if (repeatLength >= precision) return this.div10(
+					this.div(1n, n, precision),
+					tens
+				);
+				// parts == [non-repeating part, repeating part]
+				const parts = this.div10(
+					this.div(1n, n, repeatLength + nonRepeatingCount),
+					tens
+				)
+					.slice(2) // "0."
+					.splitI(nonRepeatingCount);
+
+				parts[1] += strMul("0", repeatLength - BigInt(parts[1].length));
+				precision -= nonRepeatingCount;
+
+				return this.norm(
+					(sign === 1n ? "" : "-")
+					+ "0."
+					+ parts[0]
+					+ strMul(parts[1], precision / repeatLength)
+					+ parts[1].slice( 0, Number(precision % repeatLength) )
+				);
+				// norm() is required. can return "-0." if precision <= 0
+
+			}
+			flog(n, base=10) {
+				// length of integer x == 1 + floor(log x)
+				// floored logarithm
+				return Number.isNaN( n = this.norm(n, NaN) ) ||
+					Number.isNaN( base = Number(base) ) ?
+					NaN :
+					this.norm( bMath.flog(
+						BigInt(n.remove(/\.\d+$/)),
+						base
+					) );
+			}
+			piApprox = (function create_piApprox() {
+				function piApprox(iterations="1.0", precision=this.precision) {
+					// uses the Chudnovsky Algorithm
+
+					iterations = this.norm(iterations);
+
+					if (this.eq.lt(iterations, "1.0"))
+						return "0.0";
+
+					let summation = this.sum(
+						"0.0", // first
+						this.decr( this.floor(iterations) ), // last
+						k => this.div(
+							// numerator
+							this.mul(
+								// (6k)!
+								this.ifact( this.mul("6.0", k) ),
+								// 545140134k + 13591409
+								this.add(
+									this.mul("545140134.0", k),
+									"13591409.0"
+								)
+							),
+							// denominator
+							this.mul(
+								// (3k)!
+								this.ifact(this.mul("3.0", k)),
+								// k!^3
+								this.cube(this.ifact(k)),
+								// (-262537412640768000)^k
+								this.ipow("-262537412640768000.0", k)
+							),
+							precision
+						), // function
+						"1.0", // increment
+						void 0, // division precision for stringified things
+						false // stringify function
+					);
+
+					// 640320 ^ (3/2) / 12
+					const numerator_constant = this.mul(
+						"426880.0",
+						this.sqrt("10005.0", precision)
+					);
+
+					return this.div(
+						numerator_constant,
+						summation, precision,
+					);
+				}
+
+				const digits = {
+					get max() {
+						return this[Math.max(
+							Object.keys(this)
+								.remove("max")
+								.map(e => +e)
+						)];
+					}
+				};
+
+				digits[0] = "3.0";
+				digits[1] = "3.1";
+				digits[2] = "3.14";
+				digits[3] = "3.141";
+				digits[4] = "3.1415";
+				digits[100] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
+				digits[200] = "3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196";
+				digits[300] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273";
+				digits[600] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132";
+				digits[1150] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983";
+				digits[2250] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319255060400927701671139009848824012858361603563707660104710181942955596198946767837449448255379774726847104047534646208046684259069491293313677028989152104752162056966024058038150193511253382430035587640247496473263914199272604269922796782354781636009341721641219924586315030286182974555706749838505494588586926995690927210797509302955321165344987202755960236480665499119881834797753566369807426542527862551818417574672890977772793800081647060016145249192173217214772350141441973568548161361157352552133475741849468438523323907394143334547762416862518983569485562099219222184272550254256887671790494601653466804988627232791786085784383827967976681454100953883786360950680064225125205117392984896084128488626945604241965285022210661186306744278622039194945047123713786960956364371917287467764657573962413890865832645995813390478027590099465764078951269468398352595709825822620522489407726719478268482601476990902640136394437455305068203496252451749399651431429809190659250937221696461515709858387410597885959772975498930161753928468138268683868942774155991855925245953959431049972524680";
+				piApprox.digits = digits;
+
+				piApprox.piToNDigits = function piToNDecimalDigits(n) {
+					// pi to the first `n` correct decimal digits.
+					// the last digit is truncated rather than rounded.
+					if (n <= 0) n = -1;
+					n = 2 + floor( Number(n) ); // in case it is a bigint
+
+					const pi = this.digits.max.slice(0, n);
+
+					if (pi.length < n) throw Error`not enough digits known to return as requested`;
+
+					return pi;
+				}
+
+				return piApprox;
+			})()
 			digitwiseMul(a="1.0", digit=0n) {
 				// basicaly useless. mul() with one digits is already really fast.
 				// this should technically be faster in theory though.
@@ -4795,12 +5188,16 @@ void (() => {
 				}).join("");
 
 			}
-			digitwiseDiv(a = "1.0", b = "1.0") {
+			digitwiseDiv(a="1.0", b="1.0") {
 				// TODO: implement
 				throw Error`NotImplemented`;
 				if ( Number.isNaN(a = this.norm(a, NaN)) ) return NaN;
 				if ( Number.isNaN(b = this.norm(b, NaN)) ) return NaN;
 				if (!this.isIntN(b)) throw Error`b must be an integer`;
+			}
+			acsc(x, acy, precision=this.precision) {
+				throw Error("acsc() not implemented");
+				// atan(1 / Sqrt[1-x^2])
 			}
 		}
 		, "math rMath": class RealMath {
@@ -5984,8 +6381,8 @@ void (() => {
 					, fact: null
 					, factorial: null
 					, risingFactorial: null
-					, pochHammer: null
-					, qPochHammer: null
+					, pochhammer: null
+					, qPochhammer: null
 					, fallingFactorial: null
 					, invifact: null
 					, invfact: null
@@ -6341,25 +6738,21 @@ void (() => {
 			}
 			toString() { return "[object rMath]" }
 			Omega(x=Math.E, i=10_000) {
-				// Ω(x) * x^Ω(x) ≈ 1
+				// Ω(x)x^Ω(x) ≈ 1
 				// approximate because some inputs oscilate between outputs, such as Ω(349)
 				// "i" cannot default to Infinity due to this oscilation
 				if (Number.isNaN( x = Number(x) )) return NaN;
 				if (Number.isNaN( i = Number(i) )) return NaN;
 				var ans = x, prev;
-				if (x < 142) {
-					while ( i --> 0 ) {
-						prev = ans;
-						ans -= (ans*x**ans-1) / (x**ans*(ans+1)-(ans+2)*(ans*x**ans-1)/(2*ans+2));
-						if (prev === ans) break;
-					}
+				if (x < 142) while ( i --> 0 ) {
+					prev = ans;
+					ans -= (ans*x**ans-1) / (x**ans*(ans+1)-(ans+2)*(ans*x**ans-1)/(2*ans+2));
+					if (prev === ans) break;
 				}
-				else {
-					while ( i --> 0 ) {
-						prev = ans;
-						ans = (1 + ans) / (1 + x**ans)
-						if (prev === ans) break;
-					}
+				else while ( i --> 0 ) {
+					prev = ans;
+					ans = (1 + ans) / (1 + x**ans)
+					if (prev === ans) break;
 				}
 				return ans;
 			}
@@ -7031,13 +7424,13 @@ void (() => {
 				return /*type(ans, 1) === "inf" ? NaN : */ans;
 			}
 			factorial() { return this.fact.apply(this, arguments) }
-			risingFactorial(/*x, n*/) { return this.pochHammer.apply(this, arguments) }
-			pochHammer(x, n) {
+			risingFactorial(/*x, n*/) { return this.pochhammer.apply(this, arguments) }
+			pochhammer(x, n) {
 				if ( Number.isNaN(n = Number(n)) ) return NaN;
 				if ( Number.isNaN(x = Number(x)) ) return NaN;
 				return x * this.prod(1, n-1, k => x+k);
 			}
-			qPochHammer(x, n, q) {
+			qPochhammer(x, n, q) {
 				if ( Number.isNaN(n = Number(n)) ) return NaN;
 				if ( Number.isNaN(x = Number(x)) ) return NaN;
 				if ( Number.isNaN(q = Number(q)) ) return NaN;
@@ -7048,7 +7441,7 @@ void (() => {
 						// n < 0
 						1 / this.prod(1, this.abs(n), k => 1-x/q**k)
 			}
-			fallingFactorial(x, n) { return (-1)**n * this.pochHammer(-x, n) }
+			fallingFactorial(x, n) { return (-1)**n * this.pochhammer(-x, n) }
 			invifact(n) {
 				// compositional inverse integer factorial
 				if (Number.isNaN(n = Number(n))) return NaN;
@@ -8394,6 +8787,8 @@ void (() => {
 
 			CHSolutionFunctions = (function create_CHSF() {
 				// Continuum Hypothesis Solution Functions
+				// functions with underscores are somewhat related but not important.
+
 				function naturalToReal(n = 1n) {
 					if (typeof n !== "bigint")
 						throw Error`bigint argument is required for indexToReal()`;
@@ -8414,12 +8809,27 @@ void (() => {
 					return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");
 				}
 
+				function _nthPiIndex(n=1n) {
+					return BigInt(
+						rMath.CHSolutionFunctions.realToNatural(
+							sMath.piApprox.piToNDigits(n)
+						).toString()
+						.slice(2 - sMath.piApprox.piToNDigits(n).length)
+					);
+					/*DiscreteLimit[
+						ToExpression["0." <> ToString@* IntegerReverse@ arguments.callee(n)],
+						n -> Infinity
+					];
+					*/
+				}
+
 				naturalToReal.inverse = realToNatural;
 				realToNatural.inverse = naturalToReal;
 
 				return {
 					naturalToReal : naturalToReal,
 					realToNatural : realToNatural,
+					_nthPiIndex   : _nthPiIndex  ,
 				};
 			})()
 
@@ -8972,7 +9382,7 @@ void (() => {
 				typeof θ === "number" && (θ = this.new(θ, 0));
 				if (type(r, 1) !== "complex") return NaN;
 				if (type(θ, 1) !== "complex") return NaN;
-				return this.exp(θ).mul(r);
+				return this.expi(θ).mul(r); // r exp iθ
 			}
 			isClose(z1, z2, range=Number.EPSILON) {
 				typeof z1 === "number" && (z1 = this.new(z1, 0));
@@ -9101,6 +9511,142 @@ void (() => {
 			}
 			new(re=fMath.one, im=fMath.one) { return new this.CFraction(re, im) }
 		}
+		, "math p2Math": class P2AdicIntegerMath {
+			// n means bigint
+			// x means 2-adic string
+			constructor() {
+				Reflect.defineProperty(this, "base", {
+					value: 2n
+					, writable: false
+					, enumerable: false
+					, configurable: false
+				});
+
+				Reflect.defineProperty(this, "help", {
+					value: {
+						self: "2-adic integer operations. (p-adic) integers for p=2"
+					}
+					, enumerable: false
+					, configurable: false
+				});
+			}
+			inverse(denom=3n, precision=20n, outputType=String) {
+				// TODO: the precision is really jank.
+				// takes in a natural $x$ and returns the 2-adic representation of
+				// $1/x$
+				if (typeof denom !== "bigint")
+					throw Error`p2Math.inverse() requires bigint arguments`;
+				if (typeof precision !== "bigint")
+					throw Error`p2Math.inverse() requires bigint arguments`;
+				if (denom === 2n)
+					throw Error`denominator cannot be the same as the base`;
+				if (denom === 0n)
+					throw Error`cannot divide by zero.`;
+
+				if (denom < 0n)
+					return this.negativeInverse(-denom, precision, outputType);
+
+				const output = bMath.fromBinary(
+					this.negativeInverse(denom, precision, MutableString)
+					.map(e => 1 - e + "")
+				) + 1n;
+
+				if (outputType === String) return output.toString(2);
+				if ([MutableString, MutableString._MutableString].includes(outputType)) return MutableString( output.toString(2) );
+				if (outputType === BigInt) return output;
+				if (outputType === Number) return Number(output); // not recommended
+				//.toString(2).slice(-Number(precision));
+			}
+			negativeInverse(denom=3n, precision=50n, outputType=String) {
+				// return truncated 2-adic `x` such that `x*denom` == `2-adic -1`
+				if (typeof denom !== "bigint") throw Error`denom must be of type BigInt`;
+				if (typeof precision !== "bigint") throw Error`precision must be of type BigInt`;
+				if (denom === 2n) throw Error`denominator cannot be the same as the base`;
+				if (denom === 0n) throw Error`cannot divide by zero.`;
+				if (denom  <  0n) return this.inverse(-denom, precision);
+
+				// if `denom` is too big, factor it, find the inverse
+				// of each factor and multiply them for the result
+				if (!denom.isPrime()) {
+					// TODO: maybe after every multiplication, truncate it to `precision` digits
+					const output = bMath.product( bMath.factor(denom).map(
+						([a, b]) => bMath.fromBinary(
+							(this.negativeInverse(a, precision, BigInt)**b)
+								.toString(2).slice(-Number(precision))
+						)
+					) ).toString(2).slice(-Number(precision));
+
+					// slightly different than at the end of the function.
+					if (outputType === String) return output;
+					if ([MutableString, MutableString._MutableString].includes(outputType)) return MutableString(output);
+					if (outputType === BigInt) return bMath.fromBinary(output);
+					if (outputType === Number) return Number("0b" + output);
+				}
+
+
+				for (var output_binary = MutableString(""), i = 0n; i < precision; ++i)
+					if ((denom * bMath.fromBinary(output_binary.begin("1")))
+						.toString(2)
+						.slice(-output_binary.length)
+						.indexOf("0")
+						> -1
+					)
+						output_binary[0] = "0";
+
+				if (outputType === String) return output_binary.toString();
+				if ([MutableString, MutableString._MutableString].includes(outputType)) return output_binary;
+				if (outputType === BigInt) return bMath.fromBinary(output_binary.toString());
+				if (outputType === Number) return Number("0b" + output_binary.toString()); // not recommended
+
+				throw Error`Invalid output type. only String, MutableString, MutableString._MutableString, BigInt, and Number are supported.`;
+			}
+			negative(x) {
+				if (typeof x !== "string")
+					throw Error`x must be a 2-adic integer string`;
+				const precision = x.length;
+				// one's compliment
+				x = x.split("").map(e => 1 - e).join("");
+				// finish two's compliment
+				x = 1n + bMath.fromBinary(x);
+				x = x.toString(2);
+
+				// fix precision if different after applying 1 + BigInt(x):
+
+				// in case the output is a smaller precision:
+				x = strMul("0", precision - x.length) + x;
+				// in case the output is a larger precision:
+				x = x.slice(-precision);
+
+				return x;
+			}
+			sin(n, iterations=5n, precision=200n) {
+				// `precision = 0n` is basically `precision = Infinity`
+				if (typeof n !== "bigint") throw Error`bigint arguments required`;
+				if (typeof iterations !== "bigint") throw Error`bigint arguments required`;
+				if (typeof precision !== "bigint") throw Error`bigint arguments required`;
+				if (n % 2n) throw Error`sin_p(x) probably doesn't converge if p doesn't divide x.`;
+
+				for (var total = 0n; iterations --> 0n ;) {
+					const k = 2n*iterations + 1n
+					, divisors = bMath.countTwoFactors( bMath.factorial(k) )
+					, current = n**k
+					, tmp = current * bMath.fromBinary(this.inverse(
+						divisors[0]
+						, Math.max( // Math.max(...) works as a bMath.max()
+							BigInt(current.toString(2).length),
+							precision + 5n, // a little bit extra security that the bits are good
+						)
+					)) >> divisors[1]; // this will always be an integer without round/flooring
+
+					total += iterations % 2n ?
+						bMath.fromBinary( this.negative(tmp.toString(2)) ) :
+						tmp;
+				}
+
+				return total.toString(2).slice(-Number(precision));
+				// return bMath.fromBinary(total.toString(2).slice(-Number(precision)));
+			}
+		}
 		, "math call aMath"() {
 			// name of math object
 			var _getNameOf = obj => keyof(globalThis.MathObjects, obj, 1, (a, b) => a === b)
@@ -9143,22 +9689,46 @@ void (() => {
 					}based on the type (the key).`;
 				}
 			}
-			for (const fname of Object.values(MathObjects).map(e => _protoProps(e)).flat().remrep().remove("constructor"))
-				AllMath.prototype[fname] = function () { return _call(fname, null, ...arguments) }
+			for (const fname of Reflect.ownKeys(MathObjects)
+				.map(k => MathObjects[k])
+				.map(e => _protoProps(e))
+				.flat()
+				.remrep()
+				.remove("constructor")
+			)
+			Reflect.defineProperty(AllMath.prototype, fname, {
+				value: function () { return _call(fname, null, ...arguments) }
+				, enumerable: false
+				, writable: false
+				, configurable: false
+			});
+
 			if (LibSettings.aMath_DegTrig_Argument) {
 				AllMath.prototype.deg = {};
-				for (const fname of Reflect.ownKeys(rMath.deg))
+				// set _parent to the main aMath object
+
+				for (const fname of Reflect.ownKeys(MathObjects)
+					.map(k => Reflect.ownKeys(
+						MathObjects[k]?.deg ?? {}
+					))
+					.flat()
+				)
 					AllMath.prototype.deg[fname] = function () { return _call_attr(fname, "deg", null, ...arguments) }
 			}
+
 			if (LibSettings.aMath_Comparatives_Argument) {
 				AllMath.prototype.eq = {};
-				for (const fname of [].concat(
-					Reflect.ownKeys(rMath.deg)
-					, Reflect.ownKeys(sMath.deg)
-					, Reflect.ownKeys(bMath.deg)
-					,
-				)) AllMath.prototype.eq[fname] = function () { return _call_attr(fname, "eq", null, ...arguments) }
+				// set _parent to the main aMath object
+
+				for (const fname of Reflect.ownKeys(MathObjects)
+					.map(k => Reflect.ownKeys(
+						MathObjects[k]?.eq ?? {}
+					))
+					.flat()
+				)
+					AllMath.prototype.eq[fname] = function () { return _call_attr(fname, "eq", null, ...arguments) }
 			}
+
 			if (LibSettings.aMath_Internals_Argument) AllMath.prototype._internals = {
 				  _call       : _call
 				, _call_attr  : _call_attr
@@ -9166,6 +9736,7 @@ void (() => {
 				, _protoProps : _protoProps
 				, _typeToObj  : _typeToObj
 			};
+
 			return new AllMath;
 		}
 		, "defer call Types"() {
@@ -9189,19 +9760,19 @@ void (() => {
 				,  BigInt64Array    : BigInt64Array
 				, BigUint64Array    : BigUint64Array
 				, Uint8ClampedArray : Uint8ClampedArray
-				, Object(input, handle=!1) {
+				, Object(input, handle=false) {
 					return typeof input === "object" ?
 						input :
-						handle == !0 ?
+						handle ?
 							{ data: input } :
-							void 0
+							void 0;
 				}
-				, Symbol(input, handle=!1) {
+				, Symbol(input, handle=false) {
 					return typeof input === "symbol" ?
 						input :
-						handle == !0 ?
+						handle ?
 							Symbol.for(input) :
-							void 0
+							void 0;
 				}
 				, undefined() {}
 				, null() { return null }
@@ -9216,7 +9787,7 @@ void (() => {
 			}
 		}
 		, "defer call local finalize_math"() {
-			function definer(obj, name, value, writable=!0, enumerable=!1, configurable=!0) {
+			const definer = function mathObjectDefiner(obj, name, value, writable=!0, enumerable=!1, configurable=!0) {
 				return Reflect.defineProperty(obj, name, {
 					value: value
 					, writable: writable
@@ -9480,6 +10051,8 @@ void (() => {
 			for (let o of Object.values(MathObjects)) Object.freeze(o);
 			Object.freeze(MathObjects);
 		}
+		LIBRARY_VARIABLES.VERSION = "2.1.11"; // VERSION
+		LIBRARY_VARIABLES.VERSION_ARRAY = LIBRARY_VARIABLES.VERSION.split(".").map(e => +e);
 		LIBRARY_VARIABLES.settings = LibSettings; // this will not be defined globally ...
 		// but it makes it much easier to access the settings.
 		if (LibSettings.Freeze_Library_Object && LibSettings.Freeze_Library_Object !== "default")
@@ -9521,119 +10094,21 @@ void (() => {
 		)( LibSettings.Library_Startup_Message === "default" ? `${LibSettings.LIBRARY_NAME} loaded` : LibSettings.Library_Startup_Message );
 		return 0;
 	}
-})(); /*
-	var piApprox = (function create_piApprox() {
-		var a = n => n ? (a(n-1) + b(n-1)) / 2 : 1
-		, b = n => n ? (a(n-1) * b(n-1))**.5 : Math.SQRT1_2
-		, t = n => n ? t(n-1) - 2**(n-1) * (a(n-1) - a(n))**2 : .25
-		, piApprox = n => a(n+1)**2 / t(n);
-		return piApprox;
-	})();
+})();
 
-	// sMath.sqrt, sMath.pow
-
-
-	var piApproxStr = (function create_piApproxStr() {
-		var a = n => n ? sMath.div( sMath.add(a(n-1), b(n-1)) , 2 ) : "1.0"
-		, b = n => n ? sMath.sqrt(sMath.mul(a(n-1), b(n-1))) : "0.7071067811865476"
-		, t = n => n ? t(n-1) - sMath.mul(sMath.ipow("2.0", sMath.new(n-1)), sMath.square(sMath.sub(a(n-1), a(n)))) : "0.25"
-		, piApproxStr = n => sMath.div(sMath.square(a(n+1)), t(n));
-		return piApproxStr;
-	})();
-*//*
-					1                             1     x     5
-   ----------------------------------- ≈ tan(x), --- ≤ --- ≤ ---
-	 √12         /  3       3  \                  6     π     6
-	----- cos ⁻¹ | --- x - --- | - √3
-	  π          \  π       2  /
-
-	cos⁻¹(-x) = π - cos⁻¹(x)
-
-	f(x) := cos(πx)
-	g(x) := sin(πx)
-	s(x) := sgn([x mod 2] - 1/2) · sgn([x mod 2] - 3/2)
-	mean(a, b) := (a + b)/2
-	1 / s(x) := s(x) // so there is no 1/0 nonsense.
-	identities:
-		f(-x) = f(x)
-		f(x) = s(x)√[1-f²(1/2 - x)]
-		f(x + n) = (1-2[n mod 2])·f(x)
-			f(x + 1) = -f(x)
-			f(x + 2) = f(x)
-		f(1/2 - x) = g(x)
-		f(1/2 + x) = √[1-f²(x)]·sgn([x mod 2] - 1)
-		f(a + b) = f(a)·f(b) - f(1/2 - a)·f(1/2 - b)
-		sgn[f(x)] = s(x)
-		f(x) = s(x)·√([1 - f(2x)] / 2) = 2f²(x/2)-1
-		f(c+x) + f(c-x) = 2f(x)·f(cx)
-		f(x) = f(3x) / [2f(2x) - 1]
-		f(x) = [2f(2x/3)-1]·f(x/3)
-		f(x) - f(y) = 2f([1+x±y]/2)·f([1-x±y]/2)
-		f(3x) = f(x) - 2√[ (1-f²x)·(1-f²2x) ]·sgn([x mod 2] - 1)·sgn(2[x mod 1] - 1)
-*/
 
 ///// experimental things
 
 document._createCDATASection = (function create__createCDATASection() {
 	const doc = new Document;
 	function createCDATASection(text="") { return doc.createCDATASection(text) }
-	return createCDATASection._document = doc, createCDATASection;
-})();
 
-void function removeAmlaut(str) { return str.replace([/ü/g, /Ü/g], ["u", "U"]) }
-void function removeTilde(str) { return str.replace([/ñ/g, /Ñ/g], ["n", "N"]) }
-var removeAcuteAccents = (function create_removeAcuteAccents() {
-	const map = {
-		A: "Á" , a: "á" ,
-		E: "É" , e: "é" ,
-		I: "Í" , i: "í" ,
-		O: "Ó" , o: "ó" ,
-		U: "Ú" , u: "ú" ,
-	}
-	, keys = Reflect.ownKeys(map)
-
-	function removeAcuteAccents(str) {
-		return keys.reduce((curStr, curMap) => curStr.replaceAll(map[curMap], curMap), str);
-	}
-
-	// removeAcuteAccents._map = map;
-	// removeAcuteAccents._keys = keys;
-
-	return removeAcuteAccents;
-})();
-
-
-(function () {
-	function findEndParentheses(str, i) {
-		if ( !"([{".includes(str[i]) ) return i;
-
-		const sttparen = str[i], endparen = String.fromCharCode(
-			sttparen.charCodeAt() + (sttparen.charCodeAt() > 40) + 1
-		);
-
-		for (var parens = 1; parens; ) {
-			if (i === str.length) throw Error`invalid input string`;
-			parens += str[++i] == endparen ? -1 : str[i] == sttparen ? 1 : 0;
-		}
-		return i;
-	}
-
-	return function asdf(str) {
-		str = str.remove(/\s/g);
-	}
-})();
-
-var validFlags = (function getValidRegexFlags() {
-	var validFlags = "";
-
-	for (var char of LIBRARY_VARIABLES["local alphabetL"])
-		try { RegExp("", char); validFlags += char } catch {}
-
-	return validFlags;
+	return createCDATASection._document = doc,
+		createCDATASection;
 })();
 
 void function _new(Class, ...args) {
-	// basically new Class(...args).
+	// _new(Class, argument_array) === new Class(argument_array). (approximately)
 	// if {Class} is not an argument, it saves the use of `new` each call.
 	// _new(Class) instanceof _new; // true
 	// _new(Class).ClassMethod(); // no error
@@ -9656,32 +10131,78 @@ void function _new(Class, ...args) {
 	);
 }
 
-void function __f(s) {
-	// "1  +  + + + +  +  +  +  + +  +  +  +  +  +  + +  +  +  + +  +  +  + + +  +  +  +  + +  +  +  +  +  +  + +  +  + + +  +  + + +  + +  + +  + +  +  +  + +  +  + +  +  + + +  +  + +  +  +  +  +  +  + + +  +  +  + +  + +  + + + + +  +  + + +  +  + +  +  + + +  + + +  + +  + + +  1"
-	return Array.from(
-		s .remove(/[^ +1]/g)
-			.slice(1, -1) // get rid of the ones
-			.split("+")
-			.filter(e => e.length && e.io("1") < 0)
-			.map(e => e.length - 1)
-			.join("")
-			.matchAll(/[01]{7}/g)
+var removeAcuteAccents = (function create_removeAcuteAccents() {
+	const map = {
+		A: "Á" , a: "á" ,
+		E: "É" , e: "é" ,
+		I: "Í" , i: "í" ,
+		O: "Ó" , o: "ó" ,
+		U: "Ú" , u: "ú" ,
+	}
+	, keys = Reflect.ownKeys(map)
+
+	function removeAcuteAccents(str) {
+		return keys.reduce((curStr, curMapKey) =>
+			curStr.replaceAll(map[curMapKey], curMapKey), str);
+	}
+
+	// removeAcuteAccents._map = map;
+	// removeAcuteAccents._keys = keys;
+
+	return removeAcuteAccents;
+})();
+
+var fs = (function create_fs() {
+	function f(d) {
+		return (
+			`${d} : ` +
+			rMath.CHSolutionFunctions.realToNatural(
+				sMath.piApprox.piToNDigits(d)
+			)
 		)
-			.map( e => String.fromCharCode("0b" + e[0]) )
-			.join("");
+			.splitI(-d)
+			.join("%c");
+	}
+
+	// TODO: figure out what to name this function. `fs` is temporary.
+	function fs(rangeEnd, rangeStart=1) {
+		// console.log(...arguments.callee)
+		const array = Array.range(rangeStart, rangeEnd).map(
+			e => f(e).split(/(?<=: )/)
+		)
+			, lastIntegerLength = array.last.last.length
+			, lastIndexLength = array.last[0].length;
+
+		return [
+		array.map(e => "%c" + " ".repeat(lastIndexLength - e[0].length) + e.join(
+			" ".repeat(lastIntegerLength - e[1].length)
+		)).join("\n"),
+		...Array.from( range(rangeEnd - rangeStart + 1) ).map(e => ["color: white", "color: #32C832"]).flat()
+		];
+	}
+
+	return fs._f = f,
+		fs;
+})();
+
+function binaryPiToNaturalBinary(string = "11.001001") {
+	const x = bMath.fromBinary( string.match(/^11\.(\d+)$/)[1].reverse() );
+
+	return /* "0b" + */ (x**2n + 7n*x + 18n).toString(2);
 }
 
+/*
+	var x = binaryPiToNaturalBinary(binary_pi_2250);
+	Limit[p2Math.sin(x, n, k), {n, k} -> \[Infinity]] == 0
+
+	"2^^11." <> StringJoin[ToString@ # & /@ Drop[RealDigits[SetPrecision[Pi - 2, 1], 2][[1]], 1]]
+	pi to `n` decimal places has approximately `3(n-1) + Round[n/3]` fractional binary digits
+*/
+
+// pi in binary to 2250 digits of floating-point binary precision
+var binary_pi_2250 =
+	"11.0010010000111111011010101000100010000101101000110000100011010011000100110001100110001010001011100000001101110000011100110100010010100100000010010011100000100010001010011001111100110001110100000000100000101110111110101001100011101100010011100110110010001001010001010010100000100001111001100011100011010000000100110111011110111110010101000110011011001111001101001110100100001100011011001100000010101100001010011011011111001001011111000101000011011101001111111000010011010101101101011011010101000111000010010001011110010010000101101101010111011001100010010111100111111011000110111101000100110001000010111010011010011000110111111011010110101100001011111111110101110010110110111101000000011010110111111011011110111000111000011010111111101101011010100010011001111110100101101011101001111100100100000100010111110001001011000111111110011001001001001010000110011001010001111011001110010001011011001111011100001000000000011111001011100010100001011000111011111100000101100110001101101001001000001101100001110001010101110100111001101001101001000101100011111110101000111111010010010011001111010111111000001101100101010111010010001111011100101000111010110110010110000111000110001011110011010101100010000010000101010100101011101110011110110101010010100100000111011100001001011010010110011011010110011100001100001101010100111001001010101111001001100000000100111100010111010001101100000010001100101000011000001000010111110000110010100100000101111001000110001011100011011011001110001110111110001110011110011101110010110000011000000011101000011000000011100110110010011110000011101000101110110000000111101000101000111110110101110001010101110111110000011011110100110001010010110010011101111000101011110010111111011010010101010110000001011100011000001110011001010101001001011111001110101010010101011010101110010100010101110100100010011000011000100110001111101000000101000100000001010101110010100011100101101010001010101010101100010000101101101011010011001100010111000011010000010001010000011110100011001110101000010101010010000110101011110111110001110010111010011001001110110011111011100001010000010001011000110110111110111100001010100010101110101001110001010101110101110100000110000011000111110110110011100101110000111110000101101001101110000111100100110001111010101111"
+;
 
 
-sMath.piApprox.digits = {}; // correct decimal places. last one not rounded.
-sMath.piApprox.digits["0"] = "3.0";
-sMath.piApprox.digits["1"] = "3.1";
-sMath.piApprox.digits["2"] = "3.14";
-sMath.piApprox.digits["3"] = "3.141";
-sMath.piApprox.digits["4"] = "3.1415";
-sMath.piApprox.digits["100"] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
-sMath.piApprox.digits["200"] = "3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196";
-sMath.piApprox.digits["300"] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273";
-sMath.piApprox.digits["600"] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132";
-sMath.piApprox.digits["1150"] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983";
-sMath.piApprox.digits["2250"] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319255060400927701671139009848824012858361603563707660104710181942955596198946767837449448255379774726847104047534646208046684259069491293313677028989152104752162056966024058038150193511253382430035587640247496473263914199272604269922796782354781636009341721641219924586315030286182974555706749838505494588586926995690927210797509302955321165344987202755960236480665499119881834797753566369807426542527862551818417574672890977772793800081647060016145249192173217214772350141441973568548161361157352552133475741849468438523323907394143334547762416862518983569485562099219222184272550254256887671790494601653466804988627232791786085784383827967976681454100953883786360950680064225125205117392984896084128488626945604241965285022210661186306744278622039194945047123713786960956364371917287467764657573962413890865832645995813390478027590099465764078951269468398352595709825822620522489407726719478268482601476990902640136394437455305068203496252451749399651431429809190659250937221696461515709858387410597885959772975498930161753928468138268683868942774155991855925245953959431049972524680"
+var x = bMath.fromBinary( binaryPiToNaturalBinary(binary_pi_2250) );
