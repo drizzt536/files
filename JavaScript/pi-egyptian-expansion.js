@@ -20,9 +20,9 @@ function piEgyptianFractionExpansion(useStep1=true, {nOverride, pOverride}={}) {
 		// index | decimal precision | scientific notation exponent for term
 		/*+----+------+------+*/
 		/*| 0  |    0 |  N/A |*/ 3n // represents 1/1 + 1/1 + 1/1
-		/*| 1  |    1 |    0 |*/ , sMath.inv(8n)
-		/*| 2  |    3 |    1 |*/ , sMath.inv(61n)
-		/*| 3  |    7 |    3 |*/ , sMath.inv(5020n)
+		/*| 1  |    1 |    0 |*/ , sMath.iinv(8n)
+		/*| 2  |    3 |    1 |*/ , sMath.iinv(61n)
+		/*| 3  |    7 |    3 |*/ , sMath.iinv(5020n)
 		/*| 4  |   17 |    8 |*/ , sMath.inv(128541455n)
 		/*| 5  |   34 |   17 |*/ , sMath.inv(162924332716605980n)
 		/*| 6  |   68 |   34 |*/ , sMath.inv(28783052231699298507846309644849796n)
@@ -43,7 +43,9 @@ function piEgyptianFractionExpansion(useStep1=true, {nOverride, pOverride}={}) {
 	function getApprox() {
 		return sMath.add(
 			BASE_VALUE,
-			sMath.div10(sMath.inv(n), p) // MUCH faster than multiplying before inverting
+			// MUCH faster than multiplying before inverting
+			// sMath.iinv(n) is faster for small n (<~ 5020) and can give wrong answers
+			sMath.div10(sMath.inv(n), p)
 		);
 	}
 
