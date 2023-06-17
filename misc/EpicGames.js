@@ -199,6 +199,7 @@ var OwnedApplications = {
 	, "Football Manager 2022 Demo": 0
 	, "Football Manager 2023 Demo": 0
 	, "For The King": 19.99
+	, "Fortnite Zero Build: No-Build Battle Royale": 0
 	, "Fortnite": 0 // in-app purchases: ~$10. several battle passes. no save the world
 	, "Fort Triumph": 19.99
 	, "Frostpunk": 29.99
@@ -228,6 +229,10 @@ var OwnedApplications = {
 	, "Gone Home": 14.99
 	, "GoNNer": 9.99
 	, "Good Company Demo": 0
+	, "Guacamelee! 2": 19.99
+	, "Guacamelee! Super Turbo Championship Edition": 14.99
+	, "Guacamelee 2": 0 // duplicate
+	, "Guacamelee Super Turbo Championship Edition": 0 // duplicate
 	, "Guild of Dungeoneering": 11.99 // doesn't exist anywhere. not ultimate, but ultimate is $19.99
 	, "Halcyon 6 Starbase Commander": 14.99
 	, "Heavy Rain [Demo]": 0
@@ -309,6 +314,7 @@ var OwnedApplications = {
 	, "Maneater": 39.99
 	, "Mars 2030 Editor": 0
 	, "MechWarrior 5 Editor": 0
+	, "Midnight Ghost Hunt": 19.99
 	, "Might & Magic: Chess Royale": 0
 	, "Might and Magic: Chess Royale": 0 // duplicate
 	, "Might & Magic": 0 // duplicate
@@ -347,6 +353,7 @@ var OwnedApplications = {
 	, "Paragon: The Overprime": 0 // TODO: early access
 	, "Path of Exile": 0
 	, "Pathway": 15.99
+	, "PAYDAY 2": 9.99
 	, "Phantasy Star Online 2 New Genesis": 0
 	, "Phantasy Star Online 2": 0 // duplicate
 	, "Pikuniku": 12.99
@@ -534,6 +541,7 @@ var OwnedApplications = {
 	, "Tunche": 19.99
 	, "UnMetal Demo": 0
 	, "Unrailed!": 19.99
+	, "Unreal Editor For Fortnite": 0
 	, "Unreal Tournament": 0
 	, "UT Editor": 0
 	, "VALORANT": 0
