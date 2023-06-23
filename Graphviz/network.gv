@@ -1,0 +1,17 @@
+// dot -O -Tpdf ./network.gv
+digraph Network {
+	"1A" -> {
+		"1B"
+		"2B"
+		"3B"
+		"4B"
+	} -> {
+		"1C"
+		"2C"
+		"3C"
+		"4C"
+	} -> {
+		"1D"
+		"2D"
+	}
+}

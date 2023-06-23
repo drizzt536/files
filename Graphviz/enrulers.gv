@@ -1,0 +1,176 @@
+
+/**
+ *   NOTES:
+ *
+ * dates are ruling dates not birth/death, "/" means or. "-" means through
+ * dashed, same-rank line <==> marriage
+ * red <==> monarch
+ * purple <==> female
+ * if it says "of [insert place]", that is where they ruled
+ * "pre" means look at predesessors
+ * "con" means continue at successors
+ * some dates are probably not exact
+ * queens are purple instead of red, they were queens if they have dates.
+**/
+
+digraph English_Rulers_Family_Tree {
+	layout = dot;
+	graph [labelloc = t, labeljust = c];
+	label = "English Ruling Families";
+	compound = true;
+	concentrate = true;
+	remincross = true;
+	center = false;
+	clusterrank = global;
+	// rankdir = LR;
+	// ordering = in;
+	// splines = ortho;
+	// outputorder = nodesfirst;
+	newrank = false;
+
+	subgraph cluster_House_of_Wessex {
+		labeljust = l;
+		label = "House of Wessex";
+		color = darkgreen;
+
+		{ "Cerdic of Wessex [519-534]" [color=red] } -> {
+			"Cynric of Wessex [534-560]" [color=red]
+			"Creoda [534]" [color=red]
+		};
+
+		"Cynric of Wessex [534-560]" -> {
+			"Ceawlin of Wessex [560-592]" [color=red]
+			"Cutha"
+			"Ceolwulf"
+		};
+
+		
+		"Penda of Wessex [645-648]" [color=red]; # con
+		"Cynewulf of Wessex [757-786]" [color=red];
+		"Beorhtric of Wessex [786-802]" [color=red];
+
+		"Ceolwulf" ->
+		"Cuthgils" ->
+		"Cenferth" ->
+		{ "Cenfus of Wessex [674]" [color=red] } ->
+		{ "Æscwine of Wessex [674-676]" [color=red] }; # con
+
+		"Cutha" -> {
+			"Ceol of Wessex [592-597]" [color=red] # con
+			"Ceolwulf of Wessex [594/597-611]" [color=red] # con
+		};
+
+		"Ceol of Wessex [592-597]" ->
+		{ "Cynegils of Wessex [611-642]" [color=red] } -> {
+			"Cwichelm of Wessex [625-636]" [color=red] # con
+			"Cenwalh of Wessex [642-645, 648-672]" [color=red] # con
+			"Centwine of Wessex [676-685]" [color=red] # con
+		};
+
+		"Cwichelm of Wessex [625-636]" -> "Cuthred";
+
+		"Father of Æthelheard" -> {
+			"Æthelheard of Wessex [726-740]" [color=red] # con
+			"Cuthred of Wessex [740-756]" [color=red] # con
+			"Æthelburg [689-726]" [color=purple] # con
+		};
+
+		"Father of Sigerberht" -> {
+			"Sigerberht of Wessex [756-757]" [color=red] # con
+			"Cyneheard the Ætheling" # con
+		}
+
+		"Ceawlin of Wessex [560-592]" ->
+		"Cuthwine" -> {
+			"Cynebald" #con
+			"Cedda" # con
+			"Cuthwulf" # con
+		};
+
+		"Cedda" ->
+		"Cenberht" -> {
+			"Cædwalla of Wessex [685-688]" [color=red] # con
+			"Mul of Kent [686-687]" [color=red] # con
+		};
+
+		"Cuthwulf" ->
+		"Ceolwald of Wessex" ->
+		"Cenred of Wessex" -> {
+			"Ingild"
+			"Ine of Wessex [689-726]" [color=red] # con
+			"Cuthburh" [color=purple] # con
+			"Cwenburh" [color=purple] # con
+		};
+
+		"Ingild" ->
+		"Eoppa" ->
+		"Eafa" ->
+		{ "Ealhmund of Kent [745-839]" [color=red] } -> # pre, con
+		{ "Ecgberht of Wessex [802-839]" [color=red] } -> # pre
+		{ "Æthelwulf of Wessex [839-858]" [color=red] } -> {
+			"Æthelswith [853-874]" [color=purple] # con
+			"Æthelbald [855/858-860]" [color=red]
+			"Æthelred I of Wessex [865-871]" [color=red]
+			"Æthelstan of Kent [839-851]" [color=red]
+			"Æthelberht of Wessex" [color=red] # con
+			"Alfred the Great [886-899]" [color=red] # con
+		};
+
+		"Æthelred I of Wessex [865-871]" -> {
+			"Æthelhelm" # con
+			"Æthelwold ætheling" # con
+		}
+
+		/* marriages */ {
+			edge [arrowhead=none, style=dashed];
+
+			"Ine of Wessex [689-726]" -> "Æthelburg [689-726]";
+			"Æthelbald [855/858-860]" -> "Judith of Flanders";
+
+			"Cenwalh of Wessex [642-645, 648-672]" ->
+			{ "Seaxburh [672-674]" [color=purple] };
+
+			"Æthelwulf of Wessex [839-858]" -> {
+				"Judith of Flanders" [color=purple] # pre
+				"Osburh" [color=purple] # pre
+			};
+
+		};
+	}
+
+	subgraph cluster_Mercia {
+		labeljust = l;
+		label = "Mercia";
+		color = darkgreen;
+
+		{ "Creoda of Mercia [585-593]" [color=red] } -> # pre, con
+		{ "Pybba of Mercia [593-606/615]" [color=red] } -> # pre, con
+		{ "Eowa of Mercia [626-642]" [color=red] } -> # pre, con
+		"Osmod" -> # pre, con
+		"Eanwulf" -> # pre, con
+		"Thingfrith" -> # pre, con
+		{ "Offa of Mercia [759-796]" [color=red] } -> # pre, con
+		{ "Eadburh [786-802]" [color=purple] };
+
+		{ "Pybba of Mercia [593-606/615]" [color=red] } -> { # pre, con
+			"Penda of Wessex [645-648]" [color=red]
+			"Sister of Penda" [color=purple]
+		};
+
+		/* marriages*/ {
+			edge [arrowhead=none, style=dashed];
+
+			{ "Burgred of Mercia [852-874]" [color=red] } -> # pre, con
+			"Æthelswith [853-874]"
+		}
+
+	}
+
+	/* inter-cluster links */ {
+		edge [arrowhead=none, style=dashed];
+
+		"Beorhtric of Wessex [786-802]" -> "Eadburh [786-802]";
+		"Cenwalh of Wessex [642-645, 648-672]" -> "Sister of Penda";
+	}
+
+}

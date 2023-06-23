@@ -1,10 +1,11 @@
 # most ignored files are just for testing/notes, and are not actually projects...
 # or they are incomplete to the point where they don't yet serve their purpose...
+# language folders are ignored if there are less than like 3 programs in it.
 # or they are temporary, not original (ie jQuery.js), a joke (ie 3quine.html), etc
 # executables and object files are ignored because I didn't write them
+# pdfs are included because they are viewable and useful
 
 /GoLang/
-/Graphviz/
 /Haskell/
 /ignore/
 /Java/
