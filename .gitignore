@@ -5,7 +5,6 @@
 # executables and object files are ignored because I didn't write them
 # pdfs are included because they are viewable and useful
 
-/GoLang/
 /Haskell/
 /ignore/
 /Java/
