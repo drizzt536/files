@@ -4,5 +4,5 @@ title powershell
 powershell
 :: 'pwsh' works with newer versions of powershell.
 set/p var=Are You Sure You Want To Exit?
-if %var%==yes (goto end) else (goto cmd)
-:end
+if %var%==yes (goto :EOF) else (goto cmd)
+:: if (%var%) neq (yes) (goto cmd)
