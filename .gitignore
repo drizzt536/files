@@ -28,6 +28,7 @@ Python/manim/
 test.*
 *.exe
 *.o
+*.obj
 
 # JavaScript testing library
 !JavaScript/test.js
