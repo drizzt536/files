@@ -1,5 +1,6 @@
 ; nasm -fwin64 print_integer.nasm
 ; gcc print_integer.obj -o print_integer
+; rm ./print_integer.obj
 ; ./print_integer.exe
 
 %define stack_space 32
