@@ -1,34 +1,47 @@
-; nasm -fwin64 print_range.nasm
-; gcc print_range.obj -o print_range
-; rm ./print_range.obj
-; ./print_range.exe
+; ./assemble print_range
+; print_range
 
-%define MIN 32
-%define MAX 255
-%define stack_space 24			; idk why this value works
+%define stack_space 32
+%define MAX 32
+
+segment data
+	fmt 	db "%u", 10			; printf format string "%u\n"
 
 segment text
-	extern	putchar
+	extern	printf
 	global	main
 
-; int main(void) {
-;     for (char i = MIN; i <= MAX; i++)
-;         __builtin_putchar(i);
-;
-;     return 0;
-; }
+; ╭───────────────────────────────────╮
+; │                                   │
+; │  #define printf __builtin_printf  │
+; │  #define MAX 32                   │
+; │                                   │
+; │  int main(void) {                 │
+; │      int i = 0;                   │
+; │      loop:                        │
+; │          printf("%u", i);         │
+; │          i++;                     │
+; │          if (i <= MAX)            │
+; │              goto loop;           │
+; │                                   │
+; │      return 0;                    │
+; │  }                                │
+; │                                   │
+; ╰───────────────────────────────────╯
 
 main:
-	sub 	rsp, stack_space
-	mov 	rbx, MAX			; 64 bit of MAX version to compare to
-	mov 	rax, MIN
+	sub 	rsp, stack_space	; allocate space on the stack
 
-	loop:
-		mov 	rcx, rax
-		call	putchar
-		inc 	rax
-		cmp 	rax, rbx
-		jle 	loop
+	mov 	r14, 0				; int i = 0
+	mov 	r15, MAX			; this should never change
+
+	loop:						; loop:
+		lea 	rcx, [rel fmt]	;; load format string
+		mov 	rdx, r14		;; load i
+		call	printf			;     __builtin_printf(fmt, i);
+		inc 	r14				;     i++
+		cmp 	r14, r15		;     if (i <= MAX)
+		jle  	loop			;         goto loop
 
 	add 	rsp, stack_space
 	ret
