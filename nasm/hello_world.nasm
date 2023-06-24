@@ -3,7 +3,7 @@
 
 %define stack_space 32			; minumum value without buffering before exit
 
-segment data
+segment rdata
 	txt 	db "Hello World"
 
 segment text

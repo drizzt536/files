@@ -2,7 +2,7 @@
 ; ./loop_hello
 
 
-segment data
+segment rdata
 	msg 	db "Hello World"
 
 segment text

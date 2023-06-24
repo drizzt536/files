@@ -3,7 +3,7 @@
 
 %define stack_space 32
 
-segment data
+segment rdata
 	format	db "%u", 10, 0		; printf format string ("%u\n")
 	uvalue	db 0b1111_1111		; unsigned integer value 
 

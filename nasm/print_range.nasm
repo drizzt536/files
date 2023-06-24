@@ -4,7 +4,7 @@
 %define stack_space 32
 %define MAX 32
 
-segment data
+segment rdata
 	fmt 	db "%u", 10			; printf format string "%u\n"
 
 segment text
