@@ -1,7 +1,5 @@
-; nasm -fwin64 hello_world.nasm
-; gcc hello_world.obj -o hello_world
-; rm ./hello_world.obj
-; ./hello_world.exe
+; ./assemble hello_world
+; ./hello_world
 
 %define stack_space 32			; minumum value without buffering before exit
 
@@ -12,10 +10,15 @@ segment text
 	extern	puts
 	global	main
 
-; int main(void) {
-;     puts("Hello World");
-;     return 0;
-; }
+; ╭────────────────────────────╮
+; │                            │
+; │  int main(void) {          │
+; │      puts("Hello World");  │
+; │      return 0;             │
+; │  }                         │
+; │                            │
+; ╰────────────────────────────╯
+
 
 main:
 	sub 	rsp, stack_space

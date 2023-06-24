@@ -1,7 +1,5 @@
-; nasm -fwin64 loop_hello.nasm
-; gcc loop_hello.obj -o loop_hello
-; rm ./loop_hello.obj
-; ./loop_hello.exe
+; ./assemble loop_hello
+; ./loop_hello
 
 
 segment data
@@ -11,7 +9,17 @@ segment text
 	extern	puts
 	global	main
 
-main:					; while (true)
+; ╭────────────────────────────────╮
+; │                                │
+; │  int main(void) {              │
+; │      while (true)              │
+; │          puts("Hello World");  │
+; │      return 0;                 │
+; │  }                             │
+; │                                │
+; ╰────────────────────────────────╯
+
+main:
 	mov 	rcx, msg
-	call	puts 		; puts("Hello World")
+	call	puts
 	jmp 	main
