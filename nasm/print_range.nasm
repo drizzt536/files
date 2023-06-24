@@ -19,7 +19,7 @@ segment text
 ; │  int main(void) {                 │
 ; │      int i = 0;                   │
 ; │      loop:                        │
-; │          printf("%u", i);         │
+; │          printf("%u\n", i);       │
 ; │          i++;                     │
 ; │          if (i <= MAX)            │
 ; │              goto loop;           │
