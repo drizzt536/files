@@ -25,3 +25,4 @@ test.*
 
 !JavaScript/test.js
 !/Python/manim/*/index.py
+!/Python/manim/*/manim.cfg
