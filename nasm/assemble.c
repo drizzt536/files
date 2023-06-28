@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+// gcc ./assemble.c -o assemble -Ofast
+// strip ./assemble.exe
+
 
 int main(int argc, char *argv[]) {
 	// nasm -fwin64 -Werror "./$name.$extn" $params
@@ -26,21 +29,20 @@ int main(int argc, char *argv[]) {
 	sprintf(name, "./%s", argv[1]);
 
 	char *params = argc > 3 ? argv[3] : "";
-	int name_length = strlen(name);
 
 	{
-		char cmd[22 + name_length + strlen(extn) + strlen(params)];
+		char cmd[2*(22 + strlen(name) + strlen(extn) + strlen(params))];
 		sprintf(cmd, "nasm -fwin64 -Werror %s%s %s", name, extn, params);
 		printf("running nasm: %s\n", cmd);
 		system(cmd);
 	}
 	{
-		char cmd[12 + 2*name_length];
+		char cmd[2*(12 + 2*strlen(name))];
 		sprintf(cmd, "gcc %s.obj -o %s", name, name);
 		printf("linking with gcc: %s\n", cmd);
 		system(cmd);
 	}
-	char cmd[2 + name_length];
+	char cmd[2*(2 + strlen(name))];
 	sprintf(cmd, "%s.obj", name);
 	printf("removing intermediate %s\n", cmd);
 	remove(cmd);
