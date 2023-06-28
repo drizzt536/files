@@ -8,17 +8,16 @@ segment text
 	extern	printf
 	extern	scanf
 
-; ╭──────────────────────────────────╮
-; │                                  │
-; │  int main(void) {                │
-; │      __int64 i;                  │
-; │      __builtin_scanf("%d", &i);  │
-; │      __builtin_printf("%d", i);  │
-; │                                  │
-; │      return 0;                   │
-; │  }                               │
-; │                                  │
-; ╰──────────────────────────────────╯
+; ╭────────────────────────╮
+; │                        │
+; │  int main(void) {      │
+; │      int64_t i;        │
+; │      scanf("%d", &i);  │
+; │      printf("%d", i);  │
+; │      return 0;         │
+; │  }                     │
+; │                        │
+; ╰────────────────────────╯
 
 main:
 	mov 	rbp, rsp
