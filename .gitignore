@@ -12,22 +12,16 @@
 /Wolfram/
 
 /TeX/JSAANLFE/
-# TypeScript version of lib.js v3.0.0
 /JavaScript/Library/
-# DuckyScript examples
 /PicoDucky/scripts/
-
-/HTML/3quine.html
-/HTML/calculator.html
-/HTML/BlackJack.html
-
-# not actually passwords.
-Python/passwords.py
+/Python/manim/*/*
 
 test.*
+*.htm
 *.exe
 *.o
 *.obj
+*/#*#
 
-# JavaScript testing library
 !JavaScript/test.js
+!/Python/manim/*/index.py
