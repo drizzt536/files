@@ -3,7 +3,7 @@
 
 %define MIN 32
 %define MAX 255
-%define stack_space 24			; idk why this value works
+%define main_stack_space 24			; idk why this value works
 
 segment text
 	extern	putchar
@@ -24,8 +24,8 @@ segment text
 ; ╰─────────────────────────────────────────╯
 
 main:
-	sub 	rsp, stack_space
-	mov 	rbx, MAX			; 64 bit of MAX version to compare to
+	sub 	rsp, main_stack_space
+	mov 	rbx, MAX				; 64 bit of MAX version to compare to
 	mov 	rax, MIN
 
 	loop:
@@ -35,5 +35,5 @@ main:
 		cmp 	rax, rbx
 		jle 	loop
 
-	add 	rsp, stack_space
+	add 	rsp, main_stack_space
 	ret
