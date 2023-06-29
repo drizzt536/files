@@ -1,4 +1,5 @@
 ; ./assemble print_integer
+; strip print_integer.exe
 ; ./print_integer
 
 %define main_stack_space 32

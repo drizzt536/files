@@ -1,15 +1,16 @@
 ; ./assemble print_range
-; print_range
+; strip ./print_range.exe
+; ./print_range
 
 %define main_stack_space 32
 %define MAX 32
 
 segment rdata
-	fmt 	db "%u", 10			; printf format string "%u\n"
+	fmt 	db	"%u", 10			; printf format string "%u\n"
 
 segment text
-	extern	printf
 	global	main
+	extern	printf
 
 ; ╭───────────────────────────────────╮
 ; │                                   │

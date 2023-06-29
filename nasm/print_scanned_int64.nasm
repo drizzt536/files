@@ -1,3 +1,7 @@
+; ./assemble print_scanned_int64
+; strip print_scanned_int64.exe
+; ./print_scanned_int64
+
 %define main_stack_space 48
 
 segment rdata
@@ -23,7 +27,7 @@ main:
 	mov 	rbp, rsp
 	sub 	rsp, main_stack_space
 
-	lea 	rcx, [rel fmt] 
+	lea 	rcx, [rel fmt]
 	lea 	rdx, [rbp - 4]
 	call	scanf
 

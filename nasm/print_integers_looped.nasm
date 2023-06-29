@@ -1,5 +1,6 @@
-; ./assemble print_range
-; print_range
+; ./assemble print_integers_looped
+; strip print_integers_looped.exe
+; ./print_integers_looped
 
 %define MAX 32
 

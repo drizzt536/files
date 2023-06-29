@@ -1,4 +1,5 @@
 ; ./assemble hello_world
+; strip hello_world.exe
 ; ./hello_world
 
 %define main_stack_space 32			; minumum value without buffering before exit

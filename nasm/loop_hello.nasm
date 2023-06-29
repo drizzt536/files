@@ -1,4 +1,5 @@
 ; ./assemble loop_hello
+; strip loop_hello.exe
 ; ./loop_hello
 
 

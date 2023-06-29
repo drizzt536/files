@@ -1,4 +1,5 @@
 ; ./assemble print_charcode_range
+; strip print_charcode_range.exe
 ; ./print_charcode_range
 
 %define MIN 32
