@@ -1,11 +1,9 @@
-; ./assemble print_scanned_int64
-; strip print_scanned_int64.exe
-; ./print_scanned_int64
+; ./assemble print_scanned_int64 .nasm --e
 
-%define main_stack_space 48
+%define main_stack_space 32
 
 segment rdata
-	fmt 	db	"%d"
+	fmt 	db  	"%d"
 
 segment text
 	global	main
@@ -28,12 +26,13 @@ main:
 	sub 	rsp, main_stack_space
 
 	lea 	rcx, [rel fmt]
-	lea 	rdx, [rbp - 4]
+	lea 	rdx, [rbp - 8]
 	call	scanf
 
 	lea 	rcx, [rel fmt]
-	mov 	rdx, [rbp - 4]
+	mov 	rdx, [rbp - 8]
 	call	printf
 
+	xor 	rax, rax
 	add 	rsp, main_stack_space
 	ret
