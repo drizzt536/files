@@ -1,10 +1,7 @@
-; ./assemble loop_hello
-; strip loop_hello.exe
-; ./loop_hello
-
+; ./assemble loop_hello .nasm --e
 
 segment rdata
-	msg 	db "Hello World"
+	msg 	db  	"Hello World"
 
 segment text
 	extern	puts

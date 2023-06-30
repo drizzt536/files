@@ -1,11 +1,9 @@
-; ./assemble hello_world
-; strip hello_world.exe
-; ./hello_world
+; ./assemble hello_world .nasm --e
 
 %define main_stack_space 32			; minumum value without buffering before exit
 
 segment rdata
-	txt 	db "Hello World"
+	txt 	db  	"Hello World"
 
 segment text
 	extern	puts
@@ -23,7 +21,10 @@ segment text
 
 main:
 	sub 	rsp, main_stack_space
+
 	mov 	rcx, txt
 	call	puts
+
+	xor 	rax, rax
 	add 	rsp, main_stack_space
 	ret

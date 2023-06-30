@@ -1,11 +1,9 @@
-; ./assemble print_integers_looped
-; strip print_integers_looped.exe
-; ./print_integers_looped
+; ./assemble print_integers_looped .nasm --e
 
 %define MAX 32
 
 segment rdata
-	fmt 	db "%u, "				; printf format string "%u\n"
+	fmt 	db  	"%u, "			; printf format string "%u\n"
 
 segment text
 	extern	printf

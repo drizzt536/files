@@ -1,12 +1,10 @@
-; ./assemble print_range
-; strip ./print_range.exe
-; ./print_range
+; ./assemble print_range .nasm --e
 
 %define main_stack_space 32
 %define MAX 32
 
 segment rdata
-	fmt 	db	"%u", 10			; printf format string "%u\n"
+	fmt 	db  	"%u", 10		; printf format string "%u\n"
 
 segment text
 	global	main
@@ -44,5 +42,6 @@ main:
 		cmp 	r14, r15			;     if (i <= MAX)
 		jle  	loop				;         goto loop
 
+	xor 	rax, rax
 	add 	rsp, main_stack_space
 	ret

@@ -1,12 +1,10 @@
-; ./assemble print_integer
-; strip print_integer.exe
-; ./print_integer
+; ./assemble print_integer .nasm --e
 
 %define main_stack_space 32
 
 segment rdata
-	format	db "%u", 10, 0			; printf format string ("%u\n")
-	uvalue	db 0b1111_1111			; unsigned integer value 
+	format  	db  	"%u", 10, 0	; printf format string ("%u\n")
+	uvalue  	db  	0b1111_1111	; unsigned integer value 
 
 segment text
 	extern	printf
@@ -29,5 +27,6 @@ main:
 	mov 	rdx, [rel uvalue]		; load the integer
 	call	printf					; `scanf` uses the same registers, but does `lea` on both
 
+	xor 	rax, rax
 	add 	rsp, main_stack_space
 	ret

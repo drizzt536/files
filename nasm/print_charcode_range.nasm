@@ -1,6 +1,4 @@
-; ./assemble print_charcode_range
-; strip print_charcode_range.exe
-; ./print_charcode_range
+; ./assemble print_charcode_range .nasm --e
 
 %define MIN 32
 %define MAX 255
@@ -36,5 +34,6 @@ main:
 		cmp 	rax, rbx
 		jle 	loop
 
+	xor 	rax, rax
 	add 	rsp, main_stack_space
 	ret
