@@ -26,7 +26,6 @@ factorial:
 .negative:
 	mov 	rcx, if_negative
 	call	printf
-
 	; return except go to main_exit instead
 	add 	rsp, 8
 	jmp		main_exit
