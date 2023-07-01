@@ -494,6 +494,7 @@ var OwnedApplications = {
 	, "The Cycle: Frontier": 0
 	, "The Cycle": 0 // duplicate
 	, "The Drone Racing League Simulator": 9.99
+	, "The Dungeon Of Naheulbeuk: The Amulet Of Chaos": 34.99
 	, "The Escapists": 17.99
 	, "The Escapists 2": 19.99
 	, "The Fall": 9.99
@@ -599,5 +600,3 @@ appsInclude = (() => {
 
 	return app => keys.includes( app.lower() );
 })();
-
-
