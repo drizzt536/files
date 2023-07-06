@@ -22,7 +22,6 @@ test.*
 *.exe
 *.o
 *.obj
-*/#*#
 
 !JavaScript/test.js
 !/Python/manim/*/index.py
