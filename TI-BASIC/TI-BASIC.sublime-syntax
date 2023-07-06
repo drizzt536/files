@@ -9,11 +9,11 @@ file_extensions:
 scope: text.ti-basic
 contexts:
   main:
-    - match: '\b(If |Then|Else|For|While |Repeat |End|Pause |Lbl [A-Z\dθ]{1,2}|Goto [A-Z\dθ]{0,2}|SetUpEditor |IS>\(|DS<\(|prgm([A-Zθ][A-Z\dθ]{0,7})?|Return|Stop|DelVar |Input |Prompt |Disp( |Graph|Table)|getKey|Clr(Home|Table|Draw|AllLists|List )|(Plots|Fn)O(ff|n) |(Label|Diagnostic|Expr|Axes|Coord|Grid|Clock)O(ff|n)|Horizontal|Vertical|Draw(F|Inv)|(Rect|Polar)GC||Archive |Clear Entries|UnArchive |Normal|Sci|Eng|Float|Fix \d|Radian|Degree|Func|Param|Polar|Seq|Connected|Dot|Sequential|Simul|Real|a\+b|r\^θ|Full|Horiz|G—T|MATHPRINT|CLASSIC|nd|Und|AUTO|DEC|FRAC|STATWIZARD (OFF|ON)|[1-2]-Var Stats |Med-Med |(Quad|Cubic|Quart|Ln|Exp|Pwr|Sin)Reg |LinReg\((ax\+b|a\+bx)\) |Logistic |Manual-Fit |Scatter|xyLine|Histogram|(Mod)?Boxplot|NormProbPlot|IndpntA(uto|sk)|DependA(uto|sk)|lower|upper|RegEQ|m(in|ax)(X|Y))'
+    - match: '\b(If |Then|Else|For|While |Repeat |End|Pause |Lbl [A-Z\dθ]{1,2}|Goto [A-Z\dθ]{0,2}|SetUpEditor |IS>\(|DS<\(|prgm([A-Zθ][A-Z\dθ]{0,7})?|Return|Stop|DelVar |Input |Prompt |Disp( |Graph|Table)|getKey|Clr(Home|Table|Draw|AllLists|List )|(Plots|Fn)O(ff|n) |(Label|Diagnostic|Expr|Axes|Coord|Grid|Clock)O(ff|n)|Horizontal|Vertical|Draw(F|Inv)|(Rect|Polar)GC||(Un)?Archive |Clear Entries|Normal|Sci|Eng|Float|Fix \d|Radian|Degree|Func|Param|Polar|Seq|Connected|Dot|Sequential|Simul|Real|a\+b|r\^θ|Full|Horiz|G—T|MATHPRINT|CLASSIC|nd|Und|AUTO|DEC|FRAC|STATWIZARD (OFF|ON)|[1-2]-Var Stats |Med-Med |(Quad|Cubic|Quart|Ln|Exp|Pwr|Sin)Reg |LinReg\((ax\+b|a\+bx)\) |Logistic |Manual-Fit |Scatter|xyLine|Histogram|(Mod)?Boxplot|NormProbPlot|IndpntA(uto|sk)|DependA(uto|sk)|lower|upper|RegEQ|m(in|ax)(X|Y))'
       scope: keyword.control.all.ti-basic
     - match: '\b(a\+bi)'
       scope: keyword.control.easeOfUse.ti-basic
-    - match: '\b(int|Get|Send|SortA|SortD|dim|Fill|seq|cumSum|List|Select|augment|min|maxmean|median|sum|prod|stdDev|variance|fMin|fMax|nDeriv|fnInt|Σ|logBASE|solve|round|iPart|fPart|lcm|gcd|remainder|conj|real|imag|angle|rand|randInt|randNorm|randBin|randIntNoRep|det|identity|randM|ref|rref|rowSwap|row\+|\*row|\*row\+|setTime|Plot1|Plot2|Plot3|Output|Menu|GetCalc|Tangent|GraphStyle|OpenLib|ExecLib|Line|Shade|Circle|Text)'
+    - match: '\b(int|Get|Send|Sort(A|D)|dim|Fill|seq|cumSum|List|Select|augment|min|max|mean|median|sum|prod|stdDev|variance|fM(in|ax)|nDeriv|fnInt|Σ|logBASE|solve|round|(i|f)Part|lcm|gcd|remainder|conj|real|imag|angle|rand(Int(NoRep)?|Norm|Bin|M)?|det|identity|r?ref|rowSwap|\*row|\*?row\+|setTime|Plot[1-3]|Output|Menu|GetCalc|Tangent|GraphStyle|(Open|Exec)Lib|Line|Shade|Circle|Text)'
       scope: variable.function.ti-basic
     - match: '^:?\t*".*"$|:'
       scope: punctuation.definition.comment.ti-basic
@@ -28,7 +28,7 @@ contexts:
       scope: entity.name.function.ti-basic
     - match: '­?\d*(\.\d*)??\d+'
       scope: constant.numeric.ti-basic
-    - match: "=|≠|>|≥|<|≤| and | or | xor | nPr | nCr |not|→||sin|cos|tan|sinh|sinh|cosh|cosh|tanh|tanh|\\^|²||√|√|√|log|abs|ln|/||␣|\\*|-|\\+|sin|cos|tan|°|\\b'||DMS|RPr|RPθ|PRx|PRy|!|Frac|Dec|Matrlist|Listmatr|ndUnd|FD|Rect|Polar"
+    - match: "=|≠|>|≥|<|≤| and | or | xor | nPr | nCr |not|→||sinh??|cosh??|tanh??|\\^|²||√|√|√|log|abs|ln|/||␣|\\*|-|\\+|°|\\b'||DMS|RPr|RPθ|PRx|PRy|!|Frac|Dec|Matrlist|Listmatr|ndUnd|FD|Rect|Polar"
       scope: keyword.operator.ti-basic
     - match: "sqrt|cbrt"
       scope: keyword.operator.easeOfUse.ti-basic # not actually valid syntax, but to make it easier
