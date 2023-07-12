@@ -3,7 +3,7 @@ Upload of side projects.
 <br>
 <br>
 <br>
-These are the language versions I use (as of 6/29/2023):
+These are the language versions I use:
 - C: x86_64-MinGW32-w64 gcc 13.1.0
 - Graphviz: 8.1.0
 - Go: 1.20.6
