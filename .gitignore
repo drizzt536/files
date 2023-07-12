@@ -22,6 +22,6 @@ test.*
 *.o
 *.obj
 
-!JavaScript/test.js
+!/JavaScript/test.js
 !/Python/manim/*/index.py
 !/Python/manim/*/manim.cfg
