@@ -5,6 +5,8 @@
 # executables and object files are ignored because I didn't write them
 # pdfs are included because they are viewable and useful
 
+node_modules
+
 /Haskell/
 /ignore/
 /Java/
