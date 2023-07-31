@@ -1,6 +1,8 @@
 #!usr/bin/env js
 
 // This file has the tests for lib.js must execute before Test.js does
+// in `inputs`, the first element is the `thisArg`, the rest are the function arguments
+// in `outputs`, the first element is the return value and the second is the exit code (0 or 1)
 
 if (LIBRARY_VARIABLES["local LibSettings"].Create_Testing_Object) {
 
@@ -448,3 +450,39 @@ else if (globalTestsObject.constructor?.name === "Object")
 	globalTestsObject[LibSettings.LIBRARY_NAME] = tests;
 
 }
+
+
+/* globalThis.sgn():
+
+-5.12     -> -1
+-1        -> -1
+-Infinity -> -1
+-0        -> 0
+0         -> 0
+1         -> 1
+Infinity  -> 1
+true      -> 1
+false     -> 0
+
+-6n       -> -1n
+-1n       -> -1n
+0n        -> 0n
+1n        -> 1n
+999999n   -> 1n
+
+complex(1, 0)  -> complex(1, 0)
+complex(0, 0)  -> complex(0, 0)
+complex(-1, 0) -> complex(-1, 0)
+complex(0, 1)  -> complex(0, 1)
+complex(0, -1) -> complex(0, -1)
+
+complex(1, 1)   -> complex(0.7071067811865474, 0.7071067811865474)
+complex(1, -1)  -> complex(0.7071067811865474, -0.7071067811865474)
+complex(-1, -1) -> complex(-0.7071067811865474, -0.7071067811865474)
+complex(-1, 1)  -> complex(-0.7071067811865474, 0.7071067811865474)
+
+NaN       -> NaN
+Symbol()  -> NaN
+/asdf/    -> NaN
+() => 32  -> NaN
+*/
