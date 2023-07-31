@@ -1,28 +1,93 @@
 {
-	// C:/Users/[user]/AppData/Roaming/Sublime Text/Packages/User/Preferences.sublime-settings
+	// %AppData%/Sublime Text/Packages/User/Preferences.sublime-settings
 	"settings": {
-		"font_size": 16,
+		"font_size": 19,
 		"save_on_focus_lost": true,
 		"word_wrap": true,
-		"light_color_scheme": "Mariana.sublime-color-scheme", // dark theme
+		"light_color_scheme": "Mariana.sublime-color-scheme",
 		"match_brackets_content": false,
 		"move_to_limit_on_up_down": true,
 		"control_character_style": "names",
 		"update_system_recent_files": false,
 		"minimap_horizontal_scrolling": true,
+		"theme": "Adaptive.sublime-theme",
+		"ignored_packages": [ "Vintage" ],
+		"color_scheme": "Mariana.sublime-color-scheme",
 	},
-	// C:/Users/[user]/AppData/Roaming/Sublime Text/Packages/User/Default (Windows).sublime-keymap
-	"keybinds": [
+	"distraction_free_settings": {},
+	// %AppData%/Sublime Text/Packages/User/Default (Windows).sublime-keymap
+	"keybindings": [
 		{ "keys": ["f1"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
 		{ "keys": ["shift+backspace"], "command": "right_delete" },
-		{ "keys": ["insert"], "command": "" },
 		{ "keys": ["ctrl+k", "ctrl+t"], "command": "title_case" },
 		{ "keys": ["ctrl+u"], "command": "upper_case" },
 		{ "keys": ["ctrl+shift+u"], "command": "lower_case" },
-	]/*,
-	"extra syntaxes": [
-		"NASM",
-		"TI-BASIC-84",
-		"Wolfram Language"
-	]*/
+		{ "keys": ["ctrl+alt+["], "command": "fold_all" },
+		{ "keys": ["ctrl+alt+]"], "command": "unfold_all" },
+		{ "keys": ["ctrl+alt+u"], "command": "swap_case" },
+		{ "keys": ["ctrl+tab"], "command": "next_view" },
+		{ "keys": ["ctrl+shift+tab"], "command": "prev_view" },
+		{ "keys": ["ctrl+shift+f"], "command": "show_panel", "args": {"panel": "replace", "reverse": false} },
+		{ "keys": ["ctrl+alt+f"], "command": "show_panel", "args": {"panel": "find_in_files"} },
+		{ "keys": ["alt+x", "s"], "command": "toggle_side_bar" },
+
+		// remove keybinds
+		{ "keys": ["insert"], "command": "noop" },
+		{ "keys": ["ctrl+f4"], "command": "noop" },
+		{ "keys": ["ctrl+k", "ctrl+u"], "command": "noop" },
+		{ "keys": ["ctrl+k", "ctrl+l"], "command": "noop" },
+		{ "keys": ["ctrl+k", "ctrl+b"], "command": "noop" },
+		{ "keys": ["ctrl+shift+space"], "command": "noop" },
+		{ "keys": ["ctrl+d"], "command": "noop" },
+	],
+	// %AppData%/Sublime Text/Packages/User/Mariana.sublime-color-scheme
+	// makes the background and errors easier on the eyes (darker)
+	// Even better, turn on the windows night light too. I do 20%, always on.
+	"color_scheme": {
+		"variables": {
+			"gray": "var(grey)",
+			"soft-red": "rgb(160, 80, 80)",
+			"soft-orange": "rgb(130, 80, 20)",
+		},
+		"globals": {
+			"background": "rgb(43, 51, 60)" // default: rgb(48, 56, 65)
+		},
+		"rules": [
+			{
+				"name": "Invalid",
+				"scope": "invalid",
+				"foreground": "var(gray)", // default: white2
+				"background": "var(soft-red)" // default: red
+			},
+			{
+				"name": "Invalid deprecated",
+				"scope": "invalid.deprecated",
+				"foreground": "var(red)", // default: white2
+				"background": "var(soft-orange)" // default: orange2
+			},
+			{
+				"scope": "message.error",
+				"foreground": "var(soft-red)" // default: red
+			},
+		]
+	},
+	"package_settings": {
+		"bootstrapped": true,
+		"auto_upgrade_frequency": 12,
+		"in_process_packages": [],
+		"installed_packages": [
+			"CMake",
+			"Fortran",
+			"GAS-x86 (or x64) highlighting scheme",
+			"MasmAssembly",
+			"OrgExtended",
+			"Package Control",
+			"PackageDev",
+			"PowerShell",
+			"Table Editor",
+			"TOML",
+			"VBDotNet",
+			"WolframLanguage",
+		],
+	},
 }
