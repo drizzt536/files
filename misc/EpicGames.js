@@ -250,6 +250,7 @@ var OwnedApplications = {
 	, "HITMAN - Game of the Year Edition": 59.99
 	, "HITMAN": 0 // duplicate
 	, "Hob": 19.99
+	, "Homeworld Remastered Collection": 34.99
 	, "Honkai: Star Rail": 0
 	, "Honkai Impact 3rd": 0
 	, "Hood: Outlaws & Legends": 19.99
@@ -326,6 +327,7 @@ var OwnedApplications = {
 	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is or where it came from
 	, "MudRunner": 19.99
 	, "MultiVersus": 0
+	, "Murder by Numbers": 14.99
 	, "N0va Desktop": 0
 	, "NAIRI Rising Tide": 0 // coming soon
 	, "NASA XOSS MarsXR Editor": 0
@@ -495,6 +497,7 @@ var OwnedApplications = {
 	, "The Cycle": 0 // duplicate
 	, "The Drone Racing League Simulator": 9.99
 	, "The Dungeon Of Naheulbeuk: The Amulet Of Chaos": 34.99
+	, "The Elder Scrolls Online": 19.99
 	, "The Escapists": 17.99
 	, "The Escapists 2": 19.99
 	, "The Fall": 9.99
