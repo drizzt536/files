@@ -4,13 +4,15 @@
 // null means either idk or N/A. "null" means the string "null"
 // language extenders probably don't include keywords of the languages they extend
 // a language being mostly empty means I either know almost nothing about it, or I know it well enough to not care about documenting it for easier recognization
-/**Attributes:
+/** Attributes:
+ * extension: extension or list of extensions.
+ * paradigm: main paradigm or list of programming paradigms supported, the main one first
  * function: keyword for defining functions
  * variable: keyword for defining variables
  * typing: static or dynamic
  * level: high, med or low
- * alt-name: alternate name for language, ie script for bash
- * cur.obj: keyword for current object. ie: this, self
+ * alt name: alternate name for language, ie script for bash
+ * this: keyword for current object. ie: this, self
  * undefined: keywords for undefined in the language, ie: null, nil, undefined, etc
  * cstyle: if the language is in the style of C or not
  * semicolon: semicolons required to end statements
@@ -19,15 +21,18 @@
  * misc: miscellaneous facts or notes about the language, its syntax, etc...
  * examples: self explanitory
 **/
+
 var o = dict({
 	"Abap": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": "?",
 		"typing": "static?",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": "high?",
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": false,
 		"semicolon": false,
@@ -75,15 +80,16 @@ var o = dict({
 			"seems to have periods instead of semicolons",
 		],
 		"examples": null,
-	}
-	, "Apex": {
+	}, "Apex": {
+		"extension": null,
+		"paradigm": null,
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "static",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": true,
 		"semicolon": "true?",
@@ -100,24 +106,25 @@ var o = dict({
 		"examples": [
 			"IN:accIdwithOpportunityMap.keyset()"
 		],
-	}
-	, "Batch": {
+	}, "Batch": {
+		"extension": ["bat", "cmd"],
+		"paradigm": "imperative",
 		"function": null,
 		"variable": {
 			"set": "set [optional parameters] <name> = <value>",
 			"get": ["%<name>%", "%%<name>%%"],
 		},
 		"typing": "dynamic?",
-		"compiled/interpreted": "interpreted",
+		"execution model": "interpreted",
 		"level": "high",
-		"alt-name": "cmd",
-		"cur.obj": "N/A",
+		"alt name": "cmd",
+		"this": "N/A",
 		"undefined": null,
 		"cstyle": false,
 		"semicolon": "no, separates statements",
 		"extends": "N/A",
 		"keywords": [
-			"@echo off", // the @ sign is optional
+			"@echo off",
 			"title among us",
 			"goto :eof",
 			"goto <labelname>",
@@ -134,15 +141,16 @@ var o = dict({
 			"name capitalization doesn't matter",
 		],
 		"examples": null,
-	}
-	, "Bicep": {
+	}, "Bicep": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -156,15 +164,16 @@ var o = dict({
 			"param subnetName string = 'subnet'",
 			"param adminPassword string = '&6j*Ab/>QY(S?D,r'"
 		],
-	}
-	, "C": {
+	}, "C": {
+		"extension": ["c", "h"],
+		"paradigm": "procedural",
 		"function": "<Type>",
 		"variable": "<Type>",
-		"typing": "strongly static",
-		"compiled/interpreted": "compiled",
+		"typing": "static",
+		"execution model": "compiled",
 		"level": "low",
-		"alt-name": null,
-		"cur.obj": "N/A",
+		"alt name": null,
+		"this": "N/A",
 		"undefined": "(void)",
 		"cstyle": true,
 		"semicolon": true,
@@ -217,33 +226,36 @@ var o = dict({
 		"misc": null,
 		"examples": [
 			"Labelname: statement;",
-			"for (int a = 10; i --> 0 ;)\n\tprintf(\"%i\\n\", i);",
+			'for (size_t a = 10; i --> 0 ;)\n\tprintf("%i\\n", i);',
 			"#define error(str, err) ({fprintf(stderr, \"ERROR:%s:%llu: %s\\n\", __FILE__, __LINE__, (char *)str); exit((int) err); 0ULL;})",
-			"#define swap(x, y) ({ typeof(x) t = x; x = (typeof(x)) y; y = (typeof(y)) t; 0ULL;})",
-			"#include <stdio.h> int main(void){printf(\"Hello World\n\");return 0;}"
+			"#define swap(x, y) ({ typeof(x) t = x; x = (typeof(t)) y; y = (typeof(t)) t; 0ULL;})",
+			"#include <stdio.h>\n\nint main(void){\n\tprintf(\"Hello World\\n\");\n\treturn 0;\n}",
+			"void main(void){__builtin_printf(\"Hello World\\n\");return 0;}",
 		],
-	}
-	, "C#": {
+	}, "C#": {
+		"extension": ["cs", "csx"],
+		"paradigm": ["object-oriented", "procedural"],
 		"function": "<Type>",
 		"variable": ["<Type>", "var", "const"],
 		"typing": ["static (optional)", "dynamic"],
-		"compiled/interpreted": "compiled?",
-		"level": "low?",
-		"alt-name": "C sharp",
-		"cur.obj": "this?",
+		"execution model": "compiled?",
+		"level": "low-ish",
+		"alt name": "C sharp",
+		"this": "this?",
 		"undefined": "null?",
 		"cstyle": true,
 		"semicolon": "true?",
-		"extends": "N/A?",
+		"extends": ["C", "C++"],
 		"keywords": [
 			"N..N",
-			"using",
-			"using var name = value",
+			"using System", // namespace System?
+			"using var name = value", // same as C++
 			"using()",
 			"var",
 			"with",
 			"namespace",
 			"Console.WriteLine",
+			"Console.Write",
 			"uint a = 1",
 			"$\"{variable}\"",
 			"(Type)",
@@ -256,6 +268,7 @@ var o = dict({
 			"??",
 			"++",
 			"public",
+			"Math.Pow",
 			"sealed",
 			"yield",
 			"private",
@@ -271,17 +284,21 @@ var o = dict({
 			"get",
 			"set",
 		],
-		"misc": [],
+		"misc": [
+			"uses `static void Main` instead of `public static void main` like Java",
+			"always has a namespace at the top level, unlike Java",
+		],
 		"examples": [],
-	}
-	, "C++": {
+	}, "C++": {
+		"extension": ["c++", "h++", "cpp", "hpp", "C", "cc", "cxx"],
+		"paradigm": ["object-oriented", "procedural"],
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "static",
-		"compiled/interpreted": "compiled",
+		"execution model": "compiled",
 		"level": "low",
-		"alt-name": null,
-		"cur.obj": "this",
+		"alt name": null,
+		"this": "this",
 		"undefined": ["nullptr", "NULL"],
 		"cstyle": true,
 		"semicolon": true,
@@ -300,15 +317,16 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "Clojure": {
+	}, "Clojure": {
+		"extension": null,
+		"paradigm": null,
 		"function": ["def?", "defn?"],
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": "no?",
 		"semicolon": "no?",
@@ -322,15 +340,16 @@ var o = dict({
 			"comments are either `;;` or `;`"
 		],
 		"examples": null,
-	}
-	, "CMake": {
+	}, "CMake": {
+		"extension": { name: "MakeFile" },
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -375,15 +394,16 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "ColdFusion": {
+	}, "ColdFusion": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": "var",
 		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": "N/A",
-		"cur.obj": null,
+		"alt name": "N/A",
+		"this": null,
 		"undefined": null,
 		"cstyle": false,
 		"semicolon": false,
@@ -415,15 +435,30 @@ var o = dict({
 			"<cfset newstr = \"#REReplace(a, \"@.*\", \"\")#\">",
 			"<cfscript>\nmyvar = application.myvar ?: \"default value\";\n\nwriteOutput(myvar);\n</cfscript>"
 		],
-	}
-	, "CPython": {
+	}, "CPython": {
+		"extension": [
+			"py", // source for python.exe
+			"py3", // python 3 source
+			"pyw", // source for pythonw.exe (no console)
+			"pyi", // python stub file
+			"pyc", // compiled
+			"cpy", // c python
+		],
+		"paradigm": ["object-oriented", "procedural", "functional"],
 		"function": "def",
 		"variable": "",
 		"typing": "strongly dynamic",
-		"compiled/interpreted": ["compiled to byte code", "interpreted from byte code"],
+		"execution model": [
+			"compiled to byte code (.pyc)",
+			"interpreted from byte code",
+		],
 		"level": "high",
-		"alt-name": "N/A",
-		"cur.obj": "self",
+		"alt name": "N/A",
+		"this": [
+			// you can decide yourself what to name the argument, but these are common
+			"self", // instances
+			"cls", // classes
+		],
 		"undefined": "None",
 		"cstyle": false,
 		"semicolon": "optional, not recommended",
@@ -455,16 +490,16 @@ var o = dict({
 			"[i - 1 for i in range(10)]",
 			"if ... : ... elif ...: ... else: ...",
 			"try/except/finally/raise",
-			"def name(arg1: <Type> = defaultValue,...,/,*, kwarg1: <Type> = defaultValue, ...) -> <Type>:",
-			"with",
+			"def name(arg: T = defval, /, either: T = defval, *, kwarg: T = defval) -> T: ...",
+			'with open(filename, "r") as file:',
 			"as",
-			"global",
+			"global a, b",
 			"print ... (python 2)",
 			"print(...) (python 3)",
 			"try/except/finally",
 			"break/continue/pass",
 			"match/case",
-			"if __name__ == \"__main__\": ...",
+			'if __name__ == "__main__":\n\tmain()',
 		],
 		"misc": [
 			"blocks are based on whitespace. *cringe*",
@@ -474,38 +509,43 @@ var o = dict({
 			"to_list = [item.strip() for item in df['Starring'].loc[0].split('\\n') if item !='']",
 			"with open(file, 'w') as file: ...",
 		],
-	}
-	, "CSS": {
+	}, "CSS": {
+		"extension": "css",
+		"paradigm": "N/A",
 		"function": "N/A",
-		"variable": "N/A",
+		"variable": ["--<name> (definition)", "var(--<name>) (evaluating)"],
 		"typing": "N/A",
-		"compiled/interpreted": "interpreted",
+		"execution model": "interpreted",
 		"level": "high",
-		"alt-name": "Cascading style sheets",
-		"cur.obj": "N/A",
+		"alt name": "Cascading Style-Sheets",
+		"this": "N/A",
 		"undefined": "N/A",
-		"cstyle": true,
-		"semicolon": true,
+		"cstyle": "kind of",
+		"semicolon": "true. last per scope can be omitted",
 		"extends": ["HTML", "JavaScript (kind of)"],
 		"keywords": [
 			"#id { ... }",
 			"tag, #id { ... }",
 			"div < p { ... }",
+			"[attribute=value] { ... }",
 			".class { ... }",
-			"@thing { ... }",
+			"@media { ... }",
 			"key: value;",
 		],
-		"misc": null,
+		"misc": [
+			"Not a programming language. it is for HTML styling"
+		],
 		"examples": null,
-	}
-	, "Dart": {
-		"function": "<Type>",
+	}, "Dart": {
+		"extension": null,
+		"paradigm": null,
+		"function": ["<Type> name(...) { ... }", "<Type> name(...) => ...;"],
 		"variable": ["var", "int", "const"],
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj.": "this",
+		"alt name": null,
+		"this.": "this",
 		"undefined": "null",
 		"cstyle": true,
 		"semicolon": true,
@@ -549,18 +589,20 @@ var o = dict({
 		"examples": [
 			"class MyHomePage extends StatefulWidget {const MyHomePage({Key? key}) : super(key: key);",
 			"return const Divider();",
+			"print('4 times two is ${timesTwo(4)}');",
 		],
-	}
-	, "Dockerfile": {
+	}, "Dockerfile": {
+		"extension": { name: "Dockerfile" },
+		"paradigm": null,
 		"function": null,
 		"variable": "$?",
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": "high",
-		"alt-name": ["docker"],
-		"cur.obj": null,
-		"undefined": null,
-		"cstyle": false,
+		"alt name": ["docker"],
+		"this": "N/A?",
+		"undefined": "N/A",
+		"cstyle": "false. bash-style?",
 		"semicolon": false,
 		"extends": "N/A?",
 		"keywords": [
@@ -583,15 +625,16 @@ var o = dict({
 			"RUN apk add --no-cache wget unzip",
 			"RUN useradd -G www-data,root -u 1000 -d /home/phpuser phpuser",
 		],
-	}
-	, "EditorConfig": {
+	}, "EditorConfig": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -609,15 +652,16 @@ var o = dict({
 			"[*]\nindent_style = space\nindent_size = 2",
 			"charset = utf-8\ntrim_trailing_whitespace = true",
 		],
-	}
-	, "Elixir": {
+	}, "Elixir": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -628,22 +672,34 @@ var o = dict({
 			"{_x, :nope} = {\"this is a result from another operation\", :nope}",
 			"{:nope} = {\"string\", :nope}",
 		],
-	}
-	, "Emacs Lisp": {
-		"function": null,
-		"variable": null,
+	}, "Emacs Lisp": {
+		"extension": "el",
+		"paradigm": "functional",
+		"function": "defun",
+		"variable": [
+			"defvar", // define variable if not already defined
+			"setq", // set value to
+			"setf", // set function
+			"defconst", // define constant
+			"setq-local", // local define
+			"setq-global", // global define
+			"setq-default", // idk
+		],
 		"typing": null,
-		"compiled/interpreted": null,
-		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
-		"undefined": "nil",
-		"cstyle": null,
-		"semicolon": null,
+		"execution model": "interpreted or compiled to .elc",
+		"level": "high",
+		"alt name": "ELisp",
+		"this": "N/A; functional only",
+		"undefined": "nil (kind of). `nil` is false",
+		"cstyle": false,
+		"semicolon": false,
 		"extends": null,
 		"keywords": [
 			"defun",
-			"setq-default",
+			"setq",
+			"a . b",
+			"(cons a b)",
+			"(add-to-list 'a 32 t)",
 			":variables",
 			"shell :variables",
 			"custom-set-variables",
@@ -655,15 +711,16 @@ var o = dict({
 			";; comment. could be one semicolon like nasm, but idk",
 		],
 		"examples": null,
-	}
-	, "fish": {
+	}, "fish": {
+		"extension": null,
+		"paradigm": null,
 		"function": "function",
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -679,15 +736,22 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "Fortran Free Form": {
+	}, "Fortran Free Form": {
+		"extension": [
+			// as opposed to .f or .f77 for fixed form
+			"f90", "F90",
+			"f95", "F95",
+			"f03", "F03",
+			"f08", "F08",
+		],
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": "none",
+		"alt name": null,
+		"this": "N/A",
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -710,27 +774,31 @@ var o = dict({
 			"end do",
 			"end program",
 			".and.",
+			".NOT.",
 			"allocate()",
 			"deallocate()",
 			".gt.",
 			"stop",
 		],
 		"misc": [
-			"! comment"
+			"! comment",
+			"C comment in earlier versions",
+			"literally doesn't have unsigned integers."
 		],
 		"examples": null,
-	}
-	, "Git Config": {
-		"function": null,
-		"variable": null,
-		"typing": null,
-		"compiled/interpreted": null,
-		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
-		"undefined": null,
-		"cstyle": null,
-		"semicolon": null,
+	}, "Git Config": {
+		"extension": { name: ".gitconfig" },
+		"paradigm": "N/A",
+		"function": "N/A",
+		"variable": "N/A",
+		"typing": "N/A",
+		"execution model": "interpreted?",
+		"level": "high",
+		"alt name": null,
+		"this": "N/A",
+		"undefined": "N/A",
+		"cstyle": "false. bash style",
+		"semicolon": false,
 		"extends": null,
 		"keywords": [
 			"[alias]",
@@ -752,19 +820,20 @@ var o = dict({
 			"list-config = config --list --show-origin --show-scope",
 			"list-aliases = config --global --get-regexp ^alias\\\\."
 		],
-	}
-	, "Go": {
+	}, "Go": {
+		"extension": "go",
+		"paradigm": ["procedural", "concurrent", "functional"],
 		"function": "func",
 		"variable": ["var", "const", ":="],
-		"typing": "static?",
-		"compiled/interpreted": "compiled",
-		"level": ["low?, it has pointers", "high? it has strings instead of arrays of chars"],
-		"alt-name": "GoLang",
-		"cur.obj": "N/A",
+		"typing": "static",
+		"execution model": "compiled",
+		"level": "low-ish",
+		"alt name": "GoLang",
+		"this": "N/A",
 		"undefined": "nil",
 		"cstyle": "mostly",
-		"semicolon": "required, but compiler puts it in if missing.",
-		"extends": null,
+		"semicolon": "used but not required",
+		"extends": "N/A",
 		"keywords": [
 			"import",
 			"import ( \"fmt\", \"time\", ... )",
@@ -791,17 +860,18 @@ var o = dict({
 			"for i := 0; <condition> ; i++ { ... }",
 			"for { ... }",
 			"for k, v in range variable { ... }",
+			"if err := f(); err != nil {\n\tos.Exit(1)\n\t}"
 		],
 		"misc": [
 			"functions arguments are name type instead of the more common type name",
 			"import instead of require, using, etc",
-			"go has type inferencing",
+			"go has type inferencing (:=)",
 			"go is sometimes described as C for the 21st century",
 			"go is made by people who know what they are doing",
 			"go has built in support for complex numbers",
 			"zero indexed arrays",
 			"disallows pointer arithmetic",
-			"supports concurrency (runs things at the same time by using multiple threads on a cpu)"
+			"supports concurrency by default. goroutines, channels"
 		],
 		"examples": [
 			"if err != nil {\n\treturn err\n}", // could be an error
@@ -814,18 +884,19 @@ var o = dict({
 			"a, b, c := 2, \"asdf\", true",
 			"variable := map[string]string\nvariable[\"a\"] = 3\n",
 		],
-	}
-	, "Graphviz": {
+	}, "Graphviz": {
+		"extension": ["dot", "gv"],
+		"paradigm": "N/A",
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": "dynamic?",
-		"compiled/interpreted": "compiled",
+		"execution model": "compiled",
 		"level": "high?",
-		"alt-name": "Graphviz dot",
-		"cur.obj": "N/A",
+		"alt name": "Graphviz Dot",
+		"this": "N/A",
 		"undefined": "N/A",
 		"cstyle": "mostly",
-		"semicolon": "optional",
+		"semicolon": "optional? required?",
 		"extends": "N/A",
 		"keywords": [
 			"graph NAME { ... }",
@@ -846,15 +917,16 @@ var o = dict({
 			"single quote strings are not allowed"
 		],
 		"examples": null,
-	}
-	, "Hack": {
+	}, "Hack": {
+		"extension": null,
+		"paradigm": null,
 		"function": "function",
 		"variable": "$",
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -869,17 +941,18 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "Haskell": {
+	}, "Haskell": {
+		"extension": "hs",
+		"paradigm": "functional",
 		"function": null,
 		"variable": "let",
 		"typing": null,
-		"compiled/interpreted": ["interpreted with GHCI", "compiled with GHC"],
-		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"execution model": ["interpreted with GHCI", "compiled with GHC"],
+		"level": "high",
+		"alt name": "N/A",
+		"this": "N/A; functional only",
 		"undefined": null,
-		"cstyle": null,
+		"cstyle": false,
 		"semicolon": false,
 		"extends": null,
 		"keywords": [
@@ -920,15 +993,16 @@ var o = dict({
 			"import System.Exit (exitSuccess)",
 			"next :: WithCounter a -> (a -> WithCounter b) -> WithCounter b\nf `next` g = \i -> let (r, i') = f i\n                   in  g r i'",
 		],
-	}
-	, "HCL": {
+	}, "HCL": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": ["variable", ""],
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": "null",
 		"cstyle": null,
 		"semicolon": null,
@@ -945,15 +1019,16 @@ var o = dict({
 			"# comment",
 		],
 		"examples": null,
-	}
-	, "HTML": {
+	}, "HTML": {
+		"extension": ["html", "htm"],
+		"paradigm": "N/A",
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": "N/A",
-		"compiled/interpreted": "interpreted",
+		"execution model": "interpreted",
 		"level": "high",
-		"alt-name": "Hypertext Markup language",
-		"cur.obj": "N/A",
+		"alt name": "HyperText Markup Language",
+		"this": "N/A",
 		"undefined": "N/A",
 		"cstyle": false,
 		"semicolon": false,
@@ -963,25 +1038,26 @@ var o = dict({
 			"<html ... > ... </html>",
 			"<head ... > ... </head>",
 			"<body ... > ... </body>",
-			"< ... > ... </ ... >",
+			"< tagname > ... </ tagname >",
 			"< ... />",
 			"< ... >",
 		],
 		"misc": [
-			"usually used alongside CSS, JavaScript, and maybe PHP or Python if you want",
+			"usually used alongside CSS, JavaScript, and maybe PHP or Python if you want a backend",
 		],
 		"examples": [
 			"<!doctype html><html><head><title>title</title></head><body><p>asdf</p></body></html>",
 		],
-	}
-	, "HTML+Razor": {
+	}, "HTML+Razor": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": "var",
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": "null",
 		"cstyle": null,
 		"semicolon": null,
@@ -1004,15 +1080,16 @@ var o = dict({
 			"looks like HTML but with C-style code in the middle without a script tag",
 		],
 		"examples": null,
-	}
-	, "Io": {
+	}, "Io": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1022,15 +1099,20 @@ var o = dict({
 			"Idk, im not convinced this language exists, but it was the right answer for one of them"
 		],
 		"examples": null,
-	}
-	, "Java": {
+	}, "Java": {
+		"extension": [
+			"java", // source file
+			"class", // class file
+			"jar", // java archive file
+		],
+		"paradigm": ["object-oriented", "procedural"],
 		"function": "<Type>",
 		"variable": "<Type>",
 		"typing": "static",
-		"compiled/interpreted": ["compiled", "interpreted in the JVM ?"],
-		"level": "low?",
-		"alt-name": "N/A",
-		"cur.obj": "this",
+		"execution model": ["compiled (optional)", "interpreted in the JVM"],
+		"level": "high?",
+		"alt name": "N/A",
+		"this": "this",
 		"undefined": "null",
 		"cstyle": true,
 		"semicolon": true,
@@ -1065,15 +1147,16 @@ var o = dict({
 			"import java.io.*;",
 			"System.out.println();"
 		],
-	}
-	, "Java Properties": {
+	}, "Java Properties": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1083,22 +1166,28 @@ var o = dict({
 		"examples": [
 			"spring.cloud.function.scan.packages: au.com.digio.lightweightjava.springnative.functions"
 		],
-	}
-	, "JavaScript": {
-		"function": ["function (...) { ... }", "(...) => ...", "argname => ..."],
+	}, "JavaScript": {
+		"extension": [
+			"js", // regular source file
+			"mjs", // explicit ECMAScript module
+			"cjs", // Common.js module
+		],
+		"paradigm": ["procedural", "object-oriented", "functional"],
+		"function": ["async? function *? <name>?(...) { ... }", "(...) => ...", "arg => ..."],
 		"variable": ["var", "let", "const", ""],
 		"typing": "weakly dynamic",
-		"compiled/interpreted": "interpreted",
+		"execution model": "interpreted",
 		"level": "high",
-		"alt-name": "ECMAScript",
-		"cur.obj.": "this",
+		"alt name": ["ECMAScript", "NodeJS"],
+		"this": "this",
 		"undefined": ["null", "undefined"],
 		"cstyle": true,
 		"semicolon": "suggested",
-		"extends": "HTML (kind of)",
+		"extends": "HTML (sometimes)",
 		"keywords": [
 			"console.log",
 			"window",
+			"global",
 			"globalThis",
 			"document",
 			"Math",
@@ -1115,19 +1204,20 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "JSON with Comments": {
+	}, "JSON with Comments": {
+		"extension": "json",
+		"paradigm": "N/A",
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": "N/A",
-		"compiled/interpreted": "N/A, not a language, instead, an object format",
+		"execution model": "N/A",
 		"level": "N/A",
-		"alt-name": "JavaScript object notation (with comments, cstyle)",
-		"cur.obj": "N/A",
+		"alt name": "JavaScript object notation (with comments)",
+		"this": "N/A",
 		"undefined": "null",
-		"cstyle": true,
+		"cstyle": "N/A",
 		"semicolon": false,
-		"extends": "N/A (part of JavaScript)",
+		"extends": "N/A",
 		"keywords": [
 			"[ ... array things ... ]",
 			"{ ... object things ...}",
@@ -1138,6 +1228,11 @@ var o = dict({
 		"misc": [
 			"// comment",
 			"/* multi-line comment*/",
+			"not a language. It is an object format",
+			"very slow, since it has to read one character at a time",
+			"valid json is also valid JavaScript",
+			"used for Sublime Text settings",
+			"used for TypeScript configuration and NPM package file things",
 		],
 		"examples": [
 			"{\"env\":{\"commonjs\":true,\"es2021\":true,\"node\":true},\"extends\": [\"standard\"],\"parserOptions\":{\"ecmaVersion\":12},\"rules\":{}}",
@@ -1145,15 +1240,16 @@ var o = dict({
 			"\"string\"",
 			"{\"a\":[1,2,3,{\"a\":2,\"b\":[1,2,\"123123:{}\"]}],\"b\":null}",
 		],
-	}
-	, "JSX": {
+	}, "JSX": {
+		"extension": "jsx",
+		"paradigm": ["procedural", "object-oriented", "functional"],
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
-		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"typing": "weakly dynamic",
+		"execution model": null,
 		"level": "high",
-		"alt-name": null,
-		"cur.obj": "this",
+		"alt name": "JavaScript Extended?",
+		"this": "this",
 		"undefined": ["null", "undefined"],
 		"cstyle": true,
 		"semicolon": "suggested",
@@ -1162,18 +1258,21 @@ var o = dict({
 			"<html looking thing>",
 		],
 		"misc": [
-			"has HTML looking things in the middle of the JavaScript",
+			"has HTML things in the middle of the JavaScript",
+			"can be used with React",
+			"if used with TypeScrip it becomes TSX",
 		],
 		"examples": null,
-	}
-	, "Julia": {
+	}, "Julia": {
+		"extension": null,
+		"paradigm": null,
 		"function": "function",
 		"variable": ["local", ""],
 		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1195,15 +1294,16 @@ var o = dict({
 			"prepare!.(df[:, :Message2], strip_html_tags| strip_punctuation| strip_numbers)",
 			"stem!.(df[:, :Message2])",
 		],
-	}
-	, "Kotlin": {
+	}, "Kotlin": {
+		"extension": null,
+		"paradigm": "object-oriented",
 		"function": "fun",
 		"variable": ["val", "var"],
 		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj.": "this",
+		"alt name": null,
+		"this.": "this",
 		"undefined": "null",
 		"cstyle": true,
 		"semicolon": false,
@@ -1237,15 +1337,16 @@ var o = dict({
 			"is retrofit2.HttpException -> {\ncode = e.code()"
 		],
 		"examples": null,
-	}
-	, "Logos": {
+	}, "Logos": {
+		"extension": null,
+		"paradigm": null,
 		"function": ["<Type>", "function"],
 		"variable": ["<Type>", ""],
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": true,
 		"semicolon": true,
@@ -1259,17 +1360,18 @@ var o = dict({
 		"misc": null,
 		"examples": [
 			"function Int() closure = () -> x + y;",
-			"console.println($\"{f()}\");",
+			'console.println($"{f()}");',
 		],
-	}
-	, "Lua": {
+	}, "Lua": {
+		"extension": "lua",
+		"paradigm": ["procedural", "functional"],
 		"function": "function",
 		"variable": ["", "local"],
 		"typing": "dynamic?",
 		"compiled/interpreted": null,
-		"level": "high?",
-		"alt-name": "N/A?",
-		"cur.obj": "self",
+		"level": "high",
+		"alt name": "N/A?",
+		"this": "self",
 		"undefined": "nil",
 		"cstyle": false,
 		"semicolon": "available? but unnecessary",
@@ -1279,31 +1381,39 @@ var o = dict({
 			"if ... then ... else ... end",
 			"exec()",
 			"sleep()",
+			"elseif",
 			"..",
 			"local <name> = <value>",
 			"-- comment",
+			"local function name(...) ... end",
+			'require(...):new(...):sync(...)'
+			"--[[ multiline comment --]]",
 			"function <name>(...) ... end",
 			"function(...) ... end -- anonymous",
 			"assert(<condition?>, <message>)",
+			"function object.method(...) ... end",
 		],
 		"misc": [
-			"Lua is a common language and is used in text editors and even roblox",
+			"Lua is a common language and is used in text editors (vim) and even roblox",
 			"lua is supposed to be fast",
+			"has a similar feel to ruby",
+			"uses Python-esque operators: not, or, and, etc. instead of ||, &&, !, etc."
 		],
 		"examples": [
 			"max_tokens = max_tokens or obj.max_tokens",
 			"function obj:replaceWithConfig(model, temperature, max_tokens) ... end",
-			"{ [<string>] = <value>, [<string>] = <value>, ... }"
+			"{ [<string>] = <value>, [<string>] = <value>, ... }",
 		],
-	}
-	, "MLIR": {
+	}, "MLIR": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": "%<number> = ...",
 		"typing": "static?",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": "high?",
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1321,23 +1431,24 @@ var o = dict({
 			"high",
 			"... : f32", // float32
 			"... : i64", // int64
-			"module attributes {llvm.data_layout = ""} { ... }",
+			'module attributes {llvm.data_layout = ""} { ... }',
 		],
 		"misc": null,
 		"examples": [
 			"... : !llvm.ptr<struct<(ptr<f32>, ptr<f32>, i64, array<4 x i64>, array<4 x i64>)>>",
-			"llvm.call @conv2d(%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22, %23, %25, %26, %27, %28, %29, %30, %31, %32, %33, %34, %35)"
+			"llvm.call @conv2d(%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22, %23, %25, %26, %27, %28, %29, %30, %31, %32, %33, %34, %35)",
 		],
-	}
-	, "NASM intel-ASM": {
-		"function": null,
+	}, "NASM Intel Assembly": {
+		"extension": ["nasm", "asm", "yasm", "inc"],
+		"paradigm": "imperative",
+		"function": "<labelname>:",
 		"variable": "N/A",
 		"typing": null,
-		"compiled/interpreted": "assembled",
-		"level": "very low, like literally the computer can read it (well, kind of)",
-		"alt-name": "assembly",
-		"cur.obj": "N/A",
-		"undefined": null,
+		"execution model": "assembled and linked",
+		"level": "very low. human-readable machine code",
+		"alt name": "assembly",
+		"this": "N/A",
+		"undefined": "N/A",
 		"cstyle": false,
 		"semicolon": false,
 		"extends": "N/A",
@@ -1361,6 +1472,7 @@ var o = dict({
 			"esp",
 			"esi",
 			"ax",
+			"al",
 			"dword",
 			"qword",
 			"syscall",
@@ -1372,20 +1484,23 @@ var o = dict({
 		"misc": [
 			"; comment",
 			"some other compilers are FASM, MASM, YASM, GAS, etc...",
+			"YASM uses NASM syntax, but I think is faster or something"
 		],
 		"examples": [
 			"mov rax, 123",
-			"section.bss:\nmessage: db \"Hello World\", 10\nmessage_len: equ $ - message",
+			"section .bss:\nmessage: db \"Hello World\", 10\nmessage_len: equ $ - message",
+			'segment rdata\n\tmsg\t\tdb \t\t"Hello World", 10, 0\n\nsegment text\n\tbits\t64\n\tglobal\tmain\n\textern\tprintf\n\nmain:\n\tsub \trsp, 32\n\tmov \trcx, [msg]\n\tmov \trdx, 13\n\tcall\tprintf\n\n\tadd \trsp, 32\n\txor \trax, rax\n\tret\n'
 		],
-	}
-	, "Nginx": {
+	}, "Nginx": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1403,15 +1518,16 @@ var o = dict({
 			"# comment",
 		],
 		"examples": null,
-	}
-	, "PHP": {
+	}, "PHP": {
+		"extension": "php",
+		"paradigm": ["procedural", "object-oriented", "functional"],
 		"function": ["function", "fn () =>"],
 		"variable": "$",
-		"typing": null,
-		"compiled/interpreted": "interpreted",
+		"typing": "dynamic?",
+		"execution model": "interpreted",
 		"level": "high",
-		"alt-name": "bad (LMAO)",
-		"cur.obj": "$this",
+		"alt name": "trash (LMAO)",
+		"this": "$this",
 		"undefined": "null",
 		"cstyle": "sometimes",
 		"semicolon": true,
@@ -1461,17 +1577,19 @@ var o = dict({
 			"Kind of in some ways, similar to JavaScript",
 			"no math object variable",
 			"some functions have apache in the name",
+			"basically HTML but with <?php ... ?> in it",
 		],
 		"examples": null,
-	}
-	, "PlantUML": {
+	}, "PlantUML": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1509,19 +1627,26 @@ var o = dict({
 			"export_form_before_phtml::JSajax <--> Controllers.GetFilter",
 			"Controllers.Export --> RabbitMQ",
 		],
-	}
-	, "PowerShell": {
+	}, "PowerShell": {
+		"extension": "ps1",
+		"paradigm": "procedural",
 		"function": ["function"],
 		"variable": ["$", "$global:"],
 		"typing": ["static (optional for function arguments)", "dynamic"],
-		"compiled/interpreted": "interpreted",
+		"execution model": [
+			"interpreted (most common)",
+			"compiled (with ps2exe)"
+		],
 		"level": "high",
-		"alt-name": "Windows PowerShell",
-		"cur.obj": "$this?",
+		"alt name": "Windows PowerShell",
+		"this": "$this",
 		"undefined": "$null",
 		"cstyle": "sometimes",
 		"semicolon": "not recommended",
-		"extends": ["windows cmd (kind of)", "shell (kind of, not really, but mostly not)"],
+		"extends": [
+			"windows cmd (kind of)",
+			"shell (kind of, not really, but mostly not)"
+		],
 		"keywords": [
 			"foreach",
 			"clear",
@@ -1563,8 +1688,8 @@ var o = dict({
 			"set-winhomelocation",
 		],
 		"misc": [
-			"everything is case insensitive",
-			"directories can use either \"/\" or \"\\\"",
+			"everything is case insensitive like in Batch",
+			'directories can use either "/" or "\\"',
 			"# single-line comment",
 			"<# multi-line comment #>",
 			"made by Microsoft. probably has things that refer to Microsoft",
@@ -1574,23 +1699,25 @@ var o = dict({
 			"function Get-PublicIp { return Invoke-RestMethod 'https://api.ipify.org' }",
 			"param( [Parameter(position=0, mandatory=$false)] [int] $g = 23 )",
 		],
-	}
-	, "Prolog": {
+	}, "Prolog": {
+		"extension": null,
+		"paradigm": "logic",
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
-		"cstyle": null,
-		"semicolon": null,
+		"cstyle": false,
+		"semicolon": "false?",
 		"extends": null,
 		"keywords": [
 			"% comment",
 			"op()",
 			":-",
+			"?- ... (query something)",
 			"writeln()",
 			"eval()",
 			"halt",
@@ -1598,23 +1725,27 @@ var o = dict({
 			"cek()",
 			'λ()'
 		],
-		"misc": null,
+		"misc": [
+			"logic (declarative) programming",
+		],
 		"examples": [
 			":- op(1100,yfx,$).\nv(I):- integer(I).\nv(λ(_X,_E)).",
+			"ancestor(X, Y) :- parent(X, Y).",
 			"V/P/K):- atom(X),member(X->V,P).",
 			":- run(λ(x,λ(y,x+y))$10$2,R),writeln(R),R=12.",
 			"run(E,R):- eval(E/[]/[],R/_/_).",
 			"eval(CEK,CEK2):- cek(CEK,CEK1),!,eval(CEK1,CEK2).",
 		],
-	}
-	, "Q#": {
+	}, "Q#": {
+		"extension": null,
+		"paradigm": null,
 		"function": "operation",
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": "Quantum something",
-		"cur.obj": null,
+		"alt name": "Quantum something",
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": true,
@@ -1627,23 +1758,25 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "R": {
+	}, "R": {
+		"extension": "R",
+		"paradigm": null,
 		"function": null,
 		"variable": "",
 		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
-		"cstyle": true,
-		"semicolon": null,
-		"extends": null,
+		"cstyle": "kind of?",
+		"semicolon": false,
+		"extends": "N/A",
 		"keywords": [
-			"N:N",
+			"N:N", // range
 			"<-",
 			"::",
+			"|>", // pipe operator
 			"f(arg=value, ...)",
 			"for (i in N:N) {",
 			"rpt$flag",
@@ -1659,16 +1792,18 @@ var o = dict({
 			"geom_point(alpha = 1/10)",
 			"ggplot( ... )",
 			"scales::comma",
+			"outcomes <- cross_join(tibble(x = 1:6), tibble(y = 1:6))"
 		],
-	}
-	, "RouterOS Script": {
+	}, "RouterOS Script": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"typing": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1682,15 +1817,16 @@ var o = dict({
 			"source=\":local domainPostfix \\\".cert.rimon.net.il\\\";\\r\\",
 			"\\n:log info [:resolv (\\$pwd. \\$domainPostfix)];\""
 		],
-	}
-	, "RMarkdown": {
+	}, "RMarkdown": {
+		"extension": null,
+		"paradigm": null,
 		"function": "N/A",
 		"variable": "N/A",
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1700,15 +1836,16 @@ var o = dict({
 			"just looks like a markdown file",
 		],
 		"examples": null,
-	}
-	, "RPM Spec": {
+	}, "RPM Spec": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1726,15 +1863,16 @@ var o = dict({
 			"gem build ../%{gem_name}-%{version}.gemspec",
 			"+ruby -Ilib:test -e 'Dir.glob \"./test/**/*_test.rb\", &method(:require)'"
 		],
-	}
-	, "Ruby": {
+	}, "Ruby": {
+		"extension": "rb",
+		"paradigm": "object-oriented",
 		"function": "def",
 		"variable": "",
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": "interpreted?",
 		"level": null,
-		"alt-name": null,
-		"cur.obj.": "self",
+		"alt name": null,
+		"this": "self",
 		"undefined": "nil",
 		"cstyle": false,
 		"semicolon": false,
@@ -1759,7 +1897,7 @@ var o = dict({
 			"alias_method :new_name, :old_name",
 			"assert()",
 			"assert_equal",
-			"assert_raises()"
+			"assert_raises()",
 			"puts",
 			"test",
 			"flunk()",
@@ -1800,15 +1938,16 @@ var o = dict({
 			"module Result\n\textend T::Sig\n\textend T::Helpers\n\textend T::Generic",
 			"def unwrap; end",
 		],
-	}
-	, "Rust": {
+	}, "Rust": {
+		"extension": "rs",
+		"paradigm": ["procedural", "functional?"],
 		"function": "fn",
 		"variable": "let",
 		"typing": null,
-		"compiled/interpreted": "compiled",
+		"execution model": "compiled",
 		"level": null,
-		"alt-name": null,
-		"cur.obj": "self",
+		"alt name": null,
+		"this": "self",
 		"undefined": null,
 		"cstyle": true,
 		"semicolon": "usually?",
@@ -1819,61 +1958,75 @@ var o = dict({
 			"impl",
 			"type",
 			"struct",
-			"unsafe",
+			"unsafe { ... }",
 			"array.0",
 			"if ... {",
 			"static",
+			"fn name(...) -> i32 { ... }",
 			"::",
 			"async",
 			"<Type>",
 			"<Type, Type, ...>",
-			"println!()", // macro. I think
+			"println!()", // macro
 			"fn main() { ... }",
+			"use tabled::builder::Builder;"
 		],
 		"misc": [
-			"in rust array.0 would be used instead of array[0]",
+			"in rust array.0 could be used instead of array[0]",
+			"functions with ! at the end, like println! are macros.",
+			"",
 		],
 		"examples": [
 			"impl Add<i32> for &Counter { ... }",
 			"\tfn add(self, rhs: i32) -> Self::Output {\n\t\tlet sum = self.0 + rhs; ... }",
 		],
-	}
-	, "Scala": {
+	}, "Scala": {
+		"extension": null,
+		"paradigm": "functional?",
 		"function": "def",
 		"variable": ["var", "val"],
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
 		"extends": null,
 		"keywords": [
 			"object",
+			"import scala.concurrent.duration.{DurationInt, FiniteDuration}",
 			"import",
 			"???",
+			"*>",
+			"=>",
+			"case Right(b) => a \n\t... *>\n\t...",
 			": <Type>",
 			"while ... do ...",
-			"if ... then ... else if ... then ... else ..."
+			"if ... then ... else if ... then ... else ...",
+			"io.flatMap"
 		],
 		"misc": [
 			"seems to use indents like python for blocks"
 		],
 		"examples": [
 			"def test1(): Unit = assert(poorPigs(8, 1, 1) == 3)",
-			"if arr(mid) == target then return true\nelse if arr(mid) > target then hi = mid\n else lo = mid+1 // arr(mid) < target"
+			"if arr(mid) == target then return true\nelse if arr(mid) > target then hi = mid\n else lo = mid+1 // arr(mid) < target",
+			'val prg2 = IO.raiseError[Int](new RuntimeException("PRG1 - BOOM!!!")).attempt',
+			"def retryUntilRight[A, B](io: IO[Either[A, B]]): IO[B] = { ... }",
+			"retryUntilRight(prg2).timeout(3.seconds).unsafeRunSync()"
 		],
-	}
-	, "SCSS": {
+	}, "SCSS": {
+		"extension": null,
+		"paradigm": "N/A?",
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1889,15 +2042,16 @@ var o = dict({
 			"&:hover { color: $primary; }",
 			"background-color: $primary; font-family: $font-demibold;",
 		],
-	}
-	, "Shell": {
+	}, "Shell": {
+		"extension": "sh",
+		"paradigm": "functional?",
 		"function": ["function", ""],
-		"variable": "$",
-		"typing": null,
-		"compiled/interpreted": null,
+		"variable": ["$?", ""],
+		"typing": "dynamic?",
+		"execution model": "interpreted",
 		"level": null,
-		"alt-name": ["bash", "bash script", "shell script"],
-		"cur.obj": null,
+		"alt name": ["bash", "bash script", "shell script"],
+		"this": null,
 		"undefined": null,
 		"cstyle": "sometimes",
 		"semicolon": null,
@@ -1932,6 +2086,7 @@ var o = dict({
 			"enable",
 			"pushd",
 			"umask",
+			"$(expression)",
 			"local",
 		],
 		"misc": [
@@ -1950,15 +2105,16 @@ var o = dict({
 			"scriptname=\"${0##*/}\"",
 			"projectname=\"${scriptname%.*}\"",
 		],
-	}
-	, "ShellSession": {
+	}, "ShellSession": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -1972,18 +2128,19 @@ var o = dict({
 			"$ sudo certbot --nginx -d flaskapp.example.com -d www.flaskapp.example.com",
 			"$ sudo certbot --nginx -d nodeapp.example.com -d www.nodeapp.example.com",
 		],
-	}
-	, "Solidity": {
+	}, "Solidity": {
+		"extension": null,
+		"paradigm": "object-oriented",
 		"function": "function",
 		"variable": "<Type>",
 		"typing": "static",
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": "low?",
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": true,
-		"semicolon": null,
+		"semicolon": "true?",
 		"extends": null,
 		"keywords": [
 			"pragma",
@@ -2023,18 +2180,25 @@ var o = dict({
 			) internal returns (bytes memory) {
 				return functionCallWithValue(target, data, 0, errorMessage);
 			}`,
+			`interface ERC20 {
+				function balanceOf(address account) external view returns (uint256);
+				function transfer(address recipient, uint256 amount) external returns (bool);
+				function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+			}`,
+			"pragma solidity >=0.7.0 <0.9.0;",
 			"contract SadDamn is Initializable, OwnableUpgradeable { ... }",
 			" participants = new address payable[](0);",
 		],
-	}
-	, "SQL": {
+	}, "SQL": {
+		"extension": null,
+		"paradigm": "imperative",
 		"function": "N/A?",
 		"variable": "SET?",
 		"typing": null,
-		"compiled/interpreted": "interpreted?",
+		"execution model": "interpreted?",
 		"level": "high",
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": ["null", "NULL"],
 		"cstyle": false,
 		"semicolon": "sometimes?",
@@ -2088,22 +2252,24 @@ var o = dict({
 			"create temp table lbd_stage (like knowledge.lead_by_demand);",
 			"{%- endcall -%}",
 			"{%- call statement('date_range_query', fetch_result=True) -%}",
-			"create table Ingredient (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n\tname VARCHAR(50))\n\tENGINE=InnoDB DEFAULT CHARSET=utf8;"
+			"create table Ingredient (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n\tname VARCHAR(50))\n\tENGINE=InnoDB DEFAULT CHARSET=utf8;",
 			"select r.name as \"Recipe\" ... from Recipe r",
 			"LEFT OUTER JOIN Measure mu on mu.id = measure_id;",
 			"CREATE TYPE phone_type AS ENUM ('landline', 'mobile');",
 			"ALTER TABLE TableName NOCHECK CONSTRAINT ALL",
 			"ALTER TABLE TableName CHECK CONSTRAINT ALL",
+			"SELECT pg_size_pretty(sum(pg_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename)))::bigint) FROM pg_tables WHERE schemaname = 'yourschema'",
 		],
-	}
-	, "SubRip Text": {
+	}, "SubRip Text": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -2118,15 +2284,16 @@ var o = dict({
 			"4\n00:02:18,669 --> 00:02:22,874\n彼氏と隠れて\n付きあいたくない",
 			"12\n00:02:48,499 --> 00:02:49,667\n家内は―",
 		],
-	}
-	, "Svelte": {
+	}, "Svelte": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -2136,15 +2303,16 @@ var o = dict({
 			"To my knowledge, svelte is literally just html",
 		],
 		"examples": null,
-	}
-	, "Swift": {
+	}, "Swift": {
+		"extension": null,
+		"paradigm": null,
 		"function": "func",
 		"variable": ["var", "let"],
 		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"execution model": "compiled?",
 		"level": null,
-		"alt-name": null,
-		"cur.obj": "self",
+		"alt name": null,
+		"this": "self",
 		"undefined": "nil",
 		"cstyle": true,
 		"semicolon": "false? not recommended?",
@@ -2157,6 +2325,7 @@ var o = dict({
 			": <Type>?",
 			"in",
 			"?.",
+			"!.",
 			"try!",
 			"func name(...) throws { ... }",
 			"import",
@@ -2165,7 +2334,7 @@ var o = dict({
 			"switch/case",
 			"class",
 			"extension",
-			"enum"
+			"enum",
 			"public",
 			"private",
 			"static",
@@ -2184,18 +2353,22 @@ var o = dict({
 			"try app.register(collection: TodoController())",
 			"return req.view.render(\"index\", [\"title\": \"Hello Vapor!\"])",
 			"init(handler:@escaping (_:CGPoint) -> Void ) { super.init(delegate: _delegate) ... }",
-			"struct ScrimLoader: View {\n\t@StateObject private var viewModel = ViewModel() ... }"
-
+			"struct ScrimLoader: View {\n\t@StateObject private var viewModel = ViewModel() ... }",
+			"if (!context.HasRateLimitAttribute(out var decorator))",
+			"await _next(context);",
+			"public partial class RateLimitMiddleware",
+			"var consumptionData = await _cache.GetCustomerConsumptionDataFromContextAsync(context);",
 		],
-	}
-	, "TI-BASIC-84": {
+	}, "TI-BASIC-84": {
+		"extension": "8xp",
+		"paradigm": "imperative",
 		"function": "prgm",
 		"variable": "[value]->[variable]",
 		"typing": "static: string, complex, real, natural, image, ...",
-		"compiled/interpreted": "interpreted",
+		"execution model": "interpreted",
 		"level": "high",
-		"alt-name": "TI-Program",
-		"cur.obj": "N/A",
+		"alt name": "TI-Program",
+		"this": "N/A",
 		"undefined": {
 			"numbers": 0,
 			"str, img, etc": "nothing, it throws an error if you use it if it's undefined",
@@ -2251,15 +2424,16 @@ var o = dict({
 			"1/gcd(abs(A),gcd(abs(B),abs(C🠒X:AX🠒A:BX🠒B:CX🠒C",
 			"2🠒I:While fPart(real(A)) or fPart(imag(A)) or fPart(real(B)) or fPart(imag(B)) or fPart(real(C)) or fPart(imag(C)):AI🠒A:BI🠒B:CI🠒C:I+1🠒I:End"
 		],
-	}
-	, "TSQL": {
+	}, "TSQL": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -2270,19 +2444,23 @@ var o = dict({
 		],
 		"misc": null,
 		"examples": null,
-	}
-	, "TSX": {
+	}, "TSX": {
+		"extension": "tsx",
+		"paradigm": ["procedural", "object-oriented", "functional"],
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
-		"typing": "dynamic?",
-		"compiled/interpreted": null,
+		"typing": "weakly dynamic",
+		"execution model": [
+			"compiled to JavaScript using tsc",
+			"interpreted from JavaScript",
+		],
 		"level": "high",
-		"alt-name": null,
-		"cur.obj": "this",
+		"alt name": "TypeScript Extended?",
+		"this": "this",
 		"undefined": ["null", "undefined"],
 		"cstyle": true,
 		"semicolon": "suggested",
-		"extends": ["JSX", "JavaScript", "TypeScript?"],
+		"extends": ["JSX", "JavaScript", "TypeScript"],
 		"keywords": [
 			"<html looking thing>",
 		],
@@ -2290,15 +2468,19 @@ var o = dict({
 		"examples": [
 			"<CompetitionContext.Provider value={competition}>\n{children}\n</CompetitionContext.Provider>"
 		],
-	}
-	, "TypeScript": {
+	}, "TypeScript": {
+		"extension": "ts",
+		"paradigm": ["procedural", "object-oriented", "functional"],
 		"function": ["function", "(...) => ...", "argname => ..."],
 		"variable": ["var", "let", "const", ""],
-		"typing": ["static (optional)", "dynamic"],
-		"compiled/interpreted": "compiled to JavaScript, interpreted from there",
+		"typing": ["static (optional, suggested)", "dynamic"],
+		"execution model": [
+			"compiled to JavaScript",
+			"interpreted from JavaScript",
+		],
 		"level": "high",
-		"alt-name": "N/A",
-		"cur.obj": "this",
+		"alt name": "N/A",
+		"this": "this",
 		"undefined": ["null", "undefined"],
 		"cstyle": true,
 		"semicolon": "suggested",
@@ -2341,33 +2523,33 @@ var o = dict({
 		"examples": [
 			"(object as {attribute: <Type>}).attribute"
 		],
-	}
-	, "VBA": {
+	}, "VBA": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": "interpreted?",
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
 		"extends": null,
 		"keywords": null,
-		"misc": [
-			"looks like a txt file"
-		],
+		"misc": null,
 		"examples": null,
-	}
-	, "Vim-Script": {
+	}, "Vim-Script": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": "let",
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -2398,16 +2580,16 @@ var o = dict({
 			"call plug#begin('~/.config/nvim/plugged')",
 			"Plug 'joshdick/onedark.vim'",
 		],
-	}
-	, "Visual Basic .NET": {
-		// so I don't have to retype everything every time I want to add a new language
+	}, "Visual Basic .NET": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": ["", "Const"],
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -2422,15 +2604,16 @@ var o = dict({
 			"For i = 1 To len(chars) ... Next", // at least I think `Next` ends the loop
 		],
 		"examples": null,
-	}
-	, "Vue": {
+	}, "Vue": {
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
@@ -2445,16 +2628,17 @@ var o = dict({
 		"examples": [
 			"<style src=\"./style.scss\" lang=\"scss\" />"
 		],
-	}
-	, "<object format template>": {
+	}, "<object format template>": {
 		// so I don't have to retype everything every time I want to add a new language
+		"extension": null,
+		"paradigm": null,
 		"function": null,
 		"variable": null,
 		"typing": null,
-		"compiled/interpreted": null,
+		"execution model": null,
 		"level": null,
-		"alt-name": null,
-		"cur.obj": null,
+		"alt name": null,
+		"this": null,
 		"undefined": null,
 		"cstyle": null,
 		"semicolon": null,
