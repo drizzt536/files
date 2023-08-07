@@ -76,6 +76,8 @@ var OwnedApplications = {
 	, "Blair Witch": 29.99
 	, "Blankos Block Party": 0
 	, "Blood of Steel": 0
+	, "Bloons TD 6": 13.99
+	, "Bloons TD6": 0 // duplicate
 	, "Borderlands 2": 19.99
 	, "Borderlands 3": 59.99
 	, "Borderlands: The Pre-Sequel": 39.99
@@ -310,6 +312,7 @@ var OwnedApplications = {
 	, "LEGO Builder's Journey": 0 // duplicate
 	, "Lifeless Planet: Premier Edition": 19.99
 	, "Lifeless Planet": 0 // duplicate
+	, "Loop Hero": 14.99
 	, "Magic The Gathering Arena": 0
 	, "Magic: Legends": 0 // early access, canceled
 	, "Maneater": 39.99
