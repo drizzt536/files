@@ -5,7 +5,7 @@
 	(setq default-directory home-directory)
 	(setenv "HOME" home-directory))
 
-;;; Global Interactive Functions ;;;
+;;; Miscellaneous Interactive Functions ;;;
 
 (defun byte-compile-current ()
 	"`byte-compile-file` the file open in the active buffer"
@@ -59,6 +59,14 @@ Does the same thing as the following commands:
 	(with-temp-buffer
 		(insert-file-contents filename)
 		(count-lines (point-min) (point-max))))
+(defun whereami ()
+	(interactive)
+	(message
+		(expand-file-name
+			(buffer-file-name))))
+
+;;; Dired Interactive Functions ;;;
+
 (defun dired-get-current-drive ()
 	"Returns the Windows disk drive of the current open dired-mode buffer."
 	(interactive)
@@ -82,13 +90,6 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 		(if (string-match-p "^[A-Za-z]+:[/\\]$" dired-directory)
 			(concat (dired-get-next-drive) ":/")
 			"..")))
-(defun dired-open ()
-	"Opens subdirectories in the same buffer and files in a new one."
-	(interactive)
-	(message (dired-get-filename))
-	(if (file-directory-p (dired-get-filename))
-		(dired-find-alternate-file)
-		(dired-find-file)))
 (defun dired-omit-useless-dotfiles ()
 	"omits `.` and `..` directories from dired because they are useless"
 	(interactive)
@@ -99,25 +100,32 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 				(string= ".." fn)))
 		nil)
 	(dired-do-kill-lines nil ""))
-(defun dired-next-line-fn ()
-	"`dired-next-line` is already a thing"
-	(interactive)
-	(if (< linum-current-line (count-lines (point-min) (point-max)))
-		 (dired-next-line 1)))
-(defun dired-previous-line-fn ()
-	"`dired-previous-line` is already a thing"
-	(interactive)
-	(if (> linum-current-line 3)
-		 (dired-previous-line 1)))
 (defun dired-go-home ()
 	"go back to the home directory in the `dired` buffer."
 	(interactive)
 	(find-alternate-file "~"))
-(defun whereami ()
+(defun dired-open ()
+	"Opens subdirectories in the same buffer and files in a new one."
 	(interactive)
-	(message
-		(expand-file-name
-			(buffer-file-name))))
+	(if (file-directory-p (dired-get-filename))
+		(dired-find-alternate-file)
+		(dired-find-file)))
+(defun dired-next-line-fn ()
+	"`dired-next-line` is already a thing
+works for `dired-mode` and `archive-mode` major modes."
+	(interactive)
+	(if (< linum-current-line (count-lines (point-min) (point-max)))
+		(if (eq major-mode 'archive-mode)
+			(archive-next-line 1)
+			(dired-next-line 1))))
+(defun dired-previous-line-fn ()
+	"`dired-previous-line` is already a thing
+works for `dired-mode` and `archive-mode` major modes."
+	(interactive)
+	(if (> linum-current-line 3)
+		(if (eq major-mode 'archive-mode)
+			(archive-previous-line 1)
+			(dired-previous-line 1))))
 
 ;;; Global Keybindings ;;;
 
@@ -147,7 +155,7 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 ;;; Global Settings ;;;
 
 (custom-set-variables
-	'(archive-zip-extract (cons (car archive-zip-extract) '("-q" "-p")))
+	'(archive-zip-extract '("unzip" "-q" "-p")) ; BusyBox version
 	'(auto-save-default nil)
 	'(blink-cursor-mode nil)
 	'(buffer-file-coding-system 'utf-8-dos t)
@@ -207,7 +215,7 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 	'(temporary-file-directory (concat home-directory ".emacs.d/tmp/"))
 	'(tool-bar-mode nil))
 
-;;; Mode Packages ;;;
+;;; Syntax Modes ;;;
 
 (dolist
 	(package '(
@@ -222,52 +230,70 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 		;; eval(f"{name}-mode")
 		(require mode)))
 
+(dolist
+	(sublime-json-filetype '(
+		color-scheme	completions
+		workspace		commands
+		mousemap		settings
+		project			keymap
+		build			macro
+		themes			menu))
+	(add-to-list
+		'auto-mode-alist
+		`(,(concat
+			"\\.sublime-"
+			(symbol-name sublime-json-filetype)
+			"\\'")
+		. json-mode)))
+
 ;;; Hooks ;;;
 
 (add-hook 'dired-after-readin-hook 'dired-omit-useless-dotfiles)
-(add-hook 'shell-mode-hook (lambda()
+(add-hook 'dired-mode-hook 'dired-hide-details-mode)
+(add-hook 'shell-mode-hook (lambda ()
 	(setq-local default-directory home-directory)))
-(add-hook 'eshell-mode-hook (lambda()
+(add-hook 'eshell-mode-hook (lambda ()
 	(setq-local default-directory home-directory)))
-(add-hook 'dired-mode-hook (lambda()
-	(dired-hide-details-mode t)
 
-	(local-unset-key (kbd "RET"))
-	(local-unset-key (kbd "e"))
-	(local-unset-key (kbd "f"))
-	(local-unset-key (kbd "i"))
-	(local-unset-key (kbd "k"))
-	(local-unset-key (kbd "n"))
-	(local-unset-key (kbd "B"))
-	(local-unset-key (kbd "O"))
-	(local-unset-key (kbd "W"))
-	(local-unset-key (kbd "^"))
-	(local-unset-key (kbd "#"))
-	(local-unset-key (kbd "$"))
-	(local-unset-key (kbd "0"))
-	(local-unset-key (kbd "1"))
-	(local-unset-key (kbd "2"))
-	(local-unset-key (kbd "3"))
-	(local-unset-key (kbd "4"))
-	(local-unset-key (kbd "5"))
-	(local-unset-key (kbd "6"))
-	(local-unset-key (kbd "7"))
-	(local-unset-key (kbd "8"))
-	(local-unset-key (kbd "9"))
-	(local-unset-key (kbd "-"))
-	(local-unset-key (kbd "("))
+(require 'dired)
 
-	(local-set-key (kbd "~") 'dired-go-home)
-	(local-set-key (kbd "`") 'dired-flag-backup-files)
-	(local-set-key (kbd "q") 'dired-hide-details-mode)
-	(local-set-key (kbd "SPC") 'dired-open)
-	(local-set-key (kbd "S-SPC") 'dired-updir-or-next-drive)
-	(local-set-key (kbd "w") 'dired-previous-line-fn)
-	(local-set-key (kbd "a") 'backward-char)
-	(local-set-key (kbd "s") 'dired-next-line-fn)
-	(local-set-key (kbd "d") 'forward-char)
-	(local-set-key (kbd "<up>") 'dired-previous-line-fn)
-	(local-set-key (kbd "<down>") 'dired-next-line-fn)))
+(dolist (keybind '(
+		"e"    "f"    "g"    "i"    "k"    "m"    "n"    "o"    "u"    "v"    "x"    "B"
+		"C"    "P"    "Q"    "R"    "S"    "W"    "X"    "Z"    "0"    "1"    "2"    "3"
+		"4"    "5"    "^"    "#"    "$"    "-"    "."    "?"    "("    "<"    ">"    "9"
+		"G"    "H"    "L"    "O"    "6"    "7"    "8"    "C-s"  "* u"  "RET"  "ESC"  "* C-n"
+		"* !"  "* %"  "* *"  "* /"  "* ?"  "* @"  "* N"  "* c"  "* m"  "* s"  "* t"  "* DEL"
+		"DEL"  "% S"  "% &"  "% H"  "% C"  "% r"  "% g"  "* C-p"))
+	(define-key dired-mode-map (kbd keybind) nil))
+
+(define-key dired-mode-map (kbd "a")		'backward-char)
+(define-key dired-mode-map (kbd "c")		'dired-do-copy)
+(define-key dired-mode-map (kbd "d")		'forward-char)
+(define-key dired-mode-map (kbd "q")		'dired-hide-details-mode)
+(define-key dired-mode-map (kbd "r")		'dired-do-rename)
+(define-key dired-mode-map (kbd "s")		'dired-next-line-fn)
+(define-key dired-mode-map (kbd "w")		'dired-previous-line-fn)
+(define-key dired-mode-map (kbd "~")		'dired-go-home)
+(define-key dired-mode-map (kbd "SPC")		'dired-open)
+(define-key dired-mode-map (kbd "S-SPC")	'dired-updir-or-next-drive)
+(define-key dired-mode-map (kbd "<up>")		'dired-previous-line-fn)
+(define-key dired-mode-map (kbd "<down>")	'dired-next-line-fn)
+
+(define-key dired-mode-map (kbd "% m")		'dired-mark-files-containing-regexp)
+
+(define-key dired-mode-map (kbd "@ C-n")	'dired-next-marked-file)
+(define-key dired-mode-map (kbd "@ C-p")	'dired-prev-marked-file)
+(define-key dired-mode-map (kbd "@ %")		'dired-mark-files-regexp)
+(define-key dired-mode-map (kbd "@ *")		'dired-mark-executables)
+(define-key dired-mode-map (kbd "@ /")		'dired-mark-directories)
+(define-key dired-mode-map (kbd "@ @")		'dired-mark-symlinks)
+(define-key dired-mode-map (kbd "@ N")		'dired-number-of-marked-files)
+(define-key dired-mode-map (kbd "@ c")		'dired-change-marks)
+(define-key dired-mode-map (kbd "@ m")		'dired-mark)
+(define-key dired-mode-map (kbd "@ s")		'dired-mark-subdir-files)
+(define-key dired-mode-map (kbd "@ t")		'dired-toggle-marks)
+(define-key dired-mode-map (kbd "@ u")		'dired-unmark)
+(define-key dired-mode-map (kbd "@ U")		'dired-unmark-all-marks)
 
 ;;; Miscallaneous Stuff ;;;
 
@@ -275,6 +301,7 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 (put 'dired-find-alternate-file 'disabled nil)
 
 (push '(fullscreen . fullboth) default-frame-alist)
+
 
 (set-face-attribute 'default nil :height 175)
 (prefer-coding-system 'utf-8-dos)
