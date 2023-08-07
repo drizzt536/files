@@ -3,92 +3,150 @@
 // This file has the tests for lib.js must execute before Test.js does
 // in `inputs`, the first element is the `thisArg`, the rest are the function arguments
 // in `outputs`, the first element is the return value and the second is the exit code (0 or 1)
+if (LIBRARY_VARIABLES.settings.Create_Testing_Object) {
 
-if (LIBRARY_VARIABLES["local LibSettings"].Create_Testing_Object) {
-
-let LibSettings = LIBRARY_VARIABLES["local LibSettings"]
+let LibSettings = LIBRARY_VARIABLES.settings
 , globalTestsObject = globalThis[LibSettings.Testing_Object_Global_Name]
 , tests = {
-	symbToStr: {
+	symbolToString: {
 		scope: "globalThis"
 		, args: 2
 		, inputs: [
-			[undefined, Symbol("1234"), 1] // 0
-			, [undefined, Symbol("1234"), 2] // 1
-			, [undefined, Symbol.for("io3qt"), 1] // 2
-			, [undefined, Symbol.for("io3qt"), 2] // 3
-			, [undefined, Symbol("asdf"), 1] // 4
-			, [undefined, Symbol("asdf"), 2] // 5
-			, [undefined, Symbol.for("//3/'"), 1] // 6
-			, [undefined, Symbol.for("//3/'"), 2] // 7
-			, [undefined, 1234, 1] // 8
-			, [undefined, 1234, 2] // 9
-			, [undefined, "asdf", 1] // 10
-			, [undefined, "asdf", 2] // 11
-			, [undefined, 5678n, 1] // 12
-			, [undefined, 5678n, 2] // 13
-			, [undefined, [1, 2], 1] // 14
-			, [undefined, [1, 2], 2] // 15
-			, [undefined, {a: 1, b: 2}, 1] // 16
-			, [undefined, {a: 1, b: 2}, 2] // 17
-		]
-		, outputs: [
+			[undefined, Symbol("1234"), true] // 0
+			, [undefined, Symbol("1234"), false] // 1
+			, [undefined, Symbol.for("io3qt"), true] // 2
+			, [undefined, Symbol.for("io3qt"), false] // 3
+			, [undefined, Symbol("asdf"), true] // 4
+			, [undefined, Symbol("asdf"), false] // 5
+			, [undefined, Symbol.for("//\`3/'"), true] // 6
+			, [undefined, Symbol.for("//\`3/'"), false] // 7
+			, [undefined, Symbol.asyncIterator, true] // 8
+			, [undefined, Symbol.asyncIterator, false] // 9
+			, [undefined, Symbol.hasInstance, true] // 10
+			, [undefined, Symbol.hasInstance, false] // 11
+			, [undefined, Symbol.isConcatSpreadable, true] // 12
+			, [undefined, Symbol.isConcatSpreadable, false] // 13
+			, [undefined, Symbol.iterator, true] // 14
+			, [undefined, Symbol.iterator, false] // 15
+			, [undefined, Symbol.match, true] // 16
+			, [undefined, Symbol.match, false] // 17
+			, [undefined, Symbol.matchAll, true] // 18
+			, [undefined, Symbol.matchAll, false] // 19
+			, [undefined, Symbol.replace, true] // 20
+			, [undefined, Symbol.replace, false] // 21
+			, [undefined, Symbol.search, true] // 22
+			, [undefined, Symbol.search, false] // 23
+			, [undefined, Symbol.split, true] // 24
+			, [undefined, Symbol.split, false] // 25
+			, [undefined, Symbol.toPrimitive, true] // 26
+			, [undefined, Symbol.toPrimitive, false] // 27
+			, [undefined, Symbol.toStringTag, true] // 28
+			, [undefined, Symbol.toStringTag, false] // 29
+			, [undefined, Symbol.unscopables, true] // 30
+			, [undefined, Symbol.unscopables, false] // 31
+			, [undefined, 1234, true] // 32
+			, [undefined, 1234, false] // 33
+			, [undefined, "asdf", true] // 34
+			, [undefined, "asdf", false] // 35
+			, [undefined, 5678n, true] // 36
+			, [undefined, 5678n, false] // 37
+			, [undefined, [1, 2], true] // 38
+			, [undefined, [1, 2], false] // 39
+			, [undefined, {a: 1, b: 2}, true] // 40
+			, [undefined, {a: 1, b: 2}, false] // 41
+			, [undefined, [Symbol.for("asdf")], true] // 42
+			, [undefined, [Symbol.for("asdf")], false] // 43
+			, [undefined, Symbol.for('""'), true] // 44
+			, [undefined, Symbol.for('""'), false] // 45
+			// default arguments
+			, [undefined, Symbol("1234")] // 46
+			, [undefined, Symbol.for("io3qt")] // 47
+			, [undefined, Symbol.for("//\`3/'")] // 48
+			, [undefined, Symbol.match] // 49
+			, [undefined, Symbol.for('""')] // 50
+			,
+		], outputs: [
 			['Symbol("1234")', 0] // 0
-			, ['Symbol(1234)', 0] // 1
+			, ["Symbol(1234)", 0] // 1
 			, ['Symbol.for("io3qt")', 0] // 2
-			, ['Symbol.for(io3qt)', 0] // 3
+			, ["Symbol.for(io3qt)", 0] // 3
 			, ['Symbol("asdf")', 0] // 4
-			, ['Symbol(asdf)', 0] // 5
-			, [`Symbol.for("//3/'")`, 0] // 6
-			, ["Symbol.for(//3/')", 0] // 7
-			, [undefined, 0] // 8
-			, [undefined, 0] // 9
-			, [undefined, 0] // 10
-			, [undefined, 0] // 11
-			, [undefined, 0] // 12
-			, [undefined, 0] // 13
-			, [undefined, 0] // 14
-			, [undefined, 0] // 15
-			, [undefined, 0] // 16
-			, [undefined, 0] // 17
-		]
+			, ["Symbol(asdf)", 0] // 5
+			, [`Symbol.for("//\`3/'")`, 0] // 6
+			, ["Symbol.for(//\`3/')", 0] // 7
+			, ["Symbol.asyncIterator", 0] // 8
+			, ["Symbol(Symbol.asyncIterator)", 0] // 9
+			, ["Symbol.hasInstance", 0] // 10
+			, ["Symbol(Symbol.hasInstance)", 0] // 11
+			, ["Symbol.isConcatSpreadable", 0] // 12
+			, ["Symbol(Symbol.isConcatSpreadable)", 0] // 13
+			, ["Symbol.iterator", 0] // 14
+			, ["Symbol(Symbol.iterator)", 0] // 15
+			, ["Symbol.match", 0] // 16
+			, ["Symbol(Symbol.match)", 0] // 17
+			, ["Symbol.matchAll", 0] // 18
+			, ["Symbol(Symbol.matchAll)", 0] // 19
+			, ["Symbol.replace", 0] // 20
+			, ["Symbol(Symbol.replace)", 0] // 21
+			, ["Symbol.search", 0] // 22
+			, ["Symbol(Symbol.search)", 0] // 23
+			, ["Symbol.split", 0] // 24
+			, ["Symbol(Symbol.split)", 0] // 25
+			, ["Symbol.toPrimitive", 0] // 26
+			, ["Symbol(Symbol.toPrimitive)", 0] // 27
+			, ["Symbol.toStringTag", 0] // 28
+			, ["Symbol(Symbol.toStringTag)", 0] // 29
+			, ["Symbol.unscopables", 0] // 30
+			, ["Symbol(Symbol.unscopables)", 0] // 31
+			, [undefined, 0] // 32
+			, [undefined, 0] // 33
+			, [undefined, 0] // 34
+			, [undefined, 0] // 35
+			, [undefined, 0] // 36
+			, [undefined, 0] // 37
+			, [undefined, 0] // 38
+			, [undefined, 0] // 39
+			, [undefined, 0] // 40
+			, [undefined, 0] // 41
+			, [undefined, 0] // 42
+			, [undefined, 0] // 43
+			, ['Symbol.for("\\"\\"")', 0] // 44
+			, ['Symbol.for("")', 0] // 45
+			// default arguments
+			, ['Symbol("1234")', 0] // 46
+			, ['Symbol.for("io3qt")', 0] // 47
+			, [`Symbol.for("//\`3/'")`, 0] // 48
+			, ["Symbol.match", 0] // 49
+			, ['Symbol.for("\\"\\"")', 0] // 50
+			,
+		],
 	} // 1
 	, stringify: {
 		args: 2
 		, scope: "globalThis.json"
 		, inputs: {
 			"globalThis.json": [
-				// basic array test
 				[json, [1, 2, 3], {} ] // 0
-				// spaces and spacesAtEnds
 				, [json, [1, 2, 3], { space: "\t", spacesAtEnds: true } ] // 1
-				// symbols as keys
 				, [json, {[Symbol.for("a")]: 3, b: 3}, {} ] // 2
-				// all the basic types
 				, [json, [1.3, -4n, "ab", [{},null], Symbol.for("a"), Symbol("3"), false, /df/g], {}] // 3
-				// same thing with tabs and different values
 				, [json, [-8, 0n, ";", [null, {}], Symbol.for("`"), undefined, true, /l]/s]
 					, { space: "\t", onlyEnumProps: false }
 				] // 4
-				// deeper array recursion
 				, [json, [1,[1,[],[[7,[[]]],[2,[4,[[6]]],8]]],3], { space: "  " } ] // 5
-				// deeper object recursion
 				, [json, {a:{b:{c:{d:{e:{h:{i:{m:[{}]}},j:{}}}}}}}, { space: "" } ] // 6
-				// non-enumerable string keys
 				, [json, Object.create(null, { "asdf": { value: 3, enumerable: false } })
 					, { spacesAtEnds: true }
 				] // 7
 				, [json, Object.create(null, { "asdf": { value: 3, enumerable: false } })
 					, { space: "   ", spacesAtEnds: true, onlyEnumProps: false }
 				] // 8
-				// non-enumerable symbol keys
 				, [json, Object.create(null, { [Symbol.for("asdf")]: { value: 3, enumerable: false } })
 					, { onlyEnumProps: true }
 				] // 9
 				, [json, Object.create(null, { [Symbol.for("asdf")]: { value: 3, enumerable: false } })
 					, { spacesAtEnds: true, onlyEnumProps: false }
 				] // 10
-				// number and bigint keys
 				, [json, {3: 3, 2n: 4, [-89]:  6}, {}]
 			]
 		}
