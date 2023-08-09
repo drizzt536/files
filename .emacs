@@ -105,11 +105,15 @@ Doesn't create a new buffer unlike `dired-up-directory`."
 	(interactive)
 	(find-alternate-file "~"))
 (defun dired-open ()
-	"Opens subdirectories in the same buffer and files in a new one."
+	"Opens subdirectories in the same buffer and files in a new one.
+works for `dired-mode` and `archive-mode` major modes."
 	(interactive)
-	(if (file-directory-p (dired-get-filename))
-		(dired-find-alternate-file)
-		(dired-find-file)))
+	(if (eq major-mode 'archive-mode)
+		(archive-extract)
+		(if (file-directory-p (dired-get-filename))
+			(dired-find-alternate-file)
+			(dired-find-file)))
+)
 (defun dired-next-line-fn ()
 	"`dired-next-line` is already a thing
 works for `dired-mode` and `archive-mode` major modes."
@@ -217,6 +221,7 @@ works for `dired-mode` and `archive-mode` major modes."
 
 ;;; Syntax Modes ;;;
 
+;; syntax modes
 (dolist
 	(package '(
 		gitattributes	nasm
@@ -229,7 +234,7 @@ works for `dired-mode` and `archive-mode` major modes."
 	(let ( (mode (intern (concat (symbol-name package) "-mode"))) )
 		;; eval(f"{name}-mode")
 		(require mode)))
-
+;; sublime json modes
 (dolist
 	(sublime-json-filetype '(
 		color-scheme	completions
@@ -238,8 +243,7 @@ works for `dired-mode` and `archive-mode` major modes."
 		project			keymap
 		build			macro
 		themes			menu))
-	(add-to-list
-		'auto-mode-alist
+	(add-to-list 'auto-mode-alist
 		`(,(concat
 			"\\.sublime-"
 			(symbol-name sublime-json-filetype)
@@ -255,20 +259,43 @@ works for `dired-mode` and `archive-mode` major modes."
 (add-hook 'eshell-mode-hook (lambda ()
 	(setq-local default-directory home-directory)))
 
+;;; Dired and Archive keybindings ;;;
+
+(require 'arc-mode)
 (require 'dired)
 
 (dolist (keybind '(
-		"e"    "f"    "g"    "i"    "k"    "m"    "n"    "o"    "u"    "v"    "x"    "B"
-		"C"    "P"    "Q"    "R"    "S"    "W"    "X"    "Z"    "0"    "1"    "2"    "3"
-		"4"    "5"    "^"    "#"    "$"    "-"    "."    "?"    "("    "<"    ">"    "9"
-		"G"    "H"    "L"    "O"    "6"    "7"    "8"    "C-s"  "* u"  "RET"  "ESC"  "* C-n"
-		"* !"  "* %"  "* *"  "* /"  "* ?"  "* @"  "* N"  "* c"  "* m"  "* s"  "* t"  "* DEL"
-		"DEL"  "% S"  "% &"  "% H"  "% C"  "% r"  "% g"  "* C-p"))
+		"a"  "e"  "f"  "h"  "n"  "p"  "q"  "C"  "E"  "G"  "O"  "0"  "1"  "2"  "3"  "4"
+		"5"  "6"  "7"  "8"  "9"  "-"  "<"  ">"  "?"
+
+		"C-n"  "C-p"  "C-d"  "<mouse-2>"  "DEL"  "RET"  "M-DEL"  "S-SPC"))
+	(define-key archive-mode-map (kbd keybind) nil))
+(dolist (keybind '(
+		"a"  "e"  "f"  "g"  "h"  "i"  "k"  "m"  "n"  "o"  "t"  "u"  "v"  "x"  "A"  "B"
+		"C"  "D"  "G"  "H"  "L"  "O"  "P"  "Q"  "R"  "S"  "T"  "W"  "X"  "Z"  "0"  "1"
+		"2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "^"  "#"  "$"  "-"  "."  "?"  "("  "<"
+		">"
+
+		"C-s"  "* u"  "RET"  "ESC"  "% S"  "* !"  "* %"  "* *"  "* /"  "* ?"  "* @"
+		"* N"  "* c"  "* m"  "* s"  "* t"  "DEL"  "% &"  "% H"  "% C"  "% r"  "% g"
+
+		"* C-p"  "* DEL"  "* C-n"))
 	(define-key dired-mode-map (kbd keybind) nil))
 
-(define-key dired-mode-map (kbd "a")		'backward-char)
+(define-key archive-mode-map (kbd "q")		'archive-alternate-display)
+(define-key archive-mode-map (kbd "s")		'dired-next-line-fn)
+(define-key archive-mode-map (kbd "c")		'archive-copy-file)
+(define-key archive-mode-map (kbd "w")		'dired-previous-line-fn)
+(define-key archive-mode-map (kbd "U")		'archive-unmark-all-files)
+(define-key archive-mode-map (kbd "SPC")	'dired-open)
+(define-key archive-mode-map (kbd "<up>")	'dired-previous-line-fn)
+(define-key archive-mode-map (kbd "<down>")	'dired-next-line-fn)
+(define-key archive-mode-map (kbd "C-h")	'describe-mode)
+
+
+(define-key dired-mode-map (kbd "a")		'dired-do-find-regexp)
 (define-key dired-mode-map (kbd "c")		'dired-do-copy)
-(define-key dired-mode-map (kbd "d")		'forward-char)
+(define-key dired-mode-map (kbd "d")		'dired-do-delete)
 (define-key dired-mode-map (kbd "q")		'dired-hide-details-mode)
 (define-key dired-mode-map (kbd "r")		'dired-do-rename)
 (define-key dired-mode-map (kbd "s")		'dired-next-line-fn)
@@ -276,7 +303,8 @@ works for `dired-mode` and `archive-mode` major modes."
 (define-key dired-mode-map (kbd "~")		'dired-go-home)
 (define-key dired-mode-map (kbd "SPC")		'dired-open)
 (define-key dired-mode-map (kbd "S-SPC")	'dired-updir-or-next-drive)
-(define-key dired-mode-map (kbd "<up>")		'dired-previous-line-fn)
+(define-key dired-mode-map (kbd "C-h")		'describe-mode)
+(define-key dired-mode-map (kbd "<up>")	'dired-previous-line-fn)
 (define-key dired-mode-map (kbd "<down>")	'dired-next-line-fn)
 
 (define-key dired-mode-map (kbd "% m")		'dired-mark-files-containing-regexp)
@@ -318,6 +346,7 @@ works for `dired-mode` and `archive-mode` major modes."
 ; figure out how to horizontal scroll
 ; I don't want to be able to delete the 'PS C:/>' part of the shell buffer
 ; I don't want to be able to go up in the shell buffer
+	; make <up> do what C-<up> does now.
 ; I don't want to be delete previous things in the shell buffer
 ; Make C-` open a shell instance on the bottom of the screen (or do M-x shell-command RET)
 ; Make going to 10 lines and back to 9 scale back the buffer space
@@ -329,7 +358,7 @@ works for `dired-mode` and `archive-mode` major modes."
 
 
 ; custom emacs modes to find
-;  	powershell
+;  	PowerShell
 ;  	LaTeX-Log
 ;  	TI-BASIC
 
