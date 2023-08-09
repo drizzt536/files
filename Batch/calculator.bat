@@ -1,10 +1,10 @@
 @echo off
-title integer calculator
+title Integer Calculator
 :start
-set /p math= Equation? 
-set /a result= %math%
-echo %math% = %result%
-echo.
+set /p equation= Equation? 
+set /a result= %equation%
+echo %equation% = %result%
+echo:
 pause
 cls
 goto start
