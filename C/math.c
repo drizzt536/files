@@ -46,8 +46,8 @@ struct FILE *__acrt_iob_func(unsigned index);
 
 static inline char *stringify_bool(bool b) { return b ? "true" : "false"; }
 static inline char *substr(char *str, ullong index) { return str + index; } // assume no segfault
-static inline bool isPositive(char * restrict str ) { return * str != 46; }
-static inline signed int ctoi(char chr) { return (signed int) (chr - 48); } // assume input is a number
+static inline bool isPositive(char * restrict str ) { return * str != '-'; }
+static inline int ctoi(char chr) { return (int) (chr - '0'); } // assume input is a number
 
 // String math
 static char *ullong_to_str(ullong number, bool sign) {
@@ -87,7 +87,7 @@ static bool isIntZero(char *restrict str) {
 	return true;
 }
 static bool includes(char *str, char c) {
-	for (int i = 0; str[i] != 0 ; ++i)
+	for (int i = 0; str[i] != 0; ++i)
 		if (str[i] == c) return true;
 	return false;
 }
