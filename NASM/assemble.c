@@ -1,5 +1,4 @@
-// gcc -Wall -Wextra -pedantic -Ofast ./assemble.c -o assemble
-// strip ./assemble.exe
+// gcc -Wall -Wextra -pedantic -Ofast ./assemble.c -o assemble && strip ./assemble.exe
 
 #include <io.h> // _access, (string.h: strlen)
 #include <stdio.h> // printf, sprintf
@@ -42,7 +41,8 @@ bool has_param(char *parameters, char param_character) {
 	char param[4] = {'-', '-', param_character, '\0'};
 	char *position = strstr(parameters, param);
 
-	if (position == NULL) return false;
+	if (position == NULL)
+		return false;
 
 	*position = position[1] = position[2] = ' ';
 
