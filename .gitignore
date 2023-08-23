@@ -23,6 +23,8 @@ test.*
 *.o
 *.obj
 *.class
+*/*._*.*
+
 
 !/JavaScript/test.js
 !/Python/manim/*/index.py
