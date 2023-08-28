@@ -23,10 +23,7 @@
 	The correct one should return "exe".
 #>
 Function Global:Get-ExecutableType {
-	Param ([Parameter(Position=0, Mandatory=$true)][String] $FilePath)
+	Param ( [Parameter(Position=0, Mandatory=$true)] [String] $FilePath )
 	
-	return (C:/Program` Files/Microsoft` Visual` Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/dumpbin.exe
-		/HEADERS
-		$FilePath
-	)[8].Substring(11).ToLower() -replace "cutable image", ""
+	return (D:/ExtF/Files/MSVC/bin/dumpbin.exe /HEADERS $FilePath)[8].Substring(11).ToLower() -replace "cutable image", ""
 }
