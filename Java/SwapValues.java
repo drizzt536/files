@@ -24,7 +24,7 @@ class Wrapper<T> {
 	public Wrapper(T _value) {
 		value = _value;
 	}
-	public toString() {
+	public String toString() {
 		return value.toString();
 	}
 }
