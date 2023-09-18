@@ -1,16 +1,17 @@
 // This is my honest attempt at writing Hello World in Java :)
 
-import java.io.PrintStream;
 import java.util.ArrayList;
+import java.io.PrintStream;
+import java.lang.*;
 
-public class HelloWorldFunny extends Object {
+public final class HelloWorldFunny extends Object {
 	public static void main(String[] args) {
-		ConcreteHelloPrinterWrapperManagerFactory printerManagerFactory = new ConcreteHelloPrinterWrapperManagerFactory();
-		ConcreteHelloPrinterWrapperManager printerManager = printerManagerFactory.nextManager();
+		final ConcreteHelloPrinterWrapperManagerFactory printerManagerFactory = new ConcreteHelloPrinterWrapperManagerFactory();
+		final ConcreteHelloPrinterWrapperManager printerManager = printerManagerFactory.nextManager();
 
 		printerManager.addNextPrinter(false);
 
-		ConcreteHelloPrinterWrapper printer = printerManager.getLatestPrinter();
+		final ConcreteHelloPrinterWrapper printer = printerManager.getLatestPrinter();
 
 		printer.printHello();
 	}
@@ -42,7 +43,7 @@ abstract class AbstractHelloPrinterWrapper extends Object {
 	public abstract void getOutputFile(PrintStream newOutputFile);
 }
 
-class ConcreteHelloPrinterWrapper extends AbstractHelloPrinterWrapper implements HelloPrinterInterface {
+final class ConcreteHelloPrinterWrapper extends AbstractHelloPrinterWrapper implements HelloPrinterInterface {
 	protected static <T> void printlnToOutputFile(T x) {
 		ConcreteHelloPrinterWrapper.printToOutputFile(x);
 		ConcreteHelloPrinterWrapper.printToOutputFile("\n");
@@ -82,7 +83,7 @@ class ConcreteHelloPrinterWrapper extends AbstractHelloPrinterWrapper implements
 	}
 }
 
-class ConcreteHelloPrinterWrapperManager extends Object {
+final class ConcreteHelloPrinterWrapperManager extends Object {
 	private ArrayList<ConcreteHelloPrinterWrapper> helloPrinters = new ArrayList<ConcreteHelloPrinterWrapper>();
 
 	public ConcreteHelloPrinterWrapper nextPrinter(Boolean silent) {
@@ -112,7 +113,7 @@ class ConcreteHelloPrinterWrapperManager extends Object {
 	}
 }
 
-class ConcreteHelloPrinterWrapperManagerFactory extends Object {
+final class ConcreteHelloPrinterWrapperManagerFactory extends Object {
 	private ConcreteHelloPrinterWrapperManager _nextManager() {
 		// this code might change in the future
 		return new ConcreteHelloPrinterWrapperManager();
