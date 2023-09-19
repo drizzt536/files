@@ -1,13 +1,13 @@
 % file for pdflatex.exe
 
-% continuum.tex v6.0 (c) | Copyright 2023 Daniel E. Janusch
+% continuum.tex v7.-1 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
-% and may only be copied IN ITS ENTIRETY under penalty of law.
+% and may be copied ONLY IN ITS ENTIRETY under penalty of law.
 
 
 \documentclass[12pt]{article}
-\usepackage{amssymb, latexsym, amsmath, amsthm}
+\usepackage{amssymb, latexsym, amsmath, amsthm, upquote}
 \usepackage[margin=1in]{geometry}
 
 \addtolength{\topmargin}{-0.5in}
@@ -18,27 +18,33 @@
 \begin{document}
 
 
-\title{On the Continuum Hypotheses and the Correspondence of Infinite Sets' Elements with the Natural Numbers}
+\title{On the Continuum Hypotheses and the Correspondence of Infinite Sets' Elements with the
+	Natural Numbers}
 \author{Daniel E. Janusch\\Dedicated to Maeby, my favorite kitty}
 \maketitle
 
-\begin{section}{Introduction and Countability Theorems}\label{sec:background}
-	Any ``countable" set is equinumerous to a improper subset of the natural numbers, and
-	there exists a bijection between them. Any finite set has this property, the main
+\begin{section}{Introduction and Countability Theorems}\label{sec:intro}
+	Any ``countable" set is equinumerous to an improper subset of the natural numbers, and as
+	follows, there exists a bijection between them. Any finite set has this property, an important
 	question being if all \emph{infinite} sets do. In all infinite processes, one should
 	think of the steps as executing simultaneously rather than separately and successively.
 	$|S|$ and $C(S)$ denote the cardinality and countability of a set $S$ respectively.
-	Equations (2a) and (2b) describe what will be called sum amd product ``ring operators."
-	Most theorems use ``$\iff$" instead of ``$\implies$" because Theorem~\ref{thm:subsets}.1
-	works as an inversion. Equation~(1a) doesn't nest groups but flattens them.
-	\vspace{-1em}\\
+	Equations (2a) and (2b) describe what will be called ``sum ring operators,"
+	``product ring operators," and collectively ``ring operators." Most of the theorems use
+	``$\iff$" instead of ``$\implies$" because Theorem~\ref{thm:subsets}.1 works as an
+	inversion. Equation~(1a) doesn't nest groups but flattens them in the same way as $R^n$
+	normally does. While sets don't have an indexing traditionally, it is easier to pretend
+	they can to see if they are countable. $R$, $S$ \& $T$ are sets. $a$ \& $b$ are reals.
+	$n$, $k$, $i$ \& $j$ are naturals.\vspace{-1em}\\
 	\begin{align}
 		R\times S & :=\left\{(r,s):r\in R\land s\in S\right\}~~~~(1\text a)
 		\hspace{2em}
 		R\cdot S:=\left\{r\cdot s:r\in R\land s\in S\right\}~~~~~\,(1\text b)\\
-		R(\vec v\,) & :=\left\{\sum_{n=1}^{\text{len}\,\vec v}(r_n\cdot\vec v_n):r_k\in R\right\}~~~(2\text a)
+		R(\vec v\,) & :=\left\{\sum_{n=1}^{\text{dim}\,\vec v}(r_n\cdot\vec
+		v_n):r_k\in R\right\}~~~(2\text a)
 		\hspace{2.1em}
-		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\text{len}\,\vec v}(r_n+\vec v_n):r_k\in R\right\}~~(2\text b)\\
+		R[\,\vec v\,]:=\left\{\prod_{n=1}^{\text{dim}\,\vec v}(r_n+\vec v_n):r_k\in
+		R\right\}~~(2\text b)\\
 		\aleph_0 & := |\mathbb N|\\
 		C(S) & :=\begin{cases}
 			1,\,\left[S\text{ countable}\right]\phantom{un}~~(|S|\leqslant\aleph_0)\\
@@ -48,7 +54,7 @@
 
 	\begin{thm}\label{thm:finite unions}
 		\emph{
-			Singlular Unions of Countable Sets\\
+			Singular Unions of Countable Sets\\
 			\indent If any sets $R$ and $S$ are countable, $R(a)\cup S(b)$ is countable
 			for all numbers $a$ and $b$.\vspace{0.4em}\\
 			\indent1. $C(R)\land C(S)\iff C(R\left(a\right)\cup S\left(b\right))~\forall a,b$
@@ -59,33 +65,35 @@
 			4. $C(R)\land C(S)\iff C(R[\,a\,]\cup S[\,b\,])~\forall a,b$
 		}
 	\end{thm}\begin{proof}
-		$R$ and $S$ being countable implies $R(a)$ and $S(b)$ are countable as well
-		because ring operators keep cardinalities the same. (case 1) Interlace the elements of
-		$R(a)$ with those of $S(b)$, skipping over any duplicates. If either set is
-		finite, append its elements to the beginning of the other set sans duplicates.
-		Similar logic works with the other cases.
+		$R(a)$ and $S(b)$ exist due to the Axiom Schema of Replacement. They are countable because ring
+		operators don't change cardinality. For case 1, Interlace the elements of $R(a)$ with those
+		of $S(b)$, skipping over any duplicates. If either set is finite, append its elements to the
+		beginning of the other set, excluding duplicates. The same logic works with the other 3 cases.
 	\end{proof}
 
-	\begin{thm}\label{thm:multiplications}
+	\pagebreak\begin{thm}\label{thm:multiplications}
 		\emph{
-			Cartesian Products and Element-wise Multiplications of Countable Sets\\
+			Cartesian Products and Element-Wise Multiplications of Countable Sets\\
 			\indent If any sets $R$ and $S$ are countable, both $R\times S$ and
 			$R\cdot S$ are countable.\vspace{0.4em}\\
 			\indent1. $C(R)\land C(S)\iff C(R\times S)$\\
 			\indent2. $C(R)\land C(S)\iff C(R\cdot S)$
 		}
-	\end{thm}\pagebreak\begin{proof}
-		To create $R\times S$, put all possible ordered pairs into a table as shown.
-		Going along the diagonals, including every element in the output, and not
-		``missing" any, one can show there is a bijection between $R\times S$ and
-		$\mathbb N$. The numbers and colons in the table are the output indices, the
-		first 25 being labeled if in view. Similar logic works for $R\cdot S$. This
-		method is also algorithmically viable (see Section~\ref{sec:algorithm code}),
-		and the output indices relate strongly to triangle numbers.\vspace{-0.3em}\\
+	\end{thm}\begin{proof}
+		To construct $R\times S$, put all possible ordered pairs into a table as shown. Go along the
+		diagonals adding each value to a new set $T$. Every element will be both included and indexed
+		in $T$, and thus a bijection exists between $T$ ($R\times S$) and $\mathbb N$. Each table
+		element is of the form ``$T$-index : value," the first 25 being labeled if in view. The same
+		core logic works for $R\cdot S$. This method is algorithmically viable (see
+		Section~\ref{sec:algorithm code}), and the $T$-indices relate strongly to triangle numbers
+		(see Section~\ref{sec:algorithm mathematically}).\vspace{0.5em}\\
 		\centerline{\begin{array}{|c|c|c|c|c|}
-			\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) & \phantom{0}7:(R_1, S_4) & \cdots\\
-			\hline \phantom{0}3:(R_2, S_1) & \phantom{0}5:(R_2, S_2) & \phantom{0}8:(R_2, S_3) & 12:(R_2, S_4) & \cdots\\
-			\hline \phantom{0}6:(R_3, S_1) & \phantom{0}9:(R_3, S_2) & 13:(R_3, S_3) & 18:(R_3, S_4) & \cdots\\
+			\hline \phantom{0}1:(R_1, S_1) & \phantom{0}2:(R_1, S_2) & \phantom{0}4:(R_1, S_3) &
+			\phantom{0}7:(R_1, S_4) & \cdots\\
+			\hline \phantom{0}3:(R_2, S_1) & \phantom{0}5:(R_2, S_2) & \phantom{0}8:(R_2, S_3) &
+			12:(R_2, S_4) & \cdots\\
+			\hline \phantom{0}6:(R_3, S_1) & \phantom{0}9:(R_3, S_2) & 13:(R_3, S_3) & 18:(R_3, S_4) &
+			\cdots\\
 			\hline 10:(R_4, S_1) & 14:(R_4, S_2) & 19:(R_4, S_3) & 25:(R_4, S_4) & \cdots\\
 			\hline \vdots & \vdots & \vdots & \vdots & \ddots\\
 			\hline
@@ -95,19 +103,19 @@
 	\begin{thm}\label{thm:subsets}
 		\emph{
 			Subsets, Intersections, and Differences of Countable Sets\\
-			\indent If any set $R$ is countable, any loose subset $S$ of $R$ is also countable.
+			\indent If a set $R$ is countable, if any set $S$ is an improper subset of $R$, is
+			countable.
 			\vspace{0.4em}\\
 			\indent1. $C(R)\land S\subseteq R\implies C(S)$\\
 			\indent2. $C(R)\land C(S)\implies C(R\cap S)$\\
 			\indent3. $C(R)\implies C(R\smallsetminus S)$
 		}
 	\end{thm}\begin{proof}
-		Since subsets of $\mathbb N$ are countable and $R$ is countable, all subsets of $R$
-		must also be countable due to the bijection between $R$ and $\mathbb N$. This also
-		implies that set intersections and differences are countable because these operations
-		return subsets of the left input. Case 3 doesn't require $S$ to be countable because
-		it is uncountable and $R$ is countable, then it is just more likely that the output
-		will be the empty set.
+		Since subsets of $\mathbb N$ are countable and $R$ bijects $\mathbb N$, all subsets of $R$
+		must also be countable due to the Axiom Schema of Replacement. This implies that set
+		intersections and differences are countable since these operations return subsets of the left
+		input. Case 3 doesn't require $S$ to be countable because its elements cannot appear in the
+		output set.
 	\end{proof}
 
 	\begin{thm}\label{thm:rings}
@@ -119,20 +127,22 @@
 			\indent2. $C(R)\iff C(R[\,a, b\,])~\forall a,b$
 		}
 	\end{thm}\begin{proof}
-		$R(a,b)$ can be tabulated with axes $n$ and $k$, where the corresponding
-		table box is $aR_n + bR_k$. This is countable in the same way as
-		Theorem~\ref{thm:multiplications}. Similar logic works for $R[a,b]$.\\
+		$R(a,b)$ can be tabulated with axes $n$ and $k$, where the corresponding table box is
+		$aR_n + bR_k$. This is countable in the same way as Theorem~\ref{thm:multiplications}
+		except with addition as the combining operator instead of multiplication.
+		Similar logic works for $R[a,b]$.\vspace{0.5em}\\
 		\centerline{\begin{array}{|c|c|c|c|c|c|} % 6 columns
 			\hline aR_1 + bR_1 & aR_1 + bR_2 & aR_1 + bR_3 & aR_1 + bR_4 & aR_1 + bR_5 & \cdots\\
 			\hline aR_2 + bR_1 & aR_2 + bR_2 & aR_2 + bR_3 & aR_2 + bR_4 & aR_2 + bR_5 & \cdots\\
 			\hline aR_3 + bR_1 & aR_3 + bR_2 & aR_3 + bR_3 & aR_3 + bR_4 & aR_3 + bR_5 & \cdots\\
 			\hline aR_4 + bR_1 & aR_4 + bR_2 & aR_4 + bR_3 & aR_4 + bR_4 & aR_4 + bR_5 & \cdots\\
+			\hline aR_5 + bR_1 & aR_5 + bR_2 & aR_5 + bR_3 & aR_5 + bR_4 & aR_5 + bR_5 & \cdots\\
 			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
 			\hline
 		\end{array}}
 	\end{proof}
 
-	\begin{thm}\label{thm:powers}
+	\pagebreak\begin{thm}\label{thm:powers}
 		\emph{
 			Finite Natural Powers of Countable Sets\\
 			\indent If any set $R$ is countable, $R^n$ is also countable for all natural
@@ -140,36 +150,43 @@
 			\indent1. $C(R)\iff C(R^n)~~\forall n\in\mathbb N_0<\infty$
 		}
 	\end{thm}\begin{proof}
-		$R^n$ can be factored as $R\times R^{n-1}$ (eqn.~1a flattens outputs), which is countable if $R^{n-1}$ is countable (Theorem~\ref{thm:multiplications}.1). This can be applied recursively until it becomes countable if $R^2$ or $R\times R$ is
-		countable, which is countable via Theorem~\ref{thm:multiplications}.1. If $n=0$, the
-		output set is all the groups of zero elements from $R$, or just $\emptyset$, which is countable
-		since $\left|\emptyset\right|$ is finite.
+		$R^n$ can be factored as $R\times R^{n-1}$ (eqn.~1a flattens outputs), which is countable if
+		$R^{n-1}$ is countable (Theorem~\ref{thm:multiplications}.1). This can be applied recursively
+		until it becomes countable if $R^2$ or $R\times R$ is countable, which is countable via
+		Theorem~\ref{thm:multiplications}.1. If $n=0$, the output set is all the groups of zero
+		elements ($\emptyset$) from $R$; this is countable since $\left|\emptyset\right|$ is finite.
 	\end{proof}
 
 	\begin{thm}\label{thm:infinite unions}
 		\emph{
 			Countably Infinite Unions of Countably Infinite Sets\\
-			\indent If all sets $R_i$ are countable, their union is also countable.
+			\indent If all sets $R_n$ are countable, their union is also countable.
 			\vspace{0.4em}\\
-			\indent1. $C(R_i)\forall i\iff C\!\left(\displaystyle\bigcup_{i=1}^{\aleph_0}R_i
-			\right)$
+			\indent1. $C(R_n)\forall n\iff C\!\left(\displaystyle\bigcup_{n=1}^{\aleph_0}R_n\right)$
 		}
 	\end{thm}\begin{proof}
-		To create the union, give each set $R_i$ a column in a table and put all its elements
-		sequentially in that column going down. Do this for every $R_i$, and using the same
-		method as in Theorem~\ref{thm:multiplications}, one can show that this set bijects
-		the naturals. Every column represents a different $R_i$ and each row represents a
-		different $\left(R_i\right)_j$ or $R_{i,j}$. The numbers before the colons are the
-		output index, the first 85 shown if in view. This is algorithmically viable
-		(see Section~\ref{sec:algorithm code}).\vspace{0.5em}
+		To create the union, give each set $R_n$ a column in a table $T$ and put all its elements
+		sequentially in that column going down. Do this for every $R_n$, and using the same method
+		as in Theorem~\ref{thm:multiplications}, one can show that $T$ bijects $\mathbb N$. Every
+		column represents a different $R_n$ and each row represents a different $\left(R_n\right)_k$
+		or $R_{n,k}$. This is algorithmically viable (see Section~\ref{sec:algorithm code}). Refer to
+		Theorem~\ref{thm:multiplications} for more information on the algorithm or the table format.
+		\vspace{0.5em}\\
 		\centerline{\begin{array}{|c|c|c|c|c|c|c|c|} % 8 columns
-			\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} & \phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
-			\hline \phantom{0}3:R_{1,2} & \phantom{0}5:R_{2,2} & \phantom{0}8:R_{3,2} & 14:R_{4,2} & 17:R_{5,2} & 27:R_{6,2} & 30:R_{7,2} & \cdots\\
-			\hline \phantom{0}4:R_{1,3} & \phantom{0}9:R_{2,3} & 13:R_{3,3} & 18:R_{4,3} & 26:R_{5,3} & 31:R_{6,3} & 43:R_{7,3} & \cdots\\
-			\hline 10:R_{1,4} & 12:R_{2,4} & 19:R_{3,4} & 25:R_{4,4} & 32:R_{5,4} & 42:R_{6,4} & 49:R_{7,4} & \cdots\\
-			\hline 11:R_{1,5} & 20:R_{2,5} & 24:R_{3,5} & 33:R_{4,5} & 41:R_{5,5} & 50:R_{6,5} & 62:R_{7,5} & \cdots\\
-			\hline 21:R_{1,6} & 23:R_{2,6} & 34:R_{3,6} & 40:R_{4,6} & 51:R_{5,6} & 61:R_{6,6} & 72:R_{7,6} & \cdots\\
-			\hline 22:R_{1,7} & 35:R_{2,7} & 39:R_{3,7} & 52:R_{4,7} & 60:R_{5,7} & 73:R_{6,7} & 85:R_{7,7} & \cdots\\
+			\hline \phantom{0}1:R_{1,1} & \phantom{0}2:R_{2,1} & \phantom{0}6:R_{3,1} &
+			\phantom{0}7:R_{4,1} & 15:R_{5,1} & 16:R_{6,1} & 28:R_{7,1} & \cdots\\
+			\hline \phantom{0}3:R_{1,2} & \phantom{0}5:R_{2,2} & \phantom{0}8:R_{3,2} & 14:R_{4,2} &
+			17:R_{5,2} & 27:R_{6,2} & 30:R_{7,2} & \cdots\\
+			\hline \phantom{0}4:R_{1,3} & \phantom{0}9:R_{2,3} & 13:R_{3,3} & 18:R_{4,3} & 26:R_{5,3} &
+			31:R_{6,3} & 43:R_{7,3} & \cdots\\
+			\hline 10:R_{1,4} & 12:R_{2,4} & 19:R_{3,4} & 25:R_{4,4} & 32:R_{5,4} & 42:R_{6,4} &
+			49:R_{7,4} & \cdots\\
+			\hline 11:R_{1,5} & 20:R_{2,5} & 24:R_{3,5} & 33:R_{4,5} & 41:R_{5,5} & 50:R_{6,5} &
+			62:R_{7,5} & \cdots\\
+			\hline 21:R_{1,6} & 23:R_{2,6} & 34:R_{3,6} & 40:R_{4,6} & 51:R_{5,6} & 61:R_{6,6} &
+			72:R_{7,6} & \cdots\\
+			\hline 22:R_{1,7} & 35:R_{2,7} & 39:R_{3,7} & 52:R_{4,7} & 60:R_{5,7} & 73:R_{6,7} &
+			85:R_{7,7} & \cdots\\
 			\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
 			\hline
 		\end{array}}
@@ -197,48 +214,59 @@
 		\end{proof}
 	\end{subsection}
 
-	\begin{subsection}{Countability of the Reals from Zero to One}\label{subsec:applications.reals 0 to 1}
+	% TODO: make this redirect to a better place for more information
+	\pagebreak\begin{subsection}{Countability of the Reals from Zero to One}
+	\label{subsec:applications.reals 0 to 1}
 		Claim: $\{x\in\mathbb R:0\leqslant x<1\}$ is a countable set;
 		$C(\mathbb R_{0\leqslant x<1})\equiv1$.
 		\begin{proof}
-			Let $R$ be a set where $\forall i\in\mathbb N_0$, $R_i := $ (``0." $+$ reversed digits
-			of $i$), ie: $R_{2760}=0.0672$ (see Section~\ref{sec:further algorithms} for formula). $R$
+			Let $R$ be a set where $\forall n\in\mathbb N_0$, $R_n := $ (``0." $+$ reversed digits
+			of $n$), ie: $R_{2760}=0.0672$ (see Section~\ref{sec:algorithm mathematically} for formula). $R$
 			is countable by definition, and contains every possible sequence of digits in $[0,1)$. The
 			sequence trends towards different values with different sub-series;
-			Section~\ref{subsec:applications.reals} explains this further. $R$ is used in the next proof.
+			Section~\ref{subsec:applications.reals} explains this further. $R$ is used in the next
+			proof.
 		\end{proof}
 	\end{subsection}
 
-	\pagebreak\begin{subsection}{Countability of the Non-Negative Reals}
+	\begin{subsection}{Countability of the Non-Negative Reals}
 	\label{subsec:applications.non negative reals}
 		Claim: $\mathbb R_{\geqslant0}$ or equivalently $\left\{x\in\mathbb R:x\geqslant0\right\}$,
 		is a countable set; $C(\mathbb R_{\geqslant0})\equiv1$.
 		\begin{proof}
 			$C(\mathbb R_{0\leqslant x<1})\equiv1$ via Section~\ref{subsec:applications.reals 0 to 1}.
-			$\mathbb R_{\geqslant0}=\displaystyle\bigcup_{i=1}^{\aleph_0}S_i$ where
-			$S_i:=R[i-1]$. This is countable via Theorem~\ref{thm:infinite unions}; the following
-			table illustrates this. $\forall x\in\mathbb R_{\geqslant0}$,
-			there exists a sequence of $s_i\in S_{\lceil x\rceil}$, with increasing indices, where
-			$\displaystyle\lim_{i\in\mathbb N\to\infty}s_i=x$. This is because $S_n$ contains every
-			sequence of digits in $[n-1,n)$.
-			$S$ is used in the next proof.\vspace{0.5em}\\
+			$\mathbb R_{\geqslant0}=\displaystyle\bigcup_{n=1}^{\aleph_0}S_n$ where $S_n:=R[n-1]$. This
+			is countable via Theorem~\ref{thm:infinite unions}; the following table illustrates this.
+			$\forall x\in\mathbb R_{\geqslant0}$, there exists a sequence of
+			$s_n\in S_{\lceil x\rceil}$, with increasing indices, where
+			$\displaystyle\lim_{n\in\mathbb N\to\infty}s_n=x$. This is because $S_n$ contains every
+			sequence of digits in $[n-1,n)$. $S$ is used in the next proof.
+			\vspace{0.5em}\\
 			\centerline{\begin{array}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|} % 13 columns
-				\hline 0 & 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 & 0.7 & 0.8 & 0.9 & 0.01 & 0.11 & 0.21 & \cdots\\
-				\hline 1 & 1.1 & 1.2 & 1.3 & 1.4 & 1.5 & 1.6 & 1.7 & 1.8 & 1.9 & 1.01 & 1.11 & 0.21 & \cdots\\
-				\hline 2 & 2.1 & 2.2 & 2.3 & 2.4 & 2.5 & 2.6 & 2.7 & 2.8 & 2.9 & 2.01 & 2.11 & 0.21 & \cdots\\
-				\hline 3 & 3.1 & 3.2 & 3.3 & 3.4 & 3.5 & 3.6 & 3.7 & 3.8 & 3.9 & 3.01 & 3.11 & 0.21 & \cdots\\
-				\hline 4 & 4.1 & 4.2 & 4.3 & 4.4 & 4.5 & 4.6 & 4.7 & 4.8 & 4.9 & 4.01 & 4.11 & 0.21 & \cdots\\
-				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots\\
+				\hline 0 & 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 & 0.7 & 0.8 & 0.9 & 0.01 & 0.11 & 0.21 &
+				\cdots\\
+				\hline 1 & 1.1 & 1.2 & 1.3 & 1.4 & 1.5 & 1.6 & 1.7 & 1.8 & 1.9 & 1.01 & 1.11 & 0.21 &
+				\cdots\\
+				\hline 2 & 2.1 & 2.2 & 2.3 & 2.4 & 2.5 & 2.6 & 2.7 & 2.8 & 2.9 & 2.01 & 2.11 & 0.21 &
+				\cdots\\
+				\hline 3 & 3.1 & 3.2 & 3.3 & 3.4 & 3.5 & 3.6 & 3.7 & 3.8 & 3.9 & 3.01 & 3.11 & 0.21 &
+				\cdots\\
+				\hline 4 & 4.1 & 4.2 & 4.3 & 4.4 & 4.5 & 4.6 & 4.7 & 4.8 & 4.9 & 4.01 & 4.11 & 0.21 &
+				\cdots\\
+				\hline \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots &
+				\vdots & \vdots & \vdots & \vdots & \ddots\\
 				\hline
 			\end{array}}
 			
 		\end{proof}
 	\end{subsection}
 
+	% TODO: make this redirect to a better place for more information
 	\begin{subsection}{Countability of the Reals}\label{subsec:applications.reals}
-		Claim: $\mathbb R$ is a countable set which implies $2^{\aleph_0}=\aleph_0$.
+		Claim: $\mathbb R$ is a countable set, which implies $2^{\aleph_0}=\aleph_0$.
 		\begin{proof}
-			$\mathbb R_{\geqslant0}$ is countable via Section~\ref{subsec:applications.non negative reals}.
+			$\mathbb R_{\geqslant0}$ is countable via
+			Section~\ref{subsec:applications.non negative reals}.
 			$\mathbb R_{\geqslant0}(1, -1)\equiv\mathbb R$. This is countable via
 			Theorem~\ref{thm:rings}.1. This conclusion can be further reinforced by
 			the algorithmic methods in Section~\ref{sec:algorithm code}.
@@ -274,7 +302,8 @@
 		Claim: $\mathbb C$ is a countable set; $C(\mathbb C)\equiv1$.
 		\begin{proof}
 			$\mathbb R$ and $\mathbb I$ are countable sets via Sections \ref{subsec:applications.reals}
-			and \ref{subsubsec:applications.misc.imaginary} respectively. $\mathbb R(1, \sqrt{-1})\equiv\mathbb C$
+			and \ref{subsubsec:applications.misc.imaginary} respectively.
+			$\mathbb R(1, \sqrt{-1})\equiv\mathbb C$
 			is countable via Theorem~\ref{thm:rings}.1. $\mathbb R\times\mathbb I=\mathbb C$ is
 			countable via Theorem~\ref{thm:multiplications}.1.
 		\end{proof}
@@ -301,131 +330,127 @@
 \end{section}
 
 \begin{section}{Cantor's Diagonal Argument}\label{sec:diagonal argument}
-	According to Georg Cantor in 1891$^\text{[ref \ref{ref:diagonal argument},
-	\ref{ref:cantor-1891}]}$, If someone is trying to list all the real numbers, they can
-	always find a number that is not in the list using his ``Diagonal Argument" which
-	accomplishes the same as the following, though for reals instead of
-	naturals: suppose someone is trying to make a set $S$ with every natural number
-	($\mathbb N_1$). They could first skip 1 and add 2 to $S$. Then they add 3, then 4, 5, 6,
-	et cetera forever. No matter how many natural numbers they add, they can always find one
-	not in it; $\max(S)+1$. This seems to be implying that there is not a bijection between the
-	natural numbers and themselves since in the limit towards infinity time, they've used up all
-	infinity natural numbers indexing $S$ and yet not all of them are in $S$. Well of course, because
-	they \emph{skipped} 1. Due to this possibility of skipping elements, the diagonal argument doesn't always accurately depict
-	the countability of sets, and it can just as easily skip elements in the set of real numbers.
+	According to Georg Cantor in 1891$^\text{[ref \ref{ref:diagonal argument}, \ref{ref:cantor-1891}]}$,
+	If someone is trying to list all the real numbers, they can always find a number that is not in the
+	list using his ``Diagonal Argument" which accomplishes the same as the following, though for reals
+	instead of naturals: suppose someone is trying to make a set $S$ with every natural number
+	($\mathbb N_1$). They could first skip 1 and add 2 to $S$. Then they add 3, then 4, 5, 6, et cetera
+	forever. No matter how many natural numbers they add, they can always find one not in it;
+	$\max(S)+1$. This seems to be implying that there is not a bijection between the natural numbers and
+	themselves since in the limit towards infinity, they've used up all infinity natural numbers
+	indexing $S$ and yet not all of them are in $S$. Well of course, because they \emph{skipped} 1. Due
+	to this possibility of skipping elements, the diagonal argument cannot always accurately depict the
+	countability of sets, and it can just as easily skip elements in the set of real numbers.
 \end{section}
 
 \begin{section}{Enumerating the Continuum Algorithmically}\label{sec:algorithm code}
-	The following NodeJS code prints out real numbers to stdout up to the maximum allowed big integer
-	delimited by a comma-space pair, the problem being that it prints out both $\pm0$, though this
-	is easily resolvable. The more verbatim version as well as the C version of the source code are at
-	References~\ref{ref:js-code}~and~\ref{ref:c-code}. The complexity of finding the $n^\text{th}$ real
-	number with this method is around $\Theta(\log n)$, assuming basic operations such as bit shifts,
-	comparisons, addition, and multiplication run in $\mathcal O(1)$. isqrt($n$) is less than
-	$\mathcal O(\log_2 n)$, and contains most of the complexity of the formula. The code didn't start
-	to slow down noticably until around $10^{100}$, and at $10^{10,000}$ only took 2.4 seconds (rather
-	than 0.2ms at the start).
+	The following JavaScript code prints out real numbers to stdout, delimited by a comma-space pair,
+	up to the maximum allowed big integer index. It prints out both $\pm0$, though this is not really a
+	problem and is easily resolvable. The more verbatim version as well as the C version of the source
+	code can be found at References~\ref{ref:js-code}~and~\ref{ref:c-code}. The complexity of finding
+	the $n^\text{th}$ real number with this method is around $\Theta(\log n)$, assuming basic operations
+	such as bit shifts, comparisons, addition, and multiplication run in $\mathcal O(1)$. isqrt($n$) is
+	less than $\mathcal O(\log_2 n)$, and contains most of the complexity of the formula. The code
+	didn't start to slow down noticably on my machine until around $n=10^{100}$, and at $n=10^{10,000}$
+	only took 2.4 seconds each (rather than 0.2ms at the start).
 
-	\noindent\texttt{\\
-		const write = globalThis.toString().slice(8, -1).toLowerCase() === "global" ?\\
-		$\indent$s => process.stdout.write.call(process.stdout, s) : // NodeJS\\
-		$\indent$console.log; // Browser\\
-		\\
-		function isqrt(n) \{ // floored square root\\
-		$\indent$if (n < 2n) return n;\\
-		\\
-		$\indent$var cur = n >> 1n, prev; // current, previous\\
-		\\
-		$\indent$do [cur, prev] = [cur + n / cur >> 1n, cur];\\
-		$\indent$while (cur < prev);\\
-		\\
-		$\indent$return prev;\\
-		\}\\
-		\\
-		for (var i = 0n ;;) \{\\
-		$\indent$const k = 1n + isqrt(1n + (i << 2n)) >> 1n // T(k-1) < i/2 $\leq$ T(k)\\
-		$\indent$$\indent$, t = i + k*(1n - k) >> 1n; // i/2 - T(k-1)\\
-		\\
-		$\indent$write( // coordinates: (k, k-t-1)\\
-		$\indent$$\indent$\textasciigrave\$\{i++ \% 2n ?\;"-"\;:\;""\}\$\{t\}.\textasciigrave + // integer part\\
-		$\indent$$\indent$\textasciigrave\$\{k - t - 1n\}\textasciigrave.split("").reverse().join("") // fractional part\\
-		$\indent$)\\
-		\}
-	}
+	\begin{verbatim}
+		│const write = globalThis.toString().slice(8, -1).toLowerCase() === "global" ?
+		│    s => process.stdout.write.call(process.stdout, s) : // NodeJS
+		│    console.log; // Browser
+		│
+		│function isqrt(n) { // floored square root
+		│    if (n < 2n) return n;
+		│
+		│    var cur = n >> 1n, prev; // current, previous
+		│
+		│    do [cur, prev] = [cur + n / cur >> 1n, cur];
+		│    while (cur < prev);
+		│
+		│    return prev;
+		│}
+		│
+		│for (var i = 0n ;;) {
+		│    const k = 1n + isqrt(1n + (i << 2n)) >> 1n // T(k-1) < i/2 <= T(k)
+		│        , t = i + k*(1n - k) >> 1n; // i/2 - T(k-1)
+		│
+		│    write( // coordinates: (k, k-t-1)
+		│        `${i++ % 2n ? "-" : ""}${t}.` + // integer part
+		│        `${k - t - 1n}`.split("").reverse().join("") // fractional part
+		│    )
+		│}
+	\end{verbatim}
 \end{section}
 
-\begin{section}{Further Algorithms}\label{sec:further algorithms}
+\begin{section}{The Algorithm Mathematically}\label{sec:algorithm mathematically}
 	The axioms of Zermelo-Fraenkel Set theory required to prove the algorithmic viability of
-	continuum enumeration are as follows: Axiom Schema of Specification, Axiom of Union, Axiom
-	of Infinity, and Axiom of Choice (for creating sets of ordered \textit{pairs}, which is not
-	the controversial part). Without the Axiom of Choice, Theorem~\ref{thm:multiplications}
-	doesn't work, although the algorithm from Section~\ref{sec:algorithm code} is separate from
-	set theory and assumes no axioms. The previous algorithm uses string manipulation to reverse
-	the numbers and find their lengths, but the following formulas for length() and reverse() do
-	the same thing mathematically.
+	continuum enumeration are as follows: Axiom Schema of Specification (for creating Cartesian
+	products), Axiom of Union, and Axiom of Infinity. The previous algorithm uses string
+	manipulation to reverse integers and find their lengths, but the following formulas for length()
+	and reverse() do the same thing mathematically. They are used to find the $n$th real number.\\
 	\begin{align}
-		\text{length}\,n & := 1+\lfloor\log_b|n|\rfloor=\lceil\log_b(|n|+1)\rceil\ni\ln0\leqslant0\\
-		\text{reverse}\,n & :=\text{sgn}(n)\!\!\sum_{k=0}^{\text{length}\,n}\left(\left\lfloor
-		\frac{|n|}{b^k}\right\rfloor\text{mod}\,b\right)\!b^{\text{length}\,n-k-1}\\
-		R_{i,j} & := s\cdot\left(i+\frac{\text{reverse}\,j}{b^{\text{length}\,j}}\right)
+		\text{length}_b\,x & := \max\!\left(0,1+\lfloor\log_b|x|\rfloor\right)\ni\ln0\leqslant0\\
+		\text{reverse}_b\,x & :=\text{sgn}(x)\!\!\sum_{m=0}^{\text{length}_b\,x}\left(\left\lfloor
+		\frac{|x|}{b^m}\right\rfloor\text{mod}\,b\right)\!b^{\text{length}_b\,x-m-1}\\
+		R(i,j) & := i+\frac{\text{reverse}_{10}\,j}{10^{\text{length}_{10}\,j}}
 	\end{align}
-	Where $i$ is the integer part, $s$ is the sign, $j$ is the reversed decimal part, and $b$
-	is the base. $i$ and $j$ can be swapped for a different enumeration (and inverse) (see
-	Reference~\ref{ref:desmos real-enum}). A formula for the greatest triangle number
-	$t=T(k)\leqslant n$, where $n,k\in\mathbb N_0$ (used in Section~\ref{sec:algorithm code}):\\
+	Where $i$ is the integer part, $j$ is the reversed decimal part, and $b$ is the base. $i$ and $j$
+	can be swapped for a different enumeration (and inverse) (see Reference~\ref{ref:desmos real-enum}).
+	$t$ is the greatest triangle number $T(k)\leqslant n$, where $n,k\in\mathbb N_0$.\\
 	\begin{align}
-		T(n) := \frac{n^2+n}2 & = \sum_{j=1}^nj\\
-		t = T\left(\left\lceil\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rceil-1\right)
-		& = T\left(\left\lfloor\dfrac{\sqrt{8n+1}}2\right\rceil-1\right)
+		T(x) &:= \frac{x^2+x}2 = \sum_{j=1}^xj\\
+		n &:= \left\lfloor\dfrac N2\right\rfloor\\
+		k &:= \left\lceil\frac{\left\lfloor\sqrt{8n+1}\right\rfloor}2\right\rceil-1 =
+		\left\lfloor\dfrac{\sqrt{8n+1}-1}2\right\rfloor\\
+		t &:= T(k)\\
+		u &:= n - t\\
+		\mathbb R_N&\,\, = (2[(N+1)\,\text{mod}\,2]-1)R(u, k-u)
 	\end{align}
-	Because of the bijection, there is also an inverse of the Section~\ref{sec:algorithm code}
-	algorithm. The simplicity and symmetry of the inverse is striking due to the complexity
-	of the original function.\\\\
-	\noindent\texttt{function inverse(string) \{\\
-		$\indent$const match = /\textasciicircum-??($\backslash$d+)$\backslash$.($\backslash$d+)\$/.exec(string)\\
-		$\indent\indent$, x = BigInt(match[1]) // integer part\\
-		$\indent\indent$, y = BigInt(match[3].split("").reverse().join("")); // decimal part\\
-		$\indent$return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");\\
-		\}
-	}
+	For each integer $k$, This cycles through the ordered pairs of positive $(i, j)$ where $i + j = k$
+	and it makes a unique real number out of each pair. Because of the bijection it creates, there is
+	also an inverse of the (Section~\ref{sec:algorithm code}) algorithm. The simplicity and
+	near-symmetry of the inverse is striking due to the complexity of the original function.
+	\begin{verbatim}
+		│function inverse(string) {
+		│    const [ipart, fpart] = string.replace("-", "").split(".")
+		│        , x = BigInt( ipart )
+		│        , y = BigInt( fpart.split("").reverse().join("") );
+		│
+		│    return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");
+		│}
+	\end{verbatim}
+	The following is the same formula in math form. $\infty$ can be replaced with the max precision.
+	\begin{align}
+		x(t) & := \lfloor|t|\rfloor\\
+		y(t) & := \text{reverse}_{10}\left((|t|\,\text{mod}\,1)\,10^{\sum\limits_{n=0}^\infty\text{sgn}(10^n|t|\,\text{mod}\,1)}\right)10^{\sum\limits_{n=1}^\infty(\,1-\text{sgn}\lfloor10^n(|t|\,\text{mod}\,1)\rfloor\,)}\\
+		\text{inverse}(t) & := \left[x(t) + y(t)\right]^2 + 3\,x(t) + y(t) + 1 - \text{sgn}(1+\text{sgn}\,t)
+	\end{align}
 \end{section}
 
-\begin{section}{Second Enumeration}\label{sec:second enumeration}
-	There are more enumerations than just what was previously mentioned. A (mostly unrigorous) proof
-	will be presented for the second of the following equations, both of which derive from a similar
-	idea. Something similar works for any natural number base
-	(Reference~\ref{ref:python second enum family}: Python code,
-	Reference~\ref{ref:desmos second enum family}: desmos graph), instead of just 2, although it works
-	best with prime bases.
-	\begin{align}
-	\lim_{n,k\in\mathbb N_1\to\aleph_0}\left\{k\!\left(\dfrac{2i+1}{2^{\lfloor\log_2i\rfloor}}-3\right):i\in\mathbb N_1<2^n\right\}=\mathbb R\\
-	\bigcup_{n=1}^{\aleph_0}\dfrac{2n+1}{2^{1+\lfloor\log_2n\rfloor}}\equiv\bigcup_{n=1}^{\aleph_0}\dfrac{2n+1}{2^{\text{length}_2(n)}}=\mathbb R_{(1,2)}
-	\end{align}
-	\begin{proof} This proof will first prove that $S_{\aleph_0}$ is equivalent to $\mathbb R_{[0,1)}$,
-	and then proves that it must be countable.
-		\begin{align*}
-			& S_0:=\{0\}\\
-			& S_n:=S_{n-1}\cup\left\{x+\dfrac1{2^n}:x\in S_{n-1}\right\}=\dfrac{\{k\in\mathbb N:0\le k<2^n\}}{2^n}\\
-			& S_{\aleph_0}:=\lim_{n\in\mathbb N\to\aleph_0}S_n=\mathbb R_{[0,1)}
-		\end{align*}
-		$S_{\aleph_0}$ must equal [0,1) because 0 and 1 are its bounds and it has the same cardinality
-		as the real numbers. It starts with 0 and only adds to it conditionally so its elements never
-		go below 0, and $\displaystyle\sum_{n=1}^\infty\dfrac1{2^n}=1$, meaning it can't extend past 1.
-		$|S_n|=2^n$ which implies $|S_{\aleph_0}|=2^{\aleph_0}$, the same cardinality as
-		$|\mathcal P(\mathbb N)|$ or $|\mathbb R|$. $S_{\aleph_0}$ is countable via Cantor's Enumeration
-		of Countable Collections of Countable sets, since there are countably infinitely many countable
-		processess involved in constructing $S_{\aleph_0}$. The ``countable collection" refering to the
-		indices ``$n$," and the ``processes" being the evaluation of $S_n$ given $S_{n-1}$, each of which
-		processes is itself finite, and thus countable. The same results arise when starting with $S_0=\{1\}$
-		and subtracting subsequent inverse powers of 2 rather than adding.
-	\end{proof}
+% TODO: start updating here
+\begin{section}{Further Evidence}\label{sec:further evidence}
+	TODO: finish this.
+	\begin{itemize}
+		\item $\displaystyle\lim_{n\to\infty}x_n=x\Longrightarrow\lim_{n\to\infty}\text{inverse}(x_n)=N$
+		(some 10-adic integer index unique to $x$).
+		\item $x_n$ approaches $x$ at the same rate that inverse($x_n$) approaches $N$. So for each extra
+		(decimal) digit that $x_n$ gains, inverse($x_n$) also gains one (integer) digit. It can gain more
+		if the digits after it are zero, but never less.
+		\item $\displaystyle
+			\text{inverse}(10^n) = \begin{cases}
+				100^n + 3 \cdot 10^n,~n \ge 0\\
+				\dfrac1{100^{n+1}} + \dfrac1{10^{n+1}},~n < 0
+			\end{cases}
+		$
+		\item $\text{inverse}(b^n)=b^{2n}+3\cdot b^n\forall n\ge0\land b\ge2$
+	\end{itemize}
 \end{section}
 
 \begin{section}{Conclusion}\label{sec:conclusion}
 	Since there exists a bijection between any infinite set and its powerset (GCH), there is no
 	set with a cardinality strictly or loosely in between the naturals and reals (CH), because
 	they are the same cardinality. This also implies that $\aleph_n=\beth_n=\beth_0$ for all
-	natural numbers $n$, which makes sense intuitively because $2^\infty=\infty$. Also if any
+	natural numbers $n$, which makes sense intuitively since $2^\infty=\infty$. Also if any
 	sequence of natural numbers is concatenated, it will always create a new natural number,
 	meaning every element in $\mathcal P(\mathbb N_0)$ corresponds to an element in
 	$\mathbb N_0$. This all could have disasterous consequences for set theory because CH is
@@ -438,6 +463,7 @@
 	not asserted here bacause the specifics of CH are unclear, and they are important for its
 	truth value. If the reals have to be bigger than the naturals, it is false, but if it just
 	requires that there is no set in between them, it is true.
+	% Liouville numbers are also countable because of this
 \end{section}
 
 \pagebreak\begin{section}{References}\label{sec:references}
@@ -466,21 +492,15 @@
 		\label{ref:c-code}
 		\text{The raw C source code for the Section~\ref{sec:algorithm code}}
 
-		\item\url{https://www.desmos.com/calculator/3pmv7lehhm}\\
+		\item\url{https://www.desmos.com/calculator/2dk8rm31ds}\\
 		\label{ref:desmos real-enum}
-		\text{Desmos with real number enumeration 1 formulas for Section~\ref{sec:further algorithms}}
+		\text{Desmos with real number enumeration 1 formulas for Section~\ref{sec:algorithm mathematically}}
 
-		\item\url{https://github.com/drizzt536/files/blob/main/TeX/continuum/real-enum-formula/formula.pdf}\\
+		\item
+		\url{https://github.com/drizzt536/files/blob/main/TeX/continuum/real-enum-formula/formula.pdf}\\
 		\label{ref:pdf real-enum}
-		\text{pdf with a fully-expanded real number enumeration 1 formula for Section~\ref{sec:further algorithms}}
-
-		\item\url{https://github.com/drizzt536/files/blob/main/Python/continuum.py}\\
-		\label{ref:python second enum family}
-		\text{second enumeration family python code}
-
-		\item\url{https://www.desmos.com/calculator/dbcdgkinga}\\
-		\label{ref:desmos second enum family}
-		\text{second enumeration family desmos graph}
+		\text{pdf with an almost fully-expanded real number enumeration 1 formula for
+			Section~\ref{sec:algorithm mathematically}}
 
 		\item\url{https://en.wikipedia.org/wiki/Gimel\_function\#The\_gimel\_hypothesis}\\
 		\label{ref:gimel}
@@ -488,16 +508,16 @@
 
 		\item\url{https://en.wikipedia.org/wiki/Wetzel's\_problem}\\
 		\label{ref:wetzel}
-		\text{Wikipedia page for Wetzel's Problem}
+		\text{Wetzel's Problem Wikipedia page}
 	\end{enumerate}\\
 	Editors:
 	\begin{itemize}
 		\item Daniel E. Janusch
 		\item Valerie Janusch, my mom
 	\end{itemize}
-	\vspace{3em}\\
+	\vspace{6em}\\
 	This document is licensed under https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
-	and may only be copied IN ITS ENTIRETY under penalty of law.
+	and may be copied ONLY IN ITS ENTIRETY under penalty of law.
 \end{section}
 
 \end{document}
