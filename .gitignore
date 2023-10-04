@@ -17,6 +17,9 @@ node_modules
 /PicoDucky/scripts/
 /Python/manim/*/*
 
+# This is a separate repository and I can't get submodules to work.
+/HTML/File-Sharing/
+
 test.*
 *.htm
 *.exe
