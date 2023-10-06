@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% process.tex v1.0 (c) | Copyright 2023 Daniel E. Janusch
+% process.tex v1.1 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may be copied ONLY IN ITS ENTIRETY under penalty of law.
@@ -20,11 +20,8 @@
 
 
 \title{Integrating Functions with Countably Many Jump Discontinuities}
-\author{
-	\emph{Are you smarter than a 5th-grader?}\\
-	\\
-	Daniel E. Janusch
-}
+\author{Daniel E. Janusch}
+\date{October 6, 2023, 1:33pm MST}
 
 \maketitle
 
@@ -36,7 +33,7 @@
 
 	For the following process to work, the functions are limited to a countable amount of jump discontinuities,
 	since if there is an uncountable amount, then by definition, the discontinuities can't be listed out, and
-	step 2 won't work. It makes it much easier to assume that there are no discontinuities other than the jump
+	step~2 won't work. It makes it much easier to assume that there are no discontinuities other than the jump
 	discontinuities, but the main essence of the steps should be about the same in that case. This process
 	pertains to step functions like $\lfloor x\rfloor$ and $\lceil x\rceil$. The notation used will be as
 	follows: $f(x)$ is the full function with the step functions in it and  $g(x)$ is the same function but
@@ -102,7 +99,7 @@
 	$f(x)=\sqrt{\lfloor x\rfloor}$ because not all the output values are at integers. You will benefit from
 	using a different strategy for periodic functions like $\lfloor\cos x\rfloor$ to take advantage of
 	their periodicity. Splitting at jumps is a similar method to how you integrate piecewise functions,
-	although in piecewise functions you solit the integral at the piece boundaries instead of just at jumps
+	although in piecewise functions you split the integral at the piece boundaries instead of just at jumps
 	(Calculus, Larson \& Edwards, 2010).
 
 	\subsection*{Example 1:}
@@ -143,7 +140,7 @@
 		\vspace{0.2em}
 
 		$f(x)$ on this interval will be the same value, so this is just the area of a rectangle.
-		Ignore the discontinuity at the endpoints; they don't change the outcome of the integral.
+		Ignore the discontinuities at the endpoints; they don't change the outcome of the integral.
 
 		\begin{align*}
 			\int_{2n}^{2n+2}\left\lfloor\frac t2\right\rfloor\text dt
@@ -197,7 +194,7 @@
 
 		This general formula only works if $f(x)$ is constant in between discontinuities. Make sure you
 		use the correct area formula for your function. For instance, If you have $f(x)=x\lfloor x\rfloor$
-		then use the trapezoid area formula.
+		then use the trapezoid area formula instead.
 
 \section*{Step 3: Find the Sum of Each Partial Integral}
 
@@ -212,8 +209,8 @@
 		\int_{g^{-1}(0)}^{g^{-1}(k)}f(t)\text dt=\sum_{j=1}^{k-1}\int_{g^{-1}(j)}^{g^{-1}(j+1)}f(t)\text dt
 	\end{align*}
 
-	Oftentimes times you can end up with the general harmonic sequence or a difference of zeta functions as
-	the closed form. Other times the sum can just be impossible to get a closed form for.
+	Oftentimes you can end up with the general harmonic sequence or a difference of Hurwitz Zeta functions
+	as the closed form. Other times the sum can just be impossible to get a closed form for.
 
 	\subsection*{Example:}
 
@@ -250,21 +247,21 @@
 
 		\begin{align*}
 			\int_0^k\lfloor t\rfloor\text dt
-			= \sum_{j=1}^{k-1}\int_j^{j+1}\lfloor t\rfloor\text dt
+			= \sum_{j=0}^{k-1}\int_j^{j+1}\!\lfloor t\rfloor\text dt
 			= \sum_{j=1}^{k-1}j[j+1-j]
 			= \frac{k^2-k}2
 		\end{align*}
 
-\section*{Step 4: Integrating up to $x$}
+\section*{Step 4: Integrate up to $x$}
 
-	To integrate up to $x$, you can once again use the additive interval property of integrals. The first integral (on the right) is from step 3, and the second is similar to in step 2.
-	$g^{-1}(f(k))$ is the greatest $x$-value less than $x$ with a jump discontinuity. The formula
-	for the second integral is not always correct, just use the correct area formula for the
-	section. It is the same process as in step 2 but using a subset of the interval.
+	To integrate up to $x$, you can once again use the additive interval property of integrals. The first integral (on the right) is from step~3, and the second is similar to in step~2. $g^{-1}(f(x))$ is
+	the greatest $x$-value less than $x$ with a jump discontinuity. The formula for the second integral
+	is not always correct; use the correct area formula for the section. It is the same process as in
+	step~2 but using a subset of the interval.
 
 	\begin{align*}
-		\int_{g^{-1}(0)}^xf(t)\text dt & =\int_{g^{-1}(0)}^{g^{-1}(f(x))}f(t)\text dt+\int_{g^{-1}(f(x))}^xf(t)\text dt\\
-		\int_{g^{-1}(f(x))}^xf(t)\text dt & = f(x)\left[x-g^{-1}(f(x))\right]
+		\int_{g^{-1}(0)}^xf(t)\text dt & = \int_{g^{-1}(0)}^{g^{-1}(f(x))}f(t)\text dt+\int_{g^{-1}(f(x))}^xf(t)\text dt\\
+		\int_{g^{-1}(f(x))}^xf(t)\text dt & = f(x)\!\left[x-g^{-1}(f(x))\right]
 	\end{align*}
 
 	\subsection*{Example:}
@@ -288,7 +285,7 @@
 						line width=1.01pt,
 					]
 
-					\addplot[color=red, domain=0:10]{(floor(x)^2 - floor(x)) / 2 - (x - floor(x)) * floor(x)};
+					\addplot[color=red, domain=0:10]{(floor(x)^2 - floor(x)) / 2 + (x - floor(x)) * floor(x)};
 
 				\end{axis}
 			\end{tikzpicture}
@@ -300,19 +297,19 @@
 			= \frac{\lfloor x\rfloor^2-\lfloor x\rfloor}2+(x-\lfloor x\rfloor)\lfloor x\rfloor
 		\end{align*}
 
-		Once you have this, you have the indefinate integral, just without the constant of
-		integration added to it.
+		Once you have this, you have found the principle indefinite integral. Add the constant of integration
+		for the general answer.
 
 
 \section*{References}
 	\begin{itemize}
-		\item Hardy, G. H. (1940). A Mathematician’s Apology (1st ed.). University of Alberta Mathematical Sciences Society.\\
+		\item Hardy, G. H. (1940). A Mathematician's Apology (1st ed.). University of Alberta Mathematical Sciences Society.\\
 			\url{https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf}\\
 
 		\item Larson, R., & Edwards, B. H. (2010). Calculus (9th ed.). Cengage Learning.\\
 			\url{http://teacherpress.ocps.net/cynthiaandrews/files/2013/06/Calculus-9th-Edition-by-Ron-Larson-Bruce-H.-Edwards.pdf}
 	\end{itemize}
-	\vspace{12em}\\
+	\vspace{28em}\\
 	This document is licensed under https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 	and may be copied ONLY IN ITS ENTIRETY under penalty of law.
 
