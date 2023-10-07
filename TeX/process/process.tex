@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% process.tex v1.1 (c) | Copyright 2023 Daniel E. Janusch
+% process.tex v1.2 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may be copied ONLY IN ITS ENTIRETY under penalty of law.
@@ -12,7 +12,11 @@
 \usepackage[margin=1in]{geometry}
 
 \pgfplotsset{compat=1.18, width=7.5cm}
-\definecolor{dimgreen}{RGB}{0,110,0}
+\definecolor{dimgreen}{RGB}{0, 110, 0}
+
+\pgfmathdeclarefunction{triangleNumber}{1}{
+	\pgfmathparse{(#1^2 + #1) / 2}
+}
 
 \addtolength{\topmargin}{-0.5in}
 
@@ -21,7 +25,7 @@
 
 \title{Integrating Functions with Countably Many Jump Discontinuities}
 \author{Daniel E. Janusch}
-\date{October 6, 2023, 1:33pm MST}
+\date{October 6, 2023, 11:13pm MST}
 
 \maketitle
 
@@ -278,22 +282,35 @@
 			\begin{tikzpicture}
 				\begin{axis}[
 						xlabel=$x$,
-						ylabel=$\displaystyle\int_{g^{-1}(0)}^x f(t)\text dt$,
+						ylabel=$y$,
 						axis lines=middle,
 						samples=2000,
 						grid=both,
+						domain=0:6,
 						line width=1.01pt,
+						legend pos=north west,
+						legend style={font=\small},
+						legend cell align=left
 					]
 
-					\addplot[color=red, domain=0:10]{(floor(x)^2 - floor(x)) / 2 + (x - floor(x)) * floor(x)};
+					\addplot[color=red]{(floor(x)^2 - floor(x)) / 2 + (x - floor(x)) * floor(x)};
+					\addlegendentry{$\displaystyle\int_0^x\lfloor t\rfloor\text dt$}
 
+					\addlegendimage{empty legend}\addlegendentry[]{}
+					\addlegendimage{empty legend}\addlegendentry[]{}
+
+					\addplot[color=blue]{(x^2 - x) / 2};
+					\addlegendentry{$\displaystyle\int_0^x\!\left[t-\frac12\right]\text dt$}
+
+					\addlegendimage{empty legend}\addlegendentry[]{}
+					\addlegendimage{empty legend}\addlegendentry[]{}
 				\end{axis}
 			\end{tikzpicture}
 		\end{minipage}
 
 		\begin{align*}
 			\int_{g^{-1}(0)}^xf(t)\text dt
-			= \int_{0}^{\lfloor x\rfloor}\lfloor t\rfloor\text dt+\int_{\lfloor x\rfloor}^x\lfloor t\rfloor\text dt
+			= \int_0^{\lfloor x\rfloor}\lfloor t\rfloor\text dt+\int_{\lfloor x\rfloor}^x\lfloor t\rfloor\text dt
 			= \frac{\lfloor x\rfloor^2-\lfloor x\rfloor}2+(x-\lfloor x\rfloor)\lfloor x\rfloor
 		\end{align*}
 
@@ -302,6 +319,7 @@
 
 
 \section*{References}
+	% I think these are in APA, but I don't really care.
 	\begin{itemize}
 		\item Hardy, G. H. (1940). A Mathematician's Apology (1st ed.). University of Alberta Mathematical Sciences Society.\\
 			\url{https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf}\\
