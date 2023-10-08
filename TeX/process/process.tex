@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% process.tex v1.2 (c) | Copyright 2023 Daniel E. Janusch
+% process.tex v1.3 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may be copied ONLY IN ITS ENTIRETY under penalty of law.
@@ -8,24 +8,72 @@
 
 
 \documentclass[12pt]{article}
-\usepackage{amssymb, latexsym, amsmath, pgfplots, xcolor}
+
+\usepackage{amssymb, latexsym, amsmath, pgfplots, xcolor, etoolbox}
 \usepackage[margin=1in]{geometry}
 
-\pgfplotsset{compat=1.18, width=7.5cm}
-\definecolor{dimgreen}{RGB}{0, 110, 0}
 
-\pgfmathdeclarefunction{triangleNumber}{1}{
-	\pgfmathparse{(#1^2 + #1) / 2}
+\newbool{darkMode}
+\booltrue{darkMode}
+
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\definecolor{dimblue}{RGB}{30, 30, 165}
+
+\ifbool{darkMode}{
+	\colorlet{bgcolor}{black}
+	\colorlet{fgcolor}{lightgray}
+
+	\color{fgcolor}
+	\pagecolor{bgcolor}
+
+	\definecolor{dimred}{RGB}{127, 0, 0}
+	\definecolor{dimgreen}{RGB}{0, 71, 0}
+	\definecolor{gridgray}{RGB}{60, 60, 60}
+}{
+	\colorlet{bgcolor}{white}
+	\colorlet{fgcolor}{black}
+
+	\color{fgcolor}
+	\pagecolor{bgcolor}
+
+	\definecolor{dimred}{RGB}{165, 30, 30}
+	\definecolor{dimgreen}{RGB}{30, 105, 30}
+	\definecolor{gridgray}{RGB}{191, 191, 191}
 }
 
-\addtolength{\topmargin}{-0.5in}
+\pgfplotsset{
+	compat = 1.18,
+	width = 7.5cm,
+	points/.style n args = {1}{
+		mark options = {
+			draw = #1,
+			fill = #1,
+		},
+		only marks,
+		mark = *,
+		line width = 0.6pt,
+		mark size = 1.2pt,
+		forget plot,
+	},
+	holes/.style n args = {1}{
+		points = {#1},
+		mark options = {
+			draw = #1,
+			fill = bgcolor,
+		},
+	}
+}
+
+
+\addtolength\topmargin{-0.5in}
 
 \begin{document}
 
 
 \title{Integrating Functions with Countably Many Jump Discontinuities}
 \author{Daniel E. Janusch}
-\date{October 6, 2023, 11:13pm MST}
+\date{October 7, 2023, 11:05pm MST}
 
 \maketitle
 
@@ -66,31 +114,117 @@
 		\centering
 		\begin{tikzpicture}
 			\begin{axis}[
-					xlabel=$x$,
-					ylabel=$f(x)$,
-					axis lines=middle,
-					line width=1.01pt,
-					domain=0:5,
-					samples=1000,
-					grid=both,
-					title={Plot of $\left\lfloor x^2 \right\rfloor - \left\lfloor x \right\rfloor^2$},
-				]
-				\addplot[color=red]{floor(x^2) - floor(x)^2};
+				xlabel = $x$,
+				ylabel = $f(x)$,
+				ymin = -1,
+				axis lines = middle,
+				grid = both,
+				grid style = {draw = gridgray},
+				line width = 1.01pt,
+				title = {Plot of $\left\lfloor x^2\right\rfloor - \lfloor x\rfloor^2$},
+			]
+
+				\addplot[color=dimred, domain=0.000:1.414, samples=3]{0};
+				\addplot[color=dimred, domain=1.415:1.732, samples=3]{1};
+				\addplot[color=dimred, domain=1.733:2.000, samples=3]{2};
+				\addplot[color=dimred, domain=2.000:2.236, samples=3]{0};
+				\addplot[color=dimred, domain=2.237:2.449, samples=3]{1};
+				\addplot[color=dimred, domain=2.450:2.645, samples=3]{2};
+				\addplot[color=dimred, domain=2.646:2.828, samples=3]{3};
+				\addplot[color=dimred, domain=2.829:3.000, samples=3]{4};
+				\addplot[color=dimred, domain=3.000:3.162, samples=3]{0};
+				\addplot[color=dimred, domain=3.163:3.316, samples=3]{1};
+				\addplot[color=dimred, domain=3.317:3.464, samples=3]{2};
+				\addplot[color=dimred, domain=3.465:3.605, samples=3]{3};
+				\addplot[color=dimred, domain=3.606:3.741, samples=3]{4};
+				\addplot[color=dimred, domain=3.742:3.872, samples=3]{5};
+				\addplot[color=dimred, domain=3.873:4.000, samples=3]{6};
+				\addplot[color=dimred, domain=4.000:4.123, samples=3]{0};
+				\addplot[color=dimred, domain=4.124:4.242, samples=3]{1};
+				\addplot[color=dimred, domain=4.245:4.358, samples=3]{2};
+				\addplot[color=dimred, domain=4.359:4.472, samples=3]{3};
+				\addplot[color=dimred, domain=4.473:4.582, samples=3]{4};
+				\addplot[color=dimred, domain=4.583:4.690, samples=3]{5};
+				\addplot[color=dimred, domain=4.691:4.795, samples=3]{6};
+				\addplot[color=dimred, domain=4.796:4.898, samples=3]{7};
+				\addplot[color=dimred, domain=4.899:5.001, samples=3]{8};
+
+				\addplot[points=dimred] coordinates {
+					(0, 0)
+					(sqrt(2), 1) (sqrt(3), 2)
+					(sqrt(4), 0) (sqrt(5), 1)
+					(sqrt(6), 2) (sqrt(7), 3)
+					(sqrt(8), 4) (sqrt(9), 0)
+					(sqrt(10), 1) (sqrt(11), 2)
+					(sqrt(12), 3) (sqrt(13), 4)
+					(sqrt(14), 5) (sqrt(15), 6)
+					(sqrt(16), 0) (sqrt(17), 1)
+					(sqrt(18), 2) (sqrt(19), 3)
+					(sqrt(20), 4) (sqrt(21), 5)
+					(sqrt(22), 6) (sqrt(23), 7)
+					(sqrt(24), 8) (sqrt(25), 0)
+				};
+
+				\addplot[holes=dimred] coordinates {
+					(sqrt(2), 0) (sqrt(3), 1)
+					(sqrt(4), 2) (sqrt(5), 0)
+					(sqrt(6), 1) (sqrt(7), 2)
+					(sqrt(8), 3) (sqrt(9), 4)
+					(sqrt(10), 0) (sqrt(11), 1)
+					(sqrt(12), 2) (sqrt(13), 3)
+					(sqrt(14), 4) (sqrt(15), 5)
+					(sqrt(16), 6) (sqrt(17), 0)
+					(sqrt(18), 1) (sqrt(19), 2)
+					(sqrt(20), 3) (sqrt(21), 4)
+					(sqrt(22), 5) (sqrt(23), 6)
+					(sqrt(24), 7) (sqrt(25), 8)
+				};
 			\end{axis}
 		\end{tikzpicture}
 		\hfill
 		\begin{tikzpicture}
 			\begin{axis}[
-					xlabel=$x$,
-					ylabel=$f(x)$,
-					axis lines=middle,
-					line width=1.01pt,
-					domain=0:10,
-					samples=2000,
-					grid=both,
-					title={Plot of $\lfloor x\rfloor - \left(-1\right)^{\left\lfloor x\right\rfloor}$},
-				]
-				\addplot[color=red]{floor(x) - (-1)^floor(x)};
+				xlabel = $x$,
+				ylabel = $f(x)$,
+				line width = 1.01pt,
+				axis lines = center,
+				samples = 10,
+				ymin = -2,
+				ytick distance = 2,
+				ymax = 11,
+				grid = both,
+				grid style = {draw = gridgray},
+				title = {Plot of $\lfloor x\rfloor - (-1)^{\lfloor x\rfloor}$},
+			]
+
+				\addplot[color=dimred, domain=0:1]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=1:2]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=2:3]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=3:4]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=4:5]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=5:6]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=6:7]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=7:8]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=8:9]{floor(x) - (-1)^floor(x)};
+				\addplot[color=dimred, domain=9:10]{floor(x) - (-1)^floor(x)};
+
+				\addplot[holes=dimred] coordinates {
+					(0, 0) (1, -1)
+					(2, 2) (3, 1)
+					(4, 4) (5, 3)
+					(6, 6) (7, 5)
+					(8, 8) (9, 7)
+					(10, 10)
+				};
+
+				\addplot[points=dimred] coordinates {
+					(0, -1) (1, 2)
+					(2, 1) (3, 4)
+					(4, 3) (5, 6)
+					(6, 5) (7, 8)
+					(8, 7) (9, 10)
+					(10, 9)
+				};
 			\end{axis}
 		\end{tikzpicture}
 	\end{figure}
@@ -120,23 +254,47 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
-						xlabel=$x$,
-						ylabel=$y$,
-						axis lines=middle,
-						samples=2000,
-						grid=both,
-						line width=1.01pt,
-						legend pos=inner north east,
-						legend style={font=\small},
-					]
+					xlabel = $x$,
+					ylabel = $y$,
+					axis lines = middle,
+					grid = both,
+					grid style = {draw = gridgray},
+					line width = 1.01pt,
+					legend pos = inner north east,
+					legend cell align = left,
+					legend style = {
+						font = \small,
+						fill = bgcolor,
+						draw = fgcolor,
+					},
+				]
 
-					\addplot[color=red, domain=0:10]{floor(x/2)};
+					\addplot[color=dimblue, domain=0:10, samples=2, forget plot]{x/2};
+					\addplot[color=dimgreen, domain=0:5, samples=2, forget plot]{2*x};
+
+					\addplot[color=dimred, domain=0:2, samples=2, forget plot]{0};
+					\addplot[color=dimred, domain=2:4, samples=2, forget plot]{1};
+					\addplot[color=dimred, domain=4:6, samples=2, forget plot]{2};
+					\addplot[color=dimred, domain=6:8, samples=2, forget plot]{3};
+					\addplot[color=dimred, domain=8:10, samples=2, forget plot]{4};
+
+					\addplot[points=dimred] coordinates {
+						(0, 0) (2, 1)
+						(4, 2) (6, 3)
+						(8, 4) (10, 5)
+					};
+
+					\addplot[holes=dimred] coordinates {
+						(0, -1) (2, 0)
+						(4, 1) (6, 2)
+						(8, 3) (10, 4)
+					};
+
+					\addlegendimage{dimred, line legend}
 					\addlegendentry{$f(x)$}
-
-					\addplot[color=blue, domain=0:10]{x/2};
+					\addlegendimage{dimblue, line legend}
 					\addlegendentry{$g(x)$}
-
-					\addplot[color=dimgreen, domain=0:5]{2*x};
+					\addlegendimage{dimgreen, line legend}
 					\addlegendentry{$g^{-1}(x)$}
 				\end{axis}
 			\end{tikzpicture}
@@ -165,24 +323,86 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
-						xlabel=$x$,
-						ylabel=$y$,
-						axis lines=middle,
-						samples=1800,
-						grid=both,
-						line width=1.01pt,
-						legend pos=inner north east,
-						legend style={font=\small},
-					]
+					xlabel = $x$,
+					ylabel = $y$,
+					axis lines = middle,
+					grid = both,
+					grid style = {draw = gridgray},
+					line width = 1.01pt,
+					legend cell align = left,
+					legend style = {
+						font = \small,
+						fill = bgcolor,
+						draw = fgcolor,
+						anchor = west,
+						at = {(0.15, 0.7)},
+					},
+				]
 
-					\addplot[color=red, domain=0:5]{floor(x^2)};
-					\addlegendentry{$f(x)$}
+					\addplot[color=dimgreen, samples=1000, domain=0:5, forget plot]{sqrt(x)};
+					\addplot[color=dimblue, samples=1000, domain=0:5, forget plot]{x^2};
 
-					\addplot[color=blue, domain=0:5]{x^2};
-					\addlegendentry{$g(x)$}
+					\addplot[color=dimred, domain=0.000:1.000, samples=3, forget plot]{0};
+					\addplot[color=dimred, domain=1.000:1.414, samples=3, forget plot]{1};
+					\addplot[color=dimred, domain=1.415:1.732, samples=3, forget plot]{2};
+					\addplot[color=dimred, domain=1.733:2.000, samples=3, forget plot]{3};
+					\addplot[color=dimred, domain=2.000:2.236, samples=3, forget plot]{4};
+					\addplot[color=dimred, domain=2.237:2.449, samples=3, forget plot]{5};
+					\addplot[color=dimred, domain=2.450:2.645, samples=3, forget plot]{6};
+					\addplot[color=dimred, domain=2.646:2.828, samples=3, forget plot]{7};
+					\addplot[color=dimred, domain=2.829:3.000, samples=3, forget plot]{8};
+					\addplot[color=dimred, domain=3.000:3.162, samples=3, forget plot]{9};
+					\addplot[color=dimred, domain=3.163:3.316, samples=3, forget plot]{10};
+					\addplot[color=dimred, domain=3.317:3.464, samples=3, forget plot]{11};
+					\addplot[color=dimred, domain=3.465:3.605, samples=3, forget plot]{12};
+					\addplot[color=dimred, domain=3.606:3.741, samples=3, forget plot]{13};
+					\addplot[color=dimred, domain=3.742:3.872, samples=3, forget plot]{14};
+					\addplot[color=dimred, domain=3.873:4.000, samples=3, forget plot]{15};
+					\addplot[color=dimred, domain=4.000:4.123, samples=3, forget plot]{16};
+					\addplot[color=dimred, domain=4.124:4.242, samples=3, forget plot]{17};
+					\addplot[color=dimred, domain=4.245:4.358, samples=3, forget plot]{18};
+					\addplot[color=dimred, domain=4.359:4.472, samples=3, forget plot]{19};
+					\addplot[color=dimred, domain=4.473:4.582, samples=3, forget plot]{20};
+					\addplot[color=dimred, domain=4.583:4.690, samples=3, forget plot]{21};
+					\addplot[color=dimred, domain=4.691:4.795, samples=3, forget plot]{22};
+					\addplot[color=dimred, domain=4.796:4.898, samples=3, forget plot]{23};
+					\addplot[color=dimred, domain=4.899:5.001, samples=3, forget plot]{24};
 
-					\addplot[color=dimgreen, domain=0:8]{sqrt(x)};
-					\addlegendentry{$g^{-1}(x)$}
+					\addplot[points=dimred] coordinates {
+						(1, 1)
+						(sqrt(2), 2) (sqrt(3), 3)
+						(sqrt(4), 4) (sqrt(5), 5)
+						(sqrt(6), 6) (sqrt(7), 7)
+						(sqrt(8), 8) (sqrt(9), 9)
+						(sqrt(10), 10) (sqrt(11), 11)
+						(sqrt(12), 12) (sqrt(13), 13)
+						(sqrt(14), 14) (sqrt(15), 15)
+						(sqrt(16), 16) (sqrt(17), 17)
+						(sqrt(18), 18) (sqrt(19), 19)
+						(sqrt(20), 20) (sqrt(21), 21)
+						(sqrt(22), 22) (sqrt(23), 23)
+						(sqrt(24), 24) (sqrt(25), 25)
+					};
+
+					\addplot[holes=dimred] coordinates {
+						(1, 0)
+						(sqrt(2), 1) (sqrt(3), 2)
+						(sqrt(4), 3) (sqrt(5), 4)
+						(sqrt(6), 5) (sqrt(7), 6)
+						(sqrt(8), 7) (sqrt(9), 8)
+						(sqrt(10), 9) (sqrt(11), 10)
+						(sqrt(12), 11) (sqrt(13), 12)
+						(sqrt(14), 13) (sqrt(15), 14)
+						(sqrt(16), 15) (sqrt(17), 16)
+						(sqrt(18), 17) (sqrt(19), 18)
+						(sqrt(20), 19) (sqrt(21), 20)
+						(sqrt(22), 21) (sqrt(23), 22)
+						(sqrt(24), 23) (sqrt(25), 24)
+					};
+
+					\addlegendimage{dimred, line legend} \addlegendentry{$f(x)$}
+					\addlegendimage{dimblue, line legend} \addlegendentry{$g(x)$}
+					\addlegendimage{dimgreen, line legend} \addlegendentry{$g^{-1}(x)$}
 				\end{axis}
 			\end{tikzpicture}
 		\end{minipage}
@@ -229,20 +449,56 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
-						xlabel=$x$,
-						ylabel=$y$,
-						axis lines=middle,
-						samples=2000,
-						grid=both,
-						line width=1.01pt,
-						legend pos=outer north east,
-						legend style={font=\small},
-					]
+					xlabel = $x$,
+					ylabel = $y$,
+					grid = both,
+					grid style = {draw = gridgray},
+					axis lines = center,
+					line width = 1.01pt,
+					legend cell align = left,
+					legend style = {
+						font = \small,
+						fill = bgcolor,
+						draw = fgcolor,
+						anchor = west,
+						at = {(0.03, 0.75)},
+					},
+				]
 
-					\addplot[color=red, domain=0:10]{floor(x)};
+					\addplot[color=dimblue, domain=0:10, samples=2, forget plot]{x};
+
+					\addplot[color=dimred, domain=0:1, forget plot]{0};
+					\addplot[color=dimred, domain=1:2, forget plot]{1};
+					\addplot[color=dimred, domain=2:3, forget plot]{2};
+					\addplot[color=dimred, domain=3:4, forget plot]{3};
+					\addplot[color=dimred, domain=4:5, forget plot]{4};
+					\addplot[color=dimred, domain=5:6, forget plot]{5};
+					\addplot[color=dimred, domain=6:7, forget plot]{6};
+					\addplot[color=dimred, domain=7:8, forget plot]{7};
+					\addplot[color=dimred, domain=8:9, forget plot]{8};
+					\addplot[color=dimred, domain=9:10, forget plot]{9};
+
+					\addplot[points=dimred] coordinates {
+						(0, 0) (1, 1)
+						(2, 2) (3, 3)
+						(4, 4) (5, 5)
+						(6, 6) (7, 7)
+						(8, 8) (9, 9)
+						(10, 10)
+					};
+
+					\addplot[holes=dimred] coordinates {
+						(1, 0) (2, 1)
+						(3, 2) (4, 3)
+						(5, 4) (6, 5)
+						(7, 6) (8, 7)
+						(9, 8) (10, 9)
+					};
+
+
+					\addlegendimage{dimred, line legend}
 					\addlegendentry{$f(x)$}
-
-					\addplot[color=blue, domain=0:10]{x};
+					\addlegendimage{dimblue, line legend}
 					\addlegendentry{$g(x), g^{-1}(x)$}
 
 				\end{axis}
@@ -281,29 +537,39 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
-						xlabel=$x$,
-						ylabel=$y$,
-						axis lines=middle,
-						samples=2000,
-						grid=both,
-						domain=0:6,
-						line width=1.01pt,
-						legend pos=north west,
-						legend style={font=\small},
-						legend cell align=left
-					]
+					xlabel = $x$,
+					ylabel = $y$,
+					axis lines = center,
+					samples = 2000,
+					grid = both,
+					grid style = {draw = gridgray},
+					domain = 0:5,
+					line width = 1.01pt,
+					legend cell align = left,
+					legend style = {
+						font = \small,
+						anchor = west,
+						fill = bgcolor,
+						draw = fgcolor,
+						at = {(0.03, 0.625)},
+					},
+				]
 
-					\addplot[color=red]{(floor(x)^2 - floor(x)) / 2 + (x - floor(x)) * floor(x)};
+					\addplot[color=dimblue, forget plot]{(x^2 - x) / 2};
+					\addplot[color=dimred, forget plot]{(floor(x)^2 - floor(x)) / 2 + (x - floor(x)) * floor(x)};
+
+
+					\addlegendimage{dimred, line legend}
 					\addlegendentry{$\displaystyle\int_0^x\lfloor t\rfloor\text dt$}
 
-					\addlegendimage{empty legend}\addlegendentry[]{}
-					\addlegendimage{empty legend}\addlegendentry[]{}
+					\addlegendimage{empty legend} \addlegendentry[]{}
+					\addlegendimage{empty legend} \addlegendentry[]{}
 
-					\addplot[color=blue]{(x^2 - x) / 2};
+					\addlegendimage{dimblue, line legend}
 					\addlegendentry{$\displaystyle\int_0^x\!\left[t-\frac12\right]\text dt$}
 
-					\addlegendimage{empty legend}\addlegendentry[]{}
-					\addlegendimage{empty legend}\addlegendentry[]{}
+					\addlegendimage{empty legend} \addlegendentry[]{}
+					\addlegendimage{empty legend} \addlegendentry[]{}
 				\end{axis}
 			\end{tikzpicture}
 		\end{minipage}
@@ -317,14 +583,14 @@
 		Once you have this, you have found the principle indefinite integral. Add the constant of integration
 		for the general answer.
 
-
 \section*{References}
 	% I think these are in APA, but I don't really care.
+
 	\begin{itemize}
 		\item Hardy, G. H. (1940). A Mathematician's Apology (1st ed.). University of Alberta Mathematical Sciences Society.\\
 			\url{https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf}\\
 
-		\item Larson, R., & Edwards, B. H. (2010). Calculus (9th ed.). Cengage Learning.\\
+		\item Larson, R., \& Edwards, B. H. (2010). Calculus (9th ed.). Cengage Learning.\\
 			\url{http://teacherpress.ocps.net/cynthiaandrews/files/2013/06/Calculus-9th-Edition-by-Ron-Larson-Bruce-H.-Edwards.pdf}
 	\end{itemize}
 	\vspace{28em}\\
