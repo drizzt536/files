@@ -6,14 +6,15 @@ from automate.misc import write
 
 def binify_dword(dword: int = 0, power: int = 32, /) -> str:
 	absolute_dword = abs(dword)
-	out = bin(absolute_dword)[2:]
-	out = (power - len(out)) * "0" + out
+	out = bin(absolute_dword)[2:].rjust(power, "0")
 
 	if dword < 0: # two's compliment
-		out = bin(1 + int("".join((str(1 - int(x)) for x in out)), 2))[2:]
-		out = (power - len(out)) * "0" + out
+		out = bin(1 + int(
+			"".join( str(1 - int(digit)) for digit in out ),
+			2
+		) )[2:]
 
-	return out
+	return out.rjust(power, "0") # again in case it was negative
 
 def long_double_memory(value: int | float | str = 3.4, /):
 	"""Basically solves the problem by giving it to someone else (gcc).
@@ -40,7 +41,7 @@ def long_double_memory(value: int | float | str = 3.4, /):
 	dwords = (int(x) for x in replace("^.*\t", "", float_parts, flags=MULTILINE).split("\n"))
 	remove(temprary_file)
 
-	return ''.join( (binify_dword(x) for x in dwords) )
+	return "".join( (binify_dword(x) for x in dwords) )
 
 
 def unique_filename(extension: str = "c", /) -> str:
@@ -51,14 +52,14 @@ def unique_filename(extension: str = "c", /) -> str:
 	ascii_lowercase = set(ascii_lowercase)
 	outstring = ""
 	i = 0
-	files = [filename for filename in ls('.') if fileQ(filename)]
+	files = [filename for filename in ls(".") if fileQ(filename)]
 
 	while files:
 		current_characters = (filename[i] for filename in files) # pronounced `eyes`
 		charset = set(current_characters)
 		difference = ascii_lowercase - charset
 
-		if len(difference):
+		if difference:
 			return outstring + difference.pop() + "." + extension
 
 		values = {c: list(current_characters).count(c) for c in charset}
