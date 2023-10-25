@@ -91,7 +91,7 @@ var determineRuntime = (function determineRuntime_closure() {
 				"Browser" :
 				"Deno" + (includeVersion ? " " + Deno.version.deno : "") :
 			globalThis == "[object global]" ?
-				"Node" + (includeVersion ? " " + process.version.slice(1) : "") :
+				"Node" + (includeVersion ? " " + process.versions.node : "") :
 				globalThis == "[object Object]" ?
 					// globalThis.toString() is this value as of version 1.0.4
 					"Bun" + (includeVersion ? " " + Bun.version : "") :
