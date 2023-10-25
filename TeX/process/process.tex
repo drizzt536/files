@@ -1,6 +1,6 @@
 % file for pdflatex.exe
 
-% process.tex v1.3 (c) | Copyright 2023 Daniel E. Janusch
+% process.tex v1.4 (c) | Copyright 2023 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may be copied ONLY IN ITS ENTIRETY under penalty of law.
@@ -73,7 +73,7 @@
 
 \title{Integrating Functions with Countably Many Jump Discontinuities}
 \author{Daniel E. Janusch}
-\date{October 7, 2023, 11:05pm MST}
+\date{October 8, 2023, 1:47am MST}
 
 \maketitle
 
@@ -114,6 +114,7 @@
 		\centering
 		\begin{tikzpicture}
 			\begin{axis}[
+				clip = false,
 				xlabel = $x$,
 				ylabel = $f(x)$,
 				ymin = -1,
@@ -184,6 +185,7 @@
 		\hfill
 		\begin{tikzpicture}
 			\begin{axis}[
+				clip = false,
 				xlabel = $x$,
 				ylabel = $f(x)$,
 				line width = 1.01pt,
@@ -254,6 +256,7 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
+					clip = false,
 					xlabel = $x$,
 					ylabel = $y$,
 					axis lines = middle,
@@ -323,6 +326,7 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
+					clip = false,
 					xlabel = $x$,
 					ylabel = $y$,
 					axis lines = middle,
@@ -397,7 +401,7 @@
 						(sqrt(18), 17) (sqrt(19), 18)
 						(sqrt(20), 19) (sqrt(21), 20)
 						(sqrt(22), 21) (sqrt(23), 22)
-						(sqrt(24), 23) (sqrt(25), 24)
+						(sqrt(24), 23) (5, 24)
 					};
 
 					\addlegendimage{dimred, line legend} \addlegendentry{$f(x)$}
@@ -449,6 +453,7 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
+					clip = false,
 					xlabel = $x$,
 					ylabel = $y$,
 					grid = both,
@@ -537,6 +542,7 @@
 		\begin{minipage}{0.5\textwidth}
 			\begin{tikzpicture}
 				\begin{axis}[
+					clip = false,
 					xlabel = $x$,
 					ylabel = $y$,
 					axis lines = center,
@@ -566,7 +572,7 @@
 					\addlegendimage{empty legend} \addlegendentry[]{}
 
 					\addlegendimage{dimblue, line legend}
-					\addlegendentry{$\displaystyle\int_0^x\!\left[t-\frac12\right]\text dt$}
+					\addlegendentry{$\displaystyle\int_0^x\!\left[t-\frac12\right]\!\text dt$}
 
 					\addlegendimage{empty legend} \addlegendentry[]{}
 					\addlegendimage{empty legend} \addlegendentry[]{}
