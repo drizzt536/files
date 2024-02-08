@@ -112,8 +112,7 @@ works for `dired-mode` and `archive-mode` major modes."
 		(archive-extract)
 		(if (file-directory-p (dired-get-filename))
 			(dired-find-alternate-file)
-			(dired-find-file)))
-)
+			(dired-find-file))))
 (defun dired-next-line-fn ()
 	"`dired-next-line` is already a thing
 works for `dired-mode` and `archive-mode` major modes."
@@ -304,7 +303,7 @@ works for `dired-mode` and `archive-mode` major modes."
 (define-key dired-mode-map (kbd "SPC")		'dired-open)
 (define-key dired-mode-map (kbd "S-SPC")	'dired-updir-or-next-drive)
 (define-key dired-mode-map (kbd "C-h")		'describe-mode)
-(define-key dired-mode-map (kbd "<up>")	'dired-previous-line-fn)
+(define-key dired-mode-map (kbd "<up>")		'dired-previous-line-fn)
 (define-key dired-mode-map (kbd "<down>")	'dired-next-line-fn)
 
 (define-key dired-mode-map (kbd "% m")		'dired-mark-files-containing-regexp)
