@@ -4,7 +4,8 @@
 --> "TODO: early access" is a note for me to check if the price changes after early access ends
 
 var OwnedApplications = {
-	"20XX": 14.99
+	"20 Minutes Till Dawn": 4.99
+	, "20XX": 14.99
 	, "3 out of 10, EP 1: \"Welcome To Shovelworks\"": 0
 	, "3 out of 10, EP 1": 0 // duplicate
 	, "3 out of 10, EP 2: \"Foundation 101\"": 0
@@ -42,6 +43,7 @@ var OwnedApplications = {
 	, "ARK Editor": 0
 	, "ARK: Survival Evolved": 29.99 // 1 add-on
 	, "Armored Warfare": 0
+	, "Art of Rally": 24.99
 	, "Assassins Creed Syndicate": 29.99
 	, "Atlas Mod Kit": 0
 	, "Auto Chess": 0
@@ -78,6 +80,8 @@ var OwnedApplications = {
 	, "Blood of Steel": 0
 	, "Bloons TD 6": 13.99
 	, "Bloons TD6": 0 // duplicate
+	, "Book of Yog Idle RPG": 0
+	, "Book of Yog": 0 // duplicate
 	, "Borderlands 2": 19.99
 	, "Borderlands 3": 59.99
 	, "Borderlands: The Pre-Sequel": 39.99
@@ -90,10 +94,11 @@ var OwnedApplications = {
 	, "Brothers - A Tale Of Two Sons": 14.99
 	, "Brothers": 0 // duplicate
 	, "Bus Simulator 21 - Modding Kit": 0
-	, "Call of the Sea": 19.99
 	, "Bus Simulator 21 Modding Kit": 0 // duplicate
+	, "Call of the Sea": 19.99
 	, "Car Mechanic Simulator 2018": 19.99
 	, "Carcassonne": 9.99
+	, "Cat Quest": 12.99
 	, "Cave Story+": 14.99
 	, "Cave Story Plus": 0 // duplicate
 	, "Celeste": 19.99
@@ -121,6 +126,7 @@ var OwnedApplications = {
 	, "CRSED": 0 // duplicate
 	, "Crying Suns": 24.99
 	, "Crying Suns Demo": 0
+	, "Cursed to Golf": 19.99
 	, "Dandara: Trials of Fear Edition": 14.99
 	, "Dandara": 0 // duplicate
 	, "Darksiders II Deathinitive Edition": 29.99
@@ -132,14 +138,14 @@ var OwnedApplications = {
 	, "DARQ: Complete Edition": 19.99
 	, "DARQ": 0 // duplicate
 	, "Days of War Editor": 0
-	, "DLC The Game - Track Editor": 0
-	, "DLC The Game": 0 // duplicate
 	, "Dead by Daylight": 19.99
 	, "DEATH STRANDING": 29.99
+	, "Deliver Us Mars": 29.99
 	, "Delores: A Thimbleweed Park mini-adventure": 0
 	, "Delores": 0 // duplicate
 	, "DEMON'S TILT": 19.99
 	, "Destiny 2: Bungie 30th Anniversary Pack": 24.99
+	, "Destiny 2: Legacy Collection (2023)": 59.99
 	, "Destiny 2": 0
 	, "Destroy All Humans! - Clone Carnage": 0
 	, "Detroit Become Human [Demo]": 0
@@ -152,23 +158,33 @@ var OwnedApplications = {
 	, "Dishonored®: Death of the Outsider™": 29.99
 	, "Dishonored: Death of the Outsider": 0 // duplicate
 	, "Dishonored": 0 // duplicate
+	, "Disney Speedstorm": 0
+	, "Disney Speedstorm Monochromatic Pack": 0
 	, "Divine Knockout (DKO)": 0
 	, "Divine Knockout": 0 // duplicate
+	, "DLC The Game - Track Editor": 0
 	, "Dogfight - Demo": 0
 	, "Dogfight Demo": 0 // duplicate
 	, "DOOM 64": 4.99
+	, "Doors: Paradox": 14.99
+	, "Doors - Paradox": 0 // duplicate
+	, "Dragonheir: Silent Gods": 0
 	, "Drawful 2": 9.99
 	, "Dungeons 3": 29.99
 	, "Duskers": 19.99
 	, "Dying Light Enhanced Edition": 29.99
 	, "Dying Light": 0 // duplicate
+	, "EARTHLOCK": 29.99
 	, "Elite Dangerous": 29.99
 	, "Enter the Gungeon": 14.99
 	, "Epic Cheerleader Pack": 0
 	, "Epistory - Typing Chronicles": 14.99
+	, "Escape Academy": 19.99
 	, "Europa Universalis IV": 39.99
 	, "Europa Universalis 4": 0 // duplicate
 	, "EVE Online": 0
+	, "EVE Online - Superluminal Pack": 0
+	, "EVE Online Superluminal Pack": 0 // duplicate
 	, "Evoland Legendary Edition": 19.99
 	, "Evoland": 0 // duplicate
 	, "Eximius: Seize the Frontline": 29.99
@@ -176,6 +192,9 @@ var OwnedApplications = {
 	, "Eyes in the Dark Demo": 0
 	, "Faeria": 19.99
 	, "Fall Guys": 0
+	, "Fall Guys Giddy Gift": 0 // duplicate
+	, "Fall Guys Snowberry": 0 // duplicate
+	, "Fall Guys - Giddy Gift": 0
 	, "Fall Guys - Snowberry": 0
 	, "Fallout 3: Game of the Year Edition": 19.99
 	, "Fallout: New Vegas - Ultimate Edition": 19.99
@@ -184,6 +203,7 @@ var OwnedApplications = {
 	, "Fallout 3": 0 // duplicate
 	, "Fangs": 0 // TODO: early access
 	, "Far Cry 6 - Free Trial": 0
+	, "Farlight 84": 0
 	, "Farming Simulator 19": 19.99
 	, "Fault: Elder Orb": 0
 	, "FTL: Faster Than Light": 9.99
@@ -191,6 +211,7 @@ var OwnedApplications = {
 	, "FTL": 0 // duplicate
 	, "Fez": 9.99
 	, "Figment": 19.99
+	, "Firestone Online Idle RPG": 0
 	, "First Class Trouble": 14.99
 	, "F.I.S.T.: Forged In Shadow Torch": 29.99
 	, "FIST: Forged In Shadow Torch": 0 // duplicate
@@ -200,9 +221,11 @@ var OwnedApplications = {
 	, "Football Manager 2020": 54.99
 	, "Football Manager 2022 Demo": 0
 	, "Football Manager 2023 Demo": 0
+	, "Football Manager 2024 Demo": 0
 	, "For The King": 19.99
-	, "Fortnite Zero Build: No-Build Battle Royale": 0
-	, "Fortnite": 0 // in-app purchases: ~$10. several battle passes. no save the world
+	, "Fortnite": 0 // ~$10 purchases. some battle passes. 700 vbucks
+	, "Fortnite Battle Royale": 0
+	, "Fortnite Festival": 0
 	, "Fort Triumph": 19.99
 	, "Frostpunk": 29.99
 	, "Galactic Civilizations III": 24.99
@@ -220,17 +243,20 @@ var OwnedApplications = {
 	, "Ghostbusters The Video Game": 0 // duplicate
 	, "Ghostbusters Remastered": 0 // duplicate
 	, "Ghostbusters": 0 // duplicate
+	, "Ghostrunner": 29.99
 	, "Ghostwire: Tokyo - Prelude": 0
-	, "Ghostwire: Tokyo": 0 // duplicate
-	, "Ghostwire": 0 // duplicate
+	, "Ghostwire: Tokyo": 59.99
+	, "GigaBash": 24.99
 	, "Gloomhaven": 34.99
 	, "God's Trigger": 14.99
 	, "Godfall": 19.99 // not ultimate. Ultimate is $34.99 and "upgrade to ultimate" is $14.99. math. - 1¢
 	, "Gods Will Fall": 14.99
 	, "GOG GALAXY": 0
+	, "Golden Light": 19.99
 	, "Gone Home": 14.99
 	, "GoNNer": 9.99
 	, "Good Company Demo": 0
+	, "Griftlands Demo": 0
 	, "Guacamelee! 2": 19.99
 	, "Guacamelee! Super Turbo Championship Edition": 14.99
 	, "Guacamelee 2": 0 // duplicate
@@ -267,8 +293,10 @@ var OwnedApplications = {
 	, "Hundred Days - Winemaking Simulator DEMO": 0
 	, "Hyper Light Drifter": 19.99
 	, "Idle Champions of the Forgotten Realms": 0
+	, "Idle Champions of the Forgotten Realms Dark Justiciar Shadowheart Party Pack": 0
 	, "iHeart: Radio, Music, Podcasts": 0
 	, "iHeart": 0 // duplicate
+	, "Infinifactory": 24.99
 	, "Insurgency: Sandstorm": 29.99
 	, "Insurgency": 0 // duplicate
 	, "Insurmountable": 24.99
@@ -278,6 +306,7 @@ var OwnedApplications = {
 	, "IronCast": 14.99
 	, "It Takes Two": 39.99 // owned and not owned simultaneously
 	, "itch.io": 0
+	, "Jitsu Squad": 19.99
 	, "Jotun Valhalla Edition": 14.99
 	, "Jotun": 0 // duplicate
 	, "Jurassic World Evolution": 44.99
@@ -287,6 +316,7 @@ var OwnedApplications = {
 	, "KARDS - The WWII Card Game": 0
 	, "KARDS - The WW2 Card Game": 0 // duplicate
 	, "KARDS": 0 // duplicate
+	, "Karos": 0
 	, "Kerbal Space Program": 39.99
 	, "KID A MNESIA EXHIBITION": 0
 	, "Killing Floor 2": 29.99
@@ -310,29 +340,40 @@ var OwnedApplications = {
 	, "LEGO® Builder's Journey": 19.99
 	, "LEGO Builder's Journey": 0 // duplicate
 	, "LEGO Builder's Journey": 0 // duplicate
+	, "LEGO® Fortnite®": 0
+	, "LEGO® Fortnite": 0 // duplicate
+	, "LEGO Fortnite®": 0 // duplicate
+	, "LEGO Fortnite": 0 // duplicate
 	, "Lifeless Planet: Premier Edition": 19.99
 	, "Lifeless Planet": 0 // duplicate
 	, "Loop Hero": 14.99
+	, "LOVE": 2.99
 	, "Magic The Gathering Arena": 0
 	, "Magic: Legends": 0 // early access, canceled
 	, "Maneater": 39.99
 	, "Mars 2030 Editor": 0
+	, "Marvel's Guardians of the Galaxy": 59.99
 	, "MechWarrior 5 Editor": 0
+	, "Melvor Idle": 9.99
+	, "Metalstorm": 0
 	, "Midnight Ghost Hunt": 19.99
 	, "Might & Magic: Chess Royale": 0
 	, "Might and Magic: Chess Royale": 0 // duplicate
 	, "Might & Magic": 0 // duplicate
 	, "Might and Magic": 0 // duplicate
+	, "Mighty Fight Federation": 29.99
 	, "Minit": 9.99
 	, "MONOPOLY® MADNESS DEMO": 0
 	, "MORDHAU": 29.99
 	, "Mortal Shell": 29.99
-	, "Mortal Shell Tech Beta": 0 // TODO: idk what this is or where it came from
+	, "Mortal Shell Tech Beta": 0
 	, "MudRunner": 19.99
 	, "MultiVersus": 0
 	, "Murder by Numbers": 14.99
+	, "My Pet Hooligan": 0
 	, "N0va Desktop": 0
 	, "NAIRI Rising Tide": 0 // coming soon
+	, "NARAKA: BLADEPOINT": 0
 	, "NASA XOSS MarsXR Editor": 0
 	, "NBA 2k21": 59.99
 	, "NBA 2021": 0 // duplicate
@@ -354,17 +395,21 @@ var OwnedApplications = {
 	, "Overcooked! 2": 24.99
 	, "Outplayed": 0
 	, "Paladins": 0
+	, "Palia": 0
 	, "Paradigm": 14.99
-	, "Paragon: The Overprime": 0 // TODO: early access
+	, "Paragon: The Overprime": 0
 	, "Path of Exile": 0
 	, "Pathway": 15.99
 	, "PAYDAY 2": 9.99
+	, "PC Building Simulator 2 Demo": 0
 	, "Phantasy Star Online 2 New Genesis": 0
 	, "Phantasy Star Online 2": 0 // duplicate
+	, "Phantom Blade: Executioners": 0
 	, "Pikuniku": 12.99
 	, "Pinball FX": 0
 	, "Poker Club": 19.99
 	, "Post Scriptum Modding SDK": 0
+	, "Predecessor": 8.99
 	, "Prey": 39.99
 	, "Primordials: Battle of Gods": 0
 	, "Primordials": 0 // duplicate
@@ -408,6 +453,8 @@ var OwnedApplications = {
 	, "Rumbleverse Boom Boxer Content Pack": 0 // duplicate
 	, "Rumbleverse Boom Boxer Pack": 0 // duplicate
 	, "Runbow": 14.99
+	, "Sail Forth": 19.99
+	, "Saints Row": 29.99
 	, "Saints Row Boss Factory": 0
 	, "Saints Row IV Re-Elected": 19.99
 	, "Saints Row 4 Re-Elected": 0 // duplicate
@@ -445,6 +492,7 @@ var OwnedApplications = {
 	, "Slain": 0 // duplicate
 	, "Sludge Life": 14.99
 	, "SMITE": 0
+	, "Snakebird Complete": 14.99
 	, "Solitairica": 9.99
 	, "Sonic Mania": 19.99
 	, "Space Punks": 0
@@ -461,6 +509,7 @@ var OwnedApplications = {
 	, "STAR WARS™ Battlefront™ II: Celebration Edition": 39.99
 	, "STAR WARS Battlefront II": 0 // duplicate
 	, "STAR WARS Battlefront 2": 0 // duplicate
+	, "Surviving the Aftermath": 29.99
 	, "Battlefront II": 0 // duplicate
 	, "Battlefront 2": 0 // duplicate
 	, "SteelSeries© FREE Cosmetic Pack": 0
@@ -483,6 +532,8 @@ var OwnedApplications = {
 	, "Supraland": 19.99
 	, "Surviving Mars": 29.99
 	, "Swords of Legends Online": 0
+	, "SYNCED": 0
+	, "SYNCED Winterfest Bundle": 0
 	, "Tacoma": 19.99
 	, "Tales of the Neon Sea": 16.99
 	, "Tannenburg": 19.99
@@ -496,6 +547,8 @@ var OwnedApplications = {
 	, "The Bridge": 9.99
 	, "The Bunny Graveyard DEMO": 0
 	, "The Captain": 19.99
+	, "The Crew™ Motorfest Trial": 0
+	, "The Crew Motorfest Trial": 0 // duplicate
 	, "The Cycle: Frontier": 0
 	, "The Cycle": 0 // duplicate
 	, "The Drone Racing League Simulator": 9.99
@@ -541,6 +594,7 @@ var OwnedApplications = {
 	, "Torchlight 2": 0 // duplicate
 	, "Tormentor X Punisher": 7.99
 	, "Totally Reliable Delivery Service": 14.99
+	, "Tower of Fantasy": 0
 	, "Towerfall Ascencion": 19.99
 	, "Trackmania": 0
 	, "Tropico 5": 19.99
@@ -580,9 +634,12 @@ var OwnedApplications = {
 	, "Wonder Boy": 0 // duplicate
 	, "World of Goo": 14.99
 	, "World of Warships": 0
-	, "World of Warships — Starter Pack: Ishizuchi": 23.47
-	, "World of Warships - Starter Pack: Ishizuchi": 0 // duplicate
+	, "World of Warships Frosty Celebration Pack": 0 // duplicate
 	, "World of Warships Starter Pack: Ishizuchi": 0 // duplicate
+	, "World of Warships - Frosty Celebration Pack": 0 // duplicate
+	, "World of Warships - Starter Pack: Ishizuchi": 0 // duplicate
+	, "World of Warships — Frosty Celebration Pack": 0
+	, "World of Warships — Starter Pack: Ishizuchi": 23.47
 	, "World War Z": 19.99
 	, "XCOM® 2": 59.99
 	, "XCOM 2": 0 // duplicate
