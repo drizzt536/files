@@ -116,7 +116,7 @@ download.jpg = downloadJPG
 download.jpeg = downloadJPEG
 download.webp = downloadWEBP
 
-export default {
+const _exports = {
 	download,
 	downloadPNG,
 	downloadJPG,
@@ -125,3 +125,8 @@ export default {
 	convertToCanvas,
 	dataURI,
 }
+
+if (typeof module !== "undefined" && typeof exports === "object")
+	module.exports = _exports
+else
+	globalThis.imageDownload = _exports
