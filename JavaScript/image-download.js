@@ -23,8 +23,6 @@ function _standardizeFormat(format) {
 }
 
 var convertToCanvas = (function convertToCanvas_closure() {
-	function imageToCanvas(image) 
-
 	function imageDataToCanvas(imageData) {
 		const canvas  = document.createElement("canvas")
 
