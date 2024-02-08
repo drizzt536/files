@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// lib.js v2.2.0 (c) | Copyright 2022-2023 Daniel E. Janusch
+// lib.js v2.2.1 (c) | Copyright 2022-2023 Daniel E. Janusch
 
 /**
  * Todo etc. Comment Syntax:
@@ -20,8 +20,44 @@
  * // KEEP:/ no message
  * // TODO:/ no message (probably should though)
 **/
-void (() => {
+globalThis[Symbol.for(
+	"// lib.js temporary variable for console.printCallStack() "
+	// + "because strict mode won't let it be used if it is defined "
+	// + "within the lib.js main function. hopefully no other js "
+	// + "files use strict at the top level, otherwise this won't work."
+)] = function printCallStack() {
+	// doesn't work in strict mode. because safety :(
+	// only for ease of development
+	let options = arguments[0];
+	if (options == null) options = {lastOnly: false, includeCurrent: false};
 
+	let current = arguments.callee, index = 0;
+
+	if (options?.lastOnly || !options?.includeCurrent)
+		current = current.caller
+
+	if (options?.lastOnly) return current == null ?
+	console.log(null) :
+	console.log(
+		"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
+		1,
+		current.name,
+		Array.from(current.arguments),
+		demarginFunction(current)
+	);
+
+	for (; current !== null; current = current.caller) console.log(
+		"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
+		++index,
+		current.name,
+		Array.from(current.arguments),
+		demarginFunction(current)
+	);
+
+	console.log(null);
+};
+
+void (() => { "use strict";
 /* Customization & Constants: */ {
 	const _Global_String = (globalThis + "").slice(8, -1).toLowerCase();
 
@@ -96,7 +132,7 @@ void (() => {
 			"debugger"
 			// "none" just ignores the error and overwrites it anyway, pretending it never happened.
 		]
-		, Settings_Help_String             : `Settings Help:
+		, Settings_Help_String              : `Settings Help:
 			 * OnConflict Options (ones in parentheses are aliases for the same thing):
 			   - log: console.log (default value)
 			   - throw (trw): throw an error at the end of the main functon if there were any variable naming conflicts
@@ -131,14 +167,25 @@ void (() => {
 				 > if the string ends with 'asdf asdf ", it will throw an error because the quote has no beginning.
 				 > for the name to be "asdf 1234", the quotes are required or "asdf" will be one of the parameters, and only "1234" will be the name
 			   - starting here, they are in the order that define() checks for them in.
+			   - _called
+			     > _called doesn't do anything, but it signifies an automatically generated object from a 'call' attribute on something.
 			   - auto
 				 > auto doesn't do anything and its only purpose is to distinguish variables that are dynamically created
 				 > auto acts like local but if it has "call" or "instance" etc as one of the parameters, it won't do it.
 				 > returns from the function immediately
+				 > an alias of 'archived' and 'ignore'
 			   - archived
-				 > archived is similar to auto and it has the exact same functionality, that is, none.
 				 > archived is for if you are overwriting something and you want a (shallow probably) copy of the original
 				 > returns from the function immediately
+				 > an alias of 'auto' and 'ignore'
+			   - ignore
+				 > returns from the function immediately.
+				 > an alias for 'auto' and 'archived'.
+			   - deprecated
+				 > only works with function definitions.
+				 > does not work with functions that use 'this'.
+				 > if LibSettings.Define_Deprecated_Functions is false, the function is not defined.
+				 > if LibSettings.Warn_Deprecated_Use is true, a warning is displayed whenever the function is called
 			   - ifdom
 				 > if LibSettings.Use_Document is falsy it adds the name and value to the dom ignore list and returns.
 				 > LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
@@ -168,13 +215,6 @@ void (() => {
 			   - defer
 				 > if the section argument is 0, then the string gets added to either DEFER_ARR or LOCAL_DEFER_ARR depending on if local is active or not.
 				 > if section is anything else, the function proceeds as normal
-			   - overwrite
-				 > ignores what ON_CONFLICT is set to and acts as if it is set to "none".
-				 > it just overwrites the value anyway.
-				 > no errors happen if there is nothing to overwrite. it just changes it from undefined to the new value.
-			   - native
-				 > an extension of overwrite
-				 > if the thing being overwritten is a native function, then it overwrites it, otherwise what happens depends on ON_CONFLICT.
 			   - instance
 				 > creates a new instance of the value with the "new" keyword
 				 > similar to call
@@ -182,12 +222,16 @@ void (() => {
 				 > calls the value as if it is a function assuming it is a function.
 				 > will throw an error if the value is not a function
 				 > similar to instance
-			   - deprecated
-				 > if LibSettings.Define_Deprecated_Functions is falsy or the value is not a function, it returns immediately.
-				 > it logs to the console via console.warn that a deprecated function is being defined when it is defined
-				 > if LibSettings.Warn_Deprecated_Use is truthy, whenever called, it warns to the console that a deprecated function was used
-			   - ignore
-				 > The property gets completely skipped over and ignored.
+			   - native
+				 > an extension of overwrite
+				 > if the thing being overwritten is a native function, then it overwrites it, otherwise what happens depends on ON_CONFLICT.
+			   - try
+				 > if the scope is nullish, then an error is not thrown and define() just returns undefined.
+				 > the main use cases are if the 'object' or 'prototype' flags are set.
+			   - overwrite
+				 > ignores what ON_CONFLICT is set to and acts as if it is set to "none".
+				 > it just overwrites the value anyway.
+				 > no errors happen if there is nothing to overwrite. it just changes it from undefined to the new value.
 			   - property
 				 > uses Object.defineProperty() instead of direct assignment
 				 > the arguments are defined in the LibSettings
@@ -195,17 +239,32 @@ void (() => {
 				   ~ Defined_Properties_Enumerable, default is false
 				   ~ Defined_Properties_Writable, default is true
 				 > if local is active, nothing changes and having property is useless.
+			   - nproperty
+				 > if property is set as the default in the settings, anything with the nproperty flag is never a property
 			   - enumerable
 				 > if the property flag is given, it changes the enumerable argument to true, otherwise nothing changes
 			   - configurable
 				 > if the property flag is given, it changes the configurable argument to true, otherwise nothing changes
 			   - nwritable
 				 > if the property flag is given, it changes the writable argument to false, otherwise nothing changes
-			   - nproperty
-				 > if property is set as the default in the settings, anything with the nproperty flag is never a property
-			   - try
-				 > if the scope is nullish, then an error is not thrown and define() just returns undefined.
-				 > the main use cases are if the 'object' or 'prototype' flags are set.
+			   - accessor
+				 > defines a getter and a setter on the object.
+				 > the value should be an object of this form:
+				 	~	{
+				 	~		get?: () => any;
+				 	~		set?: (value: any) => any;
+				 	~	}
+				 > if 'get' and 'set' are present, accessor will be added if not already present.
+			   - get
+				 > defines a getter on the object using Reflect.defineProperty().
+				 > uses the values given by 'configurable', 'writable', 'enumerable', etc.
+			   - getter
+				 > an alias for 'get'
+			   - set
+				 > defines a setter on the object using Reflect.defineProperty().
+				 > uses the values given by 'configurable', 'writable', 'enumerable', etc.
+			   - setter
+				 > an alias for 'set'
 		`.replace(/^\t{4}/gm, "").replace(/\s+$/, "")
 		, isNodeJS                          : _Global_String === "global"
 		, isBrowser                         : _Global_String === "window"
@@ -220,17 +279,12 @@ void (() => {
 		, __filename = document.currentScript.src;
 	}
 
-	// Other Values:
-	LibSettings.On_Conflict_Options.includes(LibSettings.ON_CONFLICT) || (LibSettings.ON_CONFLICT = "debug");
-	LibSettings.Use_Document = LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway;
 	LibSettings.ON_CONFLICT = LibSettings.ON_CONFLICT.toLowerCase();
-	LibSettings.FILE_PATH = LibSettings.isNodeJS ?
-		`${__dirname.replace(/\\/g, "/")}/${__filename}` :
-		document.currentScript.src;
+	LibSettings.On_Conflict_Options.includes(LibSettings.ON_CONFLICT) ||
+		(LibSettings.ON_CONFLICT = "default");
 
 	///////////////////////////////////////////// DEFAULTS START /////////////////////////////////////////////
-
-	// with (LibSettings) { ... } would make this so much better
+	LibSettings.Globlize_Library_Variables_Object === "default" && (LibSettings.Globlize_Library_Variables_Object = !0);
 	LibSettings.Globlize_Library_Variables_Object === "default" && (LibSettings.Globlize_Library_Variables_Object = !0);
 	LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM  === "default" && (LibSettings.MATH_TEMPCONV_DEFAULT_END_SYSTEM  = "C");
 	LibSettings.Use_Orig_Args_For_Deprecated_Fns  === "default" && (LibSettings.Use_Orig_Args_For_Deprecated_Fns  = !0);
@@ -283,31 +337,40 @@ void (() => {
 
 	////////////////////////////////////////////// DEFAULTS END //////////////////////////////////////////////
 
+	// Other Values:
+	LibSettings.Use_Document = !!(LibSettings.isBrowser || LibSettings.Do_DOM_Things_In_Node_Anyway);
+	LibSettings.FILE_PATH = LibSettings.isNodeJS ?
+		__filename :
+		document.currentScript.src;
+
 	LibSettings.Clear_SessionStorage && sessionStorage?.clear?.();
 	LibSettings.Clear_LocalStorage && localStorage?.clear?.();
+
+	// console.log(LibSettings);
 } /* Variables & Functions definitions: */ {
 	/* Local Variables (may also be global) */ {
 		// NOTE: Maximum Array length allowed: 4,294,967,295 (2^32 - 1)
 		// NOTE: Maximum BigInt value allowed: 2^1,073,741,823
 		// Array(10).fill([]) does a different thing than [[],[],[],[],[],[],[],[],[],[]]
 		var [getOldGlobals, getNewGlobals] = (function getGlobals_closure() {
-			const old_globals = Reflect.ownKeys(globalThis);
+			const oldGlobals = Reflect.ownKeys(globalThis);
+
 			return [
 				function getOldGlobals() {
 					// in case things have been deleted
-					return Reflect.ownKeys(globalThis).filter( s => old_globals.includes(s) );
+					return Reflect.ownKeys(globalThis).filter( s => oldGlobals.includes(s) );
 				},
 				function getNewGlobals() {
-					return Reflect.ownKeys(globalThis).filter( s => !old_globals.includes(s) );
+					return Reflect.ownKeys(globalThis).filter( s => !oldGlobals.includes(s) );
 				}
-			]
+			];
 		})();
 		if (LibSettings.Add_All_GlobalNames) {
 			globalThis.self       ??= globalThis; // browser
-			globalThis.global     ??= globalThis; // node.js
 			globalThis.window     ??= globalThis; // browser
-			globalThis.globalThis ??= globalThis; // both
 			globalThis.frames     ??= globalThis; // browser
+			globalThis.global     ??= globalThis; // node.js
+			globalThis.globalThis ??= globalThis; // both
 		}
 		for (var i = 10, j, multable = [[],[],[],[],[],[],[],[],[],[]]; i --> 0 ;)
 			for (j = 10; j --> 0 ;)
@@ -336,10 +399,10 @@ void (() => {
 						CONFLICT_ARR,
 						stringifyScope(val, scopename, list, orig_str)
 					);
-				},
-				writable: !1,
-				enumerable: !1,
-				configurable: !1,
+				}, writable    : !1
+				, enumerable   : !1
+				, configurable : !1
+				,
 			}
 		}), DEFER_ARR = [], LOCAL_DEFER_ARR = [], MathObjects = Object.create(null)
 		//////////////////////////////// START OF CONSTANTS ////////////////////////////////
@@ -349,7 +412,7 @@ void (() => {
 		, alphabetU = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		, base62Numerals = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		, characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()`~[]{}|;:',.<>/?-_=+ \"\\"
-		, π      = 3.1415926535897932  , π_2   = 1.5707963267948966
+		, pi     = 3.1415926535897932  , π_2   = 1.5707963267948966
 		, π_3    = 1.0471975511965979  , π2_3  = 2.0943951023931957
 		, π_4    = 0.7853981633974483  , π3_4  = 2.3561944901923449
 		, π5_4   = 3.9269908169872414  , π7_4  = 5.4977871437821382
@@ -366,7 +429,7 @@ void (() => {
 		, foia2  = 1.1874523511265010 // Foia's second constant. exact form
 		, e      = 2.7182818284590452
 		, tau    = 6.2831853071795864
-		, pi     = π
+		, π      = pi
 		, symbolToString = (function symbolToString_closure() {
 			const builtInSymbols = Reflect.ownKeys(Symbol)
 				.map(e => [e, Symbol[e]])
@@ -375,32 +438,41 @@ void (() => {
 			function symbolToString(symbol, evalable = true) {
 				// `evalable == true` means eval(output) will not throw an error.
 				if (typeof symbol !== "symbol") {
-					if (typeof symbol?.valueOf?.() !== "symbol")
-						return;
-					/* this case is possible:
-					symbolToString(
-						(function () { return this }).bind( Symbol() )()
-					) */
+					if (symbol == null) return;
+					if (typeof symbol.valueOf !== "function") return;
+					if (typeof symbol.valueOf() !== "symbol") return;
+					/*
+					these cases are possible:
+						- symbolToString(
+							(function () { return this }).bind( Symbol() )()
+						)
+
+						- new Proxy({}, { get: () => true })
+							proxies are symbols for some reason when doing toString.
+					*/
 					symbol = symbol.valueOf();
 				}
 				for (const [name, value] of builtInSymbols)
 					if (symbol === value)
-						return `${evalable ? "" : "Symbol("}Symbol.${
-							name
-						}${evalable ? "" : ")"}`;
+						return `${ evalable ? "" : "Symbol("
+							}Symbol.${ name
+							}${ evalable ? "" : ")"
+							}`;
 
 				return evalable ?
 					`Symbol${ Symbol.keyFor(symbol) === void 0 ? "" : ".for"
-						}(${symbol.description === void 0  ? "" : '"'
-						}${
-							symbol.description?.replace?.(/"/g, '\\"') ?? ""
-						}${symbol.description === void 0  ? "" : '"'
+						}(${ symbol.description === void 0  ? "" : '"'
+						}${ symbol.description?.replace?.(/"/g, '\\"') ?? ""
+						}${ symbol.description === void 0  ? "" : '"'
 						})` :
-					`Symbol${Symbol.keyFor(symbol) === void 0 ? "" : ".for"}(${symbol.description})`;
+					`Symbol${ Symbol.keyFor(symbol) === void 0 ? "" : ".for"
+						}(${ symbol.description
+						})`;
 			}
 
-			return symbolToString._builtInSymbols = builtInSymbols,
-				symbolToString;
+			symbolToString._builtInSymbols = builtInSymbols;
+
+			return symbolToString;
 		})(), json = Object.create(Object.prototype, {
 			parse: {
 				// TODO/FIN: Finish
@@ -411,6 +483,7 @@ void (() => {
 				, writable: !1
 				, enumerable: !1
 				, configurable: !1
+				,
 			}, stringify: {
 				value: function stringify(
 					object, {
@@ -484,54 +557,59 @@ void (() => {
 								else break;
 							}
 							return output + `${spacesAtEnds ? space : ""}}`;
-						default: throw Error("that type is not supposed to exist.");
+						default: throw Error`that type is not supposed to exist.`;
 					}
-					throw Error("it is supposed to be impossible to get here.");
+					throw Error`it is supposed to be impossible to get here.`;
 				}
 				, writable: !1
 				, enumerable: !1
 				, configurable: !1
+				,
 			}, _JSON: {
 				value: JSON
 				, writable: !1
 				, enumerable: !1
 				, configurable: !1
+				,
 			}, [Symbol.toStringTag]: {
 				value: "JSON"
 				, writable: !1
 				, enumerable: !1
 				, configurable: !1
+				,
 			},
 		}), list = Array.from
 		, int = Number.parseInt
 		, rand = Math.random // I don't yet know how to make my own version of this.
 		//////////////////////////////// END OF CONSTANTS ////////////////////////////////
-		, sgn = x => typeof x === "number" ?
-			x < 0 ?
-				-1 :
-				Number.isNaN(x) ?
-					NaN :
-					+(x > 0) :
-			typeof x === "bigint" ?
-				x < 0n ?
-					-1n :
-					BigInt(x > 0n) :
-				LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
-					LIBRARY_VARIABLES.MathObjects.cMath.sgn(x) :
-					typeof x === "boolean" ?
-						+x :
-						NaN
-		, abs = x => LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
-			LIBRARY_VARIABLES.MathObjects.cMath.abs(x) :
-			x * sgn(x)
-		// document.all == null ????!!/? what!?!?
-		, constr = function constructorName(input) {
-			return input == null ?
-				input :
-				input?.constructor?.name;
-		}, lastElement = function lastElement() { return this[this.length - 1] }
-		, isArr = function isArray(thing) { return thing instanceof Array }
-		, chr = function chr(integer) { return String.fromCharCode( Number(integer) ) }
+		, getLastElement = function getLastElement() { return this[this.length - 1] }
+		, setLastElement = function setLastElement(value) { this[this.length - !!this.length] = value }
+		, isArr = thing => thing instanceof Array
+		, chr = int => String.fromCharCode( Number(int) )
+		, sgn = x =>
+			typeof x === "number" ?
+				x < 0 ?
+					-1 :
+					Number.isNaN(x) ?
+						NaN :
+						+(x > 0) :
+				typeof x === "bigint" ?
+					x < 0n ?
+						-1n :
+						BigInt(x > 0n) :
+					LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
+						LIBRARY_VARIABLES.MathObjects.cMath.sgn(x) :
+						typeof x === "boolean" ?
+							+x :
+							NaN
+		, abs = x =>
+			LIBRARY_VARIABLES?.type?.(x, 1) === "complex" ?
+				LIBRARY_VARIABLES.MathObjects.cMath.abs(x) :
+				x * sgn(x)
+		, constr = thing =>
+			thing == null ?
+				thing :
+				thing?.constructor?.name
 		, deepCopy = function deepCopy(object) {
 			// this is a safe eval
 			return eval( json.stringify(object) );
@@ -635,10 +713,10 @@ void (() => {
 			// TODO: Make a faster way of filtering out infinite generators
 			if (arr1?.constructor?.prototype?.[Symbol.toStringTag] === "Generator")
 				try { arr1 = Array.from(arr1) }
-				catch { throw Error("Infinite generators cannot be zipped. argument index 0") }
+				catch { throw Error`Infinite generators cannot be zipped. (arr1)` }
 			if (arr2?.constructor?.prototype?.[Symbol.toStringTag] === "Generator")
 				try { arr2 = Array.from(arr2) }
-				catch { throw Error("Infinite generators cannot be zipped. argument index 1") }
+				catch { throw Error`Infinite generators cannot be zipped. (arr2)` }
 			if (!isIterable(arr1) || !isIterable(arr2)) return [arr1, arr2];
 			for (var output = [], length = Math.min(arr1.length, arr2.length), i = 0; i < length; i++)
 				output.push([ arr1[i] , arr2[i] ]);
@@ -738,11 +816,15 @@ void (() => {
 					}
 					else if (str[i] === nextCharacter) return [!0, i];
 				}
-			} function isInvalidSymbolDotFor(str="", nextCharacter="]") {
+			}
+
+			function isInvalidSymbolDotFor(str="", nextCharacter="]") {
 				let [isInvalid, endBracketIndex] = isInvalidString(str.slice(11), ")");
 				endBracketIndex += 12;
 				return [str[endBracketIndex] !== nextCharacter ? !1 : isInvalid, endBracketIndex];
-			} function stringToObject(
+			}
+
+			function stringToObject(
 				str = "globalThis" // string to convert into an object
 				, scope = globalThis
 				, removeSpaces = true
@@ -784,16 +866,16 @@ void (() => {
 					}
 					if (str[i] === "[") {
 						i++;
-						let tmpstr = str.substr(i);
+						let tmpstr = str.slice(i);
 						switch (!0) {
 							// Boolean:
-							case tmpstr.substr(0, 6) === "false]":
-							case tmpstr.substr(0, 5) === "true]":
+							case tmpstr.substring(0, 6) === "false]":
+							case tmpstr.substring(0, 5) === "true]":
 							// nullish:
-							case tmpstr.substr(0, 5) === "null]":
-							case tmpstr.substr(0, 10) === "undefined]":
+							case tmpstr.substring(0, 5) === "null]":
+							case tmpstr.substring(0, 10) === "undefined]":
 							// Number, NaN:
-							case tmpstr.substr(0, 4) === "NaN]":
+							case tmpstr.substring(0, 4) === "NaN]":
 							case !isNaN(+tmpstr.slice(0, tmpstr.indexOf("]"))):
 							// BigInt:
 							case tmpstr[tmpstr.indexOf("]")-1] === "n" && !isNaN( +tmpstr.slice(0, tmpstr.indexOf("]")-1) ):
@@ -807,7 +889,7 @@ void (() => {
 								i += endBracketIndex + 1;
 								break;
 							// Symbol.for:
-							case tmpstr.substr(0, 11) === "Symbol.for(":
+							case tmpstr.substring(0, 11) === "Symbol.for(":
 								var [isInvalid, endBracketIndex] = isInvalidSymbolDotFor(tmpstr, "]");
 								if (isInvalid)
 									throw Error(`invalid Symbol.for(...) computed member access at index ${i}`)
@@ -846,8 +928,10 @@ void (() => {
 				);
 				return scope;
 			}
+
 			stringToObject._isInvalidString = isInvalidString;
 			stringToObject._isInvalidSymbolDotFor = isInvalidSymbolDotFor;
+
 			return stringToObject;
 		})(), define = (function define_closure() {
 
@@ -858,7 +942,6 @@ void (() => {
 					, scopename?.replace?.(/\s*\w+\s*$/, "")?.split?.(/\s+/g) || []
 					, orig_str,
 				];
-				CONFLICT_ARR.push(args);
 				if (ON_CONFLICT === "crash") throw Error(`${stringifyScope(...args)} is already defined and LibSettings.ON_CONFLICT is set to 'crash'`);
 				if (ON_CONFLICT === "cry") console.log(`${stringifyScope(...args)} overwritten and LibSettings.ON_CONFLICT is set to cry.`);
 
@@ -871,14 +954,20 @@ void (() => {
 			function createList(str) {
 				var list = str.replace(/^\s+|\s+$/g, "")
 					, name;
+
 				if ("'\"`".includes( list[list.length - 1] )) {
 					let char = list.at(-1)
-						, i = list.length - 1; // this `- 1` is intentional
-					while (i --> 0) if (list[i] === char) break;
-					if (i < 0) throw Error("name quotation only has no beginning");
+						, i = list.length - 1;
 
-					name = list.slice(i+1);
+					while (i --> 0)
+						if (list[i] === char)
+							break;
+
+					if (i < 0)
+						throw Error`name quotation only has no beginning`;
+
 					list = list.slice(0, i);
+					name = list.slice(i + 1);
 				}
 				else {
 					const regex = list.match(/\S+$/);
@@ -886,7 +975,11 @@ void (() => {
 					list = list.slice(0, regex.index);
 				}
 				return [
-					Array.from(new Set( list.split(/\s+/g).filter(e => e).map(s => s.toLowerCase()) )),
+					Array.from(new Set(
+						list.split(/\s+/g)
+							.filter(e => e)
+							.map(s => s.toLowerCase())
+						)),
 					name
 				];
 			}
@@ -929,6 +1022,13 @@ void (() => {
 				, value = customValue === void 0 ?
 					LIBRARY_VARIABLES[str] :
 					customValue;
+
+				if (list.includes("native"))
+					;//debugger;
+
+				list.includes("getter") && list.push("get");
+				list.includes("setter") && list.push("set");
+				list.includes("get") && list.includes("set") && list.push("accessor");
 
 				if (list.includes("auto") || list.includes("archived") || list.includes("ignore"))
 					return;
@@ -1020,7 +1120,7 @@ void (() => {
 					if (list.includes("defer") && !section)
 						return LibSettings.LOCAL_DEFER_ARR.push(str);
 					if (list.includes("overwrite") || list.includes("native"))
-						throw Error("overwrite and native are not supported for locals");
+						throw Error`overwrite and native are not supported for locals`;
 					if (list.includes("instance")) previous = new value;
 					else if (list.includes("call")) previous = value();
 					else previous = value;
@@ -1063,13 +1163,20 @@ void (() => {
 					!list.includes("property") &&
 					!list.includes("get") &&
 					!list.includes("set") &&
+					!list.includes("accessor") &&
 					!LibSettings.Property_Is_Default_Defined_Vars
 				) return scope[name] = previous;
 
-				// `get` implicitly implies `property`
-				// currently requires `configurable` if adding a setter after.
-				// adding getters and setters at the same time will probably
-					// be added at some point.
+				if (list.includes("accessor"))
+					return Reflect.defineProperty(scope, name, {
+						get: previous.get
+						, set: previous.set
+						, configurable: list.includes("configurable") ||
+							!!LibSettings.Defined_Properties_Configurable
+						, enumerable: list.includes("enumerable") ||
+							!!LibSettings.Defined_Properties_Enumerable
+					});
+
 				if (list.includes("get")) return Reflect.defineProperty(scope, name, {
 					get: previous
 					, configurable: list.includes("configurable") ||
@@ -1078,7 +1185,6 @@ void (() => {
 						!!LibSettings.Defined_Properties_Enumerable
 				});
 
-				// setter. the same things that apply to `get` also apply to `set`.
 				if (list.includes("set")) return Reflect.defineProperty(scope, name, {
 					set: previous
 					, configurable: list.includes("configurable") ||
@@ -1087,7 +1193,7 @@ void (() => {
 						!!LibSettings.Defined_Properties_Enumerable
 				});
 
-				// no getter
+				// no getter/setter
 				return Reflect.defineProperty(scope, name, {
 					value: previous
 					, configurable: list.includes("configurable") ||
@@ -1201,7 +1307,7 @@ void (() => {
 						);
 						if (i === Infinity) {
 							i = rMath.min([ arr.io("+"), arr.io("-") ].filter(e => e !== -1));
-							if (i === Infinity) throw Error("Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.");
+							if (i === Infinity) throw Error`Invalid input. either operators are missing between values, or operator that is not supported was used, or something else, idk.`;
 						}
 					}
 					code = code.replace(
@@ -1342,8 +1448,8 @@ void (() => {
 			arrayOneLine      = true,
 			arrayOneLineSpace = " ", // if " ", [ ITEM ]. if "\t", [\tITEM\t]. etc
 		}={}) {
-			if (type(code) !== "string") throw TypeError("formatjson() requires a string");
-			try { JSON.parse(code) } catch { throw TypeError("formatjson() requires a JSON string") }
+			if (type(code) !== "string") throw TypeError`formatjson() requires a string`;
+			try { JSON.parse(code) } catch { throw TypeError`formatjson() requires a JSON string` }
 			if (/^\s*\{\s*\}\s*$/.test(code)) return "{}";
 			if (/^\s*\[\s*\]\s*$/.test(code)) return "[]";
 			if (/^("|'|`)(.|\n)*\1$/.test( code.remove(/\s+/g) ))
@@ -1517,11 +1623,15 @@ void (() => {
 			}
 
 			return outString;
+		}, splitByLength = function splitByLength(input, length = 1, strict=false) {
+			return input.match(
+				RegExp(`.{${strict ? "" : "1,"}${length}}`, "gs")
+			);
 		}
 		if (LibSettings.Use_Document)
 		var createElement = function createElement(element, options={}) {
 			if (typeof element !== "string") {
-				if (element == null) throw Error("undefined element name");
+				if (element == null) throw Error`undefined element name`;
 				options = element;
 				element = element.element;
 				delete options.element;
@@ -1609,187 +1719,14 @@ void (() => {
 	}
 	// Variables in LIBRARY_VARIABLES will be globalized unless explicitly localized.
 	var LIBRARY_VARIABLES = {
-	"call LinkedList"() {
-		class Node {
-			constructor(value, next=null) {
-				this.value = value;
-				this.next = next;
-			}
-		}
-		class LinkedList {
-			constructor(head) {
-				this.size = 0;
-				this.head = head == null ? null : new Node(head);
-			}
-			insertLast(value) {
-				if (!this.size) return this.insertFirst(value);
-				this.size++;
-				for (var current = this.head; current.next ;)
-					current = current.next;
-				current.next = new Node(value);
-				return this;
-			}
-			insertAt(value, index=0) {
-				if (index < 0 || index > this.size) throw Error(`Index out of range: index: ${index}`);
-				if (!index) return this.insertFirst(value);
-				if (index === this.size) return this.insertLast(value);
-				for (var current = this.head; index --> 0 ;)
-					current = current.next;
-				this.size++;
-				current.next = new Node(value, current.next)
-				return this;
-			}
-			getAt(index=0) {
-				if (index < 0 || index > this.size) throw Error(`Index out of range. index: ${index}`);
-				for (var current = this.head; index --> 0 ;)
-					current = current.next;
-				return current;
-			}
-			removeAt(index) {
-				if (index < 0 || index > this.size) throw Error(`Index out of range. index: ${index}`);
-				for (var current = this.head; index --> 1 ;)
-					current = current.next;
-				current.next = current.next.next; // Garbage Collector Will worry about this
-				this.size--;
-				return this;
-			}
-			insertFirst(value) {
-				this.head = new Node(value, this.head);
-				this.size++;
-				return this;
-			}
-			reverse() {
-				for (var cur = this.head, prev = null, next; cur ;)
-					[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
-				this.head = prev ?? this.head;
-				return this;
-			}
-			toArray() {
-				for (var current = this.head, a = []; current ;) {
-					a.push(current.value);
-					current = current.next;
-				}
-				return a;
-			}
-			clear() {
-				this.head = null;
-				this.size = 0;
-				return this;
-			}
-			Node() { return new Node(...arguments) }
-			__type__() { return "linkedlist" }
-		}
-		LinkedList._Node = Node;
-		return LinkedList;
-	}, "ifdom call native Image"() {
-		// the function can still be used the same as before
-		const _Image = globalThis.Image;
-		function Image(width, height, options={}) {
-			let image = new _Image(width, height);
-			for (const e of Object.keys(options))
-				image[e] = options[e];
-			return image;
-		}
-		Image._Image = _Image;
-		return Image;
-	}, "call md5"(n) {
-		// I did not write this one.
-		function r(n, r) {
-			var t = (65535 & n) + (65535 & r);
-			return (n >> 16) + (r >> 16) + (t >> 16) << 16 | 65535 & t
-		}
-		function t(n, t, e, u, o, c) { return r((f=r(r(t, n), r(u, c))) << (i=o) | f >>> 32 - i, e) }
-		function e(n, r, e, u, o, c, f) { return t(r & e | ~r & u, n, r, o, c, f) }
-		function u(n, r, e, u, o, c, f) { return t(r & u | e & ~u, n, r, o, c, f) }
-		function o(n, r, e, u, o, c, f) { return t(r ^ e ^ u, n, r, o, c, f) }
-		function c(n, r, e, u, o, c, f) { return t(e ^ (r | ~u), n, r, o, c, f) }
-		function f(n, t) {
-			n[t >> 5] |= 128 << t % 32, n[14 + (t + 64 >>> 9 << 4)] = t;
-			for (var f=0,i,a,h,l,v=1732584193, d=-271733879, g=-1732584194, s=271733878; f < n.length; f += 16)
-				i = v, a = d, h = g, l = s,
-				v = e(v, d, g, s, n[f], 7, -680876936), s = e(s, v, d, g, n[f + 1], 12, -389564586),
-				g = e(g, s, v, d, n[f + 2], 17, 606105819), d = e(d, g, s, v, n[f + 3], 22, -1044525330),
-				v = e(v, d, g, s, n[f + 4], 7, -176418897), s = e(s, v, d, g, n[f + 5], 12, 1200080426),
-				g = e(g, s, v, d, n[f + 6], 17, -1473231341), d = e(d, g, s, v, n[f + 7], 22, -45705983),
-				v = e(v, d, g, s, n[f + 8], 7, 1770035416), s = e(s, v, d, g, n[f + 9], 12, -1958414417),
-				g = e(g, s, v, d, n[f + 10], 17, -42063), d = e(d, g, s, v, n[f + 11], 22, -1990404162),
-				v = e(v, d, g, s, n[f + 12], 7, 1804603682), s = e(s, v, d, g, n[f + 13], 12, -40341101),
-				g = e(g, s, v, d, n[f + 14], 17, -1502002290),
-				v = u(v, d = e(d, g, s, v, n[f + 15], 22, 1236535329), g, s, n[f + 1], 5, -165796510),
-				s = u(s, v, d, g, n[f + 6], 9, -1069501632), g = u(g, s, v, d, n[f + 11], 14, 643717713),
-				d = u(d, g, s, v, n[f], 20, -373897302), v = u(v, d, g, s, n[f + 5], 5, -701558691),
-				s = u(s, v, d, g, n[f + 10], 9, 38016083), g = u(g, s, v, d, n[f + 15], 14, -660478335),
-				d = u(d, g, s, v, n[f + 4], 20, -405537848), v = u(v, d, g, s, n[f + 9], 5, 568446438),
-				s = u(s, v, d, g, n[f + 14], 9, -1019803690), g = u(g, s, v, d, n[f + 3], 14, -187363961),
-				d = u(d, g, s, v, n[f + 8], 20, 1163531501), v = u(v, d, g, s, n[f + 13], 5, -1444681467),
-				s = u(s, v, d, g, n[f + 2], 9, -51403784), g = u(g, s, v, d, n[f + 7], 14, 1735328473),
-				v = o(v, d = u(d, g, s, v, n[f + 12], 20, -1926607734), g, s, n[f + 5], 4, -378558),
-				s = o(s, v, d, g, n[f + 8], 11, -2022574463), g = o(g, s, v, d, n[f + 11], 16, 1839030562),
-				d = o(d, g, s, v, n[f + 14], 23, -35309556), v = o(v, d, g, s, n[f + 1], 4, -1530992060),
-				s = o(s, v, d, g, n[f + 4], 11, 1272893353), g = o(g, s, v, d, n[f + 7], 16, -155497632),
-				d = o(d, g, s, v, n[f + 10], 23, -1094730640), v = o(v, d, g, s, n[f + 13], 4, 681279174),
-				s = o(s, v, d, g, n[f], 11, -358537222), g = o(g, s, v, d, n[f + 3], 16, -722521979),
-				d = o(d, g, s, v, n[f + 6], 23, 76029189), v = o(v, d, g, s, n[f + 9], 4, -640364487),
-				s = o(s, v, d, g, n[f + 12], 11, -421815835), g = o(g, s, v, d, n[f + 15], 16, 530742520),
-				v = c(v, d = o(d, g, s, v, n[f + 2], 23, -995338651), g, s, n[f], 6, -198630844),
-				s = c(s, v, d, g, n[f + 7], 10, 1126891415), g = c(g, s, v, d, n[f + 14], 15, -1416354905),
-				d = c(d, g, s, v, n[f + 5], 21, -57434055), v = c(v, d, g, s, n[f + 12], 6, 1700485571),
-				s = c(s, v, d, g, n[f + 3], 10, -1894986606), g = c(g, s, v, d, n[f + 10], 15, -1051523),
-				d = c(d, g, s, v, n[f + 1], 21, -2054922799), v = c(v, d, g, s, n[f + 8], 6, 1873313359),
-				s = c(s, v, d, g, n[f + 15], 10, -30611744), g = c(g, s, v, d, n[f + 6], 15, -1560198380),
-				d = c(d, g, s, v, n[f + 13], 21, 1309151649), v = c(v, d, g, s, n[f + 4], 6, -145523070),
-				s = c(s, v, d, g, n[f + 11], 10, -1120210379), g = c(g, s, v, d, n[f + 2], 15, 718787259),
-				d = c(d, g, s, v, n[f + 9], 21, -343485551), v = r(v, i), d = r(d, a), g = r(g, h), s = r(s, l);
-			return [v, d, g, s]
-		}
-		function i(n) {
-			for (var r = 0, t = "", e = 32 * n.length; r < e; r += 8)
-				t += String.fromCharCode(n[r >> 5] >>> r % 32 & 255);
-			return t
-		}
-		function a(n) {
-			var r, t = [];
-			for (t[(n.length >> 2) - 1] = void 0, r = 0; r < t.length; r++) t[r] = 0;
-			var e = 8 * n.length;
-			for (r = 0; r < e; r += 8) t[r >> 5] |= (255 & n.charCodeAt(r / 8)) << r % 32;
-			return t
-		}
-		function h(n) {
-			var r, t, e = "0123456789abcdef", u = "";
-			for (t = 0; t < n.length; t++)
-				r = n.charCodeAt(t),
-				u += e.charAt(r >>> 4 & 15) + e.charAt(15 & r);
-			return u
-		}
-		function l(n) { return unescape(encodeURIComponent(n)) }
-		var ff = f, ii = i;
-		function v(n) { return n = l(n), ii(ff(a(n), 8 * n.length)) }
-		function d(n, r) {
-			return function(n, r) {
-				var t, e, u = a(n), o = [], c = [];
-				for (o[15] = c[15] = void 0, u.length > 16 && (u = f(u, 8 * n.length)), t = 0; t < 16; t++)
-					o[t] = 909522486 ^ u[t], c[t] = 1549556828 ^ u[t];
-				return e = f(o.concat(a(r)), 512 + 8 * r.length),
-				i(f(c.concat(e), 640))
-			}(l(n), l(r))
-		}
-		return function md5(n, r, t) {
-			return r !== void 0 ?
-				t !== void 0 ?
-					d(r, n) :
-					h( d(r, n) ) :
-				t !== void 0 ?
-					v(n) :
-					h(v(n));
-		}
-	}, enumerate(iterable) {
+	enumerate(iterable) {
 		if (!isIterable(iterable)) return [0, iterable];
 		return arrzip( Object.keys(iterable).map(e => +e), iterable );
 	}, help(str) {
 		// eval doesn't matter here because this function is for developer use only.
 		try { eval(str) }
 		catch (err) {
-			if (/SyntaxError: Unexpected token '.+'/.in(`${err}`)) {
+			if (/SyntaxError: Unexpected token '.+'/.test(`${err}`)) {
 				open(`https://developer.mozilla.org/en-US/search?q=${/'(.+)'/.exec(`${err}`)[1]}`, "_blank");
 				return "Keyword";
 			}
@@ -1797,45 +1734,52 @@ void (() => {
 				open(`https://developer.mozilla.org/en-US/search?q=${str}`, "_blank");
 				return "Keyword";
 			}
-		} try {
-			var fn = eval(str);
+		}
+
+		try {
+			const fn = eval(str);
+
 			if (typeof fn === "function") {
 				if (`${fn}`.endsWith("() { [native code] }")) {
 					open(`https://developer.mozilla.org/en-US/search?q=${str}()`, "_blank");
 					return "Native Function. arguments/docstring can't be retrieved. Use the official JS documentation";
 				}
-				return console.log(`${getDocstring(fn)}`), `Function: arguments = ${getArguments(fn)}`;
+
+				console.log( getDocstring(fn) );
+
+				return `Function: arguments = ${getArguments(fn)}`;
 			}
 		} catch {}
+
 		try { return "Variable: value = " + Function(`return ${str}`)() }
 		catch { return "Variable not Found" }
 	}, findDayOfWeek(day=0, month=0, year=0, order="dd/mm/yyyy", str=!0) {
 		// dd-mm-yyyy makes more sense in the current context.
 		if (Number.isNaN( day = Number(day) ) || !isFinite(day))
-			throw TypeError(`argument 1 either isn't finite or isn't a number`);
+			throw TypeError`argument 1 either isn't finite or isn't a number`;
 		if (Number.isNaN( month = Number(month) ) || !isFinite(month))
-			throw TypeError(`argument 2 either isn't finite or isn't a number`);
+			throw TypeError`argument 2 either isn't finite or isn't a number`;
 		if (Number.isNaN( year = Number(year) ) || !isFinite(year))
-			throw TypeError(`argument 3 either isn't finite or isn't a number`);
-		if (type(order) !== "string" ) throw TypeError(`argument 5 isn't a string`);
+			throw TypeError`argument 3 either isn't finite or isn't a number`;
+		if (type(order) !== "string" ) throw TypeError`argument 5 isn't a string`;
 		if (order !== "dd/mm/yyyy") {
 			order = order.lower().split(/\/|-/);
 			const tmp = [day, month, year]
 				, used = [!1, !1, !1];
 			for (var i = 0; i < 3; i++) switch (order[i]) {
 				case "dd":
-					if (used[0]) throw Error("Invalid input for argument 5");
+					if (used[0]) throw Error`Invalid input for argument 5`;
 					[used[0], day] = [!0, tmp[i]];
 					break;
 				case "mm":
-					if (used[1]) throw Error("Invalid input for argument 5");
+					if (used[1]) throw Error`Invalid input for argument 5`;
 					[used[1], month] = [!0, tmp[i]];
 					break;
 				case "yyyy":
-					if (used[2]) throw Error("Invalid input for argument 5");
+					if (used[2]) throw Error`Invalid input for argument 5`;
 					[used[2], year] = [!0, tmp[i]];
 					break;
-				default: throw Error("Invalid input for argument 5");
+				default: throw Error`Invalid input for argument 5`;
 			}
 		}
 		day += !day - 1, month += !month - 1;
@@ -2014,19 +1958,6 @@ void (() => {
 				max: "maxres"
 			}[resolution]}default.jpg`);
 		return alwaysReturnArray || outputArray.length - 1 ? outputArray : outputArray[0];
-	}, "call toGenerator"() {
-		function *Generator() {
-			if (isIterable(thing))
-				for (const e of thing)
-					yield e;
-			else yield thing;
-		}
-		function toGenerator(thing) {
-			return thing?.constructor?.prototype?.[Symbol.toStringTag] === "Generator" ?
-				thing :
-				Generator(thing);
-		}
-		return toGenerator.Generator = Generator, toGenerator;
 	}, fstrdiff         : function firstStringDifferenceIndex(s1, s2) {
 		// returns the index of the first difference in two strings.
 		// returns NaN if either input is not a string.
@@ -2099,25 +2030,66 @@ void (() => {
 			case string  < 90: return `eighty-${numberToWords(string[1])}`;
 			case string == 90: return "ninety";
 			case string < 100: return `ninety-${numberToWords(string[1])}`;
-			case string % 100===0 && len(string)===3: return `${numberToWords(string[0])} hundred`;
-			case string < 1e3: return `${numberToWords(string[0])} hundred and ${numberToWords(string.substr(1,2))}`;
-			case string % 1e3===0 && len(string)===4: return `${numberToWords(string[0])} thousand`;
-			case string < 1e4: return `${numberToWords(string[0])} thousand ${numberToWords(string.substr(1,3))}`;
-			case string % 1e3===0 && len(string)===5: return `${numberToWords(string.substr(0,2))} thousand`;
-			case string < 1e5: return`${numberToWords(string.substr(0,2))} thousand ${numberToWords(string.slice(2))}`;
-			case string % 1e3===0 && len(string)===6: return `${numberToWords(string.substr(0,3))} thousand`;
-			case string < 1e6: return`${numberToWords(string.substr(0,3))} thousand ${numberToWords(string.slice(3))}`;
-			case string % 1e6===0 && len(string)===7: return `${numberToWords(string[0])} million`;
-			case string < 1e7: return`${numberToWords(string[0])} million ${numberToWords(string.slice(1))}`;
-			case string % 1e6===0 && len(string)===8: return `${numberToWords(string.substr(0,2))} million`;
-			case string < 1e8: return `${numberToWords(string.substr(0,2))} million ${numberToWords(string.slice(2))}`;
-			case string % 1e6===0 && len(string)===9: return `${numberToWords(string.substr(0,3))} million`;
-			case string < 1e9: return `${numberToWords(string.substr(0,3))} million ${numberToWords(string.slice(3))}`;
-			case string % 1e9===0 && len(string)===10: return `${numberToWords(string[0])} billion`;
-			case string < 1e10: return `${numberToWords(string[0])} billion ${numberToWords(string.slice(1))}`;
-			case string % 1e9===0 && len(string)===11: return `${numberToWords(string.substr(0,2))} billion`;
-			case string < 1e11: return `${numberToWords(string.substr(0,2))} billion ${numberToWords(string.slice(2))}`;
-			default: throw Error(`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${numToStrW_s(number)}`);
+			case string % 100 === 0 && string.length === 3:
+				return `${numberToWords(string[0])} hundred`;
+			case string < 1e3:
+				return `${ numberToWords(string[0])
+				} hundred and ${ numberToWords(string.substring(1, 3))
+				}`;
+			case string % 1e3 === 0 && string.length === 4:
+				return `${numberToWords(string[0])} thousand`;
+			case string < 1e4:
+				return `${ numberToWords(string[0])
+				} thousand ${ numberToWords(string.substring(1, 4))
+				}`;
+			case string % 1e3 === 0 && string.length === 5:
+				return `${ numberToWords(string.substring(0, 2)) } thousand`;
+			case string < 1e5:
+				return`${ numberToWords(string.substring(0,2))
+				} thousand ${ numberToWords(string.slice(2))
+				}`;
+			case string % 1e3 === 0 && string.length === 6:
+				return `${ numberToWords(string.substring(0, 3)) } thousand`;
+			case string < 1e6:
+				return`${ numberToWords(string.substring(0, 3))
+				} thousand ${ numberToWords(string.slice(3))
+				}`;
+			case string % 1e6 === 0 && string.length === 7:
+				return `${ numberToWords(string[0]) } million`;
+			case string < 1e7:
+				return `${ numberToWords(string[0])
+				} million ${ numberToWords(string.slice(1))
+				}`;
+			case string % 1e6 === 0 && string.length === 8:
+				return `${ numberToWords(string.substring(0, 2))
+				} million`;
+			case string < 1e8:
+				return `${ numberToWords(string.substring(0, 2))
+				} million ${ numberToWords(string.slice(2))
+				}`;
+			case string % 1e6 === 0 && string.length === 9:
+				return `${ numberToWords(string.substring(0, 3))
+				} million`;
+			case string < 1e9:
+				return `${ numberToWords(string.substring(0, 3))
+				} million ${ numberToWords(string.slice(3))
+				}`;
+			case string % 1e9 === 0 && string.length === 10:
+				return `${ numberToWords(string[0]) } billion`;
+			case string < 1e10:
+				return `${ numberToWords(string[0])
+				} billion ${ numberToWords(string.slice(1))
+				}`;
+			case string % 1e9 === 0 && string.length === 11:
+				return `${ numberToWords(string.substring(0, 2)) } billion`;
+			case string < 1e11:
+				return `${ numberToWords(string.substring(0, 2))
+				} billion ${ numberToWords(string.slice(2))
+				}`;
+			default:
+				throw Error(
+					`Invalid Number. The function Only works for {x:|x| < 1e11}\n\t\tinput: ${
+					numToStrW_s(number)}`);
 		}
 	}, minifyjson       : function minifyJSON(code) {
 		// removes all the unnecessary spaces and things
@@ -2132,52 +2104,6 @@ void (() => {
 	}, "deprecated dir" : function currentDirectory(loc = globalThis.Error().stack) {
 		// sometimes doesn't work
 		return `${loc}`.slice(13).replace(/(.|\s)*(?=file:)|\s*at(.|\s)*|\)(?=\s+|$)/g, "");
-	}, "defer call MutableString"() {
-		// TODO: Make safety things for the functions so the user doesn't add non-character things
-		var MutStr = class MutableString extends Array {
-			constructor() {
-				// TODO: fix MutableString(["1", "2", "34"]) != MutableString("1", "2", "34")
-				// TODO: fix MutableString("1", "2", ["34"]) != MutableString("1", "2", ["3", "4"])
-				// TODO: fix MutableString(["1", "2", ["34"]]) == []
-				super();
-				this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
-				for (const e of arguments) {
-					// type() and not typeof so mutable strings also work
-					type(e) === "string" && this.union(e.split("")); // string an mutable string
-					if (isArr(e) && e.every(e => typeof e === "string"))
-						this.union(e);
-				}
-			}
-			__type__() { return "mutstr" }
-			/*override */toString(joiner="") { return this.join(joiner) }
-			/*override */valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
-			/*override */concat() { return Array.prototype.concat.apply(this, arguments) }
-			/*override */begin(str) {
-				for (var i = this.length; i --> 0 ;)
-					this[i + str.length] = this[i];
-
-				for (var i = str.length; i --> 0 ;)
-					this[i] = str[i];
-
-				return this;
-			}
-		};
-		const prototypeKeys = Reflect.ownKeys(MutStr.prototype);
-
-		// TODO: make this use Reflect.defineProperty()
-		for (const s of Reflect.ownKeys(String.prototype))
-			prototypeKeys.includes(s) || (MutStr.prototype[s] = String.prototype[s]);
-
-		function MutableString(/*arguments*/) { return new MutStr(...arguments) }
-		MutableString.fromCharCode = function fromCharCode(code) {
-			return this(
-				code instanceof Array ?
-					code.map(e => chr(e)) :
-					chr(code)
-			);
-		}
-		MutableString._MutableString = MutStr;
-		return MutableString;
 	}, str: function String(a) { return a?.toString?.call?.( [].slice.call(arguments, 1) ) }
 	, async getIp() { return (await fetch("https://api.ipify.org/")).text() }
 	, complex(re=0, im=0) { return cMath.new(re, im) }
@@ -2185,7 +2111,7 @@ void (() => {
 		a = null,
 		b = null,
 		unknown = function unknownCompare(a, b) {
-			throw Error("unknown type passed to valueCompare()");
+			throw Error`unknown type passed to valueCompare()`;
 		}
 	) {
 		// essentially a === b but for values and not references
@@ -2247,176 +2173,6 @@ void (() => {
 			return valueCompare( Array.from(a), Array.from(b) );
 		else
 			unknown(a, b);
-	}, "call native RegExp"() {
-		const _RegExp = RegExp
-		, regex = function RegExp(source="(?:)", flags="") {
-			return _RegExp(
-				typeof source === "symbol" ?
-					symbolToString(source).replace(/([-+.?*^$()[\]{}\\/\|])/g, "\\$1") :
-					source?.toString?.() ?? "(?:)",
-				Array.from( new Set(flags?.toString?.().toLowerCase?.()) ).join("") // remove repeats
-			);
-		};
-
-		// I tried both Reflect and Object.setPrototypeOf(obj, proto), neither had any effect
-		regex.prototype = _RegExp.prototype;
-
-		Reflect.defineProperty(regex, "_RegExp", {
-			get: function() { return _RegExp }
-			, set: function() { throw Error("'_RegExp' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "length", {
-			get: function() { return this._RegExp.length }
-			, set: function() { throw Error("'length' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "name", {
-			get: function() { return this._RegExp.name }
-			, set: function() { throw Error("'name' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "validFlags", {
-			value: (function get_valid_regex_flags() {
-				var flags = "";
-
-				for (var char of alphabetL)
-					try { _RegExp("", char); flags += char } catch {}
-
-				return flags;
-			})()
-			, writable: false
-			, enumerable: false
-			, configurable: false
-		});
-
-		// all of the remaining properties are deprecated.
-		Reflect.defineProperty(regex, Symbol.species, {
-			get: function() { return this._RegExp[Symbol.species] }
-			, set: function() { throw Error("`Symbol.species` property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "rightContent", {
-			get: function() { return this._RegExp.rightContent }
-			, set: function() { throw Error("'rightContent' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "leftContent", {
-			get: function() { return this._RegExp.leftContent }
-			, set: function() { throw Error("'leftContent' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "lastMatch", {
-			get: function() { return this._RegExp.lastMatch }
-			, set: function() { throw Error("'lastMatch' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "lastParen", {
-			get: function() { return this._RegExp.lastParen }
-			, set: function() { throw Error("'lastParen' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "input", {
-			get: function() { return this._RegExp.input }
-			, set: function() { throw Error("'input' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$&", {
-			get: function() { return this._RegExp["$&"] }
-			, set: function() { throw Error("'$&' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		}); // lastMatch
-		Reflect.defineProperty(regex, "$+", {
-			get: function() { return this._RegExp["$+"] }
-			, set: function() { throw Error("'$+' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		}); // lastParen
-		Reflect.defineProperty(regex, "$_", {
-			get: function() { return this._RegExp.$_ }
-			, set: function() { throw Error("'$_' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		}); // input
-		Reflect.defineProperty(regex, "$'", {
-			get: function() { return this._RegExp["$'"] }
-			, set: function() { throw Error("\"'$'\" property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		}); // rightContent
-		Reflect.defineProperty(regex, "$`", {
-			get: function() { return this._RegExp["$`"] }
-			, set: function() { throw Error("'$`' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		}); // leftContent
-		Reflect.defineProperty(regex, "$1", {
-			get: function() { return this._RegExp.$1 }
-			, set: function() { throw Error("'$1' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$2", {
-			get: function() { return this._RegExp.$2 }
-			, set: function() { throw Error("'$2' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$3", {
-			get: function() { return this._RegExp.$3 }
-			, set: function() { throw Error("'$3' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$4", {
-			get: function() { return this._RegExp.$4 }
-			, set: function() { throw Error("'$4' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$5", {
-			get: function() { return this._RegExp.$5 }
-			, set: function() { throw Error("'$5' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$6", {
-			get: function() { return this._RegExp.$6 }
-			, set: function() { throw Error("'$6' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$7", {
-			get: function() { return this._RegExp.$7 }
-			, set: function() { throw Error("'$7' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$8", {
-			get: function() { return this._RegExp.$8 }
-			, set: function() { throw Error("'$8' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-		Reflect.defineProperty(regex, "$9", {
-			get: function() { return this._RegExp.$9 }
-			, set: function() { throw Error("'$9' property of RegExp cannot be changed or deleted.") }
-			, enumerable: false
-			, configurable: false
-		});
-
-		return regex.prototype.constructor = regex,
-			regex;
 	}, HTMLElementToString(element) {
 		if (element?.constructor?.name === "DocumentType") return `<!DOCTYPE ${element?.name ?? "html"}>`;
 		if (element?.constructor?.name === "CDATASection") return `<![CDATA[${element?.textContent ?? ""}]]>`;
@@ -2455,7 +2211,7 @@ void (() => {
 		return tabs == null ?
 			code :
 			code.remove( RegExp("(?<=\n)" + tabs, "g") );
-	}, time(fn, arglist=[]) {
+	}, time(fn=()=>{}, arglist=[]) {
 		// the function should be pre-bound if required.
 		let a = 0, b = 0; // initialize so the engine knows the types.
 
@@ -2464,7 +2220,463 @@ void (() => {
 		b = performance.now();
 
 		return b - a;
-	}, comprehension: (function comprehension_closure() {
+	}, applyTemplate(htmlContent="", object={}) {
+		for (let [key, value] of Object.entries(object))
+
+			htmlContent = htmlContent.replace(
+				RegExp(`\\{${key}\\}`, "g"),
+				value
+			)
+
+		return htmlContent;
+	}
+
+	, "call require"() {
+		// change require to work with template literals
+		// these next two commands do the same thing
+		// require `fs`
+		// globalThis.fs = require("fs");
+		const _require = globalThis.require;
+
+		var require = _require == null ? function require() {
+			throw ReferenceError`require is not defined`;
+		} : function require(path) {
+			// template call
+
+			if (true
+				&& Array.isArray(path)
+				&& Array.isArray(path.raw)
+				&& path.length === 1
+				&& path.raw.length === 1
+				&& /^\w+$/.test(path[0])
+			) {
+				const value = _require(path[0]);
+
+				globalThis[path[0]] = value;
+
+				return value;
+			}
+
+			// not a template call
+
+			return _require(path);
+		};
+
+		Object.defineProperties(require, {
+			extensions : { enumerable: true, get() { return _require.extensions } },
+			resolve    : { enumerable: true, get() { return _require.resolve    } },
+			cache      : { enumerable: true, get() { return _require.cache      } },
+			main       : { enumerable: true, get() { return _require.main       } },
+		})
+
+		return require;
+	}, "call LinkedList"() {
+		class Node {
+			constructor(value, next=null) {
+				this.value = value;
+				this.next = next;
+			}
+		}
+		class LinkedList {
+			constructor(head) {
+				this.size = 0;
+				this.head = head == null ? null : new Node(head);
+			}
+			insertLast(value) {
+				if (!this.size) return this.insertFirst(value);
+				this.size++;
+				for (var current = this.head; current.next ;)
+					current = current.next;
+				current.next = new Node(value);
+				return this;
+			}
+			insertAt(value, index=0) {
+				if (index < 0 || index > this.size) throw Error(`Index out of range: index: ${index}`);
+				if (!index) return this.insertFirst(value);
+				if (index === this.size) return this.insertLast(value);
+				for (var current = this.head; index --> 0 ;)
+					current = current.next;
+				this.size++;
+				current.next = new Node(value, current.next)
+				return this;
+			}
+			getAt(index=0) {
+				if (index < 0 || index > this.size) throw Error(`Index out of range. index: ${index}`);
+				for (var current = this.head; index --> 0 ;)
+					current = current.next;
+				return current;
+			}
+			removeAt(index) {
+				if (index < 0 || index > this.size) throw Error(`Index out of range. index: ${index}`);
+				for (var current = this.head; index --> 1 ;)
+					current = current.next;
+				current.next = current.next.next; // Garbage Collector Will worry about this
+				this.size--;
+				return this;
+			}
+			insertFirst(value) {
+				this.head = new Node(value, this.head);
+				this.size++;
+				return this;
+			}
+			reverse() {
+				for (var cur = this.head, prev = null, next; cur ;)
+					[next, cur.next, prev, cur] = [cur.next, prev, cur, next];
+				this.head = prev ?? this.head;
+				return this;
+			}
+			toArray() {
+				for (var current = this.head, a = []; current ;) {
+					a.push(current.value);
+					current = current.next;
+				}
+				return a;
+			}
+			clear() {
+				this.head = null;
+				this.size = 0;
+				return this;
+			}
+			Node() { return new Node(...arguments) }
+			__type__() { return "linkedlist" }
+		}
+		LinkedList._Node = Node;
+		return LinkedList;
+	}, "ifdom call native Image"() {
+		// the function can still be used the same as before
+		const _Image = globalThis.Image;
+		function Image(width, height, options={}) {
+			let image = new _Image(width, height);
+			for (const e of Object.keys(options))
+				image[e] = options[e];
+			return image;
+		}
+		Image._Image = _Image;
+		return Image;
+	}, "defer call MutableString"() {
+		// TODO: Make safety things for the functions so the user doesn't add non-character things
+		var MutStr = class MutableString extends Array {
+			constructor() {
+				// TODO: fix MutableString(["1", "2", "34"]) != MutableString("1", "2", "34")
+				// TODO: fix MutableString("1", "2", ["34"]) != MutableString("1", "2", ["3", "4"])
+				// TODO: fix MutableString(["1", "2", ["34"]]) == []
+				super();
+				this.pop(); // there shouldn't be anything, but indexes were off before, so idk.
+				for (const e of arguments) {
+					// type() and not typeof so mutable strings also work
+					type(e) === "string" && this.union(e.split("")); // string an mutable string
+					if (isArr(e) && e.every(e => typeof e === "string"))
+						this.union(e);
+				}
+			}
+			__type__() { return "mutstr" }
+			/*override */toString(joiner="") { return this.join(joiner) }
+			/*override */valueOf(/*arguments*/) { return Array.prototype.valueOf.apply(this, arguments) }
+			/*override */concat() { return Array.prototype.concat.apply(this, arguments) }
+			/*override */start(str) {
+				for (var i = this.length; i --> 0 ;)
+					this[i + str.length] = this[i];
+
+				for (var i = str.length; i --> 0 ;)
+					this[i] = str[i];
+
+				return this;
+			}
+		};
+		const prototypeKeys = Reflect.ownKeys(MutStr.prototype);
+
+		for (const s of Reflect.ownKeys(String.prototype))
+			prototypeKeys.includes(s) || Reflect.defineProperty(MutStr.prototype, s, {
+				value: String.prototype[s],
+				writable: true,
+				enumerable: false,
+				configurable: true,
+			});
+
+		function MutableString(/*arguments*/) { return new MutStr(...arguments) }
+		MutableString.fromCharCode = function fromCharCode(code) {
+			return this (
+				code instanceof Array ?
+					code.map(e => chr(e)) :
+					chr(code)
+			);
+		}
+		MutableString._self = MutStr;
+		return MutableString;
+	}, "call native RegExp"() {
+		const _RegExp = RegExp
+		, regex = function RegExp(source="(?:)", flags="") {
+			return _RegExp(
+				typeof source === "symbol" ?
+					symbolToString(source).replace(/([-+.?*^$()[\]{}\\/\|])/g, "\\$1") :
+					source?.toString?.() ?? "(?:)",
+				Array.from( new Set(flags?.toString?.().toLowerCase?.()) ).join("") // remove repeats
+			);
+		};
+
+		// I tried both Reflect and Object.setPrototypeOf(obj, proto), neither had any effect
+		regex.prototype = _RegExp.prototype;
+
+		Reflect.defineProperty(regex, "_RegExp", {
+			get: function() { return _RegExp }
+			, set: function() { throw Error`'_RegExp' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "length", {
+			get: function() { return this._RegExp.length }
+			, set: function() { throw Error`'length' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "name", {
+			get: function() { return this._RegExp.name }
+			, set: function() { throw Error`'name' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "validFlags", {
+			value: (function get_valid_regex_flags() {
+				var flags = "";
+
+				for (var char of alphabetL)
+					try { _RegExp("", char); flags += char } catch {}
+
+				return flags;
+			})()
+			, writable: false
+			, enumerable: false
+			, configurable: false
+		});
+
+		// all of the remaining properties are deprecated.
+		Reflect.defineProperty(regex, Symbol.species, {
+			get: function() { return this._RegExp[Symbol.species] }
+			, set: function() { throw Error`'[Symbol.species]' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "rightContent", {
+			get: function() { return this._RegExp.rightContent }
+			, set: function() { throw Error`'rightContent' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "leftContent", {
+			get: function() { return this._RegExp.leftContent }
+			, set: function() { throw Error`'leftContent' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "lastMatch", {
+			get: function() { return this._RegExp.lastMatch }
+			, set: function() { throw Error`'lastMatch' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "lastParen", {
+			get: function() { return this._RegExp.lastParen }
+			, set: function() { throw Error`'lastParen' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "input", {
+			get: function() { return this._RegExp.input }
+			, set: function() { throw Error`'input' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$&", {
+			get: function() { return this._RegExp["$&"] }
+			, set: function() { throw Error`'$&' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		}); // lastMatch
+		Reflect.defineProperty(regex, "$+", {
+			get: function() { return this._RegExp["$+"] }
+			, set: function() { throw Error`'$+' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		}); // lastParen
+		Reflect.defineProperty(regex, "$_", {
+			get: function() { return this._RegExp.$_ }
+			, set: function() { throw Error`'$_' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		}); // input
+		Reflect.defineProperty(regex, "$'", {
+			get: function() { return this._RegExp["$'"] }
+			, set: function() { throw Error`"$'" property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		}); // rightContent
+		Reflect.defineProperty(regex, "$`", {
+			get: function() { return this._RegExp["$`"] }
+			, set: function() { throw Error`'$\`' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		}); // leftContent
+		Reflect.defineProperty(regex, "$1", {
+			get: function() { return this._RegExp.$1 }
+			, set: function() { throw Error`'$1' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$2", {
+			get: function() { return this._RegExp.$2 }
+			, set: function() { throw Error`'$2' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$3", {
+			get: function() { return this._RegExp.$3 }
+			, set: function() { throw Error`'$3' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$4", {
+			get: function() { return this._RegExp.$4 }
+			, set: function() { throw Error`'$4' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$5", {
+			get: function() { return this._RegExp.$5 }
+			, set: function() { throw Error`'$5' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$6", {
+			get: function() { return this._RegExp.$6 }
+			, set: function() { throw Error`'$6' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$7", {
+			get: function() { return this._RegExp.$7 }
+			, set: function() { throw Error`'$7' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$8", {
+			get: function() { return this._RegExp.$8 }
+			, set: function() { throw Error`'$8' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+		Reflect.defineProperty(regex, "$9", {
+			get: function() { return this._RegExp.$9 }
+			, set: function() { throw Error`'$9' property of RegExp cannot be changed or deleted.` }
+			, enumerable: false
+			, configurable: false
+		});
+
+		return regex.prototype.constructor = regex,
+			regex;
+	}, "call md5"(n) {
+		// I did not write this one.
+		function r(n, r) {
+			var t = (65535 & n) + (65535 & r);
+			return (n >> 16) + (r >> 16) + (t >> 16) << 16 | 65535 & t
+		}
+		function t(n, t, e, u, o, c) { return r((f=r(r(t, n), r(u, c))) << (i=o) | f >>> 32 - i, e) }
+		function e(n, r, e, u, o, c, f) { return t(r & e | ~r & u, n, r, o, c, f) }
+		function u(n, r, e, u, o, c, f) { return t(r & u | e & ~u, n, r, o, c, f) }
+		function o(n, r, e, u, o, c, f) { return t(r ^ e ^ u, n, r, o, c, f) }
+		function c(n, r, e, u, o, c, f) { return t(e ^ (r | ~u), n, r, o, c, f) }
+		function f(n, t) {
+			n[t >> 5] |= 128 << t % 32, n[14 + (t + 64 >>> 9 << 4)] = t;
+			for (var f=0,i,a,h,l,v=1732584193, d=-271733879, g=-1732584194, s=271733878; f < n.length; f += 16)
+				i = v, a = d, h = g, l = s,
+				v = e(v, d, g, s, n[f], 7, -680876936), s = e(s, v, d, g, n[f + 1], 12, -389564586),
+				g = e(g, s, v, d, n[f + 2], 17, 606105819), d = e(d, g, s, v, n[f + 3], 22, -1044525330),
+				v = e(v, d, g, s, n[f + 4], 7, -176418897), s = e(s, v, d, g, n[f + 5], 12, 1200080426),
+				g = e(g, s, v, d, n[f + 6], 17, -1473231341), d = e(d, g, s, v, n[f + 7], 22, -45705983),
+				v = e(v, d, g, s, n[f + 8], 7, 1770035416), s = e(s, v, d, g, n[f + 9], 12, -1958414417),
+				g = e(g, s, v, d, n[f + 10], 17, -42063), d = e(d, g, s, v, n[f + 11], 22, -1990404162),
+				v = e(v, d, g, s, n[f + 12], 7, 1804603682), s = e(s, v, d, g, n[f + 13], 12, -40341101),
+				g = e(g, s, v, d, n[f + 14], 17, -1502002290),
+				v = u(v, d = e(d, g, s, v, n[f + 15], 22, 1236535329), g, s, n[f + 1], 5, -165796510),
+				s = u(s, v, d, g, n[f + 6], 9, -1069501632), g = u(g, s, v, d, n[f + 11], 14, 643717713),
+				d = u(d, g, s, v, n[f], 20, -373897302), v = u(v, d, g, s, n[f + 5], 5, -701558691),
+				s = u(s, v, d, g, n[f + 10], 9, 38016083), g = u(g, s, v, d, n[f + 15], 14, -660478335),
+				d = u(d, g, s, v, n[f + 4], 20, -405537848), v = u(v, d, g, s, n[f + 9], 5, 568446438),
+				s = u(s, v, d, g, n[f + 14], 9, -1019803690), g = u(g, s, v, d, n[f + 3], 14, -187363961),
+				d = u(d, g, s, v, n[f + 8], 20, 1163531501), v = u(v, d, g, s, n[f + 13], 5, -1444681467),
+				s = u(s, v, d, g, n[f + 2], 9, -51403784), g = u(g, s, v, d, n[f + 7], 14, 1735328473),
+				v = o(v, d = u(d, g, s, v, n[f + 12], 20, -1926607734), g, s, n[f + 5], 4, -378558),
+				s = o(s, v, d, g, n[f + 8], 11, -2022574463), g = o(g, s, v, d, n[f + 11], 16, 1839030562),
+				d = o(d, g, s, v, n[f + 14], 23, -35309556), v = o(v, d, g, s, n[f + 1], 4, -1530992060),
+				s = o(s, v, d, g, n[f + 4], 11, 1272893353), g = o(g, s, v, d, n[f + 7], 16, -155497632),
+				d = o(d, g, s, v, n[f + 10], 23, -1094730640), v = o(v, d, g, s, n[f + 13], 4, 681279174),
+				s = o(s, v, d, g, n[f], 11, -358537222), g = o(g, s, v, d, n[f + 3], 16, -722521979),
+				d = o(d, g, s, v, n[f + 6], 23, 76029189), v = o(v, d, g, s, n[f + 9], 4, -640364487),
+				s = o(s, v, d, g, n[f + 12], 11, -421815835), g = o(g, s, v, d, n[f + 15], 16, 530742520),
+				v = c(v, d = o(d, g, s, v, n[f + 2], 23, -995338651), g, s, n[f], 6, -198630844),
+				s = c(s, v, d, g, n[f + 7], 10, 1126891415), g = c(g, s, v, d, n[f + 14], 15, -1416354905),
+				d = c(d, g, s, v, n[f + 5], 21, -57434055), v = c(v, d, g, s, n[f + 12], 6, 1700485571),
+				s = c(s, v, d, g, n[f + 3], 10, -1894986606), g = c(g, s, v, d, n[f + 10], 15, -1051523),
+				d = c(d, g, s, v, n[f + 1], 21, -2054922799), v = c(v, d, g, s, n[f + 8], 6, 1873313359),
+				s = c(s, v, d, g, n[f + 15], 10, -30611744), g = c(g, s, v, d, n[f + 6], 15, -1560198380),
+				d = c(d, g, s, v, n[f + 13], 21, 1309151649), v = c(v, d, g, s, n[f + 4], 6, -145523070),
+				s = c(s, v, d, g, n[f + 11], 10, -1120210379), g = c(g, s, v, d, n[f + 2], 15, 718787259),
+				d = c(d, g, s, v, n[f + 9], 21, -343485551), v = r(v, i), d = r(d, a), g = r(g, h), s = r(s, l);
+			return [v, d, g, s]
+		}
+		function i(n) {
+			for (var r = 0, t = "", e = 32 * n.length; r < e; r += 8)
+				t += String.fromCharCode(n[r >> 5] >>> r % 32 & 255);
+			return t
+		}
+		function a(n) {
+			var r, t = [];
+			for (t[(n.length >> 2) - 1] = void 0, r = 0; r < t.length; r++) t[r] = 0;
+			var e = 8 * n.length;
+			for (r = 0; r < e; r += 8) t[r >> 5] |= (255 & n.charCodeAt(r / 8)) << r % 32;
+			return t
+		}
+		function h(n) {
+			var r, t, e = "0123456789abcdef", u = "";
+			for (t = 0; t < n.length; t++)
+				r = n.charCodeAt(t),
+				u += e.charAt(r >>> 4 & 15) + e.charAt(15 & r);
+			return u
+		}
+		function l(n) { return unescape(encodeURIComponent(n)) }
+		var ff = f, ii = i;
+		function v(n) { return n = l(n), ii(ff(a(n), 8 * n.length)) }
+		function d(n, r) {
+			return function(n, r) {
+				var t, e, u = a(n), o = [], c = [];
+				for (o[15] = c[15] = void 0, u.length > 16 && (u = f(u, 8 * n.length)), t = 0; t < 16; t++)
+					o[t] = 909522486 ^ u[t], c[t] = 1549556828 ^ u[t];
+				return e = f(o.concat(a(r)), 512 + 8 * r.length),
+				i(f(c.concat(e), 640))
+			}(l(n), l(r))
+		}
+		return function md5(n, r, t) {
+			return r !== void 0 ?
+				t !== void 0 ?
+					d(r, n) :
+					h( d(r, n) ) :
+				t !== void 0 ?
+					v(n) :
+					h(v(n));
+		}
+	}, "call toGenerator"() {
+		function *Generator() {
+			if (isIterable(thing))
+				for (const e of thing)
+					yield e;
+			else yield thing;
+		}
+		function toGenerator(thing) {
+			return thing?.constructor?.prototype?.[Symbol.toStringTag] === "Generator" ?
+				thing :
+				Generator(thing);
+		}
+		return toGenerator.Generator = Generator, toGenerator;
+	}, "call comprehension"() {
 		function comprehension(fn, var_, iter, cond="") {
 			// not good to use on user input strings.
 			// python comprehension but in JavaScript
@@ -2491,6 +2703,7 @@ void (() => {
 
 			return array;
 		}
+
 		comprehension.pythonString = function toPythonCodeString(fn, var_, iter, cond="") {
 			if (typeof fn !== "string")
 				throw Error`'fn' argument must be a string`;
@@ -2508,7 +2721,7 @@ void (() => {
 		}
 
 		return comprehension;
-	})(), removeAcuteAccents: (function removeAcuteAccents_closure() {
+	}, "call removeAcuteAccents"() {
 		const map = {
 			A: "Á" , a: "á" ,
 			E: "É" , e: "é" ,
@@ -2528,8 +2741,21 @@ void (() => {
 		// removeAcuteAccents._map = map;
 		return removeAcuteAccents._keys = keys,
 			removeAcuteAccents;
-	})()
+	}, "call structuredClone"() {
+		const _clone = structuredClone;
+		const newStructuredClone = x => {
+			if (_clone == null)
+				throw Error`globalThis.structuredClone does not exist and cannot be called.`;
+			return _clone(x);
+		};
+
+		newStructuredClone._structuredClone = _clone;
+
+		return newStructuredClone;
+	}
+
 	, symbolToString : symbolToString
+	, splitByLength  : splitByLength
 	, stringifyMath  : stringifyMath
 	, createElement  : createElement
 	, getNewGlobals  : getNewGlobals
@@ -2571,7 +2797,8 @@ void (() => {
 	, len            : len
 	, chr            : chr
 	, ord            : ord // idk, it's called "ord" in python.
-	, π              : π
+	, π              : pi
+
 	, "symbol <0x200b>": "​" // zero width space
 	, "symbol <0xfeff>": "﻿" // byte order mark
 	, "symbol <0x00a0>": " " // non-(line-)breaking space
@@ -2618,42 +2845,7 @@ void (() => {
 	, "local emc": emc
 	, "local omega": omega
 	, "local define": define
-	// the built-in methods are enumerable for the next three
-	, "object console": {
-		"writable configurable enumerable property printCallStack": function printCallStack() {
-			// doesn't work in strict mode. because safety
-			// only for ease of development
-			let options = arguments[0];
-			if (options == null) options = {lastOnly: false, includeCurrent: false};
 
-			let current = arguments.callee, index = 0;
-
-			if (options?.lastOnly || !options?.includeCurrent)
-				current = current.caller
-
-			if (options?.lastOnly) return current == null ?
-			console.log(null) :
-			console.log(
-				"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
-				1,
-				current.name,
-				Array.from(current.arguments),
-				demarginFunction(current)
-			);
-
-			for (; current !== null; current = current.caller) console.log(
-				"--------------------------------------------------------------------------------\nindex: %o    name: %o    arguments: %o\n%s",
-				++index,
-				current.name,
-				Array.from(current.arguments),
-				demarginFunction(current)
-			);
-
-			console.log(null);
-		}
-	}, "ifdom prototype NodeList": { "get last": lastElement }
-	, "ifdom prototype HTMLCollection": { "get last": lastElement }
-	, "ifdom prototype HTMLAllCollection": { "get last": lastElement }
 	, "object Object": {
 		"property copy" : deepCopy,
 		"property keyof": keyof,
@@ -2664,19 +2856,88 @@ void (() => {
 				return _create(proto ?? null, properties);
 			}
 			return create._create = _create, create;
-		}
+		},
 	}, "try object jQuery.fn": {
-		merge: function ( second ) {
-			return jQuery.merge( this, second );
-		}
-		, mergeRight: function ( first ) {
-			return jQuery.merge( first, this );
-		}
-		, checked: function ( value ) {
+		merge(that) { return jQuery.merge( this, that ) }
+		, mergeRight(that) { return jQuery.merge( that, this ) }
+		, call(fname, ...args) { return this[0]?.[fname]?.(...args) }
+		, apply(fname, argList=[]) { return this[0]?.[fname]?.(...argList) }
+		, checked(value) {
 			value == null ?
-				this[0]?.checked :
-				this.each( (_i, e) => (e.checked = !!value, true) );
+				this.prop("checked") :
+				this[0].checked = value;
 		}
+	}, "object console": {
+		"call writable configurable enumerable property printCallStack"() {
+			// this is pretty much guaranteed to never exist.
+			const symbol = Symbol.for(
+				"// lib.js temporary variable for console.printCallStack() "
+				// + "because strict mode won't let it be used if it is defined "
+				// + "within the lib.js main function. hopefully no other js "
+				// + "files use strict at the top level, otherwise this won't work."
+			);
+			const tmp = globalThis[symbol];
+
+			delete globalThis[symbol];
+
+			return tmp;
+
+		}
+	}, "object Array": {
+		"property range": function getRange(/*start, stop, step=1*/) {
+			return Array.from(
+				range(...arguments)
+			);
+		},
+	}, "object Function": {
+		"property args": function getArgs(fn) { return getArguments(fn) }
+		, "overwrite property code": function getCode(fn) {
+			return typeof fn === "function" ?
+				fn.code() :
+				"";
+		}, "property isArrow": function isArrowFunction(fn) {
+			return typeof fn === "function" ?
+				fn.isArrow() :
+				!1;
+		}, "property isClass"(fn) {
+			return typeof fn === "function" ?
+				fn.isClass() :
+				!1;
+		}, "property isRegular": function isRegularFunction(fn) {
+			return typeof fn === "function" ?
+				fn.isRegular() :
+				!1;
+		}, "property isFunction"(fn) { return typeof fn === "function" ? fn.isFunction() : !1 }
+		, "property isCallable"(fn) { return typeof fn === "function" }
+		, "property functionType": function functionType(fn) {
+			return fn.isRegular() ?
+				"original" :
+				fn.isClass() ?
+					"class" :
+					fn.isArrow() ?
+						"arrow" :
+						"unknown";
+		},
+	}
+
+	, "ifdom prototype NodeList": {
+		"accessor last": {
+			get: getLastElement
+			, set: setLastElement
+			,
+		},
+	}, "ifdom prototype HTMLCollection": {
+		"accessor last": {
+			get: getLastElement
+			, set: setLastElement
+			,
+		},
+	}, "ifdom prototype HTMLAllCollection": {
+		"accessor last": {
+			get: getLastElement
+			, set: setLastElement
+			,
+		},
 	}, "prototype Object": {
 		"archived property tofar": function toFlatArray() {
 			// TODO/FIX: Fix for 'Arguments' objects and HTML elements
@@ -2695,11 +2956,12 @@ void (() => {
 	}, "prototype RegExp": {
 		"property in": RegExp.prototype.test
 		, "property all": function all(str="") { return RegExp(`^(${this.source})$`, "").test(str) }
-		, "property toRegex": function toRegex(flags=this.flags) { return RegExp(this.source, flags) },
+		, "property toRegex": function toRegex(flags=this.flags) { return RegExp(this.source, flags) }
+		,
 	}, "prototype Symbol": {
 		"overwrite toString": function toString(form) {
 			return symbolToString(this.valueOf(), form);
-		}
+		},
 	}, "prototype Array": {
 		"property append": Array.prototype.push
 		, "property io": Array.prototype.indexOf
@@ -2707,28 +2969,30 @@ void (() => {
 		, "property lio": Array.prototype.lastIndexOf
 		, "property incl": (function incl_closure() {
 			const _includes = Array.prototype.includes;
-			function includes(searchElement, fromIndex=0, compare=(a,b) => a === b) {
+
+			function includes(searchElement, fromIndex=0, compare=(a, b) => a === b) {
 				// just use .includes() if you are only using the first argument
-				for (var i = this.length; i --> fromIndex ;) {
+
+				for (var i = this.length; i --> fromIndex ;)
 					if ( compare(this[i], searchElement) )
 						return true;
-				}
+
 				return false;
 			}
 			includes._includes = _includes;
-			return includes;
 
-		})()
-		, "get last": lastElement
-		, "property nincl": function doesntInclude() {
+			return includes;
+		})(), "accessor last": {
+			set: setLastElement
+			, get: getLastElement
+			, 
+		}, "property nincl": function doesntInclude() {
 			return !Array.prototype.incl.apply(this, arguments);
-		}
-		, "call property any"() {
+		}, "call property any"() {
 			const _some = Array.prototype.some;
 			function any(callback=e=>e, thisArg=void 0) { return _some.call(this, callback, thisArg) }
 			return any._some = _some, any;
-		}
-		/*, "native property some": function some(fn) {
+		}/*, "native property some": function some(fn) {
 			// "some" implies plurality. use "any" for any. some != any
 			var num = 0;
 
@@ -2738,19 +3002,16 @@ void (() => {
 			}
 
 			return !1;
-		}*/
-		, "property for": function forEachReturn(f=(e, i, a)=>e, ret) {
+		}*/, "property for": function forEachReturn(f=(e, i, a)=>e, ret) {
 			// don't change order from ltr to rtl
 			for (var a = this, i = 0, n = a.length; i < n ;)
 				f(a[i], i++, a);
 
 			return ret;
-		}
-		, "property shift2": function shift2(num=1) {
+		}, "property shift2": function shift2(num=1) {
 			while ( num --> 0 ) Array.prototype.shift.call(this);
 			return this;
-		}
-		, "property union": function union(array) {
+		}, "property union": function union(array) {
 			["NodeList", "HTMLAllCollection", "HTMLCollection"].incl(array?.constructor?.name) &&
 				(array = Array.from(array));
 			for (var arr = this.concat(array), i = arr.length; i --> 0 ;)
@@ -2761,13 +3022,11 @@ void (() => {
 		, "property pop2": function pop2(num=1) {
 			while ( num --> 0 ) Array.prototype.pop.call(this);
 			return this;
-		}
-		, "property splice2": function splice2(a, b, ...c) {
+		}, "property splice2": function splice2(a, b, ...c) {
 			var d = this;
 			d.splice(a, b);
 			return c.flatten().for((e, i) => d.splice(a + i, 0, e), d);
-		}
-		, "property push2": function push2(e, ...i) {
+		}, "property push2": function push2(e, ...i) {
 			// TODO/FIN: Finish implementing pushing multiple values for other methods
 			let a = this, j, n;
 			i = i.flatten();
@@ -2782,8 +3041,7 @@ void (() => {
 					a.push(i[j]);
 			}
 			return a;
-		}
-		, "property unshift2": function unshift2(e, ...i) {
+		}, "property unshift2": function unshift2(e, ...i) {
 			let a = this, j, n;
 			i = i.flatten();
 			if (e === void 0) { // this bracket is required.
@@ -2797,37 +3055,38 @@ void (() => {
 					a.unshift(i[j]);
 			}
 			return a;
-		}
-		, "property toLList": function toLinkedList() {
+		}, "property toLList": function toLinkedList() {
 			// TODO: this doesn't work
 			/*
-			when `LIBRARY_VARIABLES["call LinkedList"]` defines
-			globalThis.LinkedList, it needs to also define something
-			like `LIBRARY_VARIABLES["_called LinkedList"]`, which
-			would be ignored if passed into define(...).
-			It should define the `_called` thing regardless of
-			whether or not it is globalized.
+				when `LIBRARY_VARIABLES["call LinkedList"]` defines
+				globalThis.LinkedList, it needs to also define something
+				like `LIBRARY_VARIABLES["_called LinkedList"]`, which
+				would be ignored if passed into define(...).
+				It should define the `_called` thing regardless of
+				whether or not it is globalized.
 			*/
 			throw Error`Not Implemented (correctly at least)`;
 			if (LIBRARY_VARIABLES.LinkedList == null) throw Error(`${LibSettings.Environment_Global_String}.LinkedList == null`);
 			let a = new LIBRARY_VARIABLES.LinkedList();
-			for (const e of this.rev()) a.insertFirst(e);
+			for (const e of this.rev())
+				a.insertFirst(e);
 			return a;
-		}
-		, "property toGen": function* toGenerator() { for (const e of this) yield e }
-		, "property remove": function remove(e) {
-			return this.includes(e) && this.splice(this.io(e), 1), this;
-		}
-		, "property removeAll": function removeAll(e) {
+		}, "property toGen": function *toGenerator() {
+			for (const e of this)
+				yield e;
+		}, "property remove": function remove(e) {
+			this.includes(e) &&
+				this.splice(this.io(e), 1);
+
+			return this;
+		}, "property removeAll": function removeAll(e) {
 			while (this.includes(e)) this.splice(this.io(e), 1);
 			return this;
-		}
-		, "property hasDupes": function hasDuplicates() {
+		}, "property hasDupes": function hasDuplicates() {
 			for (var a = deepCopy(this), i = a.length; i --> 0 ;)
 				if (a.includes(a.pop())) return !0;
 			return !1;
-		}
-		, "property mod": function modify(indices, func) {
+		}, "property mod": function modify(indices, func) {
 			indices = indices.flatten();
 			let a = this, n = indices.length;
 			if (type(func, 1) === "arr") func = func.flatten();
@@ -2837,29 +3096,24 @@ void (() => {
 			for (var i = 0; i < n; i++)
 				a[indices[i]] = func[i](a[indices[i]], indices[i]);
 			return a;
-		}
-		, "property remrep": function removeRepeats() { return Array.from(new Set(this)) }
+		}, "property remrep": function removeRepeats() { return Array.from(new Set(this)) }
 		, "property random": function random() { return this[ randint(0, this.length - 1) ] }
 		, "previous property rand": null
 		, "property insrand": function insertIntoRandomLocation(thing) {
 			this.splice(randint(this.length), 0, thing);
 			return this;
-		}
-		, "property insrands": function insertThingsIntoRandomLocations(...things) {
+		}, "property insrands": function insertThingsIntoRandomLocations(...things) {
 			for (const thing of things) this.insrand(thing);
 			return this;
-		}
-		, "property insSorted": function insertSorted(thing) {
+		}, "property insSorted": function insertSorted(thing) {
 			return this.splice2( this.bisectLeft(thing), 0, thing
 			);
-		}
-		, "previous property insertSorted": null
+		}, "previous property insertSorted": null
 		, "property insSorteds": function insertThingsSorted(...things) {
 			for (let thing of things)
 				this.insSorted(thing);
 			return this;
-		}
-		, "property slc": function slice(
+		}, "property slc": function slice(
 			start,
 			end,
 			startOffset = 0,
@@ -2877,19 +3131,16 @@ void (() => {
 				, n = rMath.min(a.length, end)
 			; i < n; i++) b.push( a[i] );
 			return b;
-		}
-		, "property print": function print() {
+		}, "property print": function print() {
 			console.log(this);
 
 			return this;
-		}
-		, "property printEach": function printEach() {
+		}, "property printEach": function printEach() {
 			for (const e of this)
 				console.log(e);
 
 			return this;
-		}
-		, "property printStr": (function printString_closure() {
+		}, "property printStr": (function printString_closure() {
 			const defaultMapper = e => e?.toString?.() ?? ({}).toString.call(e);
 
 			return function printString(/*mapper, joiner*/) {
@@ -2922,83 +3173,66 @@ void (() => {
 
 				return this;
 			}
-		})()
-		, "property swap": function swap(i1=0, i2=1) {
+		})(), "property swap": function swap(i1=0, i2=1) {
 			const A = this, B = A[i1];
 
 			A[i1] = A[i2];
 			A[i2] = B;
 
 			return this;
-		}
-		, "property smap": function setMap(f=(e, i)=>e) {
+		}, "property smap": function setMap(f=(e, i)=>e) {
 			// array.smap also counts empty indexes as existing unlike array.map.
 			for (var arr = this, i = arr.length; i --> 0 ;)
 				arr[i] = f(arr[i], i, arr);
 
 			return this;
-		}
-		, "property sfilter": function setFilter(f=(e, i)=>e) {
+		}, "property sfilter": function setFilter(f=(e, i)=>e) {
 			for (var i = this.length; i --> 0 ;)
 				f(this[i]) || this.splice(i, 1);
 			return this;
-		}
-		, "property mapf": function mapThenFilter(f1=(e, i, a) => e, f2=(e, i, a) => e) {
+		}, "property mapf": function mapThenFilter(f1=(e, i, a) => e, f2=(e, i, a) => e) {
 			return this.map(f1).filter(f2);
-		}
-		, "property fmap": function filterThenMap(f1=(e, i, a) => e, f2=(e, i, a) => e) {
+		}, "property fmap": function filterThenMap(f1=(e, i, a) => e, f2=(e, i, a) => e) {
 			return this.filter(f1).map(f2);
-		}
-		, "property fsmap": function filterThenMap(f1=(e, i, a) => e, f2=(e, i, a) => e) {
+		}, "property fsmap": function filterThenMap(f1=(e, i, a) => e, f2=(e, i, a) => e) {
 			return this.sfilter(f1).smap(f2);
-		}
-		, "property smapf": function setMapThenFilter(f1=(e, i, a) => e, f2=(e, i, a) => e) {
+		}, "property smapf": function setMapThenFilter(f1=(e, i, a) => e, f2=(e, i, a) => e) {
 			return this.smap(f1).sfilter(f2);
-		}
-		, "property rotr3": function rotate3itemsRight(i1=0, i2=1, i3=2) {
+		}, "property rotr3": function rotate3itemsRight(i1=0, i2=1, i3=2) {
 			const A = this, TMP = A[i1];
 			A[i1] = A[i3];
 			A[i3] = A[i2];
 			A[i2] = TMP;
 			return A;
-		}
-		, "property dupf": function duplicateFromFirst(num=1, newindex=0) {
+		}, "property dupf": function duplicateFromFirst(num=1, newindex=0) {
 			return this.dup(num, 0, newindex);
-		}
-		, "property duptf": function duplicateToFirst(num=1, index=0) {
+		}, "property duptf": function duplicateToFirst(num=1, index=0) {
 			return this.dup(num, index, 0);
-		}
-		, "property dupl": function duplicateFromLast(num=1, newindex=0) {
+		}, "property dupl": function duplicateFromLast(num=1, newindex=0) {
 			return this.dup(num, this.length - 1, newindex);
-		}
-		, "property duptl": function duplicateToLast(num=1, index=0) {
+		}, "property duptl": function duplicateToLast(num=1, index=0) {
 			return this.dup(num, index, this.length - 1);
-		}
-		, "property dup": function duplicate(num=1, from=null, newindex=Infinity) {
+		}, "property dup": function duplicate(num=1, from=null, newindex=Infinity) {
 			// by default duplicates the last element in the array
 			var a = this;
 			for (var b = a[from === null ? a.length - 1 : from], j = 0; j++ < num ;)
 				a.splice(newindex, 0, b);
 			return a;
-		}
-		, "property rotr": function rotateRight(num=1) {
+		}, "property rotr": function rotateRight(num=1) {
 			for (num %= this.length; num --> 0 ;)
 				this.unshift(this.pop());
 			return this;
-		}
-		, "property rotl": function rotateRight(num=1) {
+		}, "property rotl": function rotateRight(num=1) {
 			for (num %= this.length; num --> 0 ;)
 				this.push(this.shift());
 			return this;
-		}
-		, "property rotl3": function rotate3itemsLeft(i1=0, i2=1, i3=2) {
+		}, "property rotl3": function rotate3itemsLeft(i1=0, i2=1, i3=2) {
 			var a = this, b = a[i1];
 			a[i1] = a[i2];
 			a[i2] = a[i3];
 			a[i3] = b;
 			return a;
-		}
-		, "property len": function setLength(num, filler=undefined) {
+		}, "property len": function setLength(num, filler=undefined) {
 			this.length = isIterable(num) ?
 				num.length :
 				Number.isNaN(num = Number(num)) ?
@@ -3006,8 +3240,7 @@ void (() => {
 					rMath.max(num, 0);
 			filler == null || this.fill(filler); // !??
 			return this;
-		}
-		, "property extend": function extend(length, filler, form="new") {
+		}, "property extend": function extend(length, filler, form="new") {
 			if (form === "new")
 				return this.concat( Array(length).fill(filler) );
 			else if (form === "add")
@@ -3017,8 +3250,7 @@ void (() => {
 				else return this.concat( Array(length).fill(filler) );
 			}
 			/*else */return a;
-		}
-		, "property startsWith": function startsWith(item) { return this[0] === item }
+		}, "property startsWith": function startsWith(item) { return this[0] === item }
 		, "previous property sw": null
 		, "property endsWith": function endsWith(item) { return this.last() === item }
 		, "previous property ew": null
@@ -3036,21 +3268,19 @@ void (() => {
 						msort(this); // merge-sort, Ө(nlogn). returns new array
 			}
 			return sort._sort = _sort, sort;
-		})()
-		, "property removeAt": function removeAtIndex(i = 0) {
+		})(), "property removeAt": function removeAtIndex(i = 0) {
 			// removes the element at index `i` and returns it
 			return this.splice(i, 1)[0];
-		}
-		, "property removeRandom": function removeAtRandomIndex() {
+		}, "property removeRandom": function removeAtRandomIndex() {
 			// removes the element at a random index and returns it
 			return this.splice(randint(this.length - 1), 1)[0];
-		}
-		, "property shuffle": function shuffle(times=1) {
+		}, "property shuffle": function shuffle (times = 1) {
 			// I think this is a slightly different Fisher-Yates shuffle...
 			// but I do not know or care.
+
 			if (times < 1) return this;
 
-			var out = this, i, tempArray;
+			var out = this, i, tmp;
 
 			while (times --> 0) {
 				for (i = out.length, tmp = []; i --> 0 ;)
@@ -3060,34 +3290,28 @@ void (() => {
 			}
 
 			return this.union(out); // put the elements back in the array
-		}
-		, "property isNaN": function isNaN(strict=false) {
-			const fn = (strict ? globalThis : rMath).isNaN;
+		}, "property isNaN": function isNaN(strict=false) {
+			const f = (strict ? globalThis : rMath).isNaN;
+
 			for (const val of Array.from(this))
-				if (fn(val)) return !0;
+				if ( f(val) )
+					return !0;
+
 			return !1;
-		}
-		, "property clear": function clear() { return this.length = 0, this }
+		}, "property clear": function clear() { return this.length = 0, this }
 		, "property getDupes": function getDupes() {
 			for (var arr = deepCopy(this), dupes = [], i = arr.length, val; i --> 0 ;)
-				arr.includes(val = arr.pop()) && dupes.push([i, val]);
+				arr.includes(val = arr.pop()) &&
+					dupes.push([i, val]);
+
 			return dupes.length ? dupes : null;
-		}
-		, "property bisectLeft": function bisectLeftArray(x, low=0, high=null) {
+		}, "property bisectLeft": function bisectLeftArray(x, low=0, high=null) {
 			return bisectLeft(this, x, low, high);
-		}
-		, "property bisectRight": function bisectRightArray(x, low=0, high=null) {
+		}, "property bisectRight": function bisectRightArray(x, low=0, high=null) {
 			return bisectRight(this, x, low, high);
-		}
-		, "property bisect": function bisectArray(x, orientation="left", low=0, high=null) {
+		}, "property bisect": function bisectArray(x, orientation="left", low=0, high=null) {
 			return bisect(this, x, orientation, low, high);
 		},
-	}, "object Array": {
-		"property range": function fromRange(/*start, stop, step=1*/) {
-			return Array.from(
-				range(...arguments)
-			);
-		}
 	}, "prototype Function": {
 		"property args": function getArgs() { return getArguments(this) }
 		, "property code": function getCode() {
@@ -3151,51 +3375,30 @@ void (() => {
 						"arrow" :
 						"unknown";
 		}
-	}, "object Function": {
-		"overwrite property args": function getArgs(fn) { return getArguments(fn) }
-		, "overwrite property code": function getCode(fn) {
-			return typeof fn === "function" ?
-				fn.code() :
-				"";
-		}
-		, "overwrite property isArrow": function isArrowFunction(fn) {
-			return typeof fn === "function" ?
-				fn.isArrow() :
-				!1;
-		}
-		, "overwrite property isClass"(fn) {
-			return typeof fn === "function" ?
-				fn.isClass() :
-				!1;
-		}
-		, "overwrite property isRegular": function isRegularFunction(fn) {
-			return typeof fn === "function" ?
-				fn.isRegular() :
-				!1;
-		}
-		, "overwrite property isFunction"(fn) { return typeof fn === "function" ? fn.isFunction() : !1 }
-		, "overwrite property isCallable"(fn) { return typeof fn === "function" }
-		, "overwrite property functionType": function functionType(fn) {
-			return fn.isRegular() ?
-				"original" :
-				fn.isClass() ?
-					"class" :
-					fn.isArrow() ?
-						"arrow" :
-						"unknown";
-		}
 	}, "prototype String": {
 		"property io"       : String.prototype.indexOf
 		, "property lio"    : String.prototype.lastIndexOf
 		, "property strip"  : String.prototype.trim
 		, "property lstrip" : String.prototype.trimLeft
 		, "property rstrip" : String.prototype.trimRight
-		, "property mul"    : String.prototype.repeat
-		, "get last"        : lastElement
-		, "property toRegex": function toRegularExpression(flags="", stt="", end="", form="escaped") {
+		, "get last"        : getLastElement
+		, "property exists" : function exists() { return this.valueOf() !== "" }
+		, "property nincl"  : function doesntInclude(input) { return !this.incl(input) }
+		, "property pop2"   : function pop2() { return this.slice(0, -1) }
+		, "property reverse": function reverse() { return this.split("").reverse().join("") }
+		, "property toObj"  : function toObject(obj=globalThis) { return strToObj(this, obj) }
+		, "property remove" : function remove(text) { return this.replace(text, "") }
+		, "property mul"    : function repeat(times = 1) { return strMul(this.valueOf(), times) }
+		, "property rand"   : function random() { return Array.prototype.rand.call(this) }
+		, "property toRegex": function toRegularExpression(
+			flags = ""
+			, stt = ""
+			, end = ""
+			, form = "escaped"
+		) {
 			// `stt` and `end` are not escaped in escape mode
 			if (type(stt) !== "string" || type(end) !== "string")
-				throw Error("invalid types for last two arguments of String.prototype.toRegex(). both should be string or MutableString");
+				throw Error`invalid types for last two arguments of String.prototype.toRegex(). both should be string or MutableString`;
 
 			if (form === "escaped" || form === "e")
 				for (var i = 0, b = "", l = this.length; i < l; i++)
@@ -3204,11 +3407,10 @@ void (() => {
 						this[i];
 			else if (form === "unescaped" || form === "u")
 				return RegExp(stt + this + end, flags);
-			else throw Error("invalid form (2nd) argument for String.prototype.toRegex().");
+			else throw Error`invalid form (2nd) argument for String.prototype.toRegex().`;
 
 			return RegExp(stt + b + end, flags); // escaped
-		}
-		, "call native property startsWith"() {
+		}, "call native property startsWith"() {
 			function startsWith(input, index=0) {
 				// input is regex(es), string(s), or array of arrays of ...
 				if (typeof index === "bigint")
@@ -3234,8 +3436,7 @@ void (() => {
 
 			return startsWith._startsWith = String.prototype.startsWith,
 				startsWith;
-		}
-		, "previous property sw": null
+		}, "previous property sw": null
 		, "call native property endsWith"() {
 			function endsWith(input, index=0, flags="") {
 				// input is a regex, or string, or array of arrays (circular), regexes, or strings.
@@ -3246,15 +3447,12 @@ void (() => {
 			}
 			endsWith._endsWith = String.prototype.endsWith;
 			return endsWith;
-		}
-		, "previous property ew": null
-		, "property splitIndex": function splitAtIndex(i) {
+		}, "previous property ew": null
+		, "property splitAt": function splitAt(i) {
 			i = Number(i);
 			return [this.slice(0, i), this.slice(i)];
 			// this[:i], this[i:]
-		}
-		, "previous property splitI": null
-		, "call native property replace"() {
+		}, "call native property replace"() {
 			let _replace = String.prototype.replace;
 			function replace(search, replacer) {
 				isArr(search) || (search = [search]);
@@ -3266,24 +3464,21 @@ void (() => {
 			}
 			replace._replace = _replace;
 			return replace;
-		}
-		, "property startsLike": function startsLike(input="", index=0) {
+		}, "property startsLike": function startsLike(input="", index=0) {
 			return this.startsWith(input, index, "i");
-		}
-		, "previous property sL": null
+		}, "previous property sL": null
 		, "property endsLike": function endsLike(input="", index=0) {
 			return this.endsWith(input, index, "i");
-		}
-		, "previous property eL": null
+		}, "previous property eL": null
 		, "property shuffle": function shuffle(times=1) {
 			return this.split("").shuffle(times).join("");
-		}
-		, "property ios": function indexesOf(chars="") {
+		}, "property ios": function indexesOf(chars="") {
+			throw Error`Not Implemented`;
+			// TODO: finish implementing
 			return type(chars) === "string" ?
-				Object.keys(this).filter( i => chars?.incl?.(this[i]) ).map(s => +s) :
+				this.split("").filter( e => chars.incl(e) ) :
 				[];
-		}
-		, "property slc": function slc(
+		}, "property slc": function slc(
 			start = 0,
 			end = Infinity,
 			startOffset = 0,
@@ -3308,13 +3503,10 @@ void (() => {
 				endOffset,
 				includeEnd
 			).join("");
-		}
-		, "property tag": function tag(tagName) {
-			if (!tagName || type(tagName) !== "string") return this;
+		}, "property tag": function tag(tagName) {
+			if (!tagName || type(tagName) !== "string") return this.valueOf();
 			return `<${tagName}>${this}</${tagName}>`;
-		}
-		, "property rand": function random() { return Array.prototype.rand.call(this) }
-		, "property upper": function upper(length=Infinity, start=0, end=-1) {
+		}, "property upper": function upper(length=Infinity, start=0, end=-1) {
 			return !isFinite(Number(length)) || isNaN(length) ? this.toUpperCase() :
 			end === -1 ?
 				this.substr(0, start) +
@@ -3323,8 +3515,7 @@ void (() => {
 				this.substr(0, start) +
 					this.substring(start, end).toUpperCase() +
 					this.substr(end);
-		}
-		, "property lower": function lower(length=Infinity, start=0, end=-1) {
+		}, "property lower": function lower(length=Infinity, start=0, end=-1) {
 			return !isFinite(Number(length)) || isNaN(length) ? this.toLowerCase() :
 			end === -1 ?
 				this.substr(0, start) +
@@ -3333,33 +3524,24 @@ void (() => {
 				this.substr(0, start) +
 					this.substring(start, end).toLowerCase() +
 					this.substr(end);
-		}
-		, "property toObj": function toObject(obj=globalThis) { return strToObj(this, obj) }
-		, "property hasDupesA": function hasDuplicatesAll() {
+		}, "property hasDupesA": function hasDuplicatesAll() {
 			return/(.|\n)\1/.test(this.split("").sort().join(""));
-		}
-		, "property hasDupesL": function hasDuplicateLetters() {
+		}, "property hasDupesL": function hasDuplicateLetters() {
 			return/(\w)\1/.test(this.split("").sort().join(""));
-		}
-		, "property reverse": function reverse() { return this.split("").reverse().join("") }
-		, "property remrep": function removeRepeats() {
+		}, "property remrep": function removeRepeats() {
 			// this also sorts the string. *shrugs*, whatever idc
 			return Array.from( new Set(this) ).join("");
-		}
-		, "property remove": function remove(text) { return this.replace(text, "") }
-		, "property removeAll": function removeAll(text) {
+		}, "property removeAll": function removeAll(text) {
 			return typeof text === "string" ?
 				this.remove( RegExp(text, "g") ) :
 				type(text, 1) === "regex" ?
 					this.remove( RegExp(text.source, (text.flags + "g").remrep()) ) :
 					this;
-		}
-		, "property each": function putArgBetweenEachCharacter(joiner="") {
+		}, "property each": function putArgBetweenEachCharacter(joiner="") {
 			return this.split("").join( joiner.toString() );
-		}
-		, "property toFunc": function toNamedFunction(name="anonymous") {
+		}, "property toFunc": function toNamedFunction(name="anonymous") {
 			var s = this.valueOf();
-			if (s.sw("Symbol(") && s.ew(")")) throw Error("Can't parse Symbol().");
+			if (s.sw("Symbol(") && s.ew(")")) throw Error`Can't parse Symbol().`;
 			s = (""+s).remove(/^(\s*function\s*\w*\s*\(\s*)/);
 			var args = s.slc(0, ")");
 			return (
@@ -3371,19 +3553,15 @@ void (() => {
 					for (var i=z.length, g=""; i --> 0 ;) g += (/[$^()+*|[\]{}?.]/.test(z[i]) && "\\") + z[i];
 					return g;
 			})(args)}\\)\\s*\\{)`,"g"), "").remove(/\s*;*\s*}\s*;*\s*/)), name);
-		}
-		, "property toFun": function toNamelessFunction() {
-			var f = () => Function(this).call(this)
+		}, "property toFun": function toNamelessFunction() {
+			const f = Function(this).bind(this);
 			return () => f();
-		}
-		, "property toNumber": function toNumber() { return +this }
+		}, "property toNumber": function toNumber() { return +this }
 		, "previous property toNum": null
 		, "property toBigInt": function toBigInteger() {
 			try { return BigInt(this) }
 			catch { throw TypeError(`Cannot convert input to BigInt. input: '${this}'`) }
-		}
-		, "property pop2": function pop2() { return this.substr(0, this.length - 1) }
-		, "property unescape": function unescape() {
+		}, "property unescape": function unescape() {
 			return this.split("").map(
 				e => e === "\n" ? "\\n" : e === "\0" ? "\\0" : e === "\t" ? "\\t" : e === "\f" ? "\\f" :
 					e === "\r" ? "\\r" : e === "\v" ? "\\v" : e === "\b" ? "\\b" : e === "\\" ? "\\\\" :
@@ -3392,38 +3570,32 @@ void (() => {
 								(s => "\\x" + strMul("0", 2 - s.length) + s)(ord(e).toString(16)) :
 								(s => "\\u" + strMul("0", 4 - s.length) + s)(ord(e).toString(16))
 			).join("");
-		}
-		, "property incl": function includes(input) { return input.toRegex().in(this);
-		}, "property nincl": function doesntInclude(input) { return !this.incl(input) }
-		, "property start": function start(start="") {
-			// if the string is empty it returns the argument
-			return this.valueOf() || `${start}`;
-		}
-		, "property begin": function begin(text="") {
-			// basically Array.unshift2 for strings
-			return `${text}${this}`;
-		}
+		}, "property incl": function includes(input) { return input.toRegex().in(this) }
+		, "property or": function or(start="") { return this.valueOf() || `${start}` }
+		, "previous property begin": null
+		, "property start": function unshift(text="") { return `${text}${this}` }
+		, "property end": String.prototype.concat
+		, "previous property push": null
 		, "property splitn": function splitNTimes(
 			input,
 			times = 1,
 			joinUsingInput = true,
 			customJoiner = ""
-		)
-		{
+		) {
+			throw Error`Not Implemented`;
+			// TODO: Fix this. Currently this does not work as a prototype method.
 			var joiner = joinUsingInput ? input : customJoiner;
 			if (type(input, 1) !== "regex" && type(input) !== "string")
-				throw Error("function requires a regular expression or a string");
+				throw Error`function requires a regular expression or a string`;
 			for (var i = 0, arr = this.split(input), arr2 = [], n = arr.length; i < n && i++ < times ;)
 				arr2.push(arr.shift());
 			if (arr.length) arr2.push(arr.join(joiner));
 			return arr2;
-		}
-		, "property inRange": function inRange(n1, n2=arguments[0], include=true) {
+		}, "property inRange": function inRange(n1, n2=n1, include=true) {
 			return isNaN(this) ?
 				!1 :
 				(+this).inRange(n1, n2, include);
-		}
-		, "property isInteger": function isInteger() {
+		}, "property isInteger": function isInteger() {
 			var a = this;
 			if ( isNaN(a) ) return !1;
 			if (a.io(".") === -1) return !0;
@@ -3431,18 +3603,23 @@ void (() => {
 			for (var i = a.length; i --> 1 ;)
 				if (a[i] !== "0") return !1;
 			return !0;
-		}
-		, "previous property isInt": null
-		, "property exists": function exists() { return this !== "" }
+		}, "previous property isInt": null
 		, "property line": function line(index=Infinity) {
 			if (rMath.isNaN(index)) return false;
 			for (var line = 1, i = 0; i < this.length; this[i] === "\n" && line++, i++)
 				if (i === index) return line;
 			return line;
+		}, "property rotr": function rotateRight(times=1) { return this.split("").rotr(times).join("") }
+		, "property rotl": function rotateLeft(times=1) { return this.split("").rotl(times).join("") }
+		, "property splitByLength": function splitByLength_(length=1, strict=false) {
+			// if `strict` is false, it includes the leftover characters as the last element.
+			return splitByLength(this, length, strict);
+		}, "previous property splitl": null
+		, "property write": function write(logger = console.log) {
+			const value = this.valueOf()
+			logger(value);
+			return value;
 		}
-		, "property rotr": function rotateRight(n=1) { return this.split("").rotr(n).join("") }
-		, "property rotl": function rotateLeft(n=1) { return this.split("").rotl(n).join("") }
-		,
 	}, "prototype Number": {
 		"property bitLength": function bitLength() { return abs(this).toString(2).length }
 		, "property isPrime": function isPrime() {
@@ -3509,7 +3686,9 @@ void (() => {
 		, "property length": function length(n = 0) { return `${this}`.length - n }
 		, "property isInteger": function isInteger() { return !0 }
 		, "previous property isInt": null
-	}, "archived instance Logic": class Logic {
+	}
+
+	, "archived instance Logic": class Logic {
 		constructor(
 			bitwise = LibSettings.Logic_Bitwise_Argument
 			, comparatives = LibSettings.Logic_Comparatives_Argument
@@ -3531,8 +3710,8 @@ void (() => {
 				or: function or(a, b) { return this.xor([a, b], [1, 2]) },
 				nor: function nor(...b) { return this.xor(b, [0]) },
 				xor: (ns, range=[1]) => {
-					if (isNaN( (ns = ns.flatten()).join("") )) throw TypeError("numbers req. for 1st parameter");
-					if (isNaN( (range = range.flatten()).join("") )) throw TypeError("numbers req. for 2nd parameter");
+					if (isNaN( (ns = ns.flatten()).join("") )) throw TypeError`numbers req. for 1st parameter`;
+					if (isNaN( (range = range.flatten()).join("") )) throw TypeError`numbers req. for 2nd parameter`;
 					// fix range
 					const min = rMath.min(range), max = rMath.max(range);
 					range = [
@@ -3875,7 +4054,7 @@ void (() => {
 			return a;
 		}
 		sqrt(x=1n) {
-			if (x < 0) throw Error("non-negative value required");
+			if (x < 0) throw Error`non-negative value required`;
 			if (x < 2) return x;
 
 			var x1 = x >> 1n, x0; // current, previous
@@ -4021,6 +4200,7 @@ void (() => {
 			return dataset.reduce((t, e) => t * e, 1n);
 		}
 		fromBinary(n) {
+			// fromBinaryString
 			try { return BigInt("0b" + n) } catch {}
 			throw Error`binary integer string required`;
 		}
@@ -4033,16 +4213,32 @@ void (() => {
 			throw Error`hexadecimal integer string required`;
 		}
 	}, "math sMath": class StringRealMath /* abbreviated to sMath */ {
-		#maxPrecision = 20; // decimal precision. not floating point precision.
+		#maxPrecision = 20; // precision ditigs past the decimal; not floating point precision.
 
-		constructor(help = LibSettings.sMath_Help_Argument) {
-			help === "default" && (help = !0);
+		constructor() {
+			Reflect.defineProperty(this, "zero", {
+				// canonical value format for 0.
+				value: "0.0"
+				, writable: false
+				, configurable: false
+				, enumerable: true
+			});
+			Reflect.defineProperty(this, "one", {
+				// canonical value format for 1.
+				value: "1.0"
+				, writable: false
+				, configurable: false
+				, enumerable: true
+			});
+			Reflect.defineProperty(this, "negativeOne", {
+				// canonical value format for -1.
+				value: "-1.0"
+				, writable: false
+				, configurable: false
+				, enumerable: true
+			});
 
-			this.zero = "0.0"; // canonical format for 0.
-			this.one = "1.0"; // canonical format for 1.
-			this.negative_one = "-1.0"; // canonical format for -1.
-
-			if (help) this.help = {
+			if (LibSettings.sMath_Help_Argument) this.help = {
 				add: "Takes 2 string number arguments (a and b). returns a + b as a string with maximum precision and no floating point errors",
 				sub: "Takes 2 string number arguments (a and b). returns a - b as a string with maximum precision and no floating point errors",
 				mul: "Takes 2 string number arguments (a and b). returns a * b as a string with maximum precision and no floating point errors",
@@ -4146,12 +4342,10 @@ void (() => {
 						if (Number(a[i]) < Number(b[i])) return !1;
 					}
 					return !1;
-				}
-				, ge: function greaterOrEqual(a="0.0", b="0.0") {
+				}, ge: function greaterOrEqual(a="0.0", b="0.0") {
 					// use nn(a) for a >= 0
 					return this.gt(a, b) || this.eq(a, b);
-				}
-				, lt: function lessThan(a="0.0", b="0.0") {
+				}, lt: function lessThan(a="0.0", b="0.0") {
 					// use ng(a) for a < 0
 					if (
 						Number.isNaN(a = this._parent.norm(a, NaN)) ||
@@ -4194,12 +4388,10 @@ void (() => {
 						if (Number(a[i]) > Number(b[i])) return !1;
 					}
 					return !1;
-				}
-				, le: function LessOrEqual(a="0.0", b="0.0") {
+				}, le: function LessOrEqual(a="0.0", b="0.0") {
 					// use np(a) for a <= 0
 					return this.lt(a, b) || this.eq(a, b);
-				}
-				, eq: function equal(a="0.0", b="0.0") {
+				}, eq: function equal(a="0.0", b="0.0") {
 					// use iz(a) for a === 0
 					if (
 						Number.isNaN(a = this._parent.norm(a, NaN)) ||
@@ -4239,8 +4431,7 @@ void (() => {
 						if (Number(a[i]) !== Number(b[i])) return !1;
 					}
 					return !0;
-				}
-				, ne: function notEqual(a="0.0", b="0.0") {
+				}, ne: function notEqual(a="0.0", b="0.0") {
 					// use nz(a) for a !== 0
 					if (
 						Number.isNaN(a = this._parent.norm(a, NaN)) ||
@@ -4279,16 +4470,14 @@ void (() => {
 						if (Number(a[i]) !== Number(b[i])) return !0;
 					}
 					return !1;
-				}
-				, iz: function isZero(snum="0.0") {
+				}, iz: function isZero(snum="0.0") {
 					// x === 0. subset of eq(a, b)
 					if (typeof snum !== "string") return false; // also infinity
 
 					for (var i = +(snum[0] === "-"), n = snum.length; i < n; i++)
 						if (snum[i] !== "0" && snum[i] !== ".") return !1;
 					return !0;
-				}
-				, nz: function notZero(snum="0.0") {
+				}, nz: function notZero(snum="0.0") {
 					// x != 0. subset of ne(a, b)
 					snum = this._parent.norm(snum, NaN)
 					if (typeof snum !== "string") return true;
@@ -4296,27 +4485,23 @@ void (() => {
 					for (var i = 0; i < snum.length; i++)
 						if (snum[i] !== "0" && snum[i] !== ".") return !0;
 					return !1;
-				}
-				, ng: function negative(snum="0.0") {
+				}, ng: function negative(snum="0.0") {
 					// x < 0. subset of lt(a, b)
 					snum = this._parent.norm(snum);
 					if (snum ===  Infinity) return false;
 					if (snum === -Infinity) return true;
 					return snum[0] === "-"; // assumes not "-0"
-				}
-				, nn: function notNegative(snum="0.0") {
+				}, nn: function notNegative(snum="0.0") {
 					// x >= 0. subet of ge(a, b)
 					if (snum === -Infinity) return false;
 					if (snum ===  Infinity) return true;
 					return snum[0] !== "-";
-				}
-				, ps: function positive(snum="0.0") {
+				}, ps: function positive(snum="0.0") {
 					// x > 0. subset of gt(a, b)
 					if (snum === -Infinity) return false;
 					if (snum ===  Infinity) return true;
 					return snum[0] !== "-" && this.nz(snum);
-				}
-				, np: function notPositive(snum="0.0") {
+				}, np: function notPositive(snum="0.0") {
 					// x <= 0. subset of le(a, b)
 					if (snum ===  Infinity) return false;
 					if (snum === -Infinity) return true;
@@ -4328,10 +4513,10 @@ void (() => {
 		set precision(value) {
 			if (typeof value !== "number")
 				throw Error`StringRealMath.precision must be a number.`;
-			if (value % 1)
+			if (!Number.isInteger(value))
 				throw Error`StringRealMath.precision must be an integer.`;
 			if (value < 0)
-				throw Error`StringRealMath.precision must be non-negative`
+				throw Error`StringRealMath.precision must be non-negative`;
 			this.#maxPrecision = value;
 		}
 		new(snum="1.0", defaultValue=NaN) { return numStrNorm(snum, defaultValue) }
@@ -4440,7 +4625,7 @@ void (() => {
 							i + j && (c[i][j] += 10);
 							if (j) c[i][j-1] -= tmp;
 							else if (i === 1) c[0][c[0].length - 1] -= tmp;
-							else throw Error(`Broken. End value shouldn't be negative.`);
+							else throw Error`Broken. End value shouldn't be negative.`;
 						}
 					}
 				}
@@ -4619,7 +4804,7 @@ void (() => {
 		}
 		rdiv(num="0.0", denom="1.0") {
 			// rounded division
-			throw Error("Not Implemented");
+			throw Error`Not Implemented`;
 		}
 		cdiv(num="0.0", denom="1.0") {
 			// ceiling division
@@ -4774,7 +4959,7 @@ void (() => {
 			if ("0-.".incl(snum[0])) return this.sub(snum, "1.0");
 			var i1 = snum.io("."), i2;
 
-			if (i1 < 0) throw Error("sMath.decr's argument had no '.'");
+			if (i1 < 0) throw Error`sMath.decr's argument had no '.'`;
 			for (i2 = i1; snum[--i1] === "0" ;);
 			snum = snum.slc(0, i1) + Number(snum[i1])-1 + snum.slc(i1+1);
 			for (; ++i1 < i2 ;)
@@ -4856,7 +5041,7 @@ void (() => {
 		trunc(snum="0.0") { return this.ipart(snum) }
 		_lmgf(t="lcm", ...ns) {
 			// TODO: deprecate _lmgf
-			// throw Error("not implemented");
+			// throw Error`not implemented`;
 			// least commond multiple and greatest common factor
 			// the arguments should be correctly formatted, or it will not always work
 			ns = ns.flatten();
@@ -4872,7 +5057,7 @@ void (() => {
 						return ns.reduce((t, e) => this.mul(t, e), "1.0");
 				}
 			}
-			else throw Error("invalid first argument for sMath.lmgf");
+			else throw Error`invalid first argument for sMath.lmgf`;
 			for (var i = t[0] === "l" ? this.max(ns) : this.min(ns), c
 				;;
 				i = t[0] === "l" ? this.incr(i) : this.decr(i)
@@ -4897,7 +5082,7 @@ void (() => {
 			if (Number.isNaN( n = this.norm(n, NaN) ))
 				throw Error`invalid input to sMath.ifact(). use a string.`;
 			if (this.eq.ng(n)) return NaN;
-			if (!this.isIntN(n)) throw Error("No decimals allowed.");
+			if (!this.isIntN(n)) throw Error`No decimals allowed.`;
 			for (var i = n+"", total = "1.0"; this.eq.gt(i, "0.0"); i = this.decr(i))
 				total = this.mul(i, total);
 			return total;
@@ -5086,7 +5271,7 @@ void (() => {
 				tens
 			)
 				.slice(2) // "0."
-				.splitI(nonRepeatingCount);
+				.splitAt(nonRepeatingCount);
 
 			parts[1] += strMul("0", repeatLength - BigInt(parts[1].length));
 			precision -= nonRepeatingCount;
@@ -5173,17 +5358,21 @@ void (() => {
 				}
 			};
 
-			digits[0] = "3.0";
-			digits[1] = "3.1";
-			digits[2] = "3.14";
-			digits[3] = "3.141";
-			digits[4] = "3.1415";
-			digits[100] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
-			digits[200] = "3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196";
-			digits[300] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273";
-			digits[600] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132";
-			digits[1150] = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983";
-			digits[2250] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319255060400927701671139009848824012858361603563707660104710181942955596198946767837449448255379774726847104047534646208046684259069491293313677028989152104752162056966024058038150193511253382430035587640247496473263914199272604269922796782354781636009341721641219924586315030286182974555706749838505494588586926995690927210797509302955321165344987202755960236480665499119881834797753566369807426542527862551818417574672890977772793800081647060016145249192173217214772350141441973568548161361157352552133475741849468438523323907394143334547762416862518983569485562099219222184272550254256887671790494601653466804988627232791786085784383827967976681454100953883786360950680064225125205117392984896084128488626945604241965285022210661186306744278622039194945047123713786960956364371917287467764657573962413890865832645995813390478027590099465764078951269468398352595709825822620522489407726719478268482601476990902640136394437455305068203496252451749399651431429809190659250937221696461515709858387410597885959772975498930161753928468138268683868942774155991855925245953959431049972524680";
+			// truncated, not rounded
+			digits[4500] = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319255060400927701671139009848824012858361603563707660104710181942955596198946767837449448255379774726847104047534646208046684259069491293313677028989152104752162056966024058038150193511253382430035587640247496473263914199272604269922796782354781636009341721641219924586315030286182974555706749838505494588586926995690927210797509302955321165344987202755960236480665499119881834797753566369807426542527862551818417574672890977772793800081647060016145249192173217214772350141441973568548161361157352552133475741849468438523323907394143334547762416862518983569485562099219222184272550254256887671790494601653466804988627232791786085784383827967976681454100953883786360950680064225125205117392984896084128488626945604241965285022210661186306744278622039194945047123713786960956364371917287467764657573962413890865832645995813390478027590099465764078951269468398352595709825822620522489407726719478268482601476990902640136394437455305068203496252451749399651431429809190659250937221696461515709858387410597885959772975498930161753928468138268683868942774155991855925245953959431049972524680845987273644695848653836736222626099124608051243884390451244136549762780797715691435997700129616089441694868555848406353422072225828488648158456028506016842739452267467678895252138522549954666727823986456596116354886230577456498035593634568174324112515076069479451096596094025228879710893145669136867228748940560101503308617928680920874760917824938589009714909675985261365549781893129784821682998948722658804857564014270477555132379641451523746234364542858444795265867821051141354735739523113427166102135969536231442952484937187110145765403590279934403742007310578539062198387447808478489683321445713868751943506430218453191048481005370614680674919278191197939952061419663428754440643745123718192179998391015919561814675142691239748940907186494231961567945208095146550225231603881930142093762137855956638937787083039069792077346722182562599661501421503068038447734549202605414665925201497442850732518666002132434088190710486331734649651453905796268561005508106658796998163574736384052571459102897064140110971206280439039759515677157700420337869936007230558763176359421873125147120532928191826186125867321579198414848829164470609575270695722091756711672291098169091528017350671274858322287183520935396572512108357915136988209144421006751033467110314126711136990865851639831501970165151168517143765761835155650884909989859982387345528331635507647918535893226185489632132933089857064204675259070915481416549859461637180270981994309924488957571282890592323326097299712084433573265489382391193259746366730583604142813883032038249037589852437441702913276561809377344403070746921120191302033038019762110110044929321516084244485963766983895228684783123552658213144957685726243344189303968642624341077322697802807318915441101044682325271620105265227211166039666557309254711055785376346682065310989652691862056476931257058635662018558100729360659876486117910453348850346113657686753249441668039626579787718556084552965412665408530614344431858676975145661406800700237877659134401712749470420562230538994561314071127000407854733269939081454664645880797270826683063432858785698305235808933065757406795457163775254202114955761581400250126228594130216471550979259230990796547376125517656751357517829666454779174501129961489030463994713296210734043751895735961458901";
+			digits[2250] = digits[4500].slice(0, 2250 + 2);
+			digits[1150] = digits[2250].slice(0, 1150 + 2);
+			digits[ 600] = digits[1150].slice(0,  600 + 2);
+			digits[ 300] = digits[ 600].slice(0,  300 + 2);
+			digits[ 200] = digits[ 300].slice(0,  200 + 2);
+			digits[ 100] = digits[ 200].slice(0,  100 + 2);
+			digits[  50] = digits[ 100].slice(0,   50 + 2);
+			digits[   5] = digits[  50].slice(0,    5 + 2);
+			digits[   4] = digits[   5].slice(0,    4 + 2);
+			digits[   3] = digits[   4].slice(0,    3 + 2);
+			digits[   2] = digits[   3].slice(0,    2 + 2);
+			digits[   1] = digits[   2].slice(0,    1 + 2);
+			digits[   0] = "3.0";
 			piApprox.digits = digits;
 
 			piApprox.piToNDigits = function piToNDecimalDigits(n) {
@@ -5234,15 +5423,15 @@ void (() => {
 			if (!this.isIntN(b)) throw Error`b must be an integer`;
 		}
 		acsc(x, acy, precision=this.precision) {
-			throw Error("acsc() not implemented");
+			throw Error`acsc() not implemented`;
 			// atan(1 / Sqrt[1-x^2])
 		}
 	}, "math rMath": class RealMath {
 		constructor(help = LibSettings.rMath_Help_Argument) {
-			help === "default" && (help = !0);
+			help &&= !0;
 
-			var HelpText = help ? (function HelpText_closure() {
-				var helptext = class HelpText {
+			const HelpText = help ? (function HelpText_closure() {
+				const helptext = class HelpText {
 					constructor({
 						name = null
 						, field = null
@@ -5277,16 +5466,17 @@ void (() => {
 						this.isfunction = !!isfunction;
 					}
 					format() {
-						throw Error("Not Implemented. for now use this.getHelpString")
+						throw Error`Not Implemented. for now use this.getHelpString`
 					}
-				}
+				};
 				return function HelpText() { return new helptext(...arguments) }
-			})() : !1
+			})() : !null
 			, rSet = class RealSet {
-				// Probably not constant time lookup.
+				// Most definately not constant time lookup.
 				constructor(...args) {
 					args = args.flatten().filter(e => typeof e === "number").sort();
-					for (let x of args) Array.prototype.push.call(this, x);
+					for (let x of args)
+						Array.prototype.push.call(this, x);
 					this.length ??= 0;
 				}
 				add(number=0) {
@@ -5318,36 +5508,36 @@ void (() => {
 				intersection(set, New=true) {
 					// TODO/FIN: Implement
 					if (type(set, 1) !== "set") return this;
-					throw Error("Not Implemented");
+					throw Error`Not Implemented`;
 				}
 				difference(set, New=true) {
 					// TODO/FIN: Implement
 					if (type(set, 1) !== "set") return this;
-					throw Error("Not Implemented");
+					throw Error`Not Implemented`;
 				}
 				isSuperset(set) {
 					// TODO/FIN: Implement
 					// loose superset, can be the same set
 					if (type(set, 1) !== "set") return !0;
-					throw Error("Not Implemented");
+					throw Error`Not Implemented`;
 				}
 				isSubset(set) {
 					// TODO/FIN: Implement
 					// loose subset, can be the same set
 					if (type(set, 1) !== "set") return !1;
-					throw Error("Not Implemented");
+					throw Error`Not Implemented`;
 				}
 				isStrictSuperset(set) {
 					// TODO/FIN: Implement
 					// can't be the same set
 					if (type(set, 1) !== "set") return !0;
-					throw Error("Not Implemented");
+					throw Error`Not Implemented`;
 				}
 				isStrictSubset(set) {
 					// TODO/FIN: Implement
 					// can't be the same set
 					if (type(set, 1) !== "set") return !1;
-					throw Error("Not Implemented");
+					throw Error`Not Implemented`;
 				}
 				isSameset(set) {
 					if (type(set, 1) !== "set") return !1;
@@ -5377,73 +5567,62 @@ void (() => {
 				clear() { this.length = 0 }
 			};
 
-			Reflect.defineProperty(this, "_HelpText", {
+				Reflect.defineProperty(this, "_HelpText", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
-				, value: help ? HelpText : null
-			});
-			Reflect.defineProperty(this, Symbol.toStringTag, {
+				, value      : HelpText
+			}); Reflect.defineProperty(this, Symbol.toStringTag, {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: "rMath"
-			});
-			Reflect.defineProperty(this, "Set", {
+			}); Reflect.defineProperty(this, "Set", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: rSet
-			});
-			Reflect.defineProperty(this.Set.prototype, "⋃", {
+			}); Reflect.defineProperty(this.Set.prototype, "⋃", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.union
-			});
-			Reflect.defineProperty(this.Set.prototype, "⋂", {
+			}); Reflect.defineProperty(this.Set.prototype, "⋂", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.intersection
-			});
-			Reflect.defineProperty(this.Set.prototype, "⊂", {
+			}); Reflect.defineProperty(this.Set.prototype, "⊂", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.isStrictSubset
-			});
-			Reflect.defineProperty(this.Set.prototype, "⊃", {
+			}); Reflect.defineProperty(this.Set.prototype, "⊃", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.isStrictSuperset
-			});
-			Reflect.defineProperty(this.Set.prototype, "⊊", {
+			}); Reflect.defineProperty(this.Set.prototype, "⊊", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.isStrictSubset
-			});
-			Reflect.defineProperty(this.Set.prototype, "⊋", {
+			}); Reflect.defineProperty(this.Set.prototype, "⊋", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.isStrictSuperset
-			});
-			Reflect.defineProperty(this.Set.prototype, "⊆", {
+			}); Reflect.defineProperty(this.Set.prototype, "⊆", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.isSubset
-			});
-			Reflect.defineProperty(this.Set.prototype, "⊇", {
+			}); Reflect.defineProperty(this.Set.prototype, "⊇", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
 				, value: this.Set.prototype.isSuperset
-			});
-			Reflect.defineProperty(this.Set.prototype, "∈", {
+			}); Reflect.defineProperty(this.Set.prototype, "∈", {
 				configurable : false
 				, writable   : false
 				, enumerable : false
@@ -5470,7 +5649,8 @@ void (() => {
 			this.π_2 = π_2; // Math.π_2 is Math.π/2 but probably minusculely faster
 			this.Math = Math;
 			this.nullSet = this.emptySet = this.voidSet = Object.freeze(new this.Set());
-			/* G = 6.67m³/(10¹¹ kg s²)
+			/* this comment is completely irrelevant.
+				G = 6.67m³/(10¹¹ kg s²)
 				"–" !== "-"
 				roman numerals 1:ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩⅪⅫⅬⅭⅮⅯ
 				roman numerals 2:ⅰⅱⅲⅳⅴⅵⅶⅷⅸⅹⅺⅻⅼⅽⅾⅿ
@@ -6566,11 +6746,11 @@ void (() => {
 				, asec: x => Number.isNaN( x = Number(x) ) ? x : this.deg.acos(1/x)
 				, acot: x => Number.isNaN( x = Number(x) ) ? x : !x ? 90 : this.deg.atan(1/x) + 180*(x < 0)
 				, excst: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.cot(x))
-				// aexcst: x => Error("not implemented"),
+				// aexcst: x => { throw Error`not implemented` },
 				, exset: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(this.deg.exsec(x), this.deg.tan(x))
-				// aexset: x => Error("not implemented"),
+				// aexset: x => { throw Error`not implemented` },
 				, sqvcs: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(this.deg.vrc(x), this.deg.sin(x))
-				// avcs: x => Error("not implemented"),
+				// avcs: x => { throw Error`not implemented` },
 				, sq1s: x => Number.isNaN( x = Number(x) ) ? x : this.hypot(1, this.deg.sin(x))
 				, asq1s: x => Number.isNaN( x = Number(x) ) ? x : this.deg.asin(x**2 - 1)
 				, ccvs: null
@@ -6748,7 +6928,7 @@ void (() => {
 				this.dragCoefficient = { // C_D
 					// link 1:  https://bit.ly/3TufCLt
 					// link 2:  https://bit.ly/3T8jthf
-					// DragCoefficient = 2*DragForce   /   MassDensity*FlowSpeed²Area
+					// DragCoefficient = 2*DragForce  /  MassDensity*FlowSpeed²Area
 					sphere                : 0.47
 					, halfSphere          : 0.42
 					, spheroid3to4        : 0.59
@@ -6828,9 +7008,9 @@ void (() => {
 				set.remove("strict");
 				strict = !0;
 			}
-			if ( set.hasDupes() ) throw Error("rMath.P() cannot have duplicate arguments");
+			if ( set.hasDupes() ) throw Error`rMath.P() cannot have duplicate arguments`;
 			set = set.map( e => [e] );
-			if ( set.isNaN() ) throw TypeError("rMath.P() can only have numeric arguments");
+			if ( set.isNaN() ) throw TypeError`rMath.P() can take the powerset of numeric sets`;
 			function subP(set) {
 				return set.map(
 					e => {
@@ -6880,7 +7060,7 @@ void (() => {
 			if (Number.isNaN( last = Number(last) )) return NaN;
 			if (type(fn, 1) !== "func") return NaN;
 			if (Number.isNaN( inc = Number(inc) )) return NaN;
-			if (inc === 0) throw Error("increment to rMath.sum() cannot be 0.");
+			if (inc === 0) throw Error`increment to rMath.sum() cannot be 0.`;
 			var total = 0;
 			if (last === Infinity) {
 				for (var prev; n <= last; n += inc) {
@@ -7001,7 +7181,8 @@ void (() => {
 		_(n) { 1 / Number(n) }
 		/////////////////////////////////////// STATISTICS START ///////////////////////////////////////
 		stats(...dataset) {
-			return dataset = msort( dataset.flatten() ), {
+			dataset = msort( dataset.flatten() );
+			return {
 				dataset: dataset,
 				length: dataset.length,
 				gcd: this.gcd(dataset), // greatest common denominator
@@ -7027,15 +7208,14 @@ void (() => {
 				absoluteDeviation: this.absdev(dataset),
 				total: this.total(dataset),
 				product: this.product(dataset),
-				sumOfSquares: dataset.reduce((t, e) => t + e**2, 0),
+				sumOfSquares: this.sumOfSquares(dataset),
 				quartile: [
 					dataset[0],
 					this.Q1(dataset),
 					this.median(dataset),
 					this.Q3(dataset),
 					dataset[dataset.length - 1],
-				]
-				, mean: {
+				], mean: {
 					interquartile: this.IQM(dataset),
 					arithmetic: this.mean(dataset),
 					geometric: this.GM(dataset),
@@ -7048,19 +7228,22 @@ void (() => {
 					quintic: this.quinticmean(dataset),
 					heronian: { // heronian mean can only take 2 values
 						minmax: this.heronian(dataset[0], dataset[dataset.length - 1]),
-						q1q3: this.heronian(this.Q1(dataset), this.Q3(dataset)),
+						q1_q3: this.heronian(this.Q1(dataset), this.Q3(dataset)),
 						fences: this.heronian(this.lfence(dataset), this.ufence(dataset)),
-						p0p1: this.heronian(dataset[0], dataset[1]),
+						p0_p1: this.heronian(dataset[0], dataset[1]),
 							// datapoint 0, datapoint 1
-						pn1pn2: this.heronian(dataset[dataset.length - 1], dataset[dataset.length - 2]),
+						pn1_pn2: this.heronian(dataset[dataset.length - 1], dataset[dataset.length - 2]),
 							// datapoint -1, datapoint -2
 					}
 					, lehmer: [ // lehmer mean has to take a second parameter
-						this.lehmer(0, dataset),
-						this.lehmer(1, dataset),
-						this.lehmer(2, dataset),
+						this.lehmer(0, dataset), // harmonic mean
+						// this.lehmer(.5, dataset), // geometric mean
+						this.lehmer(1, dataset), // arithmetic mean
+						this.lehmer(2, dataset), // contraharmonic mean
 						this.lehmer(3, dataset),
 						this.lehmer(4, dataset),
+						// lim_{n->∞} this.lehmer(n, dataset) == max(dataset)
+						// lim_{n->-∞} this.lehmer(n, dataset) == min(dataset)
 					]
 					,
 				}
@@ -7129,6 +7312,10 @@ void (() => {
 			dataset = dataset.flatten();
 			return this.absdev(dataset) / dataset.length;
 		}
+		sumOfSquares(...dataset) {
+			// sum of squares.
+			return dataset.reduce((t, e) => t + e**2, 0);
+		}
 		lfence(...dataset) {
 			// lower fence. (for determining outliers)
 			dataset = dataset.flatten();
@@ -7181,7 +7368,7 @@ void (() => {
 		GM(...dataset) {
 			// geometric mean
 			dataset = dataset.flatten();
-			return this.nthrt( abs(this.product(dataset)), dataset.length );
+			return abs(this.product(dataset)) ** (1 / dataset.length);
 		}
 		HM(...dataset) {
 			// harmonic mean
@@ -7279,7 +7466,7 @@ void (() => {
 		}
 		quinticmean(...dataset) {
 			return dataset = dataset.flatten(),
-				this.nthrt( ardatasetgdatasets.reduce((t, e) => t + e**5, 0) / dataset.length, 5 );
+				this.nthrt( dataset.reduce((t, e) => t + e**5, 0) / dataset.length, 5 );
 		}
 		powmean(power, ...dataset) {
 			return dataset = dataset.flatten(),
@@ -7287,10 +7474,10 @@ void (() => {
 		}
 		linReg(xs=[], ys=[], Return="obj") {
 			// linear regression
-			if (!isArr(xs)) throw Error("first parameter of rMath.linReg() is not an array");
-			if (!isArr(ys)) throw Error("second parameter of rMath.linReg() is not an array");
-			if (!xs.length) throw Error("No elements given for first parameter of rMath.linReg()");
-			if (!ys.length) throw Error("No elements given for second parameter of rMath.linReg()");
+			if (!isArr(xs)) throw Error`first parameter of rMath.linReg() is not an array`;
+			if (!isArr(ys)) throw Error`second parameter of rMath.linReg() is not an array`;
+			if (!xs.length) throw Error`No elements given for first parameter of rMath.linReg()`;
+			if (!ys.length) throw Error`No elements given for second parameter of rMath.linReg()`;
 			if ( xs.isNaN() )
 				throw TypeError(`array of numbers required for first parameter of rMath.linReg(). Inputs: ${xs}`);
 			if ( ys.isNaN() )
@@ -8270,7 +8457,7 @@ void (() => {
 					f.slice(a[1] + len(a[0]))
 				}
 				try { f = Function(`${VARIABLE}`,`return ${f.replace(/\^/g, "**")}`) }
-				catch { throw Error("Variable name declaration is missing, and `x` was not used.") }
+				catch { throw Error`Variable name declaration is missing, and \`x\` (the default) was not used.` }
 			}
 
 			if (!( f(x) || f(x + Δx) )) return 0;
@@ -8298,10 +8485,10 @@ void (() => {
 				for (const a of arr.smap(e=>[e[0], e.index]).reverse()) {
 					f = f.substr(0, a[1]) +
 					a[0].replace(/(?<=\d+)/, "*") +
-					f.substr(a[1] + len(a[0]))
+					f.slice(a[1] + a[0].length)
 				}
 				try { f = Function(`${VARIABLE}`,`return ${f.replace(/\^/g, "**")}`) }
-				catch { throw Error("Variable name declaration is missing, and `x` was not used.") }
+				catch { throw Error`Variable name declaration is missing, and \`x\` (the default) was not used.` }
 			}
 
 			var m;
@@ -8321,8 +8508,22 @@ void (() => {
 				b: b
 			}
 			else if ( [String, "s", "str", "string"].includes(ret) )
-				return `${ m ? `${m}x` : "" }${ b<0 ? `${b}` : b ? `${m ? "+" : ""}${b}` : "" }`.
-					start("0").remove(/1(?=x)/);
+				return `${
+					m ?
+						`${m}x` :
+						""
+				}${
+					b < 0 ?
+						`${b}` :
+						b ? `${
+							m ?
+								"+" :
+								""
+						}${b}` :
+						""
+				}`
+					.or("0")
+					.remove(/1(?=x)/);
 		}
 		base10Conv(n, base, decAcy=54, numberOnly=false) {
 			// only works for base <= 10
@@ -8330,8 +8531,8 @@ void (() => {
 			if (Number.isNaN( n = Number(n) )) return NaN;
 			if (Number.isNaN( n = Number(n) ) || base < 2) return NaN;
 			if (Number.isNaN( base = Number(base) )) return NaN;
-			if (base < 2) throw Error("Base must be greater than 2");
-			if (base > 10) throw Error("base x > 10 is not supported yet");
+			if (base < 2) throw Error`Base must be greater than 2`;
+			if (base > 10) throw Error`base x > 10 is not supported yet`;
 			var iPart = sMath.ipart(`${n}`),
 				fPart = `${fpart(n, 0)}`;
 			var str = "";
@@ -8457,14 +8658,14 @@ void (() => {
 				case "f": value = (5/9) * (value - 32); break;
 				case "k": value -= 273.15             ; break;
 				case "r": value = (5/9)*value - 273.15; break;
-				default: throw Error("Invalid 2nd Input to function");
+				default: throw Error`Invalid 2nd Input to function`;
 			}
 			switch (endSystem) { // convert from celcius
 				case "c": return value;
 				case "f": return 1.8*value + 32;
 				case "k": return value + 273.15;
 				case "r": return 1.8*value + 491.67; // (9/5) (x + 273.15)
-				default: throw Error("Invalid 3rd Input to function");
+				default: throw Error`Invalid 3rd Input to function`;
 			}
 		}
 		coprime(a, b) { return this.gcd(a, b) === 1 /* coprimality of a and b */ }
@@ -8812,7 +9013,25 @@ void (() => {
 			return "The requested format doesn't exist";
 		}
 
-		CHSolutionFunctions = (function CHSF_closure() {
+		PrimeQ = (function PrimeQ_closure() {
+			function PrimeQ(n) {
+				return n < 2 ?
+					false :
+					!/^(?<divisor>11+?)\k<divisor>+$/.test( "1".repeat(n) );
+			}
+
+			return new Proxy(Object.create(null), Object.create(null, {
+				get: { value: (_, n) => PrimeQ(n) }
+			}));
+
+			// PrimeQ[55] // false
+			// PrimeQ(55) // false
+
+			// PrimeQ[101] // true
+			// PrimeQ(101) // true
+		})();
+
+		CHSolutionFunctions = (function CHSolutionFunctions_closure() {
 			// Continuum Hypothesis Solution Functions
 			// functions with underscores are somewhat related but not important.
 
@@ -8827,16 +9046,65 @@ void (() => {
 			function realToNatural(string = "1.0") {
 				if (typeof string === "string")
 					string = string.replace(/\s/g, "");
+
 				if (Number.isNaN( string = numStrNorm(string, NaN) ))
 					throw Error`string argument required`;
-				const match = /^-??(\d+)\.(\d+)$/.exec(string);
-				if (match == null) throw Error`string number argument required`;
-				const x = BigInt(match[1]), y = BigInt(match[2].reverse());
+
+				const [ipart, fpart] = string.replace("-", "").split(".")
+					, x = BigInt( ipart )
+					, y = BigInt( fpart.reverse() );
 
 				return (x+y)**2n + 3n*x + y + BigInt(string[0] === "-");
 			}
 
-			function _nthPiIndex(n=1n) {
+			var pi10adicLogger = (function pi10adicLogger_closure() {
+				// 10-adic pi logging function
+				function f(d) {
+					return (
+						`${d} : ` +
+						realToNatural( sMath.piApprox.piToNDigits(d) )
+					)
+						.splitAt(-d)
+						.join("%c");
+				}
+
+				function fList(rangeEnd, rangeStart=1) {
+					// console.log(...arguments.callee)
+					const array = Array.range(rangeStart, rangeEnd).map(
+						e => f(e).split(/(?<=: )/)
+					)
+						, lastIntegerLength = array.last.last.length
+						, lastIndexLength = array.last[0].length;
+
+					return [
+					array.map(e => "%c" + " ".repeat(lastIndexLength - e[0].length) + e.join(
+						" ".repeat(lastIntegerLength - e[1].length)
+					)).join("\n"),
+					...Array.from( range(rangeEnd - rangeStart + 1) )
+						.map(e => ["color: white", "color: #32C832"])
+						.flat()
+					];
+				}
+
+				function pi10adicLogger(min, max) {
+					// f(); min = max = 1
+					// f(min, max)
+					// f(max); min = 1
+					if (max == null)
+						[min, max] = [1, min];
+					else if (min == null)
+						[min, max] = [1, 1];
+
+					console.log(...fList(b, a));
+				}
+
+				pi10adicLogger._fList = fList;
+				pi10adicLogger._f = f;
+
+				return pi10adicLogger;
+			})();
+
+			function nthPiIndex(n=1n) {
 				return BigInt(
 					rMath.CHSolutionFunctions.realToNatural(
 						sMath.piApprox.piToNDigits(n)
@@ -8854,9 +9122,12 @@ void (() => {
 			realToNatural.inverse = naturalToReal;
 
 			return {
-				naturalToReal : naturalToReal,
-				realToNatural : realToNatural,
-				_nthPiIndex   : _nthPiIndex  ,
+				naturalToReal  : naturalToReal ,
+				realToNatural  : realToNatural ,
+				piSpecific: {
+					nthPiIndex     : nthPiIndex     ,
+					pi10adicLogger : pi10adicLogger ,
+				},
 			};
 		})()
 
@@ -8962,6 +9233,7 @@ void (() => {
 
 		// Things planned to be implemented:
 
+		// clamp (the same thing as [Math]::Clamp in PowerShell)
 		// polygonal numbers
 		// figurate numbers
 		// nth dimentional triangular numbers
@@ -9042,7 +9314,7 @@ void (() => {
 					return polar ?
 						`${cMath.abs(this)}${exp ? "exp(" : "e"}${exp ? "" : doubleStar ? "**" : "^"}${parens ? "(" : ""}${this.arg()}${char}${parens ? ")" : ""}${exp ? ")" : ""}`.remove(
 							RegExp(`^1(?=e)|e\\^\\(0${char}\\)`, "g")
-						).start("1").replace([/^0.*/, /0\./g], ["0", "."]) :
+						).or("1").replace([/^0.*/, /0\./g], ["0", "."]) :
 						this.re ? // real
 							this.im ?
 								this.im > 0 ?
@@ -9075,7 +9347,7 @@ void (() => {
 				}
 				add(num, createNew=true) {
 					if (typeof num !== "number" && type(num, 1) !== "complex")
-						throw Error("Invalid input to function");
+						throw Error`Invalid input to function`;
 					typeof num === "number" && (num = new this.constructor(num, 0));
 					if (createNew) return new this.constructor(
 						this.re + num.re,
@@ -9087,7 +9359,7 @@ void (() => {
 				}
 				sub(num, createNew=true) {
 					if (typeof num !== "number" && type(num, 1) !== "complex")
-						throw Error("Invalid input to function");
+						throw Error`Invalid input to function`;
 					typeof num === "number" && (num = new this.constructor(num, 0));
 					if (createNew) return new this.constructor(
 						this.re - num.re,
@@ -9099,7 +9371,7 @@ void (() => {
 				}
 				mul(num, createNew=true) {
 					if (typeof num !== "number" && type(num, 1) !== "complex")
-						throw Error("Invalid input to function");
+						throw Error`Invalid input to function`;
 					typeof num === "number" && (num = new this.constructor(num, 0));
 					if (createNew) return new this.constructor(
 						this.re*num.re - this.im*num.im,
@@ -9112,7 +9384,7 @@ void (() => {
 				}
 				div(num, createNew=true) {
 					if (typeof num !== "number" && type(num, 1) !== "complex")
-						throw Error("Invalid input to function");
+						throw Error`Invalid input to function`;
 					typeof num === "number" && (num = new this.constructor(num, 0));
 					if (createNew) return new this.constructor(
 						(this.re*num.re + this.im*num.im) / (num.re**2 + num.im**2),
@@ -9505,7 +9777,7 @@ void (() => {
 			// TODO/FIN: implement
 			if (typeof z === "number") return z.isPrime();
 			if (type(z, 1) !== "complex") return NaN;
-			throw Error("Not Implemented");
+			throw Error`Not Implemented`;
 		}
 	}, "math fMath": class FractionalStringMath {
 		// TODO: Make the functions convert numbers into fractions if they are inputed
@@ -9516,8 +9788,8 @@ void (() => {
 				constructor(numerator="1.0", denominator="1.0") {
 					if (Number.isNaN(numerator = sMath.new(numerator, NaN)) ||
 						Number.isNaN(denominator = sMath.new(denominator, NaN)))
-						throw Error("fMath.Fraction() requires string number arguments.");
-					if (sMath.eq.iz(denominator)) throw Error("fMath.Fraction() cannot have a zero denominator");
+						throw Error`fMath.Fraction() requires string number arguments.`;
+					if (sMath.eq.iz(denominator)) throw Error`fMath.Fraction() cannot have a zero denominator`;
 					var gcd = sMath.gcd(numerator, denominator);
 					this.numer = sMath.div(numerator, gcd);
 					this.denom = sMath.div(denominator, gcd);
@@ -9577,7 +9849,7 @@ void (() => {
 			this.CFraction = class ComplexFraction {
 				constructor(re=fMath.one, im=fMath.one) {
 					if (type(re, 1) !== "fraction" || type(im, 1) !== "fraction")
-						throw TypeError("cfMath.CFraction requires 2 fractional arguments.");
+						throw TypeError`cfMath.CFraction requires 2 fractional arguments.`;
 					this.re = fMath.simp(re);
 					this.im = fMath.simp(im);
 				}
@@ -9606,11 +9878,9 @@ void (() => {
 				, enumerable: false
 				, configurable: false
 			});
-		}
-		inverse(denom=3n, precision=20n, outputType=String) {
+		} inverse(denom=3n, precision=20n, outputType=String) {
 			// TODO: the precision is really jank.
-			// takes in a natural $x$ and returns the 2-adic representation of
-			// $1/x$
+			// takes in a natural $x$ and returns the 2-adic representation of $1/x$
 			if (typeof denom !== "bigint")
 				throw Error`p2Math.inverse() requires bigint arguments`;
 			if (typeof precision !== "bigint")
@@ -9625,16 +9895,16 @@ void (() => {
 
 			const output = bMath.fromBinary(
 				this.negativeInverse(denom, precision, MutableString)
-				.map(e => 1 - e + "")
+					.map(e => 1 - e + "")
 			) + 1n;
 
 			if (outputType === String) return output.toString(2);
-			if ([MutableString, MutableString._MutableString].includes(outputType)) return MutableString( output.toString(2) );
+			if ([MutableString, MutableString._MutableString].includes(outputType))
+				return MutableString( output.toString(2) );
 			if (outputType === BigInt) return output;
 			if (outputType === Number) return Number(output); // not recommended
 			//.toString(2).slice(-Number(precision));
-		}
-		negativeInverse(denom=3n, precision=50n, outputType=String) {
+		} negativeInverse(denom=3n, precision=50n, outputType=String) {
 			// return truncated 2-adic `x` such that `x*denom` == `2-adic -1`
 			if (typeof denom !== "bigint") throw Error`denom must be of type BigInt`;
 			if (typeof precision !== "bigint") throw Error`precision must be of type BigInt`;
@@ -9662,7 +9932,7 @@ void (() => {
 
 
 			for (var output_binary = MutableString(""), i = 0n; i < precision; ++i)
-				if ((denom * bMath.fromBinary(output_binary.begin("1")))
+				if ((denom * bMath.fromBinary(output_binary.start("1")))
 					.toString(2)
 					.slice(-output_binary.length)
 					.indexOf("0")
@@ -9676,8 +9946,7 @@ void (() => {
 			if (outputType === Number) return Number("0b" + output_binary.toString()); // not recommended
 
 			throw Error`Invalid output type. only String, MutableString, MutableString._MutableString, BigInt, and Number are supported.`;
-		}
-		negative(x) {
+		} negative(x) {
 			if (typeof x !== "string")
 				throw Error`x must be a 2-adic integer string`;
 			const precision = x.length;
@@ -9695,8 +9964,7 @@ void (() => {
 			x = x.slice(-precision);
 
 			return x;
-		}
-		sin(n, iterations=5n, precision=200n) {
+		} sin(n, iterations=5n, precision=200n) {
 			// `precision = 0n` is basically `precision = Infinity`
 			if (typeof n !== "bigint") throw Error`bigint arguments required`;
 			if (typeof iterations !== "bigint") throw Error`bigint arguments required`;
@@ -9841,15 +10109,13 @@ void (() => {
 					handle ?
 						{ data: input } :
 						void 0;
-			}
-			, Symbol(input, handle=false) {
+			}, Symbol(input, handle=false) {
 				return typeof input === "symbol" ?
 					input :
 					handle ?
 						Symbol.for(input) :
 						void 0;
-			}
-			, undefined() {}
+			}, undefined() {}
 			, null() { return null }
 			, dict          : dict
 			, RealSet       : rMath.Set
@@ -9909,6 +10175,16 @@ void (() => {
 	--> document things
 
 	if (LibSettings.Use_Document) {
+		Document.prototype.createCDATASection = (function createCDATASection_closure() {
+			const _createCDATASection = Document.prototype.createCDATASection;
+			const _document = new Document;
+
+			function createCDATASection(text="") { return _createCDATASection.call(_document, text) }
+
+			return createCDATASection._document = _document,
+				createCDATASection._createCDATASection = _createCDATASection,
+				createCDATASection;
+		})();
 		const
 			_ael = EventTarget.prototype.addEventListener
 			, _rel = EventTarget.prototype.removeEventListener
@@ -10113,7 +10389,7 @@ void (() => {
 	const CONFLICT_ARR2 = Array.from(CONFLICT_ARR);
 	if (LibSettings.Alert_Conflict_OverWritten && CONFLICT_ARR2.length) {
 		switch (LibSettings.ON_CONFLICT) {
-			case "crash": throw Error("there was a conflict and the program hasn't crashed yet.");
+			case "crash": throw Error`there was a conflict and the program hasn't crashed yet.`;
 			case "assert":
 				console.assert(!1, "Global Variables Overwritten: %o", CONFLICT_ARR2);
 				break;
@@ -10144,26 +10420,10 @@ void (() => {
 	)( LibSettings.Library_Startup_Message === "default" ? `${LibSettings.LIBRARY_NAME} loaded` : LibSettings.Library_Startup_Message );
 	return 0;
 }
-
-})();
-
-
-structuredClone = (() => {
-	const _structuredClone = structuredClone
-		, newStructuredClone = x => _structuredClone(x);
-	return newStructuredClone._structuredClone = _structuredClone,
-		newStructuredClone;
+;
 })();
 
 ///// experimental things
-
-document._createCDATASection = (function _createCDATASection_closure() {
-	const doc = new Document;
-	function createCDATASection(text="") { return doc.createCDATASection(text) }
-
-	return createCDATASection._document = doc,
-		createCDATASection;
-})();
 
 void function _new(Class, ...args) {
 	// _new(Class, argument_array) === new Class(argument_array). (approximately)
@@ -10192,38 +10452,6 @@ void function _new(Class, ...args) {
 	);
 }
 
-var fs = (function fs_closure() {
-	function f(d) {
-		return (
-			`${d} : ` +
-			rMath.CHSolutionFunctions.realToNatural(
-				sMath.piApprox.piToNDigits(d)
-			)
-		)
-			.splitI(-d)
-			.join("%c");
-	}
-
-	// TODO: figure out what to name this function. `fs` is temporary.
-	function fs(rangeEnd, rangeStart=1) {
-		// console.log(...arguments.callee)
-		const array = Array.range(rangeStart, rangeEnd).map(
-			e => f(e).split(/(?<=: )/)
-		)
-			, lastIntegerLength = array.last.last.length
-			, lastIndexLength = array.last[0].length;
-
-		return [
-		array.map(e => "%c" + " ".repeat(lastIndexLength - e[0].length) + e.join(
-			" ".repeat(lastIntegerLength - e[1].length)
-		)).join("\n"),
-		...Array.from( range(rangeEnd - rangeStart + 1) ).map(e => ["color: white", "color: #32C832"]).flat()
-		];
-	}
-
-	return fs._f = f,
-		fs;
-})();
 
 function binaryPiToNaturalBinary(string = "11.001001") {
 	const x = bMath.fromBinary( string.match(/^11\.(\d+)$/)[1].reverse() );
@@ -10245,135 +10473,182 @@ var binary_pi_2250 =
 ;
 
 
-var x = bMath.fromBinary( binaryPiToNaturalBinary(binary_pi_2250) );
+// var x = bMath.fromBinary( binaryPiToNaturalBinary(binary_pi_2250) );
 
-var PrimeQ = (function PrimeQ_closure() {
-	function PrimeQ(n) {
-		return !( n < 2 ?
-			1 :
-			/^(?<divisor>11+?)\k<divisor>+$/.test( "1".repeat(n) )
-		);
+
+// f(x) + f(x+1) = f(2x) : f(x) = floor(x/2)
+
+
+function NotImplemented() {
+	throw Error`Not Implemented`;
+}
+
+function die(msg) {
+	throw `die("${msg?.toString?.() ?? Object.prototype.toString.call(msg)}")`;
+};
+
+
+
+/*Reflect.ownKeys = (function ownKeys_closure() {
+	const _ownKeys = Reflect.ownKeys;
+
+	// basically just allow primitive types
+	function ownKeys(target) {
+		if (target == null) return [];
+		if (["bigint", "boolean", "number", "string", "symbol"].includes(typeof target))
+			target = (function objectify() { return this }).call(target);
+		return _ownKeys(target);
 	}
 
-	return new Proxy(PrimeQ, {
-		get: (_, n) => PrimeQ(n)
-	});
+	ownKeys._ownKeys = _ownKeys;
 
-	// PrimeQ[55] // false
-	// PrimeQ(55) // false
-
-	// PrimeQ[101] // true
-	// PrimeQ(101) // true
-});
+	return ownKeys
+})();*/
 
 
-// f(x) + f(x+1) = f(2x) | f(x) = floor(x/2)
+/*
+var findWrap = (function get_wrap() {
+	// find the first point where it wraps around
+	// 0xffff is the value right now.
+	var i = 1
 
-var [loadCubefield, deloadCubefield] = (function cubefield_closure() {
-	let old = null;
-	if (LIBRARY_VARIABLES.settings.Use_Document == false)
-		return [undefined, undefined];
+	while (String.fromCharCode(++i) !== "\0");
 
-	function loadCubefield() {
-		// returns false on fail. retains the doctype.
+	return i
+})()
 
-		if (document.children.length === 0)
-			return false;
+var fForever = (function fForever_closure() {
+	function fDimN (end, dimension, returnOnTrue, f, indices) {
+		if (arguments.length !== 5)
+			throw Error`fDimN requires exactly 5 arguments`;
 
-		// remove html tag
-		old = document.removeChild(document.children[0]);
+		// basically, keep creating base `end` numbers with `dimension` digits,
+		// then pass it into `this` as an array of digits.
+		if (--dimension < 0)
+			return f(indices)
 
-		// replace html tag
+		indices.length++
 
-		document.appendChild(createElement("html", {
-			attributes: {
-				lang: "en-us",
-			},
-			children: [
-				createElement("head", {
-					children: [
-						createElement("meta", {
-							attributes: {
-								charset: "utf-8",
-							},
-						}),
-						createElement("meta", {
-							attributes: {
-								name: "viewport",
-								content: "width=device-width, initial-scale=1",
-							},
-						}),
-						createElement("title", {
-							innerHTML: "Cubefield",
-						}),
-					],
+		for (var i = 0; i < end ;) {
+			indices.last = i++
+
+			const tmp = fDimN(
+				end
+				, dimension
+				, returnOnTrue
+				, f
+				, indices
+				,
+			)
+
+			if (returnOnTrue && tmp)
+				return indices
+
+		}
+	}
+
+	function F(end=1, returnOnTrue=false, f=console.log) {
+		for (var i = 0 ;;) {
+
+			console.log("starting dimension: %o", ++i)
+
+			const tmp = fDimN(end, i, true, f, [])
+
+			if (returnOnTrue && tmp)
+				return tmp
+
+		}
+	}
+
+	F._fDimN = fDimN;
+
+	return F;
+})()
+
+var hash = md5
+var ORIGINAL = "\t" // chr([9, 10]) // "ӒϨ"
+var HASH = hash(ORIGINAL) // "b0b4a470874d8b9ba71474340c44ef6b"
+// ord(original) == [1234, 1000]
+
+var each = arr => {
+	const text = arr.map(e => String.fromCharCode(e)).join("")
+
+	return text === ORIGINAL
+}
+// debug(each)
+debug(fForever)
+
+fForever(11, true, each)
+*/
+
+function sleepSync(ms=1000) {
+	const start = Date.now()
+
+	while (Date.now() - start < ms)
+		continue
+}
+
+var Worker = (function Worker_closure() {
+	// basically, just make it work with function arguments
+	const _Worker = Worker;
+
+	const Worker_ = function Worker(thing, options={}) {
+		if (!(this instanceof Worker))
+			throw TypeError`Failed to construct 'Worker': Please use the 'new' operator, this DOM object constructor cannot be called as a function.`
+
+		if (typeof thing === "function") {
+			const
+				blob = new Blob(["self.onmessage = " + thing], {
+					type: "application/javascript"
 				}),
-				createElement("body", {
-					attributes: {
-						dir: "ltr",
-					},
-					styles: {
-						background: "black",
-						margin: "0",
-					},
-					children: [
-						createElement("noscript", {
-							children: createElement("h1", {
-								innerHTML: "JavaScript must be enabled to play Cubefield.",
-								styles: {
-									"text-align" : "center",
-									"color"      : "gray",
-									"top"        : "1rem",
-								},
-							}),
-						}),
-						createElement("script", {
-							attributes: {
-								type: "module",
-							},
-							text: joinlines([
-								,  "document.body.appendChild(LIBRARY_VARIABLES.createElement(\"script\", {"
-								,  "	src: \"https://files.crazygames.com/gameframe/ruffle/2023-05-09/ruffle.js\","
-								,  "	onload() {"
-								,  "		const player = RufflePlayer.newest().createPlayer();"
-								,  "		player.style.cssText = \"height: 100vh; width: 100vw; border: 0; top: 0; left: 0; position: absolute;\";"
-								,  "		document.body.appendChild(player);"
-								,  "		player.load(\"https://files.crazygames.com/cubefield/1/cubefield.swf\");"
-								// ,  "		console.log(\"Cubefield WASM loaded\");"
-								,  "	},"
-								,  "}));"
-							]),
-						}),
-					]
-				}),
-			],
-		}));
+				url = URL.createObjectURL(blob),
+				worker = new _Worker(url, options);
 
-		return true;
+			// give it time to load
+			setTimeout(() => URL.revokeObjectURL(url), 100);
+
+			return worker;
+		}
+
+		return new _Worker(thing, options);
 	}
-	function deloadCubefield() {
-		if (false
-			|| old == null
-			|| old.constructor !== HTMLHtmlElement
-			|| document == null
-			|| document.children.length === 0)
-			return false;
 
-		document.removeChild(document.children[0]);
-		document.appendChild(old);
+	Worker_._Worker = _Worker;
 
-		old = null;
-
-		return true;
-	}
-	return [loadCubefield, deloadCubefield];
+	return Worker_;
 })();
 
 
-var NotImplemented = () => {
-	throw Error`Not Implemented`;
-};
+if (globalThis.Buffer) globalThis.Buffer.prototype.toString = (function toString_closure() {
+	const _toString = Buffer.prototype.toString
 
-var die = msg => {
-	throw `die("${msg?.toString?.() ?? ({}).toString.call(msg)}")`;
-};
+	const toString_ = function toString(encoding, start, end) {
+		if (encoding === "buffer")
+			return this.slice(start, end)
+
+		if (typeof encoding === "number" && 1 < encoding && encoding < 37) {
+			if (encoding === 2)
+				encoding = "bin"
+			else if (encoding === 16)
+				encoding = "hex"
+			else
+				return BigInt("0x0" + this.slice(start, end).toString("hex")).toString(encoding)
+		}
+
+		if (encoding === "bigint")
+			return BigInt("0x0" + this.slice(start, end).toString("hex"))
+
+		if (encoding === "bin" || encoding === 2) {
+			// "binary" is already an encoding
+			const ret = BigInt("0x0" + this.slice(start, end).toString("hex")).toString(2)
+
+			return "0".repeat(8 - ret.length % 8) + ret
+		}
+
+		return _toString.apply(this, arguments)
+	}
+
+	toString_._toString = _toString
+
+	return toString_
+})()
