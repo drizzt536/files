@@ -23,6 +23,17 @@ function _standardizeFormat(format) {
 }
 
 var convertToCanvas = (function convertToCanvas_closure() {
+	function imageToCanvas(image) {
+		const canvas  = document.createElement("canvas")
+
+		canvas.width  = image.naturalWidth
+		canvas.height = image.naturalHeight
+
+		canvas.getContext("2d").addImage(image, 0, 0)
+
+		return canvas
+	}
+
 	function imageDataToCanvas(imageData) {
 		const canvas  = document.createElement("canvas")
 
