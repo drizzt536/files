@@ -4,21 +4,25 @@ function _standardizeFormat(format) {
 	if (typeof format !== "string")
 		return "image/png"
 
-	switch (format.toLowerCase()) {
-		case "image/png" : case "png":
-			return "image/png"
+	format = format.toLowerCase()
 
-		case "image/jpeg": case "jpeg":
-		case "image/jfif": case "jfif":
-		case "image/jpg" : case "jpg":
-			return "image/jpeg"
+	if (format.startsWith("image/"))
+		format = format.slice(6)
 
-		case "image/webp": case "webp":
-			return "image/webp"
 
+	switch (format) {
 		default:
 			// format not recognized. fallback to default
+		case "png":
 			return "image/png"
+
+		case "jpeg":
+		case "jfif":
+		case "jpg":
+			return "image/jpeg"
+
+		case "webp":
+			return "image/webp"
 	}
 }
 
@@ -71,7 +75,7 @@ function download(object, dest, format) {
 	const link = document.createElement("a")
 
 	link.href = url
-	link.download = (dest || `download.${_standardizeFormat(format).slice(6)}`).toString()
+	link.download = (dest ?? `download.${_standardizeFormat(format).slice(6)}`).toString()
 
 	link.click()
 }
