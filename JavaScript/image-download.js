@@ -76,10 +76,10 @@ function download(object, dest, format) {
 	link.click()
 }
 
-function downloadPNG (object, dest) { download(object, dest || "download.png" , "png" ) }
-function downloadJPG (object, dest) { download(object, dest || "download.jpg" , "jpg" ) }
-function downloadJPEG(object, dest) { download(object, dest || "download.jpeg", "jpeg") }
-function downloadWEBP(object, dest) { download(object, dest || "download.webp", "webp") }
+function downloadPNG (object, dest) { download(object, dest, "png" ) }
+function downloadJPG (object, dest) { download(object, dest, "jpg" ) }
+function downloadJPEG(object, dest) { download(object, dest, "jpeg") }
+function downloadWEBP(object, dest) { download(object, dest, "webp") }
 
 download.png = downloadPNG
 download.jpg = downloadJPG
