@@ -33,7 +33,7 @@ var convertToCanvas = (function convertToCanvas_closure() {
 		canvas.width  = image.naturalWidth
 		canvas.height = image.naturalHeight
 
-		canvas.getContext("2d").addImage(image, 0, 0)
+		canvas.getContext("2d").drawImage(image, 0, 0)
 
 		return canvas
 	}
