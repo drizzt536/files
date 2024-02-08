@@ -8,6 +8,8 @@ Also kind of like google slides, but only with images, and different.
 # TODO: add more right-hand control options, ie: with arrow keys, mouse, etc.
 # TODO: allow keybind control
 # TODO: add controls to swap image ordering
+# TODO: make the beginning function not actually traverse the stack
+# TODO: add shift-space : unpause but don't go to the next one, just start the timer
 # TODO/Maybe: add extra statistics to details?
 # TODO/Maybe: allow multi-monitor support
 
@@ -27,17 +29,20 @@ arg_parser.add_argument("--stack-size", "-s", type=int, default=-1, help="stack 
 arg_parser.add_argument("--paused", "-p", action="store_true", default=False, help="start paused. defaults to false")
 arg_parser.add_argument("--help", "-h", action="store_true", default=False, help="print commands and this usage message and exit")
 arg_parser.add_argument("--sequential", "-S", action="store_true", default=False, help="load images sequentially instead of randomly. defaults to false")
+arg_parser.add_argument("--include-all", "-i", action="store_true", default=False, help="This switch turns off the behavior described here. ignore files with the following extensions: .txt, .text, .md, and .org. Ignore folders called ignore. Ignore files called readme, license, or ignore.")
 arg_parser.add_argument("paths", nargs="*", type=str, help="paths to directories or files with images")
 
 args = arg_parser.parse_args()
 
+
 help_arg = args.help
 directories = args.paths
 sequential = args.sequential
+ignore = not args.include_all
 swap_time = args.change_time
 stack_size = args.stack_size
 
-if not directories:
+if not directories and not help_arg:
 	from getpass import getuser
 	from os import name as osname
 
@@ -61,6 +66,9 @@ def get_images_recursively(root: list[str, ...] = "./") -> tuple[str, ...]:
 
 		return [path.join(directory, file).replace("\\", "/") for file in listdir(directory)]
 
+	def extname(filepath: str) -> str:
+		return path.splitext(filepath)[1]
+
 	if isinstance(root, str):
 		directories = [root]
 	elif isinstance(root, list) and all(isinstance(item, str) for item in root):
@@ -75,17 +83,25 @@ def get_images_recursively(root: list[str, ...] = "./") -> tuple[str, ...]:
 
 		if not path.isdir(directory):
 			if path.isfile(directory):
+				# file was given directly, so
+				# bypass the text file ignore
 				files.append(directory)
 
 			# the path does not exist
 			continue
 
+		if ignore and directory == "ignore":
+			continue
+
 		for name in ls(directory):
 			if path.isdir(name):
 				directories.append(name)
-			else:
+			elif ignore and name.lower() not in {"readme", "license", "ignore"} and\
+				extname(name).lower() not in {".txt", ".text", ".md", ".org"}:
+
 				files.append(name)
 
+	# I do not remember what the purpose of this `list()+` was. Create a new list?
 	return list()+[file for file in files if file.lower().endswith((
 		# .avif is not supported by Pillow
 		".bmp",
@@ -118,7 +134,7 @@ canvas = Canvas(
 	highlightthickness = 0
 )
 
-if not original_image_paths:
+if not original_image_paths and not help_arg:
 	print(f"No images found in the specified director{"ies" if len(directories) > 1 else "y"}.")
 	exit(2)
 
@@ -235,39 +251,39 @@ def print_commands(event=None) -> None:
 		|number keys:
 		|    1
 		|                traverses back 1 image into the stack.
-		|                the same as pressing `d`
+		|                the same as pressing `a` once
 		|
 		|    2
 		|                traverses back 2 images into the stack.
-		|                the same as pressing `d` 2 times
+		|                the same as pressing `a` 2 times
 		|
 		|    3
 		|                traverses back 3 images into the stack.
-		|                the same as pressing `d` 3 times
+		|                the same as pressing `a` 3 times
 		|
 		|    4
 		|                traverses back 4 images into the stack.
-		|                the same as pressing `d` 4 times
+		|                the same as pressing `a` 4 times
 		|
 		|    5
 		|                traverses back 5 images into the stack.
-		|                the same as pressing `d` 5 times
+		|                the same as pressing `a` 5 times
 		|
 		|    6
 		|                traverses back 6 images into the stack.
-		|                the same as pressing `d` 6 times
+		|                the same as pressing `a` 6 times
 		|
 		|    7
 		|                traverses back 7 images into the stack.
-		|                the same as pressing `d` 7 times
+		|                the same as pressing `a` 7 times
 		|
 		|    8
 		|                traverses back 8 images into the stack.
-		|                the same as pressing `d` 8 times
+		|                the same as pressing `a` 8 times
 		|
 		|    9
 		|                traverses back 9 images into the stack.
-		|                the same as pressing `d` 9 times
+		|                the same as pressing `a` 9 times
 		|
 		|zoom:
 		|    z
