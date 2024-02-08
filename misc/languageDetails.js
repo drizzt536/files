@@ -1386,7 +1386,7 @@ var o = dict({
 			"local <name> = <value>",
 			"-- comment",
 			"local function name(...) ... end",
-			'require(...):new(...):sync(...)'
+			"require(...):new(...):sync(...)",
 			"--[[ multiline comment --]]",
 			"function <name>(...) ... end",
 			"function(...) ... end -- anonymous",
