@@ -6,6 +6,12 @@
 
 ////////////////// long form functions //////////////////
 
+/**
+ * Ihe functions in this file are in a different form than
+ * in the continuum hypothesis paper (part 5?), and since
+ * they are both correct, I do not care.
+**/
+
 
 var printReals = (function printReals_closure(consoleWidth=140) {
 	// put in your console width for the argument
@@ -168,7 +174,7 @@ function realToIndex(string) {
 }
 
 
-////////////////// short forms using lib.js and floating-point double-precision numbers //////////////////
+////////////////// short forms using lib.js and double-precision floating-point numbers //////////////////
 
 function indexToReal(n = 1) {
 	const
