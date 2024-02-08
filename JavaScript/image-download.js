@@ -65,49 +65,10 @@ function download(object, dest, format) {
 	link.click()
 }
 
-function downloadPNG(object, dest) {
-	// download PNG image from <canvas/>, <img/>, data URI, or ImageData object.
-	const url = dataURI(object, "png")
-	const link = document.createElement("a")
-
-	link.href = url
-	link.download = (dest || "download.png").toString()
-
-	link.click()
-}
-
-function downloadJPG(object, dest) {
-	// download JPG image from <canvas/>, <img/>, data URI, or ImageData object.
-	const url = dataURI(object, "jpg")
-	const link = document.createElement("a")
-
-	link.href = url
-	link.download = (dest || "download.jpg").toString()
-
-	link.click()
-}
-
-function downloadJPEG(object, dest) {
-	// download JPEG image from <canvas/>, <img/>, data URI, or ImageData object.
-	const url = dataURI(object, "jpeg")
-	const link = document.createElement("a")
-
-	link.href = url
-	link.download = (dest || "download.jpeg").toString()
-
-	link.click()
-}
-
-function downloadWEBP(object, dest) {
-	// download WEBP image from <canvas/>, <img/>, data URI, or ImageData object.
-	const url = dataURI(object, "webp")
-	const link = document.createElement("a")
-
-	link.href = url
-	link.download = (dest || "download.webp").toString()
-
-	link.click()
-}
+function downloadPNG (object, dest) { download(object, dest || "download.png" , "png" ) }
+function downloadJPG (object, dest) { download(object, dest || "download.jpg" , "jpg" ) }
+function downloadJPEG(object, dest) { download(object, dest || "download.jpeg", "jpeg") }
+function downloadWEBP(object, dest) { download(object, dest || "download.webp", "webp") }
 
 download.png = downloadPNG
 download.jpg = downloadJPG
