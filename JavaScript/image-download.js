@@ -9,7 +9,6 @@ function _standardizeFormat(format) {
 	if (format.startsWith("image/"))
 		format = format.slice(6)
 
-
 	switch (format) {
 		default:
 			// format not recognized. fallback to default
@@ -26,7 +25,7 @@ function _standardizeFormat(format) {
 	}
 }
 
-var convertToCanvas = (function convertToCanvas_closure() {
+var {convertToCanvas, convertToCanvasAsync} = (function convertToCanvas_closure() {
 	function imageToCanvas(image) {
 		const canvas  = document.createElement("canvas")
 
@@ -49,14 +48,39 @@ var convertToCanvas = (function convertToCanvas_closure() {
 		return canvas
 	}
 
-	return function convertToCanvas(object) {
+	function convertToCanvas(object) {
+		// returns a canvas, or throws an error. can't convert from URI string
+
 		if (object instanceof Image) return imageToCanvas(object)
 		if (object instanceof ImageData) return imageDataToCanvas(object)
 		if (object instanceof HTMLCanvasElement) return object
-		if (object instanceof "string") throw Error`cannot convert from a data URI to a canvas`
 
-		throw Error`cannot convert unknown format to a canvas.`
+		if (typeof object === "string")
+			throw Error`cannot convert from a data URI to a canvas synchronously`
+
+		throw Error`cannot convert unknown format to a canvas  synchronously.`
 	}
+
+	async function convertToCanvasAsync(object) {
+		// returns promise of a canvas, or throws an error
+
+		if (object instanceof Image) return imageToCanvas(object)
+		if (object instanceof ImageData) return imageDataToCanvas(object)
+		if (object instanceof HTMLCanvasElement) return object
+
+		if (typeof object === "string") return new Promise((res, rej) => {
+			const image = document.createElement("image")
+
+			image.onload = () => res(imageToCanvas(image))
+			image.onerror = () => rej(Error`URI source is probably invalid`)
+
+			image.src = object
+		})
+
+		throw Error`cannot convert unknown format to a canvas asynchronously.`
+	}
+
+	return {convertToCanvas, convertToCanvasAsync}
 })()
 
 function dataURI(object, format) {
@@ -85,8 +109,8 @@ function downloadJPG (object, dest) { download(object, dest, "jpg" ) }
 function downloadJPEG(object, dest) { download(object, dest, "jpeg") }
 function downloadWEBP(object, dest) { download(object, dest, "webp") }
 
-download.png = downloadPNG
-download.jpg = downloadJPG
+download.png  = downloadPNG
+download.jpg  = downloadJPG
 download.jpeg = downloadJPEG
 download.webp = downloadWEBP
 
@@ -97,6 +121,7 @@ const _exports = {
 	downloadJPEG,
 	downloadWEBP,
 	convertToCanvas,
+	convertToCanvasAsync,
 	dataURI,
 }
 
