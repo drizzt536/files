@@ -8,15 +8,15 @@ true = True
 false = False
 ellipsis = type(...) # type(Ellipsis)
 NotImplementedType = type(NotImplemented)
-generator = type(i for i in []) # useless
 function = type(lambda: 1)
 array = list
+generator = type(i for i in []) # useless
 dict_keys = type({}.keys()) # useless
 dict_values = type({}.values()) # useless
 dict_items = type({}.items()) # useless
 realnum = float | int
 number = realnum | complex
-__variables__ = (
+__vars__ = (
 	"Module",
 	"string",
 	"NoneType",
@@ -32,7 +32,6 @@ __variables__ = (
 	"dict_items (useless)",
 	"realnum (float | int)",
 	"number (realnum | complex)",
-	"void",
 	"__variables__",
 	"__functions__",
 	"__all__"
@@ -40,6 +39,7 @@ __variables__ = (
 __functions__ = (
 	"monitors",
 	"view (view module)",
+	"void",
 	"read",
 	"readlines",
 	"write",
@@ -51,31 +51,41 @@ __functions__ = (
 	"crandom (complex random)",
 	"addressOf",
 	"nameOf",
-	"tuplify_complex"
+	"tuplify_complex",
+	"inline_namedtuple",
+	"inline_dataclass"
 )
-__all__ = __variables__ + __functions__
+__all__ = __vars__ + __functions__
 
 # functions
 
 def void(*args, **kwargs) -> None:
+	"takes in any number of arguments and return nothing."
 	pass
 
 def monitors() -> list[dict["top", "left", "width", "height"], ...]:
-	"""returns a list of all connected monitors."""
+	"returns a list of all connected monitors."
+
 	from ctypes.wintypes import RECT
 	from ctypes import (
-		c_int as cint, c_ulong as ul, POINTER as ptr,
-		c_double as dbl, WINFUNCTYPE as cfn, windll
+		c_int as cint,
+		c_ulong as ul,
+		POINTER as ptr,
+		c_double as dbl,
+		WINFUNCTYPE as cfn,
+		windll
 	)
+
 	lst = []
 	windll.user32.EnumDisplayMonitors(0, 0, cfn(cint, ul, ul, ptr(RECT), dbl)(
 		lambda monitor, dc, rect, data: (rct := rect.contents) and lst.append({
-			'top'    : rct.top,
-			'left'   : rct.left,
-			'width'  : rct.right - rct.left,
-			'height' : rct.bottom - rct.top,
+			"top"    : rct.top,
+			"left"   : rct.left,
+			"width"  : rct.right - rct.left,
+			"height" : rct.bottom - rct.top,
 		}) or 1
 	), 0)
+
 	return lst
 
 def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...] | list[str, ...] | set[str, ...] | dict_keys | None:
@@ -122,13 +132,15 @@ def view(module: Module, form: int = 8, /, *, form_6_dst = 1) -> tuple[str, ...]
 		)
 	else: return module
 
-def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
+def read(file_loc: str | bytes | int, /, *, encoding: str = "utf8") -> str:
 	"""
 		function for reading from files.
 		takes 1 argument, file path.
 		reads and returns the contents of the file
 	"""
+
 	from io import UnsupportedOperation
+
 	try:
 		with open(file_loc, "r", encoding=encoding) as file:
 			return file.read()
@@ -139,7 +151,7 @@ def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
 		print("\nautomate.misc.read() failed to read the file because the file requested is a folder or there are insufficient permissions to view the file.")
 		raise e
 	except TypeError as e:
-		print("\nautomate.misc.read() failed to read the file because it was not a string or non-negative-integer")
+		print("\nautomate.misc.read() failed to read the file because it was not a string, bytes, non-negative-integer, or os.PathLike")
 		raise e
 	except ValueError as e:
 		print("\nautomate.misc.read() failed to read the file because it was not a valid value")
@@ -151,13 +163,14 @@ def read(file_loc: str | int, /, *, encoding: str = "utf8") -> str:
 		print("\nautomate.misc.read() can't read from stdout")
 		raise e
 
-def readlines(file_loc: str | int, /, *, encoding: str = "utf8") -> list[str, ...]:
+def readlines(file_loc: str | bytes  | int, /, *, encoding: str = "utf8") -> list[str, ...]:
 	"""
 		function for reading from files.
 		takes 1 argument, file path.
 		reads and returns the contents of the file split into a list of lines
 	"""
 	from io import UnsupportedOperation
+
 	try:
 		with open(file_loc, "r") as file:
 			return file.readlines()
@@ -168,7 +181,7 @@ def readlines(file_loc: str | int, /, *, encoding: str = "utf8") -> list[str, ..
 		print("\nautomate.misc.readlines() failed to read the file because the file requested is a folder or there are insufficient permissions to view the file.")
 		raise e
 	except TypeError as e:
-		print("\nautomate.misc.readlines() failed to read the file because it was not a string or non-negative integer")
+		print("\nautomate.misc.read() failed to read the file because it was not a string, bytes, non-negative-integer, or os.PathLike")
 		raise e
 	except ValueError as e:
 		print("\nautomate.misc.readlines() failed to read the file because it was not a valid value")
@@ -180,7 +193,7 @@ def readlines(file_loc: str | int, /, *, encoding: str = "utf8") -> list[str, ..
 		print("\nautomate.misc.readlines() can't read from stdout")
 		raise e
 
-def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: str = "utf8") -> None:
+def write(file_loc: str | bytes | int, text: str = "", form: str = "a", /, *, encoding: str = "utf8") -> None:
 	"""
 		function for writing to files.
 		takes 3 arguments:
@@ -197,8 +210,10 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: 
 		returns None
 	"""
 	from io import UnsupportedOperation
+
 	if form not in {"a", "w", "write", "append"}:
 		form = "a"
+
 	try:
 		with open(file_loc, form[0], encoding=encoding) as file:
 			file.write(text)
@@ -209,7 +224,7 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: 
 		print("\nautomate.misc.write() failed to write to the file because the file requested is a folder or there are incorrect permissions to view the file.")
 		raise e
 	except TypeError as e:
-		print("\nautomate.misc.write() failed to write to the file was not a string or integer")
+		print("\nautomate.misc.read() failed to read the file because it was not a string, bytes, non-negative-integer, or os.PathLike")
 		raise e
 	except ValueError as e:
 		print("\nautomate.misc.write() failed to write to the file was not a correct value")
@@ -221,7 +236,7 @@ def write(file_loc: str | int, text: str = "", form: str = "a", /, *, encoding: 
 		print("\nautomate.misc.write() can't write to stdin")
 		raise e
 
-def clear(file_loc: str | int, /) -> bool:
+def clear(file_loc: str | bytes | int, /) -> bool:
 	"""
 		takes one argument, the file path.  
 		clears the content of the file.
@@ -234,29 +249,40 @@ def clear(file_loc: str | int, /) -> bool:
 		return false
 	return true
 
-def cmp(num1: realnum = 0, num2: realnum = 0, /) -> int:
+def cmp(num1: realnum = 0, num2: realnum = 0, /) -> -1 | 0 | 1:
 	"""
 		function for comparing floats or integers
+		This is a built-in function in python2, but not python 3 because it is useless
+
 		returns -1 if num1 < num2
 		returns 0 if num1 == num2
 		returns 1 if num1 > num2
 	"""
-	if isinstance(num1, float | int) and isinstance(num2, float | int):
-		return num1 < num2 and -1 or int(num1 != num2)
+
+	if isinstance(num1, realnum) and isinstance(num2, realnum):
+		return -1 if num1 < num2 else int(num1 != num2)
+
 	raise TypeError("automate.misc.cmp() requires an int or float input type")
 
-def ccmp(comp1: number = 0, comp2: number = 0, /) -> tuple[int, int]:
+def ccmp(z: number = 0, w: number = 0, /) -> tuple[int, int] | int:
 	"""
 		returns a tuple of two integers
 		the first integer compares the real parts and the second integer compares the imaginary parts
 	"""
-	if isinstance(comp1, complex | float | int) and isinstance(comp2, complex | float | int):
-		comp1, comp2 = complex(comp1), complex(comp2)
-		return (cmp(comp1.real, comp2.real), cmp(comp1.imag, comp2.imag))
+
+	if isinstance(z, number) and isinstance(w, number):
+		z, w = complex(z), complex(w)
+
+		ret = (cmp(z.real, w.real), cmp(z.imag, w.imag))
+
+		# return a definitive integer comparison value if possible
+		return ret[0] if ret[0] == ret[1] else ret
+
 	raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
 
 def isntinstance(a, b: type(realnum) | type, /) -> bool:
-	"""return not isinstance(arg1, arg2)"""
+	"return not isinstance(arg1, arg2)"
+
 	return not isinstance(a, b)
 
 def random(return_int: bool = False, /) -> realnum:
@@ -265,17 +291,25 @@ def random(return_int: bool = False, /) -> realnum:
 		more likely to return numbers closer to zero
 		2^-(1 + int(log|x|)) probability that ~|x| will get returned based on its magnitude
 	"""
+
 	from random import randint
+
 	string = "0"
+
 	while randint(0, 1):
 		string += str(randint(0, 9))
+
 	if not return_int:
 		string += "."
-		while 1:
+
+		while True:
 			string += str(randint(0, 9))
+
 			if randint(0, 1):
 				break
+
 	ans = float(string) * (randint(0, 1) or -1)
+
 	return int(ans) if return_int else ans
 
 def crandom(return_int: bool = False, /) -> complex:
@@ -284,6 +318,7 @@ def crandom(return_int: bool = False, /) -> complex:
 		and complex parts can be in (-∞, ∞)
 		more likely to return numbers closer to zero.
 	"""
+
 	return complex(random(return_int), random(return_int))
 
 def addressOf(fn: function, form: type = int, /) -> str | int:
@@ -291,14 +326,18 @@ def addressOf(fn: function, form: type = int, /) -> str | int:
 		function for getting the address of functions
 		takes 1 function argument and returns, as a string, the address
 	"""
-	# function cannot be a base class, thus "isinstance" is not required here
-	if type(fn) is type(lambda: 1):
+
+	# function can't be extended, so isinstance isn't required
+	if isinstance(fn, function):
 		from re import sub
+
 		ans = sub("(.* ){3}", "", str(fn))[:-1]
+
 		if form is str:
 			return ans
 		elif form is int:
 			return int(ans, 16)
+
 	raise TypeError("automate.misc.addressOf() requires a function input")
 
 def nameOf(fn: function, /) -> str:
@@ -306,10 +345,13 @@ def nameOf(fn: function, /) -> str:
 		function for getting the name of functions
 		takes 1 function argument and returns, as a string, the name
 	"""
-	# function cannot be a base class, thus "isinstance" is not required here
-	if type(fn) is type(lambda: 1):
+
+	# function can't be extended, so isinstance isn't required
+	if isinstance(fn, function):
 		from re import sub
+
 		return sub("(<function )| .*", "", str(fn))
+
 	raise TypeError("automate.misc.nameOf() requires a function input")
 
 def tuplify_complex(number: complex = complex(), /) -> tuple[float, float]:
@@ -317,10 +359,29 @@ def tuplify_complex(number: complex = complex(), /) -> tuple[float, float]:
 		returns any complex number in the form of a tuple.
 		returns (input.real, input.imag)
 	"""
+
 	return (number.real, number.imag)
 
-if __name__ == '__main__':
+def inline_namedtuple(name: str | None = None, /, **kwargs):
+	from collections import namedtuple as _namedtuple
+
+	if name is None:
+		name = "CustomTuple"
+
+	return _namedtuple(name, kwargs.keys()) (*kwargs.values())
+
+def inline_dataclass(name: str | None = None, types: tuple | list | None = None, /, **kwargs):
+	from dataclasses import make_dataclass
+
+	if name is None:
+		name = "CustomDataclass"
+
+	keys = kwargs.keys()
+
+	return make_dataclass(name, keys if types is None else zip(keys, types))(**kwargs)
+
+if __name__ == "__main__":
 	print_options = {"sep": "\n * ", "end": 3*"\n"}
-	print( "__name__ == '__main__'\nautomate.misc\n\nvariables:\n", *__variables__, **print_options )
+	print( "__name__ == \"__main__\"\nautomate.misc\n\nvariables:\n", *__variables__, **print_options )
 	print( "functions:\n", *__functions__, **print_options )
 	input("Press Enter to exit...\n")
