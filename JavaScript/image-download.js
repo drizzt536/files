@@ -55,10 +55,11 @@ var {convertToCanvas, convertToCanvasAsync} = (function convertToCanvas_closure(
 		if (object instanceof ImageData) return imageDataToCanvas(object)
 		if (object instanceof HTMLCanvasElement) return object
 
-		if (typeof object === "string")
-			throw Error`cannot convert from a data URI to a canvas synchronously`
-
-		throw Error`cannot convert unknown format to a canvas  synchronously.`
+		throw Error(`cannot synchronously convert from "${
+			typeof o === "string"?
+				"data URI":
+				"unknown format"
+		} to a canvas.`)
 	}
 
 	async function convertToCanvasAsync(object) {
@@ -77,7 +78,7 @@ var {convertToCanvas, convertToCanvasAsync} = (function convertToCanvas_closure(
 			image.src = object
 		})
 
-		throw Error`cannot convert unknown format to a canvas asynchronously.`
+		throw Error`cannot asynchronously convert from unknown format to a canvas.`
 	}
 
 	return {convertToCanvas, convertToCanvasAsync}
