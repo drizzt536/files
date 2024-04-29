@@ -1,28 +1,28 @@
 // initialize
+if (process.argv.length < 3)
+	throw Error`at least one argument must be provided: the input file.`
 
-
-// TODO: replace "\\\n" with "\n" before transformation.
-
-function help() {
+if (process.argv[2] in {"-h": 1, "-?": 1, "-help": 1, "--help": 1}) {
+	console.log("")
 	console.log("usage:")
-	console.log("	node c-beautify.js [input file] [outfile or outfile parameter]")
-	console.log("	node c-beautify.js --help")
-	console.log("	node c-beautify.js file.c --stdout")
-	console.log("	node c-beautify.js main.out.c -r")
+	console.log("    node c-beautify.js [input file] [outfile or outfile parameter]")
+	console.log("    node c-beautify.js --help")
+	console.log("    node c-beautify.js file.c --stdout")
+	console.log("    node c-beautify.js main.out.c -r")
 	console.log("")
 	console.log("parameters:")
-	console.log("	-h, -?, -help, --help            print this message")
-	console.log("	-s, -stdout, --stdout            print the transformed code to stdout")
-	console.log("	-i, -in-place, --in-place        write the transformed code back to the original file")
-	console.log("	-r, -reverse, --reverse          in-place reversal of transformation")
+	console.log("    -h, -?, -help, --help            print this message")
+	console.log("    -s, -stdout, --stdout            print the transformed code to stdout")
+	console.log("    -i, -in-place, --in-place        write the transformed code back to the original file")
+	console.log("    -r, -reverse, --reverse          in-place reversal of transformation")
 	console.log("")
 	console.log("notes:")
-	console.log("	the input file must have an extension of either `.c` or `.h`.")
-	console.log("	if no input is provided, an error is thrown")
-	console.log("	if no output is provided, it will be derived from the input:")
-	console.log("		file.c -> file.out.c")
-	console.log("		asdf.1.h -> asdf.1.out.h")
-	console.log("		etc.")
+	console.log("    the input file must have an extension of either `.c` or `.h`.")
+	console.log("    if no input is provided, an error is thrown")
+	console.log("    if no output is provided, it will be derived from the input:")
+	console.log("        file.c -> file.out.c")
+	console.log("        asdf.1.h -> asdf.1.out.h")
+	console.log("        etc.")
 	console.log("")
 	console.log("to reverse this, do the following (or use the `-r` argument):")
 	console.log("    1. remove all instances of \"\\\\\\n\"")
@@ -33,12 +33,6 @@ function help() {
 
 	process.exit(0)
 }
-
-if (process.argv.length < 3)
-	throw Error`at least one argument must be provided: the input file.`
-
-if (process.argv[2] in {"-h": 1, "-?": 1, "-help": 1, "--help": 1})
-	help()
 
 const fs = require("fs")
 const infile = process.argv[2]
@@ -81,7 +75,7 @@ if (ofile in {"-r": 1, "-reverse": 1, "--reverse": 1}) {
 // code transformation
 const result = text
 	.replace(/\r\n/g, "\n")
-	.replace(/\\\n/g, "") // without this, you can end up with likes like \\
+	.replace(/\\\n/g, "") // without this, you can end up with lines like \\
 	.split("")
 	.map(c => c === "\n" ? "\n" : `${c}\\\n`)
 	.join("")
