@@ -1,6 +1,5 @@
 // gcc -std=c99 -Wall -Wextra -Ofast assemble.c -o assemble && strip assemble.exe
 
-
 /** exit codes:
  * 0: success
  *
@@ -15,6 +14,16 @@
 **/
 
 
+
+#ifndef __GNUC__
+	#error "This program only works with GCC or compilers that allow GCC extensions."
+#endif
+
+#if __GNUC__ < 5
+	#error "Use GCC 5.1 or newer"
+#endif
+
+
 //## inclusions ##//
 
 	// NULL, strnlen, memcpy, strlen, strcmp, strdup
@@ -25,7 +34,6 @@
 		#include <io.h>
 		#define access _access
 	#else
-		#warning "this is untested on Linux and may not work"
 		#include <unistd.h>
 	#endif
 
@@ -47,11 +55,13 @@
 	#define RED    "197;15;31"
 	#define GREEN  "0;128;0"
 	#define YELLOW "128;128;0"
+	#define cleanup_free_fn_char cleanup_free_fn_
 
 	#define stringify_bool(b) ((b) ? "true" : "false")
 	#define strndup(s, n) strnkdup((s), (n), 0)
 	#define unless(condition) if (!(condition))
-
+	#define FREE_T(x) __attribute__((cleanup(cleanup_free_fn_##x))) x
+	#define AUTO_FREE FREE_T()
 	#define CON_COLOR(color) printf("\x1b[38;2;" color "m")
 	#define CON_RESET()      printf("\x1b[0m")
 
@@ -73,8 +83,8 @@
 
 	#define printf_color(...)      fprintf_color(stdout, __VA_ARGS__)
 	#define puts_color(color, str) fputs_color(stdout, color, str)
-	#define eprintf(...) fprintf_color(stderr, RED, __VA_ARGS__)
-	#define eputs(str)   fputs_color(stderr, RED, str)
+	#define eprintf(...)           fprintf_color(stderr, RED, __VA_ARGS__)
+	#define eputs(str)             fputs_color(stderr, RED, str)
 
 	#define OUT_OF_MEMORY(string, code) ({                      \
 		if ((string) == NULL) {                                  \
@@ -88,7 +98,7 @@
 		                                                                          \
 		if (access(path, 0 /* F_OK on POSIX */) == -1) {                           \
 			eprintf("'%s' cannot be accessed. code: %llu\n", path, (uLong) (code)); \
-			exit(4);                                                                 \
+			exit(4); /* code for invalid input file*/                                \
 		}                                                                             \
 		                                                                               \
 		printf("'%s' available\n", path);                                               \
@@ -148,7 +158,7 @@ char *strjoin(char *strs[], size_t num) {
 
 	// O(2n), where `n` is the combined length of the strings (without joining spaces)
 	size_t i = num;
-	size_t length = num; // space for spaces between args, and null byte
+	size_t length = num; // room for spaces between args, and null byte
 
 	while (i --> 0)
 		length += strlen(strs[i]);
@@ -310,7 +320,17 @@ done:
 	};
 }
 
-void help(void) {
+static inline void cleanup_free_fn_(void *p) {
+	free(*(void **) p);
+	*(void **) p = NULL;
+}
+
+static inline void cleanup_free_fn_Params(Params *p) {
+	free(p->libs.s);
+	p->libs.s = NULL;
+}
+
+int help(void) {
 	puts(
 		"\n./assemble.exe infile [params]"
 		"\n"
@@ -350,7 +370,7 @@ void help(void) {
 		"\n"
 	);
 
-	exit(0);
+	return 0;
 }
 
 
@@ -360,21 +380,21 @@ int main(int argc, char *argv[]) {
 	argc--; argv++; // the path to the current file is not needed
 
 	if (!argc) {
-		eputs("No command-line arguments provided. File name is required.");
+		eputs("No command-line arguments provided. Filename is required.");
 
-		exit(2);
+		return 2;
 	}
 
 	char *infile = *argv; argc--; argv++;
 
 	if (strcmp(infile, "--help") == 0)
-		help();
+		return help();
 
 	size_t inflen = strlen(infile); // this is used again later on.
 	size_t extnIndex = extensionIndex(infile, inflen);
 
-	char *params  = strjoin(argv, argc);
-	char *ofile   = strnkdup(infile, extnIndex, 4); // space for 3-charcter file extension
+	FREE_T(char) *params  = strjoin(argv, argc); // this is accessed in parseParameters.
+	FREE_T(char) *ofile   = strnkdup(infile, extnIndex, 4); // space for 3-character file extension
 
 	OUT_OF_MEMORY(params, 5);
 	OUT_OF_MEMORY(ofile, 6);
@@ -382,7 +402,7 @@ int main(int argc, char *argv[]) {
 	ofile[extnIndex + 0] = '.';
 	ofile[extnIndex + 1] = 'o';
 
-	char *object = strdup(ofile);
+	FREE_T(char) *object = strdup(ofile);
 	OUT_OF_MEMORY(object, 7);
 
 	// ofile still allows 3-char extension
@@ -390,23 +410,18 @@ int main(int argc, char *argv[]) {
 	ofile[extnIndex + 2] = 'x';
 	ofile[extnIndex + 3] = 'e';
 
-	Params parsedParams = parseParameters(params);
+	FREE_T(Params) parsedParams = parseParameters(params);
 
-	printf("infile name     : \"%s\"\n", infile);
-	printf("outfile name    : \"%s\"\n", ofile);
-	printf("object filename : \"%s\"\n", object);
-	puts  ("parameters      :");
-		printf("\tnasm parameters    : \"%s\"\n", params);
-		printf("\tlibraries          : \"%s\"\n", parsedParams.libs.s);
-		printf("\tlink to executable : %s\n"    , stringify_bool(parsedParams.link));
-		printf("\tremove '.o' file   : %s\n"    , stringify_bool(parsedParams.rm));
-		printf("\tstrip executable   : %s\n"    , stringify_bool(parsedParams.strip));
-		printf("\trun executable     : %s\n\n"  , stringify_bool(parsedParams.exec));
+	// printf("infile name     : %s\n"  , infile);
+	// printf("object filename : %s\n"  , object);
+	// printf("outfile name    : %s\n\n", ofile);
+
 	printf("validating : "); VALIDATE_FILE(infile, 1);
 
 
-	/* nasm */ {
-		char *nasm = malloc(inflen + extnIndex + parsedParams.paramslen + 33);
+	/* NASM */ {
+		// 25 + inflen + 4 + (extnIndex + 2) + 1 + parsedParams.paramslen + 1
+		char *restrict nasm = malloc(inflen + extnIndex + parsedParams.paramslen + 33);
 
 		OUT_OF_MEMORY(nasm, 8);
 		sprintf(nasm, "nasm.exe -fwin64 -Werror %s -o %s %s", infile, object, params);
@@ -422,7 +437,7 @@ int main(int argc, char *argv[]) {
 		if (exitCode) {
 			eprintf("\nassembler error. exit status: %i\n", exitCode);
 
-			exit(5);
+			return 5;
 		}
 	}
 
@@ -432,12 +447,12 @@ int main(int argc, char *argv[]) {
 	if (!parsedParams.link) {
 		puts("linking    : (skipped)");
 
-		exit(0);
+		return 0;
 	}
 
 	/* ld */ {
 		// 7 + (extnIndex + 2) + 1 + parsedParams.libs.l + 4 + (extnIndex + 4) + 13 + 1
-		char *ld = malloc(2*extnIndex + parsedParams.libs.l + 32);
+		char *restrict ld = malloc(2*extnIndex + parsedParams.libs.l + 32);
 
 		OUT_OF_MEMORY(ld, 9);
 		sprintf(ld, "ld.exe %s %s -o %s --entry main", object, parsedParams.libs.s, ofile);
@@ -453,7 +468,7 @@ int main(int argc, char *argv[]) {
 		if (exitCode) {
 			eprintf("\nlinker error. exit status: %i\n", exitCode);
 
-			exit(6);
+			return 6;
 		}
 	}
 
@@ -462,8 +477,8 @@ int main(int argc, char *argv[]) {
 
 	printf("stripping  : ");
 	if (parsedParams.strip) {
-		// 34 + (extnIndex + 4) + 1
-		char *strip = malloc(extnIndex + 53);
+		// 53 + (extnIndex + 4) + 1
+		char *restrict strip = malloc(extnIndex + 58);
 
 		OUT_OF_MEMORY(strip, 10);
 		sprintf(strip, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
@@ -478,7 +493,7 @@ int main(int argc, char *argv[]) {
 		if (exitCode) {
 			eprintf("\nstrip error. exit status: %i\n", exitCode);
 
-			exit(7);
+			return 7;
 		}
 	}
 	else
@@ -497,31 +512,32 @@ int main(int argc, char *argv[]) {
 			perror("\nRemove error");
 			CON_RESET();
 
-			exit(8);
+			return 8;
 		}
-	} else
+	}
+	else
 		puts("(skipped)");
 
 	printf("executing  : ");
 	if (parsedParams.exec) {
 		puts_color(GREEN, ofile);
 
+		// for some reason, CMD doesn't like "./folder/file.exe"
+		for (size_t i = 0; ofile[i]; i++)
+			if (ofile[i] == '/')
+				ofile[i] = '\\';
+
 		int exitCode = system(ofile);
 
-		if (exitCode)
+		if (exitCode) {
 			eprintf("\nexit status: %i\n", exitCode);
+			return 9;
+		}
 		else
 			puts("\nexit status: 0");
-
 	}
 	else
 		puts("(skipped)");
 
-
-	free(ofile);
-	free(object);
-	free(params);
-	free(parsedParams.libs.s);
-
-	exit(0);
+	return 0;
 }
