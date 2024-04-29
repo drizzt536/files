@@ -5,28 +5,28 @@
 # executables and object files are ignored because I didn't write them
 # pdfs are included because they are viewable and useful
 
-node_modules
-
 /Haskell/
+/GoLang/
 /ignore/
 /Rust/
 /.emacs.d/
-
 /TeX/JSAANLFE/
-/JavaScript/Library/
 /PicoDucky/scripts/
 /Python/manim/*/*
-
+# TypeScript version of lib.js
+/JavaScript/Library/
 # This is a separate repository and I can't get submodules to work.
 /HTML/File-Sharing/
 
+node_modules
 test.*
 *.htm
 *.exe
 *.o
 *.obj
 *.class
-*/*._*.*
+*.test.*
+*._*.*
 
 /Python/continuum.py
 
