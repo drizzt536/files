@@ -1,214 +1,527 @@
-// gcc -Wall -Wextra -pedantic -Ofast ./assemble.c -o assemble && strip ./assemble.exe
+// gcc -std=c99 -Wall -Wextra -Ofast assemble.c -o assemble && strip assemble.exe
 
-#include <io.h> // _access, (string.h: strlen)
-#include <stdio.h> // printf, sprintf
-#include <stdlib.h> // system, remove, exit, calloc, realloc, free
-#include <stdbool.h> // bool, true, false
-#include <windows.h> // HANDLE, WORD, FOREGROUND_RED, GetStdHandle, SetConsoleTextAttribute, GetConsoleScreenBufferInfo
 
-#define RUN_FINAL_EXECUTABLE true
-#define ERROR_FGCOLOR FOREGROUND_RED
-#define file_nexists(filename) ((bool) _access(filename, 0)) // F_OK == 0. file doesn't exist
-#define stringify_bool(boolean) (boolean ? "true" : "false")
-#define set_cons_color(color) SetConsoleTextAttribute(cons, color)
-#define reset_cons_colors() SetConsoleTextAttribute(cons, def_fgc | def_bgc)
-#define eprintf(...) {                      \
-	/*           error printf           */   \
-	set_cons_color(ERROR_FGCOLOR | def_bgc);  \
-	printf(__VA_ARGS__);                       \
-	reset_cons_colors();                        \
+/** exit codes:
+ * 0: success
+ *
+ * 2: not enough arguments
+ * 3: out of memory
+ * 4: invalid input file
+ * 5: assembler error
+ * 6: linker error
+ * 7: strip error
+ * 8: remove error
+ * 9: execution error
+**/
+
+
+//## inclusions ##//
+
+	// NULL, strnlen, memcpy, strlen, strcmp, strdup
+	#include <string.h>
+
+	// access
+	#ifdef _WIN32
+		#include <io.h>
+		#define access _access
+	#else
+		#warning "this is untested on Linux and may not work"
+		#include <unistd.h>
+	#endif
+
+	// size_t
+	#include <stddef.h>
+
+	// fprintf, stdout, stderr, printf, puts, sprintf, perror
+	#include <stdio.h>
+
+	// bool, false, true
+	#include <stdbool.h>
+
+	// exit, malloc, calloc, system, remove, free
+	#include <stdlib.h>
+
+
+//## macros ##//
+
+	#define RED    "197;15;31"
+	#define GREEN  "0;128;0"
+	#define YELLOW "128;128;0"
+
+	#define stringify_bool(b) ((b) ? "true" : "false")
+	#define strndup(s, n) strnkdup((s), (n), 0)
+	#define unless(condition) if (!(condition))
+
+	#define CON_COLOR(color) printf("\x1b[38;2;" color "m")
+	#define CON_RESET()      printf("\x1b[0m")
+
+	#define fprintf_color(fp, color, ...) ({ \
+		CON_COLOR(color);                     \
+		int __tmp = fprintf(fp, __VA_ARGS__);  \
+		CON_RESET();                            \
+		__tmp;                                   \
+	})
+
+	#define fputs_color(fp, color, s) ({  \
+		CON_COLOR(color);                  \
+		int __tmp = fprintf(fp, "%s\n", s); \
+		/* fputs doesn't add a newline :( */ \
+		/* that is retarded so I fixed it */  \
+		CON_RESET();                           \
+		__tmp;                                  \
+	})
+
+	#define printf_color(...)      fprintf_color(stdout, __VA_ARGS__)
+	#define puts_color(color, str) fputs_color(stdout, color, str)
+	#define eprintf(...) fprintf_color(stderr, RED, __VA_ARGS__)
+	#define eputs(str)   fputs_color(stderr, RED, str)
+
+	#define OUT_OF_MEMORY(string, code) ({                      \
+		if ((string) == NULL) {                                  \
+			eprintf("Out of memory. code: %llu", (uLong) (code)); \
+			exit(3); /* code for out of memory */                  \
+		}                                                           \
+	})
+
+	#define VALIDATE_FILE(_path, code) ({                                       \
+		char *path = (_path);                                                    \
+		                                                                          \
+		if (access(path, 0 /* F_OK on POSIX */) == -1) {                           \
+			eprintf("'%s' cannot be accessed. code: %llu\n", path, (uLong) (code)); \
+			exit(4);                                                                 \
+		}                                                                             \
+		                                                                               \
+		printf("'%s' available\n", path);                                               \
+	})
+
+//## types ##//
+
+typedef unsigned long long int uLong;
+typedef struct {
+	char *s; // string
+	size_t l; // length
+} string;
+typedef struct {
+	string libs;
+	size_t paramslen;
+
+	bool rm;
+	bool link;
+	bool strip;
+	bool exec;
+} Params;
+
+
+
+//## functions ##//
+
+char* strnkdup(const char *s, size_t n, size_t k) {
+	// strndup(s, n) with k extra null bytes at the end.
+	// if n + k < MIN(n, k), overflow
+
+	size_t len = strnlen(s, n);
+	char *outstr = malloc(len + k + 1);
+
+	if (outstr == NULL)
+		return NULL;
+
+	memcpy(outstr, s, len);
+
+	for (size_t i = k + 1; i --> 0 ;)
+		outstr[len + i] = '\0';
+
+	return outstr;
 }
-#define if_null_alloc(string) if (string == NULL) {               \
-	eprintf("could not allocate memory for the joined string.\n"); \
-	exit(-1);                                                       \
-}
 
-static HANDLE cons; // console
-static WORD def_fgc; // default foreground color
-static WORD def_bgc; // default background color
+char *strjoin(char *strs[], size_t num) {
+	// join strings with a space. returns a pointer to the heap.
 
-static __attribute__((constructor)) void init(void) {
-	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	char *res;
 
-	cons = GetStdHandle(STD_OUTPUT_HANDLE);
-	GetConsoleScreenBufferInfo(cons, &consoleInfo);
+	if (num == 0) {
+		// O(1)
+		res = calloc(1, 1);
 
-	def_fgc = consoleInfo.wAttributes & 15;
-	def_bgc = consoleInfo.wAttributes & 112;
-}
-
-bool has_param(char *parameters, char param_character) {
-	char param[4] = {'-', '-', param_character, '\0'};
-	char *position = strstr(parameters, param);
-
-	if (position == NULL)
-		return false;
-
-	*position = position[1] = position[2] = ' ';
-
-	return true;
-}
-
-char *strjoin(char *strs[], int num_strs) {
-	if (num_strs <= 0) {
-		char *out_str = (char *) calloc(1, sizeof(char)); // empty string
-		if_null_alloc(out_str);
-
-		return out_str; // no strings
+		OUT_OF_MEMORY(res, 1);
+		return res;
 	}
 
-	// first string
-	char *out_str = strdup(*strs);
-	if_null_alloc(out_str);
-	int length = strlen(out_str) + 1; // +1 for null byte
+	// O(2n), where `n` is the combined length of the strings (without joining spaces)
+	size_t i = num;
+	size_t length = num; // space for spaces between args, and null byte
 
-	for (int i = 1; i < num_strs; i++) {
-		length += 1 + strlen(strs[i]); // +1 for the space
-		out_str = realloc(out_str, length);
-		if_null_alloc(out_str);
-		strcat(out_str, " ");
-		strcat(out_str, strs[i]);
+	while (i --> 0)
+		length += strlen(strs[i]);
+
+	res = malloc(length);
+
+	OUT_OF_MEMORY(res, 2);
+
+	i = 0;
+
+	char *current = strs[0];
+
+	// `strcpy(res, *strs)` and `i = strlen(*strs)` at the same time
+	for (; current[i]; i++)
+		res[i] = current[i];
+
+	for (size_t n = 1, iPrevious = 0; n < num; n++) {
+		// if there are no more strings, break
+
+		res[iPrevious + i] = ' ';
+		current = strs[n];
+		iPrevious += i + 1;
+
+		// strcat(res, strs[n]) without having to find the end of `res` first.
+		// O( strlen(strs[n]) ).
+		for (i = 0; current[i]; i++)
+			res[iPrevious + i] = current[i];
 	}
 
-	return out_str;
+	res[length - 1] = '\0';
+
+	return res;
 }
+
+size_t extensionIndex(char *filename, size_t n /*length*/) {
+	// return filename.indexOf(".")
+
+	while (n --> 0)
+		if (filename[n] == '.')
+			return n;
+		else if (filename[n] == '/')
+			break;
+
+	eprintf("file '%s' doesn't have an extension. An extension is required.", filename);
+	exit(4);
+}
+
+Params parseParameters(char *params) {
+	size_t i = 0;
+	size_t libsLength;
+	char *libs = NULL;
+
+	bool
+		R = false,
+		L = false,
+		S = false,
+		e = false;
+
+	for (; params[i] != '\0'; i++) {
+
+		if (params[i] != '-')
+			continue;
+
+		// "-"
+
+		if (params[i + 1] == '\0') // "-\0"
+			break;
+
+		if (params[i + 1] != '-') { //"-?"
+			i++;
+			continue;
+		}
+
+		// "--"
+
+		if (params[i + 2] == '\0')
+			// "--\0"
+			break;
+
+		if (params[i + 3] != ' ' && params[i + 3] != '\0') {
+			// "-- " or "--\0"
+			i += 2;
+			continue;
+		}
+
+		switch (params[i + 2]) {
+			case 'R': R = true; break;
+			case 'L': L = true; break;
+			case 'S': S = true; break;
+			case 'e': e = true; break;
+			case 'l':
+				if (params[i + 3] == '\0')
+					goto done;
+
+				params[i + 0] =
+				params[i + 1] =
+				params[i + 2] = ' ';
+
+				i += 4;
+				size_t stt = i;
+				uLong items = 1;
+
+				while (params[i] != ' ' && params[i] != '\0') {
+					if (params[i] == ',')
+						items++;
+
+					i++;
+				}
+
+				size_t end = i;
+
+				libsLength = 2llu*items + end - stt;
+
+				libs = malloc(libsLength + 1);
+				OUT_OF_MEMORY(libs, 3);
+
+				libs[0] = '-';
+				libs[1] = 'l';
+
+				size_t j = 2;
+				for (i = stt; i < end; i++) {
+					if (params[i] == ',') {
+						libs[j++] = ' ';
+						libs[j++] = '-';
+						libs[j++] = 'l';
+					}
+					else
+						libs[j++] = params[i];
+
+					params[i] = ' ';
+				}
+
+				continue;
+		}
+
+		params[i + 0] =
+		params[i + 1] =
+		params[i + 2] = ' ';
+	}
+
+done:
+	if (libs == NULL) {
+		libs = malloc(1);
+		OUT_OF_MEMORY(libs, 4);
+
+		libsLength = 0;
+	}
+
+	libs[libsLength] = '\0';
+
+
+	return (Params) {
+		.libs = (string) {libs, libsLength},
+		.paramslen = i - 1,
+		.rm = !R, // remove
+		.link = !L, // link
+		.strip = !S, // strip
+		.exec = e, // execute
+	};
+}
+
+void help(void) {
+	puts(
+		"\n./assemble.exe infile [params]"
+		"\n"
+		"\n"
+		"\noverview of process:"
+		"\n    nasm -fwin64 -Werror infile -o object params"
+		"\n    ld object libs -o outfile --entry main"
+		"\n    if strip, strip -s -R .comment -R comment -R .note -R note hello.exe"
+		"\n    if remove, rm object"
+		"\n    if exec, run outfile"
+		"\n"
+		"\nexamples:"
+		"\n    ./assemble hello.nasm --S --R"
+		"\n        input = ./hello.nasm"
+		"\n        don't strip remove object or execute"
+		"\n        no extra arguments to nasm."
+		"\n        no libraries passed to ld"
+		"\n"
+		"\n    ./assemble ../file.asm --e -g --l msvcrt,kernel32"
+		"\n        input = ./../file.asm"
+		"\n        strip, remove object file, execute"
+		"\n        pass `-g` to nasm"
+		"\n        pass `-lmsvcrt -lkernel32` to ld."
+		"\n"
+		"\n    ./assemble --help"
+		"\n        print the help message"
+		"\n"
+		"\narguments:"
+		"\n    --R           do not remove object file (default is to remove)"
+		"\n    --L           do not link object file (default is to link)"
+		"\n    --S           do not strip executable (default is to strip)"
+		"\n    --e           run executable"
+		"\n    --l [list]    includes comma-separated libraries in linking"
+		"\n    --help        print this message. only works as the first argument"
+		"\n"
+		"\n    all other arguments are given to nasm."
+		"\n"
+	);
+
+	exit(0);
+}
+
+
 
 int main(int argc, char *argv[]) {
-	// nasm -fwin64 -Werror "./$name.$extn" $params
-	// gcc "./$name.obj" -o $name
-	// rm "./$name.obj"
-	// iex "./$name.obj"
 
-	// argv[0]:  path to this file
-	// argv[1]:  file name     ; argc > 1 ==> name   included
-	// argv[2]:  extension     ; argc > 2 ==> extn   included
-	// argv[3+]: extra params  ; argc > 3 ==> params included
+	argc--; argv++; // the path to the current file is not needed
 
-	// argv[3+] is concatenated to one string with a space in between each.
+	if (!argc) {
+		eputs("No command-line arguments provided. File name is required.");
 
-/*	*
-	*	--R :	do not remove object file
-	*	--L :	do not link object file
-	*	--S :	do not strip executable
-	*	--E :	do not run, prints exe name	, default, overrides e
-
-	*	--r :	remove object file			, default, overrides R
-	*	--l :	link object file			, default, overrides L
-	*	--s :	strip executable			, default, overrides S
-	*	--e :	run executable
-
-	* the rest are passed on to nasm for assembling
-*	*/
-	
-
-	if (argc == 1) {
-		eprintf("No command-line arguments provided. File name is required.\n");
-		exit(1);
-	}
-	char *_extn = argc > 2 ? argv[2] : ".nasm";
-	char extn[2 + strlen(_extn)];
-	sprintf(extn, *_extn == '.' ? "%s" : ".%s", _extn);
-
-	char name[3 + strlen(argv[1])];
-	sprintf(name, "./%s", argv[1]);
-
-	char filestring[strlen(name) + strlen(extn) + 1];
-	sprintf(filestring, "%s%s", name, extn);
-
-	if (file_nexists(filestring)) {
-		printf("validating : ");
-		eprintf("file '%s' does not exist\n", filestring);
 		exit(2);
 	}
-	printf("validating : file exists\n");
 
-	// TODO: start checking buffers here
-	char *params = argc > 3 ?
-		strjoin(argv + 3, argc - 3) :
-		strjoin((char **) NULL, 0);
+	char *infile = *argv; argc--; argv++;
 
-	// these have to happen now. `has_param` is not a pure function.
-	bool remove_obj = has_param(params, 'r') || !has_param(params, 'R')
-		, link      = has_param(params, 'l') || !has_param(params, 'L')
-		, strip     = has_param(params, 's') || !has_param(params, 'S')
-		, execute   = has_param(params, 'e') && !has_param(params, 'E');
+	if (strcmp(infile, "--help") == 0)
+		help();
 
-	// nasm
-	{
-		char cmd[27 + strlen(filestring) + strlen(params)];
-		sprintf(cmd, "nasm.exe -fwin64 -Werror %s %s", filestring, params);
-		printf("assembling : %s\n", cmd);
+	size_t inflen = strlen(infile); // this is used again later on.
+	size_t extnIndex = extensionIndex(infile, inflen);
 
-		int exit_code = system(cmd);
-		if (exit_code != 0) {
-			eprintf("nasm.exe returned an error while assembling\n");
-			exit(3);
+	char *params  = strjoin(argv, argc);
+	char *ofile   = strnkdup(infile, extnIndex, 4); // space for 3-charcter file extension
+
+	OUT_OF_MEMORY(params, 5);
+	OUT_OF_MEMORY(ofile, 6);
+
+	ofile[extnIndex + 0] = '.';
+	ofile[extnIndex + 1] = 'o';
+
+	char *object = strdup(ofile);
+	OUT_OF_MEMORY(object, 7);
+
+	// ofile still allows 3-char extension
+	ofile[extnIndex + 1] = 'e';
+	ofile[extnIndex + 2] = 'x';
+	ofile[extnIndex + 3] = 'e';
+
+	Params parsedParams = parseParameters(params);
+
+	printf("infile name     : \"%s\"\n", infile);
+	printf("outfile name    : \"%s\"\n", ofile);
+	printf("object filename : \"%s\"\n", object);
+	puts  ("parameters      :");
+		printf("\tnasm parameters    : \"%s\"\n", params);
+		printf("\tlibraries          : \"%s\"\n", parsedParams.libs.s);
+		printf("\tlink to executable : %s\n"    , stringify_bool(parsedParams.link));
+		printf("\tremove '.o' file   : %s\n"    , stringify_bool(parsedParams.rm));
+		printf("\tstrip executable   : %s\n"    , stringify_bool(parsedParams.strip));
+		printf("\trun executable     : %s\n\n"  , stringify_bool(parsedParams.exec));
+	printf("validating : "); VALIDATE_FILE(infile, 1);
+
+
+	/* nasm */ {
+		char *nasm = malloc(inflen + extnIndex + parsedParams.paramslen + 33);
+
+		OUT_OF_MEMORY(nasm, 8);
+		sprintf(nasm, "nasm.exe -fwin64 -Werror %s -o %s %s", infile, object, params);
+		printf("assembling : ");
+		puts_color(GREEN, nasm);
+
+		CON_COLOR(YELLOW);
+		int exitCode = system(nasm);
+		CON_RESET();
+
+		free(nasm);
+
+		if (exitCode) {
+			eprintf("\nassembler error. exit status: %i\n", exitCode);
+
+			exit(5);
 		}
 	}
 
-	// gcc, rm, strip, and execute
-	if (link) {
-		{
-			char cmd[17 + 2*strlen(name)];
-			sprintf(cmd, "%s.obj", name);
-			if (file_nexists(cmd)) {
-				// in case nasm doesn't return -1 on an error
-				eprintf("nasm.exe returned an error while assembling\n");
-				exit(3);
-			}
-			sprintf(cmd, "gcc.exe %s.obj -o %s", name, name);
-			//  this cannot be    ^^^^^^  replaced with "%s" and cmd for the argument.
-			printf("linking    : %s\n", cmd);
-			int exit_code = system(cmd);
-			if (exit_code != 0) {
-				eprintf("gcc.exe returned an error while linking\n");
-				exit(4);
-			}
-		}
+	printf("validating : "); VALIDATE_FILE(object, 2);
 
-		if (remove_obj) {
-			char cmd[5 + strlen(name)];
-			sprintf(cmd, "%s.exe", name);
-			if (file_nexists(cmd)) {
-				// in case gcc doesn't return -1 on an error
-				eprintf("gcc.exe returned an error while linking\n");
-				exit(4);
-			}
-			sprintf(cmd, "%s.obj", name);
-			printf("cleaning   : Remove-Item -Path %s\n", cmd);
-			int exit_code = remove(cmd);
-			if (exit_code != 0) {
-				eprintf("could not remove object file\n");
-				exit(5);
-			}
-		}
 
-		if (strip) {
-			char cmd[18 + strlen(name)];
-			sprintf(cmd, "strip.exe -S %s.exe", name);
-			printf("stripping  : %s\n", cmd);
-			int exit_code = system(cmd);
-			if (exit_code == -1) {
-				eprintf("could not strip executable\n");
-				exit(6);
-			}
-		}
+	if (!parsedParams.link) {
+		puts("linking    : (skipped)");
 
-		if (execute) {
-			char cmd[5 + strlen(name)];
-			sprintf(cmd, "%s.exe", name);
-			printf("executing  : %s\n\n", cmd);
-			int exit_code = system(cmd + 2); // remove "./" from the beginning
-			if (exit_code == -1) {
-				eprintf("could not run executable\n");
-				exit(7);
-			}
+		exit(0);
+	}
+
+	/* ld */ {
+		// 7 + (extnIndex + 2) + 1 + parsedParams.libs.l + 4 + (extnIndex + 4) + 13 + 1
+		char *ld = malloc(2*extnIndex + parsedParams.libs.l + 32);
+
+		OUT_OF_MEMORY(ld, 9);
+		sprintf(ld, "ld.exe %s %s -o %s --entry main", object, parsedParams.libs.s, ofile);
+		printf("linking    : ");
+		puts_color(GREEN, ld);
+
+		CON_COLOR(YELLOW);
+		int exitCode = system(ld);
+		CON_RESET();
+
+		free(ld);
+
+		if (exitCode) {
+			eprintf("\nlinker error. exit status: %i\n", exitCode);
+
+			exit(6);
 		}
+	}
+
+
+	printf("validating : "); VALIDATE_FILE(ofile, 3);
+
+	printf("stripping  : ");
+	if (parsedParams.strip) {
+		// 34 + (extnIndex + 4) + 1
+		char *strip = malloc(extnIndex + 53);
+
+		OUT_OF_MEMORY(strip, 10);
+		sprintf(strip, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
+		puts_color(GREEN, strip);
+
+		CON_COLOR(YELLOW);
+		int exitCode = system(strip);
+		CON_RESET();
+
+		free(strip);
+
+		if (exitCode) {
+			eprintf("\nstrip error. exit status: %i\n", exitCode);
+
+			exit(7);
+		}
+	}
+	else
+		puts("(skipped)");
+
+
+
+	printf("remove obj : ");
+	if (parsedParams.rm) {
+
+		int exitCode = remove(object);
+		printf_color(GREEN, "rm.exe %s\n", object);
+
+		if (exitCode) {
+			CON_COLOR(RED);
+			perror("\nRemove error");
+			CON_RESET();
+
+			exit(8);
+		}
+	} else
+		puts("(skipped)");
+
+	printf("executing  : ");
+	if (parsedParams.exec) {
+		puts_color(GREEN, ofile);
+
+		int exitCode = system(ofile);
+
+		if (exitCode)
+			eprintf("\nexit status: %i\n", exitCode);
 		else
-			printf("\nfinal executable: %s.exe\n", name);
+			puts("\nexit status: 0");
+
 	}
+	else
+		puts("(skipped)");
 
+
+	free(ofile);
+	free(object);
 	free(params);
+	free(parsedParams.libs.s);
 
-	return 0;
+	exit(0);
 }
