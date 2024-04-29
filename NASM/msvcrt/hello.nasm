@@ -1,13 +1,16 @@
-; ./assemble hello_world .nasm --e
+; nasm -fwin64 -Werror hello.nasm -o hello.o
+; ld hello.o -lmsvcrt -o hello.exe --entry main
+; rm hello.o
+; strip hello.exe
 
-%define main_stack_space 32			; minumum value without buffering before exit
 
 segment rdata
-	txt 	db  	"Hello World"
+	txt 	db  	`Hello World\0`
 
 segment text
-	extern	puts
 	global	main
+
+	extern	puts	; msvcrt.dll
 
 ; ╭────────────────────────────╮
 ; │                            │
@@ -20,11 +23,12 @@ segment text
 
 
 main:
-	sub 	rsp, main_stack_space
+	sub 	rsp, 32
 
-	mov 	rcx, txt
-	call	puts
+		mov 	rcx, txt
+		call	puts
+
+	add 	rsp, 32
 
 	xor 	rax, rax
-	add 	rsp, main_stack_space
 	ret
