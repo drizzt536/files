@@ -1,11 +1,15 @@
-; ./assemble loop_hello .nasm --e
+; nasm -fwin64 loop_hello.nasm -o loop_hello.o
+; ld loop_hello.o -lmsvcrt -o loop_hello.exe --entry main
+; rm loop_hello.o
+; strip loop_hello.exe
 
 segment rdata
-	msg 	db  	"Hello World"
+	msg db	`Hello World\0`
 
 segment text
-	extern	puts
 	global	main
+
+	extern	puts	; msvcrt.dll
 
 ; ╭────────────────────────────────╮
 ; │                                │
