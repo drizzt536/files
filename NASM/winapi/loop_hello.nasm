@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror loop-hello.nasm -o loop-hello.o
-; ld loop-hello.o -luser32 -lkernel32 -o loop-hello.exe --entry main
-; rm loop-hello.o
-; strip loop-hello.exe
+; ../assemble loop_hello.nasm --e --l user32,kernel32
 
 segment rdata
 	msg:	db	"Hello World", 10, 0
