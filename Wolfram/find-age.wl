@@ -1,6 +1,6 @@
 dateOfBirth = DateObject@ {2007, 7, 8, 17, 12, 0}
 
-GetAge[DOB_] := Module[{diff, milliseconds, microseconds},
+GetAge[DOB_ : dateOfBirth] := Module[{diff, milliseconds, microseconds},
 	(* DOB should be a DateObject with at least a year present. *)
 	diff = DateDifference[
 		Now,
@@ -21,10 +21,11 @@ GetAge[DOB_] := Module[{diff, milliseconds, microseconds},
 	][[1]] / 360
 ]
 
-PrintAgeForever[DOB_] := While[True,
-	WriteLine["stdout", N[
+PrintAgeForever[DOB_ : dateOfBirth] := While[True,
+	Print@ N[
 		Quantity[GetAge@ DOB, "Years"],
 		20
-	] ];
+	];
+
 	Pause[1/10]
 ]
