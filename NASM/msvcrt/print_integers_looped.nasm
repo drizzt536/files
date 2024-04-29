@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror print_integers_looped.nasm -o print_integers_looped.o
-; ld print_integers_looped.o -lmsvcrt -o print_integers_looped.exe --entry main
-; rm print_integers_looped.o
-; strip print_integers_looped.exe
+; ../assemble print_integers_looped.nasm --e --l msvcrt
 
 %define MAX 32
 

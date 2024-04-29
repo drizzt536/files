@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror factorial.nasm -o factorial.o
-; ld factorial.o -lmsvcrt -o factorial.exe --entry main
-; rm factorial.o
-; strip factorial.exe
+; ../assemble factorial.nasm --e --l msvcrt
 
 segment rdata
 	input_fmt		db	`input: \0`

@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror print_range.nasm -o print_range.o
-; ld print_range.o -lmsvcrt -o print_range.exe --entry main
-; rm print_range.o
-; strip print_range.exe
+; ../assemble printf_range.nasm --e --l msvcrt
 
 %define MAX 32
 

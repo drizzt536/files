@@ -1,8 +1,4 @@
-; nasm -fwin64 -Werror hello.nasm -o hello.o
-; ld hello.o -lmsvcrt -o hello.exe --entry main
-; rm hello.o
-; strip hello.exe
-
+; ../assemble hello.nasm --e --l msvcrt
 
 segment rdata
 	txt 	db  	`Hello World\0`

@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror print_char_range.nasm -o print_char_range.o
-; ld print_char_range.o -lmsvcrt -o print_char_range.exe --entry main
-; rm print_char_range.o
-; strip print_char_range.exe
+; ../assemble print_char_range.nasm --e --l msvcrt
 
 %define MIN 32
 %define MAX 255

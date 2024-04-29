@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror hello.nasm -o hello.o
-; ld hello.o -luser32 -lkernel32 -o hello.exe --entry main
-; rm hello.o
-; strip hello.exe
+; ../assemble hello.nasm --e --l user32,kernel32
 
 segment rdata
 	msg:	db	`Hello World\n\0`

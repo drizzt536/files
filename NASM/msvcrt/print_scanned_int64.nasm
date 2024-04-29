@@ -1,8 +1,4 @@
-; nasm -fwin64 -Werror print_scanned_int64.nasm -o print_scanned_int64.o
-; ld print_scanned_int64.o -lmsvcrt -o print_scanned_int64.exe --entry main
-; rm print_scanned_int64.o
-; strip print_scanned_int64.exe
-
+; ../assemble print_scanned_int64.nasm --e --l msvcrt
 
 segment rdata
 	fmt 	db  	"%llu" ; print as unsigned int64

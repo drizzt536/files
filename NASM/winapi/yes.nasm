@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror yes.nasm -o yes.o
-; ld yes.o -luser32 -lkernel32 -o yes.exe --entry main
-; rm yes.o
-; strip yes.exe
+; ../assemble yes.nasm --e --l user32,kernel32
 
 segment rdata
 	msg 	db	`y\n\0`

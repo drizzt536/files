@@ -1,7 +1,4 @@
-; nasm -fwin64 -Werror print_integer.nasm -o print_integer.o
-; ld print_integer.o -lmsvcrt -o print_integer.exe --entry main
-; rm print_integer.o
-; strip print_integer.exe
+; ../assemble print_integer.nasm --e --l msvcrt
 
 segment rdata
 	format	db	`%u\n\0`		; printf format string ("%u\n")
