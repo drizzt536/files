@@ -1,68 +1,18 @@
-Copyright (c) 2022-2024 Daniel E. Janusch
+Copyright (c) 2024 Daniel E. Janusch
+
+tl;dr:
+    /TeX/ is mine. all rights reserved.
+    The rest is ours. (MIT license)
 
 
-Section 1 - Definitions:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    The following definitions will stay unchanged for the duration of the file.
-
-    Section 1a: "software" refers to any of the associated files or documentation.
-    Section 1b: "user" refers to any person obtaining a copy of the software.
-    Section 1c: "owner" refers to the author(s) or owner(s) of the copyright for the software.
-    Section 1d:
-        "sell" means "to give, give up, or surrender in some way, in exchange for a price or
-        reward, which may or may not be monetary in nature".
-    Section 1e:
-        "substantial" means "Considerable in importance, value, degree, amount, or extent.",
-        where "considerable" means "Worthy of consideration or large in amount, extent, or degree;
-        significant."
-        A single mathematical document is substantial, see Section 1f.
-    Section 1f:
-        "Mathematical Documents" refers to any files that are mostly or entirely based on or about
-        mathematical information, formulas, theorems, ideas, et cetera. These can be PDFs LaTeX
-        code files, Images (PNG, SVG, or otherwise), or any other file format.
-        Also, Engineering, Physics, etc things also are included here, just in case.
+The applicable sections of this license must be given in all copies or substantial portions of the software.
 
 
-Section 2 - General Statement:
-
-    Permission is hereby granted, with caveats, by the "owner" (see section 1c), free of charge, to
-    any person (the "user", see section 1b) obtaining a copy of this software AND (meaning both)
-    associated documentation files (the "software", see Section 1a), to deal in the software the
-    rights to use, modify, merge, publish, and/or sublicense copies of the software.
+notice, applicable only for /TeX/ and all of its contents:
+    - all rights reserved.
 
 
-Section 3 - Monetary Use:
-
-    The user may not sell, publish or sublicense, modified or not, the software or any substiantial
-    (see Section 1e) portion of the software UNLESS it has been merged into or added to a different
-    and considerable project that serves a different purpose than just being a copied version of
-    the software. This purpose can't just be a fake reason just so the user can sell the software.
-
-    If the user's intentions are or resemble being to steal from, infringe upon the rights of, copy
-    directly, or rip off the owners or others, the user may not sell, publish or sublicense the
-    software or any parts of it regardless of substantiality, but can otherwise still use it.
-
-
-Section 4 - Mathematical Documents:
-
-    The user may not sell, publish, sublicense, or merge any mathematical documents without written
-    and express consent from the owner. When the user refers to any mathematical documents from
-    other works, they must give credit to the owner.
-
-    Any mathematical documents that are copied must be done so IN THEIR ENTIRETY so any names,
-    dates, or copyright information on them is still clearly visible. There will always be a name
-    on the mathematical documents.
-
-
-Section 5 - Extra Conditions:
-
-    ALL users are subject to the following conditions in addition everything previously mentioned:
-
-    This entire license shall be included in its entirety in all copies or substantial portions of
-    the software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
-    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
-    OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+notice, applicable for all files not located within /TeX/:
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so.
