@@ -1,12 +1,15 @@
-; ./assemble print_charcode_range .nasm --e
+; nasm -fwin64 -Werror print_char_range.nasm -o print_char_range.o
+; ld print_char_range.o -lmsvcrt -o print_char_range.exe --entry main
+; rm print_char_range.o
+; strip print_char_range.exe
 
 %define MIN 32
 %define MAX 255
-%define main_stack_space 24			; idk why this value works
 
 segment text
-	extern	putchar
 	global	main
+
+	extern	putchar	; msvcrt.dll
 
 ; ╭─────────────────────────────────────────╮
 ; │                                         │
@@ -23,17 +26,19 @@ segment text
 ; ╰─────────────────────────────────────────╯
 
 main:
-	sub 	rsp, main_stack_space
-	mov 	rbx, MAX				; 64 bit of MAX version to compare to
+	mov 	rbp, rsp
+	sub 	rsp, 32
+
+	mov 	rbx, MAX	; 64 bit of MAX version to compare to
 	mov 	rax, MIN
 
-	loop:
-		mov 	rcx, rax
-		call	putchar
-		inc 	rax
-		cmp 	rax, rbx
-		jle 	loop
+.loop:
+	mov 	rcx, rax
+	call	putchar
+	inc 	rax
+	cmp 	rax, rbx
+	jle 	.loop
 
 	xor 	rax, rax
-	add 	rsp, main_stack_space
+	mov 	rsp, rbp
 	ret
