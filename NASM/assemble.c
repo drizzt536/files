@@ -26,91 +26,32 @@
 
 //## inclusions ##//
 
-	// NULL, strnlen, memcpy, strlen, strcmp, strdup
-	#include <string.h>
+// NULL, strnlen, memcpy, strlen, strcmp, strdup, strerror
+#include <string.h>
 
-	// access
-	#ifdef _WIN32
-		#include <io.h>
-		#define access _access
-	#else
-		#include <unistd.h>
-	#endif
+// uLong, ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_YELLOW,
+// CON_COLOR, CON_RESET, printf_color, puts_color, eprintf, eputs,
+// OUT_OF_MEMORY, VALIDATE_FILE, (stdio.h: printf, puts, sprintf),
+// (stdlib.h: malloc, calloc, exit, free, system, remove)
+#include "../C/error-print.h"
 
-	// size_t
-	#include <stddef.h>
+// size_t
+#include <stddef.h>
 
-	// fprintf, stdout, stderr, printf, puts, sprintf, perror
-	#include <stdio.h>
+// bool, false, true
+#include <stdbool.h>
 
-	// bool, false, true
-	#include <stdbool.h>
+//## macros and types ##//
 
-	// exit, malloc, calloc, system, remove, free
-	#include <stdlib.h>
+#define cleanup_free_fn_char cleanup_free_fn_
 
+#define FREE_T(x) __attribute__((cleanup(cleanup_free_fn_##x))) x
 
-//## macros ##//
-
-	#define RED    "197;15;31"
-	#define GREEN  "0;128;0"
-	#define YELLOW "128;128;0"
-	#define cleanup_free_fn_char cleanup_free_fn_
-
-	#define stringify_bool(b) ((b) ? "true" : "false")
-	#define strndup(s, n) strnkdup((s), (n), 0)
-	#define unless(condition) if (!(condition))
-	#define FREE_T(x) __attribute__((cleanup(cleanup_free_fn_##x))) x
-	#define AUTO_FREE FREE_T()
-	#define CON_COLOR(color) printf("\x1b[38;2;" color "m")
-	#define CON_RESET()      printf("\x1b[0m")
-
-	#define fprintf_color(fp, color, ...) ({ \
-		CON_COLOR(color);                     \
-		int __tmp = fprintf(fp, __VA_ARGS__);  \
-		CON_RESET();                            \
-		__tmp;                                   \
-	})
-
-	#define fputs_color(fp, color, s) ({  \
-		CON_COLOR(color);                  \
-		int __tmp = fprintf(fp, "%s\n", s); \
-		/* fputs doesn't add a newline :( */ \
-		/* that is retarded so I fixed it */  \
-		CON_RESET();                           \
-		__tmp;                                  \
-	})
-
-	#define printf_color(...)      fprintf_color(stdout, __VA_ARGS__)
-	#define puts_color(color, str) fputs_color(stdout, color, str)
-	#define eprintf(...)           fprintf_color(stderr, RED, __VA_ARGS__)
-	#define eputs(str)             fputs_color(stderr, RED, str)
-
-	#define OUT_OF_MEMORY(string, code) ({                      \
-		if ((string) == NULL) {                                  \
-			eprintf("Out of memory. code: %llu", (uLong) (code)); \
-			exit(3); /* code for out of memory */                  \
-		}                                                           \
-	})
-
-	#define VALIDATE_FILE(_path, code) ({                                       \
-		char *path = (_path);                                                    \
-		                                                                          \
-		if (access(path, 0 /* F_OK on POSIX */) == -1) {                           \
-			eprintf("'%s' cannot be accessed. code: %llu\n", path, (uLong) (code)); \
-			exit(4); /* code for invalid input file*/                                \
-		}                                                                             \
-		                                                                               \
-		printf("'%s' available\n", path);                                               \
-	})
-
-//## types ##//
-
-typedef unsigned long long int uLong;
 typedef struct {
 	char *s; // string
 	size_t l; // length
 } string;
+
 typedef struct {
 	string libs;
 	size_t paramslen;
@@ -120,8 +61,6 @@ typedef struct {
 	bool strip;
 	bool exec;
 } Params;
-
-
 
 //## functions ##//
 
@@ -193,7 +132,7 @@ char *strjoin(char *strs[], size_t num) {
 	return res;
 }
 
-size_t extensionIndex(char *filename, size_t n /*length*/) {
+size_t extensionIndex(const char *const filename, size_t n /*length*/) {
 	// return filename.indexOf(".")
 
 	while (n --> 0)
@@ -320,9 +259,9 @@ done:
 	};
 }
 
-static inline void cleanup_free_fn_(void *p) {
+static inline void cleanup_free_fn_(const void *p) {
 	free(*(void **) p);
-	*(void **) p = NULL;
+	// *(void **) p = NULL;
 }
 
 static inline void cleanup_free_fn_Params(Params *p) {
@@ -330,7 +269,7 @@ static inline void cleanup_free_fn_Params(Params *p) {
 	p->libs.s = NULL;
 }
 
-int help(void) {
+static inline int help(void) {
 	puts(
 		"\n./assemble.exe infile [params]"
 		"\n"
@@ -385,16 +324,16 @@ int main(int argc, char *argv[]) {
 		return 2;
 	}
 
-	char *infile = *argv; argc--; argv++;
+	const char *const infile = *argv; argc--; argv++;
 
 	if (strcmp(infile, "--help") == 0)
-		return help();
+		return help() /* 0 */;
 
-	size_t inflen = strlen(infile); // this is used again later on.
-	size_t extnIndex = extensionIndex(infile, inflen);
+	const size_t inflen = strlen(infile); // this is used again later on.
+	const size_t extnIndex = extensionIndex(infile, inflen);
 
-	FREE_T(char) *params  = strjoin(argv, argc); // this is accessed in parseParameters.
-	FREE_T(char) *ofile   = strnkdup(infile, extnIndex, 4); // space for 3-character file extension
+	FREE_T(char) *const params = strjoin(argv, argc); // this is accessed in parseParameters.
+	FREE_T(char) *const ofile  = strnkdup(infile, extnIndex, 4); // space for 3-character file extension
 
 	OUT_OF_MEMORY(params, 5);
 	OUT_OF_MEMORY(ofile, 6);
@@ -412,30 +351,28 @@ int main(int argc, char *argv[]) {
 
 	FREE_T(Params) parsedParams = parseParameters(params);
 
-	// printf("infile name     : %s\n"  , infile);
-	// printf("object filename : %s\n"  , object);
-	// printf("outfile name    : %s\n\n", ofile);
-
 	printf("validating : "); VALIDATE_FILE(infile, 1);
 
 
 	/* NASM */ {
 		// 25 + inflen + 4 + (extnIndex + 2) + 1 + parsedParams.paramslen + 1
-		char *restrict nasm = malloc(inflen + extnIndex + parsedParams.paramslen + 33);
+		char *restrict const nasm = malloc(inflen + extnIndex + parsedParams.paramslen + 33);
 
 		OUT_OF_MEMORY(nasm, 8);
 		sprintf(nasm, "nasm.exe -fwin64 -Werror %s -o %s %s", infile, object, params);
 		printf("assembling : ");
-		puts_color(GREEN, nasm);
+		puts_color(ANSI_GREEN, nasm);
 
-		CON_COLOR(YELLOW);
-		int exitCode = system(nasm);
+		CON_COLOR(ANSI_YELLOW);
+		const int exitCode = system(nasm);
 		CON_RESET();
 
 		free(nasm);
 
 		if (exitCode) {
-			eprintf("\nassembler error. exit status: %i\n", exitCode);
+			exitCode == -1 ?
+				eprintf("\nassembler error. Couldn't execute command\n") :
+				eprintf("\nassembler error. exit status: %i\n", exitCode);
 
 			return 5;
 		}
@@ -457,16 +394,18 @@ int main(int argc, char *argv[]) {
 		OUT_OF_MEMORY(ld, 9);
 		sprintf(ld, "ld.exe %s %s -o %s --entry main", object, parsedParams.libs.s, ofile);
 		printf("linking    : ");
-		puts_color(GREEN, ld);
+		puts_color(ANSI_GREEN, ld);
 
-		CON_COLOR(YELLOW);
+		CON_COLOR(ANSI_YELLOW);
 		int exitCode = system(ld);
 		CON_RESET();
 
 		free(ld);
 
 		if (exitCode) {
-			eprintf("\nlinker error. exit status: %i\n", exitCode);
+			exitCode == -1 ?
+				eprintf("\nlinker error. Couldn't execute command\n") :
+				eprintf("\nlinker error. exit status: %i\n", exitCode);
 
 			return 6;
 		}
@@ -482,16 +421,18 @@ int main(int argc, char *argv[]) {
 
 		OUT_OF_MEMORY(strip, 10);
 		sprintf(strip, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
-		puts_color(GREEN, strip);
+		puts_color(ANSI_GREEN, strip);
 
-		CON_COLOR(YELLOW);
+		CON_COLOR(ANSI_YELLOW);
 		int exitCode = system(strip);
 		CON_RESET();
 
 		free(strip);
 
 		if (exitCode) {
-			eprintf("\nstrip error. exit status: %i\n", exitCode);
+			exitCode == -1 ?
+				eprintf("\nstrip error. Couldn't execute command\n") :
+				eprintf("\nstrip error. exit status: %i\n", exitCode);
 
 			return 7;
 		}
@@ -505,12 +446,13 @@ int main(int argc, char *argv[]) {
 	if (parsedParams.rm) {
 
 		int exitCode = remove(object);
-		printf_color(GREEN, "rm.exe %s\n", object);
+		printf_color(ANSI_GREEN, "rm.exe %s\n", object);
 
 		if (exitCode) {
-			CON_COLOR(RED);
-			perror("\nRemove error");
-			CON_RESET();
+			printf(
+				ANSI_COLOR(ANSI_RED) "\nFile removal error: %s\n" ANSI_RESET(),
+				strerror(errno)
+			);
 
 			return 8;
 		}
@@ -520,10 +462,10 @@ int main(int argc, char *argv[]) {
 
 	printf("executing  : ");
 	if (parsedParams.exec) {
-		puts_color(GREEN, ofile);
+		puts_color(ANSI_GREEN, ofile);
 
 		// for some reason, CMD doesn't like "./folder/file.exe"
-		for (size_t i = 0; ofile[i]; i++)
+		for (size_t i = 0; ofile[i] != '\0'; i++)
 			if (ofile[i] == '/')
 				ofile[i] = '\\';
 
