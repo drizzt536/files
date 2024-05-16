@@ -26,35 +26,32 @@
 
 //## inclusions ##//
 
-// NULL, strnlen, memcpy, strlen, strcmp, strdup, strerror
-#include <string.h>
-
-// uLong, ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_YELLOW,
-// CON_COLOR, CON_RESET, printf_color, puts_color, eprintf, eputs,
-// OUT_OF_MEMORY, VALIDATE_FILE, (stdio.h: printf, puts, sprintf),
-// (stdlib.h: malloc, calloc, exit, free, system, remove)
-#include "../C/error-print.h"
-
-// size_t
-#include <stddef.h>
+// string, strjoin
+// ../C/error-print.h
+	// ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_YELLOW,
+	// CON_COLOR, CON_RESET, printf_color, puts_color, eprintf, eputs,
+	// OUT_OF_MEMORY, VALIDATE_FILE,
+	// stdio.h
+		// printf, puts, sprintf
+	// stdlib.h
+		// malloc, calloc, exit, free, system, remove
+// string.h
+	// NULL, size_t, strnlen, memcpy, strlen, strcmp, strdup, strerror
+#include "../C/string-join.h"
 
 // bool, false, true
 #include <stdbool.h>
 
 //## macros and types ##//
 
-#define cleanup_free_fn_char cleanup_free_fn_
+#define cleanup_char cleanup_
 
-#define FREE_T(x) __attribute__((cleanup(cleanup_free_fn_##x))) x
+#define FREE_T(x) __attribute__((cleanup(cleanup_##x))) x
 
-typedef struct {
-	char *s; // string
-	size_t l; // length
-} string;
+typedef unsigned long long int uLong;
 
 typedef struct {
 	string libs;
-	size_t paramslen;
 
 	bool rm;
 	bool link;
@@ -82,56 +79,6 @@ char* strnkdup(const char *s, size_t n, size_t k) {
 	return outstr;
 }
 
-char *strjoin(char *strs[], size_t num) {
-	// join strings with a space. returns a pointer to the heap.
-
-	char *res;
-
-	if (num == 0) {
-		// O(1)
-		res = calloc(1, 1);
-
-		OUT_OF_MEMORY(res, 1);
-		return res;
-	}
-
-	// O(2n), where `n` is the combined length of the strings (without joining spaces)
-	size_t i = num;
-	size_t length = num; // room for spaces between args, and null byte
-
-	while (i --> 0)
-		length += strlen(strs[i]);
-
-	res = malloc(length);
-
-	OUT_OF_MEMORY(res, 2);
-
-	i = 0;
-
-	char *current = strs[0];
-
-	// `strcpy(res, *strs)` and `i = strlen(*strs)` at the same time
-	for (; current[i]; i++)
-		res[i] = current[i];
-
-	for (size_t n = 1, iPrevious = 0; n < num; n++) {
-		// if there are no more strings, break
-
-		res[iPrevious + i] = ' ';
-		current = strs[n];
-		iPrevious += i + 1;
-
-		// strcat(res, strs[n]) without having to find the end of `res` first.
-		// O( strlen(strs[n]) ).
-		for (i = 0; current[i]; i++)
-			res[iPrevious + i] = current[i];
-	}
-
-	res[length - 1] = '\0';
-
-	return res;
-}
-
 size_t extensionIndex(const char *const filename, size_t n /*length*/) {
 	// return filename.indexOf(".")
 
@@ -145,8 +92,7 @@ size_t extensionIndex(const char *const filename, size_t n /*length*/) {
 	exit(4);
 }
 
-Params parseParameters(char *params) {
-	size_t i = 0;
+Params parseParameters(string args) {
 	size_t libsLength;
 	char *libs = NULL;
 
@@ -156,52 +102,52 @@ Params parseParameters(char *params) {
 		S = false,
 		e = false;
 
-	for (; params[i] != '\0'; i++) {
+	for (size_t i = 0; i < args.l; i++) {
 
-		if (params[i] != '-')
+		if (args.s[i] != '-')
 			continue;
 
 		// "-"
 
-		if (params[i + 1] == '\0') // "-\0"
+		if (args.s[i + 1] == '\0') // "-\0"
 			break;
 
-		if (params[i + 1] != '-') { //"-?"
+		if (args.s[i + 1] != '-') { //"-?"
 			i++;
 			continue;
 		}
 
 		// "--"
 
-		if (params[i + 2] == '\0')
+		if (args.s[i + 2] == '\0')
 			// "--\0"
 			break;
 
-		if (params[i + 3] != ' ' && params[i + 3] != '\0') {
+		if (args.s[i + 3] != ' ' && args.s[i + 3] != '\0') {
 			// "-- " or "--\0"
 			i += 2;
 			continue;
 		}
 
-		switch (params[i + 2]) {
+		switch (args.s[i + 2]) {
 			case 'R': R = true; break;
 			case 'L': L = true; break;
 			case 'S': S = true; break;
 			case 'e': e = true; break;
 			case 'l':
-				if (params[i + 3] == '\0')
+				if (args.s[i + 3] == '\0')
 					goto done;
 
-				params[i + 0] =
-				params[i + 1] =
-				params[i + 2] = ' ';
+				args.s[i + 0] =
+				args.s[i + 1] =
+				args.s[i + 2] = ' ';
 
 				i += 4;
 				size_t stt = i;
 				uLong items = 1;
 
-				while (params[i] != ' ' && params[i] != '\0') {
-					if (params[i] == ',')
+				while (args.s[i] != ' ' && args.s[i] != '\0') {
+					if (args.s[i] == ',')
 						items++;
 
 					i++;
@@ -219,23 +165,23 @@ Params parseParameters(char *params) {
 
 				size_t j = 2;
 				for (i = stt; i < end; i++) {
-					if (params[i] == ',') {
+					if (args.s[i] == ',') {
 						libs[j++] = ' ';
 						libs[j++] = '-';
 						libs[j++] = 'l';
 					}
 					else
-						libs[j++] = params[i];
+						libs[j++] = args.s[i];
 
-					params[i] = ' ';
+					args.s[i] = ' ';
 				}
 
 				continue;
 		}
 
-		params[i + 0] =
-		params[i + 1] =
-		params[i + 2] = ' ';
+		args.s[i + 0] =
+		args.s[i + 1] =
+		args.s[i + 2] = ' ';
 	}
 
 done:
@@ -251,7 +197,6 @@ done:
 
 	return (Params) {
 		.libs = (string) {libs, libsLength},
-		.paramslen = i - 1,
 		.rm = !R, // remove
 		.link = !L, // link
 		.strip = !S, // strip
@@ -259,17 +204,11 @@ done:
 	};
 }
 
-static inline void cleanup_free_fn_(const void *p) {
-	free(*(void **) p);
-	// *(void **) p = NULL;
-}
+static inline void cleanup_(const void *p) { free(* (void **) p); }
+static inline void cleanup_Params(const	Params *p) { free(p->libs.s); }
+static inline void cleanup_string(const	string *p) { free(p->s); }
 
-static inline void cleanup_free_fn_Params(Params *p) {
-	free(p->libs.s);
-	p->libs.s = NULL;
-}
-
-static inline int help(void) {
+static inline void help(void) {
 	puts(
 		"\n./assemble.exe infile [params]"
 		"\n"
@@ -308,8 +247,6 @@ static inline int help(void) {
 		"\n    all other arguments are given to nasm."
 		"\n"
 	);
-
-	return 0;
 }
 
 
@@ -318,30 +255,31 @@ int main(int argc, char *argv[]) {
 
 	argc--; argv++; // the path to the current file is not needed
 
-	if (!argc) {
+	if (argc == 0) {
 		eputs("No command-line arguments provided. Filename is required.");
 
 		return 2;
 	}
 
-	const char *const infile = *argv; argc--; argv++;
+	const char *const infile = *argv;
+	argc--; argv++;
 
 	if (strcmp(infile, "--help") == 0)
-		return help() /* 0 */;
+		return help(), 0;
 
 	const size_t inflen = strlen(infile); // this is used again later on.
 	const size_t extnIndex = extensionIndex(infile, inflen);
 
-	FREE_T(char) *const params = strjoin(argv, argc); // this is accessed in parseParameters.
+	FREE_T(string) args = strjoin(argv, argc); // this is accessed in parseParameters.
 	FREE_T(char) *const ofile  = strnkdup(infile, extnIndex, 4); // space for 3-character file extension
 
-	OUT_OF_MEMORY(params, 5);
+	OUT_OF_MEMORY(args.s, 5);
 	OUT_OF_MEMORY(ofile, 6);
 
 	ofile[extnIndex + 0] = '.';
 	ofile[extnIndex + 1] = 'o';
 
-	FREE_T(char) *object = strdup(ofile);
+	const FREE_T(char) *const object = strdup(ofile);
 	OUT_OF_MEMORY(object, 7);
 
 	// ofile still allows 3-char extension
@@ -349,17 +287,17 @@ int main(int argc, char *argv[]) {
 	ofile[extnIndex + 2] = 'x';
 	ofile[extnIndex + 3] = 'e';
 
-	FREE_T(Params) parsedParams = parseParameters(params);
+	const FREE_T(Params) parsedParams = parseParameters(args);
 
 	printf("validating : "); VALIDATE_FILE(infile, 1);
 
 
 	/* NASM */ {
-		// 25 + inflen + 4 + (extnIndex + 2) + 1 + parsedParams.paramslen + 1
-		char *restrict const nasm = malloc(inflen + extnIndex + parsedParams.paramslen + 33);
+		// 25 + inflen + 4 + (extnIndex + 2) + 1 + args.l + 1
+		char *restrict const nasm = malloc(inflen + extnIndex + args.l + 33);
 
 		OUT_OF_MEMORY(nasm, 8);
-		sprintf(nasm, "nasm.exe -fwin64 -Werror %s -o %s %s", infile, object, params);
+		sprintf(nasm, "nasm.exe -fwin64 -Werror %s -o %s %s", infile, object, args.s);
 		printf("assembling : ");
 		puts_color(ANSI_GREEN, nasm);
 
@@ -389,7 +327,7 @@ int main(int argc, char *argv[]) {
 
 	/* ld */ {
 		// 7 + (extnIndex + 2) + 1 + parsedParams.libs.l + 4 + (extnIndex + 4) + 13 + 1
-		char *restrict ld = malloc(2*extnIndex + parsedParams.libs.l + 32);
+		char *restrict const ld = malloc(2*extnIndex + parsedParams.libs.l + 32);
 
 		OUT_OF_MEMORY(ld, 9);
 		sprintf(ld, "ld.exe %s %s -o %s --entry main", object, parsedParams.libs.s, ofile);
@@ -397,7 +335,7 @@ int main(int argc, char *argv[]) {
 		puts_color(ANSI_GREEN, ld);
 
 		CON_COLOR(ANSI_YELLOW);
-		int exitCode = system(ld);
+		const int exitCode = system(ld);
 		CON_RESET();
 
 		free(ld);
@@ -417,14 +355,14 @@ int main(int argc, char *argv[]) {
 	printf("stripping  : ");
 	if (parsedParams.strip) {
 		// 53 + (extnIndex + 4) + 1
-		char *restrict strip = malloc(extnIndex + 58);
+		char *restrict const strip = malloc(extnIndex + 58);
 
 		OUT_OF_MEMORY(strip, 10);
 		sprintf(strip, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
 		puts_color(ANSI_GREEN, strip);
 
 		CON_COLOR(ANSI_YELLOW);
-		int exitCode = system(strip);
+		const int exitCode = system(strip);
 		CON_RESET();
 
 		free(strip);
@@ -441,11 +379,10 @@ int main(int argc, char *argv[]) {
 		puts("(skipped)");
 
 
-
 	printf("remove obj : ");
 	if (parsedParams.rm) {
 
-		int exitCode = remove(object);
+		const int exitCode = remove(object);
 		printf_color(ANSI_GREEN, "rm.exe %s\n", object);
 
 		if (exitCode) {
@@ -469,7 +406,7 @@ int main(int argc, char *argv[]) {
 			if (ofile[i] == '/')
 				ofile[i] = '\\';
 
-		int exitCode = system(ofile);
+		const int exitCode = system(ofile);
 
 		if (exitCode) {
 			eprintf("\nexit status: %i\n", exitCode);

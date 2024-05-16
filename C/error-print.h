@@ -1,5 +1,5 @@
-#ifndef ERROR_PRINT_H
-	#define ERROR_PRINT_H
+#ifndef ERROR_PRINT_H_
+	#define ERROR_PRINT_H_
 
 	#include <stdlib.h> // exit
 	#include <stdio.h> // printf, fprintf, stdout, stderr
@@ -10,8 +10,6 @@
 	#else
 		#include <unistd.h>
 	#endif
-
-	typedef unsigned long long uLong;
 
 	#define RGB_STR(r, g, b) #r ";" #g ";" #b
 	#define ANSI_COLOR(color) "\x1b[38;2;" color "m"
@@ -45,21 +43,21 @@
 	#define eprintf(...)           fprintf_color(stderr, ANSI_RED, __VA_ARGS__)
 	#define eputs(str)             fputs_color(stderr, ANSI_RED, str)
 
-	#define OUT_OF_MEMORY(string, code) ({                      \
-		if ((string) == NULL) {                                  \
-			eprintf("Out of memory. code: %llu", (uLong) (code)); \
-			exit(3); /* code for out of memory */                  \
-		}                                                           \
+	#define OUT_OF_MEMORY(str, code) ({        \
+		if ((str) == NULL) {                    \
+			eprintf("Out of memory. code: %llu", \
+				(unsigned long long int) (code)); \
+			exit(3); /* code for out of memory */  \
+		}                                           \
 	})
 
 	#define VALIDATE_FILE(path, code) ({                   \
 		if (access(path, 0 /* F_OK on POSIX */) == -1) {    \
 			eprintf("'%s' cannot be accessed. code: %llu\n", \
-				path, (uLong) (code));                        \
+				path, (unsigned long long int) (code));       \
 			exit(4); /* code for invalid input file */         \
 		}                                                       \
 		                                                         \
 		printf("'%s' available\n", path);                         \
 	})
-
 #endif
