@@ -141,5 +141,3 @@ SylvesterExpansionNextTerm[
         Nothing
     }
 ]
-
-

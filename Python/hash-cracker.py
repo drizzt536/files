@@ -51,5 +51,3 @@ def num_combos(length: int, form = sum):
 	c = 96 if chars == "default" else len(set(chars))
 
 	return form(c**(x+1) for x in range(length))
-
-

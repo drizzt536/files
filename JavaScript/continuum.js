@@ -52,6 +52,7 @@ var printReals = (function printReals_closure(consoleWidth=140) {
 
 		return x0; // more accurate than `x1`
 	}
+
 	function greatestTriangleIndex(x) {
 		// returns the "triangle index" of the greatest triangle number...
 		// less than or equal to the input `x`.
@@ -59,6 +60,7 @@ var printReals = (function printReals_closure(consoleWidth=140) {
 
 		return ( isqrt(1n + (x << 3n)) + 1n >> 1n ) - 1n;
 	}
+
 	function triangleNumber(n) {
 		// `n` is the "triangle index"
 		return n * (n + 1n) >> 1n;
@@ -73,11 +75,13 @@ var printReals = (function printReals_closure(consoleWidth=140) {
 		return [u, k - u];
 		// these can be swapped, but it changes inverse()
 	}
+
 	function R(n, k) {
 		// `n`: integer part
 		// `k`: reversed decimal part
 		return `${n}.` + `${k}`.split("").reverse().join("");
 	}
+
 	function getReal(index) {
 		// generates a unique real number based on the index given.
 		// sign == (n+1) ~Mod~ 2 - 1
@@ -85,6 +89,7 @@ var printReals = (function printReals_closure(consoleWidth=140) {
 		return (index % 2n ? "-" : "") + // these two cases can be swapped, but it changes inverse()
 			R( ...generateCoordinates(index >> 1n) );
 	}
+
 	function inverse(string) {
 		const
 			{groups: {ipart, fpart}} = /^-??(?<ipart>\d+)\.(?<fpart>\d+)$/.exec(string),
@@ -102,6 +107,7 @@ var printReals = (function printReals_closure(consoleWidth=140) {
 
 		return set;
 	}
+
 	function printReals(maxIndex=1n, delimiter=", ") {
 		// -1n acts as infinity (or max bigint, in practice)
 		try { maxIndex = BigInt(maxIndex) } catch { return }
@@ -139,6 +145,7 @@ function isqrt(n) {
 
 	return x0;
 }
+
 function indexToReal(n = 1n) {
 	const
 		a = isqrt(1n + (n << 2n)) + 1n >> 1n, // usually n << 3n, but this skips a step
@@ -146,6 +153,7 @@ function indexToReal(n = 1n) {
 
 	return `${n % 2n ? "-" : ""}${b}.` + `${a - b - 1n}`.split("").reverse().join("");
 }
+
 function realToIndex(string) {
 	const
 		{groups: {ipart, fpart}} = /^-??(?<ipart>\d+)\.(?<fpart>\d+)$/.exec(string),
@@ -164,6 +172,7 @@ function indexToReal(n = 1n) {
 
 	return `${n % 2n ? "-" : ""}${b}.` + `${a - b - 1n}`.reverse();
 }
+
 function realToIndex(string) {
 	const
 		{groups: {ipart, fpart}} = /^-??(?<ipart>\d+)\.(?<fpart>\d+)$/.exec(string),
@@ -183,6 +192,7 @@ function indexToReal(n = 1) {
 
 	return `${n % 2 ? "-" : ""}${b}.` + `${a - b - 1}`.reverse();
 }
+
 function realToIndex(string) {
 	const
 		{groups: {ipart, fpart}} = /^-??(?<ipart>\d+)\.(?<fpart>\d+)$/.exec(string),

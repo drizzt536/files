@@ -35,4 +35,3 @@ def rock_paper_scissors() -> None:
 
 if __name__ == "__main__":
 	rock_paper_scissors()
-
