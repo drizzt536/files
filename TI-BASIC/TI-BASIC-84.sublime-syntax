@@ -1,6 +1,6 @@
 %YAML 1.2
 
-# save to C:/Users/[name]/AppData/Roaming/Sublime Text/Packages/TI-BASIC.sublime-syntax
+# save to %AppData%/Sublime Text/Packages/TI-BASIC.sublime-syntax
 name: TI-BASIC-84
 file_extensions:
   - ti-basic-84
