@@ -1,7 +1,7 @@
 // assumes that the .NET SDK thing is installed: dotnet.microsoft.com/download
 // I don't want to download Visual Studio or just do `dotnet csc.dll [args]`
 
-#include "D:/ExtF/CodeFiles/C/string-join.h"
+#include "../../string-join.h"
 
 #ifndef ROOT
 	#error "`-D ROOT=[dotnet root directory]` must be given to gcc for main.c"
