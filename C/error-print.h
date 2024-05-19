@@ -39,16 +39,19 @@
 	})
 
 	#define printf_color(...)      fprintf_color(stdout, __VA_ARGS__)
-	#define puts_color(color, str) fputs_color(stdout, color, str)
-	#define eprintf(...)           fprintf_color(stderr, ANSI_RED, __VA_ARGS__)
-	#define eputs(str)             fputs_color(stderr, ANSI_RED, str)
+	#define efprintf(fp, ...)      fprintf_color(fp, ANSI_RED, __VA_ARGS__)
+	#define eprintf(...)           efprintf(stderr, __VA_ARGS__)
 
-	#define OUT_OF_MEMORY(str, code) ({        \
-		if ((str) == NULL) {                    \
-			eprintf("Out of memory. code: %llu", \
-				(unsigned long long int) (code)); \
-			exit(3); /* code for out of memory */  \
-		}                                           \
+	#define puts_color(color, str) fputs_color(stdout, color, str)
+	#define efputs(fp, str)        fputs_color(fp, ANSI_RED, str)
+	#define eputs(str)             efputs(stderr, str)
+
+	#define OUT_OF_MEMORY(str, code) ({          \
+		if ((str) == NULL) {                      \
+			eprintf("Out of memory. code: %llu\n", \
+				(unsigned long long int) (code));   \
+			exit(3); /* code for out of memory */    \
+		}                                             \
 	})
 
 	#define VALIDATE_FILE(path, code) ({                   \
@@ -57,7 +60,6 @@
 				path, (unsigned long long int) (code));       \
 			exit(4); /* code for invalid input file */         \
 		}                                                       \
-		                                                         \
-		printf("'%s' available\n", path);                         \
+		printf("'%s' available\n", path);                        \
 	})
 #endif
