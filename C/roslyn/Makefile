@@ -10,10 +10,13 @@ ifndef VERSION
 VERSION=$(shell "$(ROOT)dotnet.exe" --version)
 endif
 
-all: csc vbc
+override OUTPUTS=csc.exe vbc.exe
+override BASE=$(basename $@)
+
+all: $(OUTPUTS)
 	@# build all
 
-copy: csc vbc
+copy: $(OUTPUTS)
 	# copying EXEs to `$(ROOT)` requires admin
 	@if [ $$(id -u) = 0 ]; then            \
 		echo cp ./csc.exe "$(ROOT)csc.exe"; \
@@ -24,15 +27,15 @@ copy: csc vbc
 		echo "no administrator privelages";      \
 	fi
 
-csc vbc:
-	$(CC) $(CFLAGS) main.c -D VERSION=\"$(VERSION)\" -D ROOT="\"\\\"$(ROOT)\"" -D LANG=\"$@\" -o $@
+clean:
+	rm *.exe
 
-	@if [ $(STRIP) = 1 ]; then            \
-		echo strip $(STRIPFLAGS) ./$@.exe; \
-		strip $(STRIPFLAGS) ./$@.exe;       \
+$(OUTPUTS):
+	$(CC) $(CFLAGS) ./main.c -D VERSION=\"$(VERSION)\" -D ROOT="\"$(ROOT)\"" -D LANG=\"$(shell echo $(BASE) | cut -c1-2)\" -o $(BASE)
+
+	@if [ $(STRIP) = 1 ]; then        \
+		echo strip $(STRIPFLAGS) ./$@; \
+		strip $(STRIPFLAGS) ./$@;       \
 	fi
 
 	@echo
-
-clean:
-	rm *.exe

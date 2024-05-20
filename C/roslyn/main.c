@@ -4,20 +4,20 @@
 #include "../string-join.h"
 
 #ifndef ROOT
-	#error "`-D ROOT=[dotnet root directory]` must be given to gcc for main.c"
+	#error "`-D ROOT=\"[dotnet root directory]\"` must be given to gcc for main.c"
 #endif
 
 #ifndef VERSION
-	#error "`-D VERSION=[version]` must be given to gcc for main.c"
+	#error "`-D VERSION=\"[version]\"` must be given to gcc for main.c"
 #endif
 
 #ifndef LANG
-	#error "`-D LANG=[csc|vbc]` must be given to gcc for main.c"
+	#error "`-D LANG=\"[cs|vb]\"` must be given to gcc for main.c"
 #endif
 
 
-#define DOTNET	ROOT "dotnet.exe\""
-#define DLL		ROOT "sdk/" VERSION "/Roslyn/bincore/" LANG ".dll\""
+#define DOTNET	"\"" ROOT "dotnet.exe\""
+#define DLL		"\"" ROOT "sdk/" VERSION "/Roslyn/bincore/" LANG "c.dll\""
 
 int main(int argc, char **argv) {
 
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
 	OUT_OF_MEMORY(cmd, 3);
 
-	sprintf(cmd, "\"%s %s %s\"", DOTNET, DLL, args.s);
+	sprintf(cmd, "\"" DOTNET " " DLL " %s\"", args.s);
 
 	return system(cmd);
 	// `free(args.s)` and `free(cmd)` happen automatically by the OS
