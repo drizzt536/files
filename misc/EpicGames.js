@@ -77,6 +77,7 @@ var OwnedApplications = {
 	, "Black Widow": 0 // duplicate
 	, "Blair Witch": 29.99
 	, "Blankos Block Party": 0
+	, "BLOCKLORDS": 0
 	, "Blood of Steel": 0
 	, "Bloons TD 6": 13.99
 	, "Bloons TD6": 0 // duplicate
@@ -108,6 +109,7 @@ var OwnedApplications = {
 	, "Chess Ultra": 12.99
 	, "Chimeraland": 0
 	, "Chorus Demo": 0
+	, "Circus Electrique": 19.99
 	, "Cities: Skylines": 29.99
 	, "City of Gangsters": 29.99
 	, "Close to the Sun": 19.99
@@ -168,6 +170,10 @@ var OwnedApplications = {
 	, "DOOM 64": 4.99
 	, "Doors: Paradox": 14.99
 	, "Doors - Paradox": 0 // duplicate
+	, "Dragon Age: Inquisition – Game of the Year Edition": 39.99
+	, "Dragon Age: Inquisition - Game of the Year Edition": 0 // duplicate
+	, "Dragon Age: Inquisition": 0 // duplicate
+	, "Dragon Age Inquisition": 0 // duplicate
 	, "Dragonheir: Silent Gods": 0
 	, "Drawful 2": 9.99
 	, "Dungeons 3": 29.99
@@ -211,6 +217,7 @@ var OwnedApplications = {
 	, "FTL": 0 // duplicate
 	, "Fez": 9.99
 	, "Figment": 19.99
+	, "Firestone Free Offer": 99.99
 	, "Firestone Online Idle RPG": 0
 	, "First Class Trouble": 14.99
 	, "F.I.S.T.: Forged In Shadow Torch": 29.99
@@ -296,6 +303,7 @@ var OwnedApplications = {
 	, "Idle Champions of the Forgotten Realms Dark Justiciar Shadowheart Party Pack": 0
 	, "iHeart: Radio, Music, Podcasts": 0
 	, "iHeart": 0 // duplicate
+	, "INDUSTRIA": 19.99
 	, "Infinifactory": 24.99
 	, "Insurgency: Sandstorm": 29.99
 	, "Insurgency": 0 // duplicate
@@ -346,6 +354,8 @@ var OwnedApplications = {
 	, "LEGO Fortnite": 0 // duplicate
 	, "Lifeless Planet: Premier Edition": 19.99
 	, "Lifeless Planet": 0 // duplicate
+	, "LISA: The Definitive Edition": 0
+	, "LISA": 0 // duplicate
 	, "Loop Hero": 14.99
 	, "LOVE": 2.99
 	, "Magic The Gathering Arena": 0
@@ -391,6 +401,8 @@ var OwnedApplications = {
 	, "OHDcore Mod Kit": 0
 	, "Opera GX - The First Browser for Gamers": 0
 	, "Opera GX": 0 // duplicate
+	, "Overclocked Combo Pack": 0
+	, "Fortnite Overclocked Combo Pack": 0 // duplicate
 	, "Overcooked": 16.99
 	, "Overcooked! 2": 24.99
 	, "Outplayed": 0
@@ -544,6 +556,7 @@ var OwnedApplications = {
 	, "The Alien Cube - Demo": 0
 	, "The Alien Cube Demo": 0 // duplicate
 	, "The Alto Collection": 9.99
+	, "The Big Con": 14.99
 	, "The Bridge": 9.99
 	, "The Bunny Graveyard DEMO": 0
 	, "The Captain": 19.99
@@ -566,6 +579,7 @@ var OwnedApplications = {
 	, "The Sims™ 4 The Daring Lifestyle Bundle": 0
 	, "The Sims 4": 0 // duplicate
 	, "The Sims 4 The Daring Lifestyle Bundle": 0 // duplicate
+	, "The Six Dragons": 0
 	, "The Spectrum Retreat": 12.99
 	, "The Stanley Parable": 14.99
 	, "The Talos Principle": 39.99
@@ -573,6 +587,7 @@ var OwnedApplications = {
 	, "The Textorcist": 0 // duplicate
 	, "The Vanishing of Ethan Carter": 19.99
 	, "The Vanishing of Ethan Carter Redux": 0
+	, "The Walking Dead: No Man's Land": 0
 	, "The World Next Door": 9.99
 	, "the Hunter: Call of the Wild™ - New England Mountains Scout Cosmetic Pack": 0
 	, "the Hunter - New England Mountains Scout Cosmetic Pack": 0 // duplicate
@@ -596,6 +611,7 @@ var OwnedApplications = {
 	, "Totally Reliable Delivery Service": 14.99
 	, "Tower of Fantasy": 0
 	, "Towerfall Ascencion": 19.99
+	, "Town of Salem 2": 0
 	, "Trackmania": 0
 	, "Tropico 5": 19.99
 	, "True Fear: Forsaken Souls Part 1 Demo": 0
