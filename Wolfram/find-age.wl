@@ -6,16 +6,16 @@ GetAge[DOB_ : dateOfBirth] := Module[{diff, milliseconds, microseconds},
 		Now,
 		DateObject@ Prepend[
 			Drop[DOB[[1]], 1],
-			Today[[1]][[1]]
+			Today[[1, 1]]
 		],
 		{"Minutes", "Seconds"}
 	];
-	milliseconds = Quantity[1000 (diff[[1]][[1]][[-1]] ~ Mod ~ 1), "Milliseconds"];
+	milliseconds = Quantity[1000 (diff[[1, 1, -1]] ~ Mod ~ 1), "Milliseconds"];
 	microseconds = Quantity[Round[1000 (milliseconds[[1]] ~ Mod ~ 1)], "Microseconds"];
-	diff[[1]][[1]][[-1]] = Floor@ diff[[1]][[1]][[-1]];
+	diff[[1, 1, -1]] = Floor@ diff[[1, 1, -1]];
 	milliseconds[[1]] = Floor@ milliseconds[[1]];
 
-	Today[[1]][[1]] - DOB[[1]][[1]] - UnitConvert[
+	Today[[1, 1]] - DOB[[1, 1]] - UnitConvert[
 		diff + milliseconds + microseconds,
 		"Day"
 	][[1]] / 360
