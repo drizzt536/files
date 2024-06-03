@@ -108,6 +108,7 @@ var OwnedApplications = {
 	, "Century": 0 // duplicate
 	, "Chess Ultra": 12.99
 	, "Chimeraland": 0
+	, "Chivalry 2": 39.99
 	, "Chorus Demo": 0
 	, "Circus Electrique": 19.99
 	, "Cities: Skylines": 29.99
@@ -211,6 +212,7 @@ var OwnedApplications = {
 	, "Far Cry 6 - Free Trial": 0
 	, "Farlight 84": 0
 	, "Farming Simulator 19": 19.99
+	, "Farming Simulator 22": 29.99
 	, "Fault: Elder Orb": 0
 	, "FTL: Faster Than Light": 9.99
 	, "Faster Than Light": 0 // duplicate
