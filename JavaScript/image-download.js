@@ -1,3 +1,7 @@
+#!/usr/bin/env js
+// image-download.js v1.0.1 (c) | Copyright 2024 Daniel E. Janusch
+
+// download any image from the current page, convert to canvas, or find the data URI.
 
 function _standardizeFormat(format) {
 	// also allow inputs like "png" or "jpg" instead of the actual MIME types.
@@ -100,7 +104,12 @@ function download(object, dest, format) {
 	const link = document.createElement("a")
 
 	link.href = url
-	link.download = (dest ?? `download.${_standardizeFormat(format).slice(6)}`).toString()
+	link.download = ((dest ?? "download") + `.${
+		_standardizeFormat(format).slice(6)
+	}`).toString()
+
+	x.download=D??`download.${a(f).slice(6)}`;
+	x.download=(D??"download")+"."+a(f).slice(6);
 
 	link.click()
 }
@@ -124,6 +133,7 @@ const _exports = {
 	convertToCanvas,
 	convertToCanvasAsync,
 	dataURI,
+	_standardizeFormat,
 }
 
 if (typeof module !== "undefined" && typeof exports === "object")
