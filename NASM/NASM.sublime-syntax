@@ -7,7 +7,7 @@
 
 # save to %AppData%/Sublime Text/Packages/NASM.sublime-syntax
 file_extensions: [yasm, nasm, asm, inc, mac]
-scope: source.asm.x86_64
+scope: source.nasm
 name: NASM
 
 variables:
@@ -27,10 +27,10 @@ contexts:
   line-continuation:
     - match: '(\\)$\n'
       captures:
-        1: punctuation.separator.continuation.asm.x86_64
+        1: punctuation.separator.continuation.nasm
     - match: '\\(\s+?)$'
       captures:
-        1: invalid.illegal.space-after-continuation.asm.x86_64
+        1: invalid.illegal.space-after-continuation.nasm
   line-ending:
     - match: '$\n'
       pop: true
@@ -63,181 +63,181 @@ contexts:
   floating-point:
     # binary
     - match: '(?i)\b0[by]{{num_bin}}\.(?:{{num_bin}}?{{num_bin_exp}}?\b)?'
-      scope: constant.numeric.binary.floating-point.asm.x86_64
+      scope: constant.numeric.binary.floating-point.nasm
     - match: '(?i)\b0[by]{{num_bin}}{{num_bin_exp}}\b'
-      scope: constant.numeric.binary.floating-point.asm.x86_64
+      scope: constant.numeric.binary.floating-point.nasm
     # octal
     - match: '(?i)\b0[oq]{{num_oct}}\.(?:{{num_oct}}?{{num_bin_exp}}?\b)?'
-      scope: constant.numeric.octal.floating-point.asm.x86_64
+      scope: constant.numeric.octal.floating-point.nasm
     - match: '(?i)\b0[oq]{{num_oct}}{{num_bin_exp}}\b'
-      scope: constant.numeric.octal.floating-point.asm.x86_64
+      scope: constant.numeric.octal.floating-point.nasm
     # decimal
     - match: '(?i)\b(?:0[dt])?{{num_dec}}\.(?:{{num_dec}}?{{num_dec_exp}}?\b)?'
-      scope: constant.numeric.decimal.floating-point.asm.x86_64
+      scope: constant.numeric.decimal.floating-point.nasm
     - match: '(?i)\b{{num_dec}}{{num_dec_exp}}\b'
-      scope: constant.numeric.decimal.floating-point.asm.x86_64
+      scope: constant.numeric.decimal.floating-point.nasm
     #- match: '(?i)\.{{num_dec}}{{num_dec_exp}}?\b'
-    #  scope: invalid.illegal.constant.numeric.decimal.floating-point.asm.x86_64
+    #  scope: invalid.illegal.constant.numeric.decimal.floating-point.nasm
     - match: '(?i)\b{{num_dec}}p{{num_dec}}?\b'
-      scope: constant.numeric.decimal.packed-bcd.asm.x86_64
+      scope: constant.numeric.decimal.packed-bcd.nasm
     # hex
     - match: '(?i)\b0[xh]{{num_hex}}\.(?:{{num_hex}}?{{num_bin_exp}}?\b)?'
-      scope: constant.numeric.hex.floating-point.asm.x86_64
+      scope: constant.numeric.hex.floating-point.nasm
     - match: '(?i)\b0[xh]{{num_hex}}{{num_bin_exp}}\b'
-      scope: constant.numeric.hex.floating-point.asm.x86_64
+      scope: constant.numeric.hex.floating-point.nasm
     - match: '(?i)\$[0-9]\_?{{num_hex}}?\.(?:{{num_hex}}?{{num_bin_exp}}?\b)?'
-      scope: constant.numeric.hex.floating-point.asm.x86_64
+      scope: constant.numeric.hex.floating-point.nasm
     - match: '(?i)\$[0-9]\_?{{num_hex}}{{num_bin_exp}}\b'
-      scope: constant.numeric.hex.floating-point.asm.x86_64
+      scope: constant.numeric.hex.floating-point.nasm
   integers:
     - match: '(?i)\b(?:(?:0[by]{{num_bin}})|(?:{{num_bin}}[by]))\b'
-      scope: constant.numeric.binary.asm.x86_64
+      scope: constant.numeric.binary.nasm
     - match: '(?i)\b(?:(?:0[oq]{{num_oct}})|(?:{{num_oct}}[oq]))\b'
-      scope: constant.numeric.octal.asm.x86_64
+      scope: constant.numeric.octal.nasm
     - match: '(?i)\b(?:(?:0[dt]{{num_dec}})|(?:{{num_dec}}[dt]?))\b'
-      scope: constant.numeric.decimal.asm.x86_64
+      scope: constant.numeric.decimal.nasm
     - match: '(?i)(?:\$[0-9]\_?{{num_hex}}?)\b'
-      scope: constant.numeric.hex.asm.x86_64
+      scope: constant.numeric.hex.nasm
     - match: '(?i)\b(?:(?:0[xh]{{num_hex}})|(?:{{num_hex}}[hxHX]))\b'
-      scope: constant.numeric.hex.asm.x86_64
+      scope: constant.numeric.hex.nasm
 
   labels:
     # http://www.nasm.us/doc/nasmdoc3.html#section-3.9
     - match: '(\.\.@)({{valid_identifier}})(?:(\:)?|\b)'
       captures:
-        1: punctuation.separator.asm.x86_64 storage.modifier.asm.x86_64
-        2: entity.name.constant.special.asm.x86_64
-        3: punctuation.separator.asm.x86_64
+        1: punctuation.separator.nasm storage.modifier.nasm
+        2: entity.name.constant.special.nasm
+        3: punctuation.separator.nasm
     - match: '(?:(\.)?|\b)({{valid_identifier}})(?:(\:)?|\b)'
       captures:
-        1: punctuation.separator.asm.x86_64 storage.modifier.asm.x86_64
-        2: entity.name.constant.asm.x86_64
-        3: punctuation.separator.asm.x86_64
+        1: punctuation.separator.nasm storage.modifier.nasm
+        2: entity.name.constant.nasm
+        3: punctuation.separator.nasm
     - match: '(\.)([0-9]+{{identifier_body}})(?:(\:)?|\b)'
       captures:
-        1: punctuation.separator.asm.x86_64 storage.modifier.asm.x86_64
-        2: entity.name.constant.asm.x86_64
-        3: punctuation.separator.asm.x86_64
+        1: punctuation.separator.nasm storage.modifier.nasm
+        2: entity.name.constant.nasm
+        3: punctuation.separator.nasm
     - match: '(?:(\.)?|\b)([0-9$@~]{{identifier_body}})(?:(\:)?|\b)'
       captures:
-        1: punctuation.separator.asm.x86_64 storage.modifier.asm.x86_64
-        2: invalid.illegal.entity.name.constant.asm.x86_64
-        3: punctuation.separator.asm.x86_64
+        1: punctuation.separator.nasm storage.modifier.nasm
+        2: invalid.illegal.entity.name.constant.nasm
+        3: punctuation.separator.nasm
     - match: '((%)(\d+))'
       captures:
-        1: invalid.illegal.meta.preprocessor.asm.x86_64
-        #1: meta.preprocessor.asm.x86_64
-        2: punctuation.definition.variable.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        3: variable.other.preprocessor.asm.x86_64
+        1: invalid.illegal.meta.preprocessor.nasm
+        #1: meta.preprocessor.nasm
+        2: punctuation.definition.variable.preprocessor.nasm keyword.control.preprocessor.nasm
+        3: variable.other.preprocessor.nasm
     - match: '((%%)({{valid_identifier}})(?:(\:)?|\b))'
       captures:
-        1: invalid.illegal.meta.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        3: entity.name.constant.special.asm.x86_64
-        4: punctuation.separator.asm.x86_64
+        1: invalid.illegal.meta.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm keyword.control.preprocessor.nasm
+        3: entity.name.constant.special.nasm
+        4: punctuation.separator.nasm
 
   data-types:
     # Initialized & uninitialized data: http://www.nasm.us/doc/nasmdoc3.html#section-3.2.1
     - match: '(?i)\b(?:s?byte|(?:[doqtyz]|dq|s[dq]?)?word|(?:d|res)[bdoqtwyz]|ddq)\b'
-      scope: storage.type.asm.x86_64
+      scope: storage.type.nasm
     - match: '(?i)\b(?:incbin|equ|times)\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
 
   prefixes:
     - match: '(?i)\b(?:strict|nosplit|near|far|abs|rel)\b'
-      scope: storage.modifier.asm.x86_64
+      scope: storage.modifier.nasm
     - match: '(?i)\b(?:[ao](?:16|32|64))\b'
-      scope: storage.modifier.prefix.asm.x86_64
+      scope: storage.modifier.prefix.nasm
     - match: '(?i)\b(?:rep(?:n?[ez])?|lock|xacquire|xrelease|(?:no)?bnd)\b'
-      scope: storage.modifier.prefix.asm.x86_64
+      scope: storage.modifier.prefix.nasm
     - match: '{(vex[23]|evex)}'
       captures:
-        1: storage.modifier.prefix.vex.asm.x86_64
+        1: storage.modifier.prefix.vex.nasm
     - match: '{(k[1-7])}'
       captures:
-        1: storage.modifier.opmask.asm.x86_64
+        1: storage.modifier.opmask.nasm
     - match: '{(1to(?:8|16))}'
       captures:
-        1: storage.modifier.precision.asm.x86_64
+        1: storage.modifier.precision.nasm
     - match: '{(z|(?:r[nudz]-)?sae)}'
       captures:
-        1: storage.modifier.rounding.asm.x86_64
+        1: storage.modifier.rounding.nasm
 
   support:
     # http://www.nasm.us/doc/nasmdoc7.html#section-7.4.6
     - match: '\.\.(?:start|imagebase|tlvp|got(?:pc(?:rel)?|(?:tp)?off)?|plt|sym|tlsie)\b'
-      scope: support.constant.asm.x86_64
+      scope: support.constant.nasm
     - match: '\b__(?:utf(?:(?:16|32)(?:[lb]e)?)|float(?:8|16|32|64|80[me]|128[lh])|Infinity|[QS]?NaN)__\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     # http://www.nasm.us/doc/nasmdoc4.html#section-4.11
     - match: '\b__NASM_(?:MAJOR|(?:SUB)?MINOR|SNAPSHOT|VER(?:SION_ID)?)__\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     - match: '\b___NASM_PATCHLEVEL__\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     - match: '\b__(?:FILE|LINE|BITS|OUTPUT_FORMAT)__\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     - match: '\b__(?:(?:UTC_)?(?:DATE|TIME)(?:_NUM)?|POSIX_TIME)__\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     - match: '\b__USE_(?:ALTREG|SMARTALIGN|FP|IFUNC)__\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     - match: '\b__PASS__\b'
-      scope: invalid.deprecated.support.constant.altreg.asm.x86_64
+      scope: invalid.deprecated.support.constant.altreg.nasm
     - match: '(?i)\balignmode\b'
-      scope: support.function.smartalign.asm.x86_64
+      scope: support.function.smartalign.nasm
       push:
         - include: line-continuation
         - include: line-ending
         - match: '\b(?:generic|nop|k7|k8|p6)\b'
-          scope: support.constant.smartalign.asm.x86_64
+          scope: support.constant.smartalign.nasm
           pop: true
         - match: '\w+'
-          scope: invalid.illegal.constant.smartalign.asm.x86_64
+          scope: invalid.illegal.constant.smartalign.nasm
           pop: true
     - match: '\b__ALIGNMODE__\b'
-      scope: support.constant.smartalign.asm.x86_64
+      scope: support.constant.smartalign.nasm
     - match: '\b(?:Inf|[QS]?NaN)\b'
-      scope: support.constant.fp.asm.x86_64
+      scope: support.constant.fp.nasm
     - match: '\b(?:float(?:8|16|32|64|80[me]|128[lh]))\b'
-      scope: support.function.fp.asm.x86_64
+      scope: support.function.fp.nasm
     - match: '(?i)\bilog2(?:[ewfc]|[fc]w)?\b'
-      scope: support.function.ifunc.asm.x86_64
+      scope: support.function.ifunc.nasm
 
   directives:
     - match: '(?i)\b(?:ideal|jumps|p[345]86|end)\b'
-      scope: invalid.deprecated.tasm.asm.x86_64
+      scope: invalid.deprecated.tasm.nasm
     - match: '(?i)\b(?:bits|use(?:16|32|64)|org|uppercase|safeseh|osabi)\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
     - match: '(?i)\b(default)(?:\s+(rel|abs|(?:no)?bnd))?\b'
       captures:
-        1: support.function.directive.asm.x86_64
-        2: support.constant.directive.asm.x86_64
+        1: support.function.directive.nasm
+        2: support.constant.directive.nasm
     - match: '(?i)\b(?:section|segment)\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push: [section-parameters, section-name]
     - match: '(?i)\bgroup\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push: section-name
     - match: '\b(?:__SECT__|__NASMDEFSEG|_?_GLOBAL_OFFSET_TABLE_)\b'
-      scope: support.constant.directive.asm.x86_64
+      scope: support.constant.directive.nasm
     - match: '(?i)\b(?:absolute|common)\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
     - match: '(?i)\b(?:subsections_via_symbols|no_dead_strip)\b'
-      scope: support.function.directive.macho.asm.x86_64
+      scope: support.function.directive.macho.nasm
     - match: '(?i)import\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '{{valid_identifier}}'
-          scope: entity.name.function.asm.x86_64
+          scope: entity.name.function.nasm
           set:
             - match: '{{valid_identifier}}'
-              scope: meta.path.asm.x86_64 string.unquoted.asm.x86_64
+              scope: meta.path.nasm string.unquoted.nasm
               set:
                 - match: '{{valid_identifier}}'
-                  scope: variable.function.asm.x86_64
+                  scope: variable.function.nasm
                   set:
                     - include: comments
                     - match: '{{valid_identifier}}'
-                      scope: invalid.illegal.asm.x86_64
+                      scope: invalid.illegal.nasm
                     - include: line-continuation
                     - include: pop-if-not-whitespace
                     - include: line-ending
@@ -251,13 +251,13 @@ contexts:
         - include: pop-if-not-whitespace
         - include: line-ending
     - match: '(?i)export\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '{{valid_identifier}}'
-          scope: entity.name.constant.asm.x86_64
+          scope: entity.name.constant.nasm
           set:
             - match: '{{valid_identifier}}'
-              scope: variable.function.asm.x86_64
+              scope: variable.function.nasm
               set: export-parameters
             - include: line-continuation
             - include: pop-if-not-whitespace
@@ -266,60 +266,60 @@ contexts:
         - include: pop-if-not-whitespace
         - include: line-ending
     - match: '(?i)global\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '(?<=\:)(?:function|data|export)\b'
-          scope: storage.type.directive.asm.x86_64
+          scope: storage.type.directive.nasm
         - match: '\b(?:default|internal|hidden|protected|proc|data)\b'
-          scope: storage.modifier.directive.asm.x86_64 variable.parameter.directive.asm.x86_64
+          scope: storage.modifier.directive.nasm variable.parameter.directive.nasm
         - include: line-continuation
         - include: line-ending
         - include: preprocessor-macro-parameter
         - include: main
     - match: '(?i)extern\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '(?<=\:)(?:import)\b'
-          scope: storage.type.directive.asm.x86_64
+          scope: storage.type.directive.nasm
         - match: '\b(?:proc|data)\b'
-          scope: storage.modifier.directive.asm.x86_64 variable.parameter.directive.asm.x86_64
+          scope: storage.modifier.directive.nasm variable.parameter.directive.nasm
         - include: line-continuation
         - include: line-ending
         - include: preprocessor-macro-parameter
         - include: main
     - match: '(?i)library\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '{{valid_identifier}}'
-          scope: meta.path.asm.x86_64 string.unquoted.asm.x86_64
+          scope: meta.path.nasm string.unquoted.nasm
           pop: true
         - include: line-continuation
         - include: line-ending
         - include: pop-if-not-whitespace
     - match: '(?i)module\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '\$?{{valid_identifier}}'
-          scope: entity.name.namespace.asm.x86_64
+          scope: entity.name.namespace.nasm
           pop: true
         - include: line-continuation
         - include: line-ending
         - include: pop-if-not-whitespace
     - match: '(?i)\bcpu\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '(?i)\b(?:(?:80|[1-6])86|pentium|ppro|p[234]|katmai|willamette|prescott|(?:x|ia)64)\b'
-          scope: support.constant.directive.asm.x86_64
+          scope: support.constant.directive.nasm
           pop: true
         - include: line-continuation
         - include: pop-if-not-whitespace
         - include: line-ending
         - include: main
     - match: '(?i)\bfloat\b'
-      scope: support.function.directive.asm.x86_64
+      scope: support.function.directive.nasm
       push:
         - match: '(?i)\b(?:(?:no)?daz|near|up|down|zero|default)\b'
-          scope: support.constant.directive.asm.x86_64
+          scope: support.constant.directive.nasm
           pop: true
         - include: line-continuation
         - include: pop-if-not-whitespace
@@ -327,69 +327,69 @@ contexts:
         - include: main
     - match: '(?i)(\[)\s*(warning)\b'
       captures:
-        2: support.function.directive.asm.x86_64
+        2: support.function.directive.nasm
       push:
         - match: '(?i)([+\-*])|(error)\s*(=)\s*'
           captures:
-            1: keyword.control.warning.asm.x86_64
-            2: support.constant.directive.warning.asm.x86_64
-            3: keyword.operator.assignment.asm.x86_64
+            1: keyword.control.warning.nasm
+            2: support.constant.directive.warning.nasm
+            3: keyword.operator.assignment.nasm
           push:
             - match: '(?i)\b(other|macro-(?:params|selfref|defaults)|orphan-labels|number-overflow|gnu-elf-extensions|float-(?:overflow|denorm|underflow|toolong)|user|lock|hle|bnd|zext-reloc|ptr|(?:bad|unknown|not-my)-pragma|unknown-warning|all)(?=\]|\s)'
-              scope: support.constant.directive.warning.asm.x86_64
+              scope: support.constant.directive.warning.nasm
               pop: true
             - match: '\S+(?=\])'
-              scope: invalid.illegal.support.constant.directive.warning.asm.x86_64
+              scope: invalid.illegal.support.constant.directive.warning.nasm
               pop: true
             - match: '\S+'
-              scope: invalid.illegal.support.constant.directive.warning.asm.x86_64
+              scope: invalid.illegal.support.constant.directive.warning.nasm
               pop: true
         - match: '(?i)\b(?:all|error)\b'
-          scope: support.constant.directive.warning.asm.x86_64
+          scope: support.constant.directive.warning.nasm
         - match: ']'
           pop: true
         - include: line-continuation
         - include: line-ending
     - match: '(?i)(\[)\s*(map)\b'
       captures:
-        2: support.function.directive.asm.x86_64
+        2: support.function.directive.nasm
       push:
         - match: '(?i)\b(?:all|brief|sections|segments|symbols)\b'
-          scope: support.constant.directive.map.asm.x86_64
+          scope: support.constant.directive.map.nasm
         - match: '(?i)\b(?:std(?:out|err))\b'
-          scope: meta.path.asm.x86_64 support.constant.directive.map.asm.x86_64
+          scope: meta.path.nasm support.constant.directive.map.nasm
         - match: '{{valid_identifier}}'
-          scope: meta.path.asm.x86_64 string.unquoted.asm.x86_64
+          scope: meta.path.nasm string.unquoted.nasm
         - match: ']'
           pop: true
         - include: line-continuation
         - include: line-ending
   section-parameters:
     - match: '='
-      scope: keyword.operator.assignment.asm.x86_64
+      scope: keyword.operator.assignment.nasm
     - match: '(?i)\b(?:(?:v)?start|align|absolute)\b'
-      scope: variable.parameter.directive.asm.x86_64
+      scope: variable.parameter.directive.nasm
     - match: '(?i)\b(?:(?:prog|no)bits|private|public|common|stack|code|text|data|bss|rdata|info)\b'
-      scope: storage.modifier.directive.asm.x86_64 variable.parameter.directive.asm.x86_64
+      scope: storage.modifier.directive.nasm variable.parameter.directive.nasm
     - match: '(?i)\b(?:mixed|zerofill|no_dead_strip|live_support|strip_static_syms)\b'
-      scope: storage.modifier.directive.asm.x86_64 variable.parameter.directive.macho.asm.x86_64
+      scope: storage.modifier.directive.nasm variable.parameter.directive.macho.nasm
     - match: '(?i)\b(?:(?:no)?(?:alloc|exec|write)|tls)\b'
-      scope: storage.modifier.directive.asm.x86_64 variable.parameter.directive.elf.asm.x86_64
+      scope: storage.modifier.directive.nasm variable.parameter.directive.elf.nasm
     - match: '(?i)\b(?:(?:v)?follows)\b'
-      scope: variable.parameter.directive.asm.x86_64
+      scope: variable.parameter.directive.nasm
       push:
         - match: '='
-          scope: keyword.operator.assignment.asm.x86_64
+          scope: keyword.operator.assignment.nasm
           set: [pop, section-name]
         - include: line-continuation
         - include: line-ending
     - match: '(?i)\b(?:class|overlay)\b'
-      scope: variable.parameter.directive.asm.x86_64
+      scope: variable.parameter.directive.nasm
       push:
         - match: '='
-          scope: keyword.operator.assignment.asm.x86_64
+          scope: keyword.operator.assignment.nasm
         - match: '{{valid_identifier}}'
-          scope: entity.name.class.asm.x86_64 string.unquoted.asm.x86_64
+          scope: entity.name.class.nasm string.unquoted.nasm
           pop: true
         - include: line-continuation
         - include: line-ending
@@ -398,20 +398,20 @@ contexts:
     - include: main
   section-name:
     - match: '(?:\.|\b)(?:text|bss|(?:[rpx]|ro)?data|code)\b'
-      scope: entity.name.section.asm.x86_64 string.unquoted.asm.x86_64 support.constant.section.asm.x86_64
+      scope: entity.name.section.nasm string.unquoted.nasm support.constant.section.nasm
       pop: true
     - match: '\b__(?:text|const|data|bss|TEXT|CONST|DATA|BSS)\b'
-      scope: entity.name.section.asm.x86_64 string.unquoted.asm.x86_64 support.constant.section.macho.asm.x86_64
+      scope: entity.name.section.nasm string.unquoted.nasm support.constant.section.macho.nasm
       pop: true
     - match: '(?:\.)(?:[lt](?:data|bss)|lrodata|comment)\b'
-      scope: entity.name.section.asm.x86_64 string.unquoted.asm.x86_64 support.constant.section.elf.asm.x86_64
+      scope: entity.name.section.nasm string.unquoted.nasm support.constant.section.elf.nasm
       pop: true
     - match: '(?:\.|\b){{valid_identifier}}\b'
-      scope: entity.name.section.asm.x86_64 string.unquoted.asm.x86_64
+      scope: entity.name.section.nasm string.unquoted.nasm
       pop: true
     - match: '(?=`|''|")'
       set:
-        - meta_scope: entity.name.section.asm.x86_64
+        - meta_scope: entity.name.section.nasm
         - include: strings
         - include: pop
     - include: line-continuation
@@ -419,11 +419,11 @@ contexts:
     - include: line-ending
   export-parameters:
     - match: '='
-      scope: keyword.operator.assignment.asm.x86_64
+      scope: keyword.operator.assignment.nasm
     - match: '(?i)\b(?:resident|nodata)\b'
-      scope: storage.modifier.directive.asm.x86_64 variable.parameter.directive.asm.x86_64
+      scope: storage.modifier.directive.nasm variable.parameter.directive.nasm
     - match: '(?i)\b(?:parm)\b'
-      scope: variable.parameter.directive.asm.x86_64
+      scope: variable.parameter.directive.nasm
     - include: primitive-directive-end
     - include: line-continuation
     - include: line-ending
@@ -431,83 +431,83 @@ contexts:
 
   operators:
     - match: '[+\-*/]'
-      scope: keyword.operator.arithmetic.asm.x86_64
+      scope: keyword.operator.arithmetic.nasm
     - match: '(%%|%)[[:space:]]'
       captures:
-        1: keyword.operator.arithmetic.asm.x86_64
+        1: keyword.operator.arithmetic.nasm
     - match: '[|&^~!]|<<|>>'
-      scope: keyword.operator.bitwise.asm.x86_64
+      scope: keyword.operator.bitwise.nasm
     - match: '(?i)\b(seg|wrt)\b'
-      scope: keyword.operator.word.asm.x86_64
+      scope: keyword.operator.word.nasm
     - match: ','
-      scope: operator.separator.asm.x86_64
+      scope: operator.separator.nasm
 
   structs:
     - match: '(?i)\bstruc\b'
-      scope: support.function.asm.x86_64 meta.struct.asm.x86_64
+      scope: support.function.nasm meta.struct.nasm
       push:
-        - meta_content_scope: meta.struct.asm.x86_64.1
+        - meta_content_scope: meta.struct.nasm.1
         - match: '{{valid_identifier}}'
-          scope: entity.name.struct.asm.x86_64
+          scope: entity.name.struct.nasm
           set:
-            - meta_scope: meta.struct.asm.x86_64
+            - meta_scope: meta.struct.nasm
             - match: '(?i)\bendstruc\b'
-              scope: support.function.asm.x86_64 meta.struct.asm.x86_64
+              scope: support.function.nasm meta.struct.nasm
               pop: true
             - include: main
         - match: '\w'
-          scope: invalid.illegal.entity.name.struct.asm.x86_64
+          scope: invalid.illegal.entity.name.struct.nasm
     - match: '(?i)\bendstruc\b'
-      scope: invalid.illegal.support.function.asm.x86_64 meta.struct.asm.x86_64
+      scope: invalid.illegal.support.function.nasm meta.struct.nasm
     - match: '(?i)\bistruc\b'
-      scope: support.function.asm.x86_64 meta.struct.asm.x86_64
+      scope: support.function.nasm meta.struct.nasm
       push:
-        - meta_content_scope: meta.struct.asm.x86_64.1
+        - meta_content_scope: meta.struct.nasm.1
         - match: '{{valid_identifier}}'
-          scope: variable.other.asm.x86_64
+          scope: variable.other.nasm
           set:
-            - meta_scope: meta.struct.asm.x86_64
+            - meta_scope: meta.struct.nasm
             - match: '(?i)\bat\b'
-              scope: support.function.asm.x86_64 meta.struct.asm.x86_64
+              scope: support.function.nasm meta.struct.nasm
             - match: '(?i)\biend\b'
-              scope: support.function.asm.x86_64 meta.struct.asm.x86_64
+              scope: support.function.nasm meta.struct.nasm
               pop: true
             - include: main
         - match: '\w'
-          scope: invalid.illegal.variable.struct.asm.x86_64
+          scope: invalid.illegal.variable.struct.nasm
     - match: '(?i)\biend\b'
-      scope: invalid.illegal.support.function.asm.x86_64 meta.struct.asm.x86_64
+      scope: invalid.illegal.support.function.nasm meta.struct.nasm
     - match: '(?i)\balignb?\b'
-      scope: support.function.asm.x86_64
+      scope: support.function.nasm
     - match: '(?i)\b(sectalign)\s+(on|off)?'
       captures:
-        1: support.function.asm.x86_64
-        2: support.constant.asm.x86_64
+        1: support.function.nasm
+        2: support.constant.nasm
 
   entities:
     - match: '\$@feat\.00\b'
-      scope: variable.language.sseh.asm.x86_64
+      scope: variable.language.sseh.nasm
     - match: '(\$)(?:\w+)\b'
-      scope: variable.other.asm.x86_64
+      scope: variable.other.nasm
       captures:
-        1: punctuation.definition.variable.asm.x86_64
+        1: punctuation.definition.variable.nasm
     - match: '\${3,}'
-      scope: invalid.illegal.variable.language.asm.x86_64
+      scope: invalid.illegal.variable.language.nasm
     - match: '\$'
-      scope: variable.language.asm.x86_64
- 
+      scope: variable.language.nasm
+
   comments:
     - match: (?:(;)|(?:^|\s)(#)\s).*$
-      scope: comment.line.asm.x86_64
+      scope: comment.line.nasm
       captures:
-        1: punctuation.definition.comment.asm.x86_64
-        2: punctuation.definition.comment.asm.x86_64
+        1: punctuation.definition.comment.nasm
+        2: punctuation.definition.comment.nasm
     - match: /\*
-      scope: punctuation.definition.comment.asm.x86_64
+      scope: punctuation.definition.comment.nasm
       push:
-        - meta_scope: comment.block.asm.x86_64
+        - meta_scope: comment.block.nasm
         - match: \*/
-          scope: punctuation.definition.comment.asm.x86_64
+          scope: punctuation.definition.comment.nasm
           pop: true
 
   preprocessor: # http://www.nasm.us/doc/nasmdoc4.html
@@ -516,141 +516,142 @@ contexts:
     - include: preprocessor-macro-indirection
     - include: preprocessor-conditions
     - include: preprocessor-other
+    - include: preprocessor-functions
   # single-line macro
   preprocessor-macro-define:
     - match: '^\s*((%)x?i?define)\b'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.import.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.import.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm
         - include: preprocessor-comments
         - match: '(?:{{valid_identifier}})(?=\()'
-          scope: entity.name.function.preprocessor.asm.x86_64
+          scope: entity.name.function.preprocessor.nasm
           set:
             - match: '\('
-              scope: punctuation.section.group.begin.asm.x86_64
+              scope: punctuation.section.group.begin.nasm
               set: preprocessor-macro-params
         - match: '{{valid_identifier}}'
-          scope: entity.name.constant.preprocessor.asm.x86_64
+          scope: entity.name.constant.preprocessor.nasm
           set: preprocessor-macro-definition
         - include: line-continuation
         - include: pop-if-not-whitespace
         - include: line-ending
     - match: '^\s*((%)(?:include|depend))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.import.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.import.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-macro-definition
     - match: '^\s*((%)use)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.import.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.import.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64 string.unquoted.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm string.unquoted.nasm
         - include: strings
         - include: line-ending
         - include: preprocessor-macro-indirection
     - match: '^\s*((%)(?:assign|i?deftok|strcat|strlen|substr|pathsearch|push|pop|repl|line|clear))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm
         - include: preprocessor-macro-indirection
         - include: preprocessor-conditions-constant
     - match: '^\s*((%)(?:arg|local))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm
         - match: '({{valid_identifier}})(\:)(?=\w+)'
           captures:
-            1: meta.preprocessor.asm.x86_64 variable.parameter.macro.asm.x86_64
-            2: punctuation.separator.asm.x86_64
+            1: meta.preprocessor.nasm variable.parameter.macro.nasm
+            2: punctuation.separator.nasm
         - match: '\,'
-          scope: punctuation.separator.asm.x86_64
+          scope: punctuation.separator.nasm
         - include: data-types
         - match: '\w+\b'
-          scope: invalid.illegal.storage.type.asm.x86_64
+          scope: invalid.illegal.storage.type.nasm
         - include: line-continuation
         - include: line-ending
     - match: '^\s*((%)stacksize)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm
         - match: '\b(flat(?:64)?|large|small)\b'
-          scope: support.constant.macro.asm.x86_64
+          scope: support.constant.macro.nasm
         - match: '\w+\b'
-          scope: invalid.illegal.storage.type.asm.x86_64
+          scope: invalid.illegal.storage.type.nasm
         - include: line-continuation
         - include: line-ending
     - match: '^\s*((%)i?defstr)\s+(?:({{valid_identifier}})|(%%)({{valid_identifier}}))\b'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.import.preprocessor.assign.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
-        3: entity.name.constant.preprocessor.asm.x86_64
-        4: punctuation.definition.keyword.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        5: entity.name.constant.special.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.import.preprocessor.assign.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
+        3: entity.name.constant.preprocessor.nasm
+        4: punctuation.definition.keyword.preprocessor.nasm keyword.control.preprocessor.nasm
+        5: entity.name.constant.special.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64 string.unquoted.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm string.unquoted.nasm
         - include: preprocessor-macro-indirection
         - include: line-ending
     - match: '^\s*((%)(?:warning|error|fatal|pragma))(?=\s|$)'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.preprocessor.assign.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
-        3: entity.name.constant.preprocessor.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.preprocessor.assign.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
+        3: entity.name.constant.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64 string.unquoted.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm string.unquoted.nasm
         - include: strings
         - include: preprocessor-macro-indirection
         - include: line-ending
   preprocessor-macro-params-illegal:
-    - meta_scope: invalid.illegal.asm.x86_64
+    - meta_scope: invalid.illegal.nasm
     - include: preprocessor-macro-params
   preprocessor-macro-params:
-    - meta_scope: meta.preprocessor.macro.parameters.asm.x86_64 meta.group.asm.x86_64
+    - meta_scope: meta.preprocessor.macro.parameters.nasm meta.group.nasm
     - match: '{{valid_identifier}}'
-      scope: variable.parameter.asm.x86_64
+      scope: variable.parameter.nasm
     - match: '\)'
-      scope: punctuation.section.group.end.asm.x86_64
+      scope: punctuation.section.group.end.nasm
       set: preprocessor-macro-definition
     - match: ','
-      scope: punctuation.separator.asm.x86_64
+      scope: punctuation.separator.nasm
       push:
         - match: '{{valid_identifier}}'
-          scope: variable.parameter.asm.x86_64
+          scope: variable.parameter.nasm
           pop: true
         - include: line-continuation
         - include: preprocessor-comments
         - match: '\.\.\.'
-          scope: keyword.operator.variadic.asm.x86_64
+          scope: keyword.operator.variadic.nasm
         - match: '(?=\))'
           pop: true
         - match: '(/\*).*(\*/)'
-          scope: comment.block.asm.x86_64
+          scope: comment.block.nasm
           captures:
-            1: punctuation.definition.comment.asm.x86_64
-            2: punctuation.definition.comment.asm.x86_64
+            1: punctuation.definition.comment.nasm
+            2: punctuation.definition.comment.nasm
         - match: '\S+'
-          scope: invalid.illegal.unexpected-character.asm.x86_64
+          scope: invalid.illegal.unexpected-character.nasm
     - include: line-continuation
     - include: preprocessor-comments
     - match: '\.\.\.'
-      scope: keyword.operator.variadic.asm.x86_64
+      scope: keyword.operator.variadic.nasm
     - match: '(/\*).*(\*/)'
-      scope: comment.block.asm.x86_64
+      scope: comment.block.nasm
       captures:
-        1: punctuation.definition.comment.asm.x86_64
-        2: punctuation.definition.comment.asm.x86_64
+        1: punctuation.definition.comment.nasm
+        2: punctuation.definition.comment.nasm
     - match: '$\n'
-      scope: invalid.illegal.unexpected-end-of-line.asm.x86_64
+      scope: invalid.illegal.unexpected-end-of-line.nasm
   preprocessor-macro-definition:
-    - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+    - meta_content_scope: meta.preprocessor.macro.nasm
     - include: preprocessor-comments
     - include: line-continuation
     - include: line-ending
@@ -658,143 +659,149 @@ contexts:
   preprocessor-macro-indirection:
     - match: '((%)(\[))'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
-        3: meta.brackets.asm.x86_64 punctuation.section.brackets.begin.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
+        3: meta.brackets.nasm punctuation.section.brackets.begin.nasm
       push:
-        - meta_scope: meta.brackets.asm.x86_64 meta.preprocessor.macro.asm.x86_64
+        - meta_scope: meta.brackets.nasm meta.preprocessor.macro.nasm
         - include: line-continuation
         - include: line-ending
         - include: main
         - match: '\]'
-          scope: punctuation.section.brackets.end.asm.x86_64 keyword.control.preprocessor.asm.x86_64
+          scope: punctuation.section.brackets.end.nasm keyword.control.preprocessor.nasm
           pop: true
     - match: '((%)\+)\s+'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.operator.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.operator.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
     - match: '((%)(\?\??))'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.operator.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
-        3: variable.language.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.operator.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
+        3: variable.language.preprocessor.nasm
     - match: '((%\$+)({{valid_identifier}})(?:(\:)?|\b))'
       captures:
-        1: meta.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        3: entity.name.constant.special.asm.x86_64
-        4: punctuation.separator.asm.x86_64
+        1: meta.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm keyword.control.preprocessor.nasm
+        3: entity.name.constant.special.nasm
+        4: punctuation.separator.nasm
     - match: '((%)(\!))'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.operator.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
-        3: punctuation.definition.variable.asm.x86_64
+        1: meta.preprocessor.nasm keyword.operator.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
+        3: punctuation.definition.variable.nasm
       push:
-        - meta_content_scope: meta.preprocessor.asm.x86_64 keyword.operator.preprocessor.asm.x86_64 variable.parameter.preprocessor.environment.asm.x86_64
+        - meta_content_scope: meta.preprocessor.nasm keyword.operator.preprocessor.nasm variable.parameter.preprocessor.environment.nasm
         - match: '{{valid_identifier}}'
-          scope: variable.parameter.preprocessor.environment.unquoted.asm.x86_64
+          scope: variable.parameter.preprocessor.environment.unquoted.nasm
           pop: true
         - match: '(?=`|''|")'
           set:
-            - meta_scope: variable.parameter.preprocessor.environment.quoted.asm.x86_64
+            - meta_scope: variable.parameter.preprocessor.environment.quoted.nasm
             - include: strings
             - include: pop
         - include: pop
   preprocessor-conditions: # also see preprocessor-macro-conditions-multiline
     - match: '^\s*((%)ifn?(?:idni?|id|num|str|token|empty|env)?)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-conditions-content-block
     - match: '^\s*((%)ifn?(?:def|ctx))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: [preprocessor-conditions-content-block, preprocessor-conditions-constant]
     - match: '^\s*((%)rep)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-conditions-content-block
     - match: '^\s*((%)ifn?macro)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: [preprocessor-conditions-content-block, preprocessor-macro-arguments-signature]
     - include: preprocessor-conditions-parity
   preprocessor-conditions-constant:
-    - meta_content_scope: meta.preprocessor.asm.x86_64
+    - meta_content_scope: meta.preprocessor.nasm
     - match: '(?:{{valid_identifier}})(?=\()'
-      scope: entity.name.constant.preprocessor.asm.x86_64
+      scope: entity.name.constant.preprocessor.nasm
       set:
         - match: '\('
-          scope: punctuation.section.group.begin.asm.x86_64
+          scope: punctuation.section.group.begin.nasm
           set: preprocessor-macro-params-illegal
     - match: '{{valid_identifier}}\b'
-      scope: meta.preprocessor.asm.x86_64 entity.name.constant.preprocessor.asm.x86_64
+      scope: meta.preprocessor.nasm entity.name.constant.preprocessor.nasm
       pop: true
     - include: line-continuation
     - include: pop-if-not-whitespace
     - include: line-ending
     - include: main
   preprocessor-conditions-content-block:
-    - meta_content_scope: meta.block.preprocessor.asm.x86_64
+    - meta_content_scope: meta.block.preprocessor.nasm
     - include: preprocessor-conditions-content-block-common
     - include: main
   preprocessor-conditions-content-block-common:
     - match: '^\s*((%)(?:elifn?(?:idni?|id|num|str|token|empty|env)?|else|exitrep))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
     - match: '^\s*((%)(?:elifn?(?:def|ctx)))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-conditions-constant
     - match: '^\s*((%)elifn?macro)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-macro-arguments-signature
     - match: '^\s*((%)(?:end(?:if|rep)))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       pop: true
   preprocessor-conditions-parity:
     - match: '^\s*((%)(?:elifn?(?:macro|def|ctx|idni?|id|num|str|token|empty|env)?|else|(?:end(?:if|rep))|exitrep))\b'
       captures:
-        1: invalid.illegal.meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: invalid.illegal.meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
   preprocessor-other:
     - include: preprocessor-macro-indirection
     - match: '^\s*((%)undef)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_scope: meta.preprocessor.asm.x86_64
+        - meta_scope: meta.preprocessor.nasm
         - include: line-continuation
         - include: line-ending
         - include: preprocessor-comments
         - match: '{{valid_identifier}}'
-          scope: entity.name.constant.preprocessor.asm.x86_64
+          scope: entity.name.constant.preprocessor.nasm
           pop: true
     - match: '^\s*((%)unmacro)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.import.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.import.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-macro-arguments-signature
+  preprocessor-functions: # added in nasm 2.16
+    - match: '%isn?(?:|def|macro|ctx|idni?|id|num|str|token|empty|env)(?=\()'
+      scope: support.function.%is-family.preprocessor-function.nasm
+    # all the rest of the preprocessor functions
+    - match: '%(?:abs|cond|count|eval|hex|map|num|sel|str|strcat|strlen|tok)(?=\()'
+      scope: support.function.other.preprocessor-function.nasm
   preprocessor-macro-arguments-signature:
-    - meta_scope: meta.preprocessor.asm.x86_64
+    - meta_scope: meta.preprocessor.nasm
     - include: preprocessor-comments
     - match: '({{valid_identifier}})(?:\s+(?:(\d+(?:(-)(?:\d+|\*))?)(\+)?(\.nolist\b)?))'
       captures:
-        1: entity.name.function.preprocessor.asm.x86_64
-        2: variable.parameter.preprocessor.asm.x86_64
-        3: keyword.operator.preprocessor.range.asm.x86_64
-        4: storage.modifier.preprocessor.greedy.asm.x86_64
-        5: storage.modifier.preprocessor.listing.asm.x86_64
+        1: entity.name.function.preprocessor.nasm
+        2: variable.parameter.preprocessor.nasm
+        3: keyword.operator.preprocessor.range.nasm
+        4: storage.modifier.preprocessor.greedy.nasm
+        5: storage.modifier.preprocessor.listing.nasm
       pop: true
     - include: line-continuation
     - include: pop-if-not-whitespace
@@ -803,99 +810,99 @@ contexts:
   preprocessor-macro-multiline:
     - match: '^\s*((%)i?macro)\b'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.import.define.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.import.define.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm
         - include: preprocessor-comments
         - match: '(?:{{valid_identifier}})(?=\()'
-          scope: entity.name.constant.preprocessor.asm.x86_64
+          scope: entity.name.constant.preprocessor.nasm
           set:
-            - meta_content_scope: invalid.illegal.asm.x86_64
+            - meta_content_scope: invalid.illegal.nasm
             - match: '\('
-              scope: punctuation.section.group.begin.asm.x86_64
+              scope: punctuation.section.group.begin.nasm
               set: preprocessor-macro-params-illegal
         - match: '({{valid_identifier}})(?:\s+(?:(\d+(?:(-)(?:\d+|\*))?)(\+)?(\.nolist\b)?))'
           captures:
-            1: entity.name.function.preprocessor.asm.x86_64
-            2: variable.parameter.preprocessor.asm.x86_64
-            3: keyword.operator.preprocessor.range.asm.x86_64
-            4: storage.modifier.preprocessor.greedy.asm.x86_64
-            5: storage.modifier.preprocessor.listing.asm.x86_64
+            1: entity.name.function.preprocessor.nasm
+            2: variable.parameter.preprocessor.nasm
+            3: keyword.operator.preprocessor.range.nasm
+            4: storage.modifier.preprocessor.greedy.nasm
+            5: storage.modifier.preprocessor.listing.nasm
           set: preprocessor-macro-definition-multiline-with-parameters
     - match: '^\s*((%)endmacro)\b'
       captures:
-        1: invalid.illegal.meta.preprocessor.asm.x86_64 keyword.control.import.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: invalid.illegal.meta.preprocessor.nasm keyword.control.import.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
   preprocessor-macro-parameter:
     - match: '((%)(\-?\d+))'
       captures:
-        1: meta.preprocessor.asm.x86_64
-        2: punctuation.definition.variable.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        3: variable.other.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm
+        2: punctuation.definition.variable.preprocessor.nasm keyword.control.preprocessor.nasm
+        3: variable.other.preprocessor.nasm
   preprocessor-macro-definition-multiline-with-parameters:
-    - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+    - meta_content_scope: meta.preprocessor.macro.nasm
     - include: preprocessor-comments
     - include: preprocessor-macro-parameter
     - include: preprocessor-macro-indirection
     - include: preprocessor-macro-conditions-multiline
     - include: preprocessor-macro-definition-multiline
   preprocessor-macro-definition-multiline:
-    - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+    - meta_content_scope: meta.preprocessor.macro.nasm
     - include: preprocessor-comments
     - match: '^\s*((%)endmacro)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.import.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.import.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       pop: true
     - match: '((%%)({{valid_identifier}})(?:(\:)?|\b))'
       captures:
-        1: meta.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        3: entity.name.constant.special.asm.x86_64
-        4: punctuation.separator.asm.x86_64
+        1: meta.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm keyword.control.preprocessor.nasm
+        3: entity.name.constant.special.nasm
+        4: punctuation.separator.nasm
     - match: '((%)({))'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
-        3: meta.braces.asm.x86_64 punctuation.section.braces.begin.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
+        3: meta.braces.nasm punctuation.section.braces.begin.nasm
       push:
-        - meta_scope: meta.braces.asm.x86_64 meta.preprocessor.macro.asm.x86_64
+        - meta_scope: meta.braces.nasm meta.preprocessor.macro.nasm
         - include: preprocessor-macro-indirection
         - match: ':'
-          scope: punctuation.separator.asm.x86_64
+          scope: punctuation.separator.nasm
         - match: '}'
-          scope: punctuation.section.braces.end.asm.x86_64 keyword.control.preprocessor.asm.x86_64
+          scope: punctuation.section.braces.end.nasm keyword.control.preprocessor.nasm
           pop: true
     - match: '^\s*((%)(?:rotate))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.operator.word.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.operator.word.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
     - match: '^\s*((%)(?:include|depend))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.import.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.import.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       set: preprocessor-macro-definition-multiline-with-parameters
     - match: '^\s*((%)(?:pathsearch))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       set: [preprocessor-macro-definition-multiline-with-parameters, preprocessor-conditions-constant]
     - match: '^\s*((%)x?i?define)\b'
       captures:
-        1: meta.preprocessor.macro.asm.x86_64 keyword.control.import.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.macro.nasm keyword.control.import.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push:
-        - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+        - meta_content_scope: meta.preprocessor.macro.nasm
         - include: preprocessor-comments
         - match: '(?:{{valid_identifier}})(?=\()'
-          scope: entity.name.function.preprocessor.asm.x86_64
+          scope: entity.name.function.preprocessor.nasm
           set:
             - match: '\('
-              scope: punctuation.section.group.begin.asm.x86_64
+              scope: punctuation.section.group.begin.nasm
               set: preprocessor-macro-params
         - match: '{{valid_identifier}}'
-          scope: entity.name.constant.preprocessor.asm.x86_64
+          scope: entity.name.constant.preprocessor.nasm
           set: preprocessor-macro-definition-inside-multiline
         - include: line-continuation
         - include: pop-if-not-whitespace
@@ -907,72 +914,72 @@ contexts:
   preprocessor-macro-conditions-multiline: # also see preprocessor-conditions
     - match: '^\s*((%)ifn?(?:idni?|id|num|str|token|empty|env)?)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-conditions-content-block-multiline
     - match: '^\s*((%)ifn?(?:def|ctx))\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: [preprocessor-conditions-content-block-multiline, preprocessor-conditions-constant]
     - match: '^\s*((%)rep)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: preprocessor-conditions-content-block-multiline
     - match: '^\s*((%)ifn?macro)\b'
       captures:
-        1: meta.preprocessor.asm.x86_64 keyword.control.preprocessor.asm.x86_64
-        2: punctuation.definition.keyword.preprocessor.asm.x86_64
+        1: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        2: punctuation.definition.keyword.preprocessor.nasm
       push: [preprocessor-macro-arguments-signature, preprocessor-conditions-content-block-multiline]
     - include: preprocessor-conditions-parity
   preprocessor-conditions-content-block-multiline:
-    - meta_content_scope: meta.block.preprocessor.asm.x86_64
+    - meta_content_scope: meta.block.preprocessor.nasm
     - include: preprocessor-conditions-content-block-common
     - include: preprocessor-macro-definition-multiline-with-parameters
   preprocessor-macro-definition-inside-multiline:
-    - meta_content_scope: meta.preprocessor.macro.asm.x86_64
+    - meta_content_scope: meta.preprocessor.macro.nasm
     - include: preprocessor-macro-parameter
     - include: preprocessor-macro-definition
 
   strings: # Character strings: http://www.nasm.us/doc/nasmdoc3.html#section-3.4.2
     - match: '`'
-      scope: punctuation.definition.string.begin.asm.x86_64
+      scope: punctuation.definition.string.begin.nasm
       push: string-backquote
     - match: ''''
-      scope: punctuation.definition.string.begin.asm.x86_64
+      scope: punctuation.definition.string.begin.nasm
       push: string-single
     - match: '"'
-      scope: punctuation.definition.string.begin.asm.x86_64
+      scope: punctuation.definition.string.begin.nasm
       push: string-double
   string-content:
     - match: '\\u[[:xdigit:]]{4}'
-      scope: constant.character.escape.asm.x86_64
+      scope: constant.character.escape.nasm
     - match: '\\U[[:xdigit:]]{8}'
-      scope: constant.character.escape.asm.x86_64
+      scope: constant.character.escape.nasm
     - match: '\\x[[:xdigit:]]{1,2}'
-      scope: constant.character.escape.asm.x86_64
+      scope: constant.character.escape.nasm
     - match: '\\[0-7]{1,3}'
-      scope: constant.character.escape.asm.x86_64
+      scope: constant.character.escape.nasm
     - match: '\\[''"`\\?abtnvfre]'
-      scope: constant.character.escape.asm.x86_64
+      scope: constant.character.escape.nasm
     - match: '\\.'
-      scope: invalid.illegal.constant.character.escape.asm.x86_64
+      scope: invalid.illegal.constant.character.escape.nasm
   string-backquote:
-    - meta_scope: string.quoted.other.asm.x86_64
+    - meta_scope: string.quoted.other.nasm
     - meta_include_prototype: false
     - include: string-content
     - match: '`'
       scope: punctuation.definition.string.end
       pop: true
   string-single:
-    - meta_scope: string.quoted.single.asm.x86_64
+    - meta_scope: string.quoted.single.nasm
     - meta_include_prototype: false
     - match: ''''
       scope: punctuation.definition.string.end
       pop: true
   string-double:
-    - meta_scope: string.quoted.double.asm.x86_64
+    - meta_scope: string.quoted.double.nasm
     - meta_include_prototype: false
     - match: '"'
       scope: punctuation.definition.string.end
@@ -980,33 +987,33 @@ contexts:
 
   registers:
     - match: '(?i)\b(?:[abcd][hl]|[er]?[abcd]x|[er]?(?:di|si|bp|sp)|dil|sil|bpl|spl|r(?:8|9|1[0-5])[bdlw]?)\b'
-      scope: constant.language.register.general-purpose.asm.x86_64
+      scope: constant.language.register.general-purpose.nasm
     - match: '(?i)\b(?:[cdefgs]s)\b'
-      scope: constant.language.register.segment.asm.x86_64
+      scope: constant.language.register.segment.nasm
     - match: '(?i)\b(?:[er]?flags)\b'
-      scope: constant.language.register.flags.asm.x86_64
+      scope: constant.language.register.flags.nasm
     - match: '(?i)\b(?:[er]?ip)\b'
-      scope: constant.language.register.instruction-pointer.asm.x86_64
+      scope: constant.language.register.instruction-pointer.nasm
     - match: '(?i)\b(?:cr[02-4])\b'
-      scope: constant.language.register.control.asm.x86_64
+      scope: constant.language.register.control.nasm
     - match: '(?i)\b(?:(?:mm|st|fpr)[0-7])\b'
-      scope: constant.language.register.mmx.asm.x86_64
+      scope: constant.language.register.mmx.nasm
     - match: '(?i)\b(?:[xy]mm(?:[0-9]|1[0-5])|mxcsr)\b'
-      scope: constant.language.register.sse_avx.asm.x86_64
+      scope: constant.language.register.sse_avx.nasm
     - match: '(?i)\b(?:zmm(?:[12]?[0-9]|30|31))\b'
-      scope: constant.language.register.avx512.asm.x86_64
+      scope: constant.language.register.avx512.nasm
     - match: '(?i)\b(?:bnd(?:[0-3]|cfg[su]|status))\b'
-      scope: constant.language.register.memory-protection.asm.x86_64
+      scope: constant.language.register.memory-protection.nasm
     - match: '(?i)\b(?:(?:[gil]dt)r?|tr)\b'
-      scope: constant.language.register.system-table-pointer.asm.x86_64
+      scope: constant.language.register.system-table-pointer.nasm
     - match: '(?i)\b(?:dr[0-367])\b'
-      scope: constant.language.register.debug.asm.x86_64
+      scope: constant.language.register.debug.nasm
     - match: '(?i)\b(?:cr8|dr(?:[89]|1[0-5])|efer|tpr|syscfg)\b'
-      scope: constant.language.register.amd.asm.x86_64
+      scope: constant.language.register.amd.nasm
     - match: '(?i)\b(?:db[0-367]|t[67]|tr[3-7]|st)\b'
-      scope: invalid.deprecated.constant.language.register.asm.x86_64
+      scope: invalid.deprecated.constant.language.register.nasm
     - match: '(?i)\b[xy]mm(?:1[6-9]|2[0-9]|3[01])\b'
-      scope: invalid.deprecated.constant.language.register.asm.x86_64
+      scope: invalid.deprecated.constant.language.register.nasm
 
   mnemonics: # see valid.asm for references
     - include: mnemonics-general-purpose
