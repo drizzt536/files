@@ -3,57 +3,64 @@
 // This file reqiures ./lib.js
 
 var Intrinsics = (() => {
-	class Intrinsics    {
-		constructor()   {
-			this.elif   = Symbol.for("JS.elif");
-			this["("]   = Symbol.for("Intrinsic.jsmodeStart");
-			this[")"]   = Symbol.for("Intrinsic.jsmodeEnd");
-			this.lbl    = Symbol.for("Intrinsic.lbl");
-			this.goto   = Symbol.for("Intrinsic.goto");
-			this.push   = Symbol.for("Intrinsic.push");
-			this.print  = Symbol.for("Intrinsic.print");
-			this.if     = Symbol.for("Intrinsic.if");
-			this.then   = Symbol.for("Intrinsic.then");
-			this.stop   = Symbol.for("Intrinsic.stop");
-			this.skip   = Symbol.for("Intrinsic.skip");
-			this.pop    = Symbol.for("Intrinsic.pop");
-			this.shift  = Symbol.for("Intrinsic.shift");// I know that shift is not for stacks. ignore it
+	class Intrinsics {
+		constructor() {
+			this.elif  = Symbol.for("JS.elif")
+			this["("]  = Symbol.for("Intrinsic.jsmodeStart")
+			this[")"]  = Symbol.for("Intrinsic.jsmodeEnd")
+			this.lbl   = Symbol.for("Intrinsic.lbl")
+			this.goto  = Symbol.for("Intrinsic.goto")
+			this.push  = Symbol.for("Intrinsic.push")
+			this.print = Symbol.for("Intrinsic.print")
+			this.if    = Symbol.for("Intrinsic.if")
+			this.then  = Symbol.for("Intrinsic.then")
+			this.stop  = Symbol.for("Intrinsic.stop")
+			this.skip  = Symbol.for("Intrinsic.skip")
+			this.pop   = Symbol.for("Intrinsic.pop")
+			this.shift = Symbol.for("Intrinsic.shift") // I know that shift is not for stacks. ignore it
 		}
 	}
-	Intrinsics.prototype.length = Object.keys(new Intrinsics()).length;
-	return new Intrinsics();
-})(),
 
-SupportedChars = (() =>  {
+	const ret = new Intrinsics
+
+	Intrinsics.prototype.length = Object.keys(ret).length
+
+	return ret
+})()
+
+, SupportedChars = (() => {
 	class SupportedChars {
-		constructor()    {
-			this["\\n"]  = Symbol.for("SupportedChars.\\n"); // newline character
-			this["\\s"]  = Symbol.for("SupportedChars.\\s"); // other whitespace characters
-			this["\\w"]  = Symbol.for("SupportedChars.\\w"); // alphanumeric charcters
-			this["/**/"] = Symbol.for("SupportedChars./**/");
-			this["/*"]   = Symbol.for("SupportedChars./*");
-			this[")"]    = Symbol.for("SupportedChars.)");
-			this["("]    = Symbol.for("SupportedChars.(");
-			this["="]    = Symbol.for("SupportedChars.=");
-			this[";"]    = Symbol.for("SupportedChars.;");
-			this["'"]    = Symbol.for("SupportedChars.'");
-			this['"']    = Symbol.for('SupportedChars."');
-			this['`']    = Symbol.for('SupportedChars.`');
-			this['{']    = Symbol.for('SupportedChars.{');
-			this['}']    = Symbol.for('SupportedChars.}');
-			this['[']    = Symbol.for('SupportedChars.[');
-			this[']']    = Symbol.for('SupportedChars.]');
-			this['<']    = Symbol.for('SupportedChars.<');
-			this['>']    = Symbol.for('SupportedChars.>');
+		constructor() {
+			this["\\n"]  = Symbol.for("SupportedChars.\\n") // newline character
+			this["\\s"]  = Symbol.for("SupportedChars.\\s") // other whitespace characters
+			this["\\w"]  = Symbol.for("SupportedChars.\\w") // alphanumeric charcters
+			this["/**/"] = Symbol.for("SupportedChars./**/")
+			this["/*"]   = Symbol.for("SupportedChars./*")
+			this[")"]    = Symbol.for("SupportedChars.)")
+			this["("]    = Symbol.for("SupportedChars.(")
+			this["="]    = Symbol.for("SupportedChars.=")
+			this[";"]    = Symbol.for("SupportedChars.;")
+			this["'"]    = Symbol.for("SupportedChars.'")
+			this['"']    = Symbol.for('SupportedChars."')
+			this["`"]    = Symbol.for("SupportedChars.`")
+			this["{"]    = Symbol.for("SupportedChars.{")
+			this["}"]    = Symbol.for("SupportedChars.}")
+			this["["]    = Symbol.for("SupportedChars.[")
+			this["]"]    = Symbol.for("SupportedChars.]")
+			this["<"]    = Symbol.for("SupportedChars.<")
+			this[">"]    = Symbol.for("SupportedChars.>")
 		}
 	}
-	SupportedChars.prototype.length = Object.keys(new SupportedChars).length;
-	return new SupportedChars;
+
+	const ret = new SupportedChars
+
+	SupportedChars.prototype.length = Object.keys(ret).length
+
+	return ret
 })();
 
 
 // Compile HexaScript to a JavaScript function
-
 function compileProgram(
 	str,
 	argnames = [],
@@ -62,15 +69,39 @@ function compileProgram(
 	downloadFile = "file.js",
 	debug = false
 ) {
-	if (type(argnames) !== "string") argnames = [argnames];
-	if (type(str) !== "string") throw `argument 1 in compileProgram() is not a string`;
-	if (type(download, 1) !== "bool") throw `argument 3 in compileProgram() is not a boolean`;
-	if (type(downloadFile, 1) !== "str") throw `argument 4 in compileProgram() is not a string`;
-	if (type(debug, 1) !== "bool") throw `argument 5 in compileProgram() is not a boolean`;
+	function _download(text, file, fileType="text/plain") {
+		if (type(text, 1) + type(file, 1) !== "strstr")
+			throw `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`
+
+		const link = document.createElement("a")
+
+		link.download = `${file}`
+		link.href = URL.createObjectURL(new Blob([text], {type: filetype}))
+
+		link.click()
+	}
+
+	if (type(argnames) !== "string")
+		argnames = [argnames]
+
+	if (type(str) !== "string")
+		throw `argument 1 in compileProgram() is not a string`
+
+	if (type(download, 1) !== "bool")
+		throw `argument 3 in compileProgram() is not a boolean`
+
+	if (type(downloadFile, 1) !== "str")
+		throw `argument 4 in compileProgram() is not a string`
+
+	if (type(debug, 1) !== "bool")
+		throw `argument 5 in compileProgram() is not a boolean`
+
 	if (str.sW("hx:")) {
-		debug && console.log("alternate hex compiler used");
+		debug && console.log("alternate hex compiler used")
+
 		return (function alternateHexCompiler() {
 			str = str.substr(3);
+
 			function hexAsciiNumToChar(str) {
 				switch (str) {
 					case "00": return"\0"; case "08": return"\b"; case "09": return"\t"; case "0a": return"\n";
@@ -102,25 +133,33 @@ function compileProgram(
 					default: return str[0];
 				}
 			}
+
 			var n = len(str);
+
 			if (n % 2) {
-				if (debug) debugger;
+				if (debug)
+					debugger;
+
 				throw new Error("Invalid input");
 			}
-			for (var i = 0, code = ""; i < n; i += 2) code += hexAsciiNumToChar(str.substr(i, 2));
+
+			for (var i = 0, code = ""; i < n; i += 2)
+				code += hexAsciiNumToChar(str.substr(i, 2));
+
 			debug && console.log("code evaluation finished");
-			download && (function download(text, file, fileType="text/plain") {
-				if (type(text, 1) + type(file, 1) !== "strstr") throw `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`;
-				const link = document.createElement("a");
-				link.download = `${file}`;
-				link.href = URL.createObjectURL(new Blob([text], {type: filetype}));
-				link.click();
-			})(code, downloadFile);
-			if (form === "s" || form === "str" || form === "string") return code;
-			if (debug) debugger;
+
+			download && _download(code, downloadFile);
+
+			if (form === "s" || form === "str" || form === "string")
+				return code;
+
+			if (debug)
+				debugger;
+
 			return Function(...argnames, code);
-		})();
+		})()
 	}
+
 	function asciiNumToChar(str) {
 		switch (true) {
 			case /\b(000|0x00)\b/.in(str): return"\0"; case /\b(008|0x08)\b/.in(str): return"\b";
@@ -186,150 +225,307 @@ function compileProgram(
 		}
 	}
 	const newToken = () => {
-		token.token && program.push(copy(token));
-		token.token = "";
+		token.token && program.push(copy(token))
+		token.token = ""
 	}
-	// the 'stop' is so it doesn't complain about skipping past the end, and the space is because it pushes the new token into the program if it encounters a space after it, and thus needs a space at the end.
-	str = `${str.remove(/\/\/(.|\s)*$/gm)} stop `; // remove single-lined comments
-	for (var [row, col] = [1, 1], i = 0, j = 0, n = len(str), program = [], token = {token: "", row: null, col: null}, code = "", tmp; i < n; i++) { // create the list of tokens
-		if (debug) console.log("create program:", row, col, str[i], token);
-		if (str[i] === "\n") row++, col = 0, newToken();
-		else if (/\s/.test(str[i])) newToken();
-		else if (/\w/.test(str[i])) {
-			if (str[i-1] === void 0 || /\s/.test(str[i-1]) || str.substr(i-2, 2) === "*/")
-				[token.row, token.col] = [row, col];
-			token.token += str[i];
-		} else if (str.substr(i, 2) === "/*") {
-			if (str.substr(i, 4) === "/**/") {
-				col += 4;
-				i += 3;
-				continue;
-			}
-			newToken();
-			[token.row, token.col] = [row, col];
-			col += 2, i += 2;
-			while (str.substr(i, 2) !== "*/") {
-				if (i > str.length) throw `CommentError:${token.row}:${token.col}:Multi-Line Comment not terminated, or another '/' is placed directly after with no whitespace.`;
-				if (str[i] === "\n") col = 0, row++;
-				col++, i++;
-			}
-			col++, i++;
-		} else {
-			if (str[i-1] === void 0 || /\s/.test(str[i-1]) || str.substr(i-2, 2) === "*/")
-				[token.row, token.col] = [row, col];
-			token.token += str[i];
+
+	// the 'stop' is so it doesn't complain about skipping past the
+	// end, and the space is because it only pushes the new token
+	// into the program if it encounters a space after it.
+
+	// remove single-lined comments
+	str = `${str.remove(/\/\/(.|\s)*$/gm)} stop `
+
+	// tokenizer
+	for (var
+		[row, col] = [1, 1],
+		i = 0,
+		j = 0,
+		n = len(str),
+		program = [],
+		token = {token: "", row: null, col: null},
+		code = "",
+		tmp
+
+		; i < n; i++
+	) {
+		if (debug)
+			console.log("create program:", row, col, str[i], token)
+
+		if (str[i] === "\n") {
+			row++
+			col = 0
+			newToken()
 		}
-		col++;
+
+		else if (/\s/.test(str[i]))
+			newToken()
+
+		else if (/\w/.test(str[i])) {
+			if (str[i - 1] === void 0
+				|| /\s/.test(str[i - 1])
+				|| str.substr(i - 2, 2) === "*/"
+			) [token.row, token.col] = [row, col]
+
+			token.token += str[i]
+		}
+
+		else if (str.substr(i, 2) === "/*") {
+			if (str.substr(i, 4) === "/**/") {
+				col += 4
+				i += 3
+				continue
+			}
+
+			newToken()
+
+			[token.row, token.col] = [row, col]
+			col += 2
+			i += 2
+
+			while (str.substr(i, 2) !== "*/") {
+				if (i > str.length)
+					throw `CommentError:${token.row}:${token.col}:Multi-Line Comment not terminated, or another '/' is placed directly after with no whitespace.`
+
+				if (str[i] === "\n") {
+					col = 0
+					row++
+				}
+
+				col++
+				i++
+			}
+
+			col++
+			i++
+		}
+
+		else {
+			if (str[i - 1] === void 0
+				|| /\s/.test(str[i - 1])
+				|| str.substr(i - 2, 2) === "*/"
+			) [token.row, token.col] = [row, col]
+
+			token.token += str[i]
+		}
+
+		col++
 	}
 
-	// returns an array of objects with the token, and the row and column it was found at
-	if (form === "object" || form === "obj" || form === "array" || form === "arr") return program;
+	// returns an array of objects with the token,
+	// and the row and column it was found at.
+	if (form in {object:1, obj:1, array:1, arr:1})
+		return program
 
 
-	if (len(Intrinsics) !== 12) throw `Exhausive handling of Intrinsics in compileProgram(): ${len(Intrinsics)}`;
-	var labels = {}, stack  = [], conditionalStack = [];
-	for (i = 0, n = len(program); i < n; i++) { // loop over the tokens and interpret them
-		if (debug) console.log("parsing: %o,  id: %o", program[i].token, i);
-		if (program[i].token === "010" || program[i].token === "0x0a") code += "\n";
-		else if (program[i].token === "009" || program[i].token === "0x09") code += "\t";
+	if (len(Intrinsics) !== 12)
+		throw `Exhausive handling of Intrinsics in compileProgram(): ${len(Intrinsics)}`;
+
+	var labels = {}
+		, stack  = []
+		, conditionalStack = []
+
+	// loop over the tokens and interpret them
+	for (i = 0, n = len(program); i < n; i++) {
+		if (debug)
+			console.log("parsing: %o,  id: %o", program[i].token, i);
+
+		// TODO: change this to a switch statement
+
+		if (program[i].token in {"010":1, "0x0a":1})
+			code += "\n"
+
+		else if (program[i].token in {"009":1, "0x09":1})
+			code += "\t"
+
+		else if (program[i].token === "stop")
+			i = Infinity
+
 		else if (program[i].token === "lbl") {
-			if (i+1 === len(program)) throw `LabelError:${program[i].row}:${program[i].col}: No label name given for 'lbl'`;
-			if (!isNaN(program[++i].token)) throw `LabelError:${program[i].row}:${program[i].col}: label name cannot be an integer '${program[i].token}'`;
-			if (program[i].token in labels) throw `LabelError:${program[i].row}:${program[i].col}: Re-definition of label '${program[i].token}'`;
-			labels[program[i].token] = i;
-		} else if (program[i].token === "goto") {
+			if (i + 1 === len(program))
+				throw `LabelError:${program[i].row}:${program[i].col}: No label name given for 'lbl'`
+
+			if (!isNaN(program[++i].token))
+				throw `LabelError:${program[i].row}:${program[i].col}: label name cannot be an integer '${program[i].token}'`
+
+			if (program[i].token in labels)
+				throw `LabelError:${program[i].row}:${program[i].col}: Re-definition of label '${program[i].token}'`
+
+			labels[program[i].token] = i
+		}
+
+		else if (program[i].token === "goto") {
 			// should be avoided inside of loops and conditionals to avoid annoying console warnings
-			if (i+1 === len(program)) throw `GotoError:${program[i].row}:${program[i].col}: No label name given for 'goto'`;
-			if (program[++i].token in labels) i = labels[program[i].token];
-			else throw `GotoError:${program[i].row}:${program[i].col}: Cannot go to nonexistent label '${program[i].token}'`;
-		} else if (program[i].token === "push") {
-			if (++i === len(program)) throw `PushError:${program[i].row}:${program[i].col}: 'push' has nothing to push to the stack`;
-			if (program[i].token === "true") stack.push([true, "bool"]);
-			else if (program[i].token === "false") stack.push([false, "bool"]);
-			else if (program[i].token === "infinity") stack.push([Infinity, "int"]);
-			else if (isNaN(program[i].token)) stack.push([program[i].token, "str"]);
-			else stack.push([Number(program[i].token), "int"]);
-		} else if (program[i].token === "print") {
-			if (!len(stack)) throw `PrintError:${program[i].row}:${program[i].col}: Cannot pop from an empty stack`;
-			console.log(stack.pop()[0]);
-		} else if (program[i].token === "if") {
-			conditionalStack.push(i);
-			if (!len(stack)) throw `StackError:${program[i].row}:${program[i].col}: 'if' requires an argument on the stack`;
-			if (stack.pop()[0] == false) { // goto the corresponding 'end'
-				var a = len(conditionalStack);
+			if (i + 1 === len(program))
+				throw `GotoError:${program[i].row}:${program[i].col}: No label name given for 'goto'`
+
+			if (program[++i].token in labels)
+				i = labels[program[i].token]
+
+			else throw `GotoError:${program[i].row}:${program[i].col}: Cannot go to nonexistent label '${program[i].token}'`
+		}
+
+		else if (program[i].token === "push") {
+			if (++i === len(program))
+				throw `PushError:${program[i].row}:${program[i].col}: 'push' has nothing to push to the stack`
+
+			if (program[i].token === "true")
+				stack.push([true, "bool"])
+
+			else if (program[i].token === "false")
+				stack.push([false, "bool"])
+
+			else if (program[i].token === "infinity")
+				stack.push([Infinity, "int"])
+
+			else if (isNaN(program[i].token))
+				stack.push([program[i].token, "str"])
+
+			else
+				stack.push([Number(program[i].token), "int"])
+		}
+
+		else if (program[i].token === "print") {
+			if (!len(stack))
+				throw `PrintError:${program[i].row}:${program[i].col}: Cannot pop from an empty stack`
+
+			console.log(stack.pop()[0])
+		}
+
+		else if (program[i].token === "if") {
+			conditionalStack.push(i)
+
+			if (!len(stack))
+				throw `StackError:${program[i].row}:${program[i].col}: 'if' requires an argument on the stack`
+
+			// go to the corresponding 'end'
+			if (stack.pop()[0] == false) {
+				var a = len(conditionalStack)
+
 				while (program[i].token !== "end" || len(conditionalStack) !== a) {
-					i++;
-					if (program[i].token === "if") conditionalStack.push(i);
-					else if (program[i].token === "end" && len(conditionalStack) !== a) conditionalStack.pop();
+					i++
+
+					if (program[i].token === "if")
+						conditionalStack.push(i);
+					else if (program[i].token === "end" && len(conditionalStack) !== a)
+						conditionalStack.pop();
 				}
+
 				conditionalStack.pop();
-			} //else do nothing
-		} else if (program[i].token === "end") {
+			}
+			// else do nothing
+		}
+
+		else if (program[i].token === "end") {
 			if (!len(conditionalStack))
-				throw `ConditionalStackError:${program[i].row}:${program[i].col}: Conditional Stack Underflow`;
-			conditionalStack.pop();
-		} else if (program[i].token === "stop") i = Infinity;
+				throw `ConditionalStackError:${program[i].row}:${program[i].col}: Conditional Stack Underflow`
+
+			conditionalStack.pop()
+		}
+
 		else if (program[i].token === "skip") {
-			var skipLoc = [program[i].row, program[i].col], skipNum = Number(program[++i].token);
-			if (isNaN(skipNum)) throw `SkipError:${program[i].row}:${program[i].col}: 'skip' Expects a number of instructions to skip after it`;
-			if (skipNum < 0) throw `SkipError:${program[i].row}:${program[i].col}: only positive integers are allowed as paramaters for skip`;
-			if (skipNum === 0) continue;
-			i++;
+			var skipLoc = [program[i].row, program[i].col]
+				, skipNum = Number(program[++i].token)
+
+			if (isNaN(skipNum))
+				throw `SkipError:${program[i].row}:${program[i].col}: 'skip' Expects a number of instructions to skip after it`
+
+			if (skipNum < 0)
+				throw `SkipError:${program[i].row}:${program[i].col}: only positive integers are allowed as paramaters for skip`
+
+			if (skipNum === 0)
+				continue
+
+			i++
+
 			while (skipNum > 0) {
 				if (program[i].token === "(") {
-					var openLoc = [program[i].row, program[i].col];
-					while (i < len(program) && program[i].token !== ")") i++;
-					if (i === len(program)) throw `ScriptError:${openLoc[0]}:${openLoc[1]}: '(' not closed, and can't be skipped`;
+					var openLoc = [program[i].row, program[i].col]
+
+					while (i < len(program) && program[i].token !== ")")
+						i++
+
+					if (i === len(program))
+						throw `ScriptError:${openLoc[0]}:${openLoc[1]}: '(' not closed, and can't be skipped`
 				}
-				i++;
-				skipNum--;
-				if (i === len(program) && skipNum) throw `SkipError:${skipLoc.join(":")}: 'skip' cannot go past the end of the program. use 'stop' to end prematurely`;
+
+				i++
+				skipNum--
+
+				if (i === len(program) && skipNum)
+					throw `SkipError:${skipLoc.join(":")}: 'skip' cannot go past the end of the program. use 'stop' to end prematurely`
 			}
-			i--;
-		} else if (program[i].token === "pop") {
-			if (!len(stack)) throw `StackError:${program[i].row}:${program[i].col}: Cannot pop from an empty stack`;
-			code += stack.pop()[0];
-		} else if (program[i].token === "shift") {// I know that shift is not for stacks. I don't care
-			if (!len(stack)) throw `StackError:${program[i].row}:${program[i].col}: Cannot shift from an empty stack`;
-			code += stack.shift()[0];
+
+			i--
 		}
 
+		else if (program[i].token === "pop") {
+			if (!len(stack))
+				throw `StackError:${program[i].row}:${program[i].col}: Cannot pop from an empty stack`
 
-		else if (program[i].token === "(") { // javascript mode
-			var openLoc = [program[i].row, program[i].col];
-			i++;
+			code += stack.pop()[0]
+		}
+
+		// I know that shift is not for stacks. I don't care
+		else if (program[i].token === "shift") {
+			if (!len(stack))
+				throw `StackError:${program[i].row}:${program[i].col}: Cannot shift from an empty stack`
+
+			code += stack.shift()[0]
+		}
+
+		// javascript mode
+		else if (program[i].token === "(") {
+			var openLoc = [program[i].row, program[i].col]
+
+			i++
+
 			while (i < len(program) && program[i].token !== ")") {
-				if (debug) console.log("js: %o", program[i]);
-				if (program[i].token === "elif") code += "else if";
+				if (debug)
+					console.log("js: %o", program[i])
+
+				if (program[i].token === "elif")
+					code += "else if"
 				else {
-					// if not needed, but makes output look nicer
-					/*if (program[i - 1].token !== "(")*/ code += " ";
+					// `if` not needed, but makes output look nicer
+					// if (program[i - 1].token !== "(")
+						code += " ";
+
 					code += program[i].token;
 				}
-				i++;
+
+				i++
 			}
-			if (i === len(program)) throw `ScriptError:${openLoc[0]}:${openLoc[1]}: '(' not closed.`;
-		} else if (program[i].token === ")") {
-			throw `ScriptError:${program[i].row}:${program[i].col}: Extra closing parentheses`;
-		} else { // non-intrinsic non (hexa)decimal tokens
-			tmp = asciiNumToChar(program[i].token);
-			if (tmp === null) throw `TokenError:${program[i].row}:${program[i].col}: Unknown token '${program[i].token}'`;
-			code += tmp;
+
+			if (i === len(program))
+				throw `ScriptError:${openLoc[0]}:${openLoc[1]}: '(' not closed.`
+		}
+
+		else if (program[i].token === ")")
+			throw `ScriptError:${program[i].row}:${program[i].col}: Extra closing parentheses`
+
+		// non-intrinsic non (hexa)decimal tokens
+		else {
+			tmp = asciiNumToChar(program[i].token)
+
+			if (tmp === null)
+				throw `TokenError:${program[i].row}:${program[i].col}: Unknown token '${program[i].token}'`
+
+			code += tmp
 		}
 	}
-	if (len(conditionalStack)) console.warn(`StackError: ${len(conditionalStack)} Conditional statement${len(conditionalStack) === 1 ? "" : "s"} not terminated`);
 
-	download && (function download(text, file, fileType="text/plain") {
-		if (type(text, 1) + type(file, 1) !== "strstr") throw `Incorrect input types. expected 2 strings but found ${type(text)}, and ${type(file)}`;
-		const link = document.createElement("a");
-		link.download = `${file}`;
-		link.href = URL.createObjectURL(new Blob([text], {type: filetype}));
-		link.click();
-	})(code, downloadFile);
+	if (len(conditionalStack))
+		console.warn(`StackError: ${len(conditionalStack)} Conditional statement${len(conditionalStack) === 1 ? "" : "s"} not terminated`)
+
+	if (download)
+		_download(code, downloadFile)
 
 
-	if (form === "s" || form === "str" || form === "string") return code;
-	return Function(...argnames, code);
+	if (form in {s:1, str:1, string:1})
+		return code
+
+	return Function(...argnames, code)
 	// return (new Function(
 	// 	"return program=>function Program() {return program(this, arguments)}"
 	// )())(Function.apply.bind(new Function(code)))
@@ -337,23 +533,23 @@ function compileProgram(
 
 
 // Compile HexaScript to a JavaScript function and run it.
-
 function interpretProgram(
-	str="",
-	args=[],
-	argnames=[],
-	form="function",
-	download=false,
-	downloadFile="file.js",
-	debug=false
+	str = "",
+	args = [],
+	argnames = [],
+	form = "function",
+	download = false,
+	downloadFile = "file.js",
+	debug = false
 ) {
-	const OUTPUT = compileProgram(str, argnames, form, download, downloadFile, debug);
-	try { return OUTPUT(...args) } catch { return OUTPUT }
+	const fn = compileProgram(str, argnames, form, download, downloadFile, debug)
+
+	try { return fn(...args) }
+	catch { return fn }
 }
 
 
 // Error line/token goto stuff
-
 function gotoToken(s, r, c) {
 	return c > len(s = s.split("\n")[r - 1].substr(c - 1)) || c < 0 || r < 0 ?
 		void 0 :
@@ -362,7 +558,7 @@ function gotoToken(s, r, c) {
 			s.remove(/\s.*/);
 }
 
-var gotoTokenLine = (str, row, col) => str.split("\n")[row - 1];
+var gotoTokenLine = (s, r, _c) => s.split("\n")[r - 1];
 
 
 
@@ -400,14 +596,28 @@ function compileJSToHex(...input) {
 			default: throw `InputError: Character not found: ${str}`;
 		}
 	}
-	input = [input].flatten();
+
+	input = [input].flatten()
+
 	for (var i = 0, n = input.length; i < n; i++) {
-		input[i] = `${input[i]}`.split("").map(
-			e => e === "\n" || e === "\t" ? e : e === "\f" ? "\f" :
-				`0x${charToAsciiHex(e).toString(16)}`).join(" ").replace(/\n/g," 0x0a ").replace(/\t/g," 0x09 ").remove(/^\s*|\s*$/g).replace(/ +/g, " ");
+		input[i] = `${input[i]}`
+			.split("")
+			.map(e =>
+				e in {"\n":1, "\t":1, "\f":1} ?
+					e :
+					`0x${charToAsciiHex(e).toString(16)}`
+			)
+			.join(" ")
+			.replace(/\n/g," 0x0a ")
+			.replace(/\t/g," 0x09 ")
+			.remove(/^\s*|\s*$/g)
+			.replace(/ +/g, " ")
 	}
-	return input.join(" ");
-} function compileJSToHexV2(...input) {
+
+	return input.join(" ")
+}
+
+function compileJSToHexV2(...input) {
 	function charToAsciiHex(str) {
 		switch (str) {
 			case"\0": return"00"; case"\b": return"08"; case"\t": return"09";
@@ -439,12 +649,19 @@ function compileJSToHex(...input) {
 			default: return str + "0"
 		}
 	}
+
 	for (var i = 0, n = input.length; i < n; i++) {
-		input[i] = `${input[i]}`.split("").map(
-			e => charToAsciiHex(e).toString(16)
-		).join("").replace(/\n/g,"0a").replace(/\t/g,"09").remove(/\s/g);
+		input[i] = `${input[i]}`
+			.split("")
+			.map(e => charToAsciiHex(e).toString(16))
+			.join("")
+			.replace(/\n/g,"0a")
+			.replace(/\t/g,"09")
+			.remove(/\s/g)
 	}
-	return "hx:" + input.join("3b"); // link the files with a semicolon.
+
+	// link the files with a semicolon.
+	return "hx:" + input.join("3b")
 }
 
 
@@ -482,13 +699,25 @@ function compileJSToDec(...input) {
 			default: throw `InputError: Character not found: ${str}`;
 		}
 	}
-	input = [input].flatten();
+
+	input = [input].flatten()
+
 	for (var i = 0, n = input.length; i < n; i++) {
-		input[i] = `${input[i]}`.split("").map(
-			e => e === "\n" || e === "\t" ? e : e === "\f" ? "\f":
-				charToAsciiDec(e)).join(" ").replace(/\n/g," 010 ").replace(/\t/g," 009 ").remove(/^\s*|\s*$/g).replace(/ +/g," ");
+		input[i] = `${input[i]}`
+			.split("")
+			.map(e =>
+				e in {"\n":1, "\t":1, "\f":1} ?
+					e :
+					charToAsciiDec(e)
+			)
+			.join(" ")
+			.replace(/\n/g," 010 ")
+			.replace(/\t/g," 009 ")
+			.remove(/^\s*|\s*$/g)
+			.replace(/ +/g," ")
 	}
-	return input.join(" ");
+
+	return input.join(" ")
 }
 
 
