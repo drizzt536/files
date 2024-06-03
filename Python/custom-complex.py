@@ -18,6 +18,12 @@ def cos(num, /) -> realnum:
     try:              return math.cos(num)
     except TypeError: return math.nan
 
+#                              c
+#         c + di       |a + bi|      i [ c arg(a + bi) + d ln|a + bi| ]
+# (a + bi)       = ---------------- e
+#                    d arg(a + bi)
+#                   e
+
 class Complex:
     def __init__(self, re: realnum = 0, im: realnum = 0, /) -> None:
         super(Complex, self).__init__()
