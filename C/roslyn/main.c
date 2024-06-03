@@ -12,12 +12,30 @@
 #endif
 
 #ifndef LANG
-	#error "`-D LANG=\"[cs|vb]\"` must be given to gcc for main.c"
+	// C#, F#, or Visual Basic.NET
+	#error "`-D LANG=[cs|fs|vb]` must be given to gcc for main.c"
 #endif
+
+#define STRINGIFY(x) #x
+#define STRINGIFY2(y) STRINGIFY(y) // stringify expanded.
+
+#define LANG_STR STRINGIFY2(LANG)
+
+#define CONCATENATE(x, y) x ## y
+#define CHECK_LANG(lang) CONCATENATE(LANG_, lang)
+
+#define LANG_cs 1
+#define LANG_vb 2
+#define LANG_fs 3
 
 
 #define DOTNET	"\"" ROOT "dotnet.exe\""
-#define DLL		"\"" ROOT "sdk/" VERSION "/Roslyn/bincore/" LANG "c.dll\""
+
+#if CHECK_LANG(LANG) == LANG_fs
+	#define DLL "\"" ROOT "sdk/" VERSION "/FSharp/fsc.dll\""
+#else
+	#define DLL "\"" ROOT "sdk/" VERSION "/Roslyn/bincore/" LANG_STR "c.dll\""
+#endif
 
 int main(int argc, char **argv) {
 
