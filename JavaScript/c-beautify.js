@@ -54,7 +54,8 @@ if (ofile in {"-r": 1, "-reverse": 1, "--reverse": 1}) {
 	assumes all the function macros are of this form:
 		- tabs for indentation
 		- at least one space before all the backslashes.
-		- ignore the `*\`. JavaScript doesn't allow nested comments.
+
+	ignore the `*\`. JavaScript doesn't allow nested comments.
 
 	```c
 	#define fputs_color(fp, color, s) ({  \
