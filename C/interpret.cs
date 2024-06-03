@@ -1,4 +1,4 @@
-// csc.exe ./interpret.cs /target:exe /main:Main.Main.Main /out:interpret.exe /optimize+
+// csc.exe ./interpret.cs /target:exe /main:MainProgram.Program /out:interpret.exe /optimize+
 
 using System.Linq; // array.Select, array.ToList
 
@@ -13,30 +13,65 @@ using ProcessStartInfo  = System.Diagnostics                   .ProcessStartInfo
 using Process           = System.Diagnostics                   .Process;
 using StringList        = System.Collections.Generic           .List<string>;
 using Regex             = System.Text       .RegularExpressions.Regex;
+using RegexOptions      = System.Text       .RegularExpressions.RegexOptions;
 using StringBuilder     = System.Text                          .StringBuilder;
 using File              = System.IO                            .File;
 using Path              = System.IO                            .Path;
 
 namespace MainProgram {
-	internal class Execute {
-		private static bool printComments = false;
+	internal static class Execute {
+		private static string CompilerArguments() {
+			string compiler = Program.compiler
+				,  language = Program.language
+				,  outFile  = Program.outFile
+				,  srcFile  = Program.srcFile;
 
-		private static bool CreatesExecutable() {
-			return Program.language != "java";
+			switch (compiler) {
+				case "cl.exe":
+					return $"/I \"D:/ExtF/Files/MSVC/include\" "
+						+  $"/Wall /O2 /J /T{(language == "C++" ? "P" : "C")} "
+						+  $"/Fe \"{outFile}\" \"{srcFile}\"";
+				case "gcc.exe":
+				case "clang.exe":
+				case "g++.exe":
+				case "clang++.exe":
+					return $"-Wall -Wextra -pedantic -Ofast -x {( language.ToLower()
+					)} -o \"{outFile}\" \"{srcFile}\"";
+				case "csc.exe":
+					return $"/target:exe /optimize+ /nologo /out:\"{outFile}\" \"{srcFile}\"";
+				case "vbc.exe":
+					return $"/target:exe /optimize+ /nologo /quiet /out:\"{outFile}\" \"{srcFile}\"";
+				case "javac.exe":
+					return $"\"{srcFile}\" --release {language.Substring(5)}";
+				default:		
+					// take a wild guess at the argument syntax
+					return $"\"{srcFile}\" -o \"{outFile}\"";
+			}
 		}
-		private static int Exec(in string executable, in string[] args) {
-			return Exec(in executable, string.Join(" ", args));
+		// string, bool
+		private static int Exec(in string executable, bool printComments) {
+			return Exec(in executable, "", printComments);
 		}
-		private static int Exec(in string executable, in string args = "") {
+		// string, string[], bool
+		// string, string[]
+		private static int Exec(in string executable, in string[] args, bool printComments = false) {
+			return Exec(in executable, string.Join(" ", args), printComments);
+		}
+		// string, string, bool
+		// string, string
+		// string
+		private static int Exec(in string executable, in string args = "", bool printComments = false) {
 			// returns exit code: 1 on error, 0 on success.
 
 			try {
 				var processInfo = new ProcessStartInfo(executable, args);
+
 				if (printComments)
 					Console.WriteLine("// Program Results:");
 
 				processInfo.UseShellExecute = false;
 				processInfo.RedirectStandardOutput = true;
+
 				using (Process process = Process.Start(processInfo)) {
 					string output = process.StandardOutput.ReadToEnd();
 					process.WaitForExit();
@@ -45,19 +80,24 @@ namespace MainProgram {
 						Console.Write(output);
 				}
 
-
 				return 0;
 			} catch {
 				return 1;
 			}
 		}
 		private static int Run(in string executable) {
-			if (!CreatesExecutable())
-				return 0;
+			Program.printResultsComment = true;
 
-			printComments = true;
-			int output = Exec(in executable);
-			printComments = false;
+			int output = Program.isJava() ?
+				Exec("java.exe", new string[] {
+					"-classpath",
+					$"\"{ Path.GetDirectoryName(executable) }\"",
+					// TODO: figure out the main class file
+					Path.GetFileNameWithoutExtension(executable)
+				}) :
+				Exec(in executable);
+
+			Program.printResultsComment = false;
 
 			return output;
 		}
@@ -65,7 +105,7 @@ namespace MainProgram {
 			if (!Program.silent)
 				Console.WriteLine("// Compiling");
 
-			int compilerExitCode = Exec(in Program.compiler, Program.LanguageArguments());
+			int compilerExitCode = Exec(in Program.compiler, CompilerArguments());
 
 			return compilerExitCode == 0 ?
 				Run(in Program.outFile) :
@@ -74,12 +114,17 @@ namespace MainProgram {
 	}
 
 	public class Program {
+		internal static bool printResultsComment = false;
 		internal static string language = "";
 		internal static string compiler = "";
 		internal static string extension = "";
 		internal static bool silent = false;
 		internal static string srcFile;
 		internal static string outFile;
+
+		internal static bool isJava() {
+			return Regex.IsMatch(language, "^java", RegexOptions.IgnoreCase);
+		}
 
 		private static bool startInMain = false;
 		private static bool saveSouceFile = false;
@@ -97,12 +142,25 @@ namespace MainProgram {
 			if (!startInMain) return string.Join("\n", lines);
 
 			switch (language) {
-				case "Java":
+				case "Java 21":
+				case "Java 20":
+				case "Java 19":
+				case "Java 18":
+				case "Java 17":
+				case "Java 16":
+				case "Java 15":
+				case "Java 14":
+				case "Java 13":
+				case "Java 12":
+				case "Java 11":
+				case "Java 10":
+				case "Java 9":
+				case "Java 8":
 					return string.Join("\n", new string[] {
 						  "import java.util.*;"
 						, "import static java.lang.System.out;"
 						, ""
-						, "public class Main {"
+						, "class Main {"
 						, "    private static <T> void print(T x) {"
 						, "        out.print(x);"
 						, "    }"
@@ -110,12 +168,16 @@ namespace MainProgram {
 						, "        out.println(x);"
 						, "    }"
 						, ""
-						, "    public static void main(String[] argv) {"
-						, "        Scanner input = new Scanner(System.in);"
+						, "    public static void main(String argv[]) {"
+						,$"        {(
+							int.Parse(language.Substring(5)) >= 10 ?
+								"var" :
+								"Scanner"
+						)} input = new Scanner(System.in);"
 						, "        String[] args = argv;"
 						, ""
 						, string.Join("\n", lines.Select(line => $"        {line}"))
-						, "    ;}"
+						, "    }" // having a semicolon here sometimes doesn't work
 						, "}"
 						, ""
 					});
@@ -128,10 +190,14 @@ namespace MainProgram {
 						, "#include <math.h>"
 						, "#include <complex.h>"
 						, "#include <string.h>"
+						, ""
 						, "#ifdef _WIN32"
 						, "    #include <windows.h>"
 						, "    #include <conio.h>"
+						, "    #include <io.h>"
+						, "    #define access(file, mode) _access((file), (mode))"
 						, "#endif"
+						, ""
 						, "#if defined(__linux__) || defined(__APPLE__) || defined(__MINGW32__)"
 						, "    #include <unistd.h>"
 						, "#endif"
@@ -146,7 +212,7 @@ namespace MainProgram {
 						, "#define uLong unsigned Long"
 						, ""
 						, "#define alloc(x, y) malloc((x)*(y))"
-						, "#define str_pos_int(numStr) (numStr[0] != '-')"
+						, "#define str_pos_int(numStr) (*numStr != '-')"
 						, "#define substr(str, index) (str + index)"
 						, "#define bool_string(b) (b ? \"true\" : \"false\")"
 						, "#define ctoi(c) ((uint) (chr - '0'))"
@@ -226,9 +292,9 @@ namespace MainProgram {
 						, ""
 						, "namespace MainProgram {"
 						, "    public class Program {"
-						, "        internal protected static void Write<T>(T x) { Console.Write(x); }"
-						, "        internal protected static void WriteLine<T>(T x) { Console.WriteLine(x); }"
-						, "        public static void Main(string[] argv) {"
+						, "        private static void Write<T>(T x) { Console.Write(x); }"
+						, "        private static void WriteLine<T>(T x) { Console.WriteLine(x); }"
+						, "        public  static void Main(string[] argv) {"
 						, string.Join("\n", lines.Select(line => $"            {line}")) + ";"
 						, "        }"
 						, "    }"
@@ -252,30 +318,7 @@ namespace MainProgram {
 					return string.Join("\n", lines);
 			}
 		}
-		internal static string LanguageArguments() {
-			switch (compiler) {
-				case "cl.exe":
-					return $"/I \"D:/ExtF/Files/MSVC/include\" "
-						+  $"/I \"E:/ExtF/Files/MSVC/include\" "
-						+  $"/Wall /O2 /J /T{(language == "C++" ? "P" : "C")} "
-						+  $"/Fe \"{outFile}\" \"{srcFile}\"";
-				case "gcc.exe":
-				case "clang.exe":
-				case "g++.exe":
-				case "clang++.exe":
-					return $"-Wall -Wextra -pedantic -O3 -x {( language.ToLower()
-					)} -o \"{outFile}\" \"{srcFile}\"";
-				case "csc.exe":
-					return $"/target:exe /optimize+ /nologo /out:\"{outFile}\" \"{srcFile}\"";
-				case "vbc.exe":
-					return $"/target:exe /optimize+ /nologo /quiet /out:\"{outFile}\" \"{srcFile}\"";
-				case "java.exe":
-					return srcFile;
-				default:		
-					// take a wild guess at the argument syntax
-					return $"{srcFile} -o \"{outFile}\"";
-			}
-		}
+
 		private static void Exit(int code = 0) {
 			// All exit points happen with the temporary files undefined.
 			Console.BackgroundColor = bg_color;
@@ -353,29 +396,116 @@ namespace MainProgram {
 				}
 			}
 		}
-		private static void SetupLanguageInfo() {
+		private static bool SetupLanguageInfo(bool setValue = true) {
+			if (setValue && Regex.IsMatch(Program.language, "^java", RegexOptions.IgnoreCase)) {
+				compiler = "javac.exe";
+				extension = "java";
+			}
 			switch (language) {
+				case "javac.exe":
 				case "java.exe":
 				case "java":
-					language = "Java";
-					compiler = "java.exe";
-					extension = "java";
+				case "java21":
+				case "java 21":
+					if (setValue)
+						language = "Java 21";
+					break;
+				case "java20":
+				case "java 20":
+					if (setValue)
+						language = "Java 20";
+					break;
+				case "java19":
+				case "java 19":
+					if (setValue)
+						language = "Java 19";
+					break;
+				case "java18":
+				case "java 18":
+					if (setValue)
+						language = "Java 18";
+					break;
+				case "java17":
+				case "java 17":
+					if (setValue)
+						language = "Java 17";
+					break;
+				case "java16":
+				case "java 16":
+					if (setValue)
+						language = "Java 16";
+					break;
+				case "java15":
+				case "java 15":
+					if (setValue)
+						language = "Java 15";
+					break;
+				case "java14":
+				case "java 14":
+					if (setValue)
+						language = "Java 14";
+					break;
+				case "java13":
+				case "java 13":
+					if (setValue)
+						language = "Java 13";
+					break;
+				case "java12":
+				case "java 12":
+					if (setValue)
+						language = "Java 12";
+					break;
+				case "java11":
+				case "java 11":
+					if (setValue)
+						language = "Java 11";
+					break;
+				case "java10":
+				case "java 10":
+					if (setValue)
+						language = "Java 10";
+					break;
+				case "java9":
+				case "java 9":
+					if (setValue)
+						language = "Java 9";
+					break;
+				case "java8":
+				case "java 8":
+					if (setValue)
+						language = "Java 8";
 					break;
 				case "gcc.exe":
 				case "c":
 				case "gcc":
 				case "gcc c":
-					language = "C";
-					compiler = "gcc.exe";
-					extension = "c";
+					if (setValue) {
+						language = "C";
+						compiler = "gcc.exe";
+						extension = "c";
+					}
 					break;
 				case "clang.exe":
 				case "clangc":
 				case "clang":
 				case "clang c":
-					language = "C";
-					compiler = "clang.exe";
-					extension = "c";
+					if (setValue) {
+						language = "C";
+						compiler = "clang.exe";
+						extension = "c";
+					}
+					break;
+				case "msvc c":
+				case "visual c":
+				case "visualc":
+				case "msvisual c":
+				case "msvisualc":
+				case "ms visual c":
+					if (setValue) {
+						language = "C";
+						compiler = "cl.exe";
+						extension = "c";
+					}
 					break;
 				case "g++.exe":
 				case "c++":
@@ -388,9 +518,11 @@ namespace MainProgram {
 				case "gcc c++":
 				case "gcc cpp":
 				case "gcc cc":
-					language = "C++";
-					compiler = "g++.exe";
-					extension = "c++";
+					if (setValue) {
+						language = "C++";
+						compiler = "g++.exe";
+						extension = "c++";
+					}
 					break;
 				case "clang++.exe":
 				case "clang++":
@@ -403,9 +535,11 @@ namespace MainProgram {
 				case "clangc++":
 				case "clangcpp":
 				case "clangcc":
-					language = "C++";
-					compiler = "clang++.exe";
-					extension = "c++";
+					if (setValue) {
+						language = "C++";
+						compiler = "clang++.exe";
+						extension = "c++";
+					}
 					break;
 				case "cl.exe":
 				case "msvc":
@@ -416,9 +550,11 @@ namespace MainProgram {
 				case "visual c++":
 				case "msvisual c++":
 				case "ms visual c++":
-					language = "C++";
-					compiler = "cl.exe";
-					extension = "c++";
+					if (setValue) {
+						language = "C++";
+						compiler = "cl.exe";
+						extension = "c++";
+					}
 					break;
 				case "vbc.exe":
 				case "visual basic":
@@ -426,36 +562,44 @@ namespace MainProgram {
 				case "vb":
 				case "vbc":
 				case "vbc vb":
-					language = "VB";
-					compiler = "vbc.exe";
-					extension = "vb";
+					if (setValue) {
+						language = "VB";
+						compiler = "vbc.exe";
+						extension = "vb";
+					}
 					break;
 				case "csc.exe":
 				case "c#":
 				case "cs":
 				case "csharp":
 				case "csc":
-					language = "C#";
-					compiler = "csc.exe";
-					extension = "cs";
+					if (setValue) {
+						language = "C#";
+						compiler = "csc.exe";
+						extension = "cs";
+					}
 					break;
 				default:
 					if (!silent)
 						Console.Error.WriteLine($"language '{language}' is not supported");
-					Exit(2);
+					if (setValue) Exit(2);
+					else return false; // the language does not exist
 					break;
 			}
+
+			return true; // the language exists
 		}
 		private static void DisplayHelp() {
 			if (!silent) Console.WriteLine( string.Join("\n", new string[] {""
 				, "Upon exit, exit the program without waiting for Enter or ^C:  -e, --exit"
-				, "Save the source file to ./file-save.{extension}:              -s, --save"
+				, "Save the source file to file-save.{extension}:                -s, --save"
 				, "Run the program silently (never print to the console):        -S, --silent"
 				, "Put the provided code into the main function automatically:   -m, --main"
 				, "Display this message and exit (disregards other options):     -h, --help, -?"
+				, "    implies -e argument"
 				, "Specify the language to interpret:                            -x, --lang, -l, --language"
 				, ""
-				, "    The default value is java."
+				, "    The default value is \"java 21\"."
 				, "    The compiler executable can also be passed."
 				, "    The value is not case sensitive."
 				, "    whitespace is condensed into one space."
@@ -467,18 +611,26 @@ namespace MainProgram {
 				, "            java.exe"
 				, "            java"
 				, "        C:"
-				, "            GCC C:"
+				, "            GNU Compiler Collection C:"
 				, "                gcc.exe"
 				, "                gcc c"
 				, "                gcc"
 				, "                c"
 				, "            Clang C:"
 				, "                clang.exe"
+				, "                clang c"
 				, "                clangc"
 				, "                clang"
-				, "                clang c"
+				, "            Microsoft Visual C:"
+				, "                msvc"
+				, "                msvc c"
+				, "                visual c"
+				, "                visualc"
+				, "                msvisualc"
+				, "                msvisual c"
+				, "                ms visual c"
 				, "        C++:"
-				, "            GCC C++:"
+				, "            GNU Compiler Collection C++:"
 				, "                g++.exe"
 				, "                g++ c++"
 				, "                g++ cpp"
@@ -499,7 +651,7 @@ namespace MainProgram {
 				, "                clangc++"
 				, "                clangcpp"
 				, "                clangcc"
-				, "            MSVC C++:"
+				, "            Microsoft Visual C++:"
 				, "                cl.exe"
 				, "                msvc cl.exe"
 				, "                msvc cl"
@@ -525,7 +677,7 @@ namespace MainProgram {
 				, "            csc"
 				, ""
 			}));
-
+			waitForKeyToExit = false;
 			Exit(0);
 		}
 		private static void ParseArguments(ref string[] argv) {
@@ -533,7 +685,7 @@ namespace MainProgram {
 
 				if (argv[0][0] != '-')
 					// return on the first unknown option
-					goto afterLoop;
+					goto end;
 
 				if (argv[0][1] != '-' && argv[0].Length > 2) {
 					// something like `-mx` or `-es`
@@ -563,8 +715,10 @@ namespace MainProgram {
 								Console.Error.WriteLine($"no value provided after '{argv[0]}' argument");
 							Exit(1);
 						}
+
 						language = Regex.Replace(argv[1], @"\s+", " ")
-							.ToLower().Replace("-", " ");
+							.ToLower()
+							.Replace("-", " ");
 						Skip(ref argv, 2);
 						break;
 					case "-s":
@@ -589,15 +743,13 @@ namespace MainProgram {
 						break;
 					default:
 						// return on the first unknown option
-						goto afterLoop;
+						goto end;
 				}
 			}
 
-			afterLoop:
+			end:
 			if (language == "")
-				language = "java";
-
-			// return argv;
+				language = "java 21";
 		}
 		private static string FileConvert(string path, string outType) {
 			string tmp = path;
@@ -619,7 +771,7 @@ namespace MainProgram {
 			SetupLanguageInfo();
 
 			srcFile = FileConvert(Path.GetTempFileName(), extension);
-			outFile = FileConvert(Path.GetTempFileName(), "exe");
+			outFile = FileConvert(Path.GetTempFileName(), isJava() ? "class" : "exe");
 
 			// print the language and program code
 			if (!silent) {
