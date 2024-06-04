@@ -8,7 +8,7 @@
 #include "../string-join.h"
 
 int main(int argc, char *argv[]) {
-	const string args = strjoin(++argv, --argc);
+	const string args = strjoin(--argc, ++argv);
 
 	char *const cmd = malloc(args.l + strlen(FILE_PATH) + 6);
 	sprintf(cmd, "\"\"" FILE_PATH ".exe\" %s\"", args.s);
