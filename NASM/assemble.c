@@ -1,16 +1,18 @@
 // gcc -std=c99 -Wall -Wextra -Ofast assemble.c -o assemble && strip assemble.exe
 
+
 /** exit codes:
  * 0: success
  *
  * 2: not enough arguments
  * 3: out of memory
- * 4: invalid input file
+ * 4: invalid/nonexistent file
  * 5: assembler error
- * 6: linker error
- * 7: strip error
- * 8: remove error
- * 9: execution error
+ * 6: objcopy error
+ * 7: linker error
+ * 8: strip error
+ * 9: remove error
+ * 10: execution error
 **/
 
 
@@ -20,7 +22,7 @@
 #endif
 
 #if __GNUC__ < 5
-	#error "Use GCC 5.1 or newer"
+	#error "Use GCC 5.1 or newer. :|"
 #endif
 
 
@@ -28,7 +30,7 @@
 
 // string, strjoin
 // ../C/error-print.h
-	// ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_YELLOW,
+	// ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_ORANGE,
 	// CON_COLOR, CON_RESET, printf_color, puts_color, eprintf, eputs,
 	// OUT_OF_MEMORY, VALIDATE_FILE,
 	// stdio.h
@@ -44,52 +46,115 @@
 
 //## macros and types ##//
 
+#ifdef _WIN32
+	#define IS_WINDOWS 1
+#else
+	#define IS_WINDOWS 0
+#endif
+
 #define cleanup_char cleanup_
 
+#define VALIDATE_FILE_2(path, code) VALIDATE_FILE(path, code, params.verbose)
 #define FREE_T(x) __attribute__((cleanup(cleanup_##x))) x
-
-typedef unsigned long long int uLong;
 
 typedef struct {
 	string libs;
 
-	bool rm;
-	bool link;
+	bool assembleOnly;
+	bool keepObjOnLDFail;
+	bool alwaysKeepObj;
+	bool normalizeSegments;
 	bool strip;
+	bool verbose;
 	bool exec;
 } Params;
 
+typedef struct {
+	char *const path;
+	const size_t dotIndex;
+	const size_t len; // as given by `strlen(this.path)`.
+} FilePathData;
+
 //## functions ##//
 
-char* strnkdup(const char *s, size_t n, size_t k) {
+char *strnkdup(const char *const s, size_t n, size_t k) {
 	// strndup(s, n) with k extra null bytes at the end.
 	// if n + k < MIN(n, k), overflow
 
-	size_t len = strnlen(s, n);
-	char *outstr = malloc(len + k + 1);
+	size_t l = strnlen(s, n);
+	char *res = malloc(l + k + 1);
 
-	if (outstr == NULL)
+	if (res == NULL)
 		return NULL;
 
-	memcpy(outstr, s, len);
+	memcpy(res, s, l);
 
 	for (size_t i = k + 1; i --> 0 ;)
-		outstr[len + i] = '\0';
+		res[l + i] = '\0';
 
-	return outstr;
+	return res;
 }
 
-size_t extensionIndex(const char *const filename, size_t n /*length*/) {
-	// return filename.indexOf(".")
+static inline char *strkdup(const char *s, size_t k) {
+	// strdup(s) with k extra null bytes at the end.
+	return strnkdup(s, -1, k);
+}
 
-	while (n --> 0)
-		if (filename[n] == '.')
-			return n;
-		else if (filename[n] == '/')
+FilePathData extensionIndex(const char *const filename) {
+	// not actually a string object, but it does return a `char *` and a `size_t`
+	// return {"s": new_filename, "l": filename.indexOf(".")}
+
+	// if the input file is "main.", the extension is "".
+
+	// TODO: figure out how to make file paths with spaces work.
+		// in situations like "C:/Program Files/folder/file.exe"
+
+	size_t n = strlen(filename);
+	size_t i = n;
+
+	for (size_t j = n; j --> 0 ;)
+		if (filename[j] == ' ') {
+			eputs("file paths cannot have spaces in them.");
+			exit(4);
+		}
+
+
+	while (i --> 0)
+		if (filename[i] == '.') {
+			// move string to heap
+			char *const tmp_str = strdup(filename);
+			OUT_OF_MEMORY(tmp_str, 3);
+
+			return (FilePathData) {
+				.path = tmp_str,
+				.dotIndex = i,
+				.len = n
+			};
+		}
+		// `./a.b/file` doesn't actually have an extension.
+		// `./a.b\file` only has an extension on linux.
+#if IS_WINDOWS
+		else if (filename[i] == '/' || filename[i] == '\\')
+#else
+		else if (filename[i] == '/')
+#endif
 			break;
 
-	eprintf("file '%s' doesn't have an extension. An extension is required.", filename);
-	exit(4);
+	// if no extension is given, assume it is `.nasm`
+	char *const str = strkdup(filename, 5);
+	OUT_OF_MEMORY(str, 4);
+
+	str[n + 0] = '.';
+	str[n + 1] = 'n';
+	str[n + 2] = 'a';
+	str[n + 3] = 's';
+	str[n + 4] = 'm';
+
+	return (FilePathData) {
+		.path = str,
+		.dotIndex = n,
+		.len = n + 5
+	};
 }
 
 Params parseParameters(string args) {
@@ -97,9 +162,12 @@ Params parseParameters(string args) {
 	char *libs = NULL;
 
 	bool
-		R = false,
-		L = false,
+		a = false,
+		k = false,
+		K = false,
 		S = false,
+		N = false,
+		s = false,
 		e = false;
 
 	for (size_t i = 0; i < args.l; i++) {
@@ -130,13 +198,16 @@ Params parseParameters(string args) {
 		}
 
 		switch (args.s[i + 2]) {
-			case 'R': R = true; break;
-			case 'L': L = true; break;
+			case 'a': a = true; break;
+			case 'k': k = true; break;
+			case 'K': K = true; break;
 			case 'S': S = true; break;
+			case 'N': N = true; break;
+			case 's': s = true; break;
 			case 'e': e = true; break;
 			case 'l':
 				if (args.s[i + 3] == '\0')
-					goto done;
+					goto done; // double break;
 
 				args.s[i + 0] =
 				args.s[i + 1] =
@@ -144,7 +215,7 @@ Params parseParameters(string args) {
 
 				i += 4;
 				size_t stt = i;
-				uLong items = 1;
+				size_t items = 1;
 
 				while (args.s[i] != ' ' && args.s[i] != '\0') {
 					if (args.s[i] == ',')
@@ -158,7 +229,7 @@ Params parseParameters(string args) {
 				libsLength = 2llu*items + end - stt;
 
 				libs = malloc(libsLength + 1);
-				OUT_OF_MEMORY(libs, 3);
+				OUT_OF_MEMORY(libs, 5);
 
 				libs[0] = '-';
 				libs[1] = 'l';
@@ -176,6 +247,11 @@ Params parseParameters(string args) {
 					args.s[i] = ' ';
 				}
 
+				// fallthrough
+				// continue
+			default:
+				// unknown argument, pass to nasm
+				// something like `--X`
 				continue;
 		}
 
@@ -187,7 +263,7 @@ Params parseParameters(string args) {
 done:
 	if (libs == NULL) {
 		libs = malloc(1);
-		OUT_OF_MEMORY(libs, 4);
+		OUT_OF_MEMORY(libs, 6);
 
 		libsLength = 0;
 	}
@@ -197,56 +273,300 @@ done:
 
 	return (Params) {
 		.libs = (string) {libs, libsLength},
-		.rm = !R, // remove
-		.link = !L, // link
-		.strip = !S, // strip
+		.assembleOnly = a,
+		.keepObjOnLDFail = k,
+		.alwaysKeepObj = K,
+		.normalizeSegments = !N,
+		.strip = !S,
+		.verbose = !s,
 		.exec = e, // execute
 	};
 }
 
 static inline void cleanup_(const void *p) { free(* (void **) p); }
-static inline void cleanup_Params(const	Params *p) { free(p->libs.s); }
-static inline void cleanup_string(const	string *p) { free(p->s); }
+static inline void cleanup_Params(const Params *p) { free(p->libs.s); }
+static inline void cleanup_string(const string *p) { free(p->s); }
+static inline void cleanup_FilePathData(const FilePathData *p) { free(p->path); }
 
 static inline void help(void) {
 	puts(
-		"\n./assemble.exe infile [params]"
+		"\n./assemble infile [params]"
 		"\n"
 		"\n"
-		"\noverview of process:"
-		"\n    nasm -fwin64 -Werror infile -o object params"
-		"\n    ld object libs -o outfile --entry main"
-		"\n    if strip, strip -s -R .comment -R comment -R .note -R note hello.exe"
-		"\n    if remove, rm object"
-		"\n    if exec, run outfile"
+		"\nrough overview of process:"
+		"\n    nasm -fwin64 -Werror $infile -o $object $params"
+		"\n"
+		"\n    # the print-out will use `--rename` which is the same."
+		"\n    objcopy --rename-section text=.text \\"
+		"\n            --rename-section data=.data  \\"
+		"\n            --rename-section rdata=.rdata \\"
+		"\n            --rename-section rodata=.rdata \\"
+		"\n            --rename-section .rodata=.rdata $object"
+		"\n"
+		"\n    ld $object $libs -o $outfile --entry main"
+		"\n    if stripFile, strip -s -R .comment -R comment -R .note -R note $outfile"
+		"\n    if remove, rm $object"
+		"\n    if exec, run $outfile"
 		"\n"
 		"\nexamples:"
-		"\n    ./assemble hello.nasm --S --R"
-		"\n        input = ./hello.nasm"
-		"\n        don't strip remove object or execute"
+		"\n    ./assemble hello --S --N --K"
+		"\n        input = ./hello.nasm (.nasm is assumed if no extension is present)"
+		"\n        don't strip, normalize segments, remove object, or execute"
 		"\n        no extra arguments to nasm."
 		"\n        no libraries passed to ld"
 		"\n"
 		"\n    ./assemble ../file.asm --e -g --l msvcrt,kernel32"
 		"\n        input = ./../file.asm"
-		"\n        strip, remove object file, execute"
+		"\n        strip, normalize segments, remove object file, and execute"
 		"\n        pass `-g` to nasm"
 		"\n        pass `-lmsvcrt -lkernel32` to ld."
+		"\n"
+		"\n    ./assemble folder/main"
+		"\n        input = ./folder/main.nasm"
+		"\n        strip, normalize segments, remove object file, but don't execute"
+		"\n        no extra arguments to nasm"
+		"\n        no libraries to ld."
 		"\n"
 		"\n    ./assemble --help"
 		"\n        print the help message"
 		"\n"
+		"\n    ./assemble \"./folder with spaces/file.nasm\""
+		"\n        this will not work, and an error will be thrown."
+		"\n"
 		"\narguments:"
-		"\n    --R           do not remove object file (default is to remove)"
-		"\n    --L           do not link object file (default is to link)"
-		"\n    --S           do not strip executable (default is to strip)"
-		"\n    --e           run executable"
+		"\n    --a           assemble only. do not link or normalize segment names"
+		"\n    --k           keep object file on linker fail (default is to remove)"
+		"\n    --K           always keep object file."
+		"\n    --S           do not strip executable (default is to strip everthing)"
+		"\n    --N           do not normalize segment names, leave them as the original"
+		"\n    --s           don't print anything (silent), and"
+		"\n                  don't print sub-program messages in color."
+		"\n                  does not suppress messages for the following:"
+		"\n                      - sub-program (nasm, ld, etc.) errors/warnings"
+		"\n                      - out-of-memory error messages."
+		"\n                      - when `--help` is given as the first argument"
+		"\n                      - error messages when the input file path has spaces"
+		"\n    --e           run final executable when done"
 		"\n    --l [list]    includes comma-separated libraries in linking"
 		"\n    --help        print this message. only works as the first argument"
 		"\n"
-		"\n    all other arguments are given to nasm."
+		"\n    the double minus signs are required; i.e. `--e` will work, `-e` will not."
+		"\n    all other arguments are given to nasm in the same order as provided."
 		"\n"
 	);
+}
+
+
+bool nasm(
+	Params params,
+	FilePathData infile,
+	string nasmArgs,
+	const char *const object
+) {
+	// 25 + infile.len + 4 + (infile.dotIndex + 2) + 1 + nasmArgs.l + 1
+	char *restrict const cmd = malloc(infile.len + infile.dotIndex + nasmArgs.l + 33);
+	OUT_OF_MEMORY(cmd, 10);
+
+	sprintf(cmd, "nasm.exe -fwin64 -Werror %s -o %s %s", infile.path, object, nasmArgs.s);
+
+	if (params.verbose) {
+		printf("assembling  : ");
+		puts_color(ANSI_GREEN, cmd);
+
+		CON_COLOR(ANSI_ORANGE);
+	}
+
+	const int exitCode = system(cmd);
+
+	if (params.verbose)
+		CON_RESET();
+
+	free(cmd);
+
+	if (exitCode) {
+		if (params.verbose)
+			exitCode == -1 ?
+				eprintf("\nassembler error. Couldn't execute command\n") :
+				eprintf("\nassembler error. exit status: %i\n", exitCode);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool objcopy(
+	Params params,
+	FilePathData infile,
+	const char *const object
+) {
+	if (params.verbose)
+		printf("normalizing : ");
+
+	// 121 + (infile.dotIndex + 2) + 1
+	char *restrict const cmd = malloc(infile.dotIndex + 124);
+	OUT_OF_MEMORY(cmd, 11);
+
+	sprintf(
+		cmd,						//
+		"objcopy.exe"				//   11
+		" --rename text=.text"		// + 20
+		" --rename data=.data"		// + 20
+		" --rename rdata=.rdata"	// + 22
+		" --rename rodata=.rdata"	// + 23
+		" --rename .rodata=.rdata"	// + 24
+		" %s",						// + 1, 1
+		object						// = 121, 1
+	);
+
+	if (params.verbose) {
+		puts_color(ANSI_GREEN, cmd);
+
+		CON_COLOR(ANSI_ORANGE);
+	}
+
+	const int exitCode = system(cmd);
+
+	if (params.verbose)
+		CON_RESET();
+
+	free(cmd);
+
+	if (exitCode) {
+		if (params.verbose)
+			exitCode == -1 ?
+				eprintf("\nobjcopy error. Couldn't execute command\n") :
+				eprintf("\nobjcopy error. exit status: %i\n", exitCode);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool rm(Params params, const char *const object) {
+	if (params.verbose) {
+		printf("purging obj : ");
+		printf_color(ANSI_GREEN, "rm.exe %s\n", object);
+	}
+
+	const int exitCode = remove(object);
+
+	if (exitCode) {
+		if (params.verbose) printf(
+			ANSI_COLOR(ANSI_RED) "\nFile removal error: %s\n" ANSI_RESET(),
+			strerror(errno)
+		);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool ld(
+	Params params,
+	FilePathData infile,
+	const char *const object,
+	const char *const ofile
+) {
+	// 7 + (infile.dotIndex + 2) + 1 + params.libs.l + 4 + (infile.dotIndex + 4*IS_WINDOWS) + 13 + 1
+	char *restrict const cmd = malloc(2*infile.dotIndex + params.libs.l + 4*IS_WINDOWS + 28);
+	OUT_OF_MEMORY(cmd, 12);
+
+	sprintf(cmd, "ld.exe %s %s -o %s --entry main", object, params.libs.s, ofile);
+
+	if (params.verbose) {
+		printf("linking     : ");
+		puts_color(ANSI_GREEN, cmd);
+
+		CON_COLOR(ANSI_ORANGE);
+	}
+
+	const int exitCode = system(cmd);
+
+	if (params.verbose)
+		CON_RESET();
+
+	free(cmd);
+
+	if (exitCode) {
+		if (params.verbose)
+			exitCode == -1 ?
+				eprintf("\nlinker error. Couldn't execute command\n") :
+				eprintf("\nlinker error. exit status: %i\n", exitCode);
+
+		if (!params.keepObjOnLDFail && !params.alwaysKeepObj)
+			rm(params, object);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool strip(
+	Params params,
+	FilePathData infile,
+	const char *const ofile
+) {
+	// 53 + (infile.dotIndex + 4*IS_WINDOWS) + 1
+	char *restrict const cmd = malloc(infile.dotIndex + 4*IS_WINDOWS + 54);
+	OUT_OF_MEMORY(cmd, 13);
+
+	sprintf(cmd, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
+
+	if (params.verbose) {
+		printf("stripping   : ");
+		puts_color(ANSI_GREEN, cmd);
+
+		CON_COLOR(ANSI_ORANGE);
+	}
+
+	const int exitCode = system(cmd);
+
+	if (params.verbose)
+		CON_RESET();
+
+	free(cmd);
+
+	if (exitCode) {
+		if (params.verbose)
+			exitCode == -1 ?
+				eprintf("\nstrip error. Couldn't execute command\n") :
+				eprintf("\nstrip error. exit status: %i\n", exitCode);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool execute(Params params, char *const ofile) {
+	if (params.verbose) {
+		printf("executing   : ");
+		puts_color(ANSI_GREEN, ofile);
+	}
+
+#if IS_WINDOWS
+	// for some reason, CMD doesn't like "./folder/file.exe"
+	for (size_t i = 0; ofile[i] != '\0'; i++)
+		if (ofile[i] == '/')
+			ofile[i] = '\\';
+#endif
+
+	const int exitCode = system(ofile);
+
+	if (exitCode) {
+		if (params.verbose)
+			eprintf("\nexit status: %i\n", exitCode);
+
+		return true;
+	}
+	else if (params.verbose)
+		puts("\nexit status: 0");
+
+	return false;
 }
 
 
@@ -261,162 +581,94 @@ int main(int argc, char *argv[]) {
 		return 2;
 	}
 
-	const char *const infile = *argv;
-	argc--; argv++;
-
-	if (strcmp(infile, "--help") == 0)
-		return help(), 0;
-
-	const size_t inflen = strlen(infile); // this is used again later on.
-	const size_t extnIndex = extensionIndex(infile, inflen);
-
-	FREE_T(string) args = strjoin(argv, argc); // this is accessed in parseParameters.
-	FREE_T(char) *const ofile  = strnkdup(infile, extnIndex, 4); // space for 3-character file extension
-
-	OUT_OF_MEMORY(args.s, 5);
-	OUT_OF_MEMORY(ofile, 6);
-
-	ofile[extnIndex + 0] = '.';
-	ofile[extnIndex + 1] = 'o';
-
-	const FREE_T(char) *const object = strdup(ofile);
-	OUT_OF_MEMORY(object, 7);
-
-	// ofile still allows 3-char extension
-	ofile[extnIndex + 1] = 'e';
-	ofile[extnIndex + 2] = 'x';
-	ofile[extnIndex + 3] = 'e';
-
-	const FREE_T(Params) parsedParams = parseParameters(args);
-
-	printf("validating : "); VALIDATE_FILE(infile, 1);
-
-
-	/* NASM */ {
-		// 25 + inflen + 4 + (extnIndex + 2) + 1 + args.l + 1
-		char *restrict const nasm = malloc(inflen + extnIndex + args.l + 33);
-
-		OUT_OF_MEMORY(nasm, 8);
-		sprintf(nasm, "nasm.exe -fwin64 -Werror %s -o %s %s", infile, object, args.s);
-		printf("assembling : ");
-		puts_color(ANSI_GREEN, nasm);
-
-		CON_COLOR(ANSI_YELLOW);
-		const int exitCode = system(nasm);
-		CON_RESET();
-
-		free(nasm);
-
-		if (exitCode) {
-			exitCode == -1 ?
-				eprintf("\nassembler error. Couldn't execute command\n") :
-				eprintf("\nassembler error. exit status: %i\n", exitCode);
-
-			return 5;
-		}
+	if (strcmp(*argv, "--help") == 0) {
+		help();
+		return 0;
 	}
 
-	printf("validating : "); VALIDATE_FILE(object, 2);
+	const FREE_T(FilePathData) infile = extensionIndex(*argv);
 
+	argc--; argv++;
 
-	if (!parsedParams.link) {
-		puts("linking    : (skipped)");
+	// this is accessed in parseParameters.
+	FREE_T(string) nasmArgs = strjoin(argc, argv);
+	OUT_OF_MEMORY(nasmArgs.s, 7);
+
+	// space for period and 3-character file extension
+	FREE_T(char) *const ofile = strnkdup(infile.path, infile.dotIndex + 1, 3);
+	OUT_OF_MEMORY(ofile, 8);
+
+	ofile[infile.dotIndex + 1] = 'o';
+
+	const FREE_T(char) *const object = strdup(ofile);
+	OUT_OF_MEMORY(object, 9);
+
+	// ofile still allows 3-char extension
+#if IS_WINDOWS
+	ofile[infile.dotIndex + 1] = 'e';
+	ofile[infile.dotIndex + 2] = 'x';
+	ofile[infile.dotIndex + 3] = 'e';
+#else
+	ofile[infile.dotIndex + 0] = '\0';
+	// ofile[infile.dotIndex + 1] = '\0'; // this line is optional.
+#endif
+	const FREE_T(Params) params = parseParameters(nasmArgs);
+
+	// strlen(object) == (infile.dotIndex + 2)
+	// strlen(ofile ) == (infile.dotIndex + 4*IS_WINDOWS)
+
+	VALIDATE_FILE_2(infile.path, 1);
+
+	if (nasm(params, infile, nasmArgs, object))
+		return 5;
+
+	VALIDATE_FILE_2(object, 2);
+
+	if (params.normalizeSegments) {
+		if (objcopy(params, infile, object))
+			return 6;
+	}
+	else puts("normalizing : (skipped)");
+
+	///////////////////////////////////
+
+	if (params.assembleOnly) {
+		if (params.verbose)
+			puts("linking     : (skipped)");
 
 		return 0;
 	}
 
-	/* ld */ {
-		// 7 + (extnIndex + 2) + 1 + parsedParams.libs.l + 4 + (extnIndex + 4) + 13 + 1
-		char *restrict const ld = malloc(2*extnIndex + parsedParams.libs.l + 32);
+	if (ld(params, infile, object, ofile))
+		return 7;
 
-		OUT_OF_MEMORY(ld, 9);
-		sprintf(ld, "ld.exe %s %s -o %s --entry main", object, parsedParams.libs.s, ofile);
-		printf("linking    : ");
-		puts_color(ANSI_GREEN, ld);
+	VALIDATE_FILE_2(ofile, 3);
+	///////////////////////////////////
 
-		CON_COLOR(ANSI_YELLOW);
-		const int exitCode = system(ld);
-		CON_RESET();
-
-		free(ld);
-
-		if (exitCode) {
-			exitCode == -1 ?
-				eprintf("\nlinker error. Couldn't execute command\n") :
-				eprintf("\nlinker error. exit status: %i\n", exitCode);
-
-			return 6;
-		}
-	}
-
-
-	printf("validating : "); VALIDATE_FILE(ofile, 3);
-
-	printf("stripping  : ");
-	if (parsedParams.strip) {
-		// 53 + (extnIndex + 4) + 1
-		char *restrict const strip = malloc(extnIndex + 58);
-
-		OUT_OF_MEMORY(strip, 10);
-		sprintf(strip, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
-		puts_color(ANSI_GREEN, strip);
-
-		CON_COLOR(ANSI_YELLOW);
-		const int exitCode = system(strip);
-		CON_RESET();
-
-		free(strip);
-
-		if (exitCode) {
-			exitCode == -1 ?
-				eprintf("\nstrip error. Couldn't execute command\n") :
-				eprintf("\nstrip error. exit status: %i\n", exitCode);
-
-			return 7;
-		}
-	}
-	else
-		puts("(skipped)");
-
-
-	printf("remove obj : ");
-	if (parsedParams.rm) {
-
-		const int exitCode = remove(object);
-		printf_color(ANSI_GREEN, "rm.exe %s\n", object);
-
-		if (exitCode) {
-			printf(
-				ANSI_COLOR(ANSI_RED) "\nFile removal error: %s\n" ANSI_RESET(),
-				strerror(errno)
-			);
-
+	if (params.strip) {
+		if (strip(params, infile, ofile))
 			return 8;
-		}
 	}
-	else
-		puts("(skipped)");
+	else if (params.verbose)
+		puts("stripping   : (skipped)");
 
-	printf("executing  : ");
-	if (parsedParams.exec) {
-		puts_color(ANSI_GREEN, ofile);
+	///////////////////////////////////
 
-		// for some reason, CMD doesn't like "./folder/file.exe"
-		for (size_t i = 0; ofile[i] != '\0'; i++)
-			if (ofile[i] == '/')
-				ofile[i] = '\\';
-
-		const int exitCode = system(ofile);
-
-		if (exitCode) {
-			eprintf("\nexit status: %i\n", exitCode);
+	if (!params.alwaysKeepObj) {
+		if (rm(params, object))
 			return 9;
-		}
-		else
-			puts("\nexit status: 0");
 	}
-	else
-		puts("(skipped)");
+	else if (params.verbose)
+		puts("purging obj : (skipped)");
+
+	///////////////////////////////////
+
+	if (params.exec) {
+		if (execute(params, ofile))
+			return 10;
+	}
+	else if (params.verbose)
+		puts("executing   : (skipped)");
 
 	return 0;
 }

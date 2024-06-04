@@ -14,9 +14,9 @@
 		size_t l; // length
 	} string;
 
-	string strjoinc(char *strs[], size_t num, const char joiner) {
+	string strjoinc(size_t num, char *strs[], const char joiner) {
 		// join strings with a space. returns a pointer to the heap.
-		// example: `const string args = strjoinc(++argv, --argc, ' ');`
+		// example: `const string args = strjoinc(--argc, ++argv, ' ');`
 
 		char *res;
 
@@ -73,8 +73,8 @@
 		return (string) {res, length - 1};
 	}
 
-	string strjoin(char *strs[], size_t num) {
-		return strjoinc(strs, num, ' ');
+	string strjoin(size_t argc, char *argv[]) {
+		return strjoinc(argc, argv, ' ');
 	}
 
 #endif

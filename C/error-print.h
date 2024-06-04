@@ -15,9 +15,11 @@
 	#define ANSI_COLOR(color) "\x1b[38;2;" color "m"
 	#define ANSI_RESET() "\x1b[0m"
 
-	#define ANSI_RED    RGB_STR(197,  15, 31)
-	#define ANSI_GREEN  RGB_STR(  0, 128,  0)
-	#define ANSI_YELLOW RGB_STR(128, 128,  0)
+	#define ANSI_RED    RGB_STR(166,  12, 26)
+	#define ANSI_GREEN  RGB_STR( 10, 128, 10)
+	#define ANSI_YELLOW RGB_STR(190, 190,  0)
+	#define ANSI_ORANGE RGB_STR(180, 100,  0)
+
 
 	#define CON_COLOR(color) printf(ANSI_COLOR(color))
 	#define CON_RESET()      printf(ANSI_RESET())
@@ -54,12 +56,28 @@
 		}                                             \
 	})
 
-	#define VALIDATE_FILE(path, code) ({                   \
-		if (access(path, 0 /* F_OK on POSIX */) == -1) {    \
+	// verbose
+	#define VALIDATE_FILE_V(path, code) ({               \
+		printf("validating  : ");                         \
+		                                                   \
+		if (access((path), 0 /* F_OK on POSIX */) == -1) {  \
 			eprintf("'%s' cannot be accessed. code: %llu\n", \
-				path, (unsigned long long int) (code));       \
-			exit(4); /* code for invalid input file */         \
+				(path), (unsigned long long int) (code));     \
+			exit(4); /* code for invalid file */               \
 		}                                                       \
-		printf("'%s' available\n", path);                        \
+		                                                         \
+		printf("'%s' available\n", (path));                       \
 	})
+
+	// silent
+	#define VALIDATE_FILE_S(path) ({ \
+		if (access((path), 0) == -1)  \
+			exit(4);                   \
+	})
+
+	#define VALIDATE_FILE(path, code, v) ( \
+		v /* verbose */ ?                   \
+			VALIDATE_FILE_V(path, code) :    \
+			VALIDATE_FILE_S(path)             \
+	)
 #endif
