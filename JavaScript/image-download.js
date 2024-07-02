@@ -108,9 +108,6 @@ function download(object, dest, format) {
 		_standardizeFormat(format).slice(6)
 	}`).toString()
 
-	x.download=D??`download.${a(f).slice(6)}`;
-	x.download=(D??"download")+"."+a(f).slice(6);
-
 	link.click()
 }
 
