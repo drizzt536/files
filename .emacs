@@ -67,6 +67,10 @@ Does the same thing as the following commands:
 
 ;;; Dired Interactive Functions ;;;
 
+; custom. not actually linum, but derived from it.
+; must be manually put into
+(require 'linum)
+
 (defun dired-get-current-drive ()
 	"Returns the Windows disk drive of the current open dired-mode buffer."
 	(interactive)
@@ -125,7 +129,7 @@ works for `dired-mode` and `archive-mode` major modes."
 	"`dired-previous-line` is already a thing
 works for `dired-mode` and `archive-mode` major modes."
 	(interactive)
-	(if (> linum-current-line 3)
+	(if (> linum-current-line 2)
 		(if (eq major-mode 'archive-mode)
 			(archive-previous-line 1)
 			(dired-previous-line 1))))
@@ -207,7 +211,7 @@ works for `dired-mode` and `archive-mode` major modes."
 		(append
 			load-path
 			(nthcdr 3 (directory-files "C:/Users/djanu/AppData/Roaming/.emacs.d/Elpa/" t))
-			(nthcdr 3 (directory-files (concat home-directory ".emacs.d/Elpa/") t)))
+			(nthcdr 3 (directory-files (concat home-directory ".emacs.d/elpa/") t)))
 		t)
 	'(make-backup-files nil)
 	'(menu-bar-mode nil)
