@@ -10,7 +10,9 @@
 int main(int argc, char *argv[]) {
 	const string args = strjoin(--argc, ++argv);
 
-	char *const cmd = malloc(args.l + strlen(FILE_PATH) + 6);
+	// 2 + strlen(FILE_PATH) + 6 + args.l + 2
+	char *const cmd = malloc(args.l + sizeof(FILE_PATH) + 5);
+
 	sprintf(cmd, "\"\"" FILE_PATH ".exe\" %s\"", args.s);
 
 	return system(cmd);
