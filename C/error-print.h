@@ -15,10 +15,11 @@
 	#define ANSI_COLOR(color) "\x1b[38;2;" color "m"
 	#define ANSI_RESET() "\x1b[0m"
 
-	#define ANSI_RED    RGB_STR(166,  12, 26)
-	#define ANSI_GREEN  RGB_STR( 10, 128, 10)
-	#define ANSI_YELLOW RGB_STR(190, 190,  0)
-	#define ANSI_ORANGE RGB_STR(180, 100,  0)
+	#define ANSI_RED    RGB_STR(166,  12,  26)
+	#define ANSI_GREEN  RGB_STR( 10, 128,  10)
+	#define ANSI_YELLOW RGB_STR(190, 190,   0)
+	#define ANSI_ORANGE RGB_STR(180, 100,   0)
+	#define ANSI_BLUE   RGB_STR(25 , 127, 250)
 
 
 	#define CON_COLOR(color) printf(ANSI_COLOR(color))
