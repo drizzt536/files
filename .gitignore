@@ -25,6 +25,7 @@ test.*
 *.o
 *.obj
 *.class
+*.tmp
 *.test.*
 *._*.*
 
