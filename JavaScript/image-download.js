@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// image-download.js v1.0.2 (c) | Copyright 2024 Daniel E. Janusch
+// image-download.js v1.0.3 (c) | Copyright 2024 Daniel E. Janusch
 
 // download any image from the current page, convert to canvas, or find the data URI.
 
@@ -9,7 +9,7 @@
  * than like 100kb. This is not a problem if you download it as normal.
 **/
 
-(function imageDownload_closure(asdf=false) {
+(function imageDownload_closure(defineGlobally=true) {
 	function _standardizeFormat(format) {
 		// also allow inputs like "png" or "jpg" instead of the actual MIME types.
 		if (typeof format !== "string")
@@ -110,9 +110,10 @@
 		const url = dataURI(object, format)
 		const link = document.createElement("a")
 
+
 		link.href = url
 		link.download = ((dest ?? "download") + `.${
-			_standardizeFormat(format).slice(6)
+			format === "jpg" ? "jpg" : _standardizeFormat(format).slice(6)
 		}`).toString()
 
 		link.click()
@@ -148,7 +149,7 @@
 	// 
 	else if (typeof define === "function" && define.amd)
 		define([], () => _exports);
-	else if (asdf)
+	else if (defineGlobally)
 		// browser
 		globalThis.imageDownload = _exports
 	else
