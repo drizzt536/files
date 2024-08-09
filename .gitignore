@@ -18,18 +18,18 @@
 # This is a separate repository and I can't get submodules to work.
 /HTML/File-Sharing/
 
-node_modules
 test.*
+*.test.*
+*.tmp
+*._*.*
+*.old
+
+node_modules
 *.htm
 *.exe
 *.o
 *.obj
 *.class
-*.tmp
-*.test.*
-*._*.*
-
-/Python/continuum.py
 
 !/JavaScript/test.js
 !/Python/manim/*/index.py
