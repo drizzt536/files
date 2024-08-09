@@ -40,11 +40,14 @@ var OwnedApplications = {
 	, "Animation Throwdown: The Quest For Cards": 0
 	, "Anodyne 2: Return To Dust": 19.99
 	, "APE OUT": 14.99
+	, "Arcade Paradise": 19.99
 	, "ARK Editor": 0
 	, "ARK: Survival Evolved": 29.99 // 1 add-on
 	, "Armored Warfare": 0
 	, "Art of Rally": 24.99
 	, "Assassins Creed Syndicate": 29.99
+	, "Astra Nova": 0
+	, "Astro Wars": 0
 	, "Atlas Mod Kit": 0
 	, "Auto Chess": 0
 	, "Auto Chess Experimental": 0
@@ -130,6 +133,7 @@ var OwnedApplications = {
 	, "Crying Suns": 24.99
 	, "Crying Suns Demo": 0
 	, "Cursed to Golf": 19.99
+	, "CurseForge": 0
 	, "Dandara: Trials of Fear Edition": 14.99
 	, "Dandara": 0 // duplicate
 	, "Darksiders II Deathinitive Edition": 29.99
@@ -227,6 +231,7 @@ var OwnedApplications = {
 	, "F.I.S.T.": 0 // duplicate
 	, "FIST": 0 // duplicate
 	, "Flat Heroes Demo": 0
+	, "Floppy Knights": 19.99
 	, "Football Manager 2020": 54.99
 	, "Football Manager 2022 Demo": 0
 	, "Football Manager 2023 Demo": 0
@@ -287,6 +292,7 @@ var OwnedApplications = {
 	, "HITMAN - Game of the Year Edition": 59.99
 	, "HITMAN": 0 // duplicate
 	, "Hob": 19.99
+	, "Homeworld 3 - Mod Tools & Editor": 0
 	, "Homeworld Remastered Collection": 34.99
 	, "Honkai: Star Rail": 0
 	, "Honkai Impact 3rd": 0
@@ -305,6 +311,7 @@ var OwnedApplications = {
 	, "Idle Champions of the Forgotten Realms Dark Justiciar Shadowheart Party Pack": 0
 	, "iHeart: Radio, Music, Podcasts": 0
 	, "iHeart": 0 // duplicate
+	, "Illuvium Zero": 0
 	, "INDUSTRIA": 19.99
 	, "Infinifactory": 24.99
 	, "Insurgency: Sandstorm": 29.99
@@ -335,6 +342,8 @@ var OwnedApplications = {
 	, "Kingdom New Lands": 14.99
 	, "Knockout City™": 0
 	, "Knockout City": 0 // duplicate
+	, "Last Oasis ModKit": 0
+	, "Last Oasis Mod Kit": 0 // duplicagte
 	, "Lawn Mowing Simulator": 19.99
 	, "Layers of Fear 2": 19.99
 	, "League of Legends": 0
@@ -362,9 +371,12 @@ var OwnedApplications = {
 	, "LOVE": 2.99
 	, "Magic The Gathering Arena": 0
 	, "Magic: Legends": 0 // early access, canceled
+	, "Maid of Sker": 24.99
 	, "Maneater": 39.99
 	, "Mars 2030 Editor": 0
+	, "Mars Battle": 0
 	, "Marvel's Guardians of the Galaxy": 59.99
+	, "Marvel's Midnight Suns": 59.99
 	, "MechWarrior 5 Editor": 0
 	, "Melvor Idle": 9.99
 	, "Metalstorm": 0
@@ -383,6 +395,8 @@ var OwnedApplications = {
 	, "MultiVersus": 0
 	, "Murder by Numbers": 14.99
 	, "My Pet Hooligan": 0
+	, "Myth of Empires - Mod Kit": 0
+	, "Myth of Empires Mod Kit": 0 // duplicate
 	, "N0va Desktop": 0
 	, "NAIRI Rising Tide": 0 // coming soon
 	, "NARAKA: BLADEPOINT": 0
@@ -401,12 +415,14 @@ var OwnedApplications = {
 	, "Nuclear Throne": 11.99
 	, "Offworld Trading Company": 29.99
 	, "OHDcore Mod Kit": 0
+	, "Once Human": 0
 	, "Opera GX - The First Browser for Gamers": 0
 	, "Opera GX": 0 // duplicate
 	, "Overclocked Combo Pack": 0
 	, "Fortnite Overclocked Combo Pack": 0 // duplicate
 	, "Overcooked": 16.99
 	, "Overcooked! 2": 24.99
+	, "OverTrip": 0
 	, "Outplayed": 0
 	, "Paladins": 0
 	, "Palia": 0
@@ -431,6 +447,7 @@ var OwnedApplications = {
 	, "PUBG BATTLEGROUNDS": 0
 	, "PUBG Founder's Pack": 0
 	, "Rage 2": 39.99
+	, "RiichiCity": 0
 	, "Rise of Industry": 29.99
 	, "Railway Empire": 29.99
 	, "Rainbow Six Extraction Demo": 0
@@ -442,9 +459,12 @@ var OwnedApplications = {
 	, "Recipe For Disaster": 16.99
 	, "Redout: Enhanced Edition": 19.99
 	, "Redout": 0 // duplicate
+	, "Redout 2": 19.99
 	, "Relicta": 19.99
 	, "Remnant: From the Ashes": 39.99
 	, "Remnant": 0 // duplicate
+	, "RENNSPORT Open Beta": 0
+	, "Replikant": 0
 	, "Ring of Pain": 19.99
 	, "Rise of the Tomb Raider: 20 Year Celebration": 29.99
 	, "Rise of the Tomb Raider": 0 // duplicate
@@ -502,6 +522,7 @@ var OwnedApplications = {
 	, "Sid Meier's Civilization 6": 0 // duplicate
 	, "Civilization VI": 0 // duplicate
 	, "Civilization 6": 0 // duplicate
+	, "Skybound Only Up": 0
 	, "Slain: Back From Hell": 12.99
 	, "Slain": 0 // duplicate
 	, "Sludge Life": 14.99
@@ -526,7 +547,9 @@ var OwnedApplications = {
 	, "Surviving the Aftermath": 29.99
 	, "Battlefront II": 0 // duplicate
 	, "Battlefront 2": 0 // duplicate
+	, "SteelSeries GG": 0
 	, "SteelSeries© FREE Cosmetic Pack": 0
+	, "SteelSeries FREE Cosmetic Pack": 0 // duplicate
 	, "Steep": 29.99
 	, "STG Football": 0 // TODO: early access
 	, "Stick it to the Man": 7.99
@@ -538,6 +561,7 @@ var OwnedApplications = {
 	, "Sundered: Eldrich Edition": 19.99
 	, "Sundered": 0 // duplicate
 	, "Sunless Sea": 18.99
+	, "Sunless Skies: Sovereign Edition": 24.99
 	, "Super Squad": 0
 	, "Superbrothers: Sword & Sworcery EP": 7.99
 	, "Superbrothers": 0 // duplicate
@@ -571,6 +595,7 @@ var OwnedApplications = {
 	, "The Elder Scrolls Online": 19.99
 	, "The Escapists": 17.99
 	, "The Escapists 2": 19.99
+	, "The Falconeer": 19.99
 	, "The Fall": 9.99
 	, "The Last Friend: First Bite": 14.99
 	, "The Last Friend": 0 // duplicate
@@ -623,9 +648,12 @@ var OwnedApplications = {
 	, "Unreal Editor For Fortnite": 0
 	, "Unreal Tournament": 0
 	, "UT Editor": 0
+	, "Valor Rising: Quest for the 7": 0
 	, "VALORANT": 0
 	, "Vertical Third Tech Demo": 0
 	, "Video Horror Society": 0
+	, "Voicemod: Real-Time AI Voice Changer & Soundboard": 0
+	, "Voicemod": 0 // duplicate
 	, "VR Funhouse Editor": 0
 	, "Warface": 0
 	, "Warframe": 0
@@ -651,6 +679,7 @@ var OwnedApplications = {
 	, "Wonder Boy: The Dragon's Trap": 19.99
 	, "Wonder Boy": 0 // duplicate
 	, "World of Goo": 14.99
+	, "World of Tanks": 0
 	, "World of Warships": 0
 	, "World of Warships Frosty Celebration Pack": 0 // duplicate
 	, "World of Warships Starter Pack: Ishizuchi": 0 // duplicate
@@ -661,8 +690,10 @@ var OwnedApplications = {
 	, "World War Z": 19.99
 	, "XCOM® 2": 59.99
 	, "XCOM 2": 0 // duplicate
+	, "XDefiant": 0
 	, "Yoku's Island Express": 19.99
 	, "Yooka-Laylee and the Impossible Lair": 29.99
+	, "Zenless Zone Zero": 0
 	, "Zorya: The Celestial Sisters Friend Pass": 0
 },
 
