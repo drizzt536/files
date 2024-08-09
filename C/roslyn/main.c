@@ -39,7 +39,7 @@
 
 int main(int argc, char **argv) {
 
-	const string args = strjoin(++argv, --argc);
+	const string args = strjoin(--argc, ++argv);
 
 	char *const cmd = malloc(strlen(DOTNET) + strlen(DLL) + args.l + 5);
 

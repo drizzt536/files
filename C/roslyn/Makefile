@@ -1,19 +1,15 @@
 #!/usr/bin/env makefile
 
-CFLAGS=-std=c99 -Wall -Wextra -Ofast
-STRIPFLAGS=-s -R .comment -R comment -R .note -R note 
-CC=gcc.exe
-ROOT=C:/Program Files/dotnet/
-STRIP=1
-
-ifndef VERSION
-# this is slow, so only execute if it is needed.
-VERSION=$(shell "$(ROOT)dotnet.exe" --version)
-endif
+CFLAGS = -std=c99 -Wall -Wextra -Ofast
+STRIPFLAGS = -s -R .comment -R comment -R .note -R note 
+CC = gcc
+ROOT = C:/Program Files/dotnet/
+STRIP = 1
+VERSION = $(shell "$(ROOT)dotnet.exe" --version)
 
 # throw in F# because why not.
-override OUTPUTS=csc.exe vbc.exe fsc.exe
-override BASE=$(basename $@)
+override OUTPUTS = csc.exe vbc.exe fsc.exe
+override BASE = $(basename $@)
 
 all: $(OUTPUTS)
 	@# build all
