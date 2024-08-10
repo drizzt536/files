@@ -7,15 +7,15 @@ Input "c=",C
 If not(real(A) or imag(A:Then
 If not(real(B) or imag(B:Then
 If not(real(C) or imag(C:Then
-Disp "ALL REAL
+Disp "All Real
 Return:End
-Disp "NO SOLUTION
+Disp "No Solution
 Return:End
 ­C/B→X
 Disp "X =",X
 Return:End
 2→I
-While fPart(real(A)) or fPart(imag(A)) or fPart(real(B)) or fPart(imag(B)) or fPart(real(C)) or fPart(imag(C))
+While fPart(real(A)) or fPart(imag(A)) or fPart(real(B)) or fPart(imag(B)) or fPart(real(C)) or fPart(imag(C
 AI→A
 BI→B
 CI→C
