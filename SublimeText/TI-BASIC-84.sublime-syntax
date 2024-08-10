@@ -26,7 +26,7 @@ contexts:
       scope: entity.name.function.source.ti-basic
     - match: '­?\d*(\.\d*)??\d+'
       scope: constant.numeric.source.ti-basic
-    - match: "=|≠|>|≥|<|≤| (and|x?or|n[CP]r) |\bnot\b|→||\bsinh??|\bcosh??|\btanh??|\\^|²||√|√|√|\blog\b|\babs\b|\bln\b|/||␣|\\*|-|\\+|°|\\b'||DMS|RPr|RPθ|PRx|PRy|!|Frac|Dec|Matrlist|Listmatr|ndUnd|FD|Rect|Polar"
+    - match: "=|≠|>|≥|<|≤| (and|x?or|n[CP]r) |not|→||sinh??|cosh??|tanh??|\\^|²||√|√|√|log|abs|ln|/||␣|\\*|-|\\+|°|\\b'||DMS|RPr|RPθ|PRx|PRy|!|Frac|Dec|Matrlist|Listmatr|ndUnd|FD|Rect|Polar"
       scope: keyword.operator.source.ti-basic
     - match: "sqrt|cbrt"
       scope: keyword.operator.easeOfUse.source.ti-basic # not actually valid syntax, but to make it easier
