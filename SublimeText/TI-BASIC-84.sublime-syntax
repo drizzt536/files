@@ -1,45 +1,43 @@
 %YAML 1.2
 
-# save to %AppData%/Sublime Text/Packages/TI-BASIC.sublime-syntax
+# TODO: this whole syntax needs to be redone.
+
 name: TI-BASIC-84
-file_extensions:
-  - ti-basic-84
-  - ti-basic
-  - 8xp
-scope: text.ti-basic
+file_extensions: [ti-basic-84, ti-basic, 8xp]
+scope: source.ti-basic
 contexts:
   main:
     - match: '\b(If |Then|Else|For|While |Repeat |End|Pause |Lbl [A-Z\dθ]{1,2}|Goto [A-Z\dθ]{0,2}|SetUpEditor |IS>\(|DS<\(|prgm([A-Zθ][A-Z\dθ]{0,7})?|Return|Stop|DelVar |Input |Prompt |Disp( |Graph|Table)|getKey|Clr(Home|Table|Draw|AllLists|List )|(Plots|Fn)O(ff|n) |(Label|Diagnostic|Expr|Axes|Coord|Grid|Clock)O(ff|n)|Horizontal|Vertical|Draw(F|Inv)|(Rect|Polar)GC||(Un)?Archive |Clear Entries|Normal|Sci|Eng|Float|Fix \d|Radian|Degree|Func|Param|Polar|Seq|Connected|Dot|Sequential|Simul|Real|a\+b|r\^θ|Full|Horiz|G—T|MATHPRINT|CLASSIC|nd|Und|AUTO|DEC|FRAC|STATWIZARD (OFF|ON)|[1-2]-Var Stats |Med-Med |(Quad|Cubic|Quart|Ln|Exp|Pwr|Sin)Reg |LinReg\((ax\+b|a\+bx)\) |Logistic |Manual-Fit |Scatter|xyLine|Histogram|(Mod)?Boxplot|NormProbPlot|IndpntA(uto|sk)|DependA(uto|sk)|lower|upper|RegEQ|m(in|ax)(X|Y))'
-      scope: keyword.control.all.ti-basic
+      scope: keyword.control.all.source.ti-basic
     - match: '\b(a\+bi)'
-      scope: keyword.control.easeOfUse.ti-basic
+      scope: keyword.control.easeOfUse.source.ti-basic
     - match: '\b(int|Get|Send|Sort(A|D)|dim|Fill|seq|cumSum|List|Select|augment|min|max|mean|median|sum|prod|stdDev|variance|fM(in|ax)|nDeriv|fnInt|Σ|logBASE|solve|round|(i|f)Part|lcm|gcd|remainder|conj|real|imag|angle|rand(Int(NoRep)?|Norm|Bin|M)?|det|identity|r?ref|rowSwap|\*row|\*?row\+|setTime|Plot[1-3]|Output|Menu|GetCalc|Tangent|GraphStyle|(Open|Exec)Lib|Line|Shade|Circle|Text)'
-      scope: variable.function.ti-basic
+      scope: variable.function.source.ti-basic
     - match: '^:?\t*".*"$|:'
-      scope: punctuation.definition.comment.ti-basic
+      scope: punctuation.definition.comment.source.ti-basic
     - match: '\B"'
-      scope: punctuation.definition.string.begin.ti-basic
+      scope: punctuation.definition.string.begin.source.ti-basic
       push: string
     - match: ',|\.'
-      scope: punctuation.separator.ti-basic
-    - match: 'Ans|π|||p?i|e' # ans, pi, e, i, i, e
-      scope: constant.language.ti-basic
+      scope: punctuation.separator.source.ti-basic
+    - match: '\b(Ans|π|||p?i|e)\b' # ans, pi, e, i, i, e
+      scope: constant.language.source.ti-basic
     - match: '\bL[₁₂₃₄₅₆]|\[[A-J]\]|­?\b?[A-Zθ]+\b?|⌊[A-Zθ][A-Z\dθ]*|Str\d|Pic\d|'
-      scope: entity.name.function.ti-basic
+      scope: entity.name.function.source.ti-basic
     - match: '­?\d*(\.\d*)??\d+'
-      scope: constant.numeric.ti-basic
-    - match: "=|≠|>|≥|<|≤| and | or | xor | nPr | nCr |not|→||sinh??|cosh??|tanh??|\\^|²||√|√|√|log|abs|ln|/||␣|\\*|-|\\+|°|\\b'||DMS|RPr|RPθ|PRx|PRy|!|Frac|Dec|Matrlist|Listmatr|ndUnd|FD|Rect|Polar"
-      scope: keyword.operator.ti-basic
+      scope: constant.numeric.source.ti-basic
+    - match: "=|≠|>|≥|<|≤| (and|x?or|n[CP]r) |\bnot\b|→||\bsinh??|\bcosh??|\btanh??|\\^|²||√|√|√|\blog\b|\babs\b|\bln\b|/||␣|\\*|-|\\+|°|\\b'||DMS|RPr|RPθ|PRx|PRy|!|Frac|Dec|Matrlist|Listmatr|ndUnd|FD|Rect|Polar"
+      scope: keyword.operator.source.ti-basic
     - match: "sqrt|cbrt"
-      scope: keyword.operator.easeOfUse.ti-basic # not actually valid syntax, but to make it easier
+      scope: keyword.operator.easeOfUse.source.ti-basic # not actually valid syntax, but to make it easier
     - match: 'n'
-      scope: entity.name.function.ti-basic
+      scope: entity.name.function.source.ti-basic
     - match: '\b"'
-      scope: keyword.operator.seconds.ti-basic
+      scope: keyword.operator.seconds.source.ti-basic
     - match: "[;`\\[\\]{}?~'@#$%&_\\\\|]|"
-      scope: invalid.ti-basic
+      scope: invalid.source.ti-basic
   string:
-    - meta_scope: string.quoted.double.ti-basic
+    - meta_scope: string.quoted.double.source.ti-basic
     - match: '["\n]'
-      scope: punctuation.definition.string.end.ti-basic
+      scope: punctuation.definition.string.end.source.ti-basic
       pop: true
