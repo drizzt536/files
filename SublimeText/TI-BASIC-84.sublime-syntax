@@ -20,7 +20,7 @@ contexts:
       push: string
     - match: ',|\.'
       scope: punctuation.separator.source.ti-basic
-    - match: '\b(Ans|π|||p?i|e)\b' # ans, pi, e, i, i, e
+    - match: 'Ans|π|||p?i|e' # ans, pi, e, i, i, e
       scope: constant.language.source.ti-basic
     - match: '\bL[₁₂₃₄₅₆]|\[[A-J]\]|­?\b?[A-Zθ]+\b?|⌊[A-Zθ][A-Z\dθ]*|Str\d|Pic\d|'
       scope: entity.name.function.source.ti-basic
