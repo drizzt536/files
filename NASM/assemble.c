@@ -1,21 +1,6 @@
-// gcc -std=c99 -Wall -Wextra -Ofast assemble.c -o assemble && strip assemble.exe
+// make all
 
-
-/** exit codes:
- * 0: success
- *
- * 2: not enough arguments
- * 3: out of memory
- * 4: invalid/nonexistent file
- * 5: assembler error
- * 6: objcopy error
- * 7: linker error
- * 8: strip error
- * 9: remove error
- * 10: execution error
-**/
-
-
+// TODO: if no extension is given and there is no `.nasm`, try other extensions
 
 #ifndef __GNUC__
 	#error "This program only works with GCC or compilers that allow GCC extensions."
@@ -47,14 +32,32 @@
 //## macros and types ##//
 
 #ifdef _WIN32
-	#define IS_WINDOWS 1
+	#define IS_WINDOWS true
 #else
-	#define IS_WINDOWS 0
+	#define IS_WINDOWS false
 #endif
+
+#ifndef NASM_FORMAT
+	#error "-D NASM_FORMAT=\"format\" must be given to GCC for assemble.c"
+#endif
+
+#if !defined(GIT_REPO) || !defined(GIT_HASH)
+	#define GIT_DATA "standalone"
+#else
+	#define GIT_DATA GIT_REPO "\n" GIT_HASH
+#endif
+
+#define TIMESTAMP __DATE__ " " __TIME__
+#define VERSION TIMESTAMP "\n" GIT_DATA
 
 #define cleanup_char cleanup_
 
-#define VALIDATE_FILE_2(path, code) VALIDATE_FILE(path, code, params.verbose)
+#define _VALIDATE_FILE(path, code) ({       \
+	if (params.verbose)                      \
+		putchar(' ');                         \
+	VALIDATE_FILE(path, code, params.verbose); \
+})
+
 #define FREE_T(x) __attribute__((cleanup(cleanup_##x))) x
 
 typedef struct {
@@ -108,6 +111,8 @@ FilePathData extensionIndex(const char *const filename) {
 
 	// TODO: figure out how to make file paths with spaces work.
 		// in situations like "C:/Program Files/folder/file.exe"
+		// just add quotes around it when required.
+		// or always add quotes around file paths?
 
 	size_t n = strlen(filename);
 	size_t i = n;
@@ -288,12 +293,12 @@ static inline void cleanup_Params(const Params *p) { free(p->libs.s); }
 static inline void cleanup_string(const string *p) { free(p->s); }
 static inline void cleanup_FilePathData(const FilePathData *p) { free(p->path); }
 
-static inline void help(void) {
+__declspec(noreturn) static inline void help(void) {
 	puts(
 		"\n./assemble infile [params]"
 		"\n"
 		"\n"
-		"\nrough overview of process:"
+		"\nRough overview of process:"
 		"\n    nasm -fwin64 -Werror $infile -o $object $params"
 		"\n"
 		"\n    # the print-out will use `--rename` which is the same."
@@ -308,7 +313,20 @@ static inline void help(void) {
 		"\n    if remove, rm $object"
 		"\n    if exec, run $outfile"
 		"\n"
-		"\nexamples:"
+		"\nExit Codes:"
+		"\n     0 - success"
+		"\n     1 - (unused)"
+		"\n     2 - not enough arguments"
+		"\n     3 - out of memory"
+		"\n     4 - invalid/nonexistent file"
+		"\n     5 - assembler error"
+		"\n     6 - objcopy error"
+		"\n     7 - linker error"
+		"\n     8 - strip error"
+		"\n     9 - file removal error"
+		"\n    10 - execution error"
+		"\n"
+		"\nExamples:"
 		"\n    ./assemble hello --S --N --K"
 		"\n        input = ./hello.nasm (.nasm is assumed if no extension is present)"
 		"\n        don't strip, normalize segments, remove object, or execute"
@@ -328,32 +346,43 @@ static inline void help(void) {
 		"\n        no libraries to ld."
 		"\n"
 		"\n    ./assemble --help"
-		"\n        print the help message"
+		"\n        print the help message."
+		"\n        If your file is named `--help.nasm`, stop that."
+		"\n        or just do `./assemble --help.nasm`"
 		"\n"
 		"\n    ./assemble \"./folder with spaces/file.nasm\""
 		"\n        this will not work, and an error will be thrown."
 		"\n"
-		"\narguments:"
-		"\n    --a           assemble only. do not link or normalize segment names"
-		"\n    --k           keep object file on linker fail (default is to remove)"
-		"\n    --K           always keep object file."
-		"\n    --S           do not strip executable (default is to strip everthing)"
-		"\n    --N           do not normalize segment names, leave them as the original"
-		"\n    --s           don't print anything (silent), and"
-		"\n                  don't print sub-program messages in color."
-		"\n                  does not suppress messages for the following:"
-		"\n                      - sub-program (nasm, ld, etc.) errors/warnings"
-		"\n                      - out-of-memory error messages."
-		"\n                      - when `--help` is given as the first argument"
-		"\n                      - error messages when the input file path has spaces"
-		"\n    --e           run final executable when done"
-		"\n    --l [list]    includes comma-separated libraries in linking"
-		"\n    --help        print this message. only works as the first argument"
+		"\nOptions:"
+		"\n    --a              assemble only. do not link or normalize segment names"
+		"\n    --e              run final executable when done"
+		"\n    -h, -?, --help   print this message. only works as the first argument"
+		"\n    --K              always keep object file (default is to remove)"
+		"\n    --k              keep object file on linker fail"
+		"\n    --l [list]       includes comma-separated libraries in linking"
+		"\n    --N              do not normalize segment names, leave them as the original"
+		"\n    --S              do not strip executable (default is to strip everthing)"
+		"\n    --s              don't print anything (silent), and"
+		"\n                     don't print sub-program messages in color"
+		"\n                     does not suppress messages for the following:"
+		"\n                         - sub-program (nasm, ld, etc.) errors/warnings"
+		"\n                         - out-of-memory error messages"
+		"\n                         - when `--help` is given as the first argument"
+		"\n                         - error messages when the input file path has spaces"
+		"\n    -v, --version    print the compile date, git repository if known, and git commit hash if known"
 		"\n"
 		"\n    the double minus signs are required; i.e. `--e` will work, `-e` will not."
 		"\n    all other arguments are given to nasm in the same order as provided."
 		"\n"
 	);
+
+	exit(0);
+}
+
+__declspec(noreturn) static inline void version(void) {
+	printf(VERSION);
+
+	exit(0);
 }
 
 
@@ -363,11 +392,14 @@ bool nasm(
 	string nasmArgs,
 	const char *const object
 ) {
-	// 25 + infile.len + 4 + (infile.dotIndex + 2) + 1 + nasmArgs.l + 1
-	char *restrict const cmd = malloc(infile.len + infile.dotIndex + nasmArgs.l + 33);
+	// 21 + infile.len + 4 + (infile.dotIndex + 2) + 1 + nasmArgs.l + 1
+	char *restrict const cmd = malloc(infile.len + infile.dotIndex + nasmArgs.l + 29);
 	OUT_OF_MEMORY(cmd, 10);
 
-	sprintf(cmd, "nasm.exe -fwin64 -Werror %s -o %s %s", infile.path, object, nasmArgs.s);
+	sprintf(cmd,
+		"nasm -f" NASM_FORMAT " -Werror %s -o %s %s",
+		infile.path, object, nasmArgs.s
+	);
 
 	if (params.verbose) {
 		printf("assembling  : ");
@@ -404,19 +436,19 @@ bool objcopy(
 		printf("normalizing : ");
 
 	// 121 + (infile.dotIndex + 2) + 1
-	char *restrict const cmd = malloc(infile.dotIndex + 124);
+	char *restrict const cmd = malloc(infile.dotIndex + 120);
 	OUT_OF_MEMORY(cmd, 11);
 
 	sprintf(
 		cmd,						//
-		"objcopy.exe"				//   11
+		"objcopy"					//    7
 		" --rename text=.text"		// + 20
 		" --rename data=.data"		// + 20
 		" --rename rdata=.rdata"	// + 22
 		" --rename rodata=.rdata"	// + 23
 		" --rename .rodata=.rdata"	// + 24
 		" %s",						// + 1, 1
-		object						// = 121, 1
+		object						// = 117, 1
 	);
 
 	if (params.verbose) {
@@ -444,10 +476,13 @@ bool objcopy(
 	return false;
 }
 
-bool rm(Params params, const char *const object) {
+bool rm(
+	Params params,
+	const char *const object
+) {
 	if (params.verbose) {
 		printf("purging obj : ");
-		printf_color(ANSI_GREEN, "rm.exe %s\n", object);
+		printf_color(ANSI_GREEN, "rm %s\n", object);
 	}
 
 	const int exitCode = remove(object);
@@ -470,11 +505,11 @@ bool ld(
 	const char *const object,
 	const char *const ofile
 ) {
-	// 7 + (infile.dotIndex + 2) + 1 + params.libs.l + 4 + (infile.dotIndex + 4*IS_WINDOWS) + 13 + 1
-	char *restrict const cmd = malloc(2*infile.dotIndex + params.libs.l + 4*IS_WINDOWS + 28);
+	// 3 + (infile.dotIndex + 2) + 1 + params.libs.l + 4 + (infile.dotIndex + 4*IS_WINDOWS) + 13 + 1
+	char *restrict const cmd = malloc(2*infile.dotIndex + params.libs.l + 4*IS_WINDOWS + 24);
 	OUT_OF_MEMORY(cmd, 12);
 
-	sprintf(cmd, "ld.exe %s %s -o %s --entry main", object, params.libs.s, ofile);
+	sprintf(cmd, "ld %s %s -o %s --entry main", object, params.libs.s, ofile);
 
 	if (params.verbose) {
 		printf("linking     : ");
@@ -510,11 +545,11 @@ bool strip(
 	FilePathData infile,
 	const char *const ofile
 ) {
-	// 53 + (infile.dotIndex + 4*IS_WINDOWS) + 1
-	char *restrict const cmd = malloc(infile.dotIndex + 4*IS_WINDOWS + 54);
+	// 49 + (infile.dotIndex + 4*IS_WINDOWS) + 1
+	char *restrict const cmd = malloc(infile.dotIndex + 4*IS_WINDOWS + 50);
 	OUT_OF_MEMORY(cmd, 13);
 
-	sprintf(cmd, "strip.exe -s -R .comment -R comment -R .note -R note %s", ofile);
+	sprintf(cmd, "strip -s -R .comment -R comment -R .note -R note %s", ofile);
 
 	if (params.verbose) {
 		printf("stripping   : ");
@@ -542,7 +577,14 @@ bool strip(
 	return false;
 }
 
-bool execute(Params params, char *const ofile) {
+bool execute(
+	Params params,
+#if IS_WINDOWS
+	char *const ofile
+#else
+	const char *const ofile
+#endif
+) {
 	if (params.verbose) {
 		printf("executing   : ");
 		puts_color(ANSI_GREEN, ofile);
@@ -571,20 +613,21 @@ bool execute(Params params, char *const ofile) {
 
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, const char *argv[]) {
 
 	argc--; argv++; // the path to the current file is not needed
 
 	if (argc == 0) {
-		eputs("No command-line arguments provided. Filename is required.");
+		eputs("No command-line arguments provided. Filename is required. Use `-h` for help.");
 
 		return 2;
 	}
 
-	if (strcmp(*argv, "--help") == 0) {
+	if (!strcmp(*argv, "--help") || !strcmp(*argv, "-h") || !strcmp(*argv, "-?"))
 		help();
-		return 0;
-	}
+
+	if (!strcmp(*argv, "--version") || !strcmp(*argv, "-v"))
+		version();
 
 	const FREE_T(FilePathData) infile = extensionIndex(*argv);
 
@@ -617,12 +660,12 @@ int main(int argc, char *argv[]) {
 	// strlen(object) == (infile.dotIndex + 2)
 	// strlen(ofile ) == (infile.dotIndex + 4*IS_WINDOWS)
 
-	VALIDATE_FILE_2(infile.path, 1);
+	_VALIDATE_FILE(infile.path, 1);
 
 	if (nasm(params, infile, nasmArgs, object))
 		return 5;
 
-	VALIDATE_FILE_2(object, 2);
+	_VALIDATE_FILE(object, 2);
 
 	if (params.normalizeSegments) {
 		if (objcopy(params, infile, object))
@@ -642,7 +685,7 @@ int main(int argc, char *argv[]) {
 	if (ld(params, infile, object, ofile))
 		return 7;
 
-	VALIDATE_FILE_2(ofile, 3);
+	_VALIDATE_FILE(ofile, 3);
 	///////////////////////////////////
 
 	if (params.strip) {
