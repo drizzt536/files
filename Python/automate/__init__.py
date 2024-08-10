@@ -173,10 +173,14 @@ def init_module() -> None:
 	# Mouse automation
 
 	def setmouseposition(x: int | Location = 0, y: int = 0) -> None:
+		"change mouse position given an absolute location."
 		mouse_controller.position = x if isinstance(x, tuple) else (x, y)
 
 	def setmouseposition2(loc: Location = None, steps: int = 50, delay_ms: int = 2) -> None:
-		"change mouse position smoothly. takes `steps` number of increments"
+		"""
+		change mouse position smoothly given an absolute location.
+		takes `steps` number of increments
+		"""
 
 		rel_x = loc[0] - mouse_controller.position[0]
 		rel_y = loc[1] - mouse_controller.position[1]
@@ -184,13 +188,25 @@ def init_module() -> None:
 		movemouse2((rel_x, rel_y), steps, delay_ms)
 
 	def movemouse(rel_x: int | Location = 0, rel_y: int = 0) -> None:
+		"""
+		move mouse given a relative location.
+		both of these will work:
+			`movemouse( (x, y) )`
+			`movemouse(x, y)`
+		"""
+
 		if isinstance(rel_x, tuple):
 			mouse_controller.move(*rel_x)
 		else:
 			mouse_controller.move(rel_x, rel_y)
 
 	def movemouse2(rel_loc: Location, steps: int = 50, delay_ms: int = 2) -> None:
-		"move mouse smoothly. takes `steps` number of increments. sleep `delay_ms` between each move."
+		"""
+		move mouse smoothly.
+		relative mouse movement
+		takes `steps` number of increments.
+		sleep `delay_ms` between each move.
+		"""
 		rel_x, rel_y = rel_loc
 
 		x_step = rel_x // steps
@@ -204,6 +220,10 @@ def init_module() -> None:
 		mouse_controller.move(rel_x % steps, rel_y % steps)
 
 	def click(button: object = Button.left, times: int = 1, loc: Location | None = None) -> None:
+		"""
+		press and release the mouse button.
+		if `loc` is not None, the location is set before clicking.
+		"""
 		if loc is not None:
 			setmouseposition(loc)
 
@@ -240,39 +260,59 @@ def init_module() -> None:
 		mouseup()
 
 	def leftclick(times: int = 1, loc: Location | None = None) -> None:
+		"if `loc` is not None, the location is set before clicking."
 		if loc is not None:
 			mouse_controller.position = loc
 
 		mouse_controller.click(Button.left, times)
 
 	def rightclick(times: int = 1, loc: Location | None = None) -> None:
+		"if `loc` is not None, the location is set before clicking."
 		if loc is not None:
 			mouse_controller.position = loc
 
 		mouse_controller.click(Button.right, times)
 
 	def middleclick(times: int = 1, loc: Location | None = None) -> None:
+		"if `loc` is not None, the location is set before clicking."
 		if loc is not None:
 			mouse_controller.position = loc
 
 		mouse_controller.click(Button.middle, times)
 
-	def scroll(ltr: realnumber | Location = 0, dtu: realnumber = 0) -> None:
-		if isinstance(ltr, tuple):
-			mouse_controller.scroll(*ltr)
-		else:
-			mouse_controller.scroll(ltr, dtu)
+	def scroll(ltr: realnumber | Location = 0, ttb: realnumber = 0) -> None:
+		"""
+		basically just `hscroll(ltr); vscroll(ttb)`.
 
-	def vscroll(dtu: realnumber = 0) -> None:
-		"vertical scroll"
-		mouse_controller.scroll(0, dtu)
+		examples:
+			scroll(0, 10) scrolls down 10.
+			scroll(0, -5) scrolls up 5.
+			scroll(10, 0) scrolls right 10.
+			scroll(-10, 0) scrolls left 10.
+
+		either of these calling conventions will work:
+			scroll(left-to-right, top-to-bottom)
+			scroll( (left-to-right, top-to-bottom) )
+		"""
+
+		if isinstance(ltr, tuple):
+			mouse_controller.scroll(ltr[0], -ltr[1])
+		else:
+			mouse_controller.scroll(ltr, -ttb)
+
+	def vscroll(ttb: realnumber = 0) -> None:
+		"vertical scroll. top-to-bottom; vscroll(10) scrolls down"
+		mouse_controller.scroll(0, -ttb)
 
 	def hscroll(ltr: realnumber = 0) -> None:
-		"horizontal scroll"
+		"horizontal scroll. left-to-right; hscroll(10) scrolls right"
 		mouse_controller.scroll(ltr, 0)
 
 	def mousedown(button: Button = Button.left, loc: Location | None = None, delay_ms: int = 10) -> None:
-		"the delay only happens if the mouse location is changed"
+		"""
+		press a mouse button but do not release it.
+		the delay only happens if the mouse location is changed
+		"""
 		if loc is not None:
 			mouse_controller.position = loc
 
@@ -282,7 +322,10 @@ def init_module() -> None:
 		mouse_controller.press(button)
 
 	def mouseup(loc: Location | None = None, delay_ms: int = 10) -> None:
-		"release most recent mouse button"
+		"""
+		release most recently pressed mouse button.
+		the delay only happens if the position is changed.
+		"""
 
 		if loc is not None:
 			mouse_controller.position = loc
@@ -292,6 +335,7 @@ def init_module() -> None:
 		mouse_controller.release( buttons.pop() )
 
 	def releasebuttons() -> None:
+		"releases all un-released mouse buttons"
 		while buttons:
 			mouseup()
 
@@ -300,16 +344,19 @@ def init_module() -> None:
 	# Keyboard automation
 
 	def keydown(key: object = None) -> None:
+		"press a key but do not release it"
 		if key is None:
 			return
 
 		keys.append(key)
 		keyboard_controller.press(key)
 
-	def keyup() -> None: # release most recent key
+	def keyup() -> None:
+		"release most recently pressed key"
 		keyboard_controller.release( keys.pop() )
 
 	def keypress(key: object = None, delay_ms: int = 0) -> None:
+		"press and release a key"
 		if key is None:
 			return
 
@@ -318,17 +365,24 @@ def init_module() -> None:
 		keyup()
 
 	def typekeys(keys: list | tuple | str | None = None, delay_ms: int = 0) -> None:
-		if keys is None:
+		"press and release keys sequentially as if typing. aliased as typestring"
+		if not keys:
 			return
 
 		for key in keys:
 			keypress(Key.enter if key == "\n" else key, delay_ms)
 
 	def enter(times: int = 1, delay_ms: int = 0) -> None:
+		"press and release the enter key"
+
 		for i in range(int(times)):
 			keypress(Key.enter, delay_ms)
 
 	def keycombo(keys: list | tuple | None = None, delay_ms: int = 10) -> None:
+		"""
+		apply a key combo.
+		presses all the keys, delays, and releases them
+		"""
 		if keys is None:
 			return
 
@@ -363,12 +417,14 @@ def init_module() -> None:
 		keyup()
 
 	def releasekeys() -> None:
+		"releases all un-released keyboard keys"
 		while keys:
 			keyup()
 
 	def releaseall() -> None:
-		releasekeys()
+		"releases all un-released mouse buttons and keyboard keys"
 		releasebuttons()
+		releasekeys()
 
 
 
@@ -383,15 +439,19 @@ def init_module() -> None:
 			keypress(Key.media_volume_down, 0)
 
 	def pauseplay() -> None:
+		"pause or play the currently active media"
 		keypress(Key.media_play_pause, 0)
 
 	def togglemute() -> None:
+		"toggle mute audio"
 		keypress(Key.media_volume_mute, 0)
 
 	def nextmedia() -> None:
+		"skip to the next media"
 		keypress(Key.media_next, 0)
 
 	def prevmedia() -> None:
+		"go back to the previous media"
 		keypress(Key.media_previous, 0)
 
 
