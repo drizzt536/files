@@ -1,0 +1,12 @@
+<snippet>
+	<content><![CDATA[%if ${1:x}
+	${2:; true}
+%elif ${3:y}
+	${4:; false, true}
+%else
+	${0:; false, false}
+%endif]]></content>
+	<tabTrigger>%ifee</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>%if … %elif … %else … %endif</description>
+</snippet>

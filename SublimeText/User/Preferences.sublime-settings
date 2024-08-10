@@ -1,0 +1,15 @@
+{
+	"font_size": 24,
+	"save_on_focus_lost": true,
+	"word_wrap": true,
+	"light_color_scheme": "Mariana.sublime-color-scheme",
+	"match_brackets_content": true,
+	"move_to_limit_on_up_down": true,
+	"control_character_style": "names",
+	"update_system_recent_files": false,
+	"minimap_horizontal_scrolling": true,
+	"theme": "Adaptive.sublime-theme",
+	"margin": 0,
+	"ignored_packages": [ "Vintage",
+	],
+}

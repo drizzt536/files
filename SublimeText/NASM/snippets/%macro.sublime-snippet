@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[%macro ${1:name} ${2:0}
+	${0; content}
+%endm]]></content>
+	<tabTrigger>%macro</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>Macro</description>
+</snippet>

@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[%rep ${1:times}
+	$0
+%endrep]]></content>
+	<tabTrigger>%rep</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>Repetition</description>
+</snippet>

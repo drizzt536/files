@@ -1,0 +1,18 @@
+{
+	"bootstrapped": true,
+	"auto_upgrade_frequency": 12,
+	"in_process_packages": [
+	],
+	"installed_packages": [
+		"CMake",
+		"M3U Syntax",
+		"OrgExtended",
+		"Package Control",
+		"PackageDev",
+		"PowerShell",
+		"Table Editor",
+		"TOML",
+		"Trello",
+		"WolframLanguage",
+	],
+}

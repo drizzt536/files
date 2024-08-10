@@ -1,0 +1,36 @@
+[
+	{ "keys": ["f1"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
+	{ "keys": ["shift+backspace"], "command": "right_delete" },
+	{ "keys": ["ctrl+k", "ctrl+t"], "command": "title_case" },
+	{ "keys": ["ctrl+u"], "command": "upper_case" },
+	{ "keys": ["ctrl+shift+u"], "command": "lower_case" },
+	{ "keys": ["ctrl+alt+["], "command": "fold_all" },
+	{ "keys": ["ctrl+alt+]"], "command": "unfold_all" },
+	{ "keys": ["ctrl+alt+u"], "command": "swap_case" },
+	{ "keys": ["ctrl+tab"], "command": "next_view" },
+
+	{ "keys": ["ctrl+shift+tab"], "command": "prev_view" },
+	{ "keys": ["ctrl+shift+f"], "command": "show_panel", "args": {"panel": "replace", "reverse": false} },
+	{ "keys": ["ctrl+alt+f"], "command": "show_panel", "args": {"panel": "find_in_files"} },
+	{ "keys": ["alt+x", "s"], "command": "toggle_side_bar" },
+	{ "keys": ["ctrl+shift+d"], "command": "show_overlay", "args": {"overlay": "goto", "text": ":"} },
+
+	// remove keybinds
+	{ "keys": ["insert"], "command": "noop" },
+	{ "keys": ["ctrl+insert"], "command": "toggle_overwrite" },
+	{ "keys": ["shift+insert"], "command": "noop" },
+	{ "keys": ["ctrl+g"], "command": "noop" },
+	{ "keys": ["ctrl+f4"], "command": "noop" },
+	{ "keys": ["ctrl+shift+space"], "command": "noop" },
+	{ "keys": ["ctrl+k", "ctrl+u"], "command": "noop" },
+	{ "keys": ["ctrl+k", "ctrl+l"], "command": "noop" },
+	{ "keys": ["ctrl+k", "ctrl+b"], "command": "noop" },
+
+	{ "keys": ["keypad_enter"], "command": "noop"},
+	{ "keys": ["shift+keypad_enter"], "command": "noop" },
+	{ "keys": ["ctrl+keypad_enter"], "command": "noop" },
+	{ "keys": ["ctrl+shift+keypad_enter"], "command": "noop" },
+	{ "keys": ["ctrl+keypad_minus"], "command": "noop" },
+	{ "keys": ["ctrl+keypad_plus"], "command": "noop" },
+	{ "keys": ["ctrl+shift+keypad_plus"], "command": "noop" },
+]

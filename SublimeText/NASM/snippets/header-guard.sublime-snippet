@@ -1,0 +1,13 @@
+<snippet>
+	<content><![CDATA[
+%ifndef ${1:HEADER_MAC}
+	%define ${1:HEADER_MAC}
+
+	${0:; code}
+
+%endif ; ${1:HEADER_MAC}
+]]></content>
+	<tabTrigger>guard</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>Header Guard</description>
+</snippet>

@@ -1,0 +1,29 @@
+// Documentation at https://www.sublimetext.com/docs/color_schemes.html
+{
+	"variables": {
+		"gray": "var(grey)",
+		"soft-red": "rgb(160, 80, 80)",
+		"soft-orange": "rgb(130, 80, 20)",
+	},
+	"globals": {
+		"background": "rgb(43, 51, 60)" // default: rgb(48, 56, 65)
+	},
+	"rules": [
+		{
+			"name": "Invalid",
+			"scope": "invalid",
+			"foreground": "var(gray)", // default: white2
+			"background": "var(soft-red)" // default: red
+		},
+		{
+			"name": "Invalid deprecated",
+			"scope": "invalid.deprecated",
+			"foreground": "var(red)", // default: white2
+			"background": "var(soft-orange)" // default: orange2
+		},
+		{
+			"scope": "message.error",
+			"foreground": "var(soft-red)" // default: red
+		},
+	]
+}

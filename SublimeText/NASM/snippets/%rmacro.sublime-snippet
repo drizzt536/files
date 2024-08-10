@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[%rmacro ${1:name} ${2:0}
+	${0:; content}
+%endm]]></content>
+	<tabTrigger>%rmacro</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>Recursive Macro</description>
+</snippet>

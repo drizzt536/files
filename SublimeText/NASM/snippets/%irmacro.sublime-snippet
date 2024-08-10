@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[%irmacro ${1:name} ${2:0}
+	${0:; content}
+%endm]]></content>
+	<tabTrigger>%irmacro</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>Case-Insensitive Recursive Macro</description>
+</snippet>
