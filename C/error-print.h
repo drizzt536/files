@@ -1,5 +1,5 @@
-#ifndef ERROR_PRINT_H_
-	#define ERROR_PRINT_H_
+#ifndef ERROR_PRINT_H
+	#define ERROR_PRINT_H
 
 	#include <stdlib.h> // exit
 	#include <stdio.h> // printf, fprintf, stdout, stderr
@@ -59,7 +59,7 @@
 
 	// verbose
 	#define VALIDATE_FILE_V(path, code) ({               \
-		printf("validating  : ");                         \
+		printf("validating : ");                          \
 		                                                   \
 		if (access((path), 0 /* F_OK on POSIX */) == -1) {  \
 			eprintf("'%s' cannot be accessed. code: %llu\n", \
