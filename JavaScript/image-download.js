@@ -1,5 +1,5 @@
 #!/usr/bin/env js
-// image-download.js v1.0.3 (c) | Copyright 2024 Daniel E. Janusch
+// image-download.js v1.0.4 (c) | Copyright 2024 Daniel E. Janusch
 
 // download any image from the current page, convert to canvas, or find the data URI.
 
@@ -67,7 +67,7 @@
 			if (object instanceof HTMLCanvasElement) return object
 
 			throw Error(`cannot synchronously convert from "${
-				typeof o === "string"?
+				typeof object === "string"?
 					"data URI":
 					"unknown format"
 			} to a canvas.`)
