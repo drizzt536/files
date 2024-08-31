@@ -1,0 +1,17 @@
+{
+	"working_dir": "${file_path}",
+	"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+
+	"selector": "text.tex",
+	"windows": {
+		"shell_cmd": "pwsh.exe \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} pdftex -verbose"
+	},
+	"variants": [
+		{
+			"name": "Build Only",
+			"windows": {
+				"shell_cmd": "pwsh.exe \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} pdftex -buildOnly -verbose"
+			}
+		},
+	]
+}

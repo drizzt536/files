@@ -14,10 +14,14 @@
 	{ "keys": ["ctrl+alt+f"], "command": "show_panel", "args": {"panel": "find_in_files"} },
 	{ "keys": ["alt+x", "s"], "command": "toggle_side_bar" },
 	{ "keys": ["ctrl+shift+d"], "command": "show_overlay", "args": {"overlay": "goto", "text": ":"} },
+	{ "keys": ["alt+d"], "command": "find_next" },
+	{ "keys": ["ctrl+insert"], "command": "toggle_overwrite" },
+	// { "keys": ["alt+shift+d"], "command": "find_under_expand_skip" },
 
 	// remove keybinds
+	{ "keys": ["ctrl+k", "ctrl+d"], "command": "noop" },
+	{ "keys": ["f3"], "command": "noop" },
 	{ "keys": ["insert"], "command": "noop" },
-	{ "keys": ["ctrl+insert"], "command": "toggle_overwrite" },
 	{ "keys": ["shift+insert"], "command": "noop" },
 	{ "keys": ["ctrl+g"], "command": "noop" },
 	{ "keys": ["ctrl+f4"], "command": "noop" },
