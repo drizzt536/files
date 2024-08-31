@@ -1,4 +1,4 @@
-; ../assemble print_scanned_int64.nasm --e --l msvcrt
+; ../assemble print-scanned-int64 --l msvcrt
 
 segment rdata
 	fmt 	db  	"%llu" ; print as unsigned int64
@@ -6,8 +6,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf	; msvcrt.dll
-	extern	scanf	; msvcrt.dll
+	extern	printf, scanf	; msvcrt.dll
 
 ; ╭──────────────────────────╮
 ; │                          │

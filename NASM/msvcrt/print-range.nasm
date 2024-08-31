@@ -1,4 +1,4 @@
-; ../assemble printf_range.nasm --e --l msvcrt
+; ../assemble print-range --l msvcrt
 
 %define MAX 32
 
@@ -35,13 +35,13 @@ main:
 	mov 	r14, 0				; int i = 0
 	mov 	r15, MAX			; this should never change
 
-	loop:						; loop:
+	.loop:						; loop:
 		lea 	rcx, [rel fmt]	;; load format string
 		mov 	rdx, r14		;; load i
 		call	printf			;     __builtin_printf(fmt, i);
 		inc 	r14				;     i++
 		cmp 	r14, r15		;     if (i <= MAX)
-		jle  	loop			;         goto loop
+		jle  	.loop			;         goto loop
 
 	xor 	rax, rax
 	mov 	rsp, rbp

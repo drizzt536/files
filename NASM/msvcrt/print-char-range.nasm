@@ -1,4 +1,4 @@
-; ../assemble print_char_range.nasm --e --l msvcrt
+; ../assemble print-char-range --l msvcrt
 
 %define MIN 32
 %define MAX 255
@@ -26,7 +26,7 @@ main:
 	mov 	rbp, rsp
 	sub 	rsp, 32
 
-	mov 	rbx, MAX	; 64 bit of MAX version to compare to
+	mov 	rbx, MAX	; 64 bit version of MAX to compare to
 	mov 	rax, MIN
 
 .loop:
@@ -36,6 +36,6 @@ main:
 	cmp 	rax, rbx
 	jle 	.loop
 
+	leave
 	xor 	rax, rax
-	mov 	rsp, rbp
 	ret

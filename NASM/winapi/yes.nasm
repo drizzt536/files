@@ -1,13 +1,14 @@
-; ../assemble yes.nasm --e --l user32,kernel32
+; ../assemble yes --l kernel32
 
 segment rdata
-	msg 	db	`y\n\0`
+%xdefine msg_str `y\n`
+%xdefine msg_len %strlen(msg_str)
+	msg_lbl 	db	msg_str
 
 segment text
 	global	main
 
-	extern	GetStdHandle		; kernel32.dll
-	extern	WriteConsoleA		; user32.dll
+	extern	GetStdHandle, WriteConsoleA	; kernel32.dll
 
 main:
 	sub 	rsp, 40			; Shadow space
@@ -18,11 +19,11 @@ main:
 	mov 	rbx, rax		; non-volatile register
 	xor 	r9 , r9			; WriteConsoleA doesn't change r9
 
-start:
+.loop:
 	mov 	rcx, rbx
-	mov 	rdx, msg
-	mov 	r8 , 3
+	mov 	rdx, msg_lbl
+	mov 	r8 , msg_len
 	call	WriteConsoleA
 
-	jmp 	start
+	jmp 	.loop
 	; will only ever exit from SIGINT/SIGKILL/SIGTERM

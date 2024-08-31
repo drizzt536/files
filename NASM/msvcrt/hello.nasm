@@ -1,4 +1,4 @@
-; ../assemble hello.nasm --e --l msvcrt
+; ../assemble hello --l msvcrt
 
 segment rdata
 	txt 	db  	`Hello World\0`
@@ -21,8 +21,8 @@ segment text
 main:
 	sub 	rsp, 32
 
-		mov 	rcx, txt
-		call	puts
+	mov 	rcx, txt
+	call	puts
 
 	add 	rsp, 32
 

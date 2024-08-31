@@ -1,4 +1,4 @@
-; ../assemble print_integer.nasm --e --l msvcrt
+; ../assemble print-integer --l msvcrt
 
 segment rdata
 	format	db	`%u\n\0`		; printf format string ("%u\n")

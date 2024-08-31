@@ -1,4 +1,4 @@
-; ../assemble print_integers_looped.nasm --e --l msvcrt
+; ../assemble print-integers-looped --l msvcrt
 
 %define MAX 32
 

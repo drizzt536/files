@@ -1,4 +1,4 @@
-; ../assemble factorial.nasm --e --l msvcrt
+; ../assemble factorial --l msvcrt
 
 segment rdata
 	input_fmt		db	`input: \0`
@@ -9,8 +9,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf	; msvcrt.dll
-	extern	scanf	; msvcrt.dll
+	extern	printf, scanf	; msvcrt.dll
 
 factorial:
 	mov 	rax, 1
@@ -50,7 +49,7 @@ main:
 	mov 	rdx, rax
 	call	printf					;  print factorial of input
 
-main_exit:
+main_exit: ; can't be a local label.
 	xor 	rax, rax
 	leave
 	ret

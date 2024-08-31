@@ -1,4 +1,4 @@
-; ../assemble empty.nasm --e
+; ../assemble empty
 
 segment text
 	global	main

@@ -1,7 +1,7 @@
-; ../assemble loop_hello.nasm --e --l msvcrt
+; ../assemble loop-hello --l msvcrt
 
 segment rdata
-	msg db	`Hello World\0`
+	msg 	db	`Hello World\0`
 
 segment text
 	global	main
