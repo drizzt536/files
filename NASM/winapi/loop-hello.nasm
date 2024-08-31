@@ -1,37 +1,29 @@
-; ../assemble loop_hello.nasm --e --l user32,kernel32
+; ../assemble loop-hello --l kernel32
 
 segment rdata
-	msg:	db	"Hello World", 10, 0
-	len:	equ $ - msg
+%xdefine msg_str `Hello World\n\0`
+%xdefine msg_len %strlen(msg_str)
+	msg_lbl 	db	msg_str
 
 segment text
 	global	main
 
-	extern	GetStdHandle	; kernel32.dll
-	extern	ExitProcess		; kernel32.dll
-	extern	WriteConsoleA	; user32.dll
+	extern	ExitProcess, GetStdHandle, WriteConsoleA	; kernel32.dll
 
-print:
-	; BOOL print(const VOID *msg, DWORD len) {
+%macro print 2
+	; inline BOOL print(const VOID *msg, DWORD len) {
 	;     return WriteConsoleA(GetStdHandle(-11), msg, len, NULL);
 	; }
-
-	push	rbp
-	mov 	rbp, rsp
-	sub 	rsp, 32
-
-	mov 	r8, rdx
-	mov 	rdx, rcx
 
 	mov 	rcx, -11 ; STD_OUTPUT_HANDLE
 	call	GetStdHandle
 
 	mov 	rcx, rax
-	xor 	r9, r9 ; ignore argument
+	mov 	rdx, %1
+	mov 	r8, %2
+	xor 	r9, r9 ; NULL: ignore argument
 	call	WriteConsoleA
-
-	leave
-	ret
+%endm
 
 main:
 	; implicit push rbp
@@ -39,9 +31,7 @@ main:
 	mov 	rbx, 100000	; ~5 seconds of printing, non-volatile register
 
 .start:
-	mov 	rcx, msg
-	mov 	rdx, len
-	call	print
+	print	msg_lbl, msg_len
 
 	dec 	rbx
 	jnz 	.start
