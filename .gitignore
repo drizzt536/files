@@ -25,6 +25,7 @@ test.*
 *.old
 
 node_modules
+__pycache__
 *.htm
 *.exe
 *.o
