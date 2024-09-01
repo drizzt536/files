@@ -1,65 +1,80 @@
 # move to `%AppData%/Sublime Text/Packages/LaTeX/build.ps1` or equivalent.
+# NOTE: if it says it can't remove the intermediate files, restart sublime.
 
 [CmdletBinding()]
 param (
 	[Alias("infile")] [string] $texfile, # file basename.
-	[string] $compiler,
+	[string] $pdfViewer = $isWindows ? "SumatraPDF.exe" : "evince",
 	[switch] $buildOnly,
 	[switch] $keepIntermediateFiles
 )
 
+# use the directory name if no file was given.
+$texfile ??= get-location | split-path -leaf
+
+$pdfViewBaseName = [IO.Path]::GetFileNameWithoutExtension($pdfViewer)
+
 # use the common parameter `-verbose`.
 $verbose_ = $PSCmdlet.MyInvocation.BoundParameters["Verbose"].isPresent ?? $false
+$pdfOpened = $false
 
-# use the directory name if no file was given
-$texfile  ??= get-location | split-path -leaf
-$compiler ??= "pdflatex"
+function open-pdf {
+	if ($buildOnly.isPresent -or $pdfOpened) {
+		if ($verbose_) { echo "Skipping opening PDF." }
+		return
+	}
 
-if ((ls ./$texfile.pdf | % lastWriteTime) -gt `
-	(ls ./$texfile.tex | % lastWriteTime)) {
+	if ($pdfViewBaseName -eq "SumatraPDF" -and (get-process | where name -eq SumatraPDF).count) {
+		# pass
+	}
+	elseif ($verbose_) { echo "Opening PDF: ``$pdfViewer ./$texfile.pdf``" }
+	# Assumes SumatraPDF `ReuseInstance` option is set to `true`
+	# although, technically it shouldn't matter either way.
+	start-process $pdfViewer -argumentList ./$texfile.pdf
+
+	$pdfOpened = $true
+}
+
+
+# setup
+if (test-path -type leaf ./$texfile.pdf) {
+	# assumes you don't have `$texfile.pdf` as a folder name.
+
 	# if the pdf is newer than the source, no compilation is needed
-	echo "No edits have been made since last compilation."
+	if ((ls ./$texfile.pdf | % lastWriteTime) -gt (ls ./$texfile.tex | % lastWriteTime)) {
+		if ($verbose_) { echo "No edits have been made since last compilation. Exiting." }
 
-	if ($buildOnly.isPresent) { echo "skipping opening PDF." }
+		open-pdf
+		exit 0
+	}
+
+	if ($pdfViewBaseName -eq "SumatraPDF") { open-pdf }
 	else {
-		try {
-			iex "./$texfile.pdf"
-			echo "opening PDF."
-		}
-		catch {}
+		# PDF Editors like Acrobat don't let you edit the file while they are using it.
+		# And I don't know how to close the file without killing the whole program.
+		get-process | where name -eq $pdfViewBaseName | stop-process
 	}
-
-	exit 0
 }
 
-get-process | where name -eq Acrobat | stop-process
 
-rm "./$texfile.pdf" 2> $null
+# compiling
+if ($verbose_) { latexmk -verbose -time -pdf ./$texfile.tex }
+else           { latexmk -silent        -pdf ./$texfile.tex > $null }
 
-iex "$compiler $($verbose_ ? '' : '-quiet') ./$texfile.tex"
-iex "$compiler $($verbose_ ? '' : '-quiet') ./$texfile.tex" # again so references work
 
-if ($buildOnly.isPresent) { echo "skipping opening PDF." }
-else {
-	try {
-		iex "./$texfile.pdf"
-		echo "opening PDF."
-	}
-	catch {}
-}
-
-# remove the extra files created
-# `rm nonexistent, existent` errors but still removes the existing file.
+# cleanup
 if (-not $keepIntermediateFiles.isPresent) {
-	rm @(
-		"./$texfile.synctex.gz",
-		"./$texfile.log",
-		"./$texfile.aux",
-		"./$texfile.toc",
-		"./$texfile.out",
-		"./texput.log"
-	) 2> $null
+	if ($verbose_) {
+		echo "Removing intermediate files"
+		latexmk -c
+	}
+	else { latexmk -c > $null }
 }
 elseif ($verbose_) {
-	echo "keeping intermediate files"
+	echo "Keeping intermediate files"
 }
+
+if ($verbose_) { echo "`n" }
+
+# if it was Sumatra, the PDF is already open, unless the pdf didn't exist before now.
+open-pdf
