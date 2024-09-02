@@ -15,47 +15,105 @@
 	#define ANSI_COLOR(color) "\x1b[38;2;" color "m"
 	#define ANSI_RESET() "\x1b[0m"
 
-	#define ANSI_RED    RGB_STR(166,  12,  26)
-	#define ANSI_GREEN  RGB_STR( 10, 128,  10)
-	#define ANSI_YELLOW RGB_STR(190, 190,   0)
-	#define ANSI_ORANGE RGB_STR(180, 100,   0)
-	#define ANSI_BLUE   RGB_STR(25 , 127, 250)
+	#define ANSI_RED    RGB_STR(166,  12,  26) // #A60C1A
+	#define ANSI_ORANGE RGB_STR(180, 100,   0) // #B46400
+	#define ANSI_YELLOW RGB_STR(160, 160,   0) // #A0A000
+	#define ANSI_GREEN  RGB_STR( 10, 128,  10) // #0A800A
+	#define ANSI_BLUE   RGB_STR(25 , 127, 250) // #197FFA
+	#define ANSI_WHITE  RGB_STR(255, 255, 255) // #FFFFFF
+	#define ANSI_BLACK  RGB_STR(  0,   0,   0) // #000000
 
+	#define ERRLOG_NONE  5u // don't print any error messages
+	#define ERRLOG_FATAL 4u // only print fatal error messages
+	#define ERRLOG_WARN  3u // print fatal error messages and warnings
+	#define ERRLOG_NOTE  2u // print fatal, warning, and note error messages
+	#define ERRLOG_DEBUG 1u // print fatal, warning, note, and debug error messages
+	#define ERRLOG_ALL   0u // print everything. functionally equivalent to ERRLOG_DEBUG
+
+#ifdef ERRLOG_USE_RUNTIME_LOG_LEVEL
+	// this has to be explicitly turned on, mostly because *I* don't want it on.
+	unsigned char ERRLOG_LEVEL = ERRLOG_NOTE;
+#else
+	#define ERRLOG_LEVEL ERRLOG_NOTE
+#endif
 
 	#define CON_COLOR(color) printf(ANSI_COLOR(color))
 	#define CON_RESET()      printf(ANSI_RESET())
 
-	#define fprintf_color(fp, color, ...) ({ \
-		CON_COLOR(color);                     \
-		int __tmp = fprintf(fp, __VA_ARGS__);  \
+	// internal color print versions
+	#define _FPRINTF_COLOR(fp, color, loglvl, args...) ( \
+		ERRLOG_LEVEL > loglvl ? 0 : ({                   \
+			CON_COLOR(color);                            \
+			const int exit_code = fprintf(fp, args);     \
+			CON_RESET();                                 \
+			exit_code;                                   \
+		})                                               \
+	)
+
+	// external color print versions
+	#define fprintf_color(fp, color, args...) \
+		_FPRINTF_COLOR(fp, color, /* true */ ERRLOG_LEVEL - 1, args)
+	#define printf_color(color, args...) fprintf_color(stdout, color, args)
+
+	#define fputs_color(fp, color, str) ({      \
+		CON_COLOR(color);                       \
+		const int e = fprintf(fp, "%s\n", str); \
+		/* fputs doesn't add a newline. And  */ \
+		/* has the string before the stream? */ \
+		/* That is retarded so I fixed it.   */ \
 		CON_RESET();                            \
-		__tmp;                                   \
+		e;                                      \
 	})
-
-	#define fputs_color(fp, color, s) ({  \
-		CON_COLOR(color);                  \
-		int __tmp = fprintf(fp, "%s\n", s); \
-		/* fputs doesn't add a newline :( */ \
-		/* that is retarded so I fixed it */  \
-		CON_RESET();                           \
-		__tmp;                                  \
-	})
-
-	#define printf_color(...)      fprintf_color(stdout, __VA_ARGS__)
-	#define efprintf(fp, ...)      fprintf_color(fp, ANSI_RED, __VA_ARGS__)
-	#define eprintf(...)           efprintf(stderr, __VA_ARGS__)
-
 	#define puts_color(color, str) fputs_color(stdout, color, str)
-	#define efputs(fp, str)        fputs_color(fp, ANSI_RED, str)
-	#define eputs(str)             efputs(stderr, str)
 
-	#define OUT_OF_MEMORY(str, code) ({          \
+	#define efprintf(fp, args...)  _FPRINTF_COLOR(fp, ANSI_RED   , ERRLOG_FATAL, args)
+	#define ewfprintf(fp, args...) _FPRINTF_COLOR(fp, ANSI_ORANGE, ERRLOG_WARN , args)
+	#define enfprintf(fp, args...) _FPRINTF_COLOR(fp, ANSI_YELLOW, ERRLOG_NOTE , args)
+	#define edfprintf(fp, args...) _FPRINTF_COLOR(fp, ANSI_BLUE  , ERRLOG_DEBUG, args)
+
+	#define eprintf(args...)   efprintf(stderr, args)
+	#define ewprintf(args...) ewfprintf(stderr, args)
+	#define enprintf(args...) enfprintf(stderr, args)
+	#define edprintf(args...) edfprintf(stderr, args)
+
+	#define efputs(fp, str)  _FPRINTF_COLOR(fp, ANSI_RED   , ERRLOG_FATAL, "%s\n", str)
+	#define ewfputs(fp, str) _FPRINTF_COLOR(fp, ANSI_ORANGE, ERRLOG_WARN , "%s\n", str)
+	#define enfputs(fp, str) _FPRINTF_COLOR(fp, ANSI_YELLOW, ERRLOG_NOTE , "%s\n", str)
+	#define edfputs(fp, str) _FPRINTF_COLOR(fp, ANSI_BLUE  , ERRLOG_DEBUG, "%s\n", str)
+
+	#define eputs(str)   efputs(stderr, str)
+	#define ewputs(str) ewfputs(stderr, str)
+	#define enputs(str) enfputs(stderr, str)
+	#define edputs(str) edfputs(stderr, str)
+
+
+	// verbose. might not even print anything if there isn't space for a stack frame.
+	#define OUT_OF_MEMORY_V(str, code) ({        \
 		if ((str) == NULL) {                      \
-			eprintf("Out of memory. code: %llu\n", \
+			eprintf("Out of Memory. code: %llu\n", \
 				(unsigned long long int) (code));   \
 			exit(3); /* code for out of memory */    \
 		}                                             \
 	})
+
+	// silent
+	#define OUT_OF_MEMORY_S(str) ({ \
+		if ((str) == NULL)           \
+			exit(3);                  \
+	})
+
+	#define OUT_OF_MEMORY(path, code, v) ( \
+		v /* verbose */ ?                   \
+			OUT_OF_MEMORY_V(path, code) :    \
+			OUT_OF_MEMORY_S(path)             \
+	)
+
+	#define VA_IDENTITY_IGNORE(...)
+	#define VA_IDENTITY(x...) x
+	#define VA_IDENTITY_IF(suffix, x...) VA_IDENTITY##suffix(x)
+	#define VA_IF(t, f, ...) __VA_OPT__(t) VA_IDENTITY_IF(__VA_OPT__(_IGNORE), f)
+
+	#define OOM(str, code...) VA_IF(OUT_OF_MEMORY_V(str, code), OUT_OF_MEMORY_S(str), code)
 
 	// verbose
 	#define VALIDATE_FILE_V(path, code) ({               \
