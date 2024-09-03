@@ -6,6 +6,7 @@ param (
 	[Alias("infile")] [string] $texfile, # file basename.
 	[string] $pdfViewer = $isWindows ? "SumatraPDF.exe" : "evince",
 	[switch] $buildOnly,
+	[switch] $alwaysBuild,
 	[switch] $keepIntermediateFiles
 )
 
@@ -20,19 +21,32 @@ $pdfOpened = $false
 
 function open-pdf {
 	if ($buildOnly.isPresent -or $pdfOpened) {
-		if ($verbose_) { echo "Skipping opening PDF." }
+		if ($verbose_) { echo "build.ps1: Skipping opening PDF." }
 		return
 	}
 
 	if ($pdfViewBaseName -eq "SumatraPDF" -and (get-process | where name -eq SumatraPDF).count) {
 		# pass
 	}
-	elseif ($verbose_) { echo "Opening PDF: ``$pdfViewer ./$texfile.pdf``" }
+	elseif ($verbose_) { echo "build.ps1: Opening PDF: ``$pdfViewer ./$texfile.pdf``" }
 	# Assumes SumatraPDF `ReuseInstance` option is set to `true`
 	# although, technically it shouldn't matter either way.
-	start-process $pdfViewer -argumentList ./$texfile.pdf
+	start-process $pdfViewer -args ./$texfile.pdf
 
 	$pdfOpened = $true
+}
+
+function cleanup {
+	if (-not $keepIntermediateFiles.isPresent) {
+		if ($verbose_) {
+			echo "build.ps1: Removing intermediate files"
+			latexmk -c
+		}
+		else { latexmk -c > $null }
+	}
+	elseif ($verbose_) {
+		echo "build.ps1: Keeping intermediate files"
+	}
 }
 
 
@@ -40,9 +54,9 @@ function open-pdf {
 if (test-path -type leaf ./$texfile.pdf) {
 	# assumes you don't have `$texfile.pdf` as a folder name.
 
-	# if the pdf is newer than the source, no compilation is needed
-	if ((ls ./$texfile.pdf | % lastWriteTime) -gt (ls ./$texfile.tex | % lastWriteTime)) {
-		if ($verbose_) { echo "No edits have been made since last compilation. Exiting." }
+	# if the pdf is newer than the source, no compilation is needed (probably)
+	if (-not $alwaysBuild.isPresent -and (ls ./$texfile.pdf | % lastWriteTime) -gt (ls ./$texfile.tex | % lastWriteTime)) {
+		if ($verbose_) { echo "build.ps1: No edits have been made since last compilation. Exiting." }
 
 		open-pdf
 		exit 0
@@ -56,25 +70,20 @@ if (test-path -type leaf ./$texfile.pdf) {
 	}
 }
 
+cleanup
 
 # compiling
-if ($verbose_) { latexmk -verbose -time -pdf ./$texfile.tex }
-else           { latexmk -silent        -pdf ./$texfile.tex > $null }
+$pdflatex = "pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error"
+if ($verbose_) { latexmk -pdflatex="$pdflatex" -time -pdf ./$texfile.tex         }
+else           { latexmk -silent -f                  -pdf ./$texfile.tex > $null }
 
+$latexmkExitCode = $lastExitCode
 
-# cleanup
-if (-not $keepIntermediateFiles.isPresent) {
-	if ($verbose_) {
-		echo "Removing intermediate files"
-		latexmk -c
-	}
-	else { latexmk -c > $null }
-}
-elseif ($verbose_) {
-	echo "Keeping intermediate files"
-}
+cleanup
 
 if ($verbose_) { echo "`n" }
 
 # if it was Sumatra, the PDF is already open, unless the pdf didn't exist before now.
 open-pdf
+if ($verbose_) { echo "build.ps1: latexmk exit code $latexmkExitCode" }
+exit $latexmkExitCode
