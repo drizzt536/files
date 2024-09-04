@@ -48,6 +48,7 @@ if (!fs.existsSync(infile))
 const text = fs.readFileSync(infile, {encoding: "utf8"})
 
 if (ofile in {"-r": 1, "-reverse": 1, "--reverse": 1}) {
+	// implies --in-place
 	const result = text.replace(/\\\r?\n/g, "").replace(/ \t/g, " \\\n\t")
 
 	/*
