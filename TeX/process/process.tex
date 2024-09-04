@@ -10,9 +10,24 @@
 \usepackage{amssymb, latexsym, amsmath, pgfplots, xcolor, etoolbox, hyperref, xurl}
 \usepackage[margin=1in]{geometry}
 
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\ceil}[1]{ \left\lceil  #1 \right\rceil}
+\newcommand{\round}[1]{\left\lfloor #1 \right\rceil}
+\newcommand{\trunc}[1]{\left\lceil  #1 \right\rfloor}
+\newcommand{\pgrp}[1]{\left( #1 \right)}   % paren group
+\newcommand{\bgrp}[1]{\left[ #1 \right]}   % bracket group
+\newcommand{\cgrp}[1]{\left\{ #1 \right\}} % curly (bracket) group.
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\sgn}{\mathrm{sgn}\,}
+\newcommand{\sgnf}[1]{\mathrm{sgn}\!\pgrp{#1}}
+\newcommand{\dx}{\df x}
+\newcommand{\dt}{\df t}
+\newcommand{\df}[1]{\mathrm{d} #1}
+\newcommand{\dstyle}{\displaystyle}
+
 
 \newbool{darkMode}
-\booltrue{darkMode}
+\boolfalse{darkMode}
 
 
 \definecolor{lightgray}{RGB}{170, 170, 170}
@@ -22,9 +37,6 @@
 	\colorlet{bgcolor}{black}
 	\colorlet{fgcolor}{lightgray}
 
-	\color{fgcolor}
-	\pagecolor{bgcolor}
-
 	\definecolor{dimred}{RGB}{127, 0, 0}
 	\definecolor{dimgreen}{RGB}{0, 71, 0}
 	\definecolor{gridgray}{RGB}{60, 60, 60}
@@ -32,13 +44,13 @@
 	\colorlet{bgcolor}{white}
 	\colorlet{fgcolor}{black}
 
-	\color{fgcolor}
-	\pagecolor{bgcolor}
-
 	\definecolor{dimred}{RGB}{165, 30, 30}
 	\definecolor{dimgreen}{RGB}{30, 105, 30}
 	\definecolor{gridgray}{RGB}{191, 191, 191}
 }
+
+\color{fgcolor}
+\pagecolor{bgcolor}
 
 \pgfplotsset{
 	compat = 1.18,
@@ -74,26 +86,27 @@
 
 \title{Integrating Functions with Countably-Many Jump Discontinuities}
 \author{Daniel E. Janusch}
-\date{September 2, 2024, 7:29pm MST}
+\date{September 3, 2024, 7:25pm MST}
 \maketitle
 
 	\indent While applications don't immediately come to attention, the pursuit of knowledge and
 	mathematical literacy is enough in itself. Godfrey Harold Hardy (1940), a 20th-century
 	mathematician famously said ``No discovery of mine has made, or is likely to make, directly
 	or indirectly, for good or for ill, the least difference to~...~the world" (A Mathematician's
-	Apology, 1st ed., p. 49); his work is now used everywhere in critical fields like cryptography.
+	Apology, 1st ed., p. 49); his work is now used everywhere in critical fields like
+	cryptography.
 
 	\indent For the following process to work, the functions are limited to a countable amount of
 	jump discontinuities, since if there is an uncountable amount, then by definition, the
 	discontinuities can't be listed out, and step~2 won't work. It makes it much easier to assume
 	that there are no discontinuities other than the jump discontinuities, but the main essence of
 	the steps should be about the same in that case. This process pertains to step functions like
-	$\lfloor x\rfloor$ and $\lceil x\rceil$. The notation used will be as follows: $f(x)$ is the
-	full function with the step functions in it and  $g(x)$ is the same function but with the step
-	functions removed. For instance, if $f(x)$ is any of $x^2$, $\lfloor x\rfloor^2$,
-	$\left\lfloor x^2\right\rfloor$, or $x\lfloor x\rfloor$, then $g(x)=x^2$. Functions like
-	$f(x)=\lfloor x\rfloor^2-2\lfloor x\rfloor$ are continuous analogs of discrete functions, so
-	this process could introduce a way of integrating discrete functions.
+	$\floor x$ and $\ceil x$. The notation used will be as follows: $f(x)$ is the full function
+	with the step functions in it and  $g(x)$ is the same function but with the step functions
+	removed. For instance, if $f(x)$ is any of $x^2$, $\floor{x}^2$, $\floor{x^2}$, or
+	$x\floor x$, then $g(x) = x^2$. Functions like $f(x) = \floor{x}^2 - 2\floor x$ are
+	continuous analogs of discrete functions, so this process could introduce a way of integrating
+	discrete functions.
 
 \phantomsection
 \addcontentsline{toc}{section}{Step 1: Define a Function to Integrate}
@@ -101,20 +114,19 @@
 \section*{Step 1: Define a Function to Integrate}
 
 	\indent\indent You can use almost any function you want, but if it is too general steps 3 or 4
-	might not work. Some possible examples for $f(x)$ are $\lfloor x\rfloor$, $\lfloor\sin\pi x
-	\rfloor$, $\left\lfloor x^2 - x + 1\right\rfloor$, or $\left\lfloor\frac 1x\right\rfloor$.
-	Usually, if you have anything in terms of the ceiling, rounding, or truncating functions, you
-	will want to convert them to the floor function with these formulas: $\text{round}(x)=\left
-	\lfloor x+\frac12\right\rfloor$, $\lceil x\rceil=-\lfloor-x\rfloor$, and $\text{truncate}(x)=
-	\lfloor|x|\rfloor\text{sgn}(x)$. Sometimes you will need to pay attention to the integral
-	boundaries, as for most functions they can be 0 and $x$, but for $f(x)=\left\lfloor\frac 1x
-	\right\rfloor$, they should be 1 and $x$. The lower bound should be wherever the integral is
-	zero. Don't use a naïve approach like $\int\lfloor x\rfloor\text dx=x\lfloor x\rfloor+c$; while
-	taking the derivative of both sides technically does give the same function, it is not correct
-	because it is missing $-\dfrac{\lfloor x\rfloor^2+\lfloor x\rfloor}2$. This is because
-	$\displaystyle\lim_{x\to a}\frac{\text d\,\lfloor x\rfloor}{\text dx}(a)=0$ for any constant
-	$a$, so $\lfloor x\rfloor$ can just be treated as a constant when taking derivatives. Here are
-	a couple example graphs.
+	might not work. Some possible examples for $f(x)$ are $\floor x$, $\floor{\sin\pi x}$,
+	$\floor{x^2 - x + 1}$, or $\floor{\frac 1x}$. Usually, if you have anything in terms of the
+	ceiling, rounding, or truncating functions, you will want to convert them to the floor
+	function with these formulas: $\mathrm{round}(x) = \floor{x + \frac12}$, $\ceil x = -
+	\floor{-x}$, and $\mathrm{truncate}(x) = \floor{\abs x}\sgn x$. Sometimes you will need to pay
+	attention to the integral boundaries, as for most functions they can be 0 and $x$, but, for
+	example, for $f(x) = \floor{\frac 1x}$, they should be 1 and $x$. The lower bound should be
+	wherever the integral is zero. Don't use a na{\"\i}ve approach like $\int\floor x\!\dx=x\!
+	\floor x+c$; while taking the derivative of both sides technically does give the same
+	function, it is not correct because it is missing $-\frac12\!\floor x\!(\floor x + 1)$. This
+	is because $\dstyle\lim_{x\to a}\frac{\df{\floor x}}\dx(a) = 0$ for any constant $a$, so
+	$\floor x$ can just be treated as a constant when taking derivatives. Here are a couple
+	example graphs.
 
 	\begin{figure}[h]
 		\centering
@@ -131,7 +143,7 @@
 				grid = both,
 				grid style = {draw = gridgray},
 				line width = 1.01pt,
-				title = {Plot of $f(x) = \left\lfloor x^2\right\rfloor - \lfloor x\rfloor^2$},
+				title = {Plot of $f(x) = \floor{x^2} - \floor x^2$},
 			]
 
 				\addplot[color=dimred, domain=sqrt( 0):sqrt( 2), samples=2]{0};
@@ -207,7 +219,7 @@
 				ymax = 11,
 				grid = both,
 				grid style = {draw = gridgray},
-				title = {Plot of $f(x) = \lfloor x\rfloor - (-1)^{\lfloor x\rfloor}$},
+				title = {Plot of $f(x) = \floor x - (-1)^{\floor x}$},
 			]
 
 				\addplot[color=dimred, domain=0:1 , samples=2]{-1};
@@ -247,13 +259,13 @@
 \phantomsection
 \section*{Step 2: Split at the Jumps and Integrate Separately}
 
-	\indent\indent Since $f(x)$ is not continuous, you need to figure out where the value of $f(x)$
-	changes, or where the $n$th jump discontinuity is. Then you split the integral by these
-	boundaries and integrate each interval individually. Sometimes this can be slightly trickier if
-	you have something like $f(x)=\sqrt{\lfloor x\rfloor}$ because not all the output values are at
-	integers. You will benefit from using a different strategy for periodic functions like $\lfloor
-	\cos x\rfloor$ to take advantage of their periodicity. Splitting at jumps is a similar method
-	to how you integrate piecewise functions, although in piecewise functions you split the
+	\indent\indent Since $f(x)$ is not continuous, you need to figure out where the value of
+	$f(x)$ changes, or where the $n$th jump discontinuity is. Then you split the integral by these
+	boundaries and integrate each interval individually. Sometimes this can be slightly trickier
+	if you have something like $f(x)=\sqrt{\floor x}$ because not all the output values are at
+	integers. You will benefit from using a different strategy for periodic functions like
+	$\floor{\cos x}$ to take advantage of their periodicity. Splitting at jumps is a similar
+	method to how you integrate piecewise functions, although in piecewise functions you split the
 	integral at the piece boundaries instead of just at jumps (Calculus, Larson \& Edwards, 2010).
 
 	\phantomsection
@@ -263,12 +275,11 @@
 
 		\begin{minipage}{0.5\textwidth}
 			\begin{align*}
-				f(x)                                         := & \, \left\lfloor\frac x2\right
-																\rfloor\\
-				g(x)                                          = & \, \frac x2\\
-				g^{-1}(x)                                     = & \, 2x\\
-				\int_{2n}^{2(n+1)}\hspace{-1.3em}f(t)\text dt = & \int_{2n}^{2n+2}\left\lfloor
-																	\frac t2\right\rfloor\!\text dt
+				f(x)                                    := & \, \floor{\frac x2}\\
+				g(x)                                     = & \, \frac x2\\
+				g^{-1}(x)                                = & \, 2x\\
+				\int_{2n}^{2(n+1)}\hspace{-1.3em}f(t)\dt = & \int_{2n}^{2n+2}
+														\floor{\frac t2}\!\dt
 			\end{align*}
 		\end{minipage}
 		\begin{minipage}{0.5\textwidth}
@@ -328,12 +339,13 @@
 		\vspace{0.2em}
 
 		$f(x)$ on this interval will be the same value, so this is just the area of a rectangle.
-		Ignore the discontinuities at the endpoints; they don't change the outcome of the integral.
+		Ignore the discontinuities at the endpoints; they don't change the outcome of the
+		integral.
 
 		\begin{align*}
-			\int_{2n}^{2n+2}\left\lfloor\frac t2\right\rfloor\text dt
-			= \left\lfloor\frac{2n}2\right\rfloor(2n+2-2n)
-			= \lfloor n\rfloor\cdot2 = 2n
+			\int_{2n}^{2n+2}\floor{\frac t2}\!\dt
+			= \floor{\frac{2n}2} (2n+2-2n)
+			= \floor n \cdot 2 = 2n
 		\end{align*}
 
 	\phantomsection
@@ -439,15 +451,15 @@
 		doing the same thing as in example 1, we get:
 
 		\begin{align*}
-			\int_{\sqrt n}^{\sqrt{n+1}}f(t)\text dt = f(\sqrt n)\left(\sqrt{n+1}-\sqrt n\right)
-			= \lfloor x\rfloor\sqrt{1+2x-2\sqrt{x^2+x}}\\
-			\text{and in general, }\int_{g^{-1}(n)}^{g^{-1}(n+1)}f(t)\text dt
-			=f\left(g^{-1}(n)\right)\left[g^{-1}(n+1)-g^{-1}(n)\right]
+			\int_{\sqrt n}^{\sqrt{n+1}}f(t)\dt = f(\sqrt n)\pgrp{\sqrt{n+1}-\sqrt n}
+			= \floor x\sqrt{1+2x-2\sqrt{x^2+x}}\\
+			\text{and in general, }\int_{g^{-1}(n)}^{g^{-1}(n+1)}f(t)\dt
+			=f\pgrp{g^{-1}(n)}\bgrp{g^{-1}(n+1)-g^{-1}(n)}
 		\end{align*}
 
 		This general formula only works if $f(x)$ is constant in between discontinuities.
 		Make sure you use the correct area formula for your function. For instance, If you
-		have $f(x)=x\lfloor x\rfloor$ then use the trapezoid area formula instead.
+		have $f(x)=x\floor x$ then use the trapezoid area formula instead.
 
 \phantomsection
 \addcontentsline{toc}{section}{Step 3: Find the Sum of Each Partial Integral}
@@ -456,15 +468,15 @@
 
 	\indent\indent After you've figured out the closed form of the integral on each interval, you
 	can use the additive interval property of integrals, where ``if $f$ is integrable on the three
-	closed intervals determined by $a$, $b$, and $c$, then $\displaystyle \int_a^b\!\!f(x)\text dx=
-	\int_a^c\!\!f(x)\text dx+\int_c^b\!\!f(x)\text dx$" (Calculus, Larson \& Edwards, 2010, p.
+	closed intervals determined by $a$, $b$, and $c$, then $\dstyle \int_a^b\!\!f(x)\dx=
+	\int_a^c\!\!f(x)\dx+\int_c^b\!\!f(x)\dx$" (Calculus, Larson \& Edwards, 2010, p.
 	276). Sum up the separate integrals and get the closed form on the whole interval. The
 	following summation is impossible for a general $f(x)$, so you need to have a specific
 	function for this step.
 
 	\begin{align*}
-		\int_{g^{-1}(0)}^{g^{-1}(k)}f(t)\text dt=\sum_{j=1}^{k-1}\int_{g^{-1}(j)}^{g^{-1}(j+1)}
-			f(t)\text dt
+		\int_{g^{-1}(0)}^{g^{-1}(k)}f(t)\dt=\sum_{j=1}^{k-1}\int_{g^{-1}(j)}^{g^{-1}(j+1)}
+			f(t)\dt
 	\end{align*}
 
 	\indent Oftentimes you can end up with something complicated as the closed form, like the
@@ -478,7 +490,7 @@
 
 		\begin{minipage}{0.5\textwidth}
 			\begin{align*}
-				f(x)     := & \, \lfloor x\rfloor\\
+				f(x)     := & \, \floor x\\
 				g(x)      = & \, \phantom\lfloor x\\
 				g^{-1}(x) = & \, \phantom\lfloor x
 			\end{align*}
@@ -544,8 +556,8 @@
 		\end{minipage}
 
 		\begin{align*}
-			\int_0^k\lfloor t\rfloor\text dt
-			= \sum_{j=0}^{k-1}\int_j^{j+1}\!\lfloor t\rfloor\text dt
+			\int_0^k\floor t\dt
+			= \sum_{j=0}^{k-1}\int_j^{j+1}\!\floor t\dt
 			= \sum_{j=1}^{k-1}j\cdot(j+1-j)
 			= \frac{k^2-k}2
 		\end{align*}
@@ -562,9 +574,9 @@
 	the section. It is the same process as in step~2 but using a subset of the interval.
 
 	\begin{align*}
-		\int_{g^{-1}(0)}^xf(t)\text dt & = \int_{g^{-1}(0)}^{g^{-1}(f(x))}f(t)\text dt+\int_{g^{-1}
-											(f(x))}^xf(t)\text dt\\
-		\int_{g^{-1}(f(x))}^xf(t)\text dt & = f(x)\!\left[x-g^{-1}(f(x))\right]
+		\int_{g^{-1}(0)}^xf(t)   \dt & = \int_{g^{-1}(0)}^{g^{-1}(f(x))}f(t)\dt+\int_{g^{-1}
+										(f(x))}^xf(t)\dt\\
+		\int_{g^{-1}(f(x))}^xf(t)\dt & = f(x)\!\bgrp{x-g^{-1}(f(x))}
 	\end{align*}
 
 	\phantomsection
@@ -574,7 +586,7 @@
 
 		\begin{minipage}{0.5\textwidth}
 			\begin{align*}
-				f(x)     := & \, \lfloor x\rfloor\\
+				f(x)     := & \, \floor x\\
 				g(x)      = & \, \phantom\lfloor x\\
 				g^{-1}(x) = & \, \phantom\lfloor x
 			\end{align*}
@@ -608,13 +620,13 @@
 
 
 					\addlegendimage{dimred, line legend}
-					\addlegendentry{$\displaystyle\int_0^x\lfloor t\rfloor\text dt$}
+					\addlegendentry{$\dstyle\int_0^x\floor t\dt$}
 
 					\addlegendimage{empty legend} \addlegendentry[]{}
 					\addlegendimage{empty legend} \addlegendentry[]{}
 
 					\addlegendimage{dimblue, line legend}
-					\addlegendentry{$\displaystyle\int_0^x\!\left[t-\frac12\right]\!\text dt$}
+					\addlegendentry{$\dstyle\int_0^x\!\bgrp{t-\frac12}\!\dt$}
 
 					\addlegendimage{empty legend} \addlegendentry[]{}
 					\addlegendimage{empty legend} \addlegendentry[]{}
@@ -623,10 +635,10 @@
 		\end{minipage}
 
 		\begin{align*}
-			\int_{g^{-1}(0)}^xf(t)\text dt
-			= \int_0^{\lfloor x\rfloor}\lfloor t\rfloor\text dt+\int_{\lfloor x\rfloor}^x\lfloor t
-				\rfloor\text dt
-			= \frac{\lfloor x\rfloor^2-\lfloor x\rfloor}2+(x-\lfloor x\rfloor)\lfloor x\rfloor
+			\int_{g^{-1}(0)}^x\hspace{-1.4em}f(t)\dt
+			= \int_0^{\floor x}\hspace{-0.9em}\floor t\!\dt+\int_{\floor x}^x\hspace{-0.6em}
+				\floor t\!\dt
+			= \frac{\floor x^2-\floor x}2+(x-\floor x)\floor x
 		\end{align*}
 
 		Once you have this, you have found the principle indefinite integral. Add the constant of
@@ -642,19 +654,20 @@
 	\begin{minipage}{\textwidth}
 		\centering
 		\begin{align}
-			& \int x\,\text{mod}\,c\, \text dx = \dfrac{c^2}2\!\left(\left\lfloor\dfrac xc\right
-												\rfloor+\dfrac xc\,\text{mod}^2\,1\right)\\
-			& \int \lfloor x\rfloor   \text dx = \dfrac12\lfloor x\rfloor(2x-\lfloor x\rfloor-1)\\
-			& \int \lceil x\rceil     \text dx = \dfrac12\lceil x\rceil(2x-\lceil x\rceil+1)\\
-			& \int \lfloor x\rceil    \text dx = \dfrac12(\lfloor x\rceil-1)(2x-\lfloor x\rceil-1)
-												\ni\lfloor x\rceil=\text{round}(x)\\
-			& \int \lceil x\rfloor    \text dx = \dfrac12\lfloor x\rfloor(2x-\lfloor x\rfloor-1)+
-												\min(0,x)\ni\lceil x\rfloor=\text{truncate}(x)\\
-			& \int \!f                \text dx = \left[b+\dfrac b{2a}\right]\!f-\dfrac{|b|n}{2a}
-												+\dfrac{\zeta\!\left(-\dfrac12,\dfrac{b^2}{4a}+1
-												+f-n\right)-\zeta\!\left(-\dfrac12,\dfrac{b^2}{4a}
-												+1\right)}{\sqrt a}\\
-			& \ni f(x)=\left\lfloor ax^2+bx+n\right\rfloor \notag
+			& \int \! x \bmod c\; \dx = \dfrac{c^2}2\!\pgrp{\floor{\dfrac xc}+
+										\dfrac xc\;\mathrm{mod}^2\,1}\\
+			& \int \floor x\!\dx = \dfrac12\floor x(2x-\floor x-1)\\
+			& \int \ceil  x\!\dx = \dfrac12\ceil x(2x-\ceil x+1)\\
+			& \int \round x\!\dx = \dfrac12(\round x-1)(2x-\round x-1)\ni\round x=
+								\mathrm{round}(x)\\
+			& \int \trunc x\!\dx = \dfrac12\floor x(2x - \floor x - 1) + \min(0,x) \ni\trunc x =
+								\mathrm{truncate}(x)\\
+			& \int_1^x \!\!\!\floor{\log_b t}\!\dt = x \!\floor{\log_b t} + \dfrac b{b-1}\!
+												\bgrp{1 - b^{\floor{\log_b t}}} \\
+			& \int \!f \dx = \bgrp{x+\dfrac b{2a}}\!f-\dfrac{\abs bn}{2a}+\dfrac{\zeta\!\pgrp{-
+							\dfrac12,\dfrac{b^2}{4a}+1+f-n}-\zeta\!\pgrp{-\dfrac12,\dfrac{b^2}{4a}
+							+1}}{\sqrt a}\\
+			& \ni f = \floor{ax^2 + bx + n} \notag
 		\end{align}
 	\end{minipage}
 
@@ -670,11 +683,13 @@
 			\url{https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf}\\
 
 		\item Larson, R., \& Edwards, B. H. (2010). Calculus (9th ed.). Cengage Learning.\\
-			\url{http://teacherpress.ocps.net/cynthiaandrews/files/2013/06/Calculus-9th-Edition-by-Ron-Larson-Bruce-H.-Edwards.pdf}
+			\url{http://teacherpress.ocps.net/cynthiaandrews/files/2013/06/
+			Calculus-9th-Edition-by-Ron-Larson-Bruce-H.-Edwards.pdf}
 	\end{itemize}
 	\vfill
-	This document is licensed under \url{https://raw.githubusercontent.com/drizzt536/files/main/LICENSE}
-	and may be copied ONLY IN ITS ENTIRETY under penalty of law.\\
+	This document is licensed under
+	\url{https://raw.githubusercontent.com/drizzt536/files/main/LICENSE}
+	and may be copied ONLY IN ITS ENTIRETY under penalty of law.
 	\vspace{0.5em}
 
 \end{document}
