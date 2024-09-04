@@ -216,11 +216,20 @@ var OwnedApplications = {
 	, "Fall Guys Snowberry": duplicate
 	, "Fall Guys - Giddy Gift": 0
 	, "Fall Guys - Snowberry": 0
+	, "Fallout® Classic Collection": 19.99 // fallout 1, 2, tactics 
+	, "Fallout Classic Collection": duplicate
+	, "Fallout: A Post Nuclear Role Playing Game": duplicate
+	, "Fallout": duplicate
+	, "Fallout 1": duplicate
+	, "Fallout 2: A Post Nuclear Role Playing Game": duplicate
+	, "Fallout 2": duplicate
+	, "Fallout Tactics: Brotherhood of Steel": duplicate
+	, "Fallout Tactics": duplicate
 	, "Fallout 3: Game of the Year Edition": 19.99
+	, "Fallout 3": duplicate
 	, "Fallout: New Vegas - Ultimate Edition": 19.99
 	, "Fallout: New Vegas": duplicate
 	, "Fallout New Vegas": duplicate
-	, "Fallout 3": duplicate
 	, "Fangs": 0 // TODO: early access
 	, "Far Cry 6 - Free Trial": 0
 	, "Farlight 84": 0
