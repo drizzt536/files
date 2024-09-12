@@ -1,0 +1,16 @@
+{
+	// assumes you want to export as pdf into the current directory.
+	"working_dir": "${file_path}",
+	"selector": "source.matlab",
+
+	"shell_cmd": "echo building \"./${file_name}\" && matlab -batch \"publish('./${file_name}', 'format', 'pdf', 'outputDir', './')\"",
+
+	"variants": [
+		{
+			"name": "Run", 
+			"windows": { "shell_cmd": "echo building and opening ./${file_name} && matlab -batch \"publish('./${file_name}', 'format', 'pdf', 'outputDir', './')\" && start    ./${file_base_name}.pdf" },
+			"linux"  : { "shell_cmd": "echo building and opening ./${file_name} && matlab -batch \"publish('./${file_name}', 'format', 'pdf', 'outputDir', './')\" && xdg-open ./${file_base_name}.pdf" },
+			"osx"    : { "shell_cmd": "echo building and opening ./${file_name} && matlab -batch \"publish('./${file_name}', 'format', 'pdf', 'outputDir', './')\" && open     ./${file_base_name}.pdf" },
+		},
+	]
+}
