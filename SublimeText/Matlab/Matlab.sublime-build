@@ -1,0 +1,19 @@
+{
+	// assumes you want to export as pdf into the current directory.
+	"working_dir": "${file_path}",
+	"selector": "source.matlab",
+
+	"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/Matlab/build.ps1\" ${file_name} -f pdf" },
+	"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/Matlab/build.ps1\" ${file_name} -f pdf" },
+	"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/Matlab/build.ps1\" ${file_name} -f pdf" },
+
+	"variants": [
+		{
+			"name": "Run",
+			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/Matlab/build.ps1\" ${file_name} -f pdf -open" },
+			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/Matlab/build.ps1\" ${file_name} -f pdf -open" },
+			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/Matlab/build.ps1\" ${file_name} -f pdf -open" },
+		},
+	]
+}
+
