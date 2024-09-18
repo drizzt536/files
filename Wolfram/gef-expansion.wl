@@ -1,3 +1,5 @@
+(* GEF stands for GreedyEgyptianFraction *)
+
 FirstStringDifference[s1_String, s2_String] := Module[{i, n},
     n = Min[StringLength@ s1, StringLength@ s2];
 
@@ -18,17 +20,17 @@ FirstDecimalDifference[a_?NumberQ, b_?NumberQ] := Module[{s1, s2, i, n},
     ]
 ]
 
-SylvesterExpansionNextTerm[
+GEFExpansionNextTerm[
     y -> yOption_,
     $Precision -> Automatic,
     terms -> termsOption_
-] := SylvesterExpansionNextTerm[
+] := GEFExpansionNextTerm[
     y -> yOption,
     $Precision -> 2 (1 + IntegerLength@ Last@ termsOption),
     terms -> termsOption
 ]
 
-SylvesterExpansionNextTerm[
+GEFExpansionNextTerm[
     y -> yOption_?NumericQ /; Positive[yOption],
     $Precision -> $Precision_Integer?Positive, (* should be a bit more than double the previous *)
     terms -> termsOption : {___Integer?Positive}
@@ -101,7 +103,7 @@ SylvesterExpansionNextTerm[
     ];
 ]
 
-SylvesterExpansionNextTerm[y -> E, $Precision -> 100, terms -> {1, 1, 2, 5, 55}]
+GEFExpansionNextTerm[y -> E, $Precision -> 100, terms -> {1, 1, 2, 5, 55}]
 
 (* list = {1, 1, 2, 5, 55}; *)
 (* Sum[IntegerLength[i], {i, list}] *)
@@ -114,7 +116,7 @@ IntegerLength[Subscript[term, n_Integer /; n > 0]] := Sum[
 ] *)
 
 
-SylvesterExpansionNextTerm[
+GEFExpansionNextTerm[
     y -> Pi - 3,
     $Precision -> 18000, (* this is for the 14th number *)
     terms -> {
