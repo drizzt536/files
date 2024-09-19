@@ -1,7 +1,15 @@
+# move to `%AppData%/Sublime Text/Packages/Matlab/invert-svg.ps1` or equivalent.
 
+<#
+.synopsis
+	inverts the colors of an SVG image.
+	requires ImageMagick if the SVG has embedded images (PNG, JPG, etc.)
+#>
 param (
 	[Parameter(Mandatory=$true)] [Alias("infile")] [string] $filepath,
-	[string] $defaultBGColor = "white" # before inversion is applied.
+
+	# the background color before inversion is applied.
+	[Alias("bgcolor")] [string] $defaultBGColor = "white"
 )
 
 # all 147 named colors. maps name to color
@@ -157,7 +165,7 @@ $namedColorMap = @{
 
 <#
 .synopsis
-	invert a color.
+	invert an individual color.
 	valid forms:
 		hex code without hash (RGB, RGBA, RRGGBB, RRGGBBAA)
 		hex code (#RGB, #RGBA, #RRGGBB, #RRGGBBAA)
@@ -323,6 +331,9 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 		throw "invalid path. either not a file or does not exist"
 	}
 
+	# required if there are embedded images.
+	[IO.Directory]::SetCurrentDirectory((pwd))
+
 	$content = (get-content $filepath) -join ""
 
 	$svgSttIndex = $content.indexOf("<svg")
@@ -402,6 +413,46 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 			$content.substring($fillEndIndex)
 	}
 
+	$imageEndIndex = 0
+	while ($true) {
+		# TODO: un-embed the image, and make it part of the SVG.
+		$imageSttIndex = $content.indexOf("<image", $imageEndIndex)
+
+		if ($imageSttIndex -eq -1) { break }
+
+		if (-not (get-command magick -type app -ErrorAct silent)) {
+			throw "Required program ImageMagick ``magick`` was not found. embedded images are left un-inverted."
+		}
+
+		$imageEndIndex = $content.indexOf(">", $imageSttIndex + 6)
+
+		$image = $content.substring($imageSttIndex,
+			$imageEndIndex - $imageSttIndex + 1
+		)
+
+		$match = [regex]::match($image,
+			"xlink:href=`"data:image/(png|jpe?g|webp);base64,([\da-zA-Z+/=]+)(`")"
+		)
+
+		$imageType = $match.groups[1].value
+		$image = [Convert]::FromBase64String($match.groups[2].value)
+		[IO.File]::WriteAllBytes("./tmp.png", $image)
+		magick tmp.png -negate tmp.png
+		$image = [IO.File]::ReadAllBytes("./tmp.png")
+		$image = [Convert]::ToBase64String($image)
+		rm tmp.png -errorAction silentlyContinue
+
+		# 23 == "xlink:href=`"data:image/".length - 1
+		$content = $content.substring(0, $imageSttIndex + $match.index + 23) + `
+			$match.groups[1].value + ";base64," + $image + `
+			$content.substring($imageSttIndex + $match.groups[3].index)
+
+		# somehow, inverting the colors of a PNG can make the base64
+		# version of it signifcantly shorter, so if you use $imageEndIndex
+		# then it could completely miss the next <image/> element
+		$imageEndIndex = $imageSttIndex + 5
+	}
+
 	$content > $filepath
 
 	# find the dimensions of the whole SVG.
@@ -412,7 +463,8 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 	# step 2, add one if there isn't one.
 		# add it at the start if there isn't one.
 	# step 3, invert the colors on every `fill` or `stroke` attribute.
-	# step 4, write the new contents back to the file
+	# step 4, look for embedded images, and invert those.
+	# step 5, write the new contents back to the file
 }
 
 
