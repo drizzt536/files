@@ -67,8 +67,6 @@ if (-not $keepLightMode) {
 	}
 }
 
-if ($verbose_) { echo "done" }
-
 if ($open.isPresent) {
 	if ($verbose_) { echo "opening `"$outfile`"" }
 	start $outfile
