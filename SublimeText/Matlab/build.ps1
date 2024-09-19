@@ -59,7 +59,7 @@ if (-not $keepLightMode) {
 			${invert-svg.ps1} = "~/Library/Application Support/Sublime Text/Packages/Matlab/invert-svg.ps1"
 		}
 
-		& ${invert-pdf.ps1} $outfile "-SVGTool" ${invert-svg.ps1} $($verbose_ ? '-v' : '-s')
+		iex "$(${invert-pdf.ps1} -replace ' ', '` ') `"$outfile`" -SVGTool `"${invert-svg.ps1}`" $($verbose_ ? '' : '-s')"
 	}
 	elseif ($verbose_) {
 		echo "formats other than pdf can't be made dark mode."

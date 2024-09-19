@@ -23,8 +23,7 @@ param (
 	[string] $outfile = $infile,
 	[string] [Alias("SVGInvertFileLocation", "SVGTool")]
 		$invertSVGFileLocation = "./invert-svg.ps1",
-	[switch] $silent,
-	[switch] $verbose_
+	[switch] $silent
 )
 
 ${invert-svg.ps1} = $invertSVGFileLocation
@@ -58,7 +57,7 @@ if (-not (get-command awk -type app -ErrorAct silent)) {
 	throw "Required program ``awk`` was not found."
 }
 
-$verbose_ = $verbose_.isPresent -or -not $silent.isPresent
+$verbose_ = -not $silent.isPresent
 
 $redirect = $verbose_ ? '' : ' *> $null'
 
@@ -73,7 +72,7 @@ for ($i = 1; $i -le $pages; $i++) {
 if ($verbose_) { echo "inverting SVG colors" }
 for ($i = 1; $i -le $pages; $i++) {
 	if ($verbose_) { echo "    page $i" }
-	iex "${invert-svg.ps1} page-$i.svg -bgcolor white$redirect"
+	iex "$(${invert-svg.ps1} -replace ' ', '` ') page-$i.svg -bgcolor white$redirect"
 }
 
 move $outfile text.pdf
