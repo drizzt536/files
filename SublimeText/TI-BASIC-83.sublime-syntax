@@ -2,8 +2,8 @@
 
 # TODO: this whole syntax needs to be redone.
 
-name: TI-BASIC-84
-file_extensions: [ti-basic-84, ti-basic, 8xp]
+name: TI-BASIC-83
+file_extensions: [ti-basic-83, ti-basic-84, ti-basic-z80, ti-basic, 8xp]
 scope: source.ti-basic
 contexts:
   main:
