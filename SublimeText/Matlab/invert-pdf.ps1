@@ -5,94 +5,114 @@
 	requirements, and where I have them from:
 		- pwsh       - PowerShell 7
 		- ./invert-svg.ps1
-		- pdfinfo    - part of MiKTeX install (or Poppler)
-		- pdfunite   - part of MiKTeX install (or Poppler)
-		- pdftocairo - part of MiKTeX install (or Poppler)
-		- qpdf       - choco install qpdf
-		- magick     - choco install imagemagick
-						required for invert-svg.ps1 if the SVGs have embedded images.
+		- pdftocairo - part of MiKTeX install (Poppler)
 		- cairosvg   - pip install cairosvg,
 						also install gtk3 runtime, or gtk2 for 32-bit.
-		- grep       - MinGW devkit
-		- awk        - MinGW devkit
+		- magick     - choco install imagemagick
+						required for invert-svg.ps1 if the SVGs have embedded images.
+		- pdftk      - choco install pdftk
 #>
 
 param (
 	# infile includes extension. relative path. e.g. `./asdf.pdf`
-	[Parameter(Mandatory=$true)] [string] $infile,
+	[Alias("inputfile")] [string] $infile = "",
+
+	# use ./invert-svg.ps1 relative to this file, and not the working directory.
 	[string] $outfile = $infile,
-	[string] [Alias("SVGInvertFileLocation", "SVGTool")]
-		$invertSVGFileLocation = "./invert-svg.ps1",
-	[switch] $silent
+	[Alias("SVGInvertFileLocation", "SVGTool")] [string] $invertSVGFileLocation =
+		"$($MyInvocation.MyCommand.Source)/../invert-svg.ps1",
+	[uint32] $dpi = 150, # the default DPI for pdftocairo
+	[switch] $keepIntermediateFiles,
+	[Alias("quiet")] [switch] $silent,
+	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent
 )
+
+if ($infile -eq "") {
+	throw "input file was not provided."
+}
 
 ${invert-svg.ps1} = $invertSVGFileLocation
 
+$verbose_ = -not $silent.isPresent -or $boolSilent
+
+if (-not (get-command pdftocairo -type app -ErrorAct silent)) {
+	throw "Required program Poppler ``pdftocairo`` was not found."
+}
 if (-not (get-command ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
-	throw "Required program ImageMagick ``invert-svg.ps1`` was not found."
-}
-if (-not (get-command pdfinfo -type app -ErrorAct silent)) {
-	throw "Required program Poppler ``pdfinfo`` was not found."
-}
-if (-not (get-command pdfunite -type app -ErrorAct silent)) {
-	throw "Required program Poppler ``pdfunite`` was not found."
-}
-if (-not (get-command pdftocairo -type app -ErrorAct silent)) {
-	throw "Required program Poppler ``pdftocairo`` was not found."
-}
-if (-not (get-command qpdf -type app -ErrorAct silent)) {
-	throw "Required program ``qpdf`` was not found."
-}
-if (-not (get-command pdftocairo -type app -ErrorAct silent)) {
-	throw "Required program Poppler ``pdftocairo`` was not found."
+	throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
 }
 if (-not (get-command cairosvg -type app -ErrorAct silent)) {
 	# assume that GTK2/3 is installed and properly setup for CairoSVG.
-	throw "Required program Poppler ``pdftocairo`` was not found."
+	throw "Required program ``cairosvg`` was not found."
 }
-if (-not (get-command grep -type app -ErrorAct silent)) {
-	throw "Required program ``grep`` was not found."
-}
-if (-not (get-command awk -type app -ErrorAct silent)) {
-	throw "Required program ``awk`` was not found."
+if (-not (get-command pdftk -type app -ErrorAct silent)) {
+	throw "Required program ``pdftk`` was not found."
 }
 
-$verbose_ = -not $silent.isPresent
+pdftk $infile dump_data output pdfdata.tmp.txt
+[uint32] $pages = (cat pdfdata.tmp.txt | sls NumberOfPages) -split " " | select -last 1
 
-$redirect = $verbose_ ? '' : ' *> $null'
-
-$pages = pdfinfo $outfile 2> $null | grep -F Pages | awk '{print $2}'
-
-if ($verbose_) { echo "converting PDF pages to SVG" }
+if ($verbose_) { write-host "converting PDF pages to SVG with $dpi dpi" }
+$startTime = [DateTime]::Now
 for ($i = 1; $i -le $pages; $i++) {
-	if ($verbose_) { echo "    page $i" }
-	iex "pdftocairo -svg -f $i -l $i `"$outfile`" page-$i.svg$redirect"
+	if ($verbose_) { write-host "`tpage $i/$pages" }
+	pdftocairo -svg -r $dpi -f $i -l $i $infile page-$i.tmp.svg *> $null
 }
+$elapsedTime = ([DateTime]::Now - $startTime).totalSeconds
 
-if ($verbose_) { echo "inverting SVG colors" }
+if ($verbose_) {
+	write-host "`tFinished in $([math]::round($elapsedTime , 1))s"
+	write-host "inverting SVG colors"
+}
+$startTime = [DateTime]::Now
 for ($i = 1; $i -le $pages; $i++) {
-	if ($verbose_) { echo "    page $i" }
-	iex "$(${invert-svg.ps1} -replace ' ', '` ') page-$i.svg -bgcolor white$redirect"
+	if ($verbose_) { write-host "`tpage $i/$pages" }
+	& ${invert-svg.ps1} page-$i.tmp.svg -bgcolor white -indent "`t`t" -boolSilent $(-not $verbose_)
 }
 
-move $outfile text.pdf
+$elapsedTime = ([DateTime]::Now - $startTime).totalSeconds
+if ($verbose_) {
+	write-host "`tFinished in $([math]::round($elapsedTime , 1))s"
+}
 
-if ($verbose_) { echo "converting SVG pages to PDF" }
+if ($infile -eq $outfile) {
+	move $infile text.tmp.pdf
+}
+else {
+	# keep the old file, but get a hardlink to the same file data.
+	new-item text.tmp.pdf -target $infile -type hardlink > $null
+}
+
+if ($verbose_) { write-host "converting SVG pages to PDF" }
+$startTime = [DateTime]::Now
 for ($i = 1; $i -le $pages; $i++) {
-	if ($verbose_) { echo "    page $i" }
-	iex "cairosvg page-$i.svg -o page-$i.pdf$redirect"
+	if ($verbose_) { write-host "`tpage $i/$pages" }
+	cairosvg page-$i.tmp.svg -o page-$i.tmp.pdf *> $null
 }
 
-if ($verbose_) { echo "combining PDF pages" }
-iex "pdfunite $(ls page-*.pdf | % name) `"$outfile`"$redirect"
+$elapsedTime = ([DateTime]::Now - $startTime).totalSeconds
+if ($verbose_) {
+	write-host "`tFinished in $([math]::round($elapsedTime , 1))s"
+	write-host "combining PDF pages"
+}
+pdftk page-*.tmp.pdf cat output $outfile *> $null
 
-if ($verbose_) { echo "adding text layer back into PDF" }
-iex "qpdf --empty --pages `"$outfile`" -- --underlay text.pdf -- tmp.pdf$redirect"
-move tmp.pdf $outfile -force
+if ($verbose_) { write-host "restoring PDF text layer" }
+pdftk $outfile multibackground text.tmp.pdf output out.tmp.pdf *> $null
 
-if ($verbose_) { echo "cleaning" }
-rm page-*.svg, page-*.pdf, text.pdf
+if ($verbose_) { write-host "restoring PDF bookmarks" }
+pdftk out.tmp.pdf update_info pdfdata.tmp.txt output $outfile *> $null
 
-if ($verbose_) { echo "done" }
+if (-not $keepIntermediateFiles) {
+	if ($verbose_) { write-host "cleaning temporary files" }
+
+	rm	page-*.tmp.svg, `
+		page-*.tmp.pdf, `
+		text.tmp.pdf,   `
+		out.tmp.pdf,    `
+		pdfdata.tmp.txt
+}
+
+if ($verbose_) { write-host "done" }
 
 exit 0

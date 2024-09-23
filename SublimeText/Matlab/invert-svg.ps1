@@ -4,15 +4,31 @@
 .synopsis
 	inverts the colors of an SVG image.
 	requires ImageMagick if the SVG has embedded images (PNG, JPG, etc.)
+
+	to supress messages, either use `-silent` or `invert-svg.ps1 [ARGS] 6> $null`
+
+	assumes the SVG is valid.
+	assumes that width=..., etc. always uses double quotes.
+	assumes properties use `fill=...` instead of `fill = ...`, etc.
 #>
 param (
-	[Parameter(Mandatory=$true)] [Alias("infile")] [string] $filepath,
+	[Alias("inputfile")] [string] $infile = "",
+	[string] $outfile = $infile,
 
 	# the background color before inversion is applied.
-	[Alias("bgcolor")] [string] $defaultBGColor = "white"
+	[Alias("bgcolor")] [string] $defaultBGColor = "white",
+	[Alias("indentation", "indentLevel")] [string] $messageIndentation = "",
+
+	[Alias("quiet")] [switch] $silent,
+	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent
 )
 
-# all 147 named colors. maps name to color
+if ($infile -eq "") {
+	throw "input file was not provided"
+}
+
+
+# all 147 named colors. maps name to inverted color.
 $namedColorMap = @{
 	"aliceblue"            = "#0f0700"
 	"antiquewhite"         = "#051428"
@@ -179,7 +195,7 @@ $namedColorMap = @{
 
 	the alpha value can always be either a number or percent.
 #>
-function invert-color([string] $color) {
+function invert-color([Parameter(Mandatory=$true)] [string] $color) {
 	# TODO: figure out what to do if the rgb values are outside of [0, 256)
 	# TODO: separate this into different functions
 		# invert-hex
@@ -323,18 +339,43 @@ function invert-color([string] $color) {
 	assumes a moderate level of simplicity (no events, gradiants, etc.).
 	basically the input should be something that a PNG can render.
 	assumes the SVG is valid.
-	assumes that width=... always uses double quotes.
+	assumes that width=..., etc. always uses double quotes.
+	assumes properties use `fill=...` instead of `fill = ...`, etc.
+.description
+	process:
+
+	1. set the background color
+		1a. find the dimensions of the whole SVG.
+		1b. look for `rect` elements where the shape matches one of these:
+			- svg width, svg height
+			- 100%, 100%
+			- svg width, 100%
+			- 100%, svg height
+		1c. add one to the start of the SVG if there isn't one.
+	2. invert the colors on every `stroke` attribute.
+	3. invert the colors on every `fill` attribute.
+	4. invert the colors on embedded images.
+	5. write the new contents to the outfile.
+		- or write to stdout if the outfile is "-".
+		- default outfile is the infile (in-place inversion).
 #>
-function invert-svg([string] $filepath, [string] $defBGColor = "white") {
+function invert-svg(
+	[Parameter(Mandatory=$true)] [Alias("inputfile", "filepath")]
+		[string] $infile,
+	[Alias("ofile", "outputfile")] [string] $outfile = $infile,
+	[Alias("defaultBGColor")] [string] $bgcolor = "white",
+	[Alias("indentation")] [string] $indent = "",
+	[Alias("quiet")] [bool] $silent = $true
+) {
 	# TODO: don't load the entire file content into memory at once.
-	if (-not (test-path -type leaf $filepath)) {
+	if (-not (test-path -type leaf $infile)) {
 		throw "invalid path. either not a file or does not exist"
 	}
 
 	# required if there are embedded images.
 	[IO.Directory]::SetCurrentDirectory((pwd))
 
-	$content = (get-content $filepath) -join ""
+	$content = (cat $infile) -join ""
 
 	$svgSttIndex = $content.indexOf("<svg")
 	$svgEndIndex = $content.indexOf(">", $svgSttIndex + 4)
@@ -345,8 +386,12 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 	$width  = [regex]::match($svg,  "width=`"(\d+)`"").groups[1].value
 	$height = [regex]::match($svg, "height=`"(\d+)`"").groups[1].value
 
-	if ($width  -eq $null -or $width -eq "") { throw  "width is not specified" }
-	if ($height -eq $null -or $height -eq "") { throw "height is not specified" }
+	if ($width -eq $null -or $width -eq "") {
+		throw  "width is not specified or is in the wrong format"
+	}
+	if ($height -eq $null -or $height -eq "") {
+		throw "height is not specified or is in the wrong format"
+	}
 
 	# find the background rectangle
 	$backgroundFound = $false
@@ -371,17 +416,20 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 
 	if (-not $backgroundFound) {
 		$content = $content.insert($svgEndIndex + 1,
-			"<rect width=`"$width`" height=`"$height`" fill=`"$defBGColor`"/>"
+			"<rect width=`"$width`" height=`"$height`" fill=`"$bgcolor`"/>"
 		)
 	}
 
-	# invert stroke colors
+	if (-not $silent) { write-host "${indent}inverting stroke colors" -noNewline }
+	$counter = 0
 	$strokeEndIndex = 0
 	while ($true) {
 		$strokeSttIndex = $content.indexOf("stroke=", $strokeEndIndex)
 
 		if ($strokeSttIndex -lt 0) { break }
+		$counter++
 		$strokeSttIndex += 7
+
 
 		$strokeEndIndex = $content.indexOf('"', $strokeSttIndex + 1)
 
@@ -394,12 +442,18 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 			$content.substring($strokeEndIndex)
 	}
 
-	# invert fill colors
+	if (-not $silent) {
+		write-host "   - found $counter"
+		write-host "${indent}inverting fill colors" -noNewline
+	}
+
+	$counter = 0
 	$fillEndIndex = 0
 	while ($true) {
 		$fillSttIndex = $content.indexOf("fill=", $fillEndIndex)
 
 		if ($fillSttIndex -eq -1) { break }
+		$counter++
 		$fillSttIndex += 5
 
 		$fillEndIndex = $content.indexOf('"', $fillSttIndex + 1)
@@ -413,12 +467,22 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 			$content.substring($fillEndIndex)
 	}
 
+	if (-not $silent) {
+		write-host "     - found $counter"
+		write-host "${indent}inverting embedded images" -noNewline
+	}
+
+	$counter = 0
 	$imageEndIndex = 0
 	while ($true) {
-		# TODO: un-embed the image, and make it part of the SVG.
+		# I looked into vectorizing the embedded raster image, but I couldn't
+		# find a single tool that does it well, even for a simple graph PNG.
+		# maybe the PNG I had was just too low quality, but idk.
+
 		$imageSttIndex = $content.indexOf("<image", $imageEndIndex)
 
 		if ($imageSttIndex -eq -1) { break }
+		$counter++
 
 		if (-not (get-command magick -type app -ErrorAct silent)) {
 			throw "Required program ImageMagick ``magick`` was not found. embedded images are left un-inverted."
@@ -440,7 +504,7 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 		magick tmp.png -negate tmp.png
 		$image = [IO.File]::ReadAllBytes("./tmp.png")
 		$image = [Convert]::ToBase64String($image)
-		rm tmp.png -errorAction silentlyContinue
+		rm tmp.png 2> $null
 
 		# 23 == "xlink:href=`"data:image/".length - 1
 		$content = $content.substring(0, $imageSttIndex + $match.index + 23) + `
@@ -453,21 +517,20 @@ function invert-svg([string] $filepath, [string] $defBGColor = "white") {
 		$imageEndIndex = $imageSttIndex + 5
 	}
 
-	$content > $filepath
+	if (-not $silent) {
+		write-host " - found $counter"
+	}
 
-	# find the dimensions of the whole SVG.
-	# step 1, see if there is a background somewhere.
-		# look for `rect` elements where the shape mathes one of these:
-			# svg width, svg height
-			# 100%, 100%
-	# step 2, add one if there isn't one.
-		# add it at the start if there isn't one.
-	# step 3, invert the colors on every `fill` or `stroke` attribute.
-	# step 4, look for embedded images, and invert those.
-	# step 5, write the new contents back to the file
+	if ($outfile -eq "-") { echo $content }
+	else { $content > $outfile }
 }
 
 
-invert-svg $filepath $defaultBGColor
+invert-svg                       `
+	-infile  $infile             `
+	-outfile $outfile            `
+	-bgcolor $defaultBGColor     `
+	-indent  $messageIndentation `
+	-silent  ($silent.isPresent -or $boolSilent)
 
 exit 0
