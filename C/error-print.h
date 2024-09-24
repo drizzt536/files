@@ -52,7 +52,7 @@
 
 	// external color print versions
 	#define fprintf_color(fp, color, args...) \
-		_FPRINTF_COLOR(fp, color, /* true */ ERRLOG_LEVEL - 1, args)
+		_FPRINTF_COLOR(fp, color, /* true */ ERRLOG_LEVEL + 1, args)
 	#define printf_color(color, args...) fprintf_color(stdout, color, args)
 
 	#define fputs_color(fp, color, str) ({      \

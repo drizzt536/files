@@ -18,13 +18,15 @@
 		size_t l; // length
 	} string;
 
-	static inline string ctos(const char c) {
-		// char to string
-		return (string) {
-			.s = (char []) {c, '\0'},
-			.l = 1
-		};
-	}
+	// for some reason this doesn't work as an inline function.
+	// the other Xtos functions probably have the same problem.
+	#define ctos(c) (              \
+		/* char to string */        \
+		(string) {                   \
+			.s = (char []) {c, '\0'}, \
+			.l = 1                     \
+		}                               \
+	)
 	static inline string atos(const char *const str) {
 		// ascii to string
 		return (string) {
