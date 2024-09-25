@@ -19,8 +19,15 @@ param (
 	[Alias("bgcolor")] [string] $defaultBGColor = "white",
 	[Alias("indentation", "indentLevel")] [string] $messageIndentation = "",
 
+	# basically, `$messageIndentation` is expected to be $indentType*$n
+	# for some non-negative integer $n.
+	[string] $indentType = "`t",
+
 	[Alias("quiet")] [switch] $silent,
-	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent
+	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent = $false,
+	[switch] $reallyVerbose,
+	[Alias("breallyVerbose", "boolVerbose", "bVerbose")]
+		[bool] $boolReallyVerbose = $false
 )
 
 if ($infile -eq "") {
@@ -365,12 +372,17 @@ function invert-svg(
 	[Alias("ofile", "outputfile")] [string] $outfile = $infile,
 	[Alias("defaultBGColor")] [string] $bgcolor = "white",
 	[Alias("indentation")] [string] $indent = "",
-	[Alias("quiet")] [bool] $silent = $true
+	[string] $indentType = "`t",
+	[Alias("quiet")] [bool] $silent = $true,
+	[bool] $verb = $false # verbose. gets overridden by silent
 ) {
-	# TODO: don't load the entire file content into memory at once.
+	# TODO: don't load the entire file content into memory at once, if possible
 	if (-not (test-path -type leaf $infile)) {
 		throw "invalid path. either not a file or does not exist"
 	}
+	${indent+1} = $indent + $indentType
+
+	if ($silent) { $verb = $false }
 
 	# required if there are embedded images.
 	[IO.Directory]::SetCurrentDirectory((pwd))
@@ -379,12 +391,13 @@ function invert-svg(
 
 	$svgSttIndex = $content.indexOf("<svg")
 	$svgEndIndex = $content.indexOf(">", $svgSttIndex + 4)
-	$svg = $content.substring($svgSttIndex,
-		$svgEndIndex - $svgSttIndex + 1
-	)
+	$svg = $content.substring($svgSttIndex, $svgEndIndex - $svgSttIndex + 1)
 
+	# full SVG dimensions.
 	$width  = [regex]::match($svg,  "width=`"(\d+)`"").groups[1].value
 	$height = [regex]::match($svg, "height=`"(\d+)`"").groups[1].value
+
+	if ($verb) { write-host "${indent}SVG dimensions (w,h): $width x $height" }
 
 	if ($width -eq $null -or $width -eq "") {
 		throw  "width is not specified or is in the wrong format"
@@ -393,106 +406,128 @@ function invert-svg(
 		throw "height is not specified or is in the wrong format"
 	}
 
+	if ($verb) { write-host "${indent}looking for background rectangle" }
+
 	# find the background rectangle
-	$backgroundFound = $false
+	<#
+	technically, this can find a "background" rectangle midway through
+	the SVG, in which case, you would be covering up everything that
+	was previously drawn, which is stupid, and there might as well be
+	nothing before the background rectangle, unless they have events
+	or something more advanced like that.
+	#>
+	$bgFound = $false
+	$end = $svgEndIndex
+	$counter = 0
 	while ($true) {
-		$bgSttIndex = $content.indexOf("<rect", $svgEndIndex)
+		$stt = $content.indexOf("<rect", $end)
 
-		if ($bgSttIndex -eq -1) { break }
-		$bgEndIndex = $content.indexOf(">", $bgSttIndex + 5)
+		if ($stt -eq -1) { break }
+		$counter++
+		$end = $content.indexOf(">", $stt + 5)
+		if ($verb) { write-host "${indent+1}found background candidate $counter at $stt-$end." }
 
-		$rect = $content.substring($bgSttIndex,
-			$bgEndIndex - $bgSttIndex + 1
-		)
+		$rect = $content.substring($stt, $end - $stt + 1)
 
 		$rectWidth  = [regex]::match($rect, "width=`"(?:100(?:\.0+)?%|$width)`"")
 		$rectHeight = [regex]::match($rect, "height=`"(?:100(?:\.0+)?%|$height)`"")
 
 		if ($rectWidth.success -and $rectHeight.success) {
-			$backgroundFound = $true
+			if ($verb) { write-host "${indent+1}found background. no insertion required." }
+			$bgFound = $true
 			break
 		}
 	}
 
-	if (-not $backgroundFound) {
+	if ($verb -and -not $bgFound) {
+		write-host "${indent+1}background not found. inserting one."
+	}
+
+	if (-not $bgFound) {
 		$content = $content.insert($svgEndIndex + 1,
 			"<rect width=`"$width`" height=`"$height`" fill=`"$bgcolor`"/>"
 		)
 	}
 
-	if (-not $silent) { write-host "${indent}inverting stroke colors" -noNewline }
+	if (-not $silent) {
+		write-host "${indent}inverting stroke colors" -noNewline
+		if ($verb) { write-host "" } # add the newline.
+	}
 	$counter = 0
-	$strokeEndIndex = 0
+	$end = 0
 	while ($true) {
-		$strokeSttIndex = $content.indexOf("stroke=", $strokeEndIndex)
+		$stt = $content.indexOf("stroke=", $end)
 
-		if ($strokeSttIndex -lt 0) { break }
+		if ($stt -lt 0) { break }
 		$counter++
-		$strokeSttIndex += 7
+		$stt += 7
 
+		$end = $content.indexOf('"', $stt + 1)
 
-		$strokeEndIndex = $content.indexOf('"', $strokeSttIndex + 1)
+		if ($verb) { write-host "${indent+1}found stroke $counter at $stt-$end" }
 
-		$color = $content.substring($strokeSttIndex + 1,
-			$strokeEndIndex - $strokeSttIndex - 1
-		)
+		$color = invert-color $( $content.substring($stt + 1, $end - $stt - 1) )
 
-		$content = $content.substring(0, $strokeSttIndex + 1) + `
-			(invert-color $color) + `
-			$content.substring($strokeEndIndex)
+		$content = $content.substring(0, $stt + 1) + $color + $content.substring($end)
 	}
 
 	if (-not $silent) {
-		write-host "   - found $counter"
+		if ($verb) {
+			if ($counter -eq 0) { write-host "${indent+1}none found" }
+		}
+		else { write-host "   - found $counter" }
 		write-host "${indent}inverting fill colors" -noNewline
+		if ($verb) { write-host "" } # add the newline.
 	}
 
 	$counter = 0
-	$fillEndIndex = 0
+	$end = 0
 	while ($true) {
-		$fillSttIndex = $content.indexOf("fill=", $fillEndIndex)
+		$stt = $content.indexOf("fill=", $end)
 
-		if ($fillSttIndex -eq -1) { break }
+		if ($stt -eq -1) { break }
 		$counter++
-		$fillSttIndex += 5
+		$stt += 5
 
-		$fillEndIndex = $content.indexOf('"', $fillSttIndex + 1)
+		$end = $content.indexOf('"', $stt + 1)
 
-		$color = $content.substring($fillSttIndex + 1,
-			$fillEndIndex - $fillSttIndex - 1
-		)
+		if ($verb) { write-host "${indent+1}found fill $counter at $stt-$end" }
 
-		$content = $content.substring(0, $fillSttIndex + 1) + `
-			(invert-color $color) + `
-			$content.substring($fillEndIndex)
+		$color = invert-color $( $content.substring($stt + 1, $end - $stt - 1) )
+
+		$content = $content.substring(0, $stt + 1) + $color + $content.substring($end)
 	}
 
 	if (-not $silent) {
-		write-host "     - found $counter"
+		if ($verb) {
+			if ($counter -eq 0) { write-host "${indent+1}none found" }
+		}
+		else { write-host "     - found $counter" }
 		write-host "${indent}inverting embedded images" -noNewline
+		if ($verb) { write-host "" } # add the newline.
 	}
 
 	$counter = 0
-	$imageEndIndex = 0
+	$end = 0
 	while ($true) {
 		# I looked into vectorizing the embedded raster image, but I couldn't
 		# find a single tool that does it well, even for a simple graph PNG.
 		# maybe the PNG I had was just too low quality, but idk.
 
-		$imageSttIndex = $content.indexOf("<image", $imageEndIndex)
+		$stt = $content.indexOf("<image", $end)
 
-		if ($imageSttIndex -eq -1) { break }
+		if ($stt -eq -1) { break }
 		$counter++
 
 		if (-not (get-command magick -type app -ErrorAct silent)) {
 			throw "Required program ImageMagick ``magick`` was not found. embedded images are left un-inverted."
 		}
 
-		$imageEndIndex = $content.indexOf(">", $imageSttIndex + 6)
+		$end = $content.indexOf(">", $stt + 6)
 
-		$image = $content.substring($imageSttIndex,
-			$imageEndIndex - $imageSttIndex + 1
-		)
+		if ($verb) { write-host "${indent+1}found embedded image $("{0:d4}" -f $counter) at $stt-$end" }
+
+		$image = $content.substring($stt, $end - $stt + 1)
 
 		$match = [regex]::match($image,
 			"xlink:href=`"data:image/(png|jpe?g|webp);base64,([\da-zA-Z+/=]+)(`")"
@@ -507,30 +542,34 @@ function invert-svg(
 		rm tmp.png 2> $null
 
 		# 23 == "xlink:href=`"data:image/".length - 1
-		$content = $content.substring(0, $imageSttIndex + $match.index + 23) + `
+		$content = $content.substring(0, $stt + $match.index + 23) + `
 			$match.groups[1].value + ";base64," + $image + `
-			$content.substring($imageSttIndex + $match.groups[3].index)
+			$content.substring($stt + $match.groups[3].index)
 
 		# somehow, inverting the colors of a PNG can make the base64
-		# version of it signifcantly shorter, so if you use $imageEndIndex
+		# version of it signifcantly shorter, so if you use $end
 		# then it could completely miss the next <image/> element
-		$imageEndIndex = $imageSttIndex + 5
+		$end = $stt + 5
 	}
 
 	if (-not $silent) {
-		write-host " - found $counter"
+		if ($verb) {
+			if ($counter -eq 0) { write-host "${indent+1}none found" }
+		}
+		else { write-host "   - found $counter" }
 	}
-
 	if ($outfile -eq "-") { echo $content }
 	else { $content > $outfile }
 }
 
 
-invert-svg                       `
-	-infile  $infile             `
-	-outfile $outfile            `
-	-bgcolor $defaultBGColor     `
-	-indent  $messageIndentation `
-	-silent  ($silent.isPresent -or $boolSilent)
+invert-svg                          `
+	-infile     $infile             `
+	-outfile    $outfile            `
+	-indentType $indentType         `
+	-bgcolor    $defaultBGColor     `
+	-indent     $messageIndentation `
+	-verb       $($reallyVerbose.isPresent -or $boolReallyVerbose) `
+	-silent     $($silent.isPresent -or $boolSilent)
 
 exit 0

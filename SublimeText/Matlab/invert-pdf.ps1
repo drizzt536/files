@@ -24,7 +24,10 @@ param (
 	[uint32] $dpi = 150, # the default DPI for pdftocairo
 	[switch] $keepIntermediateFiles,
 	[Alias("quiet")] [switch] $silent,
-	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent
+	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent,
+	[switch] $reallyVerbose, # passed to invert-svg.ps1
+	[Alias("breallyVerbose", "boolVerbose", "bVerbose")]
+		[bool] $boolReallyVerbose = $false
 )
 
 if ($infile -eq "") {
@@ -34,6 +37,7 @@ if ($infile -eq "") {
 ${invert-svg.ps1} = $invertSVGFileLocation
 
 $verbose_ = -not $silent.isPresent -or $boolSilent
+$reallyVerbose = $reallyVerbose.isPresent -or $boolReallyVerbose
 
 if (-not (get-command pdftocairo -type app -ErrorAct silent)) {
 	throw "Required program Poppler ``pdftocairo`` was not found."
@@ -67,7 +71,13 @@ if ($verbose_) {
 $startTime = [DateTime]::Now
 for ($i = 1; $i -le $pages; $i++) {
 	if ($verbose_) { write-host "`tpage $i/$pages" }
-	& ${invert-svg.ps1} page-$i.tmp.svg -bgcolor white -indent "`t`t" -boolSilent $(-not $verbose_)
+	& ${invert-svg.ps1}  `
+		page-$i.tmp.svg  `
+		-bgcolor white   `
+		-indentType "`t" `
+		-messageIndentation "`t`t"    `
+		-boolSilent $(-not $verbose_) `
+		-boolReallyVerbose $reallyVerbose
 }
 
 $elapsedTime = ([DateTime]::Now - $startTime).totalSeconds
