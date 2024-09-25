@@ -17,7 +17,8 @@ param (
 
 	# the background color before inversion is applied.
 	[Alias("bgcolor")] [string] $defaultBGColor = "white",
-	[Alias("indentation", "indentLevel")] [string] $messageIndentation = "",
+	[Alias("indentation", "indentLevel", "indlvl")]
+		[string] $messageIndentation = "",
 
 	# basically, `$messageIndentation` is expected to be $indentType*$n
 	# for some non-negative integer $n.
@@ -387,7 +388,7 @@ function invert-svg(
 	# required if there are embedded images.
 	[IO.Directory]::SetCurrentDirectory((pwd))
 
-	$content = (cat $infile) -join ""
+	$content = cat $infile -raw
 
 	$svgSttIndex = $content.indexOf("<svg")
 	$svgEndIndex = $content.indexOf(">", $svgSttIndex + 4)
@@ -519,7 +520,7 @@ function invert-svg(
 		if ($stt -eq -1) { break }
 		$counter++
 
-		if (-not (get-command magick -type app -ErrorAct silent)) {
+		if (-not (gcm magick -type app -ErrorAct silent)) {
 			throw "Required program ImageMagick ``magick`` was not found. embedded images are left un-inverted."
 		}
 

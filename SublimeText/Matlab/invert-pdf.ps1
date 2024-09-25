@@ -39,17 +39,17 @@ ${invert-svg.ps1} = $invertSVGFileLocation
 $verbose_ = -not $silent.isPresent -or $boolSilent
 $reallyVerbose = $reallyVerbose.isPresent -or $boolReallyVerbose
 
-if (-not (get-command pdftocairo -type app -ErrorAct silent)) {
-	throw "Required program Poppler ``pdftocairo`` was not found."
+if (-not (gcm pdftocairo -type app -ErrorAct silent)) {
+	throw "Required program (Poppler) ``pdftocairo`` was not found."
 }
-if (-not (get-command ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
+if (-not (gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
 	throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
 }
-if (-not (get-command cairosvg -type app -ErrorAct silent)) {
+if (-not (gcm cairosvg -type app -ErrorAct silent)) {
 	# assume that GTK2/3 is installed and properly setup for CairoSVG.
 	throw "Required program ``cairosvg`` was not found."
 }
-if (-not (get-command pdftk -type app -ErrorAct silent)) {
+if (-not (gcm pdftk -type app -ErrorAct silent)) {
 	throw "Required program ``pdftk`` was not found."
 }
 
@@ -75,9 +75,9 @@ for ($i = 1; $i -le $pages; $i++) {
 		page-$i.tmp.svg  `
 		-bgcolor white   `
 		-indentType "`t" `
-		-messageIndentation "`t`t"    `
-		-boolSilent $(-not $verbose_) `
-		-boolReallyVerbose $reallyVerbose
+		-indlvl "`t`t"   `
+		-bquiet $(-not $verbose_) `
+		-bVerb $reallyVerbose
 }
 
 $elapsedTime = ([DateTime]::Now - $startTime).totalSeconds

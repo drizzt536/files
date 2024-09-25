@@ -5,13 +5,26 @@
 	inverts the colors of "published" MatLab exports.
 	currently only implemented for PDF and HTML formats.
 
-	requirements by format:
-		everything:
-			- matlab
+	requirements by format (other than MatLab and PowerShell):
+		HTML:
+			- none
+		XML:
+			- none
 		PDF:
-			- everything `invert-pdf.ps1` requires
+			- `invert-pdf.ps1` and dependencies
+		LaTeX:
+			- GhostScript
+			- pdftocairo (Poppler)
+			- `invert-svg.ps1` and dependencies
+			- cairosvg (and GTK runtime)
 		others:
 			- nothing
+
+	Only PDF and HTML keep a copy of the light mode versions. This is
+	because the other formats keep the images separately from the main
+	file, and it would clutter the directory too much to keep two copies
+	of every image. Technically HTML also does this, but there is an easy
+	workaround to not have to store both versions of very image.
 
 
 	built for Sublime Text, but does not require it.
@@ -34,7 +47,7 @@ param (
 )
 
 function version {
-	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.1"
+	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.2"
 }
 
 if ($version.isPresent) {
@@ -46,11 +59,8 @@ if ($infile -eq "") {
 	throw "input file was not provided."
 }
 
-if (-not (get-command matlab -type app -ErrorAct silent)) {
+if (-not (gcm matlab -type app -ErrorAct silent)) {
 	throw "Required program ``matlab`` was not found."
-}
-if (-not (get-command ${invert-pdf.ps1} -type externalScript -ErrorAct silent)) {
-	throw "Required program ``invert-pdf.ps1`` was not found.`nlooking at ``${invert-pdf.ps1}``."
 }
 
 [IO.Directory]::SetCurrentDirectory((pwd))
@@ -137,7 +147,92 @@ if (-not $keepLightMode) {
 				$writer.close()
 			}
 		}
+		"latex" {
+			<#
+			this does not work for arbitrary LaTeX documents, it only works
+			for the subset of documents that MatLab outputs, and hopefully
+			it even works with all of those.
+
+			process:
+				1. invert the colors of the eps files.
+					1.1. convert EPS to PDF (gs)
+					1.2. convert PDF to SVG (pdftocairo)
+					1.3. invert SVG colors (invert-svg.ps1)
+					1.4. convert SVG to EPS (cairosvg)
+				2. add `\pagecolor{black}\color{white}` before the `\begin{document}`.
+				3. replace all instances of `\color{black}` with `\color{white}`
+					- make sure they aren't part of a `verbatim` block.
+					- it seems like it only ever gets used right after a verbatim block.
+			#>
+			move -force ./tmp/* .
+
+			$gs   = (gcm gs       -type app -errorAct silent)?.name
+			$gs ??= (gcm gswin64c -type app -errorAct silent)?.name
+			$gs ??= (gcm gswin32c -type app -errorAct silent)?.name
+
+			if ($gs -eq $null) {
+				throw "Required program GhostScript ``gs / gswin64c / gswin32c`` was not found."
+			}
+			if (-not (gcm pdftocairo -type app -ErrorAct silent)) {
+				throw "Required program (Poppler) ``pdftocairo`` was not found."
+			}
+			if (-not (gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
+				throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
+			}
+			if (-not (gcm cairosvg -type app -ErrorAct silent)) {
+				# assume that GTK2/3 is installed and properly setup for CairoSVG.
+				throw "Required program ``cairosvg`` was not found."
+			}
+
+			# step 1
+			ls *.eps | % name | % {
+				write-host "inverting colors of $_"
+				$sttTime = [DateTime]::Now
+
+				$eps = $_
+				$pdf = [IO.Path]::ChangeExtension($eps, "pdf")
+				$svg = [IO.Path]::ChangeExtension($eps, "svg")
+				write-host "`tconverting EPS to PDF"
+				& $gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dEPSCrop "-sOutputFile=$pdf" $eps *> $null
+				write-host "`tconverting PDF to SVG"
+				pdftocairo -svg -f 1 -l 1 $pdf $svg *> $null
+				write-host "`tinverting SVG colors"
+				& ${invert-svg.ps1} $svg -indentation "`t`t"
+				write-host "`tconverting SVG to EPS"
+				cairosvg $svg -o $eps *> $null
+				rm $pdf, $svg
+
+				$elapsedTime = ([DateTime]::Now - $sttTime).totalSeconds
+				write-host "`tFinished in $([math]::round($elapsedTime, 1))s"
+			}
+
+
+			$texFile = ls *.tex | % name
+
+			$LaTeXContent = cat $texFile -raw
+
+			# step 2
+			$docStartIndex = $LaTeXContent.indexOf("\begin{document}")
+			$LaTeXContent = $LaTeXContent.insert(
+				$docStartIndex,
+				"\pagecolor{black}`n\color{white}`n"
+			)
+
+
+			# step 3
+			$LaTeXContent = [regex]::replace(
+				$LaTeXContent,
+				"\\end\{verbatim\}\s*\\color\{black\}",
+				"\end{verbatim} \color{white}"
+			)
+
+			$LaTeXContent > $texFile
+		}
 		"pdf" {
+			if (-not (gcm ${invert-pdf.ps1} -type externalScript -ErrorAct silent)) {
+				throw "Required program ``invert-pdf.ps1`` was not found.`nlooking at ``${invert-pdf.ps1}``."
+			}
+
 			& ${invert-pdf.ps1}            `
 				-infile ./tmp/$outfile     `
 				-outfile ./$outfile        `
@@ -146,12 +241,21 @@ if (-not $keepLightMode) {
 
 			move -force ./tmp/$outfile ./$basename-light.pdf
 		}
+		"xml" {
+			# I don't really understand the XML formatting, so I am
+			# just going to invert the PNGs, and keep everything
+			# else the same. As far as I can tell, the XML file
+			# doesn't even have any styling, so it doesn't really
+			# make sense to "invert" the XML file's colors.
+
+			ls ./tmp/*.png | % name | % { magick $_ -negate $_ }
+			move -force ./tmp/* .
+		}
 		default {
 			if ($verbose_) {
 				write-host "dark mode is not implemented for output format ``$format``."
-				# TODO: implement these
-				# I don't care enough to figure out how, because I don't use them.
-				# I know how to make a LaTeX file dark mode, but I don't want to do it.
+				# doc
+				# ppt
 			}
 
 			move -force ./tmp/* .
