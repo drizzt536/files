@@ -3,51 +3,55 @@
 <#
 .synopsis
 	inverts the colors of "published" MatLab exports.
-	currently only implemented for PDF and HTML formats.
 
 	requirements by format (other than MatLab and PowerShell):
+		DOC/DOCX:
+			- `invert-doc.ps1` and dependencies
 		HTML:
 			- none
-		XML:
-			- none
+		LaTeX:
+			- `invert-eps.ps1` and dependencies
 		PDF:
 			- `invert-pdf.ps1` and dependencies
-		LaTeX:
-			- GhostScript
-			- pdftocairo (Poppler)
-			- `invert-svg.ps1` and dependencies
-			- cairosvg (and GTK runtime)
-		others:
-			- nothing
+		PPT/PPTX:
+			- N/A (inversion not implemented)
+			- will probably use PowerPoint when/if implemented.
+		XML:
+			- none
 
 	Only PDF and HTML keep a copy of the light mode versions. This is
 	because the other formats keep the images separately from the main
 	file, and it would clutter the directory too much to keep two copies
 	of every image. Technically HTML also does this, but there is an easy
 	workaround to not have to store both versions of very image.
-
+	And for DOC/DOCX I didn't feel like making it do that.
+	Who uses Microsoft Word anyway?
 
 	built for Sublime Text, but does not require it.
 #>
-
 param (
 	# infile includes extension. assumes it is in the working directory.
 	[Alias("inputfile")] [string] $infile = "",
-	[ValidateSet("html", "doc", "latex", "ppt", "xml", "pdf")]
-		[string] $format = "pdf",
-	[Alias("PDFTool")] [string] ${invert-pdf.ps1} =
-		"$($MyInvocation.MyCommand.Source)/../invert-pdf.ps1",
-	[Alias("SVGTool")] [string] ${invert-svg.ps1} =
-		"$($MyInvocation.MyCommand.Source)/../invert-svg.ps1",
-	[string] $invertPDF = "$($MyInvocation.MyCommand.Source)/../invert-svg.ps1",
+	[ValidateSet("doc", "docx", "html", "latex", "pdf", "ppt", "pptx", "xml")] [string] $format = "pdf",
+
+	[Alias("DOCTool", "DOCXTool")] [string] ${invert-doc.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-doc.ps1",
+	[Alias("EPSTool")]             [string] ${invert-eps.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-eps.ps1",
+	[Alias("PDFTool")]             [string] ${invert-pdf.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-pdf.ps1",
+	[Alias("SVGTool")]             [string] ${invert-svg.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-svg.ps1",
+
 	[switch] $keepLightMode,
 	[switch] $silent,
 	[switch] $version,
 	[switch] $open
 )
 
+$verbose_ = -not $silent.isPresent
+
+# TODO: on all the subprograms, cd into the directory with the input file.
+	# so all the temporary files will be in that directory.
+
 function version {
-	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.2"
+	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.3"
 }
 
 if ($version.isPresent) {
@@ -55,9 +59,7 @@ if ($version.isPresent) {
 	exit 0
 }
 
-if ($infile -eq "") {
-	throw "input file was not provided."
-}
+if ($infile -eq "") { throw "input file was not provided." }
 
 if (-not (gcm matlab -type app -ErrorAct silent)) {
 	throw "Required program ``matlab`` was not found."
@@ -66,25 +68,30 @@ if (-not (gcm matlab -type app -ErrorAct silent)) {
 [IO.Directory]::SetCurrentDirectory((pwd))
 $basename = [IO.Path]::GetFileNameWithoutExtension($infile)
 
-$outext = $format -eq 'latex' ? 'tex' : $format
+if ($format -in "docx", "pptx") {
+	# MatLab doesn't actually support docx or pptx.
+	# even though doc and ppt were deprecated in 2007.
+
+	# MatLab will create a doc/ppt, and then I will
+	# have to update it to docx/pptx myself.
+	$format = $format.substring(0, 3)
+	$updateFileType = $true
+}
+else {
+	$updateFileType = $false
+}
+
+$outext = $format -eq 'latex' ?
+	'tex' :
+	$format.toLower()
 
 $outfile = "$basename.$outext"
 
-$verbose_ = -not $silent.isPresent
-
 if ($verbose_) { version }
-
-# in case the previous build was stopped mid way through
-if ($verbose_) { write-host "cleaning temporary files" }
-rm	page-*.tmp.svg, `
-	page-*.tmp.pdf, `
-	text.tmp.pdf,   `
-	out.tmp.pdf,    `
-	pdfdata.tmp.txt 2> $null
 
 $matlabCmd = "publish('./$infile', 'format', '$format', 'outputDir', './tmp/');"
 $matlabCmd = $verbose_ ? @"
-disp('building "./$outfile"');
+disp('building ""./$outfile"" from ""./$infile""');
 ofile = $matlabCmd
 fprintf('\noutput file == "%s"\nexiting matlab\n', ofile);
 "@ : $matlabCmd
@@ -103,7 +110,7 @@ else {
 }
 
 if ($lastExitCode -ne 0) {
-	if ($verbose_) { write-host "matlab encountered a fatal error. exit code $lastExitCode. exiting"
+	if ($verbose_) { write-host "matlab encountered a fatal error. exit code $lastExitCode. exiting" }
 	# since matlab failed, there shouldn't be anything in the tmp directory,
 	# but in case there is, don't recurse, and suppress error messages.
 
@@ -113,6 +120,24 @@ if ($lastExitCode -ne 0) {
 
 if (-not $keepLightMode) {
 	switch ($format) {
+		"doc" {
+			if (-not (gcm ${invert-doc.ps1} -type externalScript -ErrorAct silent)) {
+				throw "Required program ``invert-doc.ps1`` was not found.`nlooking at ``${invert-doc.ps1}``."
+			}
+
+			if ($updateFileType) {
+				$outfile += "x" # .doc -> .docx
+			}
+
+			& ${invert-doc.ps1}              `
+				-infile  ./tmp/$basename.doc `
+				-outfile ./tmp/$outfile      `
+				-PDFTool ${invert-pdf.ps1}   `
+				-SVGTool ${invert-svg.ps1}   `
+				-quiet   $(-not $verbose_)
+
+			move ./tmp/$outfile $outfile
+		}
 		"html" {
 			move ./tmp/* .
 			$content = cat $outfile -raw
@@ -164,7 +189,7 @@ if (-not $keepLightMode) {
 					- make sure they aren't part of a `verbatim` block.
 					- it seems like it only ever gets used right after a verbatim block.
 			#>
-			move -force ./tmp/* .
+			cd tmp
 
 			$gs   = (gcm gs       -type app -errorAct silent)?.name
 			$gs ??= (gcm gswin64c -type app -errorAct silent)?.name
@@ -176,8 +201,8 @@ if (-not $keepLightMode) {
 			if (-not (gcm pdftocairo -type app -ErrorAct silent)) {
 				throw "Required program (Poppler) ``pdftocairo`` was not found."
 			}
-			if (-not (gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
-				throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
+			if (-not (gcm ${invert-eps.ps1} -type externalScript -ErrorAct silent)) {
+				throw "Required program ``invert-eps.ps1`` was not found.`nlooking at ``${invert-eps.ps1}``."
 			}
 			if (-not (gcm cairosvg -type app -ErrorAct silent)) {
 				# assume that GTK2/3 is installed and properly setup for CairoSVG.
@@ -186,24 +211,10 @@ if (-not $keepLightMode) {
 
 			# step 1
 			ls *.eps | % name | % {
-				write-host "inverting colors of $_"
-				$sttTime = [DateTime]::Now
-
-				$eps = $_
-				$pdf = [IO.Path]::ChangeExtension($eps, "pdf")
-				$svg = [IO.Path]::ChangeExtension($eps, "svg")
-				write-host "`tconverting EPS to PDF"
-				& $gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dEPSCrop "-sOutputFile=$pdf" $eps *> $null
-				write-host "`tconverting PDF to SVG"
-				pdftocairo -svg -f 1 -l 1 $pdf $svg *> $null
-				write-host "`tinverting SVG colors"
-				& ${invert-svg.ps1} $svg -indentation "`t`t"
-				write-host "`tconverting SVG to EPS"
-				cairosvg $svg -o $eps *> $null
-				rm $pdf, $svg
-
-				$elapsedTime = ([DateTime]::Now - $sttTime).totalSeconds
-				write-host "`tFinished in $([math]::round($elapsedTime, 1))s"
+				& ${invert-eps.ps1}            `
+					-infile  $_                `
+					-quiet   $(-not $verbose_) `
+					-svgTool ${invert-svg.ps1}
 			}
 
 
@@ -227,19 +238,58 @@ if (-not $keepLightMode) {
 			)
 
 			$LaTeXContent > $texFile
+
+			cd ..
+			move -force ./tmp/* .
 		}
 		"pdf" {
 			if (-not (gcm ${invert-pdf.ps1} -type externalScript -ErrorAct silent)) {
 				throw "Required program ``invert-pdf.ps1`` was not found.`nlooking at ``${invert-pdf.ps1}``."
 			}
 
+			if ($verbose_) { write-host "cleaning temporary files" }
+
+			# in case the previous build process was stopped part-way.
+			# sometimes having the files here already can break things.
+			# Or maybe that is just because sometimes you change nothing
+			# and MatLab will publish to different outputs.
+			rm	page-*.tmp.svg, `
+				page-*.tmp.pdf, `
+				text.tmp.pdf,   `
+				out.tmp.pdf,    `
+				pdfdata.tmp.txt
+
 			& ${invert-pdf.ps1}            `
-				-infile ./tmp/$outfile     `
+				-infile  ./tmp/$outfile    `
 				-outfile ./$outfile        `
-				-svgTool ${invert-svg.ps1} `
-				-boolSilent $(-not $verbose_)
+				-indLvl  0                 `
+				-indTyp  "`t"              `
+				-quiet   $(-not $verbose_) `
+				-svgTool ${invert-svg.ps1}
 
 			move -force ./tmp/$outfile ./$basename-light.pdf
+		}
+		"ppt" {
+			# TODO: implement PPT and PPTX
+			<#
+			For now, the best way to do it is to manually save the
+			PPT file as a PDF through PowerPoint, then invoke
+			`invert-pdf.ps1` on the PDF, and convert back PPT/PPTX
+			from there through PowerPoint.
+
+			I don't actually know if this works, but I'll get there.
+			#>
+			$format = $updateFileType ? "PPTX" : "PPT"
+
+			if ($verbose_) {
+				write-host "dark mode is not implemented for output format ``$format``. proceeding with light mode"
+
+				if ($updateFileType) {
+					write-host "PPT to PPTX conversion is not implemented. proceeding with PPT"
+				}
+			}
+
+			move -force ./tmp/* .
 		}
 		"xml" {
 			# I don't really understand the XML formatting, so I am
@@ -252,13 +302,7 @@ if (-not $keepLightMode) {
 			move -force ./tmp/* .
 		}
 		default {
-			if ($verbose_) {
-				write-host "dark mode is not implemented for output format ``$format``."
-				# doc
-				# ppt
-			}
-
-			move -force ./tmp/* .
+			throw "unknown file format ``$format``"
 		}
 	}
 }
@@ -274,9 +318,8 @@ if ($verbose_ -and $format -eq "pdf" -and -not $keepLightMode -and $matlabOutput
 	write-host "`nmatlab encountered non-fatal errors."
 
 	$count = $matlabOutput.count
-	# for some reason, the line with `^^^^^^` will be after the lines with
 	# `output file == '...'` and `exiting matlab`.
-	$matlabOutput[1..($count - 5) + ($count - 1)] -join "`n" | write-host
+	$matlabOutput[1..($count - 4)] -join "`n" | write-host
 }
 
 
@@ -287,10 +330,10 @@ if ($open.isPresent) {
 elseif ($verbose_) {
 	if ($outext -eq "pdf") {
 		write-host ""
-		write-host original PDF: `"./$basename-light.pdf`"
-		write-host darkmode PDF: `"./$outfile`"
+		write-host original PDF: ./$basename-light.pdf
+		write-host darkmode PDF: ./$outfile
 	} else {
-		write-host output file: `"./$outfile`"
+		write-host output file: ./$outfile
 	}
 }
 

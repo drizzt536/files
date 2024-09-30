@@ -1,39 +1,43 @@
-# move to `%AppData%/Sublime Text/Packages/Matlab/invert-svg.ps1` or equivalent.
-
 <#
 .synopsis
 	inverts the colors of an SVG image.
 	requires ImageMagick if the SVG has embedded images (PNG, JPG, etc.)
 
-	to supress messages, either use `-silent` or `invert-svg.ps1 [ARGS] 6> $null`
+	to supress messages, either use `-quiet $true` or `invert-svg.ps1 [ARGS] 6> $null`
 
 	assumes the SVG is valid.
 	assumes that width=..., etc. always uses double quotes.
 	assumes properties use `fill=...` instead of `fill = ...`, etc.
+
+	the bgcolor argument is the background color *before* inversion.
+	It can be any valid SVG color thing. (e.g. hex, name, hsl, etc.)
 #>
 param (
-	[Alias("inputfile")] [string] $infile = "",
+	[string] $infile,
 	[string] $outfile = $infile,
 
-	# the background color before inversion is applied.
-	[Alias("bgcolor")] [string] $defaultBGColor = "white",
-	[Alias("indentation", "indentLevel", "indlvl")]
-		[string] $messageIndentation = "",
+	[uint32] $indLvl = 0,
+	[string] $indTyp = "`t",
+	[bool] $quiet = $false,
+	[bool] $verb = $false,
+	[bool] $keepIntermediateFiles = $false,
+	[switch] $help,
 
-	# basically, `$messageIndentation` is expected to be $indentType*$n
-	# for some non-negative integer $n.
-	[string] $indentType = "`t",
-
-	[Alias("quiet")] [switch] $silent,
-	[Alias("bsilent", "boolquiet", "bquiet")] [bool] $boolSilent = $false,
-	[switch] $reallyVerbose,
-	[Alias("breallyVerbose", "boolVerbose", "bVerbose")]
-		[bool] $boolReallyVerbose = $false
+	# -SVGTool is for EPS and PDF
+	# -PDFTool is for DOC and DOCX
+	# -dpi is only for EPS and PDF
+	[string] $bgcolor = "white"
+	# -format is only for invert-magick.ps1
 )
 
-if ($infile -eq "") {
-	throw "input file was not provided"
+if ($infile -eq "") { throw "input file was not provided." }
+
+if ($help.isPresent -or $infile -eq "--help") {
+	& $MyInvocation.MyCommand.Source -?
+	exit 0
 }
+
+if ($quiet) { $verb = $false }
 
 
 # all 147 named colors. maps name to inverted color.
@@ -368,22 +372,31 @@ function invert-color([Parameter(Mandatory=$true)] [string] $color) {
 		- default outfile is the infile (in-place inversion).
 #>
 function invert-svg(
-	[Parameter(Mandatory=$true)] [Alias("inputfile", "filepath")]
-		[string] $infile,
-	[Alias("ofile", "outputfile")] [string] $outfile = $infile,
-	[Alias("defaultBGColor")] [string] $bgcolor = "white",
-	[Alias("indentation")] [string] $indent = "",
-	[string] $indentType = "`t",
-	[Alias("quiet")] [bool] $silent = $true,
-	[bool] $verb = $false # verbose. gets overridden by silent
+	[string] $infile,
+	[string] $outfile = $infile,
+
+	[string] $indLvl = 0,
+	[string] $indTyp = "`t",
+	[bool] $quiet = $true,
+	[bool] $verb = $false,
+	[bool] $keepIntermediateFiles,
+
+	# -SVGTool is for EPS and PDF
+	# -dpi is only for EPS and PDF
+	[string] $bgcolor = "white"
 ) {
 	# TODO: don't load the entire file content into memory at once, if possible
+	if ($infile -eq "") { throw "input file was not provided" }
+
 	if (-not (test-path -type leaf $infile)) {
 		throw "invalid path. either not a file or does not exist"
 	}
-	${indent+1} = $indent + $indentType
 
-	if ($silent) { $verb = $false }
+	$indent = $indTyp * $indLvL
+	${indent+1} = $indent + $indTyp*1
+	${indent+2} = $indent + $indTyp*2 # unused.
+
+	if ($quiet) { $verb = $false }
 
 	# required if there are embedded images.
 	[IO.Directory]::SetCurrentDirectory((pwd))
@@ -450,7 +463,7 @@ function invert-svg(
 		)
 	}
 
-	if (-not $silent) {
+	if (-not $quiet) {
 		write-host "${indent}inverting stroke colors" -noNewline
 		if ($verb) { write-host "" } # add the newline.
 	}
@@ -472,7 +485,7 @@ function invert-svg(
 		$content = $content.substring(0, $stt + 1) + $color + $content.substring($end)
 	}
 
-	if (-not $silent) {
+	if (-not $quiet) {
 		if ($verb) {
 			if ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
@@ -499,7 +512,7 @@ function invert-svg(
 		$content = $content.substring(0, $stt + 1) + $color + $content.substring($end)
 	}
 
-	if (-not $silent) {
+	if (-not $quiet) {
 		if ($verb) {
 			if ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
@@ -526,7 +539,7 @@ function invert-svg(
 
 		$end = $content.indexOf(">", $stt + 6)
 
-		if ($verb) { write-host "${indent+1}found embedded image $("{0:d4}" -f $counter) at $stt-$end" }
+		if ($verb) { write-host "${indent+1}found embedded image $counter at $stt-$end" }
 
 		$image = $content.substring($stt, $end - $stt + 1)
 
@@ -536,41 +549,49 @@ function invert-svg(
 
 		$imageType = $match.groups[1].value
 		$image = [Convert]::FromBase64String($match.groups[2].value)
-		[IO.File]::WriteAllBytes("./tmp.png", $image)
-		magick tmp.png -negate tmp.png
-		$image = [IO.File]::ReadAllBytes("./tmp.png")
+		[IO.File]::WriteAllBytes("./tmp-$counter.$imageType", $image)
+
+		magick ./tmp-$counter.$imageType -negate ./tmp-$counter.$imageType
+
+		$image = [IO.File]::ReadAllBytes("./tmp-$counter.$imageType")
 		$image = [Convert]::ToBase64String($image)
-		rm tmp.png 2> $null
+		if (-not $keepIntermediateFiles) {
+			rm ./tmp-$counter.$imageType 2> $null
+		}
 
 		# 23 == "xlink:href=`"data:image/".length - 1
 		$content = $content.substring(0, $stt + $match.index + 23) + `
-			$match.groups[1].value + ";base64," + $image + `
+			$imageType + ";base64," + $image + `
 			$content.substring($stt + $match.groups[3].index)
 
 		# somehow, inverting the colors of a PNG can make the base64
-		# version of it signifcantly shorter, so if you use $end
-		# then it could completely miss the next <image/> element
+		# version of it signifcantly shorter, so if you keep $end the
+		# same, it you could completely miss the next <image> element
 		$end = $stt + 5
 	}
 
-	if (-not $silent) {
+	if (-not $quiet) {
 		if ($verb) {
 			if ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
-		else { write-host "   - found $counter" }
+		else { write-host " - found $counter" }
+
+		write-host "${indent}done"
 	}
 	if ($outfile -eq "-") { echo $content }
 	else { $content > $outfile }
 }
 
 
-invert-svg                          `
-	-infile     $infile             `
-	-outfile    $outfile            `
-	-indentType $indentType         `
-	-bgcolor    $defaultBGColor     `
-	-indent     $messageIndentation `
-	-verb       $($reallyVerbose.isPresent -or $boolReallyVerbose) `
-	-silent     $($silent.isPresent -or $boolSilent)
+
+invert-svg            `
+	-infile  $infile  `
+	-outfile $outfile `
+	-indLvl  $indLvl  `
+	-indTyp  $indTyp  `
+	-bgcolor $bgcolor `
+	-quiet   $quiet   `
+	-verb    $verb    `
+	-keep    $keepIntermediateFiles
 
 exit 0
