@@ -257,7 +257,7 @@ if (-not $keepLightMode) {
 				page-*.tmp.pdf, `
 				text.tmp.pdf,   `
 				out.tmp.pdf,    `
-				pdfdata.tmp.txt
+				pdfdata.tmp.txt 2> $null
 
 			& ${invert-pdf.ps1}            `
 				-infile  ./tmp/$outfile    `
