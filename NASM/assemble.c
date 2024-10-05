@@ -1,5 +1,10 @@
 // make all
 
+// the build file for this program is ./Makefile
+// the rest of the NASM development system is here:
+	// - main syntax file: ../SublimeText/NASM.sublime-syntax
+	// - other stuff     : ../SublimeText/NASM/
+
 // TODO: if no extension is given and there is no `.nasm`, try other extensions
 // TODO: allow other entry points. And consider making mainCRTStartup the default.
 // TODO: make an argument to print everything without color.
@@ -286,10 +291,7 @@ char *strnkdup(const char *const s, size_t n, const size_t k) {
 	return res;
 }
 
-__attribute__((always_inline)) static inline char *strkdup(
-	const char *const s,
-	const size_t k
-) {
+static inline char *strkdup(const char *const s, const size_t k) {
 	// strdup(s) with k extra null bytes at the end.
 	return strnkdup(s, -1, k);
 }
