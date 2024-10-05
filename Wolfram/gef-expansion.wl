@@ -118,7 +118,7 @@ IntegerLength[Subscript[term, n_Integer /; n > 0]] := Sum[
 
 GEFExpansionNextTerm[
     y -> Pi - 3,
-    $Precision -> 18000, (* this is for the 14th number *)
+    $Precision -> 36000, (* this is for the 14th number *)
     terms -> {
         (* these terms need to be put in manually *)
         (* d-prec == decimal precision *)
