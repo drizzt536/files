@@ -28,16 +28,19 @@ param (
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
-	[bool] $quiet = $false,
-	[bool] $verb = $false,
+	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
 	[switch] $help,
 
 	[Alias("SVGTool")] [string] ${invert-svg.ps1} = "$($MyInvocation.MyCommand.Source)/../invert-svg.ps1",
-	# -PDFTool is for DOC and DOCX
+	# -PDFTool   - DOC/DOCX, and PPT/PPTX
 	[uint32] $dpi = 150
-	# -bgcolor is for SVG
-	# -format is only for invert-magick.ps1
+	# -bgcolor   - SVG
+	# -format    - magick
+	# -fontPath  - TXT
+	# -fontIndex - TXT
+	# -fontSize  - TXT
+	# -tabLength - TXT
 )
 
 if ($infile -eq "") { throw "input file was not provided." }
@@ -47,11 +50,9 @@ if ($help.isPresent -or $infile -eq "--help") {
 	exit 0
 }
 
-$indent = $indTyp * $indLvl
+$indent     = $indTyp * $indLvl
 ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2
-
-if ($quiet) { $verb = $false }
 
 
 $gs   = (gcm gs       -type app -errorAct silent)?.name
@@ -61,46 +62,47 @@ $gs ??= (gcm gswin32c -type app -errorAct silent)?.name
 if ($gs -eq $null) {
 	throw "Required program GhostScript ``gs / gswin64c / gswin32c`` was not found."
 }
-if (-not (gcm pdftocairo -type app -ErrorAct silent)) {
+if (!(gcm pdftocairo -type app -ErrorAct silent)) {
 	throw "Required program (Poppler) ``pdftocairo`` was not found."
 }
-if (-not (gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
+if (!(gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
 	throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
 }
-if (-not (gcm cairosvg -type app -ErrorAct silent)) {
+if (!(gcm cairosvg -type app -ErrorAct silent)) {
 	# assume that GTK2/3 is installed and properly setup for CairoSVG.
 	throw "Required program ``cairosvg`` was not found."
 }
 
-if (-not $quiet) { write-host "${indent}inverting colors of $infile" }
+if ($logging -ne "none") { write-host "${indent}inverting colors of $infile" }
 $sttTime = [DateTime]::Now
 
 $pdf = [IO.Path]::ChangeExtension($infile, "tmp.pdf")
 $svg = [IO.Path]::ChangeExtension($infile, "tmp.svg")
 
-if (-not $quiet) { write-host "${indent+1}converting EPS to PDF" }
+if ($logging -ne "none") { write-host "${indent+1}converting EPS to PDF" }
 & $gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dEPSCrop "-sOutputFile=$pdf" $infile *> $null
 
-if (-not $quiet) { write-host "${indent+1}converting PDF to SVG" }
+if ($logging -ne "none") { write-host "${indent+1}converting PDF to SVG" }
 pdftocairo -svg -f 1 -l 1 -r $dpi $pdf $svg *> $null
 
-if (-not $quiet) { write-host "${indent+1}inverting SVG colors" }
+if ($logging -ne "none") { write-host "${indent+1}inverting SVG colors" }
 
 & ${invert-svg.ps1}
-	-infile  $svg    `
-	-bgcolor "white" `
-	-quiet   $quiet  `
-	-verb    $verb   `
-	-indTyp  $indTyp `
-	-indlvl  $($indlvl+2)
+	-infile  $svg     `
+	-outfile $svg     `
+	-bgcolor "#000"   `
+	-logging $logging `
+	-indTyp  $indTyp  `
+	-indlvl  $($indlvl+2) `
+	-keepInt $keepIntermediateFiles
 
-if (-not $silent) { write-host "${indent+1}converting SVG to EPS" }
+if ($logging -ne "none") { write-host "${indent+1}converting SVG to EPS" }
 cairosvg $svg -o $outfile *> $null
 
-if (-not $keepIntermediateFiles) {
-	if (-not $silent) { write-host "${indent+1}cleaning intermediate files"}
+if (!$keepIntermediateFiles) {
+	if ($logging -ne "none") { write-host "${indent+1}cleaning intermediate files"}
 	rm $pdf, $svg
 }
 
-$elapsedTime = ([DateTime]::Now - $sttTime).totalSeconds
-if (-not $silent) { write-host "${indent+1}Finished in $([math]::round($elapsedTime, 1))s" }
+$elapsedTime = [math]::round(([DateTime]::Now - $startTime).totalSeconds, 1)
+if ($logging -ne "none") { write-host "${indent+1}Finished in ${elapsedTime}s" }

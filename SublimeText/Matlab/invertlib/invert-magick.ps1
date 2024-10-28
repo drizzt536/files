@@ -20,16 +20,19 @@ param (
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
-	[bool] $quiet = $false,
-	[bool] $verb = $false,
+	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
 	[switch] $help,
 
-	# -SVGTool is for EPS and PDF
-	# -PDFTool is for DOC and DOCX
-	# -dpi is for EPS and PDF
-	# -bgcolor is for SVG
+	# -SVGTool   - DOC/DOCX, EPS, PDF, and PPT/PPTX
+	# -PDFTool   - DOC/DOCX, and PPT/PPTX
+	# -dpi       - DOC/DOCX, EPS, PDF, and PPT/PPTX
+	# -bgcolor   - SVG
 	[string] $format
+	# -fontPath  - TXT
+	# -fontIndex - TXT
+	# -fontSize  - TXT
+	# -tabLength - TXT
 )
 
 if ($infile -eq "") { throw "input file was not provided." }
@@ -91,13 +94,13 @@ $invalidFormats = @{
 	"HEIF"  = "can't write"
 	"ICO"   = "doesn't negate properly"
 	"ICON"  = "doesn't negate properly"
-	"M2V"   = "slow + doesn't negate well; video stream/multiple frames = "
-	"M4V"   = "slow + doesn't negate well; video stream/multiple frames = "
-	"MKV"   = "slow + doesn't negate well; video stream/multiple frames = "
-	"MOV"   = "slow + doesn't negate well; video stream/multiple frames = "
-	"MP4"   = "slow + doesn't negate well; video stream/multiple frames = "
-	"MPEG"  = "slow + doesn't negate well; video stream/multiple frames = "
-	"MPG"   = "slow + doesn't negate well; video stream/multiple frames = "
+	"M2V"   = "slow + doesn't negate well; video stream/multiple frames"
+	"M4V"   = "slow + doesn't negate well; video stream/multiple frames"
+	"MKV"   = "slow + doesn't negate well; video stream/multiple frames"
+	"MOV"   = "slow + doesn't negate well; video stream/multiple frames"
+	"MP4"   = "slow + doesn't negate well; video stream/multiple frames"
+	"MPEG"  = "slow + doesn't negate well; video stream/multiple frames"
+	"MPG"   = "slow + doesn't negate well; video stream/multiple frames"
 	"MRO"   = "can't write"
 	"PS2"   = "can't read"
 	"PS3"   = "can't read"
@@ -112,21 +115,18 @@ if ($help.isPresent -or $infile -eq "--help") {
 	echo "Valid Formats:"
 	$validFormats | format-table
 	echo "Invalid Formats (not an exhaustive list):"
-	($invalidFormats | format-table)
+	$invalidFormats | format-table
 	exit 0
 }
 
 # valid extensions
 $allExtensions = -split [string[]] $validFormats.values `
-	| sort -uniq                                        `
+	| sort -unique                                      `
 	| % { $_.substring(1) }
 
-if (-not [IO.Path]::IsPathRooted($infile)) {
-	$infile = [IO.Path]::Join((pwd).path, $infile)
-}
-if (-not [IO.Path]::IsPathRooted($outfile)) {
-	$outfile = [IO.Path]::Join((pwd).path, $outfile)
-}
+# root the paths. also works if they are already rooted.
+$infile  = [IO.Path]::Combine((pwd).path, $infile)
+$outfile = [IO.Path]::Combine((pwd).path, $outfile)
 
 $format = magick identify $infile
 
@@ -169,14 +169,14 @@ $indent = $indTyp * $indLvl
 ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2 # unused
 
-if (-not (gcm magick -type app -ErrorAct silent)) {
+if (!(gcm magick -type app -ErrorAct silent)) {
 	throw "Required program ImageMagick ``magick`` was not found."
 }
 
-if (-not $quiet) { write-host "${indent}inverting colors on `"$infile`"" }
-magick $infile                       `
-	-negate                          `
-	-compress Lossless               `
-	-debug $($verb ? "All" : "None") `
+if ($logging -ne "none") { write-host "${indent}inverting colors on `"$infile`"" }
+magick $infile         `
+	-negate            `
+	-compress Lossless `
+	-debug $($logging -in "none", "basic" ? "None" : "All") `
 	$outfile                         `
 	| % { write-host "${indent+1}$_" }

@@ -20,16 +20,19 @@ param (
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
-	[bool] $quiet = $false,
-	[bool] $verb = $false,
+	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
 	[switch] $help,
 
-	[Alias("SVGTool")] [string] ${invert-pdf.ps1} = "$($MyInvocation.MyCommand.Source)/../invert-pdf.ps1",
+	[Alias("SVGTool")] [string] ${invert-svg.ps1} = "$($MyInvocation.MyCommand.Source)/../invert-svg.ps1",
 	[Alias("PDFTool")] [string] ${invert-pdf.ps1} = "$($MyInvocation.MyCommand.Source)/../invert-pdf.ps1",
-	[uint32] $dpi = 150 # passed to invert-pdf.ps1
-	# -bgcolor is for SVG
-	# -format is only for invert-magick.ps1
+	[uint32] $dpi = 150
+	# -bgcolor   - SVG
+	# -format    - magick
+	# -fontPath  - TXT
+	# -fontIndex - TXT
+	# -fontSize  - TXT
+	# -tabLength - TXT
 )
 
 if ($infile -eq "") { throw "input file was not provided." }
@@ -50,14 +53,11 @@ if ($outExt -notin "doc", "docx") {
 	throw "input file extension (``$outExt``) must be be either ``doc`` or ``docx``"
 }
 
-if (-not [IO.Path]::IsPathRooted($infile)) {
-	$infile = [IO.Path]::Join((pwd).path, $infile)
-}
-if (-not [IO.Path]::IsPathRooted($outfile)) {
-	$outfile = [IO.Path]::Join((pwd).path, $outfile)
-}
+# root the paths. also works if they are already rooted.
+$infile  = [IO.Path]::Combine((pwd).path, $infile)
+$outfile = [IO.Path]::Combine((pwd).path, $outfile)
 
-if (-not $quiet) { write-host "${indent}opening Microsoft Word" }
+if ($logging -ne "none") { write-host "${indent}opening Microsoft Word" }
 try { $word = new-object -ComObject Word.Application }
 catch { throw "Required program Microsoft Word ``Word.Application`` (ComObject) was not found." }
 
@@ -65,7 +65,7 @@ catch { throw "Required program Microsoft Word ``Word.Application`` (ComObject) 
 # to put it in the OneDrive directory.
 $pdf = [IO.Path]::ChangeExtension($infile, ".tmp.pdf")
 
-if (-not $silent) { write-host "${indent}converting $inExt to PDF" }
+if ($logging -ne "none") { write-host "${indent}converting $inExt to PDF" }
 $document = $word.documents.open(
 	$infile,         # file path
 	$false,          # don't prompt to confirm conversions
@@ -86,7 +86,7 @@ $document.SaveAs(
 # For some reason, Word locks the file without doing this.
 $document.close()
 
-if (-not $silent) { write-host "${indent}inverting PDF colors" }
+if ($logging -ne "none") { write-host "${indent}inverting PDF colors" }
 
 & ${invert-pdf.ps1} `
 	-infile  $pdf   `
@@ -94,9 +94,7 @@ if (-not $silent) { write-host "${indent}inverting PDF colors" }
 	-dpi     $dpi   `
 	-indLvl  $($indLvl+2) `
 	-indTyp  $indTyp      `
-	-quiet   $quiet       `
-	-verb    $verb        `
-	-quiet   $(-not $verbose_) `
+	-logging $logging     `
 	-svgTool ${invert-svg.ps1} `
 	-keep    $keepIntermediateFiles
 
