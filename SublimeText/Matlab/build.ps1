@@ -33,25 +33,25 @@ param (
 	# infile includes extension. assumes it is in the working directory.
 	[Alias("inputfile")] [string] $infile = "",
 	[ValidateSet("doc", "docx", "html", "latex", "pdf", "ppt", "pptx", "xml")] [string] $format = "pdf",
+	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 
+	# the inversion tools are at `./invertlib/invert-???.ps1` with respect to build.ps1
 	[Alias("DOCTool", "DOCXTool")] [string] ${invert-doc.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-doc.ps1",
 	[Alias("EPSTool")]             [string] ${invert-eps.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-eps.ps1",
 	[Alias("PDFTool")]             [string] ${invert-pdf.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-pdf.ps1",
 	[Alias("SVGTool")]             [string] ${invert-svg.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-svg.ps1",
 
 	[switch] $keepLightMode,
-	[switch] $silent,
 	[switch] $version,
 	[switch] $open
 )
 
-$verbose_ = -not $silent.isPresent
 
 # TODO: on all the subprograms, cd into the directory with the input file.
 	# so all the temporary files will be in that directory.
 
 function version {
-	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.3"
+	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.3.1"
 }
 
 if ($version.isPresent) {
@@ -61,7 +61,7 @@ if ($version.isPresent) {
 
 if ($infile -eq "") { throw "input file was not provided." }
 
-if (-not (gcm matlab -type app -ErrorAct silent)) {
+if (!(gcm matlab -type app -ErrorAct silent)) {
 	throw "Required program ``matlab`` was not found."
 }
 
@@ -87,30 +87,32 @@ $outext = $format -eq 'latex' ?
 
 $outfile = "$basename.$outext"
 
-if ($verbose_) { version }
+if ($logging -ne "none") { version }
 
 $matlabCmd = "publish('./$infile', 'format', '$format', 'outputDir', './tmp/');"
-$matlabCmd = $verbose_ ? @"
+$matlabCmd = $logging -ne "none" ? @"
 disp('building ""./$outfile"" from ""./$infile""');
 ofile = $matlabCmd
 fprintf('\noutput file == "%s"\nexiting matlab\n', ofile);
 "@ : $matlabCmd
 
-if ($verbose_) {
+if ($logging -ne "none") {
 	$startTime = [DateTime]::Now
 	write-host "starting matlab"
 	matlab -batch $matlabCmd 2>&1 | %{
 		$_.length ? " `t$_" : ""
 	} | tee -var matlabOutput
-	$elapsedTime = ([DateTime]::Now - $startTime).totalSeconds
-	write-host "`tFinished in $([math]::round($elapsedTime , 1))s"
+	$elapsedTime =  [math]::round(([DateTime]::Now - $startTime).totalSeconds, 1)
+	write-host "`tFinished in ${elapsedTime}s"
 }
 else {
 	matlab -batch $matlabCmd *> $null
 }
 
 if ($lastExitCode -ne 0) {
-	if ($verbose_) { write-host "matlab encountered a fatal error. exit code $lastExitCode. exiting" }
+	if ($logging -ne "none") {
+		write-host "matlab encountered a fatal error. exit code $lastExitCode. exiting"
+	}
 	# since matlab failed, there shouldn't be anything in the tmp directory,
 	# but in case there is, don't recurse, and suppress error messages.
 
@@ -118,10 +120,10 @@ if ($lastExitCode -ne 0) {
 	exit $lastExitCode
 }
 
-if (-not $keepLightMode) {
+if (!$keepLightMode) {
 	switch ($format) {
 		"doc" {
-			if (-not (gcm ${invert-doc.ps1} -type externalScript -ErrorAct silent)) {
+			if (!(gcm ${invert-doc.ps1} -type externalScript -ErrorAct silent)) {
 				throw "Required program ``invert-doc.ps1`` was not found.`nlooking at ``${invert-doc.ps1}``."
 			}
 
@@ -134,7 +136,7 @@ if (-not $keepLightMode) {
 				-outfile ./tmp/$outfile      `
 				-PDFTool ${invert-pdf.ps1}   `
 				-SVGTool ${invert-svg.ps1}   `
-				-quiet   $(-not $verbose_)
+				-logging $logging
 
 			move ./tmp/$outfile $outfile
 		}
@@ -191,29 +193,29 @@ if (-not $keepLightMode) {
 			#>
 			cd tmp
 
-			$gs   = (gcm gs       -type app -errorAct silent)?.name
-			$gs ??= (gcm gswin64c -type app -errorAct silent)?.name
-			$gs ??= (gcm gswin32c -type app -errorAct silent)?.name
+			$gs   = (gcm gs       -type app -ErrorAct silent)?.name
+			$gs ??= (gcm gswin64c -type app -ErrorAct silent)?.name
+			$gs ??= (gcm gswin32c -type app -ErrorAct silent)?.name
 
 			if ($gs -eq $null) {
 				throw "Required program GhostScript ``gs / gswin64c / gswin32c`` was not found."
 			}
-			if (-not (gcm pdftocairo -type app -ErrorAct silent)) {
+			if (!(gcm pdftocairo -type app -ErrorAct silent)) {
 				throw "Required program (Poppler) ``pdftocairo`` was not found."
 			}
-			if (-not (gcm ${invert-eps.ps1} -type externalScript -ErrorAct silent)) {
+			if (!(gcm ${invert-eps.ps1} -type externalScript -ErrorAct silent)) {
 				throw "Required program ``invert-eps.ps1`` was not found.`nlooking at ``${invert-eps.ps1}``."
 			}
-			if (-not (gcm cairosvg -type app -ErrorAct silent)) {
+			if (!(gcm cairosvg -type app -ErrorAct silent)) {
 				# assume that GTK2/3 is installed and properly setup for CairoSVG.
 				throw "Required program ``cairosvg`` was not found."
 			}
 
 			# step 1
 			ls *.eps | % name | % {
-				& ${invert-eps.ps1}            `
-					-infile  $_                `
-					-quiet   $(-not $verbose_) `
+				& ${invert-eps.ps1}   `
+					-infile  $_       `
+					-logging $logging `
 					-svgTool ${invert-svg.ps1}
 			}
 
@@ -247,7 +249,7 @@ if (-not $keepLightMode) {
 				throw "Required program ``invert-pdf.ps1`` was not found.`nlooking at ``${invert-pdf.ps1}``."
 			}
 
-			if ($verbose_) { write-host "cleaning temporary files" }
+			if ($logging -ne "none") { write-host "cleaning temporary files" }
 
 			# in case the previous build process was stopped part-way.
 			# sometimes having the files here already can break things.
@@ -259,12 +261,12 @@ if (-not $keepLightMode) {
 				out.tmp.pdf,    `
 				pdfdata.tmp.txt 2> $null
 
-			& ${invert-pdf.ps1}            `
-				-infile  ./tmp/$outfile    `
-				-outfile ./$outfile        `
-				-indLvl  0                 `
-				-indTyp  "`t"              `
-				-quiet   $(-not $verbose_) `
+			& ${invert-pdf.ps1}         `
+				-infile  ./tmp/$outfile `
+				-outfile ./$outfile     `
+				-indLvl  0              `
+				-indTyp  "`t"           `
+				-logging $logging       `
 				-svgTool ${invert-svg.ps1}
 
 			move -force ./tmp/$outfile ./$basename-light.pdf
@@ -281,7 +283,7 @@ if (-not $keepLightMode) {
 			#>
 			$format = $updateFileType ? "PPTX" : "PPT"
 
-			if ($verbose_) {
+			if ($logging -ne "none") {
 				write-host "dark mode is not implemented for output format ``$format``. proceeding with light mode"
 
 				if ($updateFileType) {
@@ -314,7 +316,7 @@ else {
 # there should be nothing in it at this point
 rmdir tmp -recurse
 
-if ($verbose_ -and $format -eq "pdf" -and -not $keepLightMode -and $matlabOutput.count -gt 4) {
+if ($logging -ne "none" -and $format -eq "pdf" -and !$keepLightMode -and $matlabOutput.count -gt 4) {
 	write-host "`nmatlab encountered non-fatal errors."
 
 	$count = $matlabOutput.count
@@ -324,10 +326,10 @@ if ($verbose_ -and $format -eq "pdf" -and -not $keepLightMode -and $matlabOutput
 
 
 if ($open.isPresent) {
-	if ($verbose_) { write-host "`nopening `"./$outfile`"" }
+	if ($logging -ne "none") { write-host "`nopening `"./$outfile`"" }
 	start $outfile
 }
-elseif ($verbose_) {
+elseif ($logging -ne "none") {
 	if ($outext -eq "pdf") {
 		write-host ""
 		write-host original PDF: ./$basename-light.pdf

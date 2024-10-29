@@ -113,7 +113,7 @@ try {
 			-indLvl  $($indlvl+2)    `
 			-indTyp  $indTyp         `
 			-logging $logging        `
-			-bgcolor "#000"          `
+			-bgcolor "#fff"          `
 			-keepInt $keepIntermediateFiles
 	}
 

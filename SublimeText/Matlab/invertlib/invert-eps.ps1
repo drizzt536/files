@@ -90,7 +90,7 @@ if ($logging -ne "none") { write-host "${indent+1}inverting SVG colors" }
 & ${invert-svg.ps1}
 	-infile  $svg     `
 	-outfile $svg     `
-	-bgcolor "#000"   `
+	-bgcolor "#fff"   `
 	-logging $logging `
 	-indTyp  $indTyp  `
 	-indlvl  $($indlvl+2) `

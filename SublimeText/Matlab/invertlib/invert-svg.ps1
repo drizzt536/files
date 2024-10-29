@@ -24,7 +24,7 @@ param (
 	# -SVGTool   - DOC/DOCX, EPS, PDF, and PPT/PPTX
 	# -PDFTool   - DOC/DOCX, and PPT/PPTX
 	# -dpi       - DOC/DOCX, EPS, PDF, and PPT/PPTX
-	[string] $bgcolor = "#000"
+	[string] $bgcolor = "#fff"
 	# -format    - magick
 	# -fontPath  - TXT
 	# -fontIndex - TXT
@@ -938,8 +938,6 @@ function invert-image-colors(
 		}
 		else { write-host " - found $counter" }
 	}
-
-	return $options.content
 }
 
 <#
@@ -978,7 +976,7 @@ function invert-svg(
 
 	# -SVGTool is for EPS and PDF
 	# -dpi is only for EPS and PDF
-	[string] $bgcolor = "white"
+	[string] $bgcolor = "#fff"
 ) {
 	# the `$actualXYZ` variables are used for overwriting previous lines.
 
