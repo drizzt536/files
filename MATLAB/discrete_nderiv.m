@@ -2,7 +2,7 @@ function [X, Y] = discrete_nderiv(x, y, n)
 	%   numerical nth derivative of y = f(x) given list inputs
 	%
 	%   finds the points directly without recursion.
-	%   finding the y values requires n loop sum iterations.
+	%   finding the y values requires n + 1 loop sum iterations.
 	%   at least n + 1 points are required for the nth derivative.
 	%   assumes a uniform distribution of x values.
 
