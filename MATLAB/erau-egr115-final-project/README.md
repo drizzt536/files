@@ -1,10 +1,10 @@
 for help information, run one of the following:
-- `help svg_color_tfm` (for an example)
+- `help svg_color_tfm` (for an example invocation)
 - `svg_color_tfm --help` (for the argument documentation)
 
 To generate and execute the test cases, run
 `test_gen("exec", true, "setup", "init_setup")`.
-This should take about 3-6 seconds on a good PC.
+This should take about 3-8 seconds.
 
 To rerun the test suite without creating it again, run `test_suite`
 
