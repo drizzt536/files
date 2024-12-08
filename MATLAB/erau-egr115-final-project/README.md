@@ -19,4 +19,4 @@ To recompute `proposal.pdf`, run the following:
 `latexmk -pdf -pdflatex="pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error" -shell-escape ./proposal.tex`
 
 To recompute `report.pdf`, run the following:
-`latexmk -pdf -pdflatex="pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error" -shell-escape ./rerport.tex`
+`latexmk -pdf -pdflatex="pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error" -shell-escape ./report.tex`
