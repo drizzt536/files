@@ -1,0 +1,181 @@
+% (egr 115 final project) report.tex v0.8 (c) | Copyright 2024 Daniel E. Janusch
+
+% this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
+% and must be copied IN ITS ENTIRETY under penalty of law.
+
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.50in,
+	left   = 1.00in,
+	right  = 1.00in,
+	bottom = 1.00in,
+]{geometry}
+
+\usepackage{
+	amsmath,
+	amssymb,
+	latexsym,
+	xcolor,
+	% minted,
+	% graphicx,
+	enumitem,
+	hyperref,
+	xurl
+}
+
+\definecolor{lightgray}{RGB}{170, 170, 170} % #AAA
+\definecolor{keyword}{RGB}{198, 149, 198}   % #C695C6
+\definecolor{operator}{RGB}{249, 123, 87}   % #F97B57
+\definecolor{variable}{RGB}{216, 222, 233}  % #D8DEE9
+\definecolor{function}{RGB}{102, 153, 204}  % #69C
+
+\color{lightgray}
+\pagecolor{black}
+
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+
+\newcommand \Avec {\!\nhpx{-0.5}\vec{\hpx{0.5}A}}
+\newcommand \Bvec {\nhpx{1.5}\vec{\hpx{0.3}B}}
+\newcommand \uvec {\nhpx 1 \vec{\hpx 1 u}}
+\newcommand \vvec {\nhpx 1 \vec{\hpx 1 v}}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+}
+
+\title{EGR 115 Final Project Report {\bf–} MATLAB SVG Color-Transformation Tool}
+\author{Daniel E. Janusch}
+\maketitle
+
+\section{Background and the SVG Format}
+
+\indent \indent \indent SVG files, or Scalable Vector Graphics files, are an image format unlike traditional ``raster" image formats like PNG, JPEG, or BMP. While raster formats represent images as a grid of pixels, vector formats including SVG, PDF, and EPS, use mathematical descriptions of lines, curves, and shapes, making them resolution-independent. There is a notable gap of good tools for working with SVGs programmatically, and many existing solutions have arbitrary limitations or don't preserve the advantages of vector graphics. For instance, ImageMagick \ref{imagemagick} can work with SVGs, but it just rasterizes it first, which defeats the entire purpose of vectorization in the first place.
+\vspace{5px}
+
+\indent \indent The SVG format \ref{svg docs} is governed by a web standard (currently at version 1.1), and follows an XML format. The main ways that color can be given in an SVG is through stroke colors, fill colors, and embedded images. Embedded images can be either PNG, JPEG, or WEBP, and can be either included inline or referenced through a file, however this project focuses on inlined images for simplicity. \texttt{fill} and \texttt{stroke} colors can be any of the following formats: \#RGB, \#RGBA, \#RrGgBb, \#RrGgBbAa, rgb(R,G,B), rgb(R\%,G\%,B\%), rgba(R,G,B,A), rgba(R\%,G\%,B\%,A), hsl(H,S\%,L\%), hsla(H,S\%,L\%,A), any valid named color \ref{svg named colors}, ``none", or ``transparent". The alpha values in the function forms can always be either a regular number or a percent. SVGs also have advanced features, including filters, masks, CSS styling, color gradients, and interactivity; all of these except masks will be ignored for simplicity. These features will be ignored during processing, leaving the corresponding sections of the SVG unchanged.
+
+
+\section{Problem Description and Methods}
+
+In order to apply a color transformation to the SVG, the following steps are followed \ref{code folder}:
+\begin{enumerate}
+	\item \vspace{-0.5em} find the bounding box of the SVG (width and height)
+	\item \vspace{-0.5em} find a background rectangle or add one if there is none
+	\item \vspace{-0.5em} find all \texttt{<mask>}s so they can be avoided in future steps.
+	\item \vspace{-0.5em} find \texttt{stroke} colors outside of \texttt{<mask>}s, and apply the transformation to them
+	\item \vspace{-0.5em} find \texttt{fill} colors outside of \texttt{<mask>}s, and apply the transformation to them
+	\item \vspace{-0.5em} find embedded \texttt{<image>}s outside of \texttt{<mask>}s, and transform them using ImageMagick\\
+		this only works if the transformation matrix is \texttt{[255 255 255; -1 -1 -1]} (inversion).\\
+		it doesn't apply the transformation if the image id is referenced in a \texttt{<mask>}.
+	\item \vspace{-0.5em} optimize \texttt{<path>} descriptors (optional)
+\end{enumerate}
+
+\pagebreak\restoregeometry
+
+\noindent The transformation goes as follows:
+
+$\Avec = [a_r ~\, a_g ~\, a_b],~\vec B = [b_r ~\, b_g ~\, b_b],~\overset{\text{\raisebox{-0.5px}{$\longrightarrow$}}}{C_{\text{in}}} = [r_{\text{in}} ~ g_{\text{in}} ~ b_{\text{in}}]$
+
+$\overset{\text{\raisebox{-0.5px}{$\longrightarrow$}}}{C_{\text{out}}} = \text{clamp}(\Avec + \Bvec \odot \overset{\text{\raisebox{-0.5px}{$\longrightarrow$}}}{C_{\text{in}}}, [0 ~\, 255])$
+
+\noindent This takes $\uvec \odot \vvec$ as the Haddamard Product of $\uvec$ and $\vvec$ (\texttt{\textcolor{variable}u \textcolor{operator}{.*} \textcolor{variable}v})
+\vspace{5px}
+
+\noindent For simplicity of input, the transformation can be passed as a single matrix:
+
+$M = \begin{bmatrix}
+	A \\ B
+\end{bmatrix} = \begin{bmatrix}
+	a_r & a_g & a_b \\
+	b_r & b_g & b_b
+\end{bmatrix}$
+
+\indent \indent For every color in the image, it has to first be converted to an RGB vector \ref{hsl2rgb}, then it can be transformed. After the transformation, it is converted to the shortest option between a hex code and named color. Alpha channels will not be changed on any color. colors that are ``transparent", or ``none" will also not be changed. Colors are found and manipulated through regular expressions (\textcolor{function}{\texttt{regexp}} and \textcolor{function}{\texttt{regexprep}}).
+
+
+\subsection{Inputs and Outputs}
+
+\indent \indent \indent The program output depends on the arguments given, it may print debug information if \texttt{"verbose"} is given, and it can print the output SVG content to a file, stdin, stdout, or nowhere, depending on the value of the \texttt{"outfile"} argument. Regardless of where it is set to output to, the content can still be acquired through the output arguments if so desired (e.g. \texttt{content = svg\_color\_tfm("outfile", "---");}); however, it is only given if it is requested. All arguments to the program are given named arguments (e.g. \texttt{svg\_color\_tfm("infile", "./file.svg", "outfile", "-", "verbose", false);}). The accepted arguments are the following (all case insensitive):
+
+\begin{verbatim}
+"in", "infile"
+    the input file path. should be string or char.
+    defaults to "./in.svg".
+"out", "outfile"
+    the output file path. should be string or char.
+    use "-" for stdout, "--" for stderr, or "---" for nowhere.
+    when using "---", you can still get the svg content if nargout > 0.
+    defaults to the input file.
+"verbose"
+    whether or not to give extra information through the console.
+    should be a boolean. defaults to true.
+"transformMatrix", "transform", "tfmat", "tfm", "M"
+    should be a 2x3 double matrix.
+    the top row is A and the bottom row is B.
+    the color transformation is: outRGB = A + B .* inRGB.
+    defaults to [255 255 255; -1 -1 -1] (color inversion).
+"A"
+    should be a 1x3 double matrix.
+    only updates the top row of the transformation matrix.
+"B"
+    should be a 1x3 double matrix.
+    only updates the bottom row of the transformation matrix.
+(continued on next page)
+"keepIntermediateFiles", "keepIntermediate", "keepInt", "keep"
+    whether or not to keep temporary raster image files.
+    should be a boolean. defaults to false.
+"backgroundColor", "bgcolor"
+    should be a string or char, and a valid color.
+    the background color before the transformation, defaults to "#fff"
+"content"
+    option to give the SVG content directly, rather than through a file.
+    should be a string or char.
+    if both "content" and "infile" are given, the direct content is used.
+"help", "options", "-h", "-?", "-help", "--help"
+    prints help text similar to this.
+\end{verbatim}
+
+\section{Test Cases}
+
+There are 314 test cases overall, 197 for global variables, 53 for utility functions, 50 for color functions, and 14 for the main functions \ref{test suite}.
+
+\section{References}
+
+\begin{enumerate}[label={[1]}]
+	\item \url{https://imagemagick.org/script/index.php}
+	\label{imagemagick}
+\end{enumerate}
+\vspace{-2em}
+\begin{enumerate}[label={[2]}]
+	\item \url{https://www.w3.org/TR/SVG11/}
+	\label{svg docs}
+\end{enumerate}
+\vspace{-2em}
+\begin{enumerate}[label={[3]}]
+	\item \url{https://www.w3.org/TR/SVG11/types.html#ColorKeywords}
+	\label{svg named colors}
+\end{enumerate}
+\vspace{-2em}
+\begin{enumerate}[label={[4]}]
+	\item \url{https://github.com/drizzt536/files/tree/main/MATLAB/erau-egr115-final-project}
+	\label{code folder}
+\end{enumerate}
+\vspace{-2em}
+\begin{enumerate}[label={[5]}]
+	\item \url{https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion}
+	\label{hsl2rgb}
+\end{enumerate}
+\vspace{-2em}
+\begin{enumerate}[label={[6]}]
+	\item \url{https://github.com/drizzt536/files/blob/main/MATLAB/erau-egr115-final-project/test_gen.m}
+	\label{test suite}
+\end{enumerate}
+
+\end{document}

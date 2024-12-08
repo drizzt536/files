@@ -17,4 +17,6 @@ To recompute the output SVGs for the main tests, run `main_test_transforms`.
 
 To recompute `proposal.pdf`, run the following:
 `latexmk -pdf -pdflatex="pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error" -shell-escape ./proposal.tex`
-This assumes you have `latexmk` and `pdflatex` installed.
+
+To recompute `report.pdf`, run the following:
+`latexmk -pdf -pdflatex="pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error" -shell-escape ./rerport.tex`
