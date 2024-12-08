@@ -20,3 +20,5 @@ To recompute `proposal.pdf`, run the following:
 
 To recompute `report.pdf`, run the following:
 `latexmk -pdf -pdflatex="pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error" -shell-escape ./report.tex`
+
+NOTE: `svg_color_tfm.m` is a standalone file and does not require anything else to run properly (except for sometimes when it requires `magick.exe`).
