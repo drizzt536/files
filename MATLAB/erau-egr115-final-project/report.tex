@@ -1,4 +1,4 @@
-% (egr 115 final project) report.tex v1.0 (c) | Copyright 2024 Daniel E. Janusch
+% (egr 115 final project) report.tex v1.1 (c) | Copyright 2024 Daniel E. Janusch
 
 % this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and must be copied IN ITS ENTIRETY under penalty of law.
@@ -63,49 +63,52 @@
 \iiindent SVG files, or Scalable Vector Graphics files, are an image format unlike
 traditional ``raster" image formats like PNG, JPEG, or BMP. While raster formats
 represent images as a grid of pixels, vector formats including SVG, PDF, and EPS,
-use mathematical descriptions of lines, curves, and shapes, making them resolution
+use mathematical descriptions like lines, curves, and shapes, making them resolution
 independent. There is a notable gap of good tools for working with SVGs
 programmatically, and many existing solutions have arbitrary limitations or don't
 preserve the advantages of vector graphics. For instance, ImageMagick \ref{imagemagick}
-can work with SVGs, but it just rasterizes it first, which defeats the entire purpose
+can work with SVGs, but it just rasterizes them first, which defeats the entire purpose
 of vectorization in the first place.
 \vspace{5px}
 
-\iindent The SVG format \ref{svg docs} is governed by a web standard (currently at
-version 1.1), and follows an XML format. The main ways that color can be given in an
-SVG is through stroke colors, fill colors, and embedded images. Embedded images can be
-either PNG, JPEG, or WEBP, and can be either included inline or referenced through a
-file, however this project focuses on inlined images for simplicity. \texttt{fill} and
-\texttt{stroke} colors can be any of the following formats: \#RGB, \#RGBA, \#RrGgBb,
-\#RrGgBbAa, rgb(R,G,B), rgb(R\%,G\%,B\%), rgba(R,G,B,A), rgba(R\%,G\%,B\%,A),
-hsl(H,S\%,L\%), hsla(H,S\%,L\%,A), any valid named color \ref{svg named colors},
-``none", or ``transparent". The alpha values in the function forms can always be
-either a regular number or a percent. SVGs also have advanced features, including
-filters, masks, CSS styling, color gradients, and interactivity; all of these except
-masks will be ignored for simplicity. These features will be ignored during
-processing, leaving the corresponding sections of the SVG unchanged.
-
+\iindent The SVG 1.1 format is governed by a web standard \ref{svg docs}, and
+follows an XML format. The main ways that color can be given in an SVG is through
+{\tt stroke} colors, {\tt fill} colors, and embedded {\tt <image>} elements.
+Embedded images can be PNG, JPEG, or WEBP, and can be either included
+inline or referenced through a file, however this project focuses on inlined
+images for simplicity. \texttt{fill} and \texttt{stroke} colors can be any of
+the following formats: \#RGB, \#RGBA, \#RrGgBb, \#RrGgBbAa, rgb(R,G,B),
+rgb(R\%,G\%,B\%), rgba(R,G,B,A), rgba(R\%,G\%,B\%,A), hsl(H,S\%,L\%),
+hsla(H,S\%,L\%,A), any valid named color \ref{svg named colors}, ``none", or
+``transparent". The alpha values in the function forms can always be either a
+regular number or a percent. SVGs also have advanced features, including filters,
+masks, CSS styling, color gradients, and interactivity; all of these except masks
+will be ignored for simplicity due to time constraints. An application of SVG
+color transformation is PDF color transformation: extract PDF pages as SVGs, apply
+transformations to them individually, and then recombine them into a single
+color transformed PDF.
+\vspace{-15px}
 
 \section{Problem Description and Methods}
 
 In order to apply a color transformation to the SVG, the following steps are followed
 \ref{code folder}:
 \begin{enumerate}
-	\item \vspace{-0.5em} find the bounding box of the SVG (width and height)
-	\item \vspace{-0.5em} find a background rectangle or add one if there is none
-	\item \vspace{-0.5em} find all \texttt{<mask>}s so they can be avoided in
+	\item \vspace{-0.3em} find the bounding box of the SVG (width and height)
+	\item \vspace{-0.42em} find a background rectangle or add one if there is none
+	\item \vspace{-0.42em} find all \texttt{<mask>}s so they can be avoided in
 		future steps.
-	\item \vspace{-0.5em} find {\tt stroke} colors outside of {\tt <mask>}s,
+	\item \vspace{-0.42em} find {\tt stroke} colors outside of {\tt <mask>}s,
 		and apply the transformation to them
-	\item \vspace{-0.5em} find {\tt fill} colors outside of {\tt <mask>}s,
+	\item \vspace{-0.42em} find {\tt fill} colors outside of {\tt <mask>}s,
 		and apply the transformation to them
-	\item \vspace{-0.5em} find embedded {\tt <image>}s outside of {\tt <mask>}s,
+	\item \vspace{-0.42em} find embedded {\tt <image>}s outside of {\tt <mask>}s,
 		and transform them using ImageMagick\\
 		this only works if the transformation matrix is {\tt [255 255 255; -1 -1 -1]}
 		(inversion).\\
 		it doesn't apply the transformation if the image id is referenced in a
 		{\tt <mask>}.
-	\item \vspace{-0.5em} optimize {\tt <path>} descriptors (optional)
+	\item \vspace{-0.42em} optimize {\tt <path>} descriptors (optional)
 \end{enumerate}
 
 \pagebreak\restoregeometry
@@ -138,17 +141,16 @@ $M = \begin{bmatrix}
 to the shortest option between a hex code and named color. Alpha channels will not be
 changed on any color. colors that are ``transparent", or ``none" will also not be
 changed. Colors are found and manipulated through regular expressions (e.g.
-\textcolor{function}{\texttt{regexp}} and \textcolor{function}{\texttt{regexprep}}).
+\textcolor{function}{\texttt{regexp}}).
 
 \subsection{Inputs and Outputs}
 
-\iiindent The program output depends on the arguments given, it may print debug
-information if {\tt "verbose"} is given, and it can print the output SVG content to
+\iiindent The program output depends on the arguments given, it can print status
+updates if {\tt "verbose"} is given, and it can print the output SVG content to
 a file, stdin, stdout, or nowhere, depending on the value of the {\tt "outfile"}
 argument. Regardless of where it is set to output to, the content can still be
-acquired through the output arguments if so desired (e.g.
-{\tt content = svg\_color\_tfm("outfile", "---");}); however, it is only given if
-it is requested. All arguments to the program are given named arguments (e.g.
+acquired through the output arguments if so desired (e.g. {\tt content =
+svg\_color\_tfm("outfile", "---");}). Only named arguments are accepted (e.g.
 {\tt svg\_color\_tfm("infile", "./file.svg", "outfile", "-", "verbose", false);}).
 The accepted arguments are the following (all case insensitive):
 
@@ -159,10 +161,9 @@ The accepted arguments are the following (all case insensitive):
 "out", "outfile"
     the output file path. should be string or char.
     use "-" for stdout, "--" for stderr, or "---" for nowhere.
-    when using "---", you can still get the svg content if nargout > 0.
     defaults to the input file.
 "verbose"
-    whether or not to give extra information through the console.
+    whether or not to give progress updates through the console.
     should be a boolean. defaults to true.
 "transformMatrix", "transform", "tfmat", "tfm", "M"
     should be a 2x3 double matrix.
@@ -175,17 +176,16 @@ The accepted arguments are the following (all case insensitive):
 "B"
     should be a 1x3 double matrix.
     only updates the bottom row of the transformation matrix.
-(continued on next page)
 "keepIntermediateFiles", "keepIntermediate", "keepInt", "keep"
     whether or not to keep temporary raster image files.
     should be a boolean. defaults to false.
 "backgroundColor", "bgcolor"
-    should be a string or char, and a valid color.
-    the background color before the transformation, defaults to "#fff"
+    the background color before the transformation, if there isn't one.
+    should be a string or char, and a valid color. defaults to "#fff"
 "content"
     option to give the SVG content directly, rather than through a file.
-    should be a string or char.
     if both "content" and "infile" are given, the direct content is used.
+    should be a string or char.
 "help", "options", "-h", "-?", "-help", "--help"
     prints help text similar to this.
 \end{verbatim}
@@ -195,7 +195,7 @@ The accepted arguments are the following (all case insensitive):
 \iiindent There are 314 test cases overall, 197 for global variables, 53 for utility
 functions, 50 for color functions, and 14 for the main functions \ref{test suite}.
 All four test cases for the main function are included in the {\tt svg} directory
-of the code folder \ref{code folder}, along with the example that will be shown here.
+of the code folder \ref{svg folder}, along with the example that will be shown here.
 The four examples all use color inversion ({\tt M = [255 255 255; -1 -1 -1]}), but
 the main example {\tt svg/main-test-in.svg} and {\tt svg/main-test-out-\%d.svg} use
 20 different transformations that can be seen in the {\tt main\_test\_transforms.m}
@@ -207,21 +207,21 @@ in the transformation matrix, a real sepia can't be constructed. This would requ
 a 3x4 transformation matrix, rather than a 2x3 matrix. Transforms 3, 4, and 5 extract
 out a specific color channel, and transforms 8, 9, and 10 invert a specific channel. The test cases can be run either with {\tt test\_suite}, or with
 {\tt test\_gen("exec", true, "setup", "init\_setup")} to regenerate and run them.
-Sometimes the code will break for more complicated input SVGs, but as long as they
-only use basic features it should always work.
 
-\begin{figure}[ht]
+\vfill
+\begin{figure}[h]
 	\centering
-	\begin{minipage}[b]{0.45\textwidth}
+	\begin{minipage}[b]{0.49\textwidth}
 		\includegraphics[width=\textwidth]{./pdf/main-test-in.pdf}
 		\caption{Original SVG (or tfm7)}
 	\end{minipage}
 	\hfill
-	\begin{minipage}[b]{0.45\textwidth}
+	\begin{minipage}[b]{0.49\textwidth}
 		\includegraphics[width=\textwidth]{./pdf/main-test-out-1.pdf}
 		\caption{tfm1: Inverted SVG}
 	\end{minipage}
 \end{figure}
+\vfill
 
 \pagebreak
 
@@ -291,6 +291,7 @@ ease, and for descriptive comments.\\
 \noindent {\Large Snippet from {\tt clr2hex}:}\vspace{-8px}
 \begin{minted}[fontsize=\small, linenos]{matlab}
 % convert rgba(R, G, B, A) to #RrGgBbAa
+% as exemplified here, a regular expression approach is used for most things
 matches = regexp(color, "^rgba\(" + ...
     strmul("\s*(\d+(?:\.\d+)?)\s*,", 4) + "{0}%?\)$", "tokens");
 if ~isempty(matches)
@@ -305,8 +306,8 @@ end
 \begin{minted}[fontsize=\small, linenos]{matlab}
 % formula to go from '#RrGgBb' -> [r1 g1 b1] -> [r2 g2 b2] -> "#RrGgBb"
 outhex = arrayfun(@(i) str2double(['0x' color(2*i + [0 1])]), 1:3); % hex -> double
-outhex = uint8(A + B.*outhex); % apply tfm, clamp into [0, 255], and round
-outhex = "#" + sprintf("%02x", outhex); % double -> hex
+outhex = uint8(A + B.*outhex); % apply tfm, clamp into [0, 255], and round.
+outhex = "#" + sprintf("%02x", outhex); % uint8 -> hex
 \end{minted}
 \vfill
 \noindent {\Large Snippet from {\tt invert\_fill\_colors}:}\vspace{-8px}
@@ -421,7 +422,7 @@ find and apply transformation to all `stroke` colors
 find and apply transformation to all `fill` colors
 find all embedded <image> tags
     invert the image using ImageMagick.
-    (this is undefined behavior for M != [255 255 255; -1 -1 -1])
+    (this causes undefined behavior for M != [255 255 255; -1 -1 -1])
 optimize the <path> descriptors in the svg
 replace \r\n with \n and strip the svg, adding back one trailing newline.
 print the content to wherever dictated by the "outfile" argument
