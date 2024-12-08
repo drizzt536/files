@@ -1,3 +1,8 @@
+% SVG Color Transformation Tests v1.0 (c) | Copyright 2024 Daniel E. Janusch
+
+% this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
+% and must be copied IN ITS ENTIRETY under penalty of law.
+
 function test_gen(varargin)
 	% generate the tests for ./svg_color_tfm.m
 	% outputs the test suite file to ./test_suite.m

@@ -5,6 +5,11 @@ run_tests;
 
 %%%% ./svg_color_tfm.m FUNCTIONS BEGIN
 
+% SVG Color Transformation v1.0 (c) | Copyright 2024 Daniel E. Janusch
+
+% this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
+% and must be copied IN ITS ENTIRETY under penalty of law.
+
 function outcontent = svg_color_tfm(varargin)
 	% applies a color transformation to an SVG file
 	% requires MatLab R2022b or newer. do `svg_color_tfm --help` for arguments.
