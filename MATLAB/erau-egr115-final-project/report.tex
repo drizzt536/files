@@ -1,7 +1,9 @@
-% (egr 115 final project) report.tex v0.9 (c) | Copyright 2024 Daniel E. Janusch
+% (egr 115 final project) report.tex v1.0 (c) | Copyright 2024 Daniel E. Janusch
 
 % this file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and must be copied IN ITS ENTIRETY under penalty of law.
+
+% must be compiled with shell escape
 
 \documentclass[12pt]{article}
 
@@ -17,7 +19,7 @@
 	amssymb,
 	latexsym,
 	xcolor,
-	% minted,
+	minted,
 	graphicx,
 	enumitem,
 	hyperref,
@@ -52,7 +54,7 @@
 	bottom = 1in,
 }
 
-\title{EGR 115 Final Project Report {\bf–} MATLAB SVG Color-Transformation Tool}
+\title{EGR 115 Final Project Report {\bf–} MATLAB SVG\\Color Transformation Tool}
 \author{Daniel E. Janusch}
 \maketitle
 
@@ -208,20 +210,18 @@ out a specific color channel, and transforms 8, 9, and 10 invert a specific chan
 Sometimes the code will break for more complicated input SVGs, but as long as they
 only use basic features it should always work.
 
-\vfill
 \begin{figure}[ht]
 	\centering
-	\begin{minipage}[b]{0.47\textwidth}
+	\begin{minipage}[b]{0.45\textwidth}
 		\includegraphics[width=\textwidth]{./pdf/main-test-in.pdf}
 		\caption{Original SVG (or tfm7)}
 	\end{minipage}
 	\hfill
-	\begin{minipage}[b]{0.47\textwidth}
+	\begin{minipage}[b]{0.45\textwidth}
 		\includegraphics[width=\textwidth]{./pdf/main-test-out-1.pdf}
 		\caption{tfm1: Inverted SVG}
 	\end{minipage}
 \end{figure}
-\vfill
 
 \pagebreak
 
@@ -283,46 +283,149 @@ only use basic features it should always work.
 \vspace{20px}
 
 \pagebreak
+\section{Major Code Sections}
+
+The following code segments are lightly edited for viewing
+ease, and for descriptive comments.\\
+
+\noindent {\Large Snippet from {\tt clr2hex}:}\vspace{-8px}
+\begin{minted}[fontsize=\small, linenos]{matlab}
+% convert rgba(R, G, B, A) to #RrGgBbAa
+matches = regexp(color, "^rgba\(" + ...
+    strmul("\s*(\d+(?:\.\d+)?)\s*,", 4) + "{0}%?\)$", "tokens");
+if ~isempty(matches)
+    matches = str2double(string(matches{1}));
+    if regexp(color, "%\s*\)$"), matches(4) = 255 * matches(4) / 100; end
+
+    color = "#" + sprintf("%02x", round(matches));
+end
+\end{minted}
+\vfill
+\noindent {\Large Snippet from {\tt apply\_hex\_tfm}:}\vspace{-8px}
+\begin{minted}[fontsize=\small, linenos]{matlab}
+% formula to go from '#RrGgBb' -> [r1 g1 b1] -> [r2 g2 b2] -> "#RrGgBb"
+outhex = arrayfun(@(i) str2double(['0x' color(2*i + [0 1])]), 1:3); % hex -> double
+outhex = uint8(A + B.*outhex); % apply tfm, clamp into [0, 255], and round
+outhex = "#" + sprintf("%02x", outhex); % double -> hex
+\end{minted}
+\vfill
+\noindent {\Large Snippet from {\tt invert\_fill\_colors}:}\vspace{-8px}
+\begin{minted}[fontsize=\small, linenos]{matlab}
+% NOTE: the function's name is just leftover from a previous code version.
+while true
+    % find the next `fill` color and exit if there aren't any more.
+    stt = indexOf(content, "fill=", iend);
+    if isempty(stt), break, end
+
+    counter = counter + 1;
+    stt = stt + 5;
+
+    % if the `fill` is inside a <mask>, don't transform the color.
+    if any(median([ options.masks.maskRanges
+            stt*ones(1, width(options.masks.maskRanges)) ]) == stt)
+
+        iend = stt; % stop an infinite loop
+        continue
+    end
+
+    iend = indexOf(content, """", stt + 1);
+
+    % get the hex code of the transformed color
+    color = apply_color_tfm( extractBetween(content, stt + 1, iend - 1), ...
+        options.A, options.B);
+
+    % update the SVG with the new color.
+    content = extractBefore(content, stt + 1) + ...
+        color + extractAfter(content, iend - 1);
+end
+\end{minted}
+\vfill
+\vspace{-20px}
+\pagebreak
 \section{References}
 
 \begin{enumerate}[label={[1]}]
-	\item \url{https://imagemagick.org/script/index.php}
+	\item I. S. LLC, ``ImageMagick," {\it ImageMagick}.
+	\url{https://imagemagick.org/script/index.php}
+	(accessed Dec. 07, 2024).
 	\label{imagemagick}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[2]}]
-	\item \url{https://www.w3.org/TR/SVG11/}
+	\item E. Dahlstr\"om {\it et al}., Eds., ``Scalable Vector Graphics (SVG) 1.1
+	(Second Edition)," {\it W3C}, Aug. 16, 2011. \url{https://www.w3.org/TR/SVG11/}
+	(accessed Dec. 07, 2024).
 	\label{svg docs}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[3]}]
-	\item \url{https://www.w3.org/TR/SVG11/types.html#ColorKeywords}
+	\item E. Dahlstr\"om {\it et al}., Eds., ``Basic Data Types and Interfaces –
+	SVG 1.1 (Second Edition)," {\it W3C}, Aug. 16, 2011.
+	\url{https://www.w3.org/TR/SVG11/types.html#ColorKeywords}
+	(accessed Dec. 07, 2024).
 	\label{svg named colors}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[4]}]
-	\item \url{https://github.com/drizzt536/files/tree/main/MATLAB/erau-egr115-final-project}
+	\item Daniel E. Janusch, ``ERAU EGR 115 Final Project," {\it GitHub},
+	Dec. 08, 2024.
+	\url{https://github.com/drizzt536/files/tree/main/MATLAB/erau-egr115-final-project}
+	(accessed Dec. 08, 2024).
 	\label{code folder}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[5]}]
-	\item \url{https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion}
+	\item Mohsen, ``HSL to RGB color conversion," {\it Stack Overflow}, Feb. 28, 2010.
+	\url{https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion}
+	(accessed Nov. 16, 2024).
 	\label{hsl2rgb}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[6]}]
-	\item \url{https://github.com/drizzt536/files/blob/main/MATLAB/erau-egr115-final-project/test_gen.m}
+	\item Daniel E. Janusch, ``/test\_gen.m," {\it GitHub}, Dec. 08, 2024.
+	\url{https://github.com/drizzt536/files/blob/main/MATLAB/erau-egr115-final-project/test_gen.m}
+	(accessed Dec. 08, 2024).
 	\label{test suite}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[7]}]
-	\item \url{https://github.com/drizzt536/files/tree/main/MATLAB/erau-egr115-final-project/svg}
+	\item Daniel E. Janusch, ``/svg," {\it GitHub}, Dec. 08, 2024.
+	\url{https://github.com/drizzt536/files/tree/main/MATLAB/erau-egr115-final-project/svg}
+	(accessed Dec. 08, 2024).
 	\label{svg folder}
 \end{enumerate}
-\vspace{-23px}
+\vspace{-20px}
 \begin{enumerate}[label={[8]}]
-	\item \url{https://github.com/drizzt536/files/blob/main/MATLAB/erau-egr115-final-project/main_test_transforms.m}
+	\item Daniel E. Janusch, ``/main\_test\_transforms.m," {\it GitHub}, Dec. 08, 2024.
+	\url{https://github.com/drizzt536/files/blob/main/MATLAB/erau-egr115-final-project/main_test_transforms.m}
+	(accessed Dec. 08, 2024).
 	\label{tfm tests}
 \end{enumerate}
+
+\pagebreak
+\section{Appendix {\bf–} Pseudocode}
+
+\begin{verbatim}
+define global variables
+parse arguments
+read input file, if applicable
+find SVG height and width
+look for rectangle that matches SVG height and width.
+    add one if there wasn't one
+find <mask> tags.
+    find the indices of the starts and ends of the masks
+    find the indices of embedded <image> tags
+    find the ids of objects referenced in the mask
+    store this information to avoid them in all later steps
+find and apply transformation to all `stroke` colors
+find and apply transformation to all `fill` colors
+find all embedded <image> tags
+    invert the image using ImageMagick.
+    (this is undefined behavior for M != [255 255 255; -1 -1 -1])
+optimize the <path> descriptors in the svg
+replace \r\n with \n and strip the svg, adding back one trailing newline.
+print the content to wherever dictated by the "outfile" argument
+set the output variable if applicable
+\end{verbatim}
 
 \end{document}
