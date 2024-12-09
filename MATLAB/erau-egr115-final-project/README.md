@@ -10,7 +10,10 @@ To rerun the test suite without creating it again, run one of the following:
 - `test_suite` in MatLab
 - `matlab -batch test_suite` in any terminal
 
-To recompute the PDFs from the SVGs, run `./build-pdfs.ps1` in PowerShell.
+To recompute the PDFs from the SVGs, run one of the following:
+- `./build-pdfs.ps1` in PowerShell (fastest).
+- `build_pdfs` in MatLab.
+- `matlab -batch build_pdfs` in any terminal.
 
 To recompute the output SVGs for the main tests, run one of the following:
 - `main_test_transforms` in MatLab
