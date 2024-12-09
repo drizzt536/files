@@ -99,10 +99,6 @@ function test_gen(varargin)
 
 	i = find(lines == "%%%% TEST FUNCTIONS BEGIN", 1);
 
-	% TODO: in `run_test_vec`, if the test failed, give more information about it:
-		% e.g. expected / actual value.
-	% TODO: think about how to test against errors as well as correct values.
-
 	[main_fn, globals] = gen_main_fn(lines(i + 1:end));
 
 	writelines([
