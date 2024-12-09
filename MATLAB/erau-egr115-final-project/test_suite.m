@@ -22,7 +22,6 @@ function outcontent = svg_color_tfm(varargin)
 
 	init_setup;
 
-	% TODO: don't invert fill, stroke, or embedded image colors within <mask> tags.
 	% TODO: don't load the entire file content into memory at once, if possible
 
 	% default values:
