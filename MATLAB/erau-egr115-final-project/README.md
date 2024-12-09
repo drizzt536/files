@@ -3,9 +3,8 @@ for help information, run one of the following in MatLab:
 - `svg_color_tfm --help` (for the argument documentation)
 
 To generate and execute the test cases, run one of the following
-- `test_gen("exec", true, "setup", "init_setup")` in MatLab.
-- `matlab -batch "test_gen('exec', true, 'setup', 'init_setup')"` in any terminal.
-This should take about 3-8 seconds the first way or 9-12 the second way.
+- `test_gen("exec", true, "setup", "init_setup")` in MatLab. (~3-8 seconds to run)
+- `matlab -batch "test_gen('exec', true, 'setup', 'init_setup')"` in any terminal.  (~9-12 seconds to run)
 
 To rerun the test suite without creating it again, run one of the following:
 - `test_suite` in MatLab
