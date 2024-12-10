@@ -71,6 +71,7 @@ var OwnedApplications = {
 	, "Batman Arkham Knight": duplicate
 	, "Battalion Dev Kit": 0
 	, "Battle Breakers": 0
+	, "Bear and Breakfast": 19.99
 	, "Beyond Blue": 19.99
 	, "Beyond CAD": 0
 	, "Beyond Two Souls [Demo]": 0
@@ -101,10 +102,13 @@ var OwnedApplications = {
 	, "Breathedge": 24.99
 	, "Bridge Constructor: The Walking Dead": 9.99
 	, "Bridge Constructor": duplicate
+	, "Brotato": 4.99
 	, "Brothers - A Tale Of Two Sons": 14.99
 	, "Brothers": duplicate
 	, "Bus Simulator 21 - Modding Kit": 0
 	, "Bus Simulator 21 Modding Kit": duplicate
+	, "Bus Simulator 21 Next Stop": 34.99
+	, "Bus Simulator 21": duplicate
 	, "Call of the Sea": 19.99
 	, "Car Mechanic Simulator 2018": 19.99
 	, "Carcassonne": 9.99
@@ -135,6 +139,7 @@ var OwnedApplications = {
 	, "Crayta": 0
 	, "Creature in the Well": 14.99
 	, "Cris Tales": 34.99
+	, "Crosshair V2": 0
 	, "CRSED: F.O.A.D.": 0
 	, "CRSED": duplicate
 	, "Crying Suns": 24.99
@@ -196,6 +201,7 @@ var OwnedApplications = {
 	, "Dying Light": duplicate
 	, "EARTHLOCK": 29.99
 	, "Elite Dangerous": 29.99
+	, "Empyrion - Galactic Survival": 19.99
 	, "Enter the Gungeon": 14.99
 	, "Epic Cheerleader Pack": 0
 	, "Epistory - Typing Chronicles": 14.99
@@ -216,7 +222,7 @@ var OwnedApplications = {
 	, "Fall Guys Snowberry": duplicate
 	, "Fall Guys - Giddy Gift": 0
 	, "Fall Guys - Snowberry": 0
-	, "Fallout® Classic Collection": 19.99 // fallout 1, 2, tactics 
+	, "Fallout® Classic Collection": 19.99 // fallout 1, 2, tactics
 	, "Fallout Classic Collection": duplicate
 	, "Fallout: A Post Nuclear Role Playing Game": duplicate
 	, "Fallout": duplicate
@@ -308,6 +314,8 @@ var OwnedApplications = {
 	, "Heroes and Generals WWII": duplicate
 	, "Heroes and Generals WW2": duplicate
 	, "HITMAN - Game of the Year Edition": 59.99
+	, "HITMAN World of Assassination - Free Starter Pack": 0
+	, "HITMAN World of Assassination Demo": duplicate
 	, "HITMAN": duplicate
 	, "Hob": 19.99
 	, "Homeworld 3 - Mod Tools & Editor": 0
@@ -381,6 +389,8 @@ var OwnedApplications = {
 	, "LEGO® Fortnite": duplicate
 	, "LEGO Fortnite®": duplicate
 	, "LEGO Fortnite": duplicate
+	, "LEGO® Star Wars™: The Skywalker Saga": 49.99
+	, "LEGO Star Wars: The Skywalker Saga": duplicate
 	, "Lifeless Planet: Premier Edition": 19.99
 	, "Lifeless Planet": duplicate
 	, "LISA: The Definitive Edition": 0
@@ -431,11 +441,13 @@ var OwnedApplications = {
 	, "No Straight Roads Mother and Child Demo": 0
 	, "Nova Lands: Emilia's Mission Demo": 0
 	, "Nuclear Throne": 11.99
+	, "Off The Grid - Early Access": 0
 	, "Offworld Trading Company": 29.99
 	, "OHDcore Mod Kit": 0
 	, "Once Human": 0
 	, "Opera GX - The First Browser for Gamers": 0
 	, "Opera GX": duplicate
+	, "Outliver: Tribulation": 7.99
 	, "Overclocked Combo Pack": 0
 	, "Fortnite Overclocked Combo Pack": duplicate
 	, "Overcooked": 16.99
@@ -627,6 +639,7 @@ var OwnedApplications = {
 	, "The Sims 4 The Daring Lifestyle Bundle": duplicate
 	, "The Six Dragons": 0
 	, "The Spectrum Retreat": 12.99
+	, "The Spirit and the Mouse": 19.99
 	, "The Stanley Parable": 14.99
 	, "The Talos Principle": 39.99
 	, "The Textorcist: The Story of Ray Bibbia": 14.99
