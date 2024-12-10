@@ -1,14 +1,15 @@
-//  node --no-deprecation ./pypi-search.js [args]
-// jsdom uses something that uses a deprecated internal module (punycode).
+// requires jsdom, egrep, and awk.
+// example: node ./pypi-search.js IPYTHON
+// node ./pypi-search.js [args]
 
 let
-	query = null,
-	order = "",
+	query     = null,
+	order     = "",
 	ordername = "relevant first",
-	exact = false,
-	useLegacy = false,
-	verbose = false,
-	pages = 1
+	outdated  = false,
+	exact     = false,
+	verbose   = false,
+	pages     = 1
 
 // process arguments
 
@@ -19,6 +20,7 @@ for (let i = 2; i < process.argv.length; i++) {
 
 	if (arg === "-o" || arg === "-s")
 		// -o oldest => --orderby=oldest, etc.
+		// "s" for "sort (by)"
 		arg = "--orderby"
 
 	if (arg === "-p")
@@ -83,21 +85,36 @@ for (let i = 2; i < process.argv.length; i++) {
 			exact = true
 			break
 
-		case "-l":
-		case "--legacy":
-			useLegacy = true
-			break
-
 		case "-V":
 		case "--verbose":
 			verbose = true
 			break
 
+		case "--outdated":
+			outdated = true
+			// It only makes sense to use outdated with exact.
+			exact = true
+			break
+
 		case "-h":
 		case "-?":
 		case "--help":
-			// TODO: implement
-			throw Error("--help argument is not implemented. For now, just read the code.");
+			console.log("usage: node pypi-search.js [OPTIONS] PACKAGE_NAME")
+			console.log("options:")
+			console.log("    -e, --exact                       only match against the exact package name. case sensitive.")
+			console.log("    -v, --verbose                     print out extra information about what is happening")
+			console.log("    -o, --order[by], -s, --sort[by]   change the sorting for the results. options can include")
+			console.log("                                      oldest/inactive, latest/newest, or relevance/relevant.")
+			console.log("                                      can be something like --orderby order or --orderby=order.")
+			console.log("    -p, --pages                       the number of pages of results to print. defaults to 1.")
+			console.log("                                      can be either --pages N or --pages=N. (with or without =)")
+			console.log("    --outdated                        instead of searching pypi for possible matches, it searches")
+			console.log("                                      for exact matches and returns whether it is outdated or not.")
+			console.log("                                      implies --exact.")
+			console.log("    -h, -?, --help                    prints this message.")
+			console.log("")
+
+			process.exit(0)
 
 		default:
 			if (query == null)
@@ -108,7 +125,6 @@ for (let i = 2; i < process.argv.length; i++) {
 }
 
 
-
 // errors
 
 if (exact && pages !== 1)
@@ -117,12 +133,19 @@ if (exact && pages !== 1)
 if (pages < 1)
 	throw Error`--pages must be at least 1.`
 
-if (query == null)
-	throw Error`the package name must be provided for the query.`
+if (query == null) {
+	// with `--outdated` and no query, loop over every installed package.
+	if (!outdated)
+		throw Error`the package name must be provided for the query.`
+}
 
 verbose && console.log("arguments parsed\nloading modules")
 
-
+if (/['"&;\s]/g.test(query)) {
+	// nuh uh, no code injection for you buddy
+	verbose && console.log("removing instances of /['\"&;\s]/ from query string")
+	query = query.replace(/['"&;\s]/g, "")
+}
 
 // modules
 
@@ -145,7 +168,8 @@ const JSDOM = (function find_jsdom() {
 
 	// try globally
 	try {
-		const globalRoot = shell("npm root -g").trimRight().replaceAll("\\", "/")
+		const globalRoot = process.execPath.replaceAll("\\", "/") + "/../node_modules"
+		// const globalRoot = shell("npm root -g").trimRight().replaceAll("\\", "/")
 		verbose && console.log("global root: %o", globalRoot)
 
 		return require(`${globalRoot}/jsdom`).JSDOM
@@ -157,21 +181,27 @@ const JSDOM = (function find_jsdom() {
 	throw localError
 })()
 
-const baseURL = `https://pypi.org/search/?q=${query}${order}`
+// this function is for `--outdated` with no package name.
+const baseUrlFn = query => `https://pypi.org/search/?q=${query}${order}`
+const baseURL = baseUrlFn(query)
 
-// TODO: make it work on non-windows environments (curl)
-// TODO: add `--outdated`, return if the package's installed version is outdated.
-// TODO: stop from printing past the columns on the page for the description, use a seconds line.
+// TODO: make it work on non-windows environments (curl / --outdated)
+// TODO: stop from printing past the columns on the page for the description, use a second/third/etc. line.
 
+function sleep(ms) {
+	var start  = new Date().getTime(),
+		expire = start + ms;
 
+	while (new Date().getTime() < expire);
+}
 
+function packagesFromPage(page=1, query) {
+	const baseURL = baseUrlFn(query, order)
+	const command = `curl.exe --silent --request GET "${baseURL}&page=${page}"`
 
-function packagesFromPage(page=1) {
-	const script = `curl.exe --silent --request GET "${baseURL}&page=${page}"`
+	verbose && console.log("shell command: %o", command)
 
-	verbose && console.log("shell curl script: %o", script)
-
-	const html = shell(script)
+	const html = shell(command)
 
 	const packageElems = Array.from(
 		new JSDOM(html).window.document.querySelectorAll("a.package-snippet")
@@ -194,18 +224,22 @@ function packagesFromPage(page=1) {
 	})
 
 	return exact ?
-		tmp.filter(e => e.name === query) :
+		// allow different casing in case you did it wrong.
+		tmp.filter(e => e.name.toLowerCase() === query.toLowerCase()) :
 		tmp
 }
 
 function lastPageExists() {
 	// returns true if all the pages exist, false otherwise
 
-	const script = `curl.exe --silent --output NUL "${baseURL}&page=${pages}" --write-out %{http_code}`
+	if (outdated)
+		return true
 
-	verbose && console.log("trying last page\nshell curl script: %o", script)
+	const command = `curl.exe --silent --output NUL "${baseURL}&page=${pages}" --write-out %{http_code}`
 
-	const exitCode = shell(script)
+	verbose && console.log("trying last page\nshell command: %o", command)
+
+	const exitCode = shell(command)
 
 	if (exitCode === "200")
 		return true
@@ -215,25 +249,15 @@ function lastPageExists() {
 	return false
 }
 
-function getPackages() {
+function getPackages(query) {
 	// assume the pages all exist.
 
 	const packages = []
 
 	for (let i = 1; i <= pages ;)
-		packages[i] = packagesFromPage(i++)
+		packages[i] = packagesFromPage(i++, query)
 
 	return packages.flat()
-}
-
-function legacyPrint(packages) {
-	// kind of like the legacy `pip search`, also I made this one first.
-	verbose && console.log("\nName (Version, Release date) - Description\n")
-
-	for (const pkg of packages)
-		console.log(`${pkg.name} (${pkg.version}, ${pkg.created}) - ${pkg.description}`)
-
-	console.log()
 }
 
 function print(packages) {
@@ -281,13 +305,111 @@ function print(packages) {
 	console.log(result)
 }
 
+function checkOutdated(pkg, query) {
+	console.log(pkg, query)
+	command = `pip list 2> nul | grep -Ei "^${query}" | awk "{print $2}"`
+
+	let installedVersion = shell(command).trim()
+
+	if (installedVersion === "") {
+		console.log(`package "${query}" is not installed.`)
+		process.exit(1)
+	}
+
+	const max = { // max length
+		// these are the lengths of the section titles
+		name: 4,
+		outd: 8 // outdated
+	}
+	let isOutdated = `${pkg.version.trim() !== installedVersion}`
+
+	max.name = 1 + Math.max(max.name, pkg.name.length)
+	max.outd++
+
+	console.log(
+		"Name"     + " ".repeat(max.name - 4) + "  " +
+		"Outdated" + " ".repeat(max.outd - 8) + "\n" +
+		// line 2
+		"-".repeat(max.name) + "  " +
+		"-".repeat(max.outd)
+	)
+
+
+	let result =
+		// line 1
+		pkg.name   + " ".repeat(max.name - pkg.name  .length) + "  " +
+		isOutdated + " ".repeat(max.outd - isOutdated.length) + "\n"
+
+	console.log(result)
+}
+
+function checkAllOutdated() {
+	info = shell('pip list 2> nul | awk "{print $1 \\" \\" $2}"')
+		.split("\n")
+		.map(e => e.split(" "))
+
+	info.shift()
+	info.shift()
+
+	let result = ""
+
+	const max = { // max length
+		// these are the lengths of the section titles
+		name: 4,
+		outd: 8 // outdated
+	}
+
+	for (const [query, installedVersion] of info) {
+		let pkg = packagesFromPage(1, query)[0]
+
+		if (pkg === undefined) {
+			// try again after replacing all underscores with dashes.
+			const tmp = query.replaceAll("_", "-")
+
+			if (tmp !== query)
+				pkg = packagesFromPage(1, tmp)[0]
+
+			if (pkg === undefined) {
+				// log even outside of verbose mode.
+				console.log(`package ${query} isn't found on PyPi. check yourself.`)
+				// example: `jupyter_client` is listed as `jupyter-client`
+				continue
+			}
+		}
+
+		const isOutdated = `${pkg.version !== installedVersion}`
+
+		max.name = 1 + Math.max(max.name, query.length)
+
+		result +=
+			query      + " ".repeat(max.name - query     .length) + "  " +
+			isOutdated + " ".repeat(max.outd - isOutdated.length) + "\n"
+
+		// wait to avoid rate limiting.
+		sleep(500)
+	}
+
+	max.outd++
+	console.log(
+		"Name"     + " ".repeat(max.name - 4) + "  " +
+		"Outdated" + " ".repeat(max.outd - 8) + "\n" +
+		"-".repeat(max.name) + "  " +
+		"-".repeat(max.outd) + "\n" +
+		result
+	)
+}
+
 
 verbose && console.log("starting main script")
 // main script
 
-const packages = lastPageExists() ? getPackages() : {}
 
-if (useLegacy)
-	legacyPrint(packages)
-else
+const packages = !(outdated && query === null) && lastPageExists() ?
+	getPackages(query) :
+	[{}]
+
+outdated ?
+	query === null ?
+		checkAllOutdated() :
+		checkOutdated(packages[0], query) :
 	print(packages)
