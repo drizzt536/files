@@ -1,0 +1,56 @@
+% this one might be missing formulas
+
+\ifx \combinedDocuments \undefined
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.50in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.00in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+}
+
+\title{PS 161 Exam 1 Formulas}
+\author{Daniel E. Janusch}
+\date{December 9, 2024}
+\maketitle
+\fi
+
+\begin{equation}
+	v = v_0 + at
+\end{equation}
+
+\begin{equation}
+	x = \dfrac{v_0 + v}t
+\end{equation}
+
+\begin{equation}
+	x = v_0t + \dfrac a2 t^2
+\end{equation}
+
+\begin{equation}
+	v^2 = v_0^2 + 2 a x
+\end{equation}
+
+\begin{equation}
+	\text{vector stuff: dot, cross, angle, magnitude}
+\end{equation}
+
+\ifx \combinedDocuments \undefined
+\end{document}
+\fi

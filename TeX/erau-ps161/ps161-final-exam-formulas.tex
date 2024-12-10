@@ -1,0 +1,128 @@
+\ifx \combinedDocuments \undefined
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.50in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor, graphicx}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.00in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+}
+
+\title{PS 161 Final Exam Formulas}
+\author{Daniel E. Janusch}
+\date{December 9, 2024}
+\maketitle
+\fi
+
+\begin{equation}
+	\lambda = \dfrac mL ~~~~~~~~~~
+	\sigma = \dfrac mA ~~~~~~~~~~
+	\rho = \dfrac mV
+\end{equation}
+
+\begin{equation}
+	p = \rho g h = \dfrac{F_1}{A_1} = \dfrac{F_1}{A_2}~~[\text{Pa}]
+\end{equation}
+
+\begin{equation}
+	F_{\text{pressure}} = p A
+\end{equation}
+
+\begin{equation}
+	F_{\text{buoyant}} = \rho g V
+\end{equation}
+
+\begin{equation}
+	R = A v~~(\text{flow rate})
+\end{equation}
+
+\begin{equation}
+	\rho_1 R_1 = \rho_2 R_2~~(\text{mass flux})
+\end{equation}
+
+\begin{equation}
+	\rho_1 = \rho_2~~(\text{incompressible})
+\end{equation}
+
+\begin{equation}
+	M\!E = p + \dfrac 12 \rho v^2 + \rho g y
+\end{equation}
+
+\begin{equation}
+	U_g = -\dfrac{GMm} r
+\end{equation}
+
+\begin{equation}
+	F_g = -\dfrac{GMm}{r^2}
+\end{equation}
+
+\begin{equation}
+	v_{\text{orbit}} = \sqrt{\dfrac{GM}{R}}
+\end{equation}
+
+\begin{equation}
+	v_{\text{escape}} = v_{\text{orbit}} \sqrt 2
+\end{equation}
+
+\begin{equation}
+	T = \dfrac{2 \pi r}v = \dfrac{2 \pi r^{1.5}}{\sqrt{G M}}
+\end{equation}
+
+\begin{equation}
+	R_S = \dfrac{2 G M}{c^2}
+\end{equation}
+
+\pagebreak
+\restoregeometry
+
+Simple Harmonic Motion (SHM):
+\begin{equation}
+	x(t) = A \cos(\omega t + \phi) \ni \omega^2 = \dfrac k m
+\end{equation}
+
+\begin{equation}
+	\omega = 2 \pi f
+\end{equation}
+
+\begin{equation}
+	E = \dfrac{m v^2 + k x^2}2
+\end{equation}
+
+\begin{equation}
+	v = \pm \omega \sqrt{A^2 - x^2}
+\end{equation}
+
+\begin{equation}
+	\theta(t) = \theta_0 \cos(\omega t + \phi)
+\end{equation}
+
+\begin{equation}
+	\text{Angular SHM: } \omega^2 = \dfrac \kappa I \ni \kappa = \text{torsion constant}
+\end{equation}
+
+\begin{equation}
+	\text{Small $\theta$ Simple Pendulum: } \omega^2 = \dfrac g L
+\end{equation}
+
+\begin{equation}
+	\text{Physical Pendulum: } \omega^2 = \dfrac {mgd} I
+\end{equation}
+
+\ifx \combinedDocuments \undefined
+\end{document}
+\fi

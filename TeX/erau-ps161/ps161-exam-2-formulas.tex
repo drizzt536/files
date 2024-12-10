@@ -1,0 +1,56 @@
+% this one might be missing formulas
+
+\ifx \combinedDocuments \undefined
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.50in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.00in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+}
+
+\title{PS 161 Exam 2 Formulas}
+\author{Daniel E. Janusch}
+\date{December 9, 2024}
+\maketitle
+\fi
+
+\begin{equation}
+	a_c = \dfrac{v^2} r
+\end{equation}
+
+\begin{equation}
+	f_s = \mu_s N
+\end{equation}
+
+\begin{equation}
+	f_k = \mu_k N
+\end{equation}
+
+\begin{equation}
+	a_\parallel = g(\sin \theta - \mu_k \cos \theta) ~~ \text{box sliding down slope}
+\end{equation}
+
+\begin{equation}
+	F = m a
+\end{equation}
+
+\ifx \combinedDocuments \undefined
+\end{document}
+\fi

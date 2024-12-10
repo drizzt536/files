@@ -1,0 +1,99 @@
+\newcommand{\grav}{\textrm{grav}}
+\newcommand{\cons}{\textrm{cons}}
+\newcommand{\nc}{\textrm{nc}}
+\newcommand{\el}{\textrm{el}}
+\newcommand{\cm}{\textrm{cm}}
+\newcommand{\av}{\textrm{av}}
+
+\newcommand{\pvec}{\hspace{-1px}\vec{\hspace{1px}p}}
+\newcommand{\vvec}{\hspace{-1px}\vec{\hspace{1px}v}}
+
+\newcommand{\ds}{\textrm ds}
+\newcommand{\dt}{\textrm dt}
+\newcommand{\dU}{\textrm dU}
+\newcommand{\dW}{\textrm dW}
+\newcommand{\dx}{\textrm dx}
+
+\newcommand{\DK}{\Delta K}
+\newcommand{\DU}{\Delta U}
+\newcommand{\DW}{\Delta W}
+\newcommand{\Dy}{\Delta y}
+\newcommand{\Dp}{\Delta p}
+\newcommand{\Dt}{\Delta t}
+
+\ifx \combinedDocuments \undefined
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.0in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.0in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.0in,
+}
+
+\title{PS 161 Exam 3 Formulas}
+\author{Daniel E. Janusch}
+\date{October 22, 2024}
+\maketitle
+\fi
+
+\begin{equation}
+	W = \int_{x_1}^{x_2} \! \vec F \cdot \vec \ds = W_\cons + W_\nc = \DK = \left. \left(\dfrac 12 mv^2~~\text{or}~~\dfrac{p^2}{2m}\right) \right|_{x_1}^{x_2}
+\end{equation}
+
+\begin{equation}
+	W_F^\cons = -\DU_F
+\end{equation}
+
+\begin{equation}
+	U_\grav = mgy ~~~~~~~~ U_\el = \dfrac 12 k x^2
+\end{equation}
+
+\begin{equation}
+	J = \int_{t_1}^{t_2} \! F(t) \,\text dt = \Dp = mv \, \Big|_{t_1}^{t_2} = F_\av\Dt
+\end{equation}
+
+\begin{equation}
+	F = -\vec \nabla U = \dot{m\vec v}
+\end{equation}
+
+\begin{equation}
+	P_\av = \dfrac W \Dt ~~~~~~~~ P = \dot W = \vec F \cdot \vvec
+\end{equation}
+
+\begin{equation}
+	\pvec = m\vvec
+\end{equation}
+
+\begin{equation}
+	x_\cm = \dfrac{\sum mx}{\sum m} ~~~~~~~~ \vvec_\cm = \dfrac{\sum \pvec}{\sum m}
+\end{equation}
+
+\begin{equation}
+	\DW = -\DU
+\end{equation}
+
+\begin{equation}
+	v_{Af},v_{Bf} = \dfrac{p_{Ai} + 2 p_{Bi} - m_B v_{Ai}}{m_A + m_B}, \dfrac{p_{Bi} + 2 p_{Ai} - m_A v_{Bi}}{m_A + m_B}~~(\text{elastic})
+\end{equation}
+
+%% Terminal velocity?
+
+\ifx \combinedDocuments \undefined
+\end{document}
+\fi

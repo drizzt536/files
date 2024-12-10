@@ -1,0 +1,478 @@
+
+\documentclass[12pt]{article}
+\usepackage{amssymb, latexsym, amsmath, xcolor}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 0.5in,
+	right  = 0.5in,
+	bottom = 1.0in,
+]{geometry}
+
+\newcommand \negphantom [1]{\hspace{-\widthof{#1}}}
+\newcommand \replace [2]{\negphantom{#1}\phantom{#2}}
+\newcommand \dstyle \displaystyle
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+% \! == \nhpx 2
+% \, == \hpx  2
+
+\newcommand \pgrp [1]{\left( #1 \right)}   % paren group
+\newcommand \bgrp [1]{\left[ #1 \right]}   % bracket group
+\newcommand \cgrp [1]{\left\{ #1 \right\}} % curly (bracket) group.
+\newcommand \abs [1]{\left| #1 \right|}
+\newcommand \ihat {\hat{\nhpx 1 \textit\i}}
+\newcommand \jhat {\hat{\nhpx 1 \textit\j}}
+\newcommand \khat {\hat{\textit k}}
+\newcommand \cbrt [1]{\sqrt[3]{#1}}
+\newcommand \av {\mathrm{av}}
+\newcommand \rad {\mathrm{rad}}
+\newcommand \grav {\mathrm{grav}}
+\newcommand \gr {\mathrm{gr}} % grav
+\newcommand \el {\mathrm{el}}
+\newcommand \tot {\mathrm{tot}}
+\newcommand \cons {\mathrm{cons}}
+\newcommand \nc {\mathrm{nc}}
+\newcommand \cm {\mathrm{cm}}
+\newcommand \new {\mathrm{new}}
+\newcommand \escape {\mathrm{escape}}
+\newcommand \esc {\mathrm{esc}}
+\newcommand \orbit {\mathrm{orbit}}
+ 
+\newcommand \avec {\!\vec{\,a}}
+\newcommand \Avec {\!\nhpx{-0.5}\vec{\hpx{0.5}A}}
+\newcommand \Bvec {\!\vec{\hpx{0.5}B}}
+\newcommand \dvec {\nhpx 1 \vec{\hpx 1 d}}
+\newcommand \Fvec {\vec F}
+\newcommand \pvec {\nhpx{1.5} \vec{\hpx{1.5} p}}
+\newcommand \rvec {\nhpx 1 \vec{\hpx 1 r}}
+\newcommand \Rvec {\!\vec{\hpx{0.5}R}}
+\newcommand \svec {\!\vec{\,s}}
+\newcommand \uvec {\nhpx 1 \vec{\hpx 1 u}}
+\newcommand \vvec {\nhpx 1 \vec{\hpx 1 v}}
+
+\newcommand \df [1]{\mathrm d #1}
+\newcommand \dA {\df A}
+\newcommand \dm {\df m}
+\newcommand \dr {\df r}
+\newcommand \dt {\df t}
+\newcommand \dU {\df U}
+\newcommand \dv {\df v}
+\newcommand \dV {\df V}
+\newcommand \dW {\df W}
+\newcommand \dx {\df x}
+\newcommand \dAdr {\dfrac\dA\dr}
+\newcommand \dVdr {\dfrac\dV\dr}
+\newcommand \dWdt {\dfrac\dW\dt}
+
+\newcommand \Df [1]{\Delta #1}
+\newcommand \DK {\Df K}
+\newcommand \Dp {\Df p}
+\newcommand \Dt {\Df t}
+\newcommand \DU {\Df U}
+\newcommand \Dv {\Df v}
+\newcommand \DW {\Df W}
+\newcommand \Dx {\Df x}
+\newcommand \DxDt {\dfrac\Dx\Dt}
+\newcommand \DvDt {\dfrac\Dv\Dt}
+\newcommand \DWDt {\dfrac\DW\Dt}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.0in,
+	left   = 0.5in,
+	right  = 0.5in,
+	bottom = 1.0in,
+}
+
+\title{PS 161 Notes}
+\author{Daniel E. Janusch}
+\maketitle
+
+
+$\dstyle A = \dVdr = 4\pi r^2$ (sphere)
+
+$\dstyle C = \dAdr = 2\pi r$
+
+$\mu$ = microns
+
+$\dstyle r = \cbrt{\frac{3m}{4\pi\rho}}$~~~~~~($\rho$ = $\dfrac mV$, sphere)
+
+$\sigma$ = standard deviation
+
+$l = 4.56 \pm 0.04~~~(x \pm \delta x)$
+
+precision (\% relative uncertainty) = $\dstyle\frac{\delta x}x = \frac{0.04}{4.56} = 0.88\%$
+
+accuracy (percent error) = $\rm \dfrac{actual}{expected} - 1$
+
+$||\Avec|| = |\Avec| = A$
+
+$\dstyle\Avec = A_x \ihat + A_y\jhat = A\cos\theta\,\ihat + A\sin\theta\,\jhat = \vec{A_x} + \vec{A_y}$
+
+the $\theta$ part is only true if the angle is measured counterclockwise from the $x$-axis.
+
+$\dstyle \theta = \tan^{-1}\dfrac{A_y}{A_x}$
+
+$\dstyle |\Avec| = \sqrt{\sum A_n^2}$
+
+$\Avec \cdot \Bvec = A\,B\,\cos\phi \ni\phi = \angle AOB = \angle\Bvec-\angle\Avec$. It may have to be adjusted to be in range.
+
+always take the angle that is $180^\circ$ or less.
+
+$\Avec = A\cdot\hat A$
+
+$\Bvec = B\cdot\hat B$
+
+cross product sign is right hand rule~~($\khat = \ihat \times \jhat$)
+
+$\Avec \times \Bvec = \begin{vmatrix}
+	\ihat & \jhat & \khat \\
+	A_x   & A_y   & A_z   \\
+	B_x   & B_y   & B_z
+\end{vmatrix} ~~ {\rm or} ~~\! \begin{bmatrix}
+	A_x \\
+	A_y \\
+	A_z
+\end{bmatrix} \times \begin{bmatrix}
+	B_x \\
+	B_y \\
+	B_z
+\end{bmatrix} = \begin{bmatrix}
+	\phantom-\det(y, z) \\
+			-\det(x, z) \\
+	\phantom-\det(x, y)
+\end{bmatrix} ~~ \begin{matrix}
+	\textrm{same thing. cut out the row,} \\
+	\textrm{determinant the remaining ones.}
+\end{matrix}$
+
+angle for cross products $\le 180^\circ$.
+
+$\begin{vmatrix}
+	A_x & B_x \\
+	A_y & B_y
+\end{vmatrix} = A_x B_y - B_x A_y$
+
+\vspace{2px}
+$\begin{vmatrix}
+	A_x & B_x & C_x \\
+	A_y & B_y & C_y \\
+	A_z & B_z & C_z
+\end{vmatrix} = A_x \begin{vmatrix}
+	B_y & C_y \\
+	B_z & C_z
+\end{vmatrix} - B_x \begin{vmatrix}
+	A_y & C_y \\
+	A_z & C_z
+\end{vmatrix} + C_x \begin{vmatrix}
+	A_y & B_y \\
+	A_z & B_z
+\end{vmatrix}$
+
+flipping adjacent columns of a determinent introduces a minus sign.
+
+$\Avec \times \Bvec = -\Bvec \times \Avec$
+
+kinematics $\to$ ($x$, $t$)~~or~~(space location, time)
+
+dynamics $\to$ ($x$, $t$, $m$)~~or~~(space location, time, mass)
+
+\restoregeometry
+\pagebreak
+$\Dx = x_2 - x_1$
+
+$\Dt = t_2 - t_1$
+
+$v_\av = \DxDt$
+
+$a_\av = \DvDt$
+
+\noindent There are 4 kinematic equations. These ones assume $x_0 = 0$ and $t_0 = 0$. equation 4 comes from 1 and 2. $(v + v_0)(v - v_0)$. You can get equation 1 by setting equations 2 and 3 equal.
+\begin{enumerate}
+	\item $v = v_0 + at$~(area under rectangle)
+	\item $x = \dfrac{v_0 + v}2t$~(area under trapezoid)
+	\item $x = v_0t + \dfrac a2t^2$~(double integral)
+	\item $v^2 = v_0^2 + 2ax$
+\end{enumerate}
+
+$\rvec$ = position vector.
+
+$\vvec_\av = \dfrac{\rvec_2 - \rvec_1}{t_2 - t_2} = \dfrac{\Df\rvec}\Dt$
+
+$\dstyle\vvec = \lim_{\Dt \to 0}\dfrac{\Df\rvec}\Dt$
+
+$\avec_\av = \dfrac{\Df\,\vvec}\Dt$
+
+$\Df\,\vvec_\perp = \avec_\perp \Dt$ 
+
+$\avec_\perp$ changes the direction but not magnitude (over small $\Dt$).
+
+$\avec_\parallel$ changes the magnitude but not direction.
+
+$\begin{array}{llll}
+	v_x = v_{0x}      & ~~~ \text{and} ~~~ & x = x_0 + v_{0x}t                & (a = \phantom-0) \\
+	v_y = v_{0y} - gt & ~~~ \text{and} ~~~ & y = y_0 + v_{0y}t - \dfrac12gt^2 & (a = -g)
+\end{array}$
+
+$y(x) = x\tan\alpha_0 - \dfrac g2 \bgrp{\dfrac x{v_{0x}}}^2$
+
+these previous equations can be derived from the 4 kinematic equations.
+
+the velocity in projectile motion is tangent to the curve?
+
+$\theta = \dfrac{|\Df\,\vvec|}{v_1}$.
+
+Circular motion (uniform):
+
+$\Df\,\vvec$ points towards the center of the circle.
+
+$a_\av = \dfrac{|\Df\,\vvec|}\Dt = \dfrac{v_1\Df s}{R\Dt}$
+
+$C = vT$ (velocity $\cdot$ total time in period)
+
+$a_\rad = \dfrac{v^2}R = \dfrac{4\pi^2R}{T^2} = \bgrp{\dfrac{2\pi}T}^2\!R$
+
+$a_\rad = g \Longrightarrow $ objects will fly off the earth.
+
+DYNAMICS START: basically the same as kinematics but also with mass.
+
+$\Rvec$ = resultant vector (sum of forces)
+
+(we won't do vectors in 3 dimensions for this class)
+
+Newton's First law (inertia): $\sum \Fvec = \vec 0 \Longrightarrow $ velocity constant.
+Only valid in an inertial frame.
+
+On earth, we're technically not in an inertial frame of reference, but it doesn't matter that much for small times. projectile motion is only parabolas if the time is short. coriolis affect can appear if shooting north or south.
+
+$\vvec_{P/A} = \vvec_{P/B} + \vvec_{B/A}$
+
+example:
+
+$A$ = frame at rest on earth.
+
+$B$ = train moving $2 \rm \dfrac m s$.
+
+$P$ = person on train moving $1 \rm \dfrac m s$.
+
+$\vvec_{P/A} = 2 + 1 = 3\rm \dfrac ms$
+
+only works for general relativity $(v < \sim 0.2c)$
+
+$a_{P/B} = a_{P/A}$. acceleration is the same in all inertial frames of reference, so the force is always the same too.
+
+you can get acceleration from this equation.
+
+$F =   \vec 0 \Longrightarrow $ 1st law.
+
+$F \ne \vec 0 \Longrightarrow $ 2nd law.
+
+objects act on each other $\Longrightarrow$ 3rd law.
+
+Newton's Second Law: $\sum\Fvec = m\avec$
+
+``comes to rest \underline{uniformly}" means constant acceleration.
+
+Newton's Third Law: $\Fvec_{A~{\rm on}~B}=-\Fvec_{B~{\rm on}~A}$
+
+Just like other forces, tension points away from the system. Because of this, tension is bidirection between two objects.
+
+Always point one of the axes in the direction of net acceleration.
+
+$\sum F$ can only use external forces.
+
+in statics problems, $T = w$, or $T_y = w$.
+
+massless/frictionless/massless frictionless pully $\Longrightarrow$ pulley doesn't spin and the top is slippery.
+
+for a massless frictionless pully, the tension on either side is the same.
+
+the tension is in-between the weights of either side of the pully.
+
+Finding the acceleration is easier when joining the systems.
+
+$f_k = \mu_kn$. kinetic friction = coefficient of kinetic friction $\cdot$ normal force. NOTE: $f_k \perp n$. $\mu_k$ doesn't care about the velocity. It is dimensionless and typically between 0 and 1.
+
+Static friction: $0 \le f_s \le f_s^{\rm max} = \mu_s n$
+
+You can't get the coefficient of friction from Newton's laws, you have to measure it.
+
+Kinetic friction vector opposes the velocity vector.
+
+Air friction: $\Fvec_{\rm fluid resistance}$ is opposite to $\vvec$.
+
+Slow speeds: $f = kv$. $k$ is the constant of proportionality. example: Stoke's Law
+
+Fast speeds: $F = Dv^2$. $D$ is the drag coefficient.
+
+Terminal valocity: $v_t = \dfrac{mg}k$.
+
+$v_y(t) = v_t\!\pgrp{1 - e^{-kt/m}}$
+
+this equation comes from solving $mg - kv_y = m\dfrac{\df v_y}\dt$ for $v_y$.
+
+$y(t) = v_t\!\bgrp{t - \dfrac mk\pgrp{1 - e^{-kt/m}}}$
+
+$v_t = \sqrt{mg/D}$. This can be derived from the sum of forces for Newton's 2nd law.
+
+Dynamics of circular motion: $\sum F = m\dfrac{v^2}r$. sum of forces in the direction of acceleration.
+
+tension in a simple pendulum given mass $m$, length of pendulum $\ell$, and angle $\theta$: $T=mg\cos\theta+\dfrac{mv^2}\ell$. 
+
+$f_s^{\rm max} = \mu_s^{\rm min} n$.
+
+Work = Force $\cdot$ Displacement
+
+Joule = $\rm N~m = \dfrac{kg~m^2}{s^2}$
+
+1 J = 0.7376ft $\cdot$ lb
+
+$\svec = \dvec = \vec\Dx$
+
+Work done by force $\Fvec$. $\theta$ is the angle between the force and displacement vector.
+
+$W_F = (F\cos\theta)~s = \Fvec \cdot \svec$
+
+$F_\parallel = F \cos \theta$
+
+$K = \dfrac 12 mv^2 ~~~~~$(kinetic energy).
+
+$W_{\rm total} = \pgrp{\sum \Fvec} \cdot \svec = \rvec \cdot \svec = \sum W_{F_n}$
+
+$W = F \cdot s = ma \cdot s = m\pgrp{\dfrac{v^2 - v_0^2}{2x}}s = \dfrac12 mv^2 - \dfrac12 mv_0^2 = K_{\rm final} - K_{\rm initial} = \Df K$
+
+Steps to solve problems: \begin{enumerate}
+	\item draw a picture, put the positive axes in the direction of acceleration.
+	\item project all forces onto the $x$ and $y$ axes.
+	\item solve.
+\end{enumerate}
+
+$\dstyle W_\tot = \int_{x_0}^x\!\!F(x)\,\dx$
+
+Hooke's Law: $F = -kx$. $x$ is the change from \emph{equilibrium}, where $x_0$ is the equilibrium position). $F$ is the restoring force, or the force required to hold it a distance $x$ away from equilibrium, but that force will be positive. $k$ is the spring constant. If $k$ is small, then it is easy to stretch/compress.
+
+The work done \emph{on} the spring will be $F = +kx$, but work done \emph{by} the spring will be $F = -kx$. This comes from $W = \Fvec \cdot \svec = F \Dx \cos \theta$. Assumes $F = 0$ at $x = 0$, otherwise it will be $F = k(x - x_0)$. There is an elastic limit of a spring where if you stretch it enough it won't go all the way back to where it started; the equilibrium position changed. $k$ is in units of $\rm \dfrac Nm$.
+
+$P_\av = \DWDt ~~~~~~ $(average power)
+
+This equation is misleading, it should actually just be $\dfrac W\Dt$.
+
+$\dstyle P = \lim_{\Dt \to 0} P_\av = \dWdt = \Fvec \!\cdot \vvec$
+
+If something is only moving vertically, then $P = F_y v_y$.
+
+$\dW = \Fvec \cdot \vec \dr$
+
+$\dstyle W_\tot = \int_{x_i}^{x_f}\!\!F(x)\,\dx = \DK = \dfrac12 m\!\pgrp{v_f^2 - v_i^2} = \Fvec \!\cdot\, \svec$
+
+$\dstyle I_\tot = \int_{t_i}^{t_f}\!\!F(t)\,\dt = \Df p = m\!\pgrp{v_f - v_i}$
+
+$W_\grav = -(U_2 - U_1) = -\Df U_\grav$
+
+$U_\grav := U_\grav(y) = mgy$
+
+Assuming conservative forces (only gravity): $-\Df U_\grav = \DK$
+
+$W = \DK \Longrightarrow -\Df U_\grav = \DK \Longrightarrow -(U_2 - U_1) = K_2 - K_1 \Longrightarrow K_1 + U_1 = K_2 + U_2$
+
+$W_\nc + W_\grav = \DK$
+
+$W_\nc - \DK + \DU = E_2 - E_1 \ne 0$
+
+$K_1 + U_1 = K_2 + U_2 \forall t_1, t_2$
+
+$W_\el = -\dfrac12 k\pgrp{x_f^2 - x_i^2}$. Work \emph{by} the spring on the system.
+
+$E = K + U$. If all forces are conservative, $E_1 = E_2$.
+
+If one or more forces are non-conservative ($E_1 \ne E_2$), then:
+
+$E = K + U ~~~~~ {\rm and} ~~~~~ W_\nc = E_2 - E_1$.
+
+Examples of non-conservative forces are Air-Resistance and Friction. 
+
+1. $\dstyle W_F := \int_{x_1}^{x_2}\!\!F(x)\,\dx$
+
+2. $W_F^\cons = -\Df U_F = -\pgrp{U_F^{\rm f} - U_F^{\rm i}}$
+
+3. $W_\tot = \DK$
+
+4. $U_\grav = mgy$ ($y$-axis has to point up)
+
+5. $U_\el = \dfrac12 kx^2$
+
+6. $F_x(x) = -\dfrac{\dU_r}\dx$
+
+$\pvec = m\vvec$
+
+$\sum \Fvec = \dot\pvec$
+
+$s = r\theta$. ``linear displacement" (distance) $s$, ``angular displacement" $\theta$
+
+$\alpha = \dot \omega = \ddot \theta$
+
+equations of angular motion, assuming constant acceleration. These are the same equations as for non-angular motion, but with new symbols.
+\begin{equation} \omega = \omega_0 + \alpha t \end{equation}
+\begin{equation} \theta = \dfrac{\omega_0 + \omega}2 t = \bar \omega t \end{equation}
+\begin{equation} \theta = \omega_0 t + \dfrac \alpha 2 t^2 \end{equation}
+\begin{equation} \omega^2 = \omega_0^2 + 2\alpha \theta \end{equation}
+\setcounter{equation} 0
+
+$\dstyle I = \sum_{i=1}^N m_i r_i^2 = \sum m r^2 = \! \int_0^L \!\! x^2 \dm$
+
+the integral one is only for a cylindrical rod rotated around the endpoint, parallel to the plane.
+
+or for any 1-dimensional uniform object. not sure.
+
+$\dm = \lambda(x) \hpx 1 \dx$
+
+Parallel Axis Theorem: $I_\new = I_\cm + M d^2$
+
+usually the moment of inertia isn't a scalar, but a 3x3 matrix: $\begin{bmatrix}
+    %  Xx       Xy       Xz
+	I_{xx} & I_{xy} & I_{xz} \\ % xX
+	I_{xy} & I_{yy} & I_{yz} \\ % yX
+	I_{zy} & I_{zy} & I_{zz} \\ % zX
+\end{bmatrix}$
+
+$\nhpx 1 \vec{\hpx 1 \tau} = \rvec \times \Fvec$
+
+$\vec L = \rvec \times \pvec$. angular momentum
+
+$\vec{v_t} = \vec\omega \times \rvec$
+
+$\lambda$ = linear mass density $\rm \bgrp{\dfrac{kg}{m^3}}$
+
+\vspace{1px}
+$\sigma$ = surface mass density $\rm \bgrp{\dfrac{kg}{m^2}}$
+
+\vspace{1px}
+$\rho$ = volume mass density $\rm \bgrp{\dfrac{kg}m}$
+
+$p$ = pressure.
+
+$\Dp = \rho g h ~~~~~ {\rm or} ~~~~~ p = p_0 + \rho g h$ (gauge pressure.)
+
+\vspace{1px}
+$p = \dfrac {F_1} {A_1} = \dfrac {F_2} {A_2}$
+
+$F_B = \rho g V_{\rm displacement}$
+
+$U_\gr = -\dfrac{G M m}r$
+
+$F_\gr = -\dfrac{G M m}{r^2} = -\dfrac {\dU_\gr} \dr$
+
+$v_\orbit = \sqrt{\dfrac{G M_E} r}$
+
+$v_{\mathrm{tan}} = \sqrt{\dfrac{G M m}r} = \sqrt{-\dfrac 1m U_\gr}$
+
+$v_\esc = v_\orbit \sqrt 2$
+
+$\dfrac{v_\esc^2}{2R} = \dfrac{G M}{R^2} = g$
+\end{document}
