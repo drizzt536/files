@@ -97,6 +97,7 @@ function Get-ChromeUserAgent {
 	# updated. it will just be increasingly
 	# likely over time that the server won't
 	# believe it, and block the request.
+	# NOTE: the user agent is at `navigator.userAgent` in the JS terminal
 
 	# the value given by [Microsoft.PowerShell.Commands.PSUserAgent]::Chrome
 	# says Webkit 534.6, which was from like 2010.
@@ -105,7 +106,7 @@ function Get-ChromeUserAgent {
 		$isMacOS ? "Macintosh; Intel Mac OS X 10_15_7" :
 			"X11; Linux x86_64"
 
-	$chromeVersion = "128.0.0.0"
+	$chromeVersion = "131.0.0.0"
 	$webkitVersion = "537.36"
 
 	return "Mozilla/5.0 ($osInfo) AppleWebKit/$webkitVersion" +
