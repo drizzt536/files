@@ -275,8 +275,26 @@ def ccmp(z: number = 0, w: number = 0, /) -> tuple[int, int] | int:
 
 		ret = (cmp(z.real, w.real), cmp(z.imag, w.imag))
 
-		# return a definitive integer comparison value if possible
-		return ret[0] if ret[0] == ret[1] else ret
+		if ret[0] == ret[1]:
+			# conclusive result
+			return ret[0]
+
+		if 0 in ret:
+			# zero on one axis, nonzero on the other
+			# return the other one.
+			return ret[0] + ret[1]
+
+		# map them to the y = x line.
+		a = (z.real + z.imag) / 2
+		b = (w.real + w.imag) / 2
+		tmp = cmp(a, b)
+
+		if tmp != 0:
+			return tmp
+
+		# (1, -1) or (-1, 1)
+		# they are on the same y = c - x line.
+		return ret
 
 	raise TypeError("automate.misc.ccmp() requires arguments of type complex, float, or int")
 
