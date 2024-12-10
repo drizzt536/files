@@ -10,24 +10,24 @@
 \usepackage{amssymb, latexsym, amsmath, pgfplots, xcolor, etoolbox, hyperref, xurl}
 \usepackage[margin=1in]{geometry}
 
-\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
-\newcommand{\ceil}[1]{ \left\lceil  #1 \right\rceil}
-\newcommand{\round}[1]{\left\lfloor #1 \right\rceil}
-\newcommand{\trunc}[1]{\left\lceil  #1 \right\rfloor}
-\newcommand{\pgrp}[1]{\left( #1 \right)}   % paren group
-\newcommand{\bgrp}[1]{\left[ #1 \right]}   % bracket group
-\newcommand{\cgrp}[1]{\left\{ #1 \right\}} % curly (bracket) group.
-\newcommand{\abs}[1]{\left| #1 \right|}
-\newcommand{\sgn}{\mathrm{sgn}\,}
-\newcommand{\sgnf}[1]{\mathrm{sgn}\!\pgrp{#1}}
-\newcommand{\dx}{\df x}
-\newcommand{\dt}{\df t}
-\newcommand{\df}[1]{\mathrm{d} #1}
-\newcommand{\dstyle}{\displaystyle}
+\newcommand \floor [1]{\left\lfloor #1 \right\rfloor}
+\newcommand \ceil [1]{ \left\lceil  #1 \right\rceil}
+\newcommand \round [1]{\left\lfloor #1 \right\rceil}
+\newcommand \trunc [1]{\left\lceil  #1 \right\rfloor}
+\newcommand \pgrp [1]{\left( #1 \right)}   % paren group
+\newcommand \bgrp [1]{\left[ #1 \right]}   % bracket group
+\newcommand \cgrp [1]{\left\{ #1 \right\}} % curly (bracket) group.
+\newcommand \abs [1]{\left| #1 \right|}
+\newcommand \sgn {\mathrm{sgn}\,}
+\newcommand \sgnf [1]{\mathrm{sgn}\!\pgrp{#1}}
+\newcommand \dx {\df x}
+\newcommand \dt {\df t}
+\newcommand \df [1]{\mathrm d #1}
+\newcommand \dstyle {\displaystyle}
 
 
 \newbool{darkMode}
-\boolfalse{darkMode}
+\booltrue{darkMode}
 
 
 \definecolor{lightgray}{RGB}{170, 170, 170}
@@ -86,7 +86,7 @@
 
 \title{Integrating Functions with Countably-Many Jump Discontinuities}
 \author{Daniel E. Janusch}
-\date{September 3, 2024, 7:25pm MST}
+\date{September 5, 2024, 9:55pm MST}
 \maketitle
 
 	\indent While applications don't immediately come to attention, the pursuit of knowledge and
@@ -101,12 +101,12 @@
 	discontinuities can't be listed out, and step~2 won't work. It makes it much easier to assume
 	that there are no discontinuities other than the jump discontinuities, but the main essence of
 	the steps should be about the same in that case. This process pertains to step functions like
-	$\floor x$ and $\ceil x$. The notation used will be as follows: $f(x)$ is the full function
-	with the step functions in it and  $g(x)$ is the same function but with the step functions
-	removed. For instance, if $f(x)$ is any of $x^2$, $\floor{x}^2$, $\floor{x^2}$, or
-	$x\floor x$, then $g(x) = x^2$. Functions like $f(x) = \floor{x}^2 - 2\floor x$ are
-	continuous analogs of discrete functions, so this process could introduce a way of integrating
-	discrete functions.
+	$\floor x$ (floor) and $\ceil x$ (ceiling). The notation used will be as follows: $f(x)$ is
+	the full function with the step functions in it and  $g(x)$ is the same function but with the
+	step functions removed. For instance, if $f(x)$ is any of $x^2$, $\floor{x}^2$, $\floor{x^2}$,
+	or $x\floor x$, then $g(x) = x^2$. Functions like $f(x) = \floor{x}^2 - 2\floor x$ are
+	continuous analogs of discrete functions (you could replace $\floor x$ with $n$ and have no
+	$x$s left over), so this process could introduce a way of integrating discrete functions.
 
 \phantomsection
 \addcontentsline{toc}{section}{Step 1: Define a Function to Integrate}
