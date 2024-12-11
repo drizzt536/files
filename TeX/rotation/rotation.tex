@@ -1,40 +1,66 @@
-% pdflatex %
+% file for pdflatex.exe
+
+% rotation.tex v2.0 (c) | Copyright 2022-2024 Daniel E. Janusch
+
+% This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
+% and may be copied ONLY IN ITS ENTIRETY under penalty of law.
+
 \documentclass[12pt]{article}
 
-\usepackage{amssymb,latexsym,amsmath}
-\usepackage[margin=1in,footskip=0.5in]{geometry}
+\newcommand \pgrp [1]{\left( #1 \right)}
+
+\usepackage{amssymb, latexsym, amsmath, xcolor}
+\usepackage[margin=1in, footskip=0.5in]{geometry}
+\addtolength \topmargin {-1in}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
 
 \begin{document}
-\addtolength{\topmargin}{-1in}
+
 \title{Point Rotation Formula Proof}
 \author{Daniel E. Janusch}
 \maketitle
-\noindent preface: $\tan^{-1}(y,x)$\\
 
-\noindent pf:\\
+\noindent atan2 argument order: $\tan^{-1}(y, x)$
 
-\noindent goal: rotate $(a,b)~\theta$ units around the point $(h,k)$\\
-$A_1:=(a,b)$\\
-$B_1:=(a,k)$\\
-$C_1:=(h,k)$\\
-\\
-\text{shift everything by $(-h,-k)$}\\
-$A_2:=(a-h,b-k)$\\
-$B_2:=(a-h,0)$\\
-$C_2:=(0,0)$\\
-\\
-$m\angle A_1B_1C_1=m\angle A_2B_2C_2$\\
-\\
-$t:=\tan^{-1}\left(b-k,a-h\right)$~~~~(the angle that $(a,b)$ would have if $(h,k)$ was the origin)\\
-\\
-$\theta_2:=t+\theta$ (the new angle)\\$(\cos\theta_2,\sin\theta_2)$ has the right angle with the distance scaled to 1\\
-\\
-$d:=\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}$ (the distance between $(a,b)$ and $(h,k)$)\\
+\noindent goal: rotate $(a ,b)~\theta$ units around the point $(h, k)$\\
+
+\noindent Proof:
+
+\noindent $A_1 := (a, b)$\\
+$B_1 := (a, k)$\\
+$C_1 := (h, k)$\\
+
+\noindent shift everything by $(-h,-k)$\\
+$A_2 := (a - h, b - k)$\\
+$B_2 := (a - h, 0)$\\
+$C_2 := (0, 0)$\\
+
+\noindent $m\angle A_1 B_1 C_1 = m\angle A_2 B_2 C_2$
+
+\noindent $t := \tan^{-1}\!\pgrp{b - k, a - h}$~~~~(the angle that $(a, b)$ would have if $(h, k)$ was the origin)
+
+\noindent $\theta_2 := t + \theta$ (the new angle)\\
+$(\cos \theta_2, \sin\theta_2)$ has the correct angle, with the distance scaled to 1\\
+
+\noindent $d := \sqrt{\pgrp{b - k}^2 + \pgrp{a - h}^2}$ (the distance between $(a,b)$ and $(h,k)$)\\
 \\
 the point would then be $(d\cos\theta_2,d\sin\theta_2)$\\
 \\
-after shifting by $(h,k)$ to counteract the shift from before it becomes $(h+d\cos\theta_2,k+d\sin\theta_2)$\\$=\left(\begin{aligned}h+\cos\left(\tan^{-1}\left(b-k,a-h\right)+\theta\right)\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}~,\\
-k+\sin\left(\tan^{-1}\left(b-k,a-h\right)+\theta\right)\sqrt{\left(b-k\right)^2+\left(a-h\right)^2}\end{aligned}\right)$\\
-\\
-\blacksquare
+after shifting by $(h,k)$ to counteract the shift from before it becomes
+$(h + d \cos \theta_2, k + d \sin \theta_2)$\\
+$ = \pgrp{\begin{aligned}
+	& h + \cos\pgrp{\tan^{-1}\!\pgrp{b-k, a-h} + \theta} \sqrt{\pgrp{b-k}^2 + \pgrp{a-h}^2},\\
+	& k + \sin\pgrp{\tan^{-1}\!\pgrp{b-k, a-h} + \theta} \sqrt{\pgrp{b-k}^2 + \pgrp{a-h}^2}
+\end{aligned}}$\\
+
+\noindent $\blacksquare$
+
+\vfill
+\scriptsize
+\noindent\text{This document is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE}\\
+\text{and may be copied ONLY IN ITS ENTIRETY under penalty of law.}
+\vspace{-10px}
 \end{document}
