@@ -1,29 +1,28 @@
 
-\newcommand \hpx  [1]{\hspace{ #1px}}
-\newcommand \vpx  [1]{\vspace{ #1px}}
-\newcommand \nhpx [1]{\hspace{-#1px}}
-\newcommand \nvpx [1]{\vspace{-#1px}}
+\providecommand \hpx [1] {\hspace{#1px}}
+\providecommand \vpx [1] {\vspace{ #1px}}
+\providecommand \nhpx [1] {\hspace{-#1px}}
+\providecommand \nvpx [1] {\vspace{-#1px}}
 
-\newcommand \rad {\textrm{rad}}
-\newcommand \rot {\textrm{rot}}
-\newcommand \lin {\textrm{lin}}
-\newcommand \cg {\textrm{cg}}
+\providecommand \grav {\textrm{grav}}
+\providecommand \rad {\textrm{rad}}
+\providecommand \rot {\textrm{rot}}
+\providecommand \lin {\textrm{lin}}
+\providecommand \cm {\textrm{cm}}
+\providecommand \cg {\textrm{cg}}
+\providecommand \av {\textrm{av}}
 
-\newcommand \pgrp[1]{\left( #1 \right)}
+\providecommand \pgrp [1] {\left( #1 \right)}
 
-\newcommand \Fvec {\vec F}
-\newcommand \rvec {\nhpx 1 \vec {\hpx 1 r}}
+\providecommand \Fvec {\vec F}
+\providecommand \pvec {\nhpx 1 \vec {\hpx 1 p}}
+\providecommand \rvec {\nhpx 1 \vec {\hpx 1 r}}
 
-\newcommand \dm {\mathrm dm}
-\newcommand \dr {\mathrm dr}
+\providecommand \dm {\mathrm dm}
+\providecommand \dr {\mathrm dr}
+\providecommand \DK {\Delta K}
 
 \ifx \combinedDocuments \undefined
-\newcommand \pvec {\nhpx 1 \vec {\hpx 1 p}}
-\newcommand \grav {\textrm{grav}}
-\newcommand \cm {\textrm{cm}}
-\newcommand \av {\textrm{av}}
-\newcommand \DK {\Delta K}
-
 \documentclass[12pt]{article}
 
 \usepackage[
@@ -35,9 +34,11 @@
 
 \usepackage{amsmath, amssymb, latexsym, xcolor, graphicx}
 
-\definecolor{lightgray}{RGB}{170, 170, 170}
-\color{lightgray}
-\pagecolor{black}
+\providecommand \darkMode 1
+\ifnum \darkMode = 0 \else
+	\pagecolor{black}
+	\color[RGB]{170, 170, 170}
+\fi
 
 \begin{document}
 

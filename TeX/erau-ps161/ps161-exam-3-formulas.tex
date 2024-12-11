@@ -1,41 +1,43 @@
-\newcommand{\grav}{\textrm{grav}}
-\newcommand{\cons}{\textrm{cons}}
-\newcommand{\nc}{\textrm{nc}}
-\newcommand{\el}{\textrm{el}}
-\newcommand{\cm}{\textrm{cm}}
-\newcommand{\av}{\textrm{av}}
+\providecommand \grav {\textrm{grav}}
+\providecommand \cons {\textrm{cons}}
+\providecommand \nc {\textrm{nc}}
+\providecommand \el {\textrm{el}}
+\providecommand \cm {\textrm{cm}}
+\providecommand \av {\textrm{av}}
 
-\newcommand{\pvec}{\hspace{-1px}\vec{\hspace{1px}p}}
-\newcommand{\vvec}{\hspace{-1px}\vec{\hspace{1px}v}}
+\providecommand \pvec {\hspace{-1px}\vec{\hspace{1px}p}}
+\providecommand \vvec {\hspace{-1px}\vec{\hspace{1px}v}}
 
-\newcommand{\ds}{\textrm ds}
-\newcommand{\dt}{\textrm dt}
-\newcommand{\dU}{\textrm dU}
-\newcommand{\dW}{\textrm dW}
-\newcommand{\dx}{\textrm dx}
+\providecommand \ds {\textrm ds}
+\providecommand \dt {\textrm dt}
+\providecommand \dU {\textrm dU}
+\providecommand \dW {\textrm dW}
+\providecommand \dx {\textrm dx}
 
-\newcommand{\DK}{\Delta K}
-\newcommand{\DU}{\Delta U}
-\newcommand{\DW}{\Delta W}
-\newcommand{\Dy}{\Delta y}
-\newcommand{\Dp}{\Delta p}
-\newcommand{\Dt}{\Delta t}
+\providecommand \DK {\Delta K}
+\providecommand \DU {\Delta U}
+\providecommand \DW {\Delta W}
+\providecommand \Dy {\Delta y}
+\providecommand \Dp {\Delta p}
+\providecommand \Dt {\Delta t}
 
 \ifx \combinedDocuments \undefined
 \documentclass[12pt]{article}
 
 \usepackage[
-	top    = 0.5in,
+	top    = 0.50in,
 	left   = 1.25in,
 	right  = 1.25in,
-	bottom = 1.0in,
+	bottom = 1.00in,
 ]{geometry}
 
 \usepackage{amsmath, amssymb, latexsym, xcolor}
 
-\definecolor{lightgray}{RGB}{170, 170, 170}
-\color{lightgray}
-\pagecolor{black}
+\providecommand \darkMode 1
+\ifnum \darkMode = 0 \else
+	\pagecolor{black}
+	\color[RGB]{170, 170, 170}
+\fi
 
 \begin{document}
 

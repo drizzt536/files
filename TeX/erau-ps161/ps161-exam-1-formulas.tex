@@ -12,9 +12,11 @@
 
 \usepackage{amsmath, amssymb, latexsym, xcolor}
 
-\definecolor{lightgray}{RGB}{170, 170, 170}
-\color{lightgray}
-\pagecolor{black}
+\providecommand \darkMode 1
+\ifnum \darkMode = 0 \else
+	\pagecolor{black}
+	\color[RGB]{170, 170, 170}
+\fi
 
 \begin{document}
 
