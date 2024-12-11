@@ -1,53 +1,52 @@
 % file for pdflatex.exe
 
-% process.tex v1.5 (c) | Copyright 2024 Daniel E. Janusch
+% process.tex v1.5.1 (c) | Copyright 2024 Daniel E. Janusch
 
 % This file is licensed by https://raw.githubusercontent.com/drizzt536/files/main/LICENSE
 % and may be copied ONLY IN ITS ENTIRETY under penalty of law.
 
 \documentclass[12pt]{article}
 
-\usepackage{amssymb, latexsym, amsmath, pgfplots, xcolor, etoolbox, hyperref, xurl}
+\usepackage{amssymb, latexsym, amsmath, pgfplots, xcolor, hyperref, xurl}
+
 \usepackage[margin=1in]{geometry}
+\addtolength \topmargin {-0.5in}
 
-\newcommand \floor [1]{\left\lfloor #1 \right\rfloor}
-\newcommand \ceil [1]{ \left\lceil  #1 \right\rceil}
-\newcommand \round [1]{\left\lfloor #1 \right\rceil}
-\newcommand \trunc [1]{\left\lceil  #1 \right\rfloor}
-\newcommand \pgrp [1]{\left( #1 \right)}   % paren group
-\newcommand \bgrp [1]{\left[ #1 \right]}   % bracket group
-\newcommand \cgrp [1]{\left\{ #1 \right\}} % curly (bracket) group.
-\newcommand \abs [1]{\left| #1 \right|}
-\newcommand \sgn {\mathrm{sgn}\,}
-\newcommand \sgnf [1]{\mathrm{sgn}\!\pgrp{#1}}
-\newcommand \dx {\df x}
-\newcommand \dt {\df t}
-\newcommand \df [1]{\mathrm d #1}
-\newcommand \dstyle {\displaystyle}
-
-
-\newbool{darkMode}
-\booltrue{darkMode}
-
+\providecommand \floor [1]{\left\lfloor #1 \right\rfloor}
+\providecommand \ceil [1]{ \left\lceil  #1 \right\rceil}
+\providecommand \round [1]{\left\lfloor #1 \right\rceil}
+\providecommand \trunc [1]{\left\lceil  #1 \right\rfloor}
+\providecommand \pgrp [1]{\left( #1 \right)}   % paren group
+\providecommand \bgrp [1]{\left[ #1 \right]}   % bracket group
+\providecommand \cgrp [1]{\left\{ #1 \right\}} % curly (bracket) group.
+\providecommand \abs [1]{\left| #1 \right|}
+\providecommand \sgn {\mathrm{sgn}\,}
+\providecommand \sgnf [1]{\mathrm{sgn}\!\pgrp{#1}}
+\providecommand \dx {\df x}
+\providecommand \dt {\df t}
+\providecommand \df [1]{\mathrm d #1}
+\providecommand \dstyle {\displaystyle}
 
 \definecolor{lightgray}{RGB}{170, 170, 170}
 \definecolor{dimblue}{RGB}{30, 30, 165}
 
-\ifbool{darkMode}{
-	\colorlet{bgcolor}{black}
-	\colorlet{fgcolor}{lightgray}
-
-	\definecolor{dimred}{RGB}{127, 0, 0}
-	\definecolor{dimgreen}{RGB}{0, 71, 0}
-	\definecolor{gridgray}{RGB}{60, 60, 60}
-}{
+\providecommand \darkMode 1
+\ifnum \darkMode = 0
+	% light mode
 	\colorlet{bgcolor}{white}
 	\colorlet{fgcolor}{black}
 
 	\definecolor{dimred}{RGB}{165, 30, 30}
 	\definecolor{dimgreen}{RGB}{30, 105, 30}
 	\definecolor{gridgray}{RGB}{191, 191, 191}
-}
+\else
+	\colorlet{bgcolor}{black}
+	\colorlet{fgcolor}{lightgray}
+
+	\definecolor{dimred}{RGB}{127, 0, 0}
+	\definecolor{dimgreen}{RGB}{0, 71, 0}
+	\definecolor{gridgray}{RGB}{60, 60, 60}
+\fi
 
 \color{fgcolor}
 \pagecolor{bgcolor}
@@ -74,9 +73,6 @@
 		},
 	}
 }
-
-
-\addtolength\topmargin{-0.5in}
 
 \begin{document}
 
@@ -128,7 +124,7 @@
 	$\floor x$ can just be treated as a constant when taking derivatives. Here are a couple
 	example graphs.
 
-	\begin{figure}[h]
+	\begin{figure}[ht]
 		\centering
 		\begin{tikzpicture}
 			\begin{axis}[
