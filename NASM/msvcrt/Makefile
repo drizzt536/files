@@ -8,7 +8,7 @@ all: $(DEPENDENCIES)
 	@echo "Duration: $$(( $$(date +%s) - $(START_TIME) )) seconds"
 
 %.exe: %.nasm
-	../assemble $< --l msvcrt
+	../assemble $< --infer
 	@echo
 
 clean:
