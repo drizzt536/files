@@ -52,9 +52,7 @@ public final class HelloWorldWithOOP extends Object implements HelloWorldMainPro
 	 * 
 	 * Usage: {@code HelloWorldWithOOP x = new HelloWorldWithOOP();}
 	 */
-	public HelloWorldWithOOP() {
-
-	}
+	public HelloWorldWithOOP() {}
 
 	/**
 	 * The entry point of "Hello World" program.
@@ -1213,32 +1211,14 @@ final class ConcreteHelloPrinterWrapperManagerFactory
 }
 
 /**
- * This interface does nothing. It is a noop interface.
- *
- * @author Daniel E. Janusch
- * @author Sir Chadwick Gippity Montgomery Maximillian 4o'th, Lord of Memory Leaks
- * @author Anonymous 1
- * @author Anonymous 2
- * @version 3.0.0.0
- * @since 2025
- * @deprecated This interface is deprecated.
+ * The {@code Utils} class provides utility methods and types that
+ * are essential for  maintaining a clean and organized codebase.
  * 
- * @see NoopInterface
- * @see NoopClass
- * @see Object
- */
-@Deprecated
-interface NoopInterface {}
-
-/**
- * This class performs no operations, does nothing, and is here purely for the
- * sake of having a class that does nothing. It can be used to demonstrate the
- * art of minimalism in object-oriented programming.
- *
- * <p>It's the perfect class for when you need a class, but absolutely do not
- * want it to do anything. Use this class to improve the size of your codebase
- * without adding any actual value.</p>
- *
+ * <p>This class can be used to group general-purpose utility functionality, and its 
+ * structure allows for easy expansion in case any utility methods or types become 
+ * necessary in the future. Use this class to centralize commonly used functionality 
+ * and avoid the need for multiple disparate utility classes.</p>
+ * 
  * @author Daniel E. Janusch
  * @author Sir Chadwick Gippity Montgomery Maximillian 4o'th, Lord of Memory Leaks
  * @author Anonymous 1
@@ -1247,16 +1227,64 @@ interface NoopInterface {}
  * @since 2025
  * @deprecated This class is deprecated.
  * 
- * @see Object
- * @see NoopInterface
  * @see NoopClass
+ * @see NoopInterface
+ * @see Object
  */
 @Deprecated
-final class NoopClass implements NoopInterface {
+class Utils {
 	/**
-	 * Constructs an instance of {@link NoopClass} with no arguments.
+	 * Default constructor, given explicitly to stop javadoc from giving warnings.
 	 * 
-	 * Example: {@code NoopClass nc = new NoopClass();}
+	 * Usage: {@code Utils x = new Utils();}
 	 */
-	public NoopClass() {}
+	public Utils() {}
+	/**
+	 * This interface does nothing. It is a noop interface.
+	 *
+	 * @author Daniel E. Janusch
+	 * @author Sir Chadwick Gippity Montgomery Maximillian 4o'th, Lord of Memory Leaks
+	 * @author Anonymous 1
+	 * @author Anonymous 2
+	 * @version 3.0.0.0
+	 * @since 2025
+	 * @deprecated This interface is deprecated.
+	 * 
+	 * @see NoopInterface
+	 * @see NoopClass
+	 * @see Object
+	 */
+	@Deprecated
+	interface NoopInterface {}
+
+	/**
+	 * This class performs no operations, does nothing, and is here purely for the
+	 * sake of having a class that does nothing. It can be used to demonstrate the
+	 * art of minimalism in object-oriented programming.
+	 *
+	 * <p>It's the perfect class for when you need a class, but absolutely do not
+	 * want it to do anything. Use this class to improve the size of your codebase
+	 * without adding any actual value.</p>
+	 *
+	 * @author Daniel E. Janusch
+	 * @author Sir Chadwick Gippity Montgomery Maximillian 4o'th, Lord of Memory Leaks
+	 * @author Anonymous 1
+	 * @author Anonymous 2
+	 * @version 3.0.0.0
+	 * @since 2025
+	 * @deprecated This class is deprecated.
+	 * 
+	 * @see Object
+	 * @see NoopInterface
+	 * @see NoopClass
+	 */
+	@Deprecated
+	final class NoopClass implements NoopInterface {
+		/**
+		 * Constructs an instance of {@link NoopClass} with no arguments.
+		 * 
+		 * Example: {@code NoopClass nc = new NoopClass();}
+		 */
+		public NoopClass() {}
+	}
 }
