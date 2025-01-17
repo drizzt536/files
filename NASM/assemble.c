@@ -25,6 +25,9 @@
 	// malloc, exit, free, system, remove
 #include "../C/string-join.h"
 
+#define ERRLOG_OOM_EC 3
+#define ERRLOG_INVALID_FILE_EC 4
+#define ERRLOG_FILE_VAL_SPACES " "
 // ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_ORANGE,
 // CON_COLOR, CON_RESET, printf_color, puts_color, eprintf, eputs,
 // OOM, VALIDATE_FILE,

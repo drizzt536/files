@@ -8,7 +8,7 @@
 		#include <io.h>
 		#define access _access
 	#else
-		#include <unistd.h>
+		#include <unistd.h> // access
 	#endif
 
 	#define RGB_STR(r, g, b) #r ";" #g ";" #b
@@ -30,23 +30,41 @@
 	#define ERRLOG_DEBUG 1u // print fatal, warning, note, and debug error messages
 	#define ERRLOG_ALL   0u // print everything. functionally equivalent to ERRLOG_DEBUG
 
-#ifdef ERRLOG_USE_RUNTIME_LOG_LEVEL
-	// this has to be explicitly turned on, mostly because *I* don't want it on.
-	unsigned char ERRLOG_LEVEL = ERRLOG_NOTE;
-#else
-	#define ERRLOG_LEVEL ERRLOG_NOTE
-#endif
+	#ifdef ERRLOG_USE_RUNTIME_LOG_LEVEL
+		// this has to be explicitly turned on, mostly because *I* don't want it on.
+		unsigned char ERRLOG_LEVEL = ERRLOG_NOTE;
+	#else
+		#define ERRLOG_LEVEL ERRLOG_NOTE
+	#endif
+
+	#ifndef ERRLOG_FILE_VAL_SPACES
+		// the string with the spaces before the colon in `VALIDATE_FILE_V`
+		// technically they can be things other than spaces, but that is weird.
+
+		// printf("validating" ERRLOG_FILE_VAL_SPACES ": ");
+		#define ERRLOG_FILE_VAL_SPACES ""
+	#endif
+
+	#ifndef ERRLOG_OOM_EC
+		// the program return code to be given on out-of-memory errors.
+		#define ERRLOG_OOM_EC 12 // ENOMEM from <errno.h>
+	#endif
+
+	#ifndef ERRLOG_INVALID_FILE_EC
+		// the program exit code to be given on invalid file errors.
+		#define ERRLOG_INVALID_FILE_EC 1 // EXIT_FAILURE from <stdlib.h>
+	#endif
 
 	#define CON_COLOR(color) printf(ANSI_COLOR(color))
 	#define CON_RESET()      printf(ANSI_RESET())
 
 	// internal color print versions
 	#define _FPRINTF_COLOR(fp, color, loglvl, args...) ( \
-		ERRLOG_LEVEL > loglvl ? 0 : ({                   \
+		ERRLOG_LEVEL > (loglvl) ? 0 : ({                 \
 			CON_COLOR(color);                            \
-			const int exit_code = fprintf(fp, args);     \
+			const int return_code = fprintf((fp), args); \
 			CON_RESET();                                 \
-			exit_code;                                   \
+			return_code;                                 \
 		})                                               \
 	)
 
@@ -92,14 +110,14 @@
 		if ((str) == NULL) {                      \
 			eprintf("Out of Memory. code: %llu\n", \
 				(unsigned long long int) (code));   \
-			exit(3); /* code for out of memory */    \
+			exit(ERRLOG_OOM_EC);                     \
 		}                                             \
 	})
 
 	// silent
 	#define OUT_OF_MEMORY_S(str) ({ \
 		if ((str) == NULL)           \
-			exit(3);                  \
+			exit(ERRLOG_OOM_EC);      \
 	})
 
 	#define OUT_OF_MEMORY(path, code, v) ( \
@@ -117,21 +135,21 @@
 
 	// verbose
 	#define VALIDATE_FILE_V(path, code) ({               \
-		printf("validating : ");                          \
+		printf("validating" ERRLOG_FILE_VAL_SPACES ": "); \
 		                                                   \
 		if (access((path), 0 /* F_OK on POSIX */) == -1) {  \
 			eprintf("'%s' cannot be accessed. code: %llu\n", \
 				(path), (unsigned long long int) (code));     \
-			exit(4); /* code for invalid file */               \
+			exit(ERRLOG_INVALID_FILE_EC);                      \
 		}                                                       \
 		                                                         \
 		printf("'%s' available\n", (path));                       \
 	})
 
 	// silent
-	#define VALIDATE_FILE_S(path) ({ \
-		if (access((path), 0) == -1)  \
-			exit(4);                   \
+	#define VALIDATE_FILE_S(path) ({    \
+		if (access((path), 0) == -1)     \
+			exit(ERRLOG_INVALID_FILE_EC); \
 	})
 
 	#define VALIDATE_FILE(path, code, v) ( \
