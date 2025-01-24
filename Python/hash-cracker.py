@@ -11,9 +11,8 @@ def create_hash(inpt: str | bytes, hashfunction = hashlib.sha256) -> str:
 	return h.hexdigest()
 
 
-def hash_cracker_v4(inputHash, changeChars=False, hashfunction=hashlib.sha256):
-	chars = input("Characters: ") if changeChars else "default"
-	if chars == "default":
+def hash_cracker_v4(inputHash, chars=None, hashfunction=hashlib.sha256):
+	if chars == None:
 		# chars = [s.encode("utf8") for s in "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~-_=+()[]{}\\|;:'\",<.>/?\t!@#$%^&* "]
 		
 		chars = [
@@ -33,14 +32,15 @@ def hash_cracker_v4(inputHash, changeChars=False, hashfunction=hashlib.sha256):
 	hasher.update(b"")
 
 	if inputHash == hasher.hexdigest():
-		return "Result (empty string):"
+		return "" if __name__ == "__main__" else "Result (empty string):"
 
 	while True:
 		for s in List:
 			hasher = hashfunction()
 			hasher.update(s)
 			if inputHash == hasher.hexdigest():
-				return "Result:" + str(s)[2:len(s) + 2]
+				ret = str(s)[2:len(s) + 2]
+				return ret if __name__ == "__main__" else "Result:" + ret
 
 		for i in List:
 			List += list(List[0] + chars[chars.index(x)] for x in chars)
@@ -51,3 +51,26 @@ def num_combos(length: int, form = sum):
 	c = 96 if chars == "default" else len(set(chars))
 
 	return form(c**(x+1) for x in range(length))
+
+
+if __name__ == "__main__":
+	import argparse
+	from sys import argv
+
+	if len(argv) == 1:
+		print("usage: hash-cracker.py HASH [hashfunction]")
+		exit(0)
+
+	if len(argv) == 2:
+		if argv[1] in {"-h", "-help", "--help"}:
+			print("usage: hash-cracker.py HASH [hashfunction]")
+			exit(0)
+
+		fn = hashlib.sha256
+	else:
+		fn = getattr(hashlib, argv[2])
+
+	try:
+		print( hash_cracker_v4(argv[1], hashfunction=fn) )
+	except KeyboardInterrupt:
+		pass
