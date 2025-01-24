@@ -5,6 +5,7 @@
 	],
 	"installed_packages": [
 		"CMake",
+		"Fortran",
 		"M3U Syntax",
 		"OrgExtended",
 		"Package Control",
@@ -15,4 +16,7 @@
 		"Trello",
 		"WolframLanguage",
 	],
+	"install_prereleases": [
+		"PowerShell"
+	]
 }
