@@ -33,5 +33,5 @@ __pycache__
 *.class
 
 !/JavaScript/test.js
-!/Python/manim/*/index.py
+!/Python/manim/*/*.py
 !/Python/manim/*/manim.cfg
