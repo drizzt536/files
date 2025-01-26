@@ -3,7 +3,7 @@
 CC = gcc
 
 # no -pedantic. GNU extensions are required.
-CFLAGS = -Wall -Wextra -Ofast
+CFLAGS = -std=gnu23 -Wall -Wextra -Ofast
 
 override HASH := $(shell git log -1 --format=%H -- ./assemble.c)
 
