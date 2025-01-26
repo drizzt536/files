@@ -1,5 +1,6 @@
 #ifndef ERROR_PRINT_H
 	#define ERROR_PRINT_H
+	// requires C23 for __VA_OPT__
 
 	#include <stdlib.h> // exit
 	#include <stdio.h> // printf, fprintf, stdout, stderr
