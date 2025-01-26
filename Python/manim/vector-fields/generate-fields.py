@@ -13,6 +13,9 @@ this script uses `./fields.txt` for vector fields function storage
 no dependencies other than manim and its dependendcies
 """
 
+if __name__ != "__main__":
+	raise Exception("don't use this file as a module. use Manim directly for rendering stuff, or run this as a script")
+
 # TODO: allow passing multiple ids to `--id`
 # TODO: --dryrun doesn't do anything about --clean. it still cleans either way
 # TODO: add an option to specify the pixel aspect ratio
@@ -303,8 +306,45 @@ def find_best_file(id: str, criteria: list[str]) -> str:
 
 	return best["file"]
 
+def ignore_sigint(fn: Callable) -> Callable:
+	from signal import signal as set_signal, SIGINT
+	from functools import wraps
+
+	@wraps(fn)
+	def wrapper(*args, **kwargs):
+		sigint_received = False
+
+		def sigint_handler(signum, frame) -> None:
+			nonlocal sigint_received
+			sigint_received = True
+
+		prev_handler = set_signal(SIGINT, sigint_handler)
+
+		try:
+			return_value = fn(*args, **kwargs)
+		except Exception as e:
+			set_signal(SIGINT, prev_handler)
+
+			if sigint_received:
+				raise KeyboardInterrupt
+
+			raise e
+
+		if sigint_received:
+			raise KeyboardInterrupt
+
+		return return_value
+
+	return wrapper
+
+@ignore_sigint
 def clean_list(file = None, close: bool = True):
-	"returns the file. it is seeked to the end."
+	"""
+	returns the file. it is seeked to the end.
+
+	if ^C is given during the function,
+	it won't be run until the function ends.
+	"""
 
 	if file is None:
 		file = open("./fields.txt", "r+")
@@ -489,7 +529,7 @@ version   = try_get_arg(["--version"    , "-v"], bool , False)
 config["disable_caching"] = nocache
 
 if version:
-	print("version 1.0")
+	print("version 1.1")
 	exit(0)
 
 if help:
@@ -587,7 +627,7 @@ if ls:
 		file = clean_list(close=False)
 		file.seek(0)
 	else:
-		file = open("./fields.txt", "r+")
+		file = open("./fields.txt", "r")
 
 	for line in file.readlines():
 		print(line, end="")
