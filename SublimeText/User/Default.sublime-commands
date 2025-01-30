@@ -1,9 +1,10 @@
 [
-	{ "caption": "Print Line Index"     , "command": "print_line_index"     },
-	{ "caption": "Toggle Scratch"       , "command": "toggle_scratch"       },
 	{ "caption": "Copy Filepath"        , "command": "copy_filepath"        },
 	{ "caption": "Copy Filename"        , "command": "copy_filename"        },
+	{ "caption": "Toggle Scratch"       , "command": "toggle_scratch"       },
+	{ "caption": "Change Tab Size"      , "command": "change_tab_size"      },
+	{ "caption": "Print Line Index"     , "command": "print_line_index"     },
 	{ "caption": "Reload Project Files" , "command": "reload_project_files" },
-	{ "caption": "Print Indices start 0", "command": "print_indices", "args": { "start": 0 } },
-	{ "caption": "Print Indices start 1", "command": "print_indices", "args": { "start": 1 } },
+	{ "caption": "Print Indices start 0", "command": "print_indices", "args": {"start": 0} },
+	{ "caption": "Print Indices start 1", "command": "print_indices", "args": {"start": 1} },
 ]

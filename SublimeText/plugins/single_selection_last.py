@@ -1,8 +1,8 @@
-import sublime, sublime_plugin
+from sublime_plugin import TextCommand
 
-class SingleSelectionLastCommand(sublime_plugin.TextCommand):
+class SingleSelectionLastCommand(TextCommand):
 	def run(self, edit):
-		regions = self.view.sel()
+		regions = self.view.selection
 
 		if not regions:
 			# there are no positions to collapse
@@ -10,5 +10,5 @@ class SingleSelectionLastCommand(sublime_plugin.TextCommand):
 
 		last_region = regions[-1]
 
-		self.view.sel().clear()
-		self.view.sel().add(last_region)
+		self.view.selection.clear()
+		self.view.selection.add(last_region)

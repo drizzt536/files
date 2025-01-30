@@ -1,6 +1,13 @@
 [
-	// TODO: make a better command for C-k C-v
-	// TODO: make (or figure out what it is) a command to jump the cursor by N lines (without necessarily scrolling)
+	// NOTE: the comments use an emacs-like syntax:
+		// C-a   == ctrl+a
+		// CS-b  == ctrl+shift+b
+		// CAS-c == ctrl+alt+shift+c
+		// C-ab  == ctrl+a, ctrl+b
+		// CS-xy == ctrl+shift+x, ctrl+shift+y
+		// DOWN  == down 
+		// ESC   == escape
+		// ... 
 
 	// page up and page down stuff
 	{ "keys": ["alt+up"], "command": "move", "args": {"by": "pages", "forward": false } },
@@ -8,10 +15,14 @@
 	{ "keys": ["alt+shift+up"], "command": "move", "args": {"by": "pages", "forward": false, "extend": true} },
 	{ "keys": ["alt+shift+down"], "command": "move", "args": {"by": "pages", "forward": true, "extend": true} },
 
+	{ "keys": ["ctrl+alt+shift+up"   ], "command": "move_last_cursor", "args": {"by": "l", "forward": false} },
+	{ "keys": ["ctrl+alt+shift+left" ], "command": "move_last_cursor", "args": {"by": "c", "forward": false} },
+	{ "keys": ["ctrl+alt+shift+down" ], "command": "move_last_cursor", "args": {"by": "l", "forward": true} },
+	{ "keys": ["ctrl+alt+shift+right"], "command": "move_last_cursor", "args": {"by": "c", "forward": true} },
+
 	{ "keys": ["f1"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
 
 	{ "keys": ["shift+backspace"], "command": "right_delete" },
-	{ "keys": ["ctrl+k", "ctrl+t"], "command": "title_case" },
 	{ "keys": ["ctrl+u"], "command": "upper_case" },
 	{ "keys": ["ctrl+shift+u"], "command": "lower_case" },
 	{ "keys": ["ctrl+alt+["], "command": "fold_all" },
@@ -24,119 +35,144 @@
 	{ "keys": ["ctrl+alt+f"], "command": "show_panel", "args": {"panel": "find_in_files"} },
 	{ "keys": ["ctrl+alt+s"], "command": "select_all" },
 
+	{ "keys": ["ctrl+i"], "command": "print_indices", "args": {"start": 1} },
+	{ "keys": ["ctrl+shift+i"], "command": "print_indices", "args": {"start": 0} },
+
 	{ "keys": ["ctrl+alt+d"], "command": "find_under_expand_skip" },
 	{ "keys": ["ctrl+shift+d"], "command": "show_overlay", "args": {"overlay": "goto", "text": ":"} },
 	{ "keys": ["alt+d"], "command": "find_next" },
 	{ "keys": ["alt+shift+d"], "command": "find_prev" },
 	{ "keys": ["ctrl+insert"], "command": "toggle_overwrite" },
-	{ "keys": ["alt+x", "alt+s"], "command": "toggle_side_bar" },
-	{ "keys": ["alt+x", "alt+d"], "command": "focus_side_bar" },
+
+	{ "keys": ["alt+x", "alt+a"          ], "command": "focus_side_bar" }, // use ENTER or C-<N> to exit the side bar
+	{ "keys": ["alt+x", "alt+s"          ], "command": "toggle_side_bar" },
+	{ "keys": ["alt+x", "alt+t"          ], "command": "title_case" },
+	{ "keys": ["alt+x", "ctrl+alt+down"  ], "command": "spawn_below_last_cursor" },
+
+	// these next 8 might get removed. idk if I like them.
+	{ "keys": ["alt+x", "alt+up"         ], "command": "move_repeated", "args": {"by": "l", "forward": false} },
+	{ "keys": ["alt+x", "alt+down"       ], "command": "move_repeated", "args": {"by": "l", "forward": true } },
+	{ "keys": ["alt+x", "alt+right"      ], "command": "move_repeated", "args": {"by": "c", "forward": true } },
+	{ "keys": ["alt+x", "alt+left"       ], "command": "move_repeated", "args": {"by": "c", "forward": false} },
+	{ "keys": ["alt+x", "alt+shift+up"   ], "command": "move_repeated", "args": {"by": "l", "forward": false, "extend": true} },
+	{ "keys": ["alt+x", "alt+shift+down" ], "command": "move_repeated", "args": {"by": "l", "forward": true , "extend": true} },
+	{ "keys": ["alt+x", "alt+shift+right"], "command": "move_repeated", "args": {"by": "c", "forward": true , "extend": true} },
+	{ "keys": ["alt+x", "alt+shift+left" ], "command": "move_repeated", "args": {"by": "c", "forward": false, "extend": true} },
+
+	{ "keys": ["alt+x", "ctrl+up"], "command": "scroll_repeated", "args": {"forward": false} },
+	{ "keys": ["alt+x", "ctrl+down"], "command": "scroll_repeated", "args": {"forward": true} },
+
+	// TODO: consider moving the pane stuff from C-k to A-x
+	// TODO: consider unbinding either C-= or C--
 
 	// the next 8 are inspired by emacs C-a and C-e (or they are the exact same, idk)
-	{ "keys": ["ctrl+a"]          , "command": "move_to", "args": {"to": "bol", "extend": false} },
-	{ "keys": ["ctrl+alt+a"]      , "command": "move_to", "args": {"to": "bof", "extend": false} },
-	{ "keys": ["ctrl+shift+a"]    , "command": "move_to", "args": {"to": "bol", "extend": true} },
-	{ "keys": ["ctrl+alt+shift+a"], "command": "move_to", "args": {"to": "bof", "extend": true} },
+	{ "keys": ["ctrl+a"          ], "command": "move_to", "args": {"to": "bol", "extend": false} },
+	{ "keys": ["ctrl+alt+a"      ], "command": "move_to", "args": {"to": "bof", "extend": false} },
+	{ "keys": ["ctrl+shift+a"    ], "command": "move_to", "args": {"to": "bol", "extend": true } },
+	{ "keys": ["ctrl+alt+shift+a"], "command": "move_to", "args": {"to": "bof", "extend": true } },
 
-	{ "keys": ["ctrl+e"]          , "command": "move_to", "args": {"to": "eol", "extend": false} },
-	{ "keys": ["ctrl+alt+e"]      , "command": "move_to", "args": {"to": "eof", "extend": false} },
-	{ "keys": ["ctrl+shift+e"]    , "command": "move_to", "args": {"to": "eol", "extend": true} },
-	{ "keys": ["ctrl+alt+shift+e"], "command": "move_to", "args": {"to": "eof", "extend": true} },
+	{ "keys": ["ctrl+e"          ], "command": "move_to", "args": {"to": "eol", "extend": false} },
+	{ "keys": ["ctrl+alt+e"      ], "command": "move_to", "args": {"to": "eof", "extend": false} },
+	{ "keys": ["ctrl+shift+e"    ], "command": "move_to", "args": {"to": "eol", "extend": true } },
+	{ "keys": ["ctrl+alt+shift+e"], "command": "move_to", "args": {"to": "eof", "extend": true } },
 
 	{ "keys": ["ctrl+y"], "command": "yank"},
+	{ "keys": ["alt+v"], "command": "paste_from_history" },
 
-	{ "keys": ["ctrl+shift+x"], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete Line.sublime-macro"} },
+	{ "keys": ["ctrl+alt+x"      ], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete to Hard EOL.sublime-macro"} },
+	{ "keys": ["ctrl+shift+x"    ], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete Line.sublime-macro"} },
+	{ "keys": ["ctrl+alt+shift+x"], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete to Hard BOL.sublime-macro"} },
 
 	// transpose, but move the cursor left instead of right
 	{"keys": ["alt+t"], "command": "transpose_left"},
 
-	// use M-e instead of ESC
-	{ "keys": ["alt+e"], "command": "noop" },
-	{ "keys": ["alt+e"], "command": "single_selection"                    , "context": [{ "key": "num_selections"       , "operator": "not_equal", "operand": 1    }] },
-	{ "keys": ["alt+e"], "command": "clear_fields"                        , "context": [{ "key": "has_next_field"       , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+e"], "command": "clear_fields"                        , "context": [{ "key": "has_prev_field"       , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+e"], "command": "hide_panel", "args": {"cancel": true}, "context": [{ "key": "panel_visible"        , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+e"], "command": "hide_auto_complete"                  , "context": [{ "key": "auto_complete_visible", "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+e"], "command": "hide_popup"                          , "context": [{ "key": "popup_visible"        , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+e"], "command": "hide_overlay"                        , "context": [{ "key": "overlay_visible"      , "operator": "equal"    , "operand": true }, { "key": "panel_has_focus", "operator": "equal", "operand": false }] },
+	{ "keys": ["alt+q"], "command": "show_panel", "args": {"panel": "console", "toggle": true} },
+	{ "keys": ["alt+shift+q"], "command": "wrap_lines" },
 
-	// use M-S-e for ESC but collapsing multiple cursors to the last one
+	{ "keys": ["alt+b"], "command": "cancel_build" },
+
+	// use A-e for collapsing multiple cursors to the first one
+	// use AS-e for collapsing multiple cursors to the last one
+	{ "keys": ["alt+e"      ], "command": "noop" },
 	{ "keys": ["alt+shift+e"], "command": "noop" },
-	{ "keys": ["alt+shift+e"], "command": "single_selection_last"               , "context": [{ "key": "num_selections"       , "operator": "not_equal", "operand": 1    }] },
-	{ "keys": ["alt+shift+e"], "command": "clear_fields"                        , "context": [{ "key": "has_next_field"       , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+shift+e"], "command": "clear_fields"                        , "context": [{ "key": "has_prev_field"       , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+shift+e"], "command": "hide_panel", "args": {"cancel": true}, "context": [{ "key": "panel_visible"        , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+shift+e"], "command": "hide_auto_complete"                  , "context": [{ "key": "auto_complete_visible", "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+shift+e"], "command": "hide_popup"                          , "context": [{ "key": "popup_visible"        , "operator": "equal"    , "operand": true }] },
-	{ "keys": ["alt+shift+e"], "command": "hide_overlay"                        , "context": [{ "key": "overlay_visible"      , "operator": "equal"    , "operand": true }, { "key": "panel_has_focus", "operator": "equal", "operand": false }] },
+	{ "keys": ["alt+e"      ], "command": "single_selection"     , "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
+	{ "keys": ["alt+shift+e"], "command": "single_selection_last", "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
 
 	/////////////////////////////////// remove keybinds ///////////////////////////////////
+	// the comments give what to use instead, or none if it is completely removed
 
-	{ "keys": ["ctrl+g"], "command": "noop" },
-	{ "keys": ["ctrl+h"], "command": "noop" }, // use C-S-F
-	{ "keys": ["ctrl+f4"], "command": "noop" },
-	{ "keys": ["alt+shift+w"], "command": "noop" },
-	{ "keys": ["ctrl+shift+space"], "command": "noop" },
-	{ "keys": ["insert"], "command": "noop" }, // use C-INSERT
-	{ "keys": ["shift+insert"], "command": "noop" }, // use C-v
-	{ "keys": ["ctrl+pageup"], "command": "noop" }, // use C-S-TAB
-	{ "keys": ["ctrl+pagedown"], "command": "noop" }, // use C-TAB
-	{ "keys": ["ctrl+k", "ctrl+b"], "command": "noop" }, // use M-xs
-	{ "keys": ["ctrl+k", "ctrl+d"], "command": "noop" }, // use C-M-d
-	{ "keys": ["ctrl+k", "ctrl+l"], "command": "noop" }, // use C-S-u
-	{ "keys": ["ctrl+k", "ctrl+u"], "command": "noop" }, // use C-u
-	{ "keys": ["ctrl+k", "ctrl+/"], "command": "noop" }, // use C-k;
-	{ "keys": ["ctrl+k", "ctrl+y"], "command": "none" }, // use C-y
+	{ "keys": ["ctrl+g"], "command": "noop" }, // CS-d
+	{ "keys": ["ctrl+h"], "command": "noop" }, // CS-f
+	{ "keys": ["ctrl+f4"], "command": "noop" }, // C-w (similar)
+	{ "keys": ["insert"], "command": "noop" }, // C-INSERT
+	{ "keys": ["shift+insert"], "command": "noop" }, // C-v
+	{ "keys": ["ctrl+k", "ctrl+b"], "command": "noop" }, // A-xs
+	{ "keys": ["ctrl+k", "ctrl+d"], "command": "noop" }, // CA-d
+	{ "keys": ["ctrl+k", "ctrl+j"], "command": "noop" }, // C-]
+	{ "keys": ["ctrl+k", "ctrl+k"], "command": "noop" }, // CA-x
+	{ "keys": ["ctrl+k", "ctrl+l"], "command": "noop" }, // CS-u
+	{ "keys": ["ctrl+k", "ctrl+u"], "command": "noop" }, // C-u
+	{ "keys": ["ctrl+k", "ctrl+v"], "command": "noop" }, // A-v
+	{ "keys": ["ctrl+k", "ctrl+y"], "command": "none" }, // C-y
+	{ "keys": ["ctrl+k", "ctrl+/"], "command": "noop" }, // C-k; (similar)
+	{ "keys": ["ctrl+k", "ctrl+0"], "command": "noop" }, // C-]
 
-	// I only care about find_next (M-d) and find_prev (M-S-d).
-	// If I want to find what I have highlighted, I will do C-f and then either M-d or M-S-d
-	{ "keys": ["f3"], "command": "noop" },
-	{ "keys": ["shift+f3"], "command": "noop" },
-	{ "keys": ["ctrl+f3"], "command": "noop" },
-	{ "keys": ["ctrl+shift+f3"], "command": "noop" },
-	{ "keys": ["alt+f3"], "command": "noop" },
+	{ "keys": ["alt+shift+w"], "command": "noop" }, // none
+	{ "keys": ["ctrl+shift+space"], "command": "noop" }, // none
+	{ "keys": ["ctrl+shift+k"], "command": "noop"}, // CS-x
+	{ "keys": ["ctrl+0"], "command": "noop" }, // A-xa
+	{ "keys": ["ctrl+`"], "command": "noop" }, // A-q
+	{ "keys": ["ctrl+break"], "command": "noop" }, // A-b
+	{ "keys": ["alt+o"], "command": "noop" }, // none
+	{ "keys": ["alt+shift+o"], "command": "noop" }, // none
 
-	// alt arrow keys
-	{ "keys": ["pageup"], "command": "noop" },
-	{ "keys": ["shift+pageup"], "command": "noop" },
-	{ "keys": ["pagedown"], "command": "noop" },
-	{ "keys": ["shift+pagedown"], "command": "noop" },
+	{ "keys": ["f3"], "command": "noop" }, // A-d
+	{ "keys": ["f7"], "command": "noop" }, // C-b
+	{ "keys": ["shift+f3"], "command": "noop" }, // AS-d
+	{ "keys": ["alt+f3"], "command": "noop" }, // none
+	{ "keys": ["ctrl+f3"], "command": "noop" }, // none
+	{ "keys": ["ctrl+shift+f3"], "command": "noop" }, // none
 
-	// I only ever use keypad enter/plus/monus as an accident
-	{ "keys": ["keypad_enter"], "command": "noop"},
-	{ "keys": ["ctrl+keypad_enter"], "command": "noop" },
-	{ "keys": ["alt+keypad_enter"], "command": "noop" },
-	{ "keys": ["shift+keypad_enter"], "command": "noop" },
-	{ "keys": ["ctrl+shift+keypad_enter"], "command": "noop" },
-	{ "keys": ["ctrl+alt+keypad_enter"], "command": "noop" },
-	{ "keys": ["ctrl+keypad_minus"], "command": "noop" },
-	{ "keys": ["ctrl+keypad_plus"], "command": "noop" },
-	{ "keys": ["ctrl+shift+keypad_plus"], "command": "noop" },
+	{ "keys": ["pageup"], "command": "noop" }, // A-UP
+	{ "keys": ["pagedown"], "command": "noop" }, // A-DOWN
+	{ "keys": ["ctrl+pageup"], "command": "noop" }, // CS-TAB
+	{ "keys": ["ctrl+pagedown"], "command": "noop" }, // C-TAB
+	{ "keys": ["shift+pageup"], "command": "noop" }, // AS-UP
+	{ "keys": ["shift+pagedown"], "command": "noop" }, // AS-DOWN
 
-	{ "keys": ["ctrl+alt+x"], "command": "noop" },
+	// I only ever use keypad enter/plus/minus as an accident
+	{ "keys": ["keypad_enter"], "command": "noop"}, // ENTER
+	{ "keys": ["ctrl+keypad_enter"], "command": "noop" }, // C-ENTER
+	{ "keys": ["alt+keypad_enter"], "command": "noop" }, // A-ENTER
+	{ "keys": ["shift+keypad_enter"], "command": "noop" }, // S-ENTER
+	{ "keys": ["ctrl+shift+keypad_enter"], "command": "noop" }, // CS-ENTER
+	{ "keys": ["ctrl+alt+keypad_enter"], "command": "noop" }, // CA-ENTER
+	{ "keys": ["ctrl+keypad_minus"], "command": "noop" }, // C--
+	{ "keys": ["ctrl+keypad_plus"], "command": "noop" }, // C-ENTER
+	{ "keys": ["ctrl+shift+keypad_plus"], "command": "noop" }, // CS-+
+
 
 	// I added C-a and C-e commands for all this stuff. this is to stop me from using these
 	{ "keys": ["home"], "command": "noop" }, // C-a
 	{ "keys": ["end"], "command": "noop" }, // C-e
-	{ "keys": ["shift+home"], "command": "noop" }, // C-S-a
-	{ "keys": ["shift+end"], "command": "noop" }, // C-S-e
-	{ "keys": ["ctrl+home"], "command": "noop" }, // C-M-a
-	{ "keys": ["ctrl+end"], "command": "noop" }, // C-M-e
-	{ "keys": ["ctrl+shift+home"], "command": "noop" }, // C-S-a
-	{ "keys": ["ctrl+shift+end"], "command": "noop" }, // C-S-e
+	{ "keys": ["shift+home"], "command": "noop" }, // CS-a
+	{ "keys": ["shift+end"], "command": "noop" }, // CS-e
+	{ "keys": ["ctrl+home"], "command": "noop" }, // CA-a
+	{ "keys": ["ctrl+end"], "command": "noop" }, // CA-e
+	{ "keys": ["ctrl+shift+home"], "command": "noop" }, // CS-a
+	{ "keys": ["ctrl+shift+end"], "command": "noop" }, // CS-e
 
-	{ "keys": ["ctrl+shift+k"], "command": "noop"}, // use C-S-x
-
+	// this command is stupid
 	{ "keys": ["ctrl+shift+a"], "command": "noop", "context": [{ "key": "selector", "operator": "equal", "operand": "(text.html, text.xml) - source", "match_all": true }] },
 
-	{ "keys": ["escape"], "command": "noop" }, // use M-e or M-S-e. NOTE: this unbinds all escape commands
-
-	{ "keys": ["ctrl+0"], "command": "noop" }, // use M-x M-d
+	// A-e or AS-e
+	{ "keys": ["escape"], "command": "noop", "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
 /*
-TODO: consider unbinding these. I never move by subwords
+TODO: consider unbinding these. I almost never move by subwords
 	alt+left
 	alt+right
 	alt+shift+left
 	alt+shift+right
+TODO: consider unbinding CS-delete (AS-x) and C-backspace (CAS-x)
 */
 ]

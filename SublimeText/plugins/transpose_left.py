@@ -1,16 +1,15 @@
-import sublime, sublime_plugin
+from sublime import Region
+from sublime_plugin import TextCommand
 
-class TransposeLeftCommand(sublime_plugin.TextCommand):
+class TransposeLeftCommand(TextCommand):
 	def run(self, edit):
-		# Run the default transpose command
+		# transpose right, and then move all the cursors back two characters
 		self.view.run_command("transpose")
 
-		# After transposing, move every cursor location back two characters
-		for region in self.view.sel():
-			if not region.empty():
+		for region in self.view.selection:
+			# ignore highlighted regions
+			if region.a != region.b:
 				continue
 
-			# Move cursor two positions to the left
-			new_point = region.begin() - 2
-			self.view.sel().clear()
-			self.view.sel().add(sublime.Region(new_point, new_point))
+			self.view.selection.clear()
+			self.view.selection.add(Region(region.a - 2))
