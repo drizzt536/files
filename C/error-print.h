@@ -13,8 +13,8 @@
 	#endif
 
 	#define RGB_STR(r, g, b) #r ";" #g ";" #b
-	#define ANSI_COLOR(color) "\x1b[38;2;" color "m"
-	#define ANSI_RESET() "\x1b[0m"
+	#define ANSI_COLOR(color) "\e[38;2;" color "m"
+	#define ANSI_RESET() "\e[0m"
 
 	#define ANSI_RED    RGB_STR(166,  12,  26) // #A60C1A
 	#define ANSI_ORANGE RGB_STR(180, 100,   0) // #B46400
