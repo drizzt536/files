@@ -1,4 +1,4 @@
-; ../assemble print-scanned-int64 --l msvcrt
+; ../assemble print-scanned-int64 --l ucrtbase
 
 segment rdata
 	fmt 	db  	"%llu" ; print as unsigned int64
@@ -6,7 +6,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf, scanf	; msvcrt.dll
+	extern	printf, scanf	; ucrtbase.dll
 
 ; ╭──────────────────────────╮
 ; │                          │

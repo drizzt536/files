@@ -1,4 +1,4 @@
-; ../assemble print-char-range --l msvcrt
+; ../assemble print-char-range --l ucrtbase
 
 %define MIN 32
 %define MAX 255
@@ -6,7 +6,7 @@
 segment text
 	global	main
 
-	extern	putchar	; msvcrt.dll
+	extern	putchar	; ucrtbase.dll
 
 ; ╭─────────────────────────────────────────╮
 ; │                                         │

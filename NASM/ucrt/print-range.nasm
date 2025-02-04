@@ -1,4 +1,4 @@
-; ../assemble print-range --l msvcrt
+; ../assemble print-range --l ucrtbase
 
 %define MAX 32
 
@@ -8,7 +8,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf	; msvcrt.dll
+	extern	printf	; ucrtbase.dll
 
 ; ╭───────────────────────────────────╮
 ; │                                   │

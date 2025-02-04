@@ -1,4 +1,4 @@
-; ../assemble print-integer --l msvcrt
+; ../assemble print-integer --l ucrtbase
 
 segment rdata
 	format	db	`%u\n\0`		; printf format string ("%u\n")
@@ -7,7 +7,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf	; msvcrt.dll
+	extern	printf	; ucrtbase.dll
 
 ; ╭───────────────────────────╮
 ; │                           │

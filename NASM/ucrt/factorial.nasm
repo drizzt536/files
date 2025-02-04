@@ -1,4 +1,4 @@
-; ../assemble factorial --l msvcrt
+; ../assemble factorial --l ucrtbase
 
 segment rdata
 	input_fmt		db	`input: \0`
@@ -9,7 +9,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf, scanf	; msvcrt.dll
+	extern	printf, scanf	; ucrtbase.dll
 
 factorial:
 	mov 	rax, 1

@@ -1,4 +1,4 @@
-; ../assemble print-integers-looped --l msvcrt
+; ../assemble print-integers-looped --l ucrtbase
 
 %define MAX 32
 
@@ -8,7 +8,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	printf	; msvcrt.dll
+	extern	printf	; ucrtbase.dll
 
 ; ╭──────────────────────────╮
 ; │                          │
@@ -39,5 +39,5 @@ main:
 	jmp  	.loop				;     goto loop
 
 	; unreachable
-	mov 	rsp, rbp
-	ret
+	; mov 	rsp, rbp
+	; ret

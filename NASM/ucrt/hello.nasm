@@ -1,4 +1,4 @@
-; ../assemble hello --l msvcrt
+; ../assemble hello --l ucrtbase
 
 segment rdata
 	txt 	db  	`Hello World\0`
@@ -6,7 +6,7 @@ segment rdata
 segment text
 	global	main
 
-	extern	puts	; msvcrt.dll
+	extern	puts	; ucrtbase.dll
 
 ; ╭────────────────────────────╮
 ; │                            │
