@@ -1,0 +1,30 @@
+%macro spaces_to_underscores 4
+	; this macro needs to be general for normalizing the callconv string.
+	; string, function, starting index, ending index (inclusive bounds)
+	%defstr _%[%?]_outstr
+	%assign _%[%?]_i (1 + %3)
+
+	%rep (%4 < 1)*%strlen(%1) + %4 - %3
+		%xdefine _%[%?]_part %substr(%1, _%[%?]_i, 1)
+		%strcat _%[%?]_outstr _%[%?]_outstr %cond(_%[%?]_part == " ", "_", _%[%?]_part)
+		%assign _%[%?]_i (_%[%?]_i + 1)
+	%endrep
+	%undef _%[%?]_i
+	%undef _%[%?]_part
+	%2(_%[%?]_outstr)
+	%undef _%[%?]_outstr
+%endm
+
+%macro spaces_to_underscores 3
+	%? %1, %2, %3, 0
+%endm
+
+%macro spaces_to_underscores 2
+	%? %1, %2, 0
+%endm
+
+%macro spaces_to_underscores 1
+	%define _%[%?]_fn(x) x
+	%? %1, _%[%?]_fn
+	%undef  _%[%?]_fn
+%endm
