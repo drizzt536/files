@@ -1,2 +1,3 @@
-files in `./ucrt/` use Lib C functions from `ucrtbase.dll`.<br>
-files in `./winapi/` use the Windows API (`kernel32.dll`, `user32.dll`, etc.).
+programs under `./ucrt/` use Lib C functions from `ucrtbase.dll`.<br>
+programs under `./winapi/` use the Windows API (`kernel32.dll`, `user32.dll`, etc.).<br>
+programs under `./libasm/` are either macro files or programs without libraries
