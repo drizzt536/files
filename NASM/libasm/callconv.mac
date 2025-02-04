@@ -1,0 +1,353 @@
+%ifndef CALLCONV_MAC
+	%define CALLCONV_MAC
+
+	;; figures out the calling convention being used.
+	;; assumes the arguments are all integers the same size as the bit mode.
+	;; 8bit macros can only be called manually; `__?BITS?__` can't be 8.
+
+	; TODO: 
+
+	;; defines the following:
+	;;     `rx` for return register
+	;;     `arg[1-6]` for argument registers
+	;;     `arg5nl` and `arg6nl` are also defined.
+	;;         In Microsoft ABI,they assume the callee hasn't set up the stack,
+	;;         but in System V ABI, the 5th and 6th arguments are still passed
+	;;         via registers, so no distinction is made from the non `nl` ones.
+	;;     `sptr` for stack pointer      (rsp/esp/sp/spl)
+	;;     `bptr` for stack base pointer (rbp/ebp/bp/bpl) 
+	;;     `callconv` (either "Microsoft ABI" or "System V ABI")
+	;;         can be overwritten via `-D` argument. If this is done,
+	;;         the string is normalized, so these are also all valid:
+	;;              - `-Dcallconv=System V ABI`
+	;;              - `-Dcallconv=sys5`
+	;;              - `-Dcallconv="Linux"`
+	;;              - `-Dcallconv="DOS"`
+	;;              - `-Dcallconv="MS_ABI"`
+	;;              - etc. See approximately line 260 for an exhaustive list.
+	;;              - case is ignored and underscores are replaced with spaces.
+	;;         these will be changed into one of the two values mentioned before. 
+	;;         If it is overwritten to an invalid value, it will be ignored as if
+	;;         no override value was given.
+	;;     `callconv_update` to update the register macros.
+	;;     `BITS` (imacro) to change bitness and update register macros.
+	;;         auto update register macros when changing bitness.
+	;;         overrides the normal BITS directive.
+
+	%if __?NASM_VERSION_ID?__ >> 16 < 2_10h
+		;; required for preprocessor functions
+		%fatal NASM version 2.16 or higher is required for callconv.mac.
+	%endif
+
+	%macro _callconv_normalize_spaces 0
+		; converts underscores to spaces on a general string and assigns it
+		; to `callconv`. This macro needs to be general for normalizing the
+		; callconv string. I could make it directly map known strings like
+		; `"MS_ABI" => "MS ABI"`, etc., but that's lame. As a sidenote, if
+		; callconv was a token, it will convert into a string automatically.
+		; unless it is defined, in which case it will resolve to something else.
+		%defstr _%[%?]_outstr
+		%assign _%[%?]_i 1
+
+		%rep %strlen(callconv)
+			%xdefine _%[%?]_part %substr(callconv, _%[%?]_i, 1)
+			%strcat _%[%?]_outstr _%[%?]_outstr  %cond(_%[%?]_part == "_", " ", _%[%?]_part)
+			%assign _%[%?]_i (_%[%?]_i + 1)
+		%endrep
+
+		%undef _%[%?]_i
+		%undef _%[%?]_part
+		%xdefine callconv _%[%?]_outstr
+		%undef _%[%?]_outstr
+	%endm
+
+	%macro _callconv_spaces_to_underscores 0
+		; this macro should only be called after callconv has been normalized
+
+		%ifidni callconv, "System V ABI"
+			%xdefine callconv "System_V_ABI"
+		%elifidni callconv, "Microsoft ABI"
+			%xdefine callconv "Microsoft_ABI"
+		%else
+			%error `_callconv_spaces_to_underscores` was called while `callconv` is in an invalid state. Must be "System V ABI" or "Microsoft ABI"
+		%endif
+	%endm
+
+	%macro _callconv_underscores_to_spaces 0
+		; this macro should only be called after callconv has been normalized
+
+		%ifidni callconv, "System_V_ABI"
+			%xdefine callconv "System V ABI"
+		%elifidni callconv, "Microsoft_ABI"
+			%xdefine callconv "Microsoft ABI"
+		%else
+			%error `_callconv_underscores_to_spaces` was called while `callconv` is in an invalid state. Must be "System_V_ABI" or "Microsoft_ABI"
+		%endif
+	%endm
+
+	%macro _callconv_undefine 0
+		%undef rx
+		%undef arg1
+		%undef arg2
+		%undef arg3
+		%undef arg4
+
+		;; assumes `push rbp`, `mov rbp, rsp` happened.
+		%undef arg5
+		%undef arg6
+
+		;; assumes `push rbp`, `mov rbp, rsp` did not happen.
+		%undef arg5nl
+		%undef arg6nl
+
+		;; stack registers
+		%undef bptr
+		%undef sptr
+	%endm
+
+	;; Microsoft ABI macros
+	%macro _callconv_Microsoft_ABI_64bit 0
+		_callconv_undefine
+		%xdefine rx   rax
+		%xdefine arg1 rcx
+		%xdefine arg2 rdx
+		%xdefine arg3 r8
+		%xdefine arg4 r9
+
+		%xdefine arg5   [rbp + 16]
+		%xdefine arg6   [rbp + 24]
+		%xdefine arg5nl [rsp +  8]
+		%xdefine arg6nl [rsp + 16]
+
+		%xdefine bptr rbp
+		%xdefine sptr rsp
+	%endm
+
+	%macro _callconv_Microsoft_ABI_32bit 0
+		_callconv_undefine
+		%xdefine rx   eax
+		%xdefine arg1 ecx
+		%xdefine arg2 edx
+		%xdefine arg3 r8d
+		%xdefine arg4 r9d
+
+		%xdefine arg5   [ebp +  8]
+		%xdefine arg6   [ebp + 12]
+		%xdefine arg5nl [esp +  4]
+		%xdefine arg6nl [esp +  8]
+
+		%xdefine bptr ebp
+		%xdefine sptr esp
+	%endm
+
+	%macro _callconv_Microsoft_ABI_16bit 0
+		_callconv_undefine
+		%xdefine rx   ax
+		%xdefine arg1 cx
+		%xdefine arg2 dx
+		%xdefine arg3 r8w
+		%xdefine arg4 r9w
+
+		%xdefine arg5   [bp + 4]
+		%xdefine arg6   [bp + 6]
+		%xdefine arg5nl [sp + 2]
+		%xdefine arg6nl [sp + 4]
+
+		%xdefine bptr bp
+		%xdefine sptr sp
+	%endm
+
+	%macro _callconv_Microsoft_ABI_8bit 0
+		;; this one can only be called manually.
+		_callconv_undefine
+		%xdefine rx   al
+		%xdefine arg1 cl
+		%xdefine arg2 dl
+		%xdefine arg3 r8b
+		%xdefine arg4 r9b
+
+		%xdefine arg5   [bpl + 2]
+		%xdefine arg6   [bpl + 3]
+		%xdefine arg5nl [spl + 1]
+		%xdefine arg6nl [spl + 2]
+
+		%xdefine bptr bpl
+		%xdefine sptr spl
+	%endm
+
+	;; System V ABI macros
+	%macro _callconv_System_V_ABI_64bit 0
+		_callconv_undefine
+		%xdefine rx   rax
+		%xdefine arg1 rdi
+		%xdefine arg2 rsi
+		%xdefine arg3 rdx
+		%xdefine arg4 rcx
+
+		%xdefine arg5 r8
+		%xdefine arg6 r9
+		%xdefine arg5nl arg5
+		%xdefine arg6nl arg6
+
+		%xdefine bptr rbp
+		%xdefine sptr rsp
+	%endm
+
+	%macro _callconv_System_V_ABI_32bit 0
+		_callconv_undefine
+		%xdefine rx   eax
+		%xdefine arg1 edi
+		%xdefine arg2 esi
+		%xdefine arg3 edx
+		%xdefine arg4 ecx
+
+		%xdefine arg5 r8d
+		%xdefine arg6 r9d
+		%xdefine arg5nl arg5
+		%xdefine arg6nl arg6
+
+		%xdefine bptr ebp
+		%xdefine sptr esp
+	%endm
+
+	%macro _callconv_System_V_ABI_16bit 0
+		_callconv_undefine
+		%xdefine rx   ax
+		%xdefine arg1 di
+		%xdefine arg2 si
+		%xdefine arg3 dx
+		%xdefine arg4 cx
+
+		%xdefine arg5 r8w
+		%xdefine arg6 r9w
+		%xdefine arg5nl arg5
+		%xdefine arg6nl arg6
+
+		%xdefine bptr bp
+		%xdefine sptr sp
+	%endm
+
+	%macro _callconv_System_V_ABI_8bit 0
+		;; this one can only be called manually.
+		_callconv_undefine
+		%xdefine rx   al
+		%xdefine arg1 dil
+		%xdefine arg2 sil
+		%xdefine arg3 dl
+		%xdefine arg4 cl
+
+		%xdefine arg5 r8b
+		%xdefine arg6 r9b
+		%xdefine arg5nl arg5
+		%xdefine arg6nl arg6
+
+		%xdefine bptr bpl
+		%xdefine sptr spl
+	%endm
+
+	%macro callconv_update 0
+		_callconv_spaces_to_underscores
+		_callconv_%[%tok(callconv)]_%[__?BITS?__]bit
+		_callconv_underscores_to_spaces
+	%endm
+
+	%imacro BITS 1
+		;; redefinition of BITS directive.
+		[BITS %1]
+		%undef __?BITS?__
+		%define __?BITS?__ %1
+		callconv_update
+	%endm
+
+	;; allow the user to override calling convention.
+	;; probably with `-Dcallconv`
+	%ifdef callconv
+		_callconv_normalize_spaces
+
+		; try to normalize the convention string
+		%if 0 \
+			|| %isidni(callconv, "System V ABI") \
+			|| %isidni(callconv, "SystemVABI") \
+			|| %isidni(callconv, "SystemV ABI") \
+			|| %isidni(callconv, "System VABI") \
+			|| %isidni(callconv, "System V") \
+			|| %isidni(callconv, "SystemV") \
+			|| %isidni(callconv, "System 5") \
+			|| %isidni(callconv, "System 5 ABI") \
+			|| %isidni(callconv, "System5") \
+			|| %isidni(callconv, "Linux ABI") \
+			|| %isidni(callconv, "Linux") \
+			|| %isidni(callconv, "UNIX") \
+			|| %isidni(callconv, "SysV") \
+			|| %isidni(callconv, "SysV ABI") \
+			|| %isidni(callconv, "SysVABI") \
+			|| %isidni(callconv, "Sys5 ABI") \
+			|| %isidni(callconv, "Sys5ABI") \
+			|| %isidni(callconv, "Sys5")
+
+			%xdefine callconv "System V ABI"
+		%endif
+
+		%if 0 \
+			|| %isidni(callconv, "Microsoft ABI") \
+			|| %isidni(callconv, "MicrosoftABI") \
+			|| %isidni(callconv, "Microsoft") \
+			|| %isidni(callconv, "Windows ABI") \
+			|| %isidni(callconv, "WindowsABI") \
+			|| %isidni(callconv, "Windows") \
+			|| %isidni(callconv, "DOS") \
+			|| %isidni(callconv, "MS") \
+			|| %isidni(callconv, "MS ABI") \
+			|| %isidni(callconv, "MSABI")
+
+			%xdefine callconv "Microsoft ABI"
+		%endif
+
+		%if %isnidn(callconv, "System V ABI") \
+			&& %isnidn(callconv, "Microsoft ABI")
+
+			;; bad definition. start over.
+			%undef callconv
+		%endif
+	%endif
+
+	%ifndef callconv
+		%if %isidn(__?OUTPUT_FORMAT?__, elf64) \
+			|| %isidn(__?OUTPUT_FORMAT?__, macho64) \
+			|| %isidn(__?OUTPUT_FORMAT?__, elfx32) \
+			|| %isidn(__?OUTPUT_FORMAT?__, elf32) \
+			|| %isidn(__?OUTPUT_FORMAT?__, macho32) \
+			|| %isidn(__?OUTPUT_FORMAT?__, elf) \
+			|| %isidn(__?OUTPUT_FORMAT?__, macho) \
+			|| %isidn(__?OUTPUT_FORMAT?__, aout) \
+			|| %isidn(__?OUTPUT_FORMAT?__, aoutb) \
+			|| %isidn(__?OUTPUT_FORMAT?__, coff)
+
+			%xdefine callconv "System V ABI"
+		%elif %isidn(__?OUTPUT_FORMAT?__, win64) \
+			|| %isidn(__?OUTPUT_FORMAT?__, win32) \
+			|| %isidn(__?OUTPUT_FORMAT?__, win) \
+			|| %isidn(__?OUTPUT_FORMAT?__, obj)
+
+			%xdefine callconv "Microsoft ABI"
+		%else
+			;; fallback guess.
+			;; an OS check might not work if you are assembling
+			;; for a different system than the one currently being used.
+			;; i.e. assembling from Windows for a System V ABI microcontroller. 
+			;; If this gives the wrong convention, use `-Dcallconv=...` or `%define callconv ...` to override it.
+
+			;; it is impossible to know what convention should be used for these.
+			;; output format is one of the following:
+				;; bin, ith, srec, as86, ieee, dbg
+				;; idk about as86 though.
+			%xdefine callconv %cond( %isidn(%str(%!OS),"Windows_NT"), \
+				"Microsoft ABI", \
+				"System V ABI")
+		%endif ;; check output formats
+	%endif ;; %ifndef callconv
+
+	callconv_update
+
+	%unmacro _callconv_normalize_spaces 0
+%endif

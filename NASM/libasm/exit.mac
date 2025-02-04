@@ -1,0 +1,16 @@
+; defines `fn_exit` macro, because there isn't an `exit` instruction.
+; it is not called `exit` in case you want the C `exit` function
+
+%ifndef EXIT_MAC
+	%define EXIT_MAC
+
+	%ifndef CALLCONV_MAC
+		%include "callconv.mac"
+	%endif
+
+	%imacro fn_exit 0
+		leave
+		xor 	rx, rx
+		ret
+	%endm
+%endif
