@@ -28,6 +28,6 @@ main:
 	mov 	rdx, [rel uvalue]	; rdx = *uvalue
 	call	printf				; `scanf` uses the same registers, but does `lea` on both
 
-	xor 	rax, rax
+	xor 	eax, eax
 	leave
 	ret

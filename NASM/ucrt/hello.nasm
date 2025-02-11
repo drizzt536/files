@@ -26,5 +26,5 @@ main:
 
 	add 	rsp, 32
 
-	xor 	rax, rax
+	xor 	eax, eax
 	ret

@@ -4,5 +4,5 @@ segment text
 	global	main
 
 main:
-	xor 	rax, rax
+	xor 	eax, eax
 	ret

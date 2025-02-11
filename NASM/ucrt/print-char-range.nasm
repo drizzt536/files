@@ -37,5 +37,5 @@ main:
 	jle 	.loop
 
 	leave
-	xor 	rax, rax
+	xor 	eax, eax
 	ret

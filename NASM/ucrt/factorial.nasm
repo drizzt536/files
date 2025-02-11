@@ -50,6 +50,6 @@ main:
 	call	printf					;  print factorial of input
 
 main_exit: ; can't be a local label.
-	xor 	rax, rax
+	xor 	eax, eax
 	leave
 	ret

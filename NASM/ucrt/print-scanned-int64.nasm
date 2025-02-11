@@ -31,6 +31,6 @@ main:
 	mov 	rdx, [rbp - 8]
 	call	printf
 
-	xor 	rax, rax
+	xor 	eax, eax
 	mov 	rsp, rbp
 	ret

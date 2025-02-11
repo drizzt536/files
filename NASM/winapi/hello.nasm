@@ -33,5 +33,5 @@ main:
 	print	msg_lbl, msg_len
 
 	leave
-	xor 	rax, rax
+	xor 	eax, eax
 	ret

@@ -43,6 +43,6 @@ main:
 		cmp 	r14, r15		;     if (i <= MAX)
 		jle  	.loop			;         goto loop
 
-	xor 	rax, rax
+	xor 	eax, eax
 	mov 	rsp, rbp
 	ret
