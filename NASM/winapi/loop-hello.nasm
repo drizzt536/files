@@ -3,6 +3,7 @@
 segment rdata
 %xdefine msg_str `Hello World\n\0`
 %xdefine msg_len %strlen(msg_str)
+
 	msg_lbl 	db	msg_str
 
 segment text
@@ -26,16 +27,14 @@ segment text
 %endm
 
 main:
-	; implicit push rbp
-	sub 	rsp, 40		; Shadow space
-	mov 	rbx, 100000	; ~5 seconds of printing, non-volatile register
+	sub 	rsp, 40	; Shadow space, plus 8 bytes instead of `push rbp`
 
-.start:
+	mov 	rbx, 100000	; ~5 seconds of printing, non-volatile register.
+.loop:
 	print	msg_lbl, msg_len
 
 	dec 	rbx
-	jnz 	.start
+	jnz 	.loop
 
-	add 	rsp, 40
-	xor 	rcx, rcx
+	xor 	ecx, ecx
 	call	ExitProcess
