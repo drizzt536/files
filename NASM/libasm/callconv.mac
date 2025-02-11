@@ -5,8 +5,6 @@
 	;; assumes the arguments are all integers the same size as the bit mode.
 	;; 8bit macros can only be called manually; `__?BITS?__` can't be 8.
 
-	; TODO: 
-
 	;; defines the following:
 	;;     `rx` for return register
 	;;     `arg[1-6]` for argument registers
