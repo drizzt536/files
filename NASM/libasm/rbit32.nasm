@@ -7,7 +7,7 @@
 	%xdefine RBIT32_OPTIMIZATION balanced
 %endif
 
-%ifidni RBIT32_OPTIMIZATION, balanced
+%ifidni RBIT32_OPTIMIZATION, recurse
 	%ifndef RBIT16_INC
 		%xdefine RBIT16_OPTIMIZATION recurse
 		%xdefine RBIT8_OPTIMIZATION balanced
