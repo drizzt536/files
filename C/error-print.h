@@ -24,6 +24,7 @@
 	#define ANSI_WHITE  RGB_STR(255, 255, 255) // #FFFFFF
 	#define ANSI_BLACK  RGB_STR(  0,   0,   0) // #000000
 
+	// this is basically the same as the values in Python's `logging` package.
 	#define ERRLOG_NONE  5u // don't print any error messages
 	#define ERRLOG_FATAL 4u // only print fatal error messages
 	#define ERRLOG_WARN  3u // print fatal error messages and warnings
@@ -60,14 +61,14 @@
 	#define CON_RESET()      printf(ANSI_RESET())
 
 	// internal color print versions
-	#define _FPRINTF_COLOR(fp, color, loglvl, args...) ( \
-		ERRLOG_LEVEL > (loglvl) ? 0 : ({                 \
-			CON_COLOR(color);                            \
-			const int return_code = fprintf((fp), args); \
-			CON_RESET();                                 \
-			return_code;                                 \
-		})                                               \
-	)
+	#define _FPRINTF_COLOR(fp, color, loglvl, args...) ({ \
+		ERRLOG_LEVEL > (loglvl) ? 0 : ({                  \
+			CON_COLOR(color);                             \
+			const int return_code = fprintf((fp), args);  \
+			CON_RESET();                                  \
+			return_code;                                  \
+		});                                               \
+	})
 
 	// external color print versions
 	#define fprintf_color(fp, color, args...) \
