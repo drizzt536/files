@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
 %endif
 
 segment rdata
-	file_modifier	db `r\0`
-	file_nexits_str	db `\e[31minput file "%s" does not exist or is not readable\e[0m\n\0`
+	file_modifier		db `r\0`
+	file_nexists_str	db `\e[31minput file "%s" does not exist or is not readable\e[0m\n\0`
 
 segment text
 	global main
@@ -91,7 +91,7 @@ catfile: ; void catfile(char *filename);
 	call	__acrt_iob_func
 
 	mov 	rcx, rax	; print to stderr
-	lea 	rdx, [rel file_nexits_str]
+	lea 	rdx, [rel file_nexists_str]
 	mov 	r8 , r12
 	call	fprintf
 	; closing the file is unnecessary since it was never opened.
@@ -102,7 +102,6 @@ main:
 	sub 	rsp, 8 ; for alignment purposes, otherwise it crashes with access violation (0xC0000005)
 
 	call	setup_argc_argv
-
 
 	mov 	ebx, 1 ; start at the first argument. ignore the current executable path.
 .loop:
