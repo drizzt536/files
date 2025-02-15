@@ -1,4 +1,9 @@
-%include "callconv.mac"
+%ifndef CALLCONV_MAC
+	%include "callconv.mac"
+%endif
+
+;; NOTE: the zero flag is always set after `streq` runs.
+;; this way you don't need `test al, al`. just jump.
 
 %if %isnidni(callconv, "Microsoft ABI") || __?BITS?__ != 16
 	;; the main implementation:
@@ -15,15 +20,18 @@
 		jnz 	.loop			; } while (*a++);
 	.true:
 	%if __?BITS?__ == 64
-		mov 	eax, 1			; return true;
+		; basically `mov eax, 1` but also update the zero flag
+		xor 	eax, eax		; return true
+		inc 	eax
 	%else
-		mov 	rx, 1			; return true;
+		xor 	rx, rx
+		inc 	rx
 	%endif
 		ret
 
 	.false:
 	%if __?BITS?__ == 64
-		xor 	eax, eax
+		xor 	eax, eax		; return false
 	%else
 		xor 	rx, rx
 	%endif
@@ -47,7 +55,8 @@
 		test	al, al
 		jnz 	.loop
 	.true:
-		mov 	ax, 1
+		xor 	ax, ax
+		inc 	ax
 		jmp 	.exit
 	.false:
 		xor 	ax, ax
