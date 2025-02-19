@@ -19,6 +19,6 @@ segment text
 ; ╰────────────────────────────────╯
 
 main:
-	mov 	rcx, msg
+	lea 	rcx, [rel msg]
 	call	puts
 	jmp 	main
