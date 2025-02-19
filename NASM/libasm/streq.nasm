@@ -5,6 +5,9 @@
 ;; NOTE: the zero flag is always set after `streq` runs.
 ;; this way you don't need `test al, al`. just jump.
 
+;; NOTE: returns 0 on true and 1 on false. this way,
+;; you can do `je .if_equal` or `jne .if_unequal`.
+
 %if %isnidni(callconv, "Microsoft ABI") || __?BITS?__ != 16
 	;; the main implementation:
 	streq:						; bool streq(uint8_t *a, uint8_t *b) {
@@ -13,35 +16,35 @@
 	.loop:						; do {
 		mov 	al, byte [arg1]	; // NOTE: al's opcodes are shorter than r8b's.
 		cmp 	al, byte [arg2]	; // NOTE: `cmp reg, mem` works, but `cmp mem, mem` doesn't.
-		jne  	.false			;     if (*a != *b) return false;
+		jne 	.false			;     if (*a != *b) return false;
 		inc 	arg1			; // argument registers are always volatile, so this is fine
 		inc 	arg2			;     b++;
 		test	al, al
 		jnz 	.loop			; } while (*a++);
 	.true:
 	%if __?BITS?__ == 64
-		; basically `mov eax, 1` but also update the zero flag
-		xor 	eax, eax		; return true
-		inc 	eax
+		xor 	eax, eax		; return false
 	%else
 		xor 	rx, rx
-		inc 	rx
 	%endif
 		ret
 
 	.false:
 	%if __?BITS?__ == 64
-		xor 	eax, eax		; return false
+		; basically `mov eax, 1` but also update the zero flag
+		xor 	eax, eax		; return true
+		inc 	al
 	%else
 		xor 	rx, rx
+		inc 	rx
 	%endif
 		ret
 %else
 	;; 16-bit Microsoft ABI implementation:
 	;; for some reason, cx and dx don't work as pointers, you have to use di and si.
 	streq:
-		push 	di	;; di and si are non-volatile in Microsoft ABI
-		push 	si
+		push	di	;; di and si are non-volatile in Microsoft ABI
+		push	si
 		cmp 	cx, dx
 		je  	.true
 		mov 	di, cx
@@ -49,17 +52,17 @@
 	.loop:
 		mov 	al, byte [di]
 		cmp 	al, byte [si]
-		jne  	.false
+		jne 	.false
 		inc 	di
 		inc 	si
 		test	al, al
 		jnz 	.loop
 	.true:
 		xor 	ax, ax
-		inc 	ax
 		jmp 	.exit
 	.false:
 		xor 	ax, ax
+		inc 	al
 	.exit:
 		pop 	si
 		pop 	di
