@@ -96,7 +96,7 @@ setup_argc_argv:
 	; ignores the ABI convention of rdi and rsi being non-volatile. 
 	push	rbp
 	mov 	rbp, rsp
-	sub 	rsp, 64 ; 32-bit shadow space + 32-bit integer. 32 seems to work though too.
+	sub 	rsp, 48 ; 32-bit shadow space + 4-byte integer. 32 seems to work though too.
 
 	call	GetCommandLineW
 
@@ -108,14 +108,14 @@ setup_argc_argv:
 	mov 	rsi, rax		; rsi = argv
 
 	xor 	r9, r9			; int i = 0;
-.ws2s_loop:
+.loop:
 	mov 	rcx, [rsi + 8*r9] ; rcx = argv[i]
 	wstr_to_str_inplace_macro rcx
 ;	call	win_wstr_to_str_inplace
 
 	inc 	r9
 	cmp 	r9, rdi
-	jl  	.ws2s_loop
+	jl  	.loop
 
 	leave
 	ret
