@@ -1,6 +1,4 @@
 
-# recompile externally if you want it recompiled, because it takes too long to do it every time.
-
 if ($args[0] -eq "--recompile") {
 	../assemble adler32 --infer
 	write-host "" # blank line
