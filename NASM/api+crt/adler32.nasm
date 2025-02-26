@@ -41,10 +41,10 @@ segment rdata
 
 	comb_arg		db `-c\0`
 	do_arg			db `-d\0`
+	inc_arg			db `-i\0`
 	long_arg		db `-l\0`
 	prev_arg		db `-p\0`
 	raw_arg			db `-r\0`
-	seq_arg			db `-s\0`
 	undo_arg		db `-u\0`
 
 	help_text:
@@ -52,7 +52,7 @@ segment rdata
 		db `\n`
 		db `Options:\n`
 		db `    -h, -?, --help    Print this message. Must be the first argument.\n`
-		db `    -s                Toggle sequential mode. When enabled, automatically carries over the checksum\n`
+		db `    -i                Toggle incremental mode. When enabled, automatically carries over the checksum\n`
 		db `                      between files. Defaults to off. Missing files do not update the checksum.\n`
 		db `    -p CKSM           Set the starting checksum for subsequent files. Only the first 8 characters of\n`
 		db `                      the value are read. If an invalid value is passed, the program exits immediately.\n`
@@ -62,7 +62,7 @@ segment rdata
 		db `    -d                Switch to forwards/do mode. (default)\n`
 		db `    -u                Switch to backwards/undo mode. Not implemented (except for with \`-c\`).\n`
 		db `    -c CKSM2 LEN2     Combines two checksums as if the data was contiguous. Uses the previously set checksum\n`
-		db `                      (from \`-p\` or \`-s\`) as the first checksum. LEN2 is the length of the data that CKSM2\n`
+		db `                      (from \`-p\` or \`-i\`) as the first checksum. LEN2 is the length of the data that CKSM2\n`
 		db `                      represents. To pass two arguments, use: \`-p CKSM1 -c CKSM2 LEN2\`.\n`
 		db `                      For an undo, use: \`-u -p CKSM1 -c CKSM2 LEN2\`.\n`
 		db `                      CKSM2 must be in hexadecimal (same as for \`-p\`), and LEN2 should be in decimal.\n`
@@ -313,13 +313,12 @@ adler32_combine: ; uint32_t adler32_combine(uint32_t cksm1, uint32_t cksm2, uint
 ;; and then you maximize the `n` while ensuring `nmax_f(n, bits) < 0`. This formula is from zlib
 ;; and then I just expanded it to also work with different bit widths. you can also use the
 ;; explicit formula: `Floor[(Sqrt[17104714185 + 2040 2^bits] - 131295)/510]`
+;; https://github.com/madler/zlib/blob/e9d5486e6635141f589e110fd789648aa08e9544/adler32.c#L12
 
 ;; the buffer size of 64 KiB was chosen as a balance between speed and memory.
 ;; this probably has something to do with the size of the L1 cache. (64 KiB/core on my machine)
 ;; Use `./adler32-perftest-bufsize.ps1` to verify the optimal buffer size on your machine.
 ;; It doesn't actually give statistics, so you have to analyze it yourself.
-
-;; https://github.com/madler/zlib/blob/e9d5486e6635141f589e110fd789648aa08e9544/adler32.c#L12
 
 ;; a register is required for the scratch buffer because `byte [rel scratch_buffer + rdi]`
 ;; doesn't work (RIP address with register offset). and you can't do `[scratch_buffer + rdi]`
@@ -538,6 +537,12 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	call	streq
 	je  	.arg_match_d
 
+	;; -i
+	mov 	rcx, r13
+	lea 	rdx, [rel inc_arg]
+	call	streq
+	je  	.arg_match_i
+
 	;; -l
 	mov 	rcx, r13
 	lea 	rdx, [rel long_arg]
@@ -555,12 +560,6 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	lea 	rdx, [rel raw_arg]
 	call	streq
 	je  	.arg_match_r
-
-	;; -s
-	mov 	rcx, r13
-	lea 	rdx, [rel seq_arg]
-	call	streq
-	je  	.arg_match_s
 
 	;; -u
 	mov 	rcx, r13
@@ -615,6 +614,10 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	jnz 	.switch_direction	;     goto switch_direction;
 
 	process_arg__ret			; return;
+.arg_match_i:
+	xor  	r14, SEQ_BIT_VAL
+
+	process_arg__ret
 .arg_match_l:
 	mov 	word [rel valid_line_fmt + 4], `\t%`
 	mov 	word [rel invalid_line_fmt + 18], `\t%`
@@ -623,10 +626,6 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 .arg_match_r:
 	mov 	word [rel valid_line_fmt + 4], `\n\0`
 	mov 	word [rel invalid_line_fmt + 18], `\n\0`
-
-	process_arg__ret
-.arg_match_s:
-	xor  	r14, SEQ_BIT_VAL
 
 	process_arg__ret
 .arg_match_u:
