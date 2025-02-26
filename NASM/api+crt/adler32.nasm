@@ -1,6 +1,9 @@
 ;; ../assemble adler32 --l kernel32,shell32,ucrtbase
 
-%define SCRATCH_BUF_LEN	%eval(1024*1024)
+%ifndef SCRATCH_BUF_LEN
+	%define SCRATCH_BUF_LEN %eval(1024*64)
+%endif
+
 %define BASE			65521
 
 %define SEQ_BIT_VAL		1
@@ -262,6 +265,9 @@ adler32_combine: ; uint32_t adler32_combine(uint32_t cksm1, uint32_t cksm2, uint
 
 	imul	ecx, r8d		; x1 *= len2;
 
+	;; TODO: I think there is another condition on when to add the 225.
+	;;       I'm pretty sure that always adding it is not correct.
+
 	;; I have no idea where the extra 225 came from. It is required though.
 	;; This `lea` instruction is equivalent to the next 2 commented out instructions.
 	lea 	edx, [edx + r9d + BASE*BASE + 225]	; b = x2 + BASE*BASE + 255;
@@ -301,12 +307,17 @@ adler32_combine: ; uint32_t adler32_combine(uint32_t cksm1, uint32_t cksm2, uint
 
 ;; with 64-bit intermediate values, a modulo is only required every 363 MiB to prevent
 ;; overflow, but that is too much memory to use at once, so this implementation applies
-;; the modulo at the end of every 1 MiB block instead. using 128-bit intermediate values,
-;; you can ignore doing modulos until the end. the methodology in finding the values is
+;; the modulo at the end of every 64 KiB block instead. using 128-bit intermediate values,
+;; you can ignore doing modulos until the end. the methodology in finding the NMAX values is
 ;; this function: `nmax_f = lambda n, bits: 255*n*(n + 1)//2 + (n + 1)*(BASE - 1) - 2**bits + 1`
-;; and then you maximize the `n` while ensuring `nmax_f(n, bits) < 0`. This formula came
-;; from zlib, and then I just expanded it to also work with different bit widths.
-;; you can also use the explicit formula: `Floor[(Sqrt[17104714185 + 2040 2^bits] - 131295)/510]`
+;; and then you maximize the `n` while ensuring `nmax_f(n, bits) < 0`. This formula is from zlib
+;; and then I just expanded it to also work with different bit widths. you can also use the
+;; explicit formula: `Floor[(Sqrt[17104714185 + 2040 2^bits] - 131295)/510]`
+
+;; the buffer size of 64 KiB was chosen as a balance between speed and memory.
+;; this probably has something to do with the size of the L1 cache. (64 KiB/core on my machine)
+;; Use `./adler32-perftest-bufsize.ps1` to verify the optimal buffer size on your machine.
+;; It doesn't actually give statistics, so you have to analyze it yourself.
 
 ;; https://github.com/madler/zlib/blob/e9d5486e6635141f589e110fd789648aa08e9544/adler32.c#L12
 
@@ -355,7 +366,7 @@ unsigned adler32_fp_v2(FILE *fp, unsigned prev) {
 	;; bytes_read     : r8d
 	;; i              : r9d
 
-;; buffered adler32 given a file pointer as input. reads in 1 MiB at a time
+;; buffered adler32 given a file pointer as input. reads in 64 KiB at a time
 ;; this should work for stdin since `fread` doesn't lock if there are no more characters
 ;; returns the file checksum.
 ;; forwards version
