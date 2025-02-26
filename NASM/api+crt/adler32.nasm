@@ -48,7 +48,7 @@ segment rdata
 	undo_arg		db `-u\0`
 
 	help_text:
-		db `Usage: [pipe input] | adler32 [--help | -h | -?] [-p VALUE | -[dlrsu] | FILENAME]...\n`
+		db `Usage: [pipe input] | adler32 [--help | -h | -?] [-p VALUE | -[dilru] | FILENAME]...\n`
 		db `\n`
 		db `Options:\n`
 		db `    -h, -?, --help    Print this message. Must be the first argument.\n`
