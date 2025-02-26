@@ -196,7 +196,7 @@ function test-case-10 {
 	if ((cat errors.tmp).length -ne 0) { return 1 }
 	if ($cksm3 -ne "126b02ef") { return 2 }
 
-	$output = ./adler32 -r -s file1.tmp file2.tmp 2> errors.tmp
+	$output = ./adler32 -r -i file1.tmp file2.tmp 2> errors.tmp
 
 	if ((cat errors.tmp).length -ne 0) { return 1 }
 	if ($output.count -ne 2) { return 2 }
