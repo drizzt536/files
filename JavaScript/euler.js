@@ -1,35 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Project Euler Problems</title>
-	<style type="text/css">
-		body {
-			background: black;
-			color: dimgray;
-		}
-	</style>
-</head>
-<body dir="ltr">
-	<noscript>Enable Javascript you clown</noscript>
-	<p></p>
-<script type="text/javascript" defer>
 // Project Euler problems
 
 // CONTAINS SPOILERS
 // DO NOT CONTINUE UNLESS YOU HAVE ALREADY COMPLETED THE PROBLEMS,
 // OR WANT TO SPOIL THE FUN FOR YOURSELF
-
-
-
-
-
-(() => {
-	for (var i = 0; this[`problem_${++i}`];);
-	document.querySelector("p").innerHTML = `${i-1} Problems completed consecutively from the start.`;
-	// This will display the wrong number i
-})();
 
 {;
 // assume all inputs are valid
@@ -976,7 +949,3 @@ function problem_512(target=500_000_000) {
 
 	return 50660591862310323; // if `target` == 5 * 10^8
 }
-
-</script>
-</body>
-</html>
