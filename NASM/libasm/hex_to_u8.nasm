@@ -1,22 +1,25 @@
 ;; assumes `segment text` is already done.
 ;; does not require any external functions
 
-%ifndef HEX_TO_U32_INC
-%define HEX_TO_U32_INC
+%ifndef HEX_TO_U8_INC
+%define HEX_TO_U8_INC
+
+;; this file is almost the exact same as hex_to_u32.nasm, but with a
+;; shorter loop, a different name, and a couple of extra optimizations.
 
 ;; returns qword -1 on error.
 ;; check the upper bits of rax to see if there was an error
 
 ;; convert hex string to unsigned 32-bit integer
 
-;; clobbers: rax, rcx, rdx, r8
-hex_to_u32: ; uint64_t hex_to_u32(const char *str) {
+;; clobbers: rax (return value), rcx, dl, r8
+hex_to_u8: ; uint64_t hex_to_u8(const char *str) {
 	jrcxz	.error ; null check
 
 	cmp 	byte [rcx], `\0`
 	je  	.error
 
-%ifndef HEX_TO_U32_SKIP_PREFIX_CHECK
+%ifndef HEX_TO_U8_SKIP_PREFIX_CHECK
 	;; skip past '0x' if applicable
 	cmp 	word [rcx], '0x'
 	jne 	.noprefix
@@ -26,7 +29,6 @@ hex_to_u32: ; uint64_t hex_to_u32(const char *str) {
 	;; clear r8d and not r8b because r8 is used as an offset, and clearing r8b doesn't clear the upper bits.
 	xor 	eax, eax	; register uint32_t x = 0;
 	xor 	r8d, r8d	; register uint8_t  i = 0;
-	xor 	edx, edx	; clear all bits so `or eax, edx` works properly
 .loop: ;; loop up to 8 times (8 characters)
 	mov 	dl, [rcx + r8]	; dl = c
 
@@ -34,7 +36,7 @@ hex_to_u32: ; uint64_t hex_to_u32(const char *str) {
 	jz  	.done
 
 	;; this might be a little strange for the invalid case, but just don't give invalid values.
-	shl 	eax, 4
+	shl 	al, 4
 .cond1: ; '0' <= c <= '9'
 	cmp 	dl, '0'
 	jb  	.error
@@ -66,16 +68,22 @@ hex_to_u32: ; uint64_t hex_to_u32(const char *str) {
 	;; c <= 'f'
 	sub 	dl, 'a' - 10
 .endloop:
-	or  	eax, edx
+	or  	al, dl
 	inc 	r8b
-	cmp 	r8b, 8
+	cmp 	r8b, 2
 	jb  	.loop
 .done:
 	ret
 .error:
 	;; return `qword -1` on error.
 	;; this is different than `-1` the value because the upper bits of `rax` are set.
-	xor 	eax, eax
-	dec 	rax
+
+	;; NOTE: using `al` instead of `eax` is okay because `eax` is zeroed out before the loop,
+	;;       and only `al` is changed inside the loop.
+	xor 	al, al
+	dec 	eax	;; return dword -1
+
+	;; use 32-bit value for error return instead of 64 or 16 because 64 bits
+	;; are not required, and 16-bit instructions have longer opcodes.
 	ret
 %endif
