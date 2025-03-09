@@ -9,7 +9,7 @@
 	%define UNROLL_N 1
 %endif
 
-%defstr VERSION 4.1
+%defstr VERSION 4.2
 %xdefine BASE 65521
 
 %define HEX_TO_U8_SKIP_PREFIX_CHECK
@@ -43,6 +43,7 @@ segment rdata
 	unknown_arg_str			db `\e[31mERROR: unknown argument \`%s\`.\e[0m\nUse \`--help\` for more information.\0`
 	im_not_implemented_str	db `\e[31mERROR: immediate value arguments (\`-s\` and \`-x\`) are not implemented.\e[0m\0`
 	pipe_arg_disallowed_str	db `\e[31mERROR: argument \`-\` (explicit pipe process) is not allowed after the pipe is processed.\e[0m\0`
+	force_file_no_arg_str	db `\e[31mERROR: argument \`-f\` given with no value.\e[0m\n\0`
 	version_str				db `adler32 v`, VERSION, `\0`
 	pipeline_available_str	db `the pipeline is available\n\0`
 	file_read_modifier		db `rb\0`
@@ -55,13 +56,15 @@ segment rdata
 	help_arg		db `--help\0`
 	ver_arg			db `--version\0`
 
-	;; TODO: document the '-' argument.
 	help_str:
 		db `Usage: [pipe input] | adler32 [--help | --version] [OPTION | FILENAME]...\n`
 		db `\n`
 		db `Options:\n`
 		db `    -h, -?, --help    Print this message and exit. Must be the first argument.\n`
 		db `    -v, --version     Print the version string and exit. Must be the first argument.\n`
+		db `    -                 Process the pipe early. Example: \`adler32 - -i file1 file2\` processes the pipe before.\n`
+		db `                      enabling incremental mode. Using \`-\` more than once, or after the first regular file throws\n`
+		db `                      an error. Using the pipeline for option argument (e.g. \`-p -\`) is not implemented.\n`
 		db `    -r                Use raw formatting: print only the checksum for subsequent files.\n`
 		db `    -l                Use long formatting: print the checksum and filename for subsequent files. (default)\n`
 		db `    -F                Swap formatting modes. Equivalent to \`-l\` when in raw mode, and \`-r\` when in long mode.\n`
@@ -70,6 +73,8 @@ segment rdata
 		db `    -D                Swap directions. Equivalent to \`-d\` when in undo mode, and \`-u\` when in do mode.\n`
 		db `    -i                Toggle incremental mode. When enabled, automatically carries over the checksum\n`
 		db `                      between files. Defaults to off. Missing files do not update the checksum.\n`
+		db `    -f PATH           force the next argument to be read as a file path, even if it looks like an option.\n`
+		db `                      useful for file names starting with \`-\` or for explicitly specifying a file.\n`
 		db `    -p CKSM           Set the starting checksum for subsequent files. Only the first 8 characters of\n`
 		db `                      the value are read. If an invalid value is passed, the program exits immediately.\n`
 		db `                      The value should be given in hexadecimal (either \`0xXXXXXXXX\` or \`XXXXXXXX\`).\n`
@@ -90,6 +95,8 @@ segment rdata
 		db `All arguments can be passed multiple times. The most recent value is used.\n`
 		db `Arguments are processed in one pass, so argument order matters.\n`
 		db `Multi-character options like \`-abc\` are treated as a single entity, not as \`-a -b -c\`.\n`
+		db `If a directory path is given instead of a file path, a non-fatal error is given.\n`
+		db `NOTE: the pipeline (stdin) collapses \`\\r\\n\` into \`\\n\`, whereas nothing else does.\n`
 		db `\n`
 		db `Exit Codes:\n`
 		db `    0   success\n`
@@ -100,7 +107,8 @@ segment rdata
 		db `    5   \`-c\` was given with only one value\n`
 		db `    6   \`-c\` was given with an invalid first value\n`
 		db `    7   \`-u\` was used with a non-seekable file or pipe larger than `, %num(SCRATCH_BUF_LEN - 1), ` bytes\n`
-		db `    8   \`-\` was given either after the first filename, or after \`-\` was already previously given.\n`
+		db `    8   \`-f\` was given without a value\n`
+		db `    9   \`-\` was given either after the first filename, or after \`-\` was already previously given.\n`
 		db `   -1   something is not implemented. see error message for details\0`
 
 segment text
@@ -1111,14 +1119,17 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	jmp 	.print_im_result
 .arg_match_f:
 	inc 	ebx		; i++
-	;; TODO: fix bug here.
-	;;       if there are no more arguments, throw an error.
+
+	cmp 	ebx, edi
+	je  	.force_file_no_arg
+
+	mov 	r13, [rsi + 8*rbx]
 
 	leave
 	add 	rsp, 8	;; remove the return address from the stack
 	jmp 	main.process_file
 	;; return, but not to the call site.
-;;;;;;;;;;;;;;;;;;;; error cases 2-6, 8 ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; error cases 2-6, 8-9 ;;;;;;;;;;;;;;;;;;;;
 .arg_match_pipe:
 .prev_no_arg:
 	mov 	rcx, [rel pstderr]
@@ -1160,13 +1171,20 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 	mov 	rcx, 6
 	call	exit
+.force_file_no_arg:
+	mov 	rcx, [rel pstderr]
+	lea 	rdx, [rel force_file_no_arg_str]
+	call	fprintf
+
+	mov 	ecx, 8
+	call	exit
 .pipe_arg:
 	;; TODO: or should it be treated as if you passed an empty file?
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel pipe_arg_disallowed_str]
 	call	fprintf
 
-	mov 	ecx, 8
+	mov 	ecx, 9
 	call	exit
 
 %unmacro process_arg__ret 0
