@@ -1,31 +1,82 @@
-;; ../assemble adler32 --l kernel32,shell32,ucrtbase
+;; ../assemble adler32 --l kernel32,shell32,ucrtbase -DNO_LONG_ARGS
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; configuration macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	;; SCRATCH_BUF_LEN
-	;; UNROLL_N
-	;; LEAN
-	;; MINIMAL
-	;; NO_INLINE_INPUT
-	;; NO_DIRECTIONS
-	;; NO_DOCS
-	;; NO_ARG_C
-	;; NO_ARG_H
-	;; NO_ARG_P
-	;; NO_ARG_S
-	;; NO_ARG_X
+	;; SCRATCH_BUF_LEN / BUF_LEN
+	;; UNROLL_N / UNROLL
 
-%ifndef SCRATCH_BUF_LEN
-	; default to 64 KiB
-	%define SCRATCH_BUF_LEN %eval(1024*64)
+	;; hierarchy of configuration macros:
+	;; each macro implies the macros indented after it, as well itself
+	;; BARE_BONES (default buffer size = 1 KiB)
+		;; MINIMAL (defailt buffer size = 32 KiB)
+			;; LEAN
+				;; NO_LONG_ARGS
+				;; NO_INLINE_INPUT
+					;; NO_ARG_S (-s)
+					;; NO_ARG_X (-x)
+				;; NO_DIRECTIONS (-d, -u, -D)
+			;; NO_ARG_C (-c)
+			;; NO_ARG_H (completely remove doc string and --help arguments)
+				;; NO_DOCS (replace the doc string with a simple message)
+			;; NO_ARG_P (-p)
+			;; force UNROLL_N=1 (disable unrolling)u
+		;; NO_FORMAT (-F)
+			;; NO_ARG_R (-r)
+			;; NO_ARG_L (-l)
+		;; NO_ARG_F (-f)
+		;; NO_ARG_I (-i)
+		;; NO_ARG_V (-v, requires -DNO_ARG_H to be given as well)
+		;; NO_PIPE (both - and pipe input processing)
+
+%ifdef UNROLL
+	;; allow `-DUNROLL=N` as an alias to `-DUNROLL_N=N`.
+	%ifdef UNROLL_N
+		%error both -DUNROLL_N and its alias -DUNROLL were given. Only specify one.
+	%endif
+
+	%xdefine UNROLL_N UNROLL
+	%undef UNROLL
 %endif
 
-%ifndef UNROLL_N
-	; after testing, I don't think unrolling changes anything.
-	%define UNROLL_N 1
+%ifdef BUF_LEN
+	;; allow `-DBUF_LEN=N` as an alias to `-DSCRATCH_BUF_LEN=N`.
+	%ifdef SCRATCH_BUF_LEN
+		%error both -DSCRATCH_BUF_LEN and its alias -DBUF_LEN were given. Only specify one.
+	%endif
+
+	%xdefine SCRATCH_BUF_LEN BUF_LEN
+	%undef BUF_LEN
+%endif
+
+%ifdef BARE_BONES
+	;; completely stripped down version of the program. only basic functionality is allowed.
+	;; only parsing for regular files remains. everything else is removed.
+	%ifndef MINIMAL
+		%define MINIMAL
+	%endif
+
+	%ifndef NO_FORMAT
+		%define NO_FORMAT
+	%endif
+
+	%ifndef NO_PIPE
+		%define NO_PIPE
+	%endif
+
+	%ifndef NO_ARG_F
+		%define NO_ARG_F
+	%endif
+
+	%ifndef NO_ARG_I
+		%define NO_ARG_I
+	%endif
+
+	%ifndef NO_ARG_V
+		%define NO_ARG_V
+	%endif
 %endif
 
 %ifdef MINIMAL
-	;; disable everything that can be disabled. minimal version of the program
+	;; disable almost everything that can be disabled. minimal version of the program
 
 	%ifndef LEAN
 		%define LEAN
@@ -51,7 +102,11 @@
 %endif
 
 %ifdef LEAN
-	;; disable -s, -x, -d, -u, and -D
+	;; disable -s, -x, -d, -u, -D, and long-form arguments
+
+	%ifndef NO_LONG_ARGS
+		%define NO_LONG_ARGS
+	%endif
 
 	%ifndef NO_INLINE_INPUT
 		%define NO_INLINE_INPUT
@@ -72,11 +127,20 @@
 	%endif
 %endif
 
-;; expansions. define the category if all sub things are defined
+%ifdef NO_FORMAT
+	;; disable -r, -l, and -F
 
-%if %isdef(NO_ARG_S) && %isdef(NO_ARG_X) && %isndef(NO_INLINE_INPUT)
-	; if both are given separately, define NO_INLINE_INPUT.
-	%define NO_INLINE_INPUT
+	%ifndef NO_ARG_R
+		%define NO_ARG_R
+	%endif
+
+	%ifndef NO_ARG_L
+		%define NO_ARG_L
+	%endif
+%endif
+
+%if %isdef(NO_ARG_V) && %isndef(NO_ARG_H)
+	%fatal -DNO_ARG_V without -DNO_ARG_H is an error.
 %endif
 
 %if %isdef(NO_ARG_H) && %isndef(NO_DOCS)
@@ -84,12 +148,41 @@
 	%define NO_DOCS
 %endif
 
-%if %isdef(NO_INLINE_INPUT) && %isdef(NO_DIRECTIONS) && %isndef(LEAN)
+%ifndef UNROLL_N
+	; after testing, I don't think unrolling changes anything.
+	%define UNROLL_N 1
+%endif
+
+;; expansions. define the whole category if all sub macros are defined
+
+;; NOTE: -DNO_ARG_L -DNO_ARG_R is not equivalent to -DNO_FORMAT
+
+%if %isdef(NO_ARG_S) && %isdef(NO_ARG_X) && %isndef(NO_INLINE_INPUT)
+	; if both are given separately, define NO_INLINE_INPUT.
+	%define NO_INLINE_INPUT
+%endif
+
+%if %isdef(NO_LONG_ARGS) && %isdef(NO_INLINE_INPUT) && %isdef(NO_DIRECTIONS) && %isndef(LEAN)
 	%define LEAN
 %endif
 
 %if %isdef(LEAN) && %isdef(NO_ARG_C) && %isdef(NO_ARG_H) && %isdef(NO_ARG_P) && UNROLL_N == 1 && %isndef(MINIMAL)
 	%define MINIMAL
+%endif
+
+%if %isdef(MINIMAL) && %isdef(NO_FORMAT) && %isdef(NO_PIPE) && %isdef(NO_ARG_F) \
+	&& %isdef(NO_ARG_I) && %isdef(NO_ARG_V) && %isndef(BARE_BONES)
+	%define BARE_BONES
+%endif
+
+%ifndef SCRATCH_BUF_LEN
+	%ifdef BARE_BONES ;; default to 1 KiB
+		%define SCRATCH_BUF_LEN 1024
+	%elifdef MINIMAL ; default to 32 KiB
+		%define SCRATCH_BUF_LEN %eval(1024*32)
+	%else ; default to 64 KiB (LEAN or normal)
+		%define SCRATCH_BUF_LEN %eval(1024*64)
+	%endif
 %endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;; configuration macros bounds checks ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -98,10 +191,10 @@
 	%error scratch buffer size (%[SCRATCH_BUF_LEN]) must be at least 1.
 %endif
 
-%if SCRATCH_BUF_LEN >= 380_368_439
-	; it can probably be equal, but I don't remember, but it can't hurt to be more restrictive
-	; check the docs for `adler32_fp_fw`.
-	%error scratch buffer size (%[SCRATCH_BUF_LEN]) must be less than 380,368,439.
+%if SCRATCH_BUF_LEN > 380_368_439
+	%warning %strcat(`scratch buffer size (`, %num(SCRATCH_BUF_LEN), \
+		`) exceeds maximum size of 380,368,439. bytes\n`, \
+		`\tCorrectness of program outputs is no longer guaranteed.`)
 %endif
 
 %if UNROLL_N < 1
@@ -109,7 +202,7 @@
 %endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; other macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-%defstr	VERSION 4.3
+%defstr	VERSION 4.4
 %xdefine BASE 65521
 
 %define HEX_TO_U8_SKIP_PREFIX_CHECK ; don't allow `0x` in between each byte in `-x HEXDATA`
@@ -123,30 +216,39 @@
 %xdefine CACHE_READ_BIT_VAL		8
 %xdefine CACHE_WRITE_BIT_VAL	16
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; data segments ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 segment .bss
 	scratch_buffer	resb SCRATCH_BUF_LEN
 	pstderr			resq 1 ; pointer to stderr.
 
-segment data
-	;; these three values are updated at runtime when `-r` is passed.
+;; these three values are updated at runtime when `-r`, `-l`, and `-F` are passed.
+;; if those are disabled, then these don't have to be in a .data section, and .rdata will work too.
+segment %cond(%isdef(NO_FORMAT), rdata, data)
 	valid_line_fmt		db `%08x\t%s\n\0`
 	invalid_line_fmt	db `\e[31m[ABSENT]\e[0m\t%s\n\0` ;; file doesn't exist
 	dir_passed_line_fmt	db `\e[31m[FOLDER]\e[0m\t%s\n\0` ;; filename is a folder, not a file
 
-segment rdata
-	non_seekable_large_file_undo_str	db `\e[31mERROR: file is not seekable and larger than `, %num(SCRATCH_BUF_LEN - 1), ` bytes.\e[0m\n\0`
+%ifdef NO_FORMAT
+	;; if -DNO_FORMAT is given, the previous three labels are in the rdata section,
+	;; so another segment declaration is reduntant and not required.
+	segment rdata
+%endif
+	;; errors
+	%cond(%isdef(NO_DIRECTIONS),, {non_seekable_large_file_undo_str	db `\e[31mERROR: file is not seekable and larger than `, %num(SCRATCH_BUF_LEN - 1), ` bytes.\e[0m\n\0`})
 
 	%cond(%isdef(NO_ARG_P),, prev_no_arg_str		db `\e[31mERROR: argument \`-p\` given with no value.\e[0m\n\0`)
 	%cond(%isdef(NO_ARG_P),, prev_invalid_arg_str	db `\e[31mERROR: argument \`-p\` given with an invalid value \`%.8s\`.\e[0m\n\0`)
 	%cond(%isdef(NO_ARG_C),, comb_no_args_str		db `\e[31mERROR: argument \`-c\` given with no values.\e[0m\n\0`)
 	%cond(%isdef(NO_ARG_C),, comb_one_arg_str		db `\e[31mERROR: argument \`-c\` given with only one argument.\e[0m\n\0`)
 	%cond(%isdef(NO_ARG_C),, comb_invalid_arg1_str	db `\e[31mERROR: argument \`-c\` given with an invalid first argument \`%.8s\`.\e[0m\n\0`)
+	%cond(%isndef(NO_ARG_F), force_file_no_arg_str	db `\e[31mERROR: argument \`-f\` given with no value.\e[0m\n\0`)
 	unknown_arg_str			db `\e[31mERROR: unknown argument \`%s\`.\e[0m`
 	%cond(%isndef(NO_DOCS), db `\nUse \`--help\` for more information.\0`, db `\0`)
-	force_file_no_arg_str	db `\e[31mERROR: argument \`-f\` given with no value.\e[0m\n\0`
-	pipeline_available_str	db `the pipeline is available\n\0`
-	file_read_modifier		db `rb\0`
-	pipeline_filename_str	db `[PIPE]\0`
+
+	;; miscellaneous strings
+	file_rb_mode		db `rb\0`
+	%cond(%isdef(NO_PIPE),, pipeline_filename_str			db `[PIPE]\0`)
 	%cond(%isdef(NO_ARG_C),, comb_filename_str				db `[COMBINE]\0`)
 	%cond(%isdef(NO_INLINE_INPUT),, string_filename_str		db `[STRING]\0`)
 ;	test_string				db `test string %ld\n\0`
@@ -155,57 +257,85 @@ segment rdata
 	;; the ones with a random letter at the start is because the first letter
 	;; has to match the short argument for `process_arg__test_long` to work.
 
+	;; NOTE: --help and --version are still allowed even if long form arguments are disabled.
+	;;       to disable these ones, you need to give -DNO_ARG_H and -DNO_ARG_V specifically.
 	%cond(%isdef(NO_ARG_H),, help_arg				db `--help\0`)
-	ver_arg				db `--version\0`
-	incremental_arg		db `--incremental\0`
-	raw_arg				db `--format-raw\0`
-	%cond(%isdef(NO_ARG_P),, prev_arg				db `--prev-cksm\0`)
+	%cond(%isdef(NO_ARG_V),, ver_arg				db `--version\0`)
+%ifndef NO_LONG_ARGS
 	%cond(%isdef(NO_ARG_C),, combine_arg			db `--combine\0`)
-	Fformatswap_arg		db `--format-swap\0`
+	%cond(%isdef(NO_ARG_F),, file_override_arg		db `--file-override\0`)
+	%cond(%isdef(NO_ARG_I),, incremental_arg		db `--incremental\0`)
+	%cond(%isdef(NO_ARG_P),, prev_arg				db `--prev-cksm\0`)
+
+	%cond(%isdef(NO_ARG_R),, raw_arg				db `--format-raw\0`)
+	%cond(%isdef(NO_ARG_L),, long_arg				db `--format-long\0`)
+	%cond(%isdef(NO_FORMAT),, Fformatswap_arg		db `--format-swap\0`)
+
 	%cond(%isdef(NO_ARG_S),, str_data_arg			db `--str-data\0`)
 	%cond(%isdef(NO_ARG_X),, xhex_data_arg			db `--hex-data\0`)
-	long_arg			db `--format-long\0`
+
 	%cond(%isdef(NO_DIRECTIONS),, ubackwards_arg	db `--backwards\0`)
 	%cond(%isdef(NO_DIRECTIONS),, dforwards_arg		db `--forwards\0`)
-	file_override_arg	db `--file-override\0`
 	%cond(%isdef(NO_DIRECTIONS),, Dreverse_arg		db `--reverse\0`)
+%endif
 
+%ifndef NO_ARG_V
 	version_str:
 		db `adler32 v`, VERSION, `\n`
 		db `assembled with buffer size `
 ;; don't worry about GiB, because the buffer can only be up to like 362 MiB
 ;; NOTE: if it is like 12.34 MiB, it will truncate it to 12 MiB.
 %if SCRATCH_BUF_LEN >= 1024*1024
-		db %num(SCRATCH_BUF_LEN >> 20), ` MiB`
+		db %num(SCRATCH_BUF_LEN >> 20), " MiB"
 %elif SCRATCH_BUF_LEN >= 1024
-		db %num(SCRATCH_BUF_LEN >> 10), ` KiB`
+		db %num(SCRATCH_BUF_LEN >> 10), " KiB"
 %else
 		db %num(SCRATCH_BUF_LEN), ` B`
 %endif
+		%cond(SCRATCH_BUF_LEN <= 380_368_439,, db " (excessive size)")
 		db `, `
-%ifdef MINIMAL
+%ifdef BARE_BONES
+		db `-DBARE_BONES: `
+%elifdef MINIMAL
 		db `-DMINIMAL: `
 %elifdef LEAN
 		db `-DLEAN: `
 %endif
 		db `unroll factor `, %num(UNROLL_N)
 		%cond(%isndef(NO_ARG_C),, db `, no combine (-c)`)
-%if %isdef(NO_ARG_S) && %isdef(NO_ARG_X)
+		%cond(%isndef(NO_ARG_F),, db `, no file override (-f)`)
+		%cond(%isndef(NO_ARG_I),, db `, no incremental mode (-i)`)
+		%cond(%isndef(NO_ARG_P),, db `, no prev-cksm update (-p)`)
+%ifdef NO_FORMAT
+		db `, no formatting (-r/-l/-F)`
+%else
+		%cond(%isndef(NO_ARG_R),, db `, no raw format (-r)`)
+		%cond(%isndef(NO_ARG_L),, db `, no long format (-l)`)
+%endif
+%ifdef NO_INLINE_INPUT
 		db `, no inline input (-s/-x)`
 %else
 		%cond(%isndef(NO_ARG_S),, db `, no string input (-s)`)
 		%cond(%isndef(NO_ARG_X),, db `, no hex input (-x)`)
 %endif
-		%cond(%isndef(NO_ARG_P),, db `, no prev-cksm update (-p)`)
-		%cond(%isndef(NO_ARG_H),, db `, no help (-h/-?)`)
-		%cond(%isndef(NO_DOCS) ,, db `, no docs`)
 		%cond(%isndef(NO_DIRECTIONS),, db `, no directions (-d/-u/-D)`)
+		%cond(%isndef(NO_ARG_V),, db `, no version (-v)`) ; NOTE: this never evaluates to anything
+		%cond(%isndef(NO_ARG_H),, db `, no help (-h/-?)`)
+		%cond(%isndef(NO_DOCS),, db `, no docs`)
+		%cond(%isndef(NO_PIPE),, db `, no pipeline`)
+		%cond(%isndef(NO_LONG_ARGS),, db `, no long-form arguments`)
 		db `\0`
+%endif ; %ifndef NO_ARG_V
+
+;; 24 spaces. this is not dynamic, it cannot be changed.
+%define DOC_PAD "                        "
 
 %ifndef NO_ARG_H
 	help_str:
 		db `\n` ; buffer between the version and the help text
-		db `Usage: [pipe input] | adler32 [--help | --version] [OPTION | FILENAME]...\n`
+		db `Usage: `
+		%cond(%isdef(NO_PIPE),, db `[pipe input] | `)
+		db `adler32 [--help | --version] [OPTION | FILENAME]...\n`
 		db `\n`
 %ifdef NO_DOCS
 		db `help text disabled\0`
@@ -213,103 +343,183 @@ segment rdata
 		db `Options:\n`
 		;db`0       10        20        30        40        50        60        70        80        90       100       110       120\n`
 		;db`123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n`
+		;; NOTE: if this part of the program is generated, --help exists.
 		db `    -h, -?, --help      Print this message and exit. Must be the first argument.\n`
+		;; NOTE: if -h exists, then -v also must exist.
 		db `    -v, --version       Print the version string and exit. Must be the first argument.\n`
+
+%ifndef NO_PIPE
 		db `    -                   Process the pipe early. Example: \`adler32 - -i file1 file2\` processes the pipe before.\n`
-		db `                        enabling incremental mode. Using \`-\` more than once, or after the first regular file, will\n`
-		db `                        be treated as an empty file. Using the pipeline for options (e.g. \`-p -\`) is not implemented.\n`
-		db `    -r, --format-raw    Use raw formatting: print only the checksum for subsequent files.\n`
-		db `    -l, --format-long   Use long formatting: print the checksum and filename for subsequent files. (default)\n`
-		db `    -F, --format-swap   Swap formatting modes. Equivalent to \`-l\` when in raw mode, and \`-r\` when in long mode.\n`
+		db DOC_PAD, `enabling incremental mode. Using \`-\` more than once, or after the first regular file, will\n`
+		db DOC_PAD, `be treated as an empty file. Using the pipeline for options (e.g. \`-p -\`) is not implemented.\n`
+%endif
+
+%ifndef NO_ARG_R
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -r                  `, \
+			`    -r, --format-raw    `)
+		db `Use raw formatting: print only the checksum for subsequent files.\n`
+%endif ; %ifndef NO_ARG_R
+
+%ifndef NO_ARG_L
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -l                  `, \
+			`    -l, --format-long   `)
+		db `Use long formatting: print the checksum and filename for subsequent files. (default)\n`
+%endif ; %ifndef NO_ARG_L
+
+%ifndef NO_FORMAT
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -F                  `, \
+			`    -F, --format-swap   `)
+		db `Swap formatting modes. Equivalent to \`-l\` when in raw mode, and \`-r\` when in long mode.\n`
+%endif ; %ifndef NO_FORMAT
+
 %ifndef NO_DIRECTIONS
-		db `    -d, --forwards      Switch to forwards/do mode. (default)\n`
-		db `    -u, --backwards     Switch to backwards/undo mode.\n`
-		db `    -D, --reverse       Swap directions. Equivalent to \`-d\` when in undo mode, and \`-u\` when in do mode.\n`
-%endif
-		db `    -i, --incremental   Toggle incremental mode. When enabled, automatically carries over the checksum\n`
-		db `                        between files. Defaults to off. Missing files do not update the checksum.\n`
-		db `    -f, --file-override PATH\n`
-		db `                        Force the next argument to be read as a file path, even if it looks like an option.\n`
-		db `                        Useful for file names starting with \`-\` or for explicitly specifying a file.\n`
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -d                  `, \
+			`    -d, --forwards      `)
+		db `Switch to forwards/do mode. (default)\n`
+
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -u                  `, \
+			`    -u, --backwards     `)
+		db `Switch to backwards/undo mode.\n`
+
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -D                  `, \
+			`    -D, --reverse       `)
+		db `Swap directions. Equivalent to \`-d\` when in undo mode, and \`-u\` when in do mode.\n`
+%endif ; %ifndef NO_DIRECTIONS
+
+%ifndef NO_ARG_I
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -i                  `, \
+			`    -i, --incremental   `)
+		db          `Toggle incremental mode. When enabled, automatically carries over the checksum\n`
+		db DOC_PAD, `between files. Defaults to off. Missing files do not update the checksum.\n`
+%endif ; %ifndef NO_ARG_I
+
+%ifndef NO_ARG_F
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -f PATH             `, { \
+			`    -f, --file-override PATH\n`, DOC_PAD })
+		db          `Force the next argument to be read as a file path, even if it looks like an option.\n`
+		db DOC_PAD, `Useful for file names starting with \`-\` or for explicitly specifying a file.\n`
+%endif ; %ifndef NO_ARG_F
+
 %ifndef NO_ARG_P
-		db `    -p, --prev-cksm CHECKSUM\n`
-		db `                        Set the starting checksum for subsequent files. Only the first 8 characters of the value are\n`
-		db `                        read, but less is allowed too. If an invalid value is passed, the program exits immediately.\n`
-		db `                        The value should be given in hexadecimal (either \`0xXXXXXXXX\` or \`XXXXXXXX\`).\n`
-%endif
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -p CHECKSUM         `, { \
+			`    -p, --prev-cksm CHECKSUM\n`, DOC_PAD })
+		db          `Set the starting checksum for subsequent files. Only the first 8 characters of the value are\n`
+		db DOC_PAD, `read, but less is allowed too. If an invalid value is passed, the program exits immediately.\n`
+		db DOC_PAD, `The value should be given in hexadecimal (either \`0xXXXXXXXX\` or \`XXXXXXXX\`).\n`
+%endif ; %ifndef NO_ARG_P
+
 %ifndef NO_ARG_C
-		db `    -c, --combine CKSM2 LEN2\n`
-		db `                        Combines two checksums as if the data was contiguous. Uses the previously set checksum\n`
-		db `                        (from \`-p\` or \`-i\`) as the first checksum. LEN2 is the length of the data that CKSM2\n`
-		db `                        represents. To pass two arguments, use: \`-p CKSM1 -c CKSM2 LEN2\`.\n`
-		db `                        For an undo, use: \`-u -p CKSM1 -c CKSM2 LEN2\`.\n`
-		db `                        CKSM2 must be in hexadecimal (same as for \`-p\`), and LEN2 should be in decimal by default.\n`
-		db `                        If LEN2 starts with \`0b\` it is binary, \`0x\` for hex, and \`0o\` or \`0\` is octal.\n`
-%endif
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -c CKSM2 LEN2       `, { \
+			`    -c, --combine CKSM2 LEN2\n`, DOC_PAD })
+		db          `Combines two checksums as if the data was contiguous. Uses the previously set checksum\n`
+		db DOC_PAD, `(from \`-p\` or \`-i\`) as the first checksum. LEN2 is the length of the data that CKSM2\n`
+		db DOC_PAD, `represents. To pass two arguments, use: \`-p CKSM1 -c CKSM2 LEN2\`.\n`
+		db DOC_PAD, `For an undo, use: \`-u -p CKSM1 -c CKSM2 LEN2\`.\n`
+		db DOC_PAD, `CKSM2 must be in hexadecimal (same as for \`-p\`), and LEN2 should be in decimal by default.\n`
+		db DOC_PAD, `If LEN2 starts with \`0b\` it is binary, \`0x\` for hex, and \`0o\` or \`0\` is octal.\n`
+%endif ; %ifndef NO_ARG_C
+
 %ifndef NO_ARG_S
-		db `    -s, --str-data STR  Compute the checksum of data passed directly as a string. Stops at the first null byte.\n`
-		db `                        Can only be 8192 characters before Windows truncates it.\n`
-%endif
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -s STR              `, \
+			`    -s, --str-data STR  `)
+		db          `Compute the checksum of data passed directly as a string. Stops at the first null byte.\n`
+		db DOC_PAD, `Can only be 8192 characters before Windows truncates it.\n`
+%endif ; %ifndef NO_ARG_S
+
 %ifndef NO_ARG_X
-		db `    -x, --hex-data HEX  Compute the checksum of data passed as hexadecimal. Has the same length restriction as \`-s\`.\n`
-		db `                        If an odd number of characters is passed, the last one is ignored. If an invalid byte value\n`
-		db `                        (e.g. "ZZ") is passed, 0xff is used for the byte value. \`-x ffab0012\` is equivalent to a file\n`
-		db `                        where the contents are \`\\xff\\xab\\x00\\x12\`. There cannot be \`0x\` at the start of the string.\n`
-%endif
-		db `\n`
+		db %cond(%isdef(NO_LONG_ARGS), \
+			`    -x STR              `, \
+			`    -x, --hex-data HEX  `)
+		db          `Compute the checksum of data passed as hexadecimal. Windows truncates it to 8192 characters.\n`
+		db DOC_PAD, `If an odd number of characters is passed, the last one is ignored. If an invalid byte value\n`
+		db DOC_PAD, `(e.g. "ZZ") is passed, 0xff is used for the byte value. \`-x ffab0012\` is equivalent to a file\n`
+		db DOC_PAD, `where the contents are \`\\xff\\xab\\x00\\x12\`. There cannot be \`0x\` at the start of the string.\n`
+%endif ; %ifndef NO_ARG_X
+
+		db `\n` ; space between the options and the generic information
+
+%ifndef NO_PIPE
 		db `If input is piped, arguments before the first non-flag argument (\`-\`, \`-f\`, or a filename) will also apply to the pipe.\n`
+		db `NOTE: the pipeline (stdin) collapses \`\\r\\n\` into \`\\n\`, whereas nothing else does.\n`
+%endif
+		;; TODO: maybe change the examples if -r or -l are disabled?
 		db `All arguments can be passed multiple times. The most recent value is used, for example \`-r -l\` is the same as \`-l\`.\n`
 		db `Arguments are processed in one pass, so argument order matters, for example \`-r\` only applies to files after it.\n`
 		db `Multi-character options like \`-abc\` are treated as a single entity, not as \`-a -b -c\`.\n`
-		db `If a directory path is given instead of a file path, a non-fatal error is given.\n`
-		db `NOTE: the pipeline (stdin) collapses \`\\r\\n\` into \`\\n\`, whereas nothing else does.\n`
+		db `If a directory path is given instead of a file path, an error is given, but processing continues.\n`
 		db `\n`
 		db `Exit Codes:\n`
 		db `    0   success\n`
 		db `    1   unknown argument\n`
+
 %ifndef NO_ARG_P
 		db `    2   \`-p\` was given without a value\n`
 		db `    3   \`-p\` was given with an invalid value\n`
 %endif
+
 %ifndef NO_ARG_C
 		db `    4   \`-c\` was given with no values\n`
 		db `    5   \`-c\` was given with only one value\n`
 		db `    6   \`-c\` was given with an invalid first value\n`
 %endif
-%ifndef NO_DIRECTIONS
-		db `    7   \`-u\` was used with a non-seekable file or pipe larger than `, %num(SCRATCH_BUF_LEN - 1), ` bytes\n`
-%endif
-		db `    8   \`-f\` was given without a value\n`
-		db `   -1   something is not implemented. see error message for details\0`
+
+		%cond(%isdef(NO_DIRECTIONS),, {db `    7   \`-u\` was used with a non-seekable file or pipe larger than `, %num(SCRATCH_BUF_LEN - 1), ` bytes\n`})
+		%cond(%isdef(NO_ARG_F),, db `    8   \`-f\` was given without a value\n`)
+		db `   -1   something is not implemented. see the error message for details\0`
 %endif ; %ifdef NO_DOCS (else branch)
 %endif ; %ifndef NO_ARG_H
 
 segment text
 	global main
 
-	extern PeekNamedPipe, GetStdHandle, GetFileType
 	extern GetCommandLineW, GetFileAttributesA		; kernel32.dll
 	extern CommandLineToArgvW						; shell32.dll
 	extern fprintf, printf, puts, _access, exit
 	extern __acrt_iob_func, fopen, fclose, fread	; ucrtbase.dll
 
 %ifndef NO_INLINE_INPUT
-	; only used in adler32_str and adler32_hex, so only import it at least one of those exists.
+	; only used in adler32_str and adler32_hex.
+	;; ucrtbase.dll
 	extern strlen
 %endif
+
 %ifndef NO_ARG_C
-	; only used in parsing for `-c`, so only import it `-c` is enabled.
+	; only used in parsing for `-c`
+	;; ucrtbase.dll
 	extern strtoul
 %endif
+
 %ifndef NO_DIRECTIONS
-	; only used in `adler32_fp_bw`, so only import it if directions are enabled.
+	; only used in `adler32_fp_bw`; only import if directions are enabled.
+	;; ucrtbase.dll
 	extern _fseeki64, _ftelli64
+%endif
+
+%ifndef NO_PIPE
+	; only used in `pipeline_available`; only import if pipes are enabled.
+	; kernel32.dll
+	extern GetStdHandle, GetFileType, PeekNamedPipe
 %endif
 
 %include "../winapi/setup_argc_argv.nasm"
 
-%include "../libasm/callconv.mac"		; required for streq.nasm
-%include "../libasm/streq.nasm"			; for process_arg and main
+%if %isndef(NO_ARG_V) || %isndef(NO_ARG_H) || %isndef(NO_LONG_ARGS)
+	;; streq can be disabled if NO_ARG_V, NO_ARG_H, and NO_LONG_ARGS are all given
+	;; include it if at least one of them is not passed
+	%include "../libasm/callconv.mac"		; required for streq.nasm
+	%include "../libasm/streq.nasm"			; for process_arg and main
+%endif
 
 %if %isndef(NO_ARG_C) || %isndef(NO_ARG_P)
 	;; only include hex_to_u32 if at least one of -c or -p exists.
@@ -319,6 +529,7 @@ segment text
 	%include "../libasm/hex_to_u8.nasm"	; for adler32_hex (-x)
 %endif
 
+%ifndef NO_PIPE
 pipeline_available:
 	;; there might be a way to do this with libc functions.
 	push	rbx	; stdin
@@ -357,6 +568,7 @@ pipeline_available:
 	leave
 	pop 	rbx
 	ret
+%endif
 
 %ifndef NO_ARG_C
 %ifdifi
@@ -571,7 +783,7 @@ _adler32_digest_buffer_fw:
 	movzx	edx, byte [r13 + r8 - i]	; tmp = scratch_buffer[i]
 	add 	rbx, rdx	; a += scratch_buffer[i]
 	add 	rbp, rbx	; b += a
-	%assign i i-1
+	%assign i i - 1
 %endrep
 
 	jmp 	.for_start
@@ -603,7 +815,7 @@ _adler32_digest_buffer_fw:
 	add 	rbp, rbx	; b += a
 	add 	r8d, 1		; `inc r8d` but one byte longer for alignment. avoids `nop` instruction.
 
-	%assign i i-1
+	%assign i i - 1
 %endrep
 .0_leftover:
 	;; do modulos, etc.
@@ -742,10 +954,11 @@ uint32_t adler32_fp_v2(FILE *fp, uint32_t prev_cksm) {
 	;; scratch_buffer : r13, [rel scratch_buffer]
 	;; fp             : r14
 ;; uint32_t adler32_fp_v2_fw(FILE *const fp, uint32_t prev_cksm);
+;; if -u/-d/-D are disabled, rename this function to adler32_fp.
 %cond(%isdef(NO_DIRECTIONS),adler32_fp,adler32_fp_fw):
 	push	rbx	; a
 	push	rbp	; b
-	push	r12	; BASE
+	push	r12	; BASE. ;; NOTE: this function doesn't need prev_cksm, so overwriting r12d is okay.
 	push	r13	; scratch buffer
 	push	r14	; fp
 	sub 	rsp, 32
@@ -803,7 +1016,7 @@ adler32_fp_bw: ; uint32_t adler32_fp_bw(FILE *fp, uint32_t prev_cksm) {
 	push	rbp	; b
 	push	rdi	; pos
 	push	rsi	; len
-	push	r12	; BASE
+	push	r12	; BASE ;; NOTE: this function doesn't need `prev_cksm`, so overwriting r12d is okay.
 	push	r13	; scratch buffer
 	push	r14	; fp
 	sub 	rsp, 32	; shadow space
@@ -886,11 +1099,11 @@ adler32_fp_bw: ; uint32_t adler32_fp_bw(FILE *fp, uint32_t prev_cksm) {
 	;; if the file is the same length as the buffer, this is an incorrect result,
 	;; but that is such a tiny edge case that I don't really care.
 	cmp 	eax, SCRATCH_BUF_LEN
-	je  	.non_seekable_file_large_file
+	je  	.non_seekable_large_file
 
 	call	_adler32_digest_buffer_bw
 	jmp 	.done
-.non_seekable_file_large_file: ;; unused label. only for clarity.
+.non_seekable_large_file: ;; unused label. only for clarity.
 	;; file is non seekable and longer than a single scratch buffer.
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel non_seekable_large_file_undo_str]
@@ -940,7 +1153,7 @@ adler32_fname:
 	jnz 	.directory_passed
 
 	mov 	rcx, r12
-	lea 	rdx, [rel file_read_modifier]
+	lea 	rdx, [rel file_rb_mode]
 	call	fopen
 
 	mov 	r12, rax	; r12 = fp;
@@ -1112,7 +1325,6 @@ adler32_hex: ; uint32_t adler32_hex(char *str, uint32_t prev_cksm);
 .endloop:
 	mov 	byte [r13 + r9], `\0`	; str[i] = '\0';
 	mov 	eax, r9d				; len = i; (but in eax now for the buffer digest functions.)
-
 %ifndef NO_DIRECTIONS
 	;; NOTE: all the variables should be set up now.
 	test	r14b, DIR_BIT_VAL	;; if ((r14b & 4) == 0)
@@ -1136,6 +1348,7 @@ adler32_hex: ; uint32_t adler32_hex(char *str, uint32_t prev_cksm);
 	ret
 %endif ; %ifndef NO_ARG_X
 
+%ifndef NO_PIPE
 process_pipe: ; void process_pipe(uint32_t prev_cksm /*r12d*/, uint8_t flags /*r14b*/);
 	push	rbp
 	mov 	rbp, rsp
@@ -1153,10 +1366,10 @@ process_pipe: ; void process_pipe(uint32_t prev_cksm /*r12d*/, uint8_t flags /*r
 	; mov 	rdx, r12d	;; redundant instruction
 	call	adler32_fp	; uint32_t checksum = adler32_fp(stdin, prev);
 
-	test	r14b, INC_BIT_VAL
-
-	;; if the incremental flag bit is set, update the input checksum
-	cmovnz	r12d, eax	; prev = checksum
+%ifndef NO_ARG_I
+	test	r14b, INC_BIT_VAL	; if (flags & incremental_bit)
+	cmovnz	r12d, eax			;     prev_cksm = cksm;
+%endif
 
 	mov 	edx, eax	; arg2 = checksum
 .print: ; assumes `edx` (checksum) has already been set
@@ -1166,7 +1379,7 @@ process_pipe: ; void process_pipe(uint32_t prev_cksm /*r12d*/, uint8_t flags /*r
 
 	leave
 	ret
-
+%endif ; %ifndef NO_PIPE
 
 ;; this has shorter total opcodes than `jmp .done` and is faster.
 %macro process_arg__ret 0
@@ -1207,40 +1420,42 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	;; TODO: make `-` work as arguments for -p and -c.
 	;; NOTE: for -s and -x, `-` as the argument is treated as if that is the actual data.
 
-	;; `-` means to process the arg
+	;; `-` means to process the pipe. but only if the pipe is enabled.
 	cmp 	byte [r13 + 1], `\0`
-	je  	.pipe_arg
+	je  	%cond(%isdef(NO_PIPE), .unknown_argument, .pipe_arg)
 
 	mov 	cx, word [r13 + 1] ;; next two characters after the '-'.
 
 	;; the arguments are sorted by commonality, based on guessing.
-	process_arg__test_short	'i'
-	process_arg__test_short	'r'
-	%cond(%isdef(NO_ARG_P),, process_arg__test_short	'p')
-	%cond(%isdef(NO_ARG_C),, process_arg__test_short	'c')
-	process_arg__test_short	'F'
-	%cond(%isdef(NO_ARG_S),, process_arg__test_short	's')
-	%cond(%isdef(NO_ARG_X),, process_arg__test_short	'x')
-	process_arg__test_short	'l'
+	%cond(%isdef(NO_ARG_I),, process_arg__test_short		'i')
+	%cond(%isdef(NO_ARG_R),, process_arg__test_short		'r')
+	%cond(%isdef(NO_ARG_P),, process_arg__test_short		'p')
+	%cond(%isdef(NO_ARG_C),, process_arg__test_short		'c')
+	%cond(%isdef(NO_FORMAT),, process_arg__test_short		'F')
+	%cond(%isdef(NO_ARG_S),, process_arg__test_short		's')
+	%cond(%isdef(NO_ARG_X),, process_arg__test_short		'x')
+	%cond(%isdef(NO_ARG_L),, process_arg__test_short		'l')
 	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_short	'u')
 	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_short	'd')
-	process_arg__test_short	'f'
+	%cond(%isdef(NO_ARG_F),, process_arg__test_short		'f')
 	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_short	'D')
 
 	;; NOTE: the long tests need to be after all the short tests.
 	;;       this is because `streq` will clobber `cx`.
 
-	process_arg__test_long	incremental_arg									; -i
-	process_arg__test_long	raw_arg											; -r
-	%cond(%isdef(NO_ARG_P),, process_arg__test_long	prev_arg)				; -p
-	%cond(%isdef(NO_ARG_C),, process_arg__test_long	combine_arg)			; -c
-	process_arg__test_long	Fformatswap_arg									; -F
-	%cond(%isdef(NO_ARG_S),, process_arg__test_long	str_data_arg)			; -s
-	process_arg__test_long	long_arg										; -l
-	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_long	ubackwards_arg)	; -u
-	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_long	dforwards_arg)	; -d
-	process_arg__test_long	file_override_arg								; -f
-	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_long	Dreverse_arg)	; -D
+%ifndef NO_LONG_ARGS
+	%cond(%isdef(NO_ARG_I),, process_arg__test_long			incremental_arg)	; -i
+	%cond(%isdef(NO_ARG_R),, process_arg__test_long			raw_arg)			; -r
+	%cond(%isdef(NO_ARG_P),, process_arg__test_long			prev_arg)			; -p
+	%cond(%isdef(NO_ARG_C),, process_arg__test_long			combine_arg)		; -c
+	%cond(%isdef(NO_FORMAT),, process_arg__test_long		Fformatswap_arg)	; -F
+	%cond(%isdef(NO_ARG_S),, process_arg__test_long			str_data_arg)		; -s
+	%cond(%isdef(NO_ARG_L),, process_arg__test_long			long_arg)			; -l
+	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_long	ubackwards_arg)		; -u
+	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_long	dforwards_arg)		; -d
+	%cond(%isdef(NO_ARG_F),, process_arg__test_long			file_override_arg)	; -f
+	%cond(%isdef(NO_DIRECTIONS),, process_arg__test_long	Dreverse_arg)		; -D
+%endif
 
 	;; no more cases to test for. unknown argument
 	;; fallthrough
@@ -1252,6 +1467,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 	mov 	rcx, 1
 	call	exit
+
 %ifndef NO_ARG_C
 .arg_match_c:
 	inc 	ebx
@@ -1284,8 +1500,10 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	r8 , rax	;; len2 = strtoul(second argument)
 	call	adler32_combine
 
+%ifndef NO_ARG_I
 	test	r14b, INC_BIT_VAL	; if (inc_bit_set)
 	cmovnz	r12d, eax			;     prev_cksm = checksum;
+%endif
 
 	lea 	rcx, [rel valid_line_fmt]
 	mov 	edx, eax
@@ -1293,7 +1511,8 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	call	printf		; printf(valid_line_fmt, checksum, "[COMBINED]")
 
 	process_arg__ret
-%endif
+%endif ; %ifndef NO_ARG_C
+
 %ifndef NO_DIRECTIONS
 .arg_match_u:
 	test	r14b, DIR_BIT_VAL	; if (undo_bit_active == 0)
@@ -1309,15 +1528,20 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	xor 	r14b, DIR_BIT_VAL
 
 	process_arg__ret
-%endif
+%endif ; %ifndef NO_DIRECTIONS
+
+%ifndef NO_ARG_I
 .arg_match_i:
 	xor  	r14b, INC_BIT_VAL
 
 	process_arg__ret
+%endif
+
+%ifndef NO_FORMAT
+;; all the branches have to exist unless -F is disabled too.
 .arg_match_F:
 	cmp 	byte [rel valid_line_fmt + 4], `\t`
 	je  	.arg_match_r
-	;; branch fallthrough
 .arg_match_l:
 	mov 	word [rel valid_line_fmt + 4], `\t%`
 	mov 	word [rel invalid_line_fmt + 17], `\t%`
@@ -1330,6 +1554,8 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	word [rel dir_passed_line_fmt + 17], `\n\0`
 
 	process_arg__ret
+%endif ; %ifndef NO_FORMAT
+
 %ifndef NO_ARG_X
 .arg_match_x:
 	inc 	ebx					; i++
@@ -1343,6 +1569,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 		jmp 	.print_im_result
 	%endif
 %endif
+
 %ifndef NO_ARG_S
 .arg_match_s:
 	inc 	ebx					; i++
@@ -1351,11 +1578,14 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	call	adler32_str
 	;; branch fallthrough
 %endif
+
 %ifndef NO_INLINE_INPUT ;; include if either -s or -x exist
 .print_im_result:
 	;; print immediate result
-	test	r14b, INC_BIT_VAL	; if (incremental_bit_set)
-	cmovnz	r12d, eax			;     prev = checksum
+%ifndef NO_ARG_I
+	test	r14b, INC_BIT_VAL	; if (flags & incremental_bit)
+	cmovnz	r12d, eax			;     prev_cksm = cksm;
+%endif
 
 	;; do printing stuff
 	lea 	rcx, [rel valid_line_fmt]	; NOTE: it will always be valid.
@@ -1364,7 +1594,8 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	call	printf		; printf(valid_line_fmt, checksum, filename)
 
 	process_arg__ret
-%endif
+%endif ; %ifndef NO_INLINE_INPUT
+
 %ifndef NO_ARG_P
 .arg_match_p:
 	inc 	ebx
@@ -1386,6 +1617,8 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 	process_arg__ret
 %endif
+
+%ifndef NO_ARG_F
 .arg_match_f:
 	inc 	ebx		; i++
 
@@ -1398,9 +1631,13 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	add 	rsp, 8	;; remove the return address from the stack
 	jmp 	main.process_file
 	;; return, but not to the call site.
+%endif
+
+%ifndef NO_PIPE
 .pipe_arg:
 	call	process_pipe
 	process_arg__ret
+%endif
 ;;;;;;;;;;;;;;;;;;;; error cases 2-6, 8 ;;;;;;;;;;;;;;;;;;;;
 %ifndef NO_ARG_P
 .prev_no_arg:
@@ -1420,6 +1657,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	rcx, 3
 	call	exit
 %endif
+
 %ifndef NO_ARG_C
 .comb_no_args:
 	mov 	rcx, [rel pstderr]
@@ -1446,6 +1684,8 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	rcx, 6
 	call	exit
 %endif
+
+%ifndef NO_ARG_F
 .force_file_no_arg:
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel force_file_no_arg_str]
@@ -1453,6 +1693,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 	mov 	ecx, 8
 	call	exit
+%endif
 
 %unmacro process_arg__ret 0
 %unmacro process_arg__test_short 1
@@ -1497,6 +1738,7 @@ main:
 	call	__acrt_iob_func
 	mov 	[rel pstderr], rax
 
+%ifndef NO_PIPE
 	call	pipeline_available
 
 	test 	al, al
@@ -1507,6 +1749,7 @@ main:
 
 	test 	edi, edi	; skip testing arguments if there are no arguments
 	jz  	.process_pipe_if_given
+%endif
 .test_arg1: ;; test for things that only work as the first argument
 	;; NOTE: there is no ebx incrementing because currently all the options  only allowed as the first argument
 	;;       exit the program early, and everything else should be processed in `process_arg`, or is a file.
@@ -1518,17 +1761,14 @@ main:
 	jz  	.help		;;         print help text
 %endif
 
-	;; TODO: the [rcx] and [rcx + 1] accesses can be changed into a single `word` access, and then
-	;;       separate checks against `cl` and `ch`. I don't know which byte would be in which register though.
-
 	;; if the first character is not '-', checking for arguments is useless because they will not match.
 	mov 	rcx, [rsi]
 	cmp 	byte [rcx], '-'
-	jne 	.process_pipe_if_given
+	jne 	%cond(%isdef(NO_PIPE), .arg_pass_2, .process_pipe_if_given)
 
-	;; '-' with nothing after it.
+	;; '-' with nothing after it. only has any meaning if the pipe is enabled.
 	cmp 	byte [rcx + 1], `\0`
-	je  	.process_pipe_explicit
+	je  	%cond(%isdef(NO_PIPE), .arg_pass_2, .process_pipe_explicit)
 
 	;; long form arguments
 
@@ -1538,12 +1778,17 @@ main:
 	call	streq
 	je  	.help
 
-	mov 	rcx, [rsi]
+	%ifndef NO_ARG_V
+		;; if --version doesn't exist, reloading `rcx` is a redundant instruction.
+		mov 	rcx, [rsi]
+	%endif
 %endif
 
+%ifndef NO_ARG_V
 	lea 	rdx, [rel ver_arg] ; --version
 	call	streq
 	je  	.version
+%endif
 
 	mov 	rcx, [rsi]			; tmp = argv[0]
 	mov 	cx, word [rcx + 1]	; tmp = (char []) {argv[0][1], argv[0][2]}
@@ -1556,8 +1801,13 @@ main:
 	je  	.help
 %endif
 
+%ifndef NO_ARG_V
 	cmp 	cx, `v\0`
 	je  	.version
+%endif
+
+%ifndef NO_PIPE
+;; if the pipe is disabled, skip the first pass and the pipe processing
 .arg_pass_1: ; go through the arguments until there is a non-option argument
 	cmp 	ebx, edi				; if (i == argc)
 	je  	.process_pipe_if_given	;     goto process_pipe_if_given;
@@ -1591,6 +1841,7 @@ main:
 .process_pipe:
 	call	process_pipe
 	;; fall through to the second argument pass
+%endif ; %ifndef NO_PIPE
 .arg_pass_2:	;; this time, iterate through everything, including file names
 	; while (i < argc)
 	cmp 	ebx, edi
@@ -1635,10 +1886,10 @@ main:
 	inc 	ebx
 	jmp 	.arg_pass_2	; continue
 .file_found:
-	test	r14b, INC_BIT_VAL
-
-	;; if the incremental flag bit is set, update the input checksum
-	cmovnz	r12d, eax	; prev = checksum
+%ifndef NO_ARG_I
+	test	r14b, INC_BIT_VAL	; if (flags & incremental_bit)
+	cmovnz	r12d, eax			;     prev_cksm = cksm;
+%endif
 
 	lea 	rcx, [rel valid_line_fmt]
 	mov 	edx, eax	; checksum
@@ -1651,6 +1902,7 @@ main:
 	xor 	eax, eax
 	leave
 	ret
+
 %ifndef NO_ARG_H
 .help:
 	lea 	rcx, [rel version_str]
@@ -1663,6 +1915,8 @@ main:
 	leave
 	ret
 %endif
+
+%ifndef NO_ARG_V	
 .version:
 	lea 	rcx, [rel version_str]
 	call	puts
@@ -1670,3 +1924,4 @@ main:
 	xor 	eax, eax
 	leave
 	ret
+%endif
