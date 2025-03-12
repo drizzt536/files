@@ -1,0 +1,43 @@
+\documentclass{standalone}
+\usepackage{circuitikz, xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\draw 
+
+	% circuit boundary
+	(0, 0)
+	-- (7, 0)
+	to[R, l_=$50\,\Omega$] (7, 4)
+	-- (7, 4)
+	to[rmeter, t=A] (5, 4)
+	to[R, l_=$30\,\Omega$] (0, 4)
+	to[R, l_=$75\,\Omega$] (0, 0)
+
+	% first vertical section
+	(1, 4)
+	to[R, l^=$20\,\Omega$] (1, 2)
+	to[battery1, l=$\varepsilon$] (1, 0)
+
+	% second vertical section
+	(4, 4)
+	to[battery1, l^={25\,V}] (4, 2)
+	to[short, nos, l_=S] (4, 0)
+
+	% voltmeter section
+	(7, 1)
+	-- (9, 1)
+	to[rmeter, t=V] (9, 3)
+	-- (7, 3)
+	;
+
+	% page margins
+	\node at (-1.2, -0.25) {};
+	\node at (9.7, 4.8) {};
+\end{circuitikz}
+
+\end{document}

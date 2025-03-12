@@ -1,0 +1,48 @@
+\documentclass{standalone}
+\usepackage{circuitikz, xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\draw
+
+	% main circuit edge
+	(0, 0)
+	to[R, l=$35\,\Omega$] (5, 0)
+	to[battery1, invert, l=$\varepsilon$] (6, 0)
+	-- (8.5, 0)
+	-- (8.5, 3)
+	-- (6, 3)
+	to[R, l_=$15\,\Omega$] (3.75, 3)
+	-- (3, 3)
+	to[R, l=$45\,\Omega$] (0, 3)
+	-- (0, 3)
+	-- (0, 0)
+
+	% parallel part
+	(4, 4.5)
+	-- (4, 1.5)
+	to[R, l^=$15\,\Omega$] (5.75, 1.5)
+	-- (7, 1.5)
+	to[R, l_=$10\,\Omega$] (7, 3)
+	-- (7, 4.5)
+	to[rmeter, t=A] (5.5, 4.5)
+	to[R, l_=$25\,\Omega$] (4.25, 4.5)
+	-- (4, 4.5)
+
+	% voltmeter part
+	(2.25, 3)
+	-- (2.25, 4)
+	to[rmeter, t=V] (0.75, 4)
+	-- (0.75, 3)
+	;
+
+	% page margins ~0.2 on each side.
+	\node at (-0.2, -0.55) {};
+	\node at (8.7, 5.2) {};
+\end{circuitikz}
+
+\end{document}

@@ -1,0 +1,39 @@
+\documentclass{standalone}
+\usepackage{circuitikz, xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\draw
+
+	% edge of circuit
+	(0, 0)
+	to[R, l^=$30\,\Omega$] (5, 0)
+	to[R, l_=$50\,\Omega$] (5, 4)
+	to[short, nos, invert, l^=S] (0, 4)
+	to[C, l_=$15\,\mu$F] (0, 0)
+
+	% parallel section
+	(0, 3)
+	-- (2, 3)
+	to[C, l^=$20\,\mu$F] (2, 1)
+	-- (0, 1)
+	;
+
+	% direction labels for capacitor 1
+	\node at (-0.3, 2.4) {+};
+	\node at (-0.3, 1.6) {--};
+
+	% direction labels for capacitor 2
+	\node at (2.3, 2.4) {+};
+	\node at (2.3, 1.6) {--};
+
+	% page margins
+	\node at (-1.5, -0.4) {};
+	\node at (6.1, 4.2) {};
+\end{circuitikz}
+
+\end{document}

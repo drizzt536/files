@@ -1,0 +1,35 @@
+\documentclass{standalone}
+\usepackage{circuitikz, xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\draw
+
+	% circuit edge
+	(0, 0)
+	to[battery1, invert, l_=$\varepsilon$] (0, 3)
+	-- (3, 3)
+	to[R, l^=$R_1$] (4.5, 1.5)
+	to[R, l^=$R_2$] (3, 0)
+	-- (0, 0)
+
+	% inner half
+	(3, 3)
+	to[R, l_=$R_3$] (1.5, 1.5)
+	to[R, l_=$R_4$] (3, 0)
+
+	% middle bridge
+	(1.5, 1.5)
+	to[R, l^=$R_5$] (4.5, 1.5)
+	;
+
+	% page margins
+	\node at (-0.7, -0.25) {};
+	\node at (4.75, 3.25) {};
+\end{circuitikz}
+
+\end{document}

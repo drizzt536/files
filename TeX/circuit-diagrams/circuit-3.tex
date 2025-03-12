@@ -1,0 +1,40 @@
+\documentclass{standalone}
+\usepackage{circuitikz, xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\draw
+
+	% outside edge of the circuit
+	(0, 0)
+	-- (1, 0)
+	to[R, l_=$R_3$] (3, 0)
+	-- (4, 0)
+	-- (4, 2)
+	-- (3, 2)
+	-- (3, 2.75)
+	to[R, l^=$R_1$] (1, 2.75)
+	-- (1, 2.75)
+	-- (1, 2)
+	-- (0, 2)
+	to[battery1, l_=$\varepsilon$] (0, 0)
+	-- (0, 0)
+
+	% bottom path of parallel resistor section
+	(3, 2)
+	-- (3, 1.25)
+	to[R, l^=$R_2$] (1, 1.25)
+	-- (1, 1.25)
+	-- (1, 2)
+	;
+
+	% page margins
+	\node at (-0.9, -0.85) {};
+	\node at (4.2, 3.15) {};
+\end{circuitikz}
+
+\end{document}

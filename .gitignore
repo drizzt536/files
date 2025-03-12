@@ -32,6 +32,9 @@ __pycache__
 *.obj
 *.class
 
+/TeX/circuit-diagrams/originals/
+/TeX/circuit-diagrams/*.png
+
 !/JavaScript/test.js
 !/Python/manim/*/*.py
 !/Python/manim/*/manim.cfg

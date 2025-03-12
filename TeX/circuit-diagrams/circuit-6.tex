@@ -1,0 +1,37 @@
+\documentclass{standalone}
+\usepackage{circuitikz, xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\draw
+
+	% circuit edge
+	(0, 0)
+	to[short, nos, l_=$S$] (2, 0)
+	to[R, l^=$R$] (4, 0)
+	to[rmeter, t=A] (7, 0)
+	-- (7, 2)
+	-- (6, 2)
+	-- (6, 4)
+	to[rmeter, t=V] (1, 4)
+	-- (1, 2)
+	-- (0, 2)
+	-- (0, 0)
+
+	% middle section
+	(1, 2)
+	-- (2.5, 2)
+	to[R, l=$r$] (4, 2)
+	to[battery1, l=$\varepsilon$] (5, 2)
+	-- (6, 2)
+	;
+
+	\node at (-0.2, -0.7) {};
+	\node at (7.2, 4.6) {};
+\end{circuitikz}
+
+\end{document}
