@@ -1,9 +1,9 @@
-# requires MinGW on Windows.
+# requires MinGW on Windows (MSYS2 might also work, idk)
 
 CC = gcc
 
 # no -pedantic. GNU extensions are required.
-CFLAGS = -std=gnu23 -Wall -Wextra -Ofast
+CFLAGS = -std=gnu23 -Werror -Wall -Wextra -Ofast
 
 override HASH := $(shell git log -1 --format=%H -- ./assemble.c)
 
@@ -48,9 +48,9 @@ endif
 prereqs-exist:
 	@# given that `make` is present, `nasm` is the only one likely to be missing. \
 	echo "# finding requisite subprograms:";      #\
-	start="\x1b[38;2;166;12;26mError:";          #\
+	start="\e[38;2;166;12;26mError:";            #\
 	end="could not be found. It is required";    #\
-	end="$$end for the output program.\x1b[0m\n"; #\
+	end="$$end for the output program.\e[0m\n";   #\
 	missing=0;                                      #\
 	printf "    # ";                                   #\
 	if ! command -v nasm; then                           #\

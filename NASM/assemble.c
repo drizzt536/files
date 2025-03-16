@@ -1,18 +1,29 @@
 // make all
 
+// the version number is given in the VERSION macro
+
 // the build file for this program is ./Makefile
 // the rest of the NASM development system is here:
 	// - main syntax file: ../SublimeText/NASM.sublime-syntax
 	// - other stuff     : ../SublimeText/NASM/
 
+// TODO: collapse spaces in the command printouts.
+// TODO: add `--aslr` option. (pass `--dynamicbase` to `ld`)
 // TODO: if no extension is given and there is no `.nasm`, try other extensions
 // TODO: allow other entry points. And consider making mainCRTStartup the default.
 // TODO: make an argument to print everything without color.
+// TODO: add something to use different libraries on different operating systems
+	// specifically for the infer line, like `--l ucrtbase` on Windows, but `--l c` on Linux.
+// TODO: make it so `--` by itself as an argument makes everything after it get passed
+	// to the final executable with `--e`
+
 
 #ifndef __GNUC__
 	#error "This program only works with GCC or compilers that allow GCC extensions."
 #elif __GNUC__ < 10
-	#error "Use GCC 10 or newer. Required for C20 `__VA_OPT__` (probably, idk)."
+	// should this be __STDC_VERSION__?
+	// I don't actually think all GCC 10.x versions even have C23
+	#error "Use GCC 10 or newer. Required for C23 `__VA_OPT__`."
 #endif
 
 
@@ -25,15 +36,17 @@
 	// malloc, exit, free, system, remove
 #include "../C/string-join.h"
 
-#define ERRLOG_OOM_EC 3
-#define ERRLOG_INVALID_FILE_EC 4
-#define ERRLOG_FILE_VAL_SPACES " "
+#define ERRLOG_OOM_EC           3
+#define ERRLOG_INVALID_FILE_EC  4
+#define ERRLOG_FILE_VAL_SPACES  "  "
 // ANSI_COLOR, ANSI_RESET, ANSI_RED, ANSI_GREEN, ANSI_ORANGE,
 // CON_COLOR, CON_RESET, printf_color, puts_color, eprintf, eputs,
 // OOM, VALIDATE_FILE,
 // stdio.h
 	// printf, puts, sprintf
 #include "../C/error-print.h"
+// #undef ERRLOG_LEVEL
+// #define ERRLOG_LEVEL ERRLOG_ALL
 
 // bool, false, true
 #include <stdbool.h>
@@ -57,11 +70,11 @@
 #endif
 
 #define TIMESTAMP __DATE__ " " __TIME__
-#define VERSION "NASM Build Tool v3.0\n" TIMESTAMP "\n" GIT_DATA
+#define VERSION "NASM Build Tool v3.1\n" TIMESTAMP "\n" GIT_DATA
 
 #define _VALIDATE_FILE(path, quoted, verbose, code) ({ \
 	if (quoted) path.s[path.l - 1] = '\0';             \
-	if (verbose) putchar(' ');                         \
+	/*if (verbose) putchar(' ');*/                     \
 	VALIDATE_FILE(path.s + quoted, code, verbose);     \
 	if (quoted) path.s[path.l - 1] = '"';              \
 })
@@ -71,8 +84,11 @@
 
 #define AF_char         AUTO_FREE(char)
 #define AF_string       AUTO_FREE(string)
+#define AF_FILE         AUTO_FREE(FILE) // should be a `FILE *` variable and not just `FILE`
 #define AF_Params       AUTO_FREE(Params)
 #define AF_FilePathData AUTO_FREE(FilePathData)
+
+#define FORCE_INLINE __attribute__((always_inline)) static inline
 
 typedef struct {
 	const string libs;
@@ -94,39 +110,35 @@ typedef struct {
 
 //## functions ##//
 
-__attribute__((always_inline)) static inline void cleanup_array(const void *p) {
-	free(* (void **) p);
-}
-__attribute__((always_inline)) static inline void cleanup_Params(const Params *restrict p) {
-	free((void *) p->libs.s);
-}
-__attribute__((always_inline)) static inline void cleanup_string(const string *p) {
-	free((void *) p->s);
-}
-__attribute__((always_inline)) static inline void cleanup_FilePathData(const FilePathData *restrict p) {
-	free((void *) p->path.s);
-}
+// these all assume you didn't free the values themselves. doing so may cause undefined behavior.
+// these take in `const`s in case your variable was constant,
+// but casts it away because `free` doesn't like it.
+FORCE_INLINE void cleanup_array       (const void *p)         { free(* (void **) p); }
+FORCE_INLINE void cleanup_Params      (const Params *p)       { free((void *) p->libs.s); }
+FORCE_INLINE void cleanup_FILE        (FILE *const *fp)       { fclose(*fp); }
+FORCE_INLINE void cleanup_string      (const string *p)       { free((void *) p->s); }
+FORCE_INLINE void cleanup_FilePathData(const FilePathData *p) { free((void *) p->path.s); }
 
-__attribute__((noreturn)) static inline void help(const unsigned char options) {
+FORCE_INLINE void help(const unsigned char options) {
 	bool
-		include_usage                 = (options >> 7) & 1,
-		include_overview              = (options >> 6) & 1,
-		include_options               = (options >> 5) & 1,
-		include_exit_codes            = (options >> 4) & 1,
-		include_out_of_memory_codes   = (options >> 3) & 1,
-		include_file_validation_codes = (options >> 2) & 1,
-		include_examples              = (options >> 1) & 1,
-		include_version               = (options >> 0) & 1;
+		include_usage                 = options & (1 << 7),
+		include_overview              = options & (1 << 6),
+		include_options               = options & (1 << 5),
+		include_exit_codes            = options & (1 << 4),
+		include_out_of_memory_codes   = options & (1 << 3),
+		include_file_validation_codes = options & (1 << 2),
+		include_examples              = options & (1 << 1),
+		include_version               = options & (1 << 0);
 
 	if (include_usage) puts(
 		"Usage: assemble infile [options]\n"
 	);
 	if (include_overview) puts(
 		"Rough Overview of Process:\n"
-		"    # infer arguments from infile, when applicable"
+		"    # infer arguments from infile, when applicable\n"
 		"    nasm -f" NASM_FORMAT " -Werror $infile -o $object $params\n"
 		"\n"
-		"    # the print-out will use `--rename` which is the same.\n"
+		"    # the print-out will use `--rename` which should be the same.\n"
 		"    objcopy --rename-section text=.text \\\n"
 		"            --rename-section data=.data  \\\n"
 		"            --rename-section rdata=.rdata \\\n"
@@ -160,23 +172,21 @@ __attribute__((noreturn)) static inline void help(const unsigned char options) {
 		"\n"
 		"    code | operation          | description/condition\n"
 		"  -------+--------------------+---------------------------------------------\n"
-		"      1  | filename parsing   | input filename is quoted\n"
-		"      2  | filename parsing   | input filename has spaces but is not quoted\n"
-		"      3  | filename parsing   | input filename has no spaces or quotes\n"
-		"      4  | argument inferring | adding argument character to string\n"
-		"      5  | argument inferring | adding null byte to string\n"
-		"      6  | argument inferring | malformed argument line or no arguments\n"
-		"      7  | argument inferring | joining CLI args\n"
-		"      8  | argument inferring | joining inferred and CLI args together\n"
-		"      9  | argument parsing   | `--l` is passed\n"
-		"     10  | argument parsing   | `--l` is not passed\n"
-		"     11  | setup              | creating output file string\n"
-		"     12  | setup              | creating object file string\n"
-		"     13  | setup              | argument parsing, `--infer` not passed.\n"
-		"     14  | assembling         | creating command string\n"
-		"     15  | segment renaming   | creating command string\n"
-		"     16  | linking            | creating command string\n"
-		"     17  | stripping          | creating command string\n"
+		"      1  | filename parsing   | output string could not be created\n"
+		"      2  | argument inferring | adding argument character to string\n"
+		"      3  | argument inferring | adding null byte to string\n"
+		"      4  | argument inferring | malformed argument line or no arguments\n"
+		"      5  | argument inferring | joining CLI args\n"
+		"      6  | argument inferring | joining inferred and CLI args together\n"
+		"      7  | argument parsing   | `--l` is passed\n"
+		"      8  | argument parsing   | `--l` is not passed\n"
+		"      9  | setup              | creating output file string\n"
+		"     10  | setup              | creating object file string\n"
+		"     11  | setup              | argument parsing, `--infer` not passed.\n"
+		"     12  | assembling         | creating command string\n"
+		"     13  | segment renaming   | creating command string\n"
+		"     14  | linking            | creating command string\n"
+		"     15  | stripping          | creating command string\n"
 	);
 	if (include_file_validation_codes) puts(
 		"File Validation Error Codes:\n"
@@ -197,7 +207,7 @@ __attribute__((noreturn)) static inline void help(const unsigned char options) {
 		"        no extra arguments to nasm.\n"
 		"        no libraries passed to ld\n"
 		"\n"
-		"    ./assemble ../file.asm --e -g --l msvcrt,kernel32\n"
+		"    ./assemble ../file.asm --e -g --l ucrtbase,kernel32\n"
 		"        input = ./../file.asm\n"
 		"        strip, normalize segments, remove object file, and execute\n"
 		"        pass `-g` to nasm\n"
@@ -231,11 +241,11 @@ __attribute__((noreturn)) static inline void help(const unsigned char options) {
 		"    --a              assemble only. do not link or normalize segment names\n"
 		"    --e              run final executable when done\n"
 		"    -h, -?, --help   print this message. only works as the first argument\n"
-		"    --help=[group]   print extended help text. only works as the first argument\n"
+		"    --help=GROUP     print extended help text. only works as the first argument\n"
 		"                     group must be one of the following:\n"
 		"                         - error codes: errors, codes, validation, memory, exit\n"
 		"                         - compound groups: none, all, basic, default, extra\n"
-		"                         - other groups: overview, usage, version, examples, options,\n"
+		"                         - other groups: overview, usage, version, examples, options, arguments, args\n"
 		"    --infer          infer arguments from the first line of the input file. only works\n"
 		"                     as the first argument after the filename. other arguments can be\n"
 		"                     passed after it. the line should be of the following format:\n"
@@ -244,8 +254,8 @@ __attribute__((noreturn)) static inline void help(const unsigned char options) {
 		"                     and they aren't used; they can be quoted. there can be more than one\n"
 		"                     semicolon at the start, but there has to be at least one.\n"
 		"    --K              always keep object file (default is to remove)\n"
-		"    --k              keep object file on linker fail\n"
-		"    --l [list]       includes comma-separated libraries in linking\n"
+		"    --k              keep object file only on linker fail\n"
+		"    --l LIST         includes comma-separated list of libraries in linking\n"
 		"    --N              do not normalize segment names, leave them as the original\n"
 		"    --S              do not strip executable (default is to strip everthing)\n"
 		"    --s              don't print anything (silent), and\n"
@@ -266,7 +276,8 @@ __attribute__((noreturn)) static inline void help(const unsigned char options) {
 
 	exit(0);
 }
-__attribute__((noreturn)) static inline void version(void) {
+
+FORCE_INLINE void version(void) {
 	printf(VERSION);
 
 	exit(0);
@@ -276,30 +287,35 @@ char *strnkdup(const char *const s, size_t n, const size_t k) {
 	// str n,k dup
 	// strndup(s, n) with k extra null bytes at the end.
 	// if n + k < MAX(n, k), an overflow occured.
+	// I feel like something here is off by one, but I don't know for sure.
 
+	edprintf("DEBUG: strnkdup(\"%s\", %zu, %zu)\n", s, n, k);
+
+	edprintf("DEBUG: n before `n = strnlen(s, n);`: %zu\n", n);
 	n = strnlen(s, n);
-	char *const restrict res = (char *) malloc(n + k + 1);
+	edprintf("DEBUG: n after `n = strnlen(s, n);`: %zu\n", n);
+
+	edprintf("DEBUG: (n + 1) + (k) + 1 == %zu\n", n + k + 2);
+	// I actually have no idea why this has to be n + k + 2, and not n + k + 1.
+	char *const res = (char *) malloc(n + k + 2);
+	edprintf("DEBUG: memory allocated: malloc(%zu) == %p\n", n + k + 2, res);
 
 	if (res == NULL)
 		return NULL;
 
-	// this version gives 2 less instructions with -Oz (assuming GCC 14.1).
 	memcpy(res, s, n);
 	memset(res + n, '\0', k + 1);
-
-	// this version takes 1 less cpu cycle on -Ofast
-	/*strncpy(res, s, n);
-	memset(res + n + 1, '\0', k);*/
 
 	return res;
 }
 
-static inline char *strkdup(const char *const s, const size_t k) {
+FORCE_INLINE char *strkdup(const char *const s, const size_t k) {
 	// strdup(s) with k extra null bytes at the end.
 	return strnkdup(s, -1, k);
 }
 
 FilePathData parse_input_filename(const char *const filename) {
+
 	// NOTE: if the input file is "main.", the extension is "".
 
 	// TODO: maybe just always add quotes around file paths?
@@ -307,17 +323,11 @@ FilePathData parse_input_filename(const char *const filename) {
 	char *outstr; // outstr is always set before usage, `= NULL` isn't required.
 
 	const size_t n = strlen(filename);
-	size_t i = n;
 
 	bool
 		hasExtension = false,
 		needsQuotes = false,
 		hasQuotes = false;
-
-	// don't convert / to \ here on Windows.
-	// convert it right before execution.
-	// The rest of the sub-programs allow / and \, so they will work either way.
-	// I don't want the command printouts to have backslashes. yucky.
 
 	// determine if it has quotes or needs quotes.
 	for (size_t j = 0; j < n; j++) switch (filename[j]) {
@@ -352,6 +362,7 @@ FilePathData parse_input_filename(const char *const filename) {
 	}
 
 	// determine if it has an extension
+	size_t i = n; // extension index
 	while (i --> 0)
 		if (filename[i] == '.') {
 			hasExtension = true;
@@ -366,56 +377,72 @@ FilePathData parse_input_filename(const char *const filename) {
 	if (!hasExtension)
 		i = n;
 
-	// these condition need to be in this order.
-	if (hasQuotes) {
-		// f.nasm"0 or f
-		outstr = strkdup(filename, 5*!hasExtension);
-		OOM(outstr, 1);
+	char *new_ext = ".nasm\"";
+	const int max_ext_len = 5;
 
-		*outstr = '"'; // in case it was single quoted.
-		outstr[n - 1] = hasExtension ? '"' : '.';  // " (or ')
+	edprintf("DEBUG: filename    : %s\n", filename);
+	edprintf("DEBUG: hasQuotes   : %s\n", hasQuotes    ? "true" : "false");
+	edprintf("DEBUG: needsQuotes : %s\n", needsQuotes  ? "true" : "false");
+	edprintf("DEBUG: hasExtension: %s\n", hasExtension ? "true" : "false");
 
-		if (!hasExtension) {
-			outstr[n + 0] = 'n';  // \0
-			outstr[n + 1] = 'a';  // +1
-			outstr[n + 2] = 's';  // +2
-			outstr[n + 3] = 'm';  // +3
-			outstr[n + 4] = '"';  // +4
-			// outstr[n + 5] = '\0'; // +5
-		}
-	}
-	else if (needsQuotes) {
-		// needs quotes (has spaces), but doesn't have quotes.
-		// "f.nasm"0 or "f"0
-		outstr = (char *) malloc(n + 3 + 5*!hasExtension);
-		OOM(outstr, 2);
-
-		*outstr = '"';
-		memcpy(outstr + 1, filename, n);
-		if (!hasExtension) {
-			outstr[n + 1] = '.'; // +1
-			outstr[n + 2] = 'n'; // +2
-			outstr[n + 3] = 'a'; // +3
-			outstr[n + 4] = 's'; // +4
-			outstr[n + 5] = 'm'; // +5
-		}
-		outstr[n + 1 + 5*!hasExtension] = '"';
-		outstr[n + 2 + 5*!hasExtension] = '\0';
+	if (!hasQuotes && needsQuotes) {
+		edprintf("DEBUG: !hasQuotes && needsQuotes is true\n");
+		edprintf("DEBUG: malloc size: %zu\n", n + 3 + max_ext_len*!hasExtension);
+		outstr = (char *) malloc(n + 3 + max_ext_len*!hasExtension);
 	}
 	else {
+		edprintf("DEBUG: !hasQuotes && needsQuotes is false\n");
+		outstr = strnkdup(filename, n, max_ext_len*!hasExtension);
+	}
+
+	OOM(outstr, 1);
+
+	///////////////////////////////////////////////////////
+
+	if (hasQuotes) {
+		edprintf("DEBUG: if (hasQuotes)\n");
+		// "f" -> f.nasm"0
+		// "f.nasm" -> "f.nasm"
+		*outstr = '"'; // normalize to double quotes
+
+		if (hasExtension)
+			outstr[n - 1] = '"'; // normalize to double quotes
+		else
+			strcpy(outstr + n - 1, new_ext);
+	}
+	else if (needsQuotes) {
+		edprintf("DEBUG: else if (needsQuotes)\n");
+		// needs quotes (has spaces), but doesn't have quotes.
+		// "f.nasm"0 or "f"0
+
+		*outstr = '"';
+		memcpy(outstr + 1, filename, n); // shift everything over by one
+
+		if (hasExtension) {
+			outstr[n + 1] = '"';
+			outstr[n + 2] = '\0';
+		}
+		else
+			strcpy(outstr + n + 1, new_ext);
+	}
+	else {
+		edprintf("DEBUG: else\n");
 		// f.nasm0 or f
-		outstr = strkdup(filename, 5*!hasExtension);
-		OOM(outstr, 3);
+		const int new_ext_len = strlen(new_ext);
 
 		if (!hasExtension) {
-			outstr[n + 0] = '.';  // \0
-			outstr[n + 1] = 'n';  // +1
-			outstr[n + 2] = 'a';  // +2
-			outstr[n + 3] = 's';  // +3
-			outstr[n + 4] = 'm';  // +4
-			// outstr[n + 5] = '\0'; // +5
+			// everything except the quote
+			memcpy(outstr + n, new_ext, new_ext_len - 1);
+			outstr[n + new_ext_len] = '\0'; // this may or may not be off by one
 		}
 	}
+	edprintf("DEBUG: outstr has been created\n");
+	edprintf("DEBUG: outstr: %s\n", outstr);
+	edprintf("DEBUG: 1 + strlen(outstr) == %zu\n", 1 + strlen(outstr));
+	edprintf("DEBUG: outstr size allocated: %zu\n", 1 + n + max_ext_len*!hasExtension);
+///////////////////////////////////////////////////////
+
+	// TODO: either check file validation here, or move this stuff into the main parsing.
 
 #if IS_WINDOWS
 	// \ path separators are yucky. change them to / for the command printouts.
@@ -424,15 +451,29 @@ FilePathData parse_input_filename(const char *const filename) {
 			outstr[j] = '/';
 #endif
 
-	// I don't re,e,ber where half of these offsets come from, but they are required.
-	return (FilePathData) {
-		.path  = (string) {
+	FilePathData fpd = (FilePathData) {
+		.path = (string) {
 			.s = outstr,
-			.l = n + 2*(!hasQuotes && needsQuotes) + 5*!hasExtension
+			// length of string + strlen(quotes added) + strlen(extension added)
+			// TODO: ???
+			.l = n + 2*(!hasQuotes && needsQuotes) + (strlen(new_ext) - 1)*!hasExtension
 		},
+
+		// extension index or end of string + (1 if a quote was added before it)
+		//  - (1 if the extension was added before the end quote)
 		.dotIndex = i + (!hasQuotes && needsQuotes) - (hasQuotes && !hasExtension),
-		.quoted   = hasQuotes || needsQuotes,
+
+		// NOTE: if quotes were already present but not required, they are kept anyway.
+		.quoted = hasQuotes || needsQuotes,
 	};
+
+	edprintf("DEBUG: fpd.path.s               == %s\n", fpd.path.s);
+	edprintf("DEBUG: fpd.path.l               == %zu\n", fpd.path.l);
+	edprintf("DEBUG: fpd.dotIndex             == %zu\n", fpd.dotIndex);
+	edprintf("DEBUG: fpd.path.s[fpd.dotIndex] == '%c'\n", fpd.path.s[fpd.dotIndex]);
+	edprintf("DEBUG: fpd.quoted               == %s\n", fpd.quoted ? "true" : "false");
+
+	return fpd;
 }
 
 Params parse_params(const string args) {
@@ -443,9 +484,9 @@ Params parse_params(const string args) {
 		a = false,
 		k = false,
 		K = false,
-		S = false,
 		N = false,
 		s = false,
+		S = false,
 		e = false;
 
 	for (size_t i = 0; i < args.l; i++) {
@@ -470,7 +511,8 @@ Params parse_params(const string args) {
 			break;
 
 		if (args.s[i + 3] != ' ' && args.s[i + 3] != '\0') {
-			// neither "-- " or "--\0"
+			// not "--?[ \0]"
+			// if it is something like "--XY", it isn't valid
 			i += 2;
 			continue;
 		}
@@ -481,37 +523,42 @@ Params parse_params(const string args) {
 			case 'k': k = true; break;
 			case 'K': K = true; break;
 			case 'N': N = true; break;
-			case 'S': S = true; break;
 			case 's': s = true; break;
+			case 'S': S = true; break;
 			case 'l':
+				// converts something like "--l AA,BB,CC" to "-lAA -lBB -lCC"
+
+				// "--l\0".
+				// consider adding a printf here?
 				if (args.s[i + 3] == '\0')
 					goto done; // double break;
 
+				// remove the "--l"
 				args.s[i + 0] =
 				args.s[i + 1] =
 				args.s[i + 2] = ' ';
 
-				i += 4;
+				i += 4; // skip past "--l "
 				const size_t stt = i;
 				size_t items = 1;
 
-				while (args.s[i] != ' ' && args.s[i] != '\0') {
+				for (; args.s[i] != ' ' && args.s[i] != '\0'; i++)
 					if (args.s[i] == ',')
 						items++;
 
-					i++;
-				}
-
 				const size_t end = i;
 
+				// NOTE: there is no -4 because this is with the
+				// "--l " part skipped past already
 				libsLength = 2llu*items + end - stt;
 
 				libs = (char *) malloc(libsLength + 1);
-				OOM(libs, 9);
+				OOM(libs, 7);
 
 				libs[0] = '-';
 				libs[1] = 'l';
 
+				// add in the libraries to the string.
 				size_t j = 2;
 				for (i = stt; i < end; i++) {
 					if (args.s[i] == ',') {
@@ -526,11 +573,11 @@ Params parse_params(const string args) {
 				}
 
 				// fallthrough
-				// continue
+				// continue;
 			default:
 				// unknown argument, pass to nasm
 				// something like `--X`
-				continue; // NOTE: `break` is the wrong behavior here.
+				continue; // NOTE: `break;` is the wrong behavior here.
 		}
 
 		args.s[i + 0] =
@@ -541,13 +588,12 @@ Params parse_params(const string args) {
 done:
 	if (libs == NULL) {
 		libs = malloc(1);
-		OOM(libs, 10);
+		OOM(libs, 8);
 
 		libsLength = 0;
 	}
 
 	libs[libsLength] = '\0';
-
 
 	return (Params) {
 		.libs = (string) {
@@ -575,7 +621,7 @@ bool nasm(
 	AF_char *const cmd = (char *) malloc(
 		infile.path.l + object.l + nasm_args.l + strlen(NASM_FORMAT) + 22
 	);
-	OOM(cmd, 14);
+	OOM(cmd, 12);
 
 	sprintf(cmd,
 		"nasm -f" NASM_FORMAT " -Werror %s -o %s %s",
@@ -598,7 +644,7 @@ bool nasm(
 		if (verbose)
 			exitCode == -1 ?
 				eputs("\nassembler error. Couldn't execute command") :
-				eprintf("\nassembler error. exit status: %i\n", exitCode);
+				eprintf("\nassembler error. exit status: " ANSI_COLOR(ANSI_YELLOW) "%i\n", exitCode);
 
 		return true;
 	}
@@ -611,8 +657,11 @@ bool objcopy(const bool verbose, const string object) {
 
 	// 117 + object.l + 1
 	AF_char *const cmd = (char *) malloc(object.l + 118);
-	OOM(cmd, 15);
+	OOM(cmd, 13);
 
+	// --rename isn't in the help text, but should still work. It works on at least these versions:
+	//     2.27-44.base.0.3.el7_9.1 (from 2016, on Red Hat Enterprise Linux 7.9)
+	//     2.42 (from 2024, on Windows 11, from MinGW devkit)
 	sprintf(
 		cmd,						//
 		"objcopy"					//    7
@@ -640,7 +689,7 @@ bool objcopy(const bool verbose, const string object) {
 		if (verbose)
 			exitCode == -1 ?
 				eprintf("\nobjcopy error. Couldn't execute command\n") :
-				eprintf("\nobjcopy error. exit status: %i\n", exitCode);
+				eprintf("\nobjcopy error. exit status: " ANSI_COLOR(ANSI_YELLOW) "%i\n", exitCode);
 
 		return true;
 	}
@@ -681,7 +730,7 @@ bool rm(const bool verbose, const string object) {
 bool ld(const Params params, const string object, const string ofile) {
 	// 3 + object.l + 1 + params.libs.l + 4 + ofile.l + 13 + 1
 	AF_char *const cmd = (char *) malloc(object.l + params.libs.l + ofile.l + 22);
-	OOM(cmd, 16);
+	OOM(cmd, 14);
 
 	sprintf(cmd,
 		"ld %s %s -o %s --entry main",
@@ -704,7 +753,7 @@ bool ld(const Params params, const string object, const string ofile) {
 		if (params.verbose)
 			exitCode == -1 ?
 				eprintf("\nlinker error. Couldn't execute command\n") :
-				eprintf("\nlinker error. exit status: %i\n", exitCode);
+				eprintf("\nlinker error. exit status: " ANSI_COLOR(ANSI_YELLOW) "%i\n", exitCode);
 
 		if (!params.keepObjOnLinkerFail && !params.alwaysKeepObj)
 			rm(params.verbose, object);
@@ -717,7 +766,7 @@ bool ld(const Params params, const string object, const string ofile) {
 bool strip(const bool verbose, const string ofile) {
 	// 49 + ofile.l + 1
 	AF_char *const cmd = (char *) malloc(ofile.l + 50);
-	OOM(cmd, 17);
+	OOM(cmd, 15);
 
 	sprintf(cmd, "strip -s -R .comment -R comment -R .note -R note %s", ofile.s);
 
@@ -737,7 +786,7 @@ bool strip(const bool verbose, const string ofile) {
 		if (verbose)
 			exitCode == -1 ?
 				eprintf("\nstrip error. Couldn't execute command\n") :
-				eprintf("\nstrip error. exit status: %i\n", exitCode);
+				eprintf("\nstrip error. exit status: " ANSI_COLOR(ANSI_YELLOW) "%i\n", exitCode);
 
 		return true;
 	}
@@ -764,16 +813,15 @@ bool execute(const bool verbose, const string ofile) {
 
 	if (exitCode) {
 		if (verbose)
-			eprintf("\nexit status: %i\n", exitCode);
+			eprintf("\nexit status: " ANSI_COLOR(ANSI_YELLOW) "%i\n", exitCode);
 
 		return true;
 	}
 	else if (verbose)
-		puts("\nexit status: 0");
+		puts("\nexit status: " ANSI_COLOR(ANSI_GREEN) "0" ANSI_RESET());
 
 	return false;
 }
-
 
 void infer_args(
 	const FilePathData infile,
@@ -792,7 +840,7 @@ void infer_args(
 	char c;
 
 	if (infile.quoted) infile.path.s[infile.path.l - 1] = '\0';
-	FILE *fp = fopen(infile.path.s + infile.quoted, "r");
+	AF_FILE *fp = fopen(infile.path.s + infile.quoted, "r");
 	if (infile.quoted) infile.path.s[infile.path.l - 1] = '\"';
 
 
@@ -870,39 +918,37 @@ void infer_args(
 			continue; // collapse spaces together.
 
 		str = realloc(str, ++len); // expand space
-		OOM(str, 4);              // exit if no memory
+		OOM(str, 2);               // exit if no memory
 		str[len - 1] = c;          // set the new character.
 	}
 
 	// previous to here, there was no null byte, so the length and size were the same.
 	// execution only gets here on success.
 	str = realloc(str, len + 1); // add the null byte.
-	OOM(str, 5);
+	OOM(str, 3);
 
 	str[len] = '\0';
 
 cleanup:
-	fclose(fp);
-
 	if (str == NULL) {
 		str = malloc(1);
 		// len = 0;
-		OOM(str, 6);
+		OOM(str, 4);
 		*str = '\0';
 	}
 
 	const AF_string cli_args = strjoin(argc, argv);
-	OOM(cli_args.s, 7);
+	OOM(cli_args.s, 5);
 
 	// cli args override file args.
 	const string nasm_args = sstrjoin2(
 		((string) {str, len}),
 		cli_args
 	);
-	OOM(nasm_args.s, 8);
+	OOM(nasm_args.s, 6);
 
-	// don't worry about freeing the original nasm args string
-	// it is junk anyway.
+	// don't worry about freeing the original nasm args string.
+	// It should be cleaned up outside of this function.
 	out_nasm_args->s = nasm_args.s;
 	out_nasm_args->l = nasm_args.l;
 }
@@ -911,6 +957,7 @@ cleanup:
 int main(int argc, const char *const *argv) {
 
 	argc--; argv++; // the path to the current file is not needed
+
 
 	if (argc == 0) {
 		eputs("No command-line arguments provided. Filename is required. Use `-h` for general help, or `--help=all` for all help.");
@@ -921,7 +968,7 @@ int main(int argc, const char *const *argv) {
 	// help(basic, exit codes, memory codes, validation codes, examples, options, version);
 	if (!strncmp(*argv, "--help=", 7)) {
 		// 7 == strlen("--help=")
-		const char *const group = 7 +* argv;
+		const char *const group = 7 + *argv;
 
 		if (!strcmp(group, "none"      )) help(0b00000000); //   0
 		if (!strcmp(group, "version"   )) help(0b00000001); //   1
@@ -931,7 +978,9 @@ int main(int argc, const char *const *argv) {
 		if (!strcmp(group, "exit"      )) help(0b00010000); //  16
 		if (!strcmp(group, "codes"     )) help(0b00011100); //  28
 		if (!strcmp(group, "errors"    )) help(0b00011100); //  28
-		if (!strcmp(group, "options"   )) help(0b00100000); //  32
+		if (!strcmp(group, "options"   ) ||
+			!strcmp(group, "arguments" ) ||
+			!strcmp(group, "args"      )) help(0b00100000); //  32
 		if (!strcmp(group, "overview"  )) help(0b01000000); //  64
 		if (!strcmp(group, "usage"     )) help(0b10000000); // 128
 		if (!strcmp(group, "basic"     )) help(0b11000000); // 192
@@ -942,6 +991,7 @@ int main(int argc, const char *const *argv) {
 		eprintf("Invalid help group: '%s'\n", group);
 		return 2;
 	}
+
 
 	if (!strcmp(*argv, "--help") || !strcmp(*argv, "-h") || !strcmp(*argv, "-?"))
 		help(0b11100000); // same as `--help=default`
@@ -955,15 +1005,22 @@ int main(int argc, const char *const *argv) {
 
 	// use `ofile` to create the object string, then move it to `object`,
 	// then change `ofile` to be the output file path.
+	edprintf("DEBUG: infile.path.s == %s\n", infile.path.s);
+	edprintf("DEBUG: infile dot test: %s\n", infile.path.s[infile.dotIndex] == '.' ? "true" : "false");
+	edprintf("DEBUG: infile.dotIndex + infile.quoted + 2 == %zu\n", infile.dotIndex + infile.quoted + 2);
+
 	const AF_string ofile = (string) {
 		.s = strnkdup(
 			infile.path.s,
 			infile.dotIndex + infile.quoted + 2 /* object.l */,
 			3 + infile.quoted // leave space for a 3-character extension and possible end quote.
 		),
-		.l = infile.dotIndex + infile.quoted + 4*IS_WINDOWS
+		.l = infile.dotIndex + infile.quoted + 4*IS_WINDOWS // 4 == strlen(".exe")
 	};
-	OOM(ofile.s, 11);
+	OOM(ofile.s, 9);
+
+	edprintf("DEBUG: ofile.s == %s\n", ofile.s);
+	edprintf("DEBUG: ofile.l == %zu\n", ofile.l);
 
 	ofile.s[infile.dotIndex + 1] = 'o';
 	if (infile.quoted)
@@ -973,7 +1030,7 @@ int main(int argc, const char *const *argv) {
 		.s = strdup(ofile.s),
 		.l = infile.dotIndex + infile.quoted + 2
 	};
-	OOM(object.s, 12);
+	OOM(object.s, 10);
 
 #if IS_WINDOWS
 	ofile.s[infile.dotIndex + 1] = 'e';
@@ -993,13 +1050,15 @@ int main(int argc, const char *const *argv) {
 	// at this point, ofile and object are set up.
 	AF_string nasm_args;
 
-	if (!strcmp(*argv, "--infer"))
+	edprintf("DEBUG: input file: \"%s\"\n", infile.path.s);
+
+	if (argc && !strcmp(*argv, "--infer"))
 		// NOTE: don't include --e in the comment line for --infer.
 		// use `--infer --e` in the command line to execute.
 		infer_args(infile, --argc, ++argv, &nasm_args);
 	else {
 		nasm_args = strjoin(argc, argv);
-		OOM(nasm_args.s, 13);
+		OOM(nasm_args.s, 11);
 	}
 
 
