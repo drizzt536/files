@@ -1,10 +1,10 @@
 
-# you have to analyze the data yourself
+# you have to analyze the data yourself. but this makes it easier to get the data.
 
-# buffer size
+
+# buffer size. KB -> KiB. MB -> MiB.
+
 $sizes = @(
-	"2 B"
-	"4 B"
 	"8 B"
 	"16 B"
 	"32 B"
@@ -24,32 +24,44 @@ $sizes = @(
 	"512 KB",
 	"1 MB",
 	"2 MB",
-	"4 MB",
-	"8 MB"
+	"4 MB"
+	# 8 MiB is 2^32 bytes, and I don't know for sure that will work with `uint32_t` values.
+	# larger than 8 MiB does not work (probably) because the buffer is assumed to fit in 2^32 (I think).
 )
 
 $EXP_MIN = 1
 $EXP_MAX = 23
 
 if ($args[0] -eq "--help") {
-	write-host "test ./adler32 using different static .BSS section buffer sizes"
-	write-host "using a randomly-generated 128 MiB file as the input."
-	write-host ""
-	write-host "Options:"
-	write-host "    --trials N      specify the number of trials to run per buffer size"
-	write-host "    --exponent N    specify a specific size to use (2^N). clamped to [1, 23]."
-	write-host "                    only that specific size will be used in trials."
-	write-host "    --tex-only      only print out the TeX format output. don't print the header either."
-	write-host "    --plain-only    only print out the plain format output. don't print the header either."
-	write-host ""
-	write-host "at the end, it recompiles the binary with default buffer size."
-	write-host "the results are printed out in two formats: a human readable format,"
-	write-host "and a TeX form. If you exit with ^C, it still recompiles with the default,"
-	write-host "but it doesn't print the results. ``--tex-only`` takes precedence over"
-	write-host "``--plain-only`` regardless of the order thet are passed."
+	# print each section separately.
+	# so `(./adler32-perftest-bufsize.ps1 --help 6>&1)[$n]` gives the nth section and not the nth line.
+	write-host $(
+		"test ./adler32 using different static .BSS section buffer sizes`n" +
+		"using a randomly-generated 128 MiB file as the input.`n"
+	)
+
+	write-host $(
+		"Options:`n" +
+		"    --trials N      specify the number of trials to run per buffer size`n" +
+		"    --exponent N    specify a specific size to use (2^N). clamped to [1, 23].`n" +
+		"    --unroll N      specify a specific unroll factor to use.`n" +
+		"                    only that specific size will be used in trials.`n" +
+		"    --tex-only      only print out the TeX format output. don't print the header either.`n" +
+		"    --plain-only    only print out the plain format output. don't print the header either.`n"
+	)
+
+	write-host $(
+		"at the end, it recompiles the binary with default buffer size and unroll factor.`n" +
+		"the results are printed out in two formats: a human readable format,`n" +
+		"and a TeX form. If you exit with ^C, it still recompiles with the default,`n" +
+		"but it doesn't print the results. ``--tex-only`` takes precedence over`n" +
+		"``--plain-only`` regardless of the order thet are passed."
+	)
 
 	exit 0
 }
+
+[IO.Directory]::SetCurrentDirectory((pwd))
 
 $infile = "random.bin.tmp"
 
@@ -64,6 +76,8 @@ if (-not (test-path -type leaf $infile) -or (ls $infile | % length) -ne 128MB) {
 $plain_outstr = ""
 $tex_outstr   = @("Y_R=\left[", "Y_U=\left[", "Y_S=\left[")
 
+
+########################### process arguments ###########################
 $i = $args.indexOf("--trials")
 $NUM_TRIALS = $i -ne -1 ? [uint32] $args[$i + 1] : 8 # 8 trials is the default
 
@@ -71,11 +85,18 @@ $i = $args.indexOf("--exponent")
 if ($i -ne -1) {
 	$exp = $args[$i + 1] # exponent / size index
 	$exp = [math]::clamp($exp, $EXP_MIN, $EXP_MAX)
-	$sizes = @($sizes[$exp - 1])
+	$sizes = @($sizes[$exp - 3])
+}
+
+$i = $args.indexOf("--unroll")
+if ($i -ne -1) {
+	$unroll = [uint32] $args[$i + 1]
 }
 
 $natural_exit = $false
+$version_printed = $false
 
+############################## main code ##############################
 try {
 	foreach ($size_str in $sizes) {
 		$size = $size_str -replace " B?", "" -as [uint32]
@@ -83,11 +104,30 @@ try {
 		start-sleep -ms 100
 
 		write-host -nonewline "recompiling"
-		../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" 1> $null
+		if ($unroll -eq $null) {
+			../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" 1> $null
+		}
+		else {
+			../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" "-DUNROLL_N=$unroll" 1> $null
+		}
 
-		write-host -nonewline $("`r" + " " * "recompiling".length + "`rtesting with buffer size: $size_str")
+		write-host -nonewline $("`r" + " " * "recompiling".length + "`r")
+
+		if (-not $version_printed) {
+			write-host "performance testing buffer sizes for $(./adler32 --version)"
+			if ($unroll -ne $null) {
+				write-host "using unroll factor $unroll"
+			} else {
+				write-host "using default unroll factor (decided by adler32.nasm)"
+			}
+			$version_printed = $true
+		}
+		write-host "testing with buffer size: $size_str"
+
+		# write-host "executable size: $(wc -c adler32.exe | awk '{print $1}') bytes"
 
 		if ($lastExitCode -ne 0) {
+			# NOTE: this only works with the MinGW printf, and not the MSYS2 printf.
 			printf "\e[0m" # reset the console colors in case it didn't reset on its own.
 			write-host "an unexpected error occurred while compiling"
 			break
@@ -167,7 +207,7 @@ else {
 	write-host "######################### Data: Report Format #########################"
 	write-output $plain_outstr
 
-	write-host "######################### Data: TeX Format #########################"
+	write-host "########################## Data: TeX Format ##########################"
 	write-output $tex_outstr
 }
 
