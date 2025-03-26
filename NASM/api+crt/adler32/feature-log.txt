@@ -1,0 +1,36 @@
+program feature history for the program.
+does not include functionality or implementation changes, only feature additions.
+
+1.0
+	basic processing. files only, no options.
+2.0
+	-h, -?, --help, -r, -p, -s (original name for -i)
+	pipeline input
+	SCRATCH_BUF_LEN
+3.0
+	-l, -d, -u (not implemented), -c
+3.1
+	None
+3.2
+	-i (renamed from -s)
+4.0
+	-F, -D, -u.
+	UNROLL_N
+4.1
+	-v, --version, -s, -x, -f (broken, undocumented), - (undocumented)
+4.2
+	-f, -
+4.3
+	long-form arguments
+	normalize / fix pipe processing
+	MINIMAL, LEAN, NO_INLINE_INPUT, NO_DIRECTIONS, NO_DOCS, NO_ARG_C, NO_ARG_H, NO_ARG_P, NO_ARG_S, NO_ARG_X
+4.4
+	NO_LONG_ARGS, NO_FORMAT, NO_ARG_R, NO_ARG_L, NO_ARG_F, NO_ARG_I, NO_ARG_V, NO_PIPE, BARE_BONES
+5.0
+	-o, -e, -!
+	-p -, -c - *, -c * -, -c - -
+	DEFAULT, NO_ARG_O, NO_ARG_E, NO_REDIRECTS
+5.1
+	DELIM, SPACE_DELIM, TAB_DELIM, LF_DELIM, PIPE_DELIM, COLON_DELIM, COLON_SPACE_DELIM, NO_FATAL_MESSAGES,
+	CKSM_UPPER, FMT_SWAP_ARGS, FMT_RAW_DEFAULT, MODE_UNDO_DEFAULT, NO_ALIGN, NO_COLOR, NO_COLOR_FATAL,
+	NO_COLOR_ERROR, NO_COLOR_WARNG, NO_MEM_CLEANUP, NO_FOLDER_CHECK, NO_DOCS_EXIT_CODE_TABLE
