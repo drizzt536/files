@@ -57,7 +57,7 @@ void setup_argc_argv(void) {
 	mov 	ax, [%1 + 2*r8]
 
 	test	ax, ax
-	jz  	%%end	; null character
+	jz  	%%done	; null character
 
 	test	ah, ah	; test if the upper byte is 0
 	jz  	%%ascii
@@ -66,7 +66,7 @@ void setup_argc_argv(void) {
 	mov 	[%1 + r8], al
 	inc 	r8
 	jmp 	%%loop
-%%end:
+%%done:
 	mov 	byte [%1 + r8], 0
 %endm
 
@@ -77,7 +77,7 @@ win_wstr_to_str_inplace:
 	mov 	ax, word [rcx + 2*r8]
 
 	test	ax, ax
-	jz  	.end	; null character
+	jz  	.done	; null character
 
 	test	ah, ah	; test if the upper byte is 0
 	jz  	.ascii
@@ -86,11 +86,12 @@ win_wstr_to_str_inplace:
 	mov 	[rcx + r8], al
 	inc 	r8
 	jmp 	.loop
-.end:
+.done:
 	mov 	byte [rcx + r8], `\0` ; set the ending null byte
 	ret
 %endif
 
+%ifndef SETUP_ARGC_ARGV_MACRO_ONLY
 setup_argc_argv:
 	; moves argc into edi and argv into rsi.
 	; ignores the ABI convention of rdi and rsi being non-volatile. 
@@ -101,10 +102,10 @@ setup_argc_argv:
 	call	GetCommandLineW
 
 	mov 	rcx, rax
-	lea 	rdx, [rbp - 4]
+	lea 	rdx, [rsp + 44]
 	call	CommandLineToArgvW
 
-	mov 	edi, [rbp - 4]	; rdi = argc
+	mov 	edi, [rsp + 44]	; rdi = argc
 	mov 	rsi, rax		; rsi = argv
 
 	xor 	r9, r9			; int i = 0;
@@ -119,4 +120,30 @@ setup_argc_argv:
 
 	leave
 	ret
-%endif
+%endif ; %ifndef SETUP_ARGC_ARGV_MACRO_ONLY
+
+%macro setup_argc_argv_macro 0
+	; moves argc into edi and argv into rsi.
+
+	;; assumes you have already done `sub rsp, 56` (or more)
+	;; 32 for the shadow space, then 4 for the dword stack variable,
+	;; and then 12 to align it to 16 bytes, and then 8 more to counteract the return address's 8 bytes
+	call	GetCommandLineW
+
+	mov 	rcx, rax
+	lea 	rdx, [rsp + 32]
+	call	CommandLineToArgvW
+
+	mov 	edi, [rsp + 32]	; rdi = argc
+	mov 	rsi, rax		; rsi = argv
+
+	xor 	r9, r9			; int i = 0;
+%%loop:
+	mov 	rcx, [rsi + 8*r9] ; rcx = argv[i]
+	wstr_to_str_inplace_macro rcx
+
+	inc 	r9
+	cmp 	r9, rdi
+	jl  	%%loop
+%endm
+%endif ; %ifndef SETUP_ARGC_ARGV_INC
