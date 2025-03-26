@@ -13,7 +13,7 @@
 ;; convert hex string to unsigned 32-bit integer
 
 ;; clobbers: rax (return value), rcx, dl, r8
-hex_to_u8: ; uint64_t hex_to_u8(const char *str) {
+hex_to_u8: ; uint64_t hex_to_u8(char *str);
 	jrcxz	.error ; null check
 
 	cmp 	byte [rcx], `\0`
@@ -24,12 +24,12 @@ hex_to_u8: ; uint64_t hex_to_u8(const char *str) {
 	cmp 	word [rcx], '0x'
 	jne 	.noprefix
 	add 	rcx, 2
-%endif
 .noprefix: ;; the string doesn't have a prefix anymore.
+%endif
 	;; clear r8d and not r8b because r8 is used as an offset, and clearing r8b doesn't clear the upper bits.
 	xor 	eax, eax	; register uint32_t x = 0;
 	xor 	r8d, r8d	; register uint8_t  i = 0;
-.loop: ;; loop up to 8 times (8 characters)
+.loop: ;; loop up to 2 times (2 characters)
 	mov 	dl, [rcx + r8]	; dl = c
 
 	test 	dl, dl
