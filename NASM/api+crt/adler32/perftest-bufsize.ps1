@@ -1,4 +1,6 @@
 
+# requires MinGW for time.
+
 # you have to analyze the data yourself. but this makes it easier to get the data.
 
 
@@ -105,10 +107,10 @@ try {
 
 		write-host -nonewline "recompiling"
 		if ($unroll -eq $null) {
-			../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" 1> $null
+			../../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" 1> $null
 		}
 		else {
-			../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" "-DUNROLL_N=$unroll" 1> $null
+			../../assemble adler32 --infer "-DSCRATCH_BUF_LEN=$size" "-DUNROLL_N=$unroll" 1> $null
 		}
 
 		write-host -nonewline $("`r" + " " * "recompiling".length + "`r")
@@ -186,11 +188,11 @@ try {
 	$natural_exit = $true
 }
 finally {
-	rm.exe stderr.log.tmp stdout.log.tmp 2> $null
+	rm stderr.log.tmp, stdout.log.tmp 2> $null
 
 	if (-not $natural_exit) { write-host "" <# newline #> }
 	write-host "recompiling with default buffer size"
-	../assemble adler32 --infer 1> $null
+	../../assemble adler32 --infer 1> $null
 }
 
 # remove the last character because the loop code always adds an extra comma at the end.

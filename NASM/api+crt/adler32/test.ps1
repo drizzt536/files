@@ -1,6 +1,6 @@
 #requires -version 7
 # requires MinGW (cat.exe)
-# requires ./ntstatus.ps1 or ../../PowerShell/ntstatus.ps1
+# requires ./ntstatus.ps1 or ../../../PowerShell/ntstatus.ps1
 
 # these are the tests for the main build with no configuration
 
@@ -64,15 +64,15 @@ $MAX_EXITCODE = 21
 if (gcm -type externalscript ./ntstatus.ps1 -ea ignore | % name) {
 	$ntstatus = "./ntstatus.ps1"
 }
-elseif (gcm -type externalscript ../../PowerShell/ntstatus.ps1 -ea ignore | % name) {
-	$ntstatus = "../../PowerShell/ntstatus.ps1"
+elseif (gcm -type externalscript ../../../PowerShell/ntstatus.ps1 -ea ignore | % name) {
+	$ntstatus = "../../../PowerShell/ntstatus.ps1"
 }
 elseif (gcm -type externalscript ntstatus.ps1 -ea ignore | % name) {
 	# if it is in PATH
 	$ntstatus = "ntstatus.ps1"
 }
 else {
-	throw 'cannot find `ntstatus.ps1`. checked `./`, `../../PowerShell/`, and PATH'
+	throw 'cannot find `ntstatus.ps1`. checked `./`, `../../../PowerShell/`, and PATH'
 }
 
 if ($args[0] -eq "--help") {
@@ -86,7 +86,7 @@ if ($args[0] -eq "--help") {
 }
 
 if ($args[0] -eq "--recompile") {
-	../assemble adler32 --infer
+	../../assemble adler32 --infer
 	write-host "`n###### test cases ######" # blank line
 }
 
@@ -135,7 +135,7 @@ function test-case-1 {
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
 	$errors = (cat errors.tmp) -join "`n"
 	if ($errors.length -eq 0) { return 1 }
-	if (!$errors.startsWith("WARNING: 1 misplaced argument(s)"))
+	if (!$errors.startsWith("WARNING: 1 misplaced argument(s)")) { return 1 }
 	if ($output -ne "00620062`tfile1.tmp") { return 2 }
 }
 

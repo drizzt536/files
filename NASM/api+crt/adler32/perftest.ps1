@@ -3,8 +3,8 @@
 
 # NOTE: only supports TeX mode.
 
-if (-not (gcm ./adler32-perftest-bufsize.ps1 -type ExternalScript -ea ignore)) {
-	throw "``./adler32-perftest-bufsize.ps1`` could not be found and is required for this program."
+if (-not (gcm ./perftest-bufsize.ps1 -type ExternalScript -ea ignore)) {
+	throw "``./perftest-bufsize.ps1`` could not be found and is required for this program."
 }
 
 # number of bytes to process per loop iteration.
@@ -23,7 +23,7 @@ $unroll_factors = @(
 
 if ($args[0] -eq "--help") {
 	# print each section separately.
-	# so `(./adler32-perftest-bufsize.ps1 --help 6>&1)[$n]` gives the nth section and not the nth line.
+	# so `(./perftest-bufsize.ps1 --help 6>&1)[$n]` gives the nth section and not the nth line.
 	write-host $(
 		"test ./adler32 using different .BSS section buffer sizes and unroll factors`n" +
 		"using a randomly-generated 128 MiB file as the input.`n"
@@ -75,11 +75,11 @@ else {
 $output = @()
 
 foreach ($unroll in $unroll_factors) {
-	# NOTE: `./adler32-perftest-bufsize.ps1` prints everything as one string.
+	# NOTE: `./perftest-bufsize.ps1` prints everything as one string.
 
 	$results = $NUM_TRIALS -eq $null ?
-		(./adler32-perftest-bufsize.ps1 --tex-only --unroll $unroll) : # use the default
-		(./adler32-perftest-bufsize.ps1 --tex-only --unroll $unroll --trials $NUM_TRIALS)
+		(./perftest-bufsize.ps1 --tex-only --unroll $unroll) : # use the default
+		(./perftest-bufsize.ps1 --tex-only --unroll $unroll --trials $NUM_TRIALS)
 
 	$results = $results -split "`n"
 

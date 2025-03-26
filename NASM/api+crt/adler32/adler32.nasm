@@ -971,22 +971,22 @@ segment text
 %ifdef BARE_BONES
 	%define SETUP_ARGC_ARGV_MACRO_ONLY
 %endif
-%include "../winapi/setup_argc_argv.nasm"
+%include "../../winapi/setup_argc_argv.nasm"
 
 %if %isndef(NO_ARG_V) || %isndef(NO_ARG_H) || %isndef(NO_LONG_ARGS)
 	;; streq can be disabled if NO_ARG_V, NO_ARG_H, and NO_LONG_ARGS are all given
 	;; include it if at least one of them is not passed
-	%include "../libasm/callconv.mac"		; required for streq.nasm
-	%include "../libasm/streq.nasm"			; for process_arg and main
+	%include "../../libasm/callconv.mac"		; required for streq.nasm
+	%include "../../libasm/streq.nasm"			; for process_arg and main
 %endif
 
 %if %isndef(NO_ARG_C) || %isndef(NO_ARG_P)
 	;; only include hex_to_u32 if at least one of -c or -p exists.
-	%include "../libasm/hex_to_u32.nasm"	; for process_arg (-c and -p)
+	%include "../../libasm/hex_to_u32.nasm"	; for process_arg (-c and -p)
 %endif
 
 %ifndef NO_ARG_X
-	%include "../libasm/hex_to_u8.nasm"	; for adler32_hex (-x)
+	%include "../../libasm/hex_to_u8.nasm"	; for adler32_hex (-x)
 %endif
 
 %ifndef NO_MEM_CLEANUP
