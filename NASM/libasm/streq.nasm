@@ -22,22 +22,12 @@
 		test	al, al
 		jnz 	.loop			; } while (*a++);
 	.true:
-	%if __?BITS?__ == 64
-		xor 	eax, eax		; return false
-	%else
-		xor 	rx, rx
-	%endif
+		xor 	%cond(__?BITS?__ == 64, {eax, eax}, {rx, rx})
 		ret
-
 	.false:
-	%if __?BITS?__ == 64
 		; basically `mov eax, 1` but also update the zero flag
-		xor 	eax, eax		; return true
+		xor 	%cond(__?BITS?__ == 64, {eax, eax}, {rx, rx})
 		inc 	al
-	%else
-		xor 	rx, rx
-		inc 	rx
-	%endif
 		ret
 %else
 	;; 16-bit Microsoft ABI implementation:
