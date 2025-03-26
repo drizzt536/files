@@ -70,7 +70,7 @@
 #endif
 
 #define TIMESTAMP __DATE__ " " __TIME__
-#define VERSION "NASM Build Tool v3.1\n" TIMESTAMP "\n" GIT_DATA
+#define VERSION "NASM Build Tool v3.2\n" TIMESTAMP "\n" GIT_DATA
 
 #define _VALIDATE_FILE(path, quoted, verbose, code) ({ \
 	if (quoted) path.s[path.l - 1] = '\0';             \
@@ -145,7 +145,7 @@ FORCE_INLINE void help(const unsigned char options) {
 		"            --rename-section rodata=.rdata \\\n"
 		"            --rename-section .rodata=.rdata $object\n"
 		"\n"
-		"    ld $object $libs -o $outfile --entry main\n"
+		"    ld $object $libs -o $outfile -e main --gc-sections\n"
 		"    if stripFile, strip -s -R .comment -R comment -R .note -R note $outfile\n"
 		"    if remove, rm $object\n"
 		"    if exec, run $outfile\n"
@@ -733,7 +733,7 @@ bool ld(const Params params, const string object, const string ofile) {
 	OOM(cmd, 14);
 
 	sprintf(cmd,
-		"ld %s %s -o %s --entry main",
+		"ld %s %s -o %s -e main --gc-sections",
 		object.s, params.libs.s, ofile.s
 	);
 
