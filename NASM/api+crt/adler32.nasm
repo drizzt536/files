@@ -1,21 +1,36 @@
 ;; ../assemble adler32 --l kernel32,shell32,ucrtbase -DEFAULT
 
+%if __NASM_VERSION_ID__ < 2100000h
+	;; preprocessor functions.
+	%fatal NASM 2.16.0 or higher is required to assemble this program.
+%endif
+
 ;; configuration macro aliases
 
 %ifdef UNROLL
 	;; allow `-DUNROLL=N` as an alias to `-DUNROLL_N=N`.
-	%ifdef UNROLL_N
-		%error both -DUNROLL_N and its alias -DUNROLL were given. Only specify one.
+
+	%if %isdef(UNROLL_N) && %isnidn(UNROLL, UNROLL_N)
+		%error both -DUNROLL_N and its alias -DUNROLL were given with conflicting values.
 	%endif
 
 	%xdefine UNROLL_N UNROLL
 	%undef UNROLL
 %endif
 
+%ifdef UNROLL_N
+	;; for some reason %if %isdef(UNROLL_N) && UNROLL_N == 0
+	%if UNROLL_N == 0
+		;; use -DUNROLL=0 as an alias of not giving it at all.
+		%undef UNROLL_N
+	%endif
+%endif
+
 %ifdef BUF_LEN
 	;; allow `-DBUF_LEN=N` as an alias to `-DSCRATCH_BUF_LEN=N`.
-	%ifdef SCRATCH_BUF_LEN
-		%error both -DSCRATCH_BUF_LEN and its alias -DBUF_LEN were given. Only specify one.
+
+	%if %isdef(SCRATCH_BUF_LEN) && %isnidn(BUF_LEN, SCRATCH_BUF_LEN)
+		%error both -DSCRATCH_BUF_LEN and its alias -DBUF_LEN were given with conflicting values.
 	%endif
 
 	%xdefine SCRATCH_BUF_LEN BUF_LEN
@@ -25,21 +40,107 @@
 %ifdef EFAULT
 	;; allow -DEFAULT as an alias to -DDEFAULT
 	;; if they are both defined, ignore the second one.
-	%ifndef DEFAULT
-		%define DEFAULT
-	%endif
 
+	%define DEFAULT
 	%undef EFAULT
 %endif
 
+%ifdef ELIM
+	%if %isdef(DELIM) && %isnidn(ELIM, DELIM)
+		%error both -DDELIM and its alias -DELIM were given with conflicting values.
+	%endif
+
+	%xdefine DELIM ELIM
+	%undef ELIM
+%endif
+
+%ifdef SPACE_DELIM
+	%if %isdef(DELIM) && %isnidn(DELIM, ' ')
+		%error -DSPACE_DELIM conflicts with existing delimiter definition.
+	%endif
+
+	%xdefine DELIM ' '
+	%undef SPACE_DELIM
+%endif
+
+%ifdef TAB_DELIM
+	;; essentially useless because tab delimiters is the default.
+	%if %isdef(DELIM) && %isnidn(DELIM, `\t`)
+		%error -DTAB_DELIM conflicts with existing delimiter definition.
+	%endif
+
+	%xdefine DELIM `\t`
+	%undef TAB_DELIM
+%endif
+
+%ifdef LF_DELIM
+	%if %isdef(DELIM) && %isnidn(DELIM, `\n`)
+		%error -DLF_DELIM conflicts with existing delimiter definition.
+	%endif
+
+	%xdefine DELIM `\n`
+	%undef LF_DELIM
+%endif
+
+%ifdef PIPE_DELIM
+	;; essentially useless because tab delimiters is the default.
+	%if %isdef(DELIM) && %isnidn(DELIM, '|')
+		%error -DPIPE_DELIM conflicts with existing delimiter definition.
+	%endif
+
+	%xdefine DELIM '|'
+	%undef PIPE_DELIM
+%endif
+
+%ifdef COLON_DELIM
+	;; essentially useless because tab delimiters is the default.
+	%if %isdef(DELIM) && %isnidn(DELIM, ':')
+		%error -DCOLON_DELIM conflicts with existing delimiter definition.
+	%endif
+
+	%xdefine DELIM ':'
+	%undef COLON_DELIM
+%endif
+
+%ifdef COLON_SPACE_DELIM
+	;; essentially useless because tab delimiters is the default.
+	%if %isdef(DELIM) && %isnidn(DELIM, ': ')
+		%error -DCOLON_SPACE_DELIM conflicts with existing delimiter definition.
+	%endif
+
+	%xdefine DELIM ': '
+	%undef COLON_SPACE_DELIM
+%endif
+
+%ifndef DELIM
+	;; default to a tab
+	%define DELIM `\t`
+%endif
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; configuration macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; formatting/internal configuration macros:
+	;; NO_FATAL_MESSAGES
 	;; SCRATCH_BUF_LEN / BUF_LEN
 	;; UNROLL_N / UNROLL
+	;; DELIM / ELIM, SPACE_DELIM, TAB_DELIM, LF_DELIM, COLON_DELIM, COLON_SPACE_DELIM
+	;; CKSM_UPPER (print the checksum in uppercase)
+	;; FMT_SWAP_ARGS (put the filename before the checksum)
+	;; FMT_RAW_DEFAULT (use raw formatting as the default. use -l or -F to change it)
+	;; NO_COLOR (remove the color from all error printouts, fatal and non-fatal)
+		;; NO_COLOR_FATAL (remove color from stuff like "unknown argument" errors)
+		;; NO_COLOR_ERROR (remove color from missing file / directory printouts)
+		;; NO_COLOR_WARNG (remove color from warnings)
+	;; NO_ALIGN (don't align hot functions to 64-byte boundaries)
+	;; MODE_UNDO_DEFAULT (use -u mode by default, disallowed if NO_DIRECTIONS is defined)
+	;; NO_MEM_CLEANUP (don't zero out bss section on exit. might introduce security issues)
+	;; NO_DOCS_EXIT_CODE_TABLE (remove just the exit code table from the documentation)
+	;; NO_FOLDER_CHECK (collapse [FOLDER] errors into [MISSING])
 
-	;; hierarchy of configuration macros:
-	;; each macro implies the macros indented after it, as well itself
-	;; DEFAULT (default configuration. currently, basically an alias to -DNO_LONG_ARGS)
-	;; BARE_BONES (default buffer size = 1 KiB)
+	;; hierarchy of feature-exclusion configuration macros:
+	;; DEFAULT/EFAULT (default configuration)
+		;; NO_COLOR_ERROR
+		;; NO_LONG_ARGS
+	;; BARE_BONES (default buffer size = 2 KiB, super aggressive function inlining)
 		;; MINIMAL (defailt buffer size = 32 KiB)
 			;; LEAN
 				;; NO_LONG_ARGS
@@ -47,141 +148,88 @@
 					;; NO_ARG_S (-s)
 					;; NO_ARG_X (-x)
 				;; NO_DIRECTIONS (-d, -u, -D)
+				;; NO_REDIRECTS
+					;; NO_ARG_O (-o)
+					;; NO_ARG_E (-e)
+				;; NO_COLOR_ERROR
+			;; NO_WARN_UNUSED
+			;; NO_COLOR
 			;; NO_ARG_C (-c)
 			;; NO_ARG_H (completely remove doc string and --help arguments)
 				;; NO_DOCS (replace the doc string with a simple message)
 			;; NO_ARG_P (-p)
-			;; force UNROLL_N=1 (disable unrolling)
-			;; NO_REDIRECTS
-				;; NO_ARG_O (-o)
-				;; NO_ARG_E (-e)
-		;; NO_FORMAT (-F)
-			;; NO_ARG_R (-r)
-			;; NO_ARG_L (-l)
+		;; NO_FORMAT (-F, removes implementation for runtime format mode switching)
+			;; NO_ARG_R (-r, removes the option but not the underlying implementation)
+			;; NO_ARG_L (-l, removes the option but not the underlying implementation)
+		;; NO_PIPE (-, -!, and pipe input processing)
 		;; NO_ARG_F (-f)
 		;; NO_ARG_I (-i)
 		;; NO_ARG_V (-v, requires -DNO_ARG_H to be given as well)
-		;; NO_PIPE (-, -!, and pipe input processing)
 
-%if %isdef(DEFAULT) && %isndef(NO_LONG_ARGS)
+%ifdef DEFAULT
 	%define NO_LONG_ARGS
+	%define NO_COLOR_ERROR
 %endif
 
 %ifdef BARE_BONES
 	;; completely stripped down version of the program. only basic functionality is allowed.
 	;; only parsing for regular files remains. everything else is removed.
-	%ifndef MINIMAL
-		%define MINIMAL
-	%endif
-
-	%ifndef NO_FORMAT
-		%define NO_FORMAT
-	%endif
-
-	%ifndef NO_PIPE
-		%define NO_PIPE
-	%endif
-
-	%ifndef NO_ARG_F
-		%define NO_ARG_F
-	%endif
-
-	%ifndef NO_ARG_I
-		%define NO_ARG_I
-	%endif
-
-	%ifndef NO_ARG_V
-		%define NO_ARG_V
-	%endif
+	%define MINIMAL
+	%define NO_FORMAT
+	%define NO_PIPE
+	%define NO_ARG_F
+	%define NO_ARG_I
+	%define NO_ARG_V
 %endif
 
 %ifdef MINIMAL
 	;; disable almost everything that can be disabled. minimal version of the program
-
-	%ifndef LEAN
-		%define LEAN
-	%endif
-
-	%ifndef NO_REDIRECTS
-		%define NO_REDIRECTS
-	%endif
-
-	%ifndef NO_ARG_C
-		%define NO_ARG_C
-	%endif
-
-	%ifndef NO_ARG_H
-		%define NO_ARG_H
-	%endif
-
-	%ifndef NO_ARG_P
-		%define NO_ARG_P
-	%endif
-
-	%ifdef UNROLL_N
-		%undef UNROLL_N
-	%endif
-
-	%define UNROLL_N 1 ; force disable unrolling completely
+	%define LEAN
+	%define NO_WARN_UNUSED
+	%define NO_COLOR
+	%define NO_ARG_C
+	%define NO_ARG_H
+	%define NO_ARG_P
 %endif
 
 %ifdef LEAN
 	;; disable -s, -x, -d, -u, -D, and long-form arguments
+	%define NO_LONG_ARGS
+	%define NO_REDIRECTS
+	%define NO_INLINE_INPUT
+	%define NO_DIRECTIONS
+	%define NO_COLOR_ERROR
+%endif
 
-	%ifndef NO_LONG_ARGS
-		%define NO_LONG_ARGS
-	%endif
-
-	%ifndef NO_INLINE_INPUT
-		%define NO_INLINE_INPUT
-	%endif
-
-	%ifndef NO_DIRECTIONS
-		%define NO_DIRECTIONS
-	%endif
+%ifdef NO_COLOR
+	%define NO_COLOR_FATAL
+	%define NO_COLOR_ERROR
+	%define NO_COLOR_WARNG
 %endif
 
 %ifdef NO_REDIRECTS
 	;; disable -o and -e
-
-	%ifndef NO_ARG_O
-		%define NO_ARG_O
-	%endif
-
-	%ifndef NO_ARG_E
-		%define NO_ARG_E
-	%endif
+	%define NO_ARG_O
+	%define NO_ARG_E
 %endif
 
 %ifdef NO_INLINE_INPUT
 	;; disable -s and -x
-
-	%ifndef NO_ARG_S
-		%define NO_ARG_S
-	%endif
-
-	%ifndef NO_ARG_X
-		%define NO_ARG_X
-	%endif
+	%define NO_ARG_S
+	%define NO_ARG_X
 %endif
 
 %ifdef NO_FORMAT
 	;; disable -r, -l, and -F
-
-	%ifndef NO_ARG_R
-		%define NO_ARG_R
-	%endif
-
-	%ifndef NO_ARG_L
-		%define NO_ARG_L
-	%endif
+	%define NO_ARG_R
+	%define NO_ARG_L
 %endif
 
 %if %isdef(NO_ARG_V) && %isndef(NO_ARG_H)
 	%fatal -DNO_ARG_V without -DNO_ARG_H is an error.
 %endif
 
-%if %isdef(NO_ARG_H) && %isndef(NO_DOCS)
+%if %isdef(NO_ARG_H)
 	; NO_ARG_H removes the help arguments, which in turn makes the doc string useless.
 	%define NO_DOCS
 %endif
@@ -196,57 +244,112 @@
 
 ;; NOTE: -DNO_ARG_L -DNO_ARG_R is not equivalent to -DNO_FORMAT
 
-%if %isdef(NO_ARG_S) && %isdef(NO_ARG_X) && %isndef(NO_INLINE_INPUT)
+%if %isdef(NO_ARG_S) && %isdef(NO_ARG_X)
 	; if both are given separately, define NO_INLINE_INPUT.
 	%define NO_INLINE_INPUT
 %endif
 
-%if %isdef(NO_ARG_O) && %isdef(NO_ARG_E) && %isndef(NO_REDIRECTS)
+%if %isdef(NO_ARG_O) && %isdef(NO_ARG_E)
 	%define NO_REDIRECTS
 %endif
 
-%if %isdef(NO_LONG_ARGS) && %isdef(NO_INLINE_INPUT) && %isdef(NO_DIRECTIONS) && %isndef(LEAN)
+%if %isdef(NO_COLOR_FATAL) && %isdef(NO_COLOR_ERROR) && %isdef(NO_COLOR_WARNG)
+	%define NO_COLOR
+%endif
+
+%if %isdef(NO_LONG_ARGS) && %isdef(NO_INLINE_INPUT) && %isdef(NO_DIRECTIONS) && \
+	%isdef(NO_COLOR_ERROR) && %isdef(NO_REDIRECTS)
 	%define LEAN
 %endif
 
-%if %isdef(LEAN) && %isdef(NO_REDIRECTS) && %isdef(NO_ARG_C) && \
-	%isdef(NO_ARG_H) && %isdef(NO_ARG_P) && UNROLL_N == 1 && %isndef(MINIMAL)
+%if %isdef(LEAN) && %isdef(NO_ARG_C) && %isdef(NO_ARG_H) && %isdef(NO_ARG_P) && \
+	%isdef(NO_COLOR) && %isdef(NO_WARN_UNUSED)
 	%define MINIMAL
 %endif
 
 %if %isdef(MINIMAL) && %isdef(NO_FORMAT) && %isdef(NO_PIPE) && %isdef(NO_ARG_F) \
-	&& %isdef(NO_ARG_I) && %isdef(NO_ARG_V) && %isndef(BARE_BONES)
+	&& %isdef(NO_ARG_I) && %isdef(NO_ARG_V)
 	%define BARE_BONES
 %endif
 
 %ifndef SCRATCH_BUF_LEN
-	%ifdef BARE_BONES ;; default to 1 KiB
-		%define SCRATCH_BUF_LEN 1024
+	%ifdef BARE_BONES ; default to 1 KiB
+		%assign SCRATCH_BUF_LEN 1024
 	%elifdef MINIMAL ; default to 32 KiB
-		%define SCRATCH_BUF_LEN %eval(1024*32)
+		%assign SCRATCH_BUF_LEN 1024*32
 	%else ; default to 64 KiB (LEAN or normal)
-		%define SCRATCH_BUF_LEN %eval(1024*64)
+		%assign SCRATCH_BUF_LEN 1024*64
 	%endif
 %endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;; configuration macros bounds checks ;;;;;;;;;;;;;;;;;;;;;;;;
 
+%ifnnum SCRATCH_BUF_LEN
+	%fatal scratch buffer size (-DSCRATCH_BUF_LEN) must be a number.
+%endif
+
+%ifnnum UNROLL_N
+	%fatal unroll factor (-DUNROLL_N) must be a number.
+%endif
+
+%ifnstr DELIM
+	%fatal output format delimiter (-DDELIM) must be a string.
+%endif
+
 %if SCRATCH_BUF_LEN < 1
-	%error scratch buffer size (%[SCRATCH_BUF_LEN]) must be at least 1.
+	%fatal scratch buffer size (%[SCRATCH_BUF_LEN]) must be at least 1.
 %endif
 
 %if SCRATCH_BUF_LEN > 380_368_439
 	%warning %strcat(`scratch buffer size (`, %num(SCRATCH_BUF_LEN), \
-		`) exceeds maximum size of 380,368,439. bytes\n`, \
+		`) exceeds maximum size of 380,368,439 bytes.\n`, \
 		`\tCorrectness of program outputs is no longer guaranteed.`)
 %endif
 
+%if SCRATCH_BUF_LEN > (1 << 32) - 1
+	%fatal %strcat(`scratch buffer size (`, %num(SCRATCH_BUF_LEN), `) does not fit in 32 bits.`)
+%endif
+
 %if UNROLL_N < 1
-	%error unroll factor (%[UNROLL_N]) must be at least 1.
+	%fatal unroll factor (%[UNROLL_N]) must be at least 1.
+%endif
+
+%if UNROLL_N > SCRATCH_BUF_LEN
+	;; protect against `-DUNROLL=-1`, which is actually the same thing as `-DUNROLL=18446744073709551615`.
+	%fatal unroll factor (%[UNROLL_N]) cannot be greater than the buffer size (%[SCRATCH_BUF_LEN])
+%elif UNROLL_N > 32768
+	;; this is beyond the point where there is no way unrolling is giving any kind of speed up.
+	%fatal unroll factor (%[UNROLL_N]) greater than 32768. this is likely a mistake.
+%elif UNROLL_N > 1024
+	;; from 1024 to 32768, it is probably a misconfiguration, but it isn't immediately an issue.
+	%warning unroll factor (%[UNROLL_N]) greater than 1024. this is possibly a mistake.
+%endif
+
+%if %strlen(DELIM) > 64
+	%warning delimiter is longer than 64 characters. this is likely a mistake.
+%elif %strlen(DELIM) > 8192
+	%fatal delimiter is longer than 8192 characters. this is almost certainly a misconfiguration
+%endif
+
+%assign i 1
+%rep %strlen(DELIM)
+	%substr c DELIM i
+
+	%if c > '~' || c < 32 && c != `\t` && c != `\n`
+		%fatal output format delimiter invalid character at position i: cannot contain control or special characters.
+	%endif
+
+	%assign i i + 1
+%endrep
+%undef c
+%undef i
+
+%if %isdef(MODE_UNDO_DEFAULT) && %isdef(NO_DIRECTIONS)
+	%fatal -DMODE_UNDO_DEFAULT and -DNO_DIRECTIONS cannot both be provided.
 %endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; other macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-%defstr VERSION 5.0
+%defstr VERSION 5.1
 %assign BASE 65521
 
 %define HEX_TO_U8_SKIP_PREFIX_CHECK ; don't allow `0x` in between each byte in `-x HEXDATA`
@@ -286,14 +389,34 @@
 
 ;; exit code string padding. left pads to length 5, and then adds 3 spaces after it.
 %xdefine spad~5spaces "     "
-%define exitcode_spad(code) %strcat(%substr(spad~5spaces, 1 + %strlen(%num(code)), -1), %num(code), "   ")
+%define exitcode_spad(code) %strcat(%substr(spad~5spaces, 1 + %strlen(%num(code))), %num(code), "   ")
+
+;; color macros
+;; ANSI escape sequences.
+%xdefine FATAL_RED		%cond(%isdef(NO_COLOR_FATAL), "", `\e[31m`)
+%xdefine FATAL_CLEAR	%cond(%isdef(NO_COLOR_FATAL), "", `\e[0m`)
+
+%xdefine ERROR_RED		%cond(%isdef(NO_COLOR_ERROR), "", `\e[31m`)
+%xdefine ERROR_CLEAR	%cond(%isdef(NO_COLOR_ERROR), "", `\e[0m`)
+
+%xdefine WARNING_ORANGE	%cond(%isdef(NO_COLOR_WARNG), "", `\e[38;5;172m`)
+;; NOTE: WARNING_CLEAR doesn't need to exist.
+
+%xdefine CKSM_X %cond(%isdef(CKSM_UPPER), "X", "x")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; data segments ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 segment .bss
-	scratch_buffer	resb SCRATCH_BUF_LEN
-	pstdin			resq 1 ; FILE **pstdin . for reading from pipes
+	;; pad the buffer to the nearest multiple of 4, but only if memory is cleared on exit
+	%ifdef NO_MEM_CLEANUP
+		%xdefine PADDED_SCRATCH_BUF_LEN SCRATCH_BUF_LEN
+	%else
+		%xdefine PADDED_SCRATCH_BUF_LEN %eval(SCRATCH_BUF_LEN + ((SCRATCH_BUF_LEN + 3) & ~3))
+	%endif
+
+	scratch_buffer	resb PADDED_SCRATCH_BUF_LEN
 	pstderr			resq 1 ; FILE **pstderr. for printing generic fatal errors like "unknown argument"
+	%cond(%isndef(NO_PIPE), pstdin		resq 1) ; FILE **pstdin. only used for the pipeline
 
 	%cond(%isndef(NO_ARG_O), pstdout	resq 1) ; FILE **pstdout. only used for comparison in `process_arg`.
 	%cond(%isndef(NO_ARG_O), poutfile	resq 1) ; FILE **poutfile. write the output here instead of to stdout
@@ -302,9 +425,59 @@ segment .bss
 ;; these three values are updated at runtime when `-r`, `-l`, and `-F` are passed.
 ;; if those are disabled, then these don't have to be in a .data section, and .rdata will work too.
 segment %cond(%isdef(NO_FORMAT), rdata, data)
-	valid_line_fmt		db `%08x\t%s\n\0`
-	invalid_line_fmt	db `\e[31m[ABSENT]\e[0m\t%s\n\0` ;; file doesn't exist
-	dir_passed_line_fmt	db `\e[31m[FOLDER]\e[0m\t%s\n\0` ;; filename is a folder, not a file
+%ifdef FMT_SWAP_ARGS
+	;; these have to use `%0s` to be the same length as `%.s`, which ignores the argument. this
+	;; makes it so I don't have to change the implementation to have conditions everywhere to pass
+	;; the checksum as the first argument in raw formatting mode. %0s has the same functionality
+	;; as %s because it prints a string and left pads with spaces it to at least 0 characers
+	%xdefine LONGFMT_STR_VALID  %strcat("%0s", DELIM, "%08", CKSM_X, `\n\0`)
+	%xdefine LONGFMT_STR_ABSENT %strcat(ERROR_RED, "%0s", DELIM, "[ABSENT]", ERROR_CLEAR, `\n\0`)
+	%xdefine LONGFMT_STR_FOLDER %strcat(ERROR_RED, "%0s", DELIM, "[FOLDER]", ERROR_CLEAR, `\n\0`)
+
+	;; these are basically the long form ones but with %0s replaced with %.s, and the delimiter removed.
+	;; these don't include the required padding characters after it to make `-l` work properly.
+	%xdefine RAWFMT_STR_VALID   %strcat("%.s%08", CKSM_X, `\n\0`)
+	%xdefine RAWFMT_STR_ABSENT  %strcat(ERROR_RED, "%.s[ABSENT]", ERROR_CLEAR, `\n\0`)
+	%xdefine RAWFMT_STR_FOLDER  %strcat(ERROR_RED, "%.s[FOLDER]", ERROR_CLEAR, `\n\0`)
+
+	;; offsets to the character after the % in the `%.s` / `%0s` part
+	%xdefine FMT_OFFSET_INVALID %strlen(%strcat(ERROR_RED, '%'))
+	%xdefine FMT_OFFSET_VALID   %strlen("%")
+%else ; %ifdef FMT_SWAP_ARGS
+	%xdefine LONGFMT_STR_VALID  %strcat("%08", CKSM_X, DELIM, `%s\n\0`)
+	%xdefine LONGFMT_STR_ABSENT %strcat(ERROR_RED, "[ABSENT]", DELIM, "%s", ERROR_CLEAR, `\n\0`) ;; file doesn't exist
+	%xdefine LONGFMT_STR_FOLDER %strcat(ERROR_RED, "[FOLDER]", DELIM, "%s", ERROR_CLEAR, `\n\0`) ;; filename is a folder, not a file
+
+	;; these don't include the required padding characters after it to make `-l` work properly.
+	%xdefine RAWFMT_STR_VALID   %strcat("%08", CKSM_X, `\n\0`)
+	%xdefine RAWFMT_STR_ABSENT  %strcat(ERROR_RED, "[ABSENT]", ERROR_CLEAR, `\n\0`)
+	%xdefine RAWFMT_STR_FOLDER  %strcat(ERROR_RED, "[FOLDER]", ERROR_CLEAR, `\n\0`)
+
+	;; offsets to the delimiter.
+	;; [ABSENT] and [FOLDER] are the same length, and %08x and %08X are the same length.
+	%xdefine FMT_OFFSET_INVALID	%strlen(%strcat(ERROR_RED, "[ABSENT]"))
+	%xdefine FMT_OFFSET_VALID	%strlen("%08x")
+%endif ; %ifdef FMT_SWAP_ARGS (else branch)
+
+
+%ifdef FMT_RAW_DEFAULT
+	%ifdef NO_FORMAT
+		;; no characters are required after the raw format part, because -r, -l, and -F don't exist.
+		;; the string can just exist as it is with no data after the null byte.
+		valid_line_fmt		db RAWFMT_STR_VALID
+		invalid_line_fmt	db RAWFMT_STR_ABSENT
+		%cond(%isndef(NO_FOLDER_CHECK), dir_passed_line_fmt db RAWFMT_STR_FOLDER)
+	%else ; %ifdef NO_FORMAT
+		;; put the short format string, but put the remaining characters from the long form one after it.
+		valid_line_fmt		db %strcat(RAWFMT_STR_VALID, %substr(LONGFMT_STR_VALID, %strlen(RAWFMT_STR_VALID) + 1))
+		invalid_line_fmt	db %strcat(RAWFMT_STR_ABSENT, %substr(LONGFMT_STR_ABSENT,  %strlen(RAWFMT_STR_ABSENT) + 1))
+		%cond(%isndef(NO_FOLDER_CHECK), dir_passed_line_fmt db %strcat(RAWFMT_STR_FOLDER, %substr(LONGFMT_STR_FOLDER,  %strlen(RAWFMT_STR_FOLDER) + 1)))
+	%endif ; %ifdef NO_FORMAT (else branch)
+%else ; %ifdef FMT_RAW_DEFAULT
+	valid_line_fmt		db LONGFMT_STR_VALID
+	invalid_line_fmt	db LONGFMT_STR_ABSENT ;; file doesn't exist
+	%cond(%isndef(NO_FOLDER_CHECK), dir_passed_line_fmt db LONGFMT_STR_FOLDER) ;; filename is a folder, not a file
+%endif ; %ifdef FMT_RAW_DEFAULT (else branch)
 
 %ifndef NO_FORMAT
 	;; if -DNO_FORMAT is given, the previous three labels are in the rdata section,
@@ -312,35 +485,46 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 	segment rdata
 %endif
 	;; errors
-	%cond(%isdef(NO_PIPE),, internal_error_str	db `\e[31mERROR: internal error %hhu\e[0m\n\0`)
-	%cond(%isdef(NO_DIRECTIONS),, {non_seekable_large_file_undo_str	db `\e[31mERROR: file is not seekable and larger than `, %num(SCRATCH_BUF_LEN - 1), ` bytes.\e[0m\n\0`})
 
-	%cond(%isdef(NO_ARG_P),, prev_invalid_arg_str	db `\e[31mERROR: argument \`-p\` given with an invalid value \`%.8s\`.\e[0m\n\0`)
-	%cond(%isdef(NO_ARG_P),, prev_no_pipe_str		db `\e[31mERROR: argument \`-p\` given with value \`-\` when there is no pipeline.\e[0m\n\0`)
-	%cond(%isdef(NO_ARG_X),, hex_odd_length_str		db `\e[31mERROR: argument \`-x\` given with an odd-length value.\e[0m\n\0`)
-	%cond(%isdef(NO_ARG_X),, hex_invalid_byte_str	db `\e[31mERROR: argument \`-x\` given with an invalid value at hex-pair index %u.\e[0m\n\0`)
+%ifndef NO_FATAL_MESSAGES
+	%cond(%isndef(NO_PIPE), internal_error_str	db %strcat(FATAL_RED, "ERROR: internal error %hhu", FATAL_CLEAR, `\n\0`))
+	%cond(%isndef(NO_DIRECTIONS), non_seekable_large_file_undo_str	db %strcat(FATAL_RED, "ERROR: file is not seekable and larger than ", %num(SCRATCH_BUF_LEN - 1), " bytes.", FATAL_CLEAR, `\n\0`))
+
+	%cond(%isndef(NO_ARG_P), prev_invalid_arg_str	db %strcat(FATAL_RED, "ERROR: argument `-p` given with an invalid value `%.8s`.", FATAL_CLEAR, `\n\0`))
+	%cond(%isndef(NO_ARG_P), prev_no_pipe_str		db %strcat(FATAL_RED, "ERROR: argument `-p` given with value `-` when there is no pipeline.", FATAL_CLEAR, `\n\0`))
+	%cond(%isndef(NO_ARG_X), hex_odd_length_str		db %strcat(FATAL_RED, "ERROR: argument `-x` given with an odd-length value.", FATAL_CLEAR, `\n\0`))
+	%cond(%isndef(NO_ARG_X), hex_invalid_byte_str	db %strcat(FATAL_RED, "ERROR: argument `-x` given with an invalid value at hex-pair index %u.", FATAL_CLEAR, `\n\0`))
 
 %ifndef NO_REDIRECTS
-	option_non_writable_file_str	db `\e[31mERROR: invalid path given for \`-%c\`: file '%s' could not be opened for writing.\e[0m\n\0`
-	option_file_is_directory_str	db `\e[31mERROR: invalid path given for \`-%c\`: '%s' is a directory.\e[0m\n\0`
-%endif
+	;; error strings specific to `-o` and `-e`
+	option_non_writable_file_str	db FATAL_RED, "ERROR: invalid path given for `-%c`: file '%s' could not be opened for writing.", FATAL_CLEAR, `\n\0`
+	option_file_is_directory_str	db FATAL_RED, "ERROR: invalid path given for `-%c`: '%s' is a directory.", FATAL_CLEAR, `\n\0`
+%endif ; %ifndef NO_REDIRECTS
 
 %if %isndef(NO_ARG_X) || %isndef(NO_ARG_S) || %isndef(NO_ARG_P) || \
 	%isndef(NO_ARG_F) || %isndef(NO_ARG_O) || %isndef(NO_ARG_E)
-	option_no_arg_str	db `\e[31mERROR: argument \`-%c\` given with no value.\e[0m\n\0`
-%endif
+	option_no_arg_str	db FATAL_RED, "ERROR: argument `-%c` given with no value.", FATAL_CLEAR, `\n\0`
+%endif ; %if at least one of -[xspfoe] exists.
 
 %ifndef NO_ARG_C
-	comb_no_args_str		db `\e[31mERROR: argument \`-c\` given with no values.\e[0m\n\0`
-	comb_one_arg_str		db `\e[31mERROR: argument \`-c\` given with only one argument.\e[0m\n\0`
-	comb_invalid_arg_str	db `\e[31mERROR: argument \`-c\` given with an invalid %s argument \`%.8s\`.\e[0m\n\0`
+	comb_no_args_str		db FATAL_RED, "ERROR: argument `-c` given with no values.", FATAL_CLEAR, `\n\0`
+	comb_one_arg_str		db FATAL_RED, "ERROR: argument `-c` given with only one argument.", FATAL_CLEAR, `\n\0`
+	comb_invalid_arg_str	db FATAL_RED, "ERROR: argument `-c` given with an invalid %s argument `%.8s`.", FATAL_CLEAR, `\n\0`
 	first_str				db `first\0`
 	second_str				db `second\0`
 	;; TODO: there should be a `comb_no_pipe_str` I think. there is probably
 	;;       a bug if you if you do `-c * -` or `-c - *` without piping anything
-%endif
-	unknown_arg_str			db `\e[31mERROR: unknown argument \`%s\`.\e[0m`
+%endif ; %ifndef NO_ARG_C
+
+	unknown_arg_str			db FATAL_RED, "ERROR: unknown argument `%s`.", FATAL_CLEAR
 	%cond(%isndef(NO_DOCS), db `\nUse \`--help\` for more information.\0`, db `\0`)
+%endif ; %ifndef NO_FATAL_MESSAGES
+
+%ifndef NO_WARN_UNUSED
+	unused_warning_str	db WARNING_ORANGE, "WARNING: %u misplaced argument(s) after the last output argument", `\n         unused flags:\0`
+	unused_arg_str		db " %s", `\0`
+	ansi_clear_str		db `\e[0m\0`
+%endif
 
 	;; miscellaneous strings
 	file_rb_mode	db `rb\0`
@@ -380,12 +564,12 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 	%cond(%isdef(NO_DIRECTIONS),, ubackwards_arg	db `--backwards\0`)
 	%cond(%isdef(NO_DIRECTIONS),, dforwards_arg		db `--forwards\0`)
 	%cond(%isdef(NO_DIRECTIONS),, Dreverse_arg		db `--reverse\0`)
-%endif
+%endif ; %ifndef NO_LONG_ARGS
 
 %ifndef NO_ARG_V
 	version_str:
-		db `adler32 v`, VERSION, `\n`
-		db `assembled with buffer size `
+		db "adler32 v", VERSION, `\n`
+		db "assembled with: buffer="
 ;; don't worry about GiB, because the buffer can only be up to like 362 MiB
 ;; NOTE: if it is like 12.34 MiB, it will truncate it to 12 MiB.
 %if SCRATCH_BUF_LEN >= 1024*1024
@@ -393,51 +577,58 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 %elif SCRATCH_BUF_LEN >= 1024
 		db %num(SCRATCH_BUF_LEN >> 10), " KiB"
 %else
-		db %num(SCRATCH_BUF_LEN), ` B`
+		db %num(SCRATCH_BUF_LEN), " B"
 %endif
-		%cond(SCRATCH_BUF_LEN <= 380_368_439,, db " (excessive size)")
-		db `, `
+		%cond(SCRATCH_BUF_LEN > 380_368_439, db " (excessive size)") ; checksum accuracy is not guaranteed.
 
-%ifdef BARE_BONES
-		db `-DBARE_BONES: `
-%elifdef MINIMAL
-		db `-DMINIMAL: `
-%elifdef LEAN
-		db `-DLEAN: `
+		db ", unroll=", %num(UNROLL_N)
+		db ", output-format=(", %cond(%isdef(FMT_SWAP_ARGS), "filename", "checksum"), " first"
+%if %isdef(NO_COLOR_ERROR) && %isndef(NO_COLOR)
+		;; don't output this if it will output "no color" for the whole program.
+		db ", no color"
 %endif
+		db ", default=", %cond(%isdef(FMT_RAW_DEFAULT), "raw", "long")
+		db ", delim=", '"', %substr(%str(DELIM), 2, -2), `")`
 
-		db `unroll factor `, %num(UNROLL_N)
-		%cond(%isdef(NO_ARG_C), db `, no combine (-c)`)
-		%cond(%isdef(NO_ARG_F), db `, no file override (-f)`)
-		%cond(%isdef(NO_ARG_I), db `, no incremental mode (-i)`)
-		%cond(%isdef(NO_ARG_P), db `, no prev-cksm update (-p)`)
+%ifdef NO_COLOR
+		db ", no color"
+%else
+		%cond(%isdef(NO_COLOR_FATAL), db ", no fatal error color")
+		%cond(%isdef(NO_COLOR_WARNG), db ", no warning color")
+%endif ; %ifdef NO_COLOR (else branch)
+
+		%cond(%isdef(NO_ARG_C), db ", no combine (-c)")
+		%cond(%isdef(NO_ARG_F), db ", no file override (-f)")
+		%cond(%isdef(NO_ARG_I), db ", no incremental mode (-i)")
+		%cond(%isdef(NO_ARG_P), db ", no prev-cksm update (-p)")
 
 %ifdef NO_FORMAT
-		db `, no formatting (-r/-l/-F)`
+		db ", no formatting (-r/-l/-F)"
 %else
-		%cond(%isdef(NO_ARG_R), db `, no raw format (-r)`)
-		%cond(%isdef(NO_ARG_L), db `, no long format (-l)`)
+		%cond(%isdef(NO_ARG_R), db ", no raw format (-r)")
+		%cond(%isdef(NO_ARG_L), db ", no long format (-l)")
 %endif
 
 %ifdef NO_REDIRECTS
-		db `, no file redirects (-o/-e)`
+		db ", no file redirects (-o/-e)"
 %else
-		%cond(%isdef(NO_ARG_O), db `, no outfile redirects (-o)`)
-		%cond(%isdef(NO_ARG_E), db `, no errfile redirects (-e)`)
+		%cond(%isdef(NO_ARG_O), db ", no outfile redirects (-o)")
+		%cond(%isdef(NO_ARG_E), db ", no errfile redirects (-e)")
 %endif
 
 %ifdef NO_INLINE_INPUT
-		db `, no inline input (-s/-x)`
+		db ", no inline input (-s/-x)"
 %else
-		%cond(%isdef(NO_ARG_S), db `, no string input (-s)`)
-		%cond(%isdef(NO_ARG_X), db `, no hex input (-x)`)
+		%cond(%isdef(NO_ARG_S), db ", no string input (-s)")
+		%cond(%isdef(NO_ARG_X), db ", no hex input (-x)")
 %endif
-		%cond(%isdef(NO_DIRECTIONS), db `, no directions (-d/-u/-D)`)
-		%cond(%isdef(NO_ARG_V), db `, no version (-v)`) ; NOTE: this never evaluates to anything
-		%cond(%isdef(NO_ARG_H), db `, no help (-h/-?)`)
-		%cond(%isdef(NO_DOCS), db `, no docs`)
-		%cond(%isdef(NO_PIPE), db `, no pipeline`)
-		%cond(%isdef(NO_LONG_ARGS), db `, no long-form arguments`)
+
+		%cond(%isdef(NO_DIRECTIONS), db ", no directions (-d/-u/-D)")
+		%cond(%isdef(NO_ARG_V), db ", no version (-v)") ; NOTE: this never evaluates to anything
+		%cond(%isdef(NO_ARG_H), db ", no help (-h/-?)")
+		%cond(%isdef(NO_DOCS), db ", no docs")
+		%cond(%isdef(NO_PIPE), db ", no pipeline")
+		%cond(%isdef(NO_LONG_ARGS), db ", no long-form arguments")
 		db `\0`
 %endif ; %ifndef NO_ARG_V
 
@@ -485,20 +676,22 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 		db DOC_PAD, `characters after it. It terminates the string at the first invalid character. The second\n`
 		db DOC_PAD, `argument of \`-c\` reads at most 20 characters as an unsigned 64-bit integer, and stops at the\n`
 		db DOC_PAD, `first invalid character, leaving it in stdin.\n`
-%endif
+%endif ; %ifndef NO_PIPE
 
 %ifndef NO_ARG_R
 		db %cond(%isdef(NO_LONG_ARGS), \
 			`    -r                  `, \
 			`    -r, --format-raw    `)
-		db `Use raw formatting: print only the checksum for subsequent files.\n`
+		db `Use raw formatting: print only the checksum for subsequent files.`
+		db %cond(%isdef(FMT_RAW_DEFAULT), ` (default)\n`, `\n`)
 %endif ; %ifndef NO_ARG_R
 
 %ifndef NO_ARG_L
 		db %cond(%isdef(NO_LONG_ARGS), \
 			`    -l                  `, \
 			`    -l, --format-long   `)
-		db `Use long formatting: print the checksum and filename for subsequent files. (default)\n`
+		db `Use long formatting: print the checksum and filename for subsequent files.`
+		db %cond(%isdef(FMT_RAW_DEFAULT), `\n`, ` (default)\n`)
 %endif ; %ifndef NO_ARG_L
 
 %ifndef NO_FORMAT
@@ -512,12 +705,14 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 		db %cond(%isdef(NO_LONG_ARGS), \
 			`    -d                  `, \
 			`    -d, --forwards      `)
-		db `Switch to forwards/do mode. (default)\n`
+		db `Switch to forwards/do mode.`
+		db %cond(%isdef(MODE_UNDO_DEFAULT), `\n`, ` (default)\n`)
 
 		db %cond(%isdef(NO_LONG_ARGS), \
 			`    -u                  `, \
 			`    -u, --backwards     `)
-		db `Switch to backwards/undo mode.\n`
+		db `Switch to backwards/undo mode.`
+		db %cond(%isdef(MODE_UNDO_DEFAULT), ` (default)\n`, `\n`)
 
 		db %cond(%isdef(NO_LONG_ARGS), \
 			`    -D                  `, \
@@ -607,6 +802,7 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 	%endif
 %endif ; %ifndef NO_ARG_E
 
+%ifndef NO_DOCS_EXIT_CODE_TABLE
 		db `Exit Codes:\n`
 		db exitcode_spad(EXIT_SUCCESS),  `success\n`
 		db exitcode_spad(EXIT_INTERNAL), `generic error\n`
@@ -667,7 +863,7 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 
 %ifndef NO_ARG_O
 		db exitcode_spad(EXIT_ONOVAL),   `\`-o\` was given without a value\n`
-		db exitcode_spad(EXIT_OFOLDER),  `\`-o\` was given a directory\n`
+		db exitcode_spad(EXIT_OFOLDER), %cond(%isdef(NO_FOLDER_CHECK), "unused", "`-o` was given a directory"), `\n`
 		db exitcode_spad(EXIT_ONOPERM),  `\`-o\` could not open the file (miscellaneous/permission error)\n`
 %elif %isndef(NO_ARG_E)
 		db exitcode_spad(EXIT_ONOVAL),   `unused\n`
@@ -677,7 +873,7 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 
 %ifndef NO_ARG_E
 		db exitcode_spad(EXIT_ENOVAL),   `\`-e\` was given without a value\n`
-		db exitcode_spad(EXIT_EFOLDER),  `\`-e\` was given a directory\n`
+		db exitcode_spad(EXIT_EFOLDER), %cond(%isdef(NO_FOLDER_CHECK), "unused", "`-e` was given a directory"), `\n`
 		db exitcode_spad(EXIT_ENOPERM),  `\`-e\` could not open the file (miscellaneous/permission error)\n`
 %elif 0
 	;; don't output anything because there are no exit codes after these ones.
@@ -689,6 +885,7 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 		; db `   -1   something is not implemented. see the error message for details\n`
 
 		db `\n` ; space between the exit codes and generic information.
+%endif ; %ifndef NO_DOCS_EXIT_CODE_TABLE
 
 %ifndef NO_PIPE
 		db `By default, if input is piped, arguments before the first non input source argument will also\n`
@@ -698,22 +895,34 @@ segment %cond(%isdef(NO_FORMAT), rdata, data)
 		db `All arguments can be passed multiple times. The most recent value is used, for example \`-r -l\` is the same as \`-l\`.\n`
 		db `Arguments are processed in one pass, so argument order matters. Flags only apply to files after it.\n`
 		db `Multi-character options like \`-abc\` are treated as a single entity, not as \`-a -b -c\`.\n`
+%ifndef NO_WARN_UNUSED
+		;; NOTE: an output argument is an argument that produces output.
+		db `A warning is given for misplaced arguments after the last output argument. This does not change the exit code.\n`
+%endif
 		db `If a directory path is given instead of a file path, an error is given, but processing continues.\0`
 %endif ; %ifdef NO_DOCS (else branch)
 %endif ; %ifndef NO_ARG_H
 
+%undef DOC_PAD
+
 segment text
 	global main
 
-	extern GetCommandLineW, GetFileAttributesA		; kernel32.dll
-	extern CommandLineToArgvW						; shell32.dll
-	extern fprintf, puts, exit
-	extern __acrt_iob_func, fopen, fclose, fread	; ucrtbase.dll
+	extern GetCommandLineW				; kernel32.dll
+	extern CommandLineToArgvW			; shell32.dll
+	extern fprintf, puts, fopen, fclose
+	extern __acrt_iob_func, exit, fread	; ucrtbase.dll
 
 %ifndef NO_INLINE_INPUT
 	; only used in adler32_str and adler32_hex.
 	;; ucrtbase.dll
 	extern strlen
+%endif
+
+%ifndef NO_FOLDER_CHECK
+	;; used for `-o`, `-e`, and in `adler32_fname`. disabled if -DNO_FOLDER_CHECK is given.
+	;; kernel32.dll
+	extern GetFileAttributesA
 %endif
 
 %ifdef NO_ARG_O
@@ -732,6 +941,12 @@ segment text
 	; only used in `adler32_fp_bw`; only import if directions are enabled.
 	;; ucrtbase.dll
 	extern _fseeki64, _ftelli64
+%endif
+
+%ifndef NO_MEM_CLEANUP
+	; only used for `atexit(memory_cleanup);` in main; only import if memory cleanup is enabled.
+	;; ucrtbase.dll
+	extern _crt_atexit
 %endif
 
 %ifndef NO_PIPE
@@ -753,6 +968,9 @@ segment text
 	extern _setmode
 %endif
 
+%ifdef BARE_BONES
+	%define SETUP_ARGC_ARGV_MACRO_ONLY
+%endif
 %include "../winapi/setup_argc_argv.nasm"
 
 %if %isndef(NO_ARG_V) || %isndef(NO_ARG_H) || %isndef(NO_LONG_ARGS)
@@ -769,6 +987,22 @@ segment text
 
 %ifndef NO_ARG_X
 	%include "../libasm/hex_to_u8.nasm"	; for adler32_hex (-x)
+%endif
+
+%ifndef NO_MEM_CLEANUP
+;; clobbers rcx and rdx.
+;; zeroes the scratch buffer and the file pointer pointers after it.
+memory_cleanup: ; void memory_cleanup(void);
+	;; rcx has to be the index variable because the `loop` instruction assumes it is.
+	mov 	ecx, (PADDED_SCRATCH_BUF_LEN >> 2) + 2*(1 + %isndef(NO_PIPE) + 2*%isndef(NO_ARG_O) + %isndef(NO_ARG_E)) - 1 ; uint32_t index;
+	lea 	rdx, [rel scratch_buffer]
+.loop:
+	mov 	dword [rdx + 4*rcx], 0
+	loop	.loop
+
+	;; handle the last dword after the loop exits.
+	mov 	dword [rdx], 0
+	ret
 %endif
 
 %ifndef NO_PIPE
@@ -848,7 +1082,7 @@ void adler32_combine_bw(uint32_t _, uint32_t cksm2, uint64_t len2) {
 	x2 -= b2;
 
 	uint32_t b = x2;
-	b += 65521u *65521u;
+	b += 65521u * 65521u;
 	b -= x1;
 
 	// intel syntax
@@ -997,25 +1231,25 @@ adler32_combine: ; uint32_t adler32_combine(uint32_t cksm1, uint32_t cksm2, uint
 ;;       for immediate value strings, `bytes_read` is really `data_length`.
 ;;       it should be fine as long as it is less than ~362 MiB.
 
-align 64	;; align to the next cache line. hot function.
-_adler32_digest_buffer_fw:
+;; this is defined as a macro because it is inlined if -DBARE_BONES is given.
+%macro _adler32_digest_buffer_fw_macro 0
 	xor 	r8d, r8d	; uint32_t i = 0;
 %if UNROLL_N == 1 ;; start of for loop
-.for_start:
+%%for@start:
 	cmp 	r8d, eax
-	je  	.done		; if (i == bytes_read) break; // while (i < bytes_read) { ... }
+	je  	%%done		; if (i == bytes_read) break; // while (i < bytes_read) { ... }
 
 	movzx	edx, byte [r13 + r8]
 	add 	rbx, rdx	; a += scratch_buffer[i]
 	add 	rbp, rbx	; b += a
-.for_inc: ;; unused label. for clarity
+%%for@inc: ;; unused label. for clarity
 	inc 	r8d
-	jmp 	.for_start
+	jmp 	%%for@start
 %else ;; end UNROLL_N == 1 branch.
-.for_start:
+%%for@start:
 	add 	r8d, UNROLL_N
 	cmp 	r8d, eax
-	ja  	.for_done	; if (i + N >= bytes_read) break; // while (i + N < bytes_read) { ... }
+	ja  	%%for@done	; if (i + N >= bytes_read) break; // while (i + N < bytes_read) { ... }
 
 	;; these use subtraction instead of addition them because of the `i += N` at the start of the loop.
 	;; NOTE: the order matters, so this has to be i = N...1, and can't be i = 1...N
@@ -1027,8 +1261,8 @@ _adler32_digest_buffer_fw:
 	%assign i i - 1
 %endrep
 
-	jmp 	.for_start
-.for_done:
+	jmp 	%%for@start
+%%for@done:
 	sub 	r8d, UNROLL_N	; counteract the `add r8d, N` at the start of the loop.
 
 	;; setup jump address
@@ -1050,7 +1284,7 @@ _adler32_digest_buffer_fw:
 ;; the cases are intended to fall through to the next case.
 ;; handle the last remaining (N-1 to 1) bytes.
 %rep UNROLL_N - 1
-.%[i]_leftover: ;; i is the number of bytes left to be processed
+%%case_%[i]_leftover: ;; i is the number of bytes left to be processed
 	movzx	edx, byte [r13 + r8] ; tmp = scratch_buffer[i]
 	add 	rbx, rdx	; a += tmp
 	add 	rbp, rbx	; b += a
@@ -1058,12 +1292,12 @@ _adler32_digest_buffer_fw:
 
 	%assign i i - 1
 %endrep
-.0_leftover:
+%%case_0_leftover:
 	;; do modulos, etc.
 
 %undef i
 %endif ;; end UNROLL_N != 1 branch. end of for loop
-.done:
+%%done:
 	mov 	r8d, eax	; save bytes_read into r8d
 
 	;; a %= BASE
@@ -1077,7 +1311,16 @@ _adler32_digest_buffer_fw:
 	mov 	rax, rbp
 	div 	r12			; (rax, rdx) = (b // BASE, b % BASE)
 	mov 	rbp, rdx	; b %= BASE
+%endm ; _adler32_digest_buffer_fw_macro
+
+%ifndef BARE_BONES
+%cond(%isndef(NO_ALIGN), align 64) ;; align to the next cache line. hot function.
+_adler32_digest_buffer_fw:
+_adler32_digest_buffer_fw_macro
 	ret
+
+%endif
+
 
 %ifndef NO_DIRECTIONS
 ;; Variables:
@@ -1088,10 +1331,12 @@ _adler32_digest_buffer_fw:
 	;; BASE (65521)   : r12
 	;; scratch_buffer : r13
 ;; TODO: add unrolling for this
-align 64 ;; this shouldn't offset by too much. the last function should be close to a boundary
+%ifndef NO_ALIGN
+	align 64 ;; this shouldn't offset by too much. the last function should be close to a boundary
+%endif
 _adler32_digest_buffer_bw:
-.loop_start:
-	test 	eax, eax				; while (i --> 0)
+.loop:
+	test 	eax, eax				; while (i > 0)
 	jz  	.done
 	dec 	eax						; i--;
 
@@ -1099,7 +1344,7 @@ _adler32_digest_buffer_bw:
 	sub 	rbp, rbx				; b -= a;
 	sub 	rbx, rdx				; a -= scratch_buffer[i];
 
-	jmp 	.loop_start
+	jmp 	.loop
 .done:
 	;; a = a % BASE + (a < 0)*BASE;
 	mov 	rax, rbx	; rax = a
@@ -1214,7 +1459,7 @@ uint32_t adler32_fp_v2(FILE *fp, uint32_t prev_cksm) {
 	mov 	r12d, BASE
 	mov 	r14, rcx
 	lea 	r13, [rel scratch_buffer]
-.do_start:
+.do@start:
 	; bytes_read = fread(scratch_buffer, sizeof(char), BUF_LEN, fp);
 	mov 	rcx, r13				; scratch_buffer
 	mov 	edx, 1					; sizeof(char)
@@ -1222,10 +1467,14 @@ uint32_t adler32_fp_v2(FILE *fp, uint32_t prev_cksm) {
 	mov 	r9, r14					; fp
 	call	fread ;; eax = bytes_read
 
-	call	_adler32_digest_buffer_fw
-.do_cond:
+%ifdef BARE_BONES
+	_adler32_digest_buffer_fw_macro
+%else
+	call	_adler32_digest_buffer_fw ; `mov r8d, eax` (among other side-effects)
+%endif
+.do@cond: ; unused label. only for clarity
 	cmp 	r8d, SCRATCH_BUF_LEN
-	je  	.do_start	; if (bytes_read == BUF_LEN) goto do_start;
+	je  	.do@start	; if (bytes_read == BUF_LEN) goto do_start;
 
 	mov 	eax, ebp	; b
 	shl 	eax, 16
@@ -1355,9 +1604,11 @@ adler32_fp_bw: ; uint32_t adler32_fp_bw(FILE *fp, uint32_t prev_cksm);
 	jmp 	.done
 .non_seekable_large_file: ;; unused label. only for clarity.
 	;; file is non seekable and longer than a single scratch buffer.
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel non_seekable_large_file_undo_str]
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_UNOSEEK
 	call	exit
@@ -1369,12 +1620,12 @@ adler32_fname:
 	push	r12
 	push 	r13
 
-	push	rbp
-	mov 	rbp, rsp
-	sub 	rsp, 32		; shadow space
+	sub 	rsp, 40		; shadow space
 
 	mov 	r12, rcx	; file name
 	mov 	r13, rdx	; input checksum
+
+%ifndef NO_FOLDER_CHECK
 
 	; mov 	rcx, r12	;; redundant instruction
 	call	GetFileAttributesA
@@ -1387,7 +1638,8 @@ adler32_fname:
 	test	al, 16 ; FILE_ATTRIBUTE_DIRECTORY
 	jnz 	.directory_passed
 
-	mov 	rcx, r12
+	mov 	rcx, r12 ; this argument restoration is only needed if `GetFileAttributesA` is called.
+%endif
 	lea 	rdx, [rel file_rb_mode]
 	call	fopen
 
@@ -1408,7 +1660,7 @@ adler32_fname:
 
 	mov 	rax, r12	; rax = checksum
 .done:
-	leave
+	add 	rsp, 40
 	pop 	r13
 	pop 	r12
 	ret
@@ -1419,11 +1671,13 @@ adler32_fname:
 	dec 	eax
 
 	jmp 	.done		; leave, pop r12, ret
+%ifndef NO_FOLDER_CHECK
 .directory_passed:
 	;; give an invalid value (0xfffffffe). the max valid value is 0xfff0fff0
 	mov 	eax, -2
 
 	jmp 	.done
+%endif
 
 %ifndef NO_ARG_S
 %ifdifi
@@ -1609,17 +1863,21 @@ adler32_hex: ; uint32_t adler32_hex(char *str, uint32_t prev_cksm);
 	pop 	rbx
 	ret
 .odd_length:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel hex_odd_length_str]
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_XODDLEN
 	call	exit
 .invalid_byte_value:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel hex_invalid_byte_str]
 	mov 	r8d, r9d	; NOTE: r9d is the loop index register
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_XINVAL
 	call	exit
@@ -1631,19 +1889,13 @@ process_pipe: ; void process_pipe(uint32_t prev_cksm /*r12d*/, uint8_t flags /*r
 	mov 	rbp, rsp
 	sub 	rsp, 32
 
-	; this has to happen before `if (flags & pipe_bit_val) goto print;`
-	; 2nd argument if -DNO_ARG_O, else 3rd argument.
-	mov 	edx, r12d ; 2nd argument for adler32_fp
-
-	; argument for `fprintf` in case the pipe bit isn't set.
-	; not required if -DNO_ARG_O is given.
-	%cond(%isndef(NO_ARG_O), {mov	r8d, r12d})
+	mov 	eax, r12d ; in case the pipe bit isn't set.
 
 	test	r14b, PIPE_BIT_VAL	; if the pipeline was not given,
 	jz  	.print				;     just print the previous checksum
 
 	mov 	rcx, [rel pstdin]
-	; mov 	edx, r12d	;; redundant instruction
+	mov 	edx, r12d ; 2nd argument for adler32_fp
 	call	adler32_fp	; uint32_t checksum = adler32_fp(stdin, prev);
 
 %ifndef NO_ARG_I
@@ -1651,19 +1903,23 @@ process_pipe: ; void process_pipe(uint32_t prev_cksm /*r12d*/, uint8_t flags /*r
 	cmovnz	r12d, eax			;     prev_cksm = cksm;
 %endif
 
-	; 2nd argument if -DNO_ARG_O, else 3rd argument.
-	mov 	%cond(%isdef(NO_ARG_O), edx, r8d), eax
+	;; fallthrough
 .print: ; assumes `edx` (checksum) has already been set
+;; NOTE: this can be optimized slightly more to eek out a couple more bytes, but it requires like
+;;       double the comptime complexity. It follows the same optimization used in v5.0 and earlier.
+;;       because of this, I don't think it is worth it anymore. previously it was just like two extra lines.
 %ifdef NO_ARG_O
 	lea 	rcx, [rel valid_line_fmt]
-	lea 	r8 , [rel pipeline_filename_str]
-	call	printf		; printf(valid_line_fmt, checksum, "[PIPE]")
+	lea 	%cond(%isdef(FMT_SWAP_ARGS), rdx, r8), [rel pipeline_filename_str]
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r8d, edx), eax
+	call	printf		; printf(valid_line_fmt, checksum, "[PIPE]") // or with swapped args
 %else
 	mov 	rcx, [rel poutfile]
 	lea 	rdx, [rel valid_line_fmt]
-	lea 	r9 , [rel pipeline_filename_str]
-	call	fprintf		; fprintf(*poutfile, valid_line_fmt, checksum, "[PIPE]")
-%endif
+	lea 	%cond(%isdef(FMT_SWAP_ARGS), r8, r9), [rel pipeline_filename_str]
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r9d, r8d), eax
+	call	fprintf		; fprintf(*poutfile, valid_line_fmt, checksum, "[PIPE]") // or with swapped args
+%endif ; %ifdef NO_ARG_O (else branch)
 
 	leave
 	ret
@@ -1775,6 +2031,8 @@ pipe_read_u64:
 	;; prev   = r12d
 	;; arg[i] = r13
 	;; flags  = r14
+%ifndef BARE_BONES
+	;; with -DBARE_BONES, this function is inlined
 process_arg: ; void process_arg(register char *str asm("r13"));
 	;; this function has side effects and doesn't follow the ABI
 	;; assume the argument starts with '-'
@@ -1786,18 +2044,21 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 	;; NOTE: for -s and -x, `-` as the argument is treated as if that is the actual data.
 
+	;; if -DBARE_BONES is given, execution is guaranteed to end up in `.unknown_argument` anyway,
+	;; so the comparison and value storage is not required.
+
 	;; `-` means to process the pipe. but only if the pipe is enabled.
 	cmp 	byte [r13 + 1], `\0`
 	je  	%cond(%isdef(NO_PIPE), .unknown_argument, .pipe_arg)
 
 	mov 	cx, word [r13 + 1] ;; next two characters after the '-'.
+%endif
 
 	;; the arguments are sorted by commonality, based on guessing.
 	%cond(%isdef(NO_ARG_I),,		process_arg~test_short		'i')
 	%cond(%isdef(NO_ARG_R),,		process_arg~test_short		'r')
 	%cond(%isdef(NO_ARG_P),,		process_arg~test_short		'p')
 	%cond(%isdef(NO_ARG_C),,		process_arg~test_short		'c')
-	%cond(%isdef(NO_FORMAT),,		process_arg~test_short		'F')
 	%cond(%isdef(NO_ARG_L),,		process_arg~test_short		'l')
 	%cond(%isdef(NO_DIRECTIONS),,	process_arg~test_short		'u')
 	%cond(%isdef(NO_ARG_O),,		process_arg~test_short		'o')
@@ -1806,6 +2067,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	%cond(%isdef(NO_ARG_F),,		process_arg~test_short		'f')
 	%cond(%isdef(NO_ARG_S),,		process_arg~test_short		's')
 	%cond(%isdef(NO_ARG_X),,		process_arg~test_short		'x')
+	%cond(%isdef(NO_FORMAT),,		process_arg~test_short		'F')
 	%cond(%isdef(NO_DIRECTIONS),,	process_arg~test_short		'D')
 
 	;; NOTE: the long tests need to be after all the short tests.
@@ -1816,7 +2078,6 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	%cond(%isdef(NO_ARG_R),,		process_arg~test_long		raw_arg)			; -r
 	%cond(%isdef(NO_ARG_P),,		process_arg~test_long		prev_arg)			; -p
 	%cond(%isdef(NO_ARG_C),,		process_arg~test_long		combine_arg)		; -c
-	%cond(%isdef(NO_FORMAT),,		process_arg~test_long		Fformatswap_arg)	; -F
 	%cond(%isdef(NO_ARG_L),,		process_arg~test_long		long_arg)			; -l
 	%cond(%isdef(NO_DIRECTIONS),,	process_arg~test_long		ubackwards_arg)		; -u
 	%cond(%isdef(NO_ARG_O),,		process_arg~test_long		outfile_arg)		; -o
@@ -1825,19 +2086,25 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	%cond(%isdef(NO_ARG_F),,		process_arg~test_long		file_override_arg)	; -f
 	%cond(%isdef(NO_ARG_S),, 		process_arg~test_long		str_data_arg)		; -s
 	%cond(%isdef(NO_ARG_X),, 		process_arg~test_long		xhex_data_arg)		; -x
+	%cond(%isdef(NO_FORMAT),,		process_arg~test_long		Fformatswap_arg)	; -F
 	%cond(%isdef(NO_DIRECTIONS),,	process_arg~test_long		Dreverse_arg)		; -D
-%endif
+%endif ; %ifndef NO_LONG_ARGS
 
 	;; no more arguments to test against; unknown argument
 	;; fallthrough
+%ifndef BARE_BONES
+
 .unknown_argument:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel unknown_arg_str]
 	mov 	r8 , r13
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_UNKN_ARG
 	call	exit
+%endif ; %ifndef BARE_BONES
 
 %ifndef NO_ARG_C
 .arg_match_c:
@@ -1914,50 +2181,60 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 %ifdef NO_ARG_O
 	lea 	rcx, [rel valid_line_fmt]
-	mov 	edx, eax
-	lea 	r8 , [rel comb_filename_str]
-	call	printf		; printf(valid_line_fmt, checksum, "[COMBINED]")
+	lea 	%cond(%isdef(FMT_SWAP_ARGS), rdx, r8), [rel comb_filename_str]
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r8d, edx), eax
+	call	printf		; printf(valid_line_fmt, checksum, "[COMBINE]") // or with swapped args
 %else
 	mov 	rcx, [rel poutfile]
 	lea 	rdx, [rel valid_line_fmt]
-	mov 	r8d, eax
-	lea 	r9 , [rel comb_filename_str]
-	call	fprintf		; fprintf(*putfile, valid_line_fmt, checksum, "[COMBINED]")
-%endif
+	lea 	%cond(%isdef(FMT_SWAP_ARGS), r8, r9), [rel comb_filename_str]
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r9d, r8d), eax
+	call	fprintf		; fprintf(*poutfile, valid_line_fmt, checksum, "[COMBINE]") // or with swapped args
+%endif ; %ifdef NO_ARG_O (else branch)
+
+	%cond(%isndef(NO_WARN_UNUSED), {mov r15d, ebx}) ; output argument
 
 	process_arg~ret
 .arg_match_c@no_args:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel comb_no_args_str]
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_CNOVAL
 	call	exit
 .arg_match_c@one_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel comb_one_arg_str]
 	mov 	r8 , r13
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_C1VAL
 	call	exit
 .arg_match_c@invalid_arg1:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel comb_invalid_arg_str]
 	lea 	r8, [rel first_str]
 	mov 	r9 , r13
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_CINVAL1
 	call	exit
 %if 0
 ;; currently unused
 .arg_match_c@invalid_arg2:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel comb_invalid_arg_str]
 	lea 	r8, [rel second_str]
 	mov 	r9 , r13
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_CINVAL2
 	call	exit
@@ -1990,35 +2267,144 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 %ifndef NO_FORMAT
 ;; all the branches have to exist unless -F is disabled too.
+
 .arg_match_F:
-	cmp 	byte [rel valid_line_fmt + 4], `\t` ; if it is a tab there, it is in long mode.
-	je  	.arg_match_r
+%ifdef FMT_SWAP_ARGS
+	; if the filename is ignored (%.s), we are in raw mode.
+	cmp 	byte [rel valid_line_fmt + FMT_OFFSET_VALID], '.'
+%else
+	; if the string ends, it is in raw formatting.
+	cmp 	word [rel valid_line_fmt + FMT_OFFSET_VALID], `\n\0`
+%endif ; %ifdef FMT_SWAP_ARGS (else branch)
+	je  	.arg_match_l
 	;; fallthrough
-.arg_match_l:
-	mov 	word [rel valid_line_fmt + 4], `\t%`
-	mov 	word [rel invalid_line_fmt + 17], `\t%`
-	mov 	word [rel dir_passed_line_fmt + 17], `\t%`
+
+.arg_match_r:
+	;; make the first argument ignored
+
+;; this implementation is beyond disgusting, but I don't really want to have to touch it, and I
+;; don't even know ifi I can make it better without removing some of the optimizations/config options.
+
+%ifdef FMT_SWAP_ARGS
+	%if %strlen(DELIM) == 0
+		;; %0s -> %.s
+		mov 	byte [rel valid_line_fmt + FMT_OFFSET_VALID], '.'
+		mov 	byte [rel invalid_line_fmt + FMT_OFFSET_INVALID], '.'
+		%ifndef NO_FOLDER_CHECK
+			mov 	byte [rel dir_passed_line_fmt + FMT_OFFSET_INVALID], '.'
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%else ; %if %strlen(DELIM) == 0
+		mov 	dword [rel valid_line_fmt + FMT_OFFSET_VALID + 0], %substr(RAWFMT_STR_VALID, FMT_OFFSET_VALID + 1, 4)
+		mov 	dword [rel valid_line_fmt + FMT_OFFSET_VALID + 4], %substr(RAWFMT_STR_VALID, FMT_OFFSET_VALID + 5, 4)
+
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID +  0], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID +  1, 4)
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID +  4], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID +  5, 4)
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID +  8], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID +  9, 4)
+		%ifndef NO_COLOR_ERROR
+			mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID + 12], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID + 13, 4)
+		%endif
+
+		%ifndef NO_FOLDER_CHECK
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID +  0], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID +  1, 4)
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID +  4], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID +  5, 4)
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID +  8], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID +  9, 4)
+			%ifndef NO_COLOR_ERROR
+				mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID + 12], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID + 13, 4)
+			%endif ; %ifndef NO_COLOR_ERROR
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%endif ; %if %strlen(DELIM) == 0 (else branch)
+%else ; %ifdef FMT_SWAP_ARGS
+	mov 	word  [rel valid_line_fmt + FMT_OFFSET_VALID], %substr(RAWFMT_STR_VALID, FMT_OFFSET_VALID + 1, 2)
+
+	%ifdef NO_COLOR_ERROR
+		mov 	word [rel invalid_line_fmt + FMT_OFFSET_INVALID], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID + 1, 2)
+		%ifndef NO_FOLDER_CHECK
+			mov 	word [rel dir_passed_line_fmt + FMT_OFFSET_INVALID], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID + 1, 2)
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%else ; %ifdef NO_COLOR_ERROR
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID + 0], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID + 1, 4)
+		mov 	word  [rel invalid_line_fmt + FMT_OFFSET_INVALID + 4], %substr(RAWFMT_STR_ABSENT, FMT_OFFSET_INVALID + 5, 2)
+
+		%ifndef NO_FOLDER_CHECK
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID + 0], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID + 1, 4)
+			mov 	word  [rel dir_passed_line_fmt + FMT_OFFSET_INVALID + 4], %substr(RAWFMT_STR_FOLDER, FMT_OFFSET_INVALID + 5, 2)
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%endif ; %ifdef NO_COLOR_ERROR (else branch)
+%endif ; %ifdef FMT_SWAP_ARGS (else branch)
 
 	process_arg~ret
-.arg_match_r:
-	mov 	word [rel valid_line_fmt + 4], `\n\0`
-	mov 	word [rel invalid_line_fmt + 17], `\n\0`
-	mov 	word [rel dir_passed_line_fmt + 17], `\n\0`
+.arg_match_l:
+%ifdef FMT_SWAP_ARGS
+	;; it has to move the entire checksum formatting back and forth, and swap between %0s and %.s,
+	;; and add back the delimiter, so it has to be a full qword move (two dword moves is shorter).
+
+	%if %strlen(DELIM) == 0
+		;; the `mov qword` way works wit this too, but it isn't required.
+		mov 	byte [rel valid_line_fmt + FMT_OFFSET_VALID], '0'
+		mov 	byte [rel invalid_line_fmt + FMT_OFFSET_INVALID], '0'
+		%ifndef NO_FOLDER_CHECK
+			mov 	byte [rel dir_passed_line_fmt + FMT_OFFSET_INVALID], '0'
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%else ; %if %strlen(DELIM) == 0
+		; `mov m64, imm64` doesn't exist, and `mov r64, imm64` is 10 bytes long, so I am using dwords.
+		; this is just the inverse operation of what `-r` does.
+
+		mov 	dword [rel valid_line_fmt + FMT_OFFSET_VALID + 0], %substr(LONGFMT_STR_VALID, FMT_OFFSET_VALID + 1, 4)
+		mov 	dword [rel valid_line_fmt + FMT_OFFSET_VALID + 4], %substr(LONGFMT_STR_VALID, FMT_OFFSET_VALID + 5, 4)
+
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID +  0], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID +  1, 4)
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID +  4], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID +  5, 4)
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID +  8], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID +  9, 4)
+		%ifndef NO_COLOR_ERROR
+			mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID + 12], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID + 13, 4)
+		%endif
+
+		%ifndef NO_FOLDER_CHECK
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID +  0], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID +  1, 4)
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID +  4], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID +  5, 4)
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID +  8], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID +  9, 4)
+			%ifndef NO_COLOR_ERROR
+				mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID + 12], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID + 13, 4)
+			%endif ; %ifndef NO_COLOR_ERROR
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%endif ; %if %strlen(DELIM) == 0 (else branch)
+%else ; %ifdef FMT_SWAP_ARGS
+	;; the valid one only has to replace `\n\0`, but the invalid ones have to replace `\e[0m\n\0`
+	mov 	word [rel valid_line_fmt + FMT_OFFSET_VALID], %substr(LONGFMT_STR_VALID, FMT_OFFSET_VALID + 1, 2)
+
+	%ifdef NO_COLOR_ERROR
+		mov 	word [rel invalid_line_fmt + FMT_OFFSET_INVALID], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID + 1, 2)
+		%ifndef NO_FOLDER_CHECK
+			mov 	word [rel dir_passed_line_fmt + FMT_OFFSET_INVALID], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID + 1, 2)
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%else ; %ifdef NO_COLOR_ERROR
+		mov 	dword [rel invalid_line_fmt + FMT_OFFSET_INVALID + 0], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID + 1, 4)
+		mov 	word  [rel invalid_line_fmt + FMT_OFFSET_INVALID + 4], %substr(LONGFMT_STR_ABSENT, FMT_OFFSET_INVALID + 5, 2)
+
+		%ifndef NO_FOLDER_CHECK
+			mov 	dword [rel dir_passed_line_fmt + FMT_OFFSET_INVALID + 0], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID + 1, 4)
+			mov 	word  [rel dir_passed_line_fmt + FMT_OFFSET_INVALID + 4], %substr(LONGFMT_STR_FOLDER, FMT_OFFSET_INVALID + 5, 2)
+		%endif ; %ifndef NO_FOLDER_CHECK
+	%endif ; %ifdef NO_COLOR_ERROR (else branch)
+%endif ; %ifdef FMT_SWAP_ARGS (else branch)
 
 	process_arg~ret
 %endif ; %ifndef NO_FORMAT
 
 %ifndef NO_ARG_X
 .arg_match_x@no_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_no_arg_str]
 	mov 	r8b, 'x'
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_XNOVAL
 	call	exit
 .arg_match_x:
 	inc 	ebx					; i++
+	%cond(%isndef(NO_WARN_UNUSED), {mov r15d, ebx}) ; output argument
 
 	cmp 	ebx, edi			; if (i == argc)
 	je  	.arg_match_x@no_arg	;     goto arg_match_x_no_arg;
@@ -2035,6 +2421,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 %ifndef NO_ARG_S
 .arg_match_s:
 	inc 	ebx					; i++
+	%cond(%isndef(NO_WARN_UNUSED), {mov r15d, ebx}) ; output argument
 
 	cmp 	ebx, edi			; if (i == argc)
 	je  	.arg_match_s@no_arg	;     goto arg_match_s_no_arg;
@@ -2055,14 +2442,14 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	;; do printing stuff
 %ifdef NO_ARG_O
 	lea 	rcx, [rel valid_line_fmt]	; NOTE: it will always be valid.
-	mov 	edx, eax
-	lea 	r8 , [rel string_filename_str]
+	lea 	%cond(%isdef(FMT_SWAP_ARGS), rdx, r8), [rel string_filename_str]	; filename
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r8d, edx), eax							; cksm
 	call	printf		; printf(valid_line_fmt, checksum, filename)
 %else
 	mov 	rcx, [rel poutfile]
 	lea 	rdx, [rel valid_line_fmt]	; NOTE: it will always be valid.
-	mov 	r8d, eax
-	lea 	r9 , [rel string_filename_str]
+	lea 	%cond(%isdef(FMT_SWAP_ARGS), r8, r9), [rel string_filename_str]		; filename
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r9d, r8d), eax							; cksm
 	call	fprintf		; fprintf(*poutfile, valid_line_fmt, checksum, filename)
 %endif ; %ifdef NO_ARG_O (else branch)
 
@@ -2070,10 +2457,12 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 %endif ; %ifndef NO_INLINE_INPUT
 %ifndef NO_ARG_S
 .arg_match_s@no_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_no_arg_str]
 	mov 	r8b, 's'
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_SNOVAL
 	call	exit
@@ -2100,12 +2489,14 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	rax, [rel pstdout]		; FILE *fp = *pstdout;
 	jmp 	.arg_match_o@close_previous
 .arg_match_o@test_filename:
+%ifndef NO_FOLDER_CHECK
 	call	GetFileAttributesA
 	cmp 	eax, 0xffffffff			; if (attrs == INVALID_FILE_ATTRIBUTES)
 	je  	.arg_match_o@try_open	;     goto try_open;
 
 	test	al, 16 ; FILE_ATTRIBUTE_DIRECTORY
 	jnz 	.arg_match_o@directory_passed
+%endif
 .arg_match_o@try_open:
 	mov 	rcx, r13
 	lea 	rdx, [rel file_a_mode]
@@ -2132,28 +2523,36 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	pop 	rdi
 	process_arg~ret
 .arg_match_o@no_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_no_arg_str]
 	mov 	r8b, 'o'
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_ONOVAL
 	call	exit
+%ifndef NO_FOLDER_CHECK
 .arg_match_o@directory_passed:
-	mov 	rcx, [rel pstderr]
-	lea 	rdx, [rel option_file_is_directory_str]
-	mov 	r8b, 'o'
-	mov 	r9, r13 ; filename
-	call	fprintf
+	%ifndef NO_FATAL_MESSAGES
+		mov 	rcx, [rel pstderr]
+		lea 	rdx, [rel option_file_is_directory_str]
+		mov 	r8b, 'o'
+		mov 	r9, r13 ; filename
+		call	fprintf
+	%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_OFOLDER
 	call	exit
+%endif ; %ifndef NO_FOLDER_CHECK
 .arg_match_o@invalid_file:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_non_writable_file_str]
 	mov 	r8b, 'o'
 	mov 	r9, r13 ; filename
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_ONOPERM
 	call	exit
@@ -2180,12 +2579,14 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	rax, [rel pstderr]		; FILE *fp = *pstderr;
 	jmp 	.arg_match_e@close_previous
 .arg_match_e@test_filename:
+%ifndef NO_FOLDER_CHECK
 	call	GetFileAttributesA
 	cmp 	eax, 0xffffffff			; if (attrs == INVALID_FILE_ATTRIBUTES)
 	je  	.arg_match_e@try_open	;     goto try_open;
 
 	test	al, 16 ; FILE_ATTRIBUTE_DIRECTORY
 	jnz 	.arg_match_e@directory_passed
+%endif
 .arg_match_e@try_open:
 	mov 	rcx, r13
 	lea 	rdx, [rel file_a_mode]
@@ -2212,28 +2613,36 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	pop 	rdi
 	process_arg~ret
 .arg_match_e@no_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_no_arg_str]
 	mov 	r8b, 'e'
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_ENOVAL
 	call	exit
+%ifndef NO_FOLDER_CHECK
 .arg_match_e@directory_passed:
-	mov 	rcx, [rel pstderr]
-	lea 	rdx, [rel option_file_is_directory_str]
-	mov 	r8b, 'e'
-	mov 	r9, r13 ; filename
-	call	fprintf
+	%ifndef NO_FATAL_MESSAGES
+		mov 	rcx, [rel pstderr]
+		lea 	rdx, [rel option_file_is_directory_str]
+		mov 	r8b, 'e'
+		mov 	r9, r13 ; filename
+		call	fprintf
+	%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_EFOLDER
 	call	exit
+%endif ; %ifndef NO_FOLDER_CHECK
 .arg_match_e@invalid_file:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_non_writable_file_str]
 	mov 	r8b, 'e'
 	mov 	r9, r13 ; filename
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_ENOPERM
 	call	exit
@@ -2277,15 +2686,18 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 	process_arg~ret
 .arg_match_p@no_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_no_arg_str]
 	mov 	r8b, 'p'
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_PNOVAL
 	call	exit
 .arg_match_p@invalid_arg:
-	;; decide between `scratch_buffer`  and `argv[i]` as the string.
+%ifndef NO_FATAL_MESSAGES
+	;; decide between `scratch_buffer` and `argv[i]` as the string.
 	lea 	rax, [rel scratch_buffer]
 	mov 	r8 , r13
 
@@ -2295,14 +2707,17 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel prev_invalid_arg_str]
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_PINVAL
 	call	exit
 .arg_match_p@no_pipe:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel prev_no_pipe_str]
 	mov 	r8 , r13
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_PNOPIPE
 	call	exit
@@ -2311,6 +2726,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 %ifndef NO_ARG_F
 .arg_match_f:
 	inc 	ebx		; i++
+	;; don't worry about updating r15d because that is done in `main.process_file`
 
 	cmp 	ebx, edi
 	je  	.arg_match_f@no_arg
@@ -2322,10 +2738,12 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 	add 	rsp, 8	;; remove the return address from the stack
 	jmp 	main.process_file
 .arg_match_f@no_arg:
+%ifndef NO_FATAL_MESSAGES
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel option_no_arg_str]
 	mov 	r8b, 'f'
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_FNOVAL
 	call	exit
@@ -2333,6 +2751,7 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 
 %ifndef NO_PIPE
 .pipe_arg:
+	%cond(%isndef(NO_WARN_UNUSED), {mov r15d, ebx}) ; output argument
 	call	process_pipe
 	process_arg~ret
 %endif ; %ifndef NO_PIPE
@@ -2356,29 +2775,63 @@ process_arg: ; void process_arg(register char *str asm("r13"));
 		;; bit 4: (not implemented) cache write bit. 1 if caching writing is enabled, 0 if not.
 	; prev     = r12d
 
-; future reserved values:
-	; r15d = index of the last file argument, to print warnings for unused flags passed after the last file
+	; r15d = index of the output argument
 main:
+%ifdef BARE_BONES
+	;; 32 for shadow space, 16 for variables, and 8 more instead of `push rbp`
+	sub 	rsp, 56
+%else
 	push	rbp
 	mov 	rbp, rsp
 	sub 	rsp, 32
+%endif
 
+%ifndef BARE_BONES
+	;; there are no flags, so this is not required.
 	xor 	r14d, r14d	; clear global program flags
+%endif
+
+	;; put it into undo mode if, for some reason, you want it to do that.
+	%cond(%isdef(MODE_UNDO_DEFAULT), {or r14b, DIR_BIT_VAL})
+
+%if %isndef(NO_ARG_I) || %isndef(NO_ARG_P)
+	;; if -i and -p both do not exist, this doesn't need to happen
 	mov 	r12d, 1		; default input checksum
+%endif
 	xor 	ebx, ebx	; int i = 0;
+
+%ifndef NO_WARN_UNUSED
+	;; use dword 0x7fffffff as the default value.
+	;; this is the maximum value you can use in an immediate operand for `cmp`.
+
+	; index of the last output argument
+	mov 	r15d, 0x7fffffff
+%endif ; %ifndef NO_WARN_UNUSED
 
 	;; NOTE: technically, the memory given by this should be freed at the end of the program,
 	;;       but that adds extra complexity for basically no gain. The OS will reclaim it anyway.
+%ifdef BARE_BONES
+	setup_argc_argv_macro
+%else
 	call	setup_argc_argv
+%endif
 	;; TODO: check if argv is null? I think the null check has to be in `setup_argc_argv`.
 
 	dec 	edi			; skip past the path to the current executable
 	add 	rsi, 8
 
+%ifndef NO_MEM_CLEANUP
+	lea 	rcx, [rel memory_cleanup]
+	call	_crt_atexit
+%endif
+
+%ifndef NO_PIPE
+	;; stdin is only ever used with pipes.
 	;; setup stdin, and output file defaults
 	mov 	ecx, 0		; setup stdin
 	call	__acrt_iob_func
 	mov 	[rel pstdin], rax
+%endif
 
 %ifndef NO_ARG_O
 	mov 	ecx, 1		; setup the default output file
@@ -2414,10 +2867,14 @@ main:
 	test 	edi, edi				; skip testing arguments if there are no arguments
 	jz  	.process_pipe_if_given	; don't jump to .done in case the pipeline was given.
 %endif
+
+%ifndef BARE_BONES
+	;; for -DBARE_BONES, this is all unnecessary, because it just jumps past nothing,
+	;; and the `test edi, edi` case is the same as the `test ebx, edi` at the start of the loop.
+
 .test_arg1: ;; test for things that only work as the first argument
 	;; NOTE: there is no ebx incrementing because currently all the options only allowed as the first argument
 	;;       exit the program early, and everything else should be processed in `process_arg`, or is a file.
-
 	test 	edi, edi	;; if no arguments given
 	jz  	%cond(%isdef(NO_ARG_H), .done, .help)
 
@@ -2425,19 +2882,20 @@ main:
 
 	;; if the first character is not '-', checking for arguments is useless because they will not match.
 	cmp 	byte [rcx], '-'
-	jne 	%cond(%isdef(NO_PIPE), .arg_pass_2, .process_pipe_if_given)
+	jne 	%cond(%isdef(NO_PIPE), .arg_phase_2, .process_pipe_if_given)
 
 	;; '-' with nothing after it. only has any meaning if the pipe is enabled.
 	cmp 	byte [rcx + 1], `\0`
-	je  	%cond(%isdef(NO_PIPE), .arg_pass_2, .process_pipe_explicit)
+	je  	%cond(%isdef(NO_PIPE), .arg_phase_2, .process_pipe_explicit)
+%endif ; %ifndef BARE_BONES
 
 %ifndef NO_PIPE
 	;; `-!`
 	lea 	edx, [rbx + 1] ; shorter than `lea edx, [ebx + 1]` by one byte
 	cmp 	word [rcx + 1], `!\0`
 	cmove	ebx, edx
-	je  	.arg_pass_2
-%endif
+	je  	.arg_phase_2
+%endif ; %ifndef NO_PIPE
 
 	;; long form arguments
 	; lea 	rcx, [rsi]	;; redundant instruction
@@ -2454,8 +2912,8 @@ main:
 		lea 	rdx, [rel ver_arg] ; --version
 		call	streq
 		je  	.version
-	%endif
-%endif
+	%endif ; %ifndef NO_ARG_V
+%endif ; %ifndef NO_ARG_H
 
 %if %isndef(NO_PIPE) && %isndef(NO_LONG_ARGS)
 	;; if --help exists, then rcx needs to be reloaded
@@ -2465,11 +2923,15 @@ main:
 	call	streq
 	lea 	edx, [rbx + 1] ; shorter than `lea edx, [ebx + 1]` by one byte
 	cmove	ebx, edx
-	je  	.arg_pass_2
-%endif
+	je  	.arg_phase_2
+%endif ; !NO_PIPE && !NO_LONG_ARGS
+
+%if %isndef(NO_ARG_H) || %isndef(NO_ARG_V)
+	;; this doesn't need to be here if neither of the next things exist.
 
 	mov 	rcx, [rsi]			; tmp = argv[0]
 	mov 	cx, word [rcx + 1]	; tmp = (char []) {argv[0][1], argv[0][2]}
+%endif
 
 %ifndef NO_ARG_H
 	cmp 	cx, `h\0`
@@ -2486,7 +2948,7 @@ main:
 
 %ifndef NO_PIPE
 ;; if the pipe is disabled, skip the first pass and the pipe processing
-.arg_pass_1: ; go through the arguments until there is an input source argument
+.arg_phase_1: ; go through the arguments until there is an input source argument
 	cmp 	ebx, edi				; if (i == argc)
 	je  	.process_pipe_if_given	;     goto process_pipe_if_given;
 
@@ -2499,7 +2961,6 @@ main:
 	;; `-` argument means to process the pipe here.
 	cmp 	byte [r13 + 1], `\0`
 	je  	.process_pipe_explicit
-
 
 %if %isndef(NO_ARG_F) && %isndef(NO_INLINE_INPUT) || %isndef(NO_ARG_S) && %isndef(NO_ARG_X)
 	;; use a register as an intermediate value if at least 2 of the following options exist.
@@ -2529,22 +2990,23 @@ main:
 
 	call	process_arg
 	inc 	ebx
-	jmp 	.arg_pass_1
+	jmp 	.arg_phase_1
 .process_pipe_explicit:
 	;; for if `-` was used explicitly before the first input source argument
+	%cond(%isndef(NO_WARN_UNUSED), {mov r15d, ebx}) ; output argument
 	inc 	ebx				; skip past the `-` argument.
 	jmp 	.process_pipe	; always process the pipe
 .process_pipe_if_given:
 	;; this is for when the first input source argument is encountered.
 	;; like in `adler32 -r file`, don't process the pipe if it wasn't given.
 	test	r14b, PIPE_BIT_VAL	; if the pipe-given flag isn't set, skip this part.
-	jz  	.arg_pass_2
+	jz  	.arg_phase_2
 	;; fall through if the pipe was given
 .process_pipe:
 	call	process_pipe
 	;; fall through to the second argument pass
 %endif ; %ifndef NO_PIPE
-.arg_pass_2:	;; this time, iterate through everything, including file names
+.arg_phase_2:	;; this time, iterate through everything, including file names
 	; while (i < argc)
 	cmp 	ebx, edi
 	je  	.done
@@ -2556,37 +3018,72 @@ main:
 	jne 	.process_file
 
 	;; argument
+
+%ifdef BARE_BONES
+	;; inline the call to `process_arg` for -DBARE_BONES.
+	%ifndef NO_FATAL_MESSAGES
+		mov 	rcx, [rel pstderr]
+		lea 	rdx, [rel unknown_arg_str]
+		mov 	r8 , r13
+		call	fprintf
+	%endif ; %ifndef NO_FATAL_MESSAGES
+
+	mov 	ecx, EXIT_UNKN_ARG
+	call	exit
+%else ; %ifdef BARE_BONES
 	call	process_arg
 	inc 	ebx
-	jmp 	.arg_pass_2	; continue
+	jmp 	.arg_phase_2	; continue
+%endif ; %ifdef BARE_BONES (else branch)
+
 .process_file:
+	%cond(%isndef(NO_WARN_UNUSED), {mov r15d, ebx}) ; output argument
 	mov 	rcx, r13		; filename
+%if %isdef(NO_ARG_I) && %isdef(NO_ARG_P)
+	;; r12 is not set to 1 at the start of the program if it is not needed.
+	mov 	edx, 1
+%else
 	mov 	edx, r12d		; prev
+%endif
 	call	adler32_fname	; checksum = adler32_fname(filename, prev);
 
-	cmp 	eax, -2
-	je  	.dir_passed		; adler32_fnam returns `dword -2` if a directory is passed
+	%ifdef NO_FOLDER_CHECK
+		cmp 	eax, -1
+	%else ; %ifdef NO_FOLDER_CHECK
+		cmp 	eax, -2
+		je  	.dir_passed ; adler32_fnam returns `dword -2` if a directory is passed
+	%endif ; %ifdef NO_FOLDER_CHECK (else branch)
+
 	jb  	.file_found		; adler32_fnam returns `dword -1` on file-not-found errors
 	; NOTE: the only other error code is -1, which is above -2 when treated as unsigend.
 
 	;; the file was not readable or does not exist
 	mov 	rcx, [rel %cond(%isdef(NO_ARG_E), pstderr, perrfile)]
 	lea 	rdx, [rel invalid_line_fmt]
+%if %isndef(NO_FORMAT) || %isndef(FMT_RAW_DEFAULT)
+	;; the argument won't be used so it doesn't need to be passed.
 	mov 	r8 , r13
+%endif
 	call	fprintf		; fprintf(stderr, invalid_line_fmt, argv[i])
 
 	;; go to the next argument and keep iterating
 	inc 	ebx
-	jmp 	.arg_pass_2	; continue
+	jmp 	.arg_phase_2	; continue
+%ifndef NO_FOLDER_CHECK
 .dir_passed:
 	;; a directory was given instead of a file
 	mov 	rcx, [rel %cond(%isdef(NO_ARG_E), pstderr, perrfile)]
 	lea 	rdx, [rel dir_passed_line_fmt]
+%if %isndef(NO_FORMAT) || %isndef(FMT_RAW_DEFAULT)
+	;; with -DNO_FORMAT and -DFMT_RAW_DEFAULT, the argument doesn't need to be passed because it isn't used
 	mov 	r8 , r13
+%endif
 	call	fprintf		; fprintf(*perrfile, invalid_line_fmt, argv[i])
 
 	inc 	ebx
-	jmp 	.arg_pass_2	; continue
+	jmp 	.arg_phase_2	; continue
+%endif ; %ifndef NO_FOLDER_CHECK
+
 .file_found:
 %ifndef NO_ARG_I
 	test	r14b, INC_BIT_VAL	; if (flags & incremental_bit)
@@ -2595,22 +3092,82 @@ main:
 
 %ifdef NO_ARG_O
 	lea 	rcx, [rel valid_line_fmt]
-	mov 	edx, eax	; checksum
-	mov 	r8 , r13	; filename
-	call	printf		; printf(valid_line_fmt, checksum, filename)
+	%if %isndef(NO_FORMAT) || %isndef(FMT_RAW_DEFAULT) || %isdef(FMT_SWAP_ARGS)
+		;; with -DNO_FORMAT and -DFMT_RAW_DEFAULT, the argument doesn't need to be passed because it isn't used
+		;; if -DFMT_SWAP_ARGS is given, this is still required to prevent access violations.
+		mov 	%cond(%isdef(FMT_SWAP_ARGS), rdx, r8), r13	; filename
+	%endif
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r8d, edx), eax	; cksm
+	call	printf		; printf(valid_line_fmt, checksum, filename) // or with swapped args
 %else
 	mov 	rcx, [rel poutfile]
 	lea 	rdx, [rel valid_line_fmt]
-	mov 	r8d, eax	; checksum
-	mov 	r9 , r13	; filename
-	call	fprintf		; fprintf(*poutfile, valid_line_fmt, checksum, filename)
-%endif
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r8, r9), r13	; filename
+	mov 	%cond(%isdef(FMT_SWAP_ARGS), r9d, r8d), eax	; cksm
+	call	fprintf		; fprintf(*poutfile, valid_line_fmt, checksum, filename) // or with swapped args
+%endif ; %ifdef NO_ARG_O (else branch)
 
 	inc 	ebx
-	jmp 	.arg_pass_2	; continue
+	jmp 	.arg_phase_2	; continue
 .done:
-%ifdef NO_REDIRECTS
-	;; `exit` isn't required because there are no open files except stdin, stdout, and stderr.
+
+%ifndef NO_WARN_UNUSED
+	;; NOTE: input source arguments are a subset of output arguments.
+	;;       output arguments encompass anything that gives output to stdout or stderr.
+
+	cmp 	r15d, 0x7fffffff
+	je  	.no_output_args
+
+	dec 	ebx
+
+	sub 	ebx, r15d	; the result of this is always 0 or positive
+	jnz  	.warn_unused
+
+	jmp 	.actually_done
+.no_output_args:
+	mov 	rcx, [rel pstderr]
+	lea 	rdx, [rel unused_warning_str]
+	mov 	r8d, ebx
+	call	fprintf
+
+	mov 	r15d, ebx
+	xor 	ebx, ebx
+
+	jmp 	.warn_unused@loop
+.warn_unused:
+	mov 	rcx, [rel pstderr]
+	lea 	rdx, [rel unused_warning_str]
+	mov 	r8d, ebx
+	call	fprintf
+
+	inc 	r15d
+	add 	ebx, r15d	; counteract the subraction from before.
+	xchg 	ebx, r15d
+.warn_unused@loop:
+	cmp 	ebx, r15d		; while (i < argc)
+	je  	.warn_unused@done
+
+	mov 	rcx, [rel pstderr]
+	lea 	rdx, [rel unused_arg_str]
+	mov 	r8, qword [rsi + 8*rbx]
+	call	fprintf			; fprintf(stderr, " %s", argv[i])
+
+	inc 	ebx
+	jmp 	.warn_unused@loop
+.warn_unused@done:
+	mov 	rcx, [rel pstderr]
+	lea 	rdx, [rel ansi_clear_str]
+	call	fprintf			; fprintf(stderr, "\e[0m");
+.actually_done:
+%endif
+
+%ifdef BARE_BONES
+	xor 	eax, eax
+	add 	rsp, 56
+	ret
+%elif %isdef(NO_REDIRECTS) && %isdef(NO_MEM_CLEANUP)
+	;; `exit` isn't required because there are no open files except stdin, stdout, and stderr,
+	;; and there are no `atexit` functions that need to run.
 	xor 	eax, eax
 	leave
 	ret
@@ -2619,6 +3176,10 @@ main:
 	xor 	ecx, ecx
 	call	exit
 %endif
+
+;; `exit(0)` is never required for `.help` or `.version` because if they are given, no files are opened
+;; and the buffer is already zeroed on startup, so it doesn't need to be re-zeroed.
+;; the only consideration are the pointers to stdin, stderr, and stdout, but those don't matter that much.
 
 ;; these don't need to be `exit(0)` because `-e` and `-o` can't happen before the first argument.
 ;; and they don't require `fprintf` either for the same reason.
@@ -2648,11 +3209,13 @@ main:
 %if %isndef(NO_PIPE)
 ;; currently only used from branches that only exist if pipeline operations exist
 .internal_error:
+%ifndef NO_FATAL_MESSAGES
+	;; assume the error code was already given in r8b.
 	mov 	rcx, [rel pstderr]
 	lea 	rdx, [rel internal_error_str]
-	;; assume the error code was already given in r8b.
 	call	fprintf
+%endif ; %ifndef NO_FATAL_MESSAGES
 
 	mov 	ecx, EXIT_INTERNAL
 	call	exit
-%endif
+%endif ; %if %isndef(NO_PIPE)
