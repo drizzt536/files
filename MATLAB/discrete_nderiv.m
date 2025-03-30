@@ -38,7 +38,7 @@ function [X, Y] = discrete_nderiv(x, y, n)
 
 		throw (MException("nderiv:numel", [                         ...
 			'not enough points for ' num2str(n) suf ' derivative. ' ...
-			num2str(n) '/' num2str(n + 1) ' points given.'          ...
+			num2str(x_len) '/' num2str(n + 1) ' points given.'      ...
 		]))
 	end
 
@@ -54,4 +54,3 @@ function [X, Y] = discrete_nderiv(x, y, n)
 
 	Y = Y / dx^n;
 end
-
