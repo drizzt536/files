@@ -1,5 +1,4 @@
 from sublime_plugin import WindowCommand
-from functools import partial
 
 class MoveRepeatedCommand(WindowCommand):
 	def run(self, *, by = "l", forward = True, extend = False):
@@ -7,12 +6,23 @@ class MoveRepeatedCommand(WindowCommand):
 		elif by == "c": by = "characters"
 		elif by == "p": by = "pages"
 
-		on_done = partial(self.on_done, options={"by": by, "forward": forward, "extend": extend})
+		self._options = {"by": by, "forward": forward, "extend": extend}
 
-		self.window.show_input_panel("n = ", "", on_done, None, None)
+		self.window.show_input_panel("n = ", "", self.on_done, self.on_change, None)
 
-	def on_done(self, n, *, options):
+	def on_change(self, n):
+		"exit early if `S` or `f` is the last character (same as RET)."
+
+		if n == "" or n[-1] not in "Sf":
+			return
+
+		self.window.run_command("hide_panel")
+		self.on_done(n[:-1])
+
+	def on_done(self, n):
 		try:
+			options = self._options
+
 			# this is the same orientation as the number pad, but moved.
 			keymap = {
 				'q':'7', 'w':'8', 'e':'9',

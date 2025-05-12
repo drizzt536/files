@@ -1,14 +1,22 @@
 from sublime_plugin import WindowCommand
 from functools import partial
-import sublime
 
 class ScrollRepeatedCommand(WindowCommand):
 	def run(self, *, by = "l", forward = True):
-		base_amount = -1.0 if forward else 1.0
+		self._base_amount = -1.0 if forward else 1.0
 
-		self.window.show_input_panel("n = ", "", lambda n: self.on_done(n, base_amount), None, None)
+		self.window.show_input_panel("n = ", "", self.on_done, None, None)
 
-	def on_done(self, n, base_amount):
+	def on_change(self, n):
+		"exit early if `S` of `f` is the last character (same as RET)."
+
+		if n == "" or n[-1] not in "Sf":
+			return
+
+		self.window.run_command("hide_panel")
+		self.on_done(n[:-1])
+
+	def on_done(self, n):
 		try:
 			# this is the same orientation as the number pad, but moved.
 			keymap = {
@@ -20,6 +28,6 @@ class ScrollRepeatedCommand(WindowCommand):
 
 			n = int( ''.join(keymap.get(c, c) for c in n.lower()) )
 
-			self.window.run_command("scroll_lines", {"amount": base_amount * n})
+			self.window.run_command("scroll_lines", {"amount": self._base_amount * n})
 		except ValueError:
 			self.window.status_message("Invalid input: integer required")
