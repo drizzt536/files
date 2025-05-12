@@ -121,4 +121,13 @@ F[38814] (* x < 38814 works, x >= 38814 fails, assuming $RecursionLimit = 40000.
 *)
 
 
-F[x_] := (Print[x]; F[x + 1])
+F[x_] := (Print[x]; F[x + 1]);
+
+
+
+(*
+	NOTE: here is another way to crash the engine:
+	this way exits with an access violation (3221225477, 0xc0000005),
+	and prints the license error message
+*)
+Sum[Ceiling@ FractionalPart[10^n / 3], {n, 0, Infinity}]
