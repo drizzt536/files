@@ -1,0 +1,963 @@
+% TODO: go through and replace \varepsilon with \mathcal E for EMF.
+
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, latexsym, xcolor, graphics, wasysym, circuitikz}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 0.5in,
+	right  = 0.5in,
+	bottom = 1.0in,
+]{geometry}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\newcommand \capacitor {\tikz \draw (0, 0) to[C] (1, 0);}
+\newcommand \resistor {\tikz \draw (0, 0) to[R] (1, 0);}
+\newcommand \inductor {\tikz \draw (0, 0) to[L] (1, 0);}
+\newcommand \battery {\tikz \draw (0, 0) to[battery1] (1, 0);}
+\newcommand \acpower {\tikz \draw (0, 0) to[sV] (0, 1);}
+
+\newcommand \negphantom [1]{\hspace{-\widthof{#1}}}
+\newcommand \replace [2]{\negphantom{#1}\phantom{#2}}
+\newcommand \dstyle \displaystyle
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \vpx [1]{\vspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+\newcommand \nvpx [1]{\vspace{-#1px}}
+\newcommand \kvalue {\dfrac 1{4 \pi \varepsilon_0}}
+% \! == \nhpx 2
+% \! == \nhpx 2
+
+\renewcommand \implies {\hpx 4 \raisebox{-0.14px}{\scalebox{1.051} =} \nhpx{5.2} \Rightarrow \hpx 3}
+
+\newcommand \ihat {\hat{\nhpx 1 \textit\i}}
+\newcommand \jhat {\hat{\nhpx 1 \textit\j}}
+\newcommand \khat {\hat{\textit k}}
+\newcommand \encl {\mathrm{encl}}
+
+\renewcommand \d {\mathrm d} % normally, \d is a text mode under dot diacritic thing
+\newcommand \dl {\d l}
+\newcommand \dq {\d q}
+\newcommand \dr {\d r}
+\newcommand \dt {\d t}
+\newcommand \dy {\d y}
+\newcommand \dA {\d A}
+\newcommand \dE {\d E}
+\newcommand \dQ {\d Q}
+\newcommand \dI {\d I}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.0in,
+	left   = 0.5in,
+	right  = 0.5in,
+	bottom = 1.0in,
+}
+
+\title{PS 250 Notes}
+\author{Daniel E. Janusch}
+\maketitle
+
+magnetism is just electricity moving.
+
+% TODO: change this to a `tabular`
+$\begin{array}{c|c|c}
+{\rm Force:} & {\rm gravity} & {\rm electromagnetic}\\
+{\rm conserved~quantity:} & {\rm mass} & {\rm charge}\\
+\hline
+{\rm electron} & 9.108 \times 10^{-31} {\rm kg} & -1.602 \times 10^{-19} {\rm C}\\
+{\rm proton} & 1.673 \times 10^{-27} {\rm kg} & +1.602 \times 10^{-19} {\rm C}\\
+{\rm neutron} & 1.675 \times 10^{-27} {\rm kg} & 0 {\rm C}\\
+\end{array}$
+
+fundamental charge: $|e| = 1.602 \times 10^{-19}$
+
+$1 C$ = 1 coulomb = $6.242 \times 10^{18} |e|$
+
+$\varepsilon_0 = 8.85 \times 10^{-12}\dfrac{{\rm C}^2}{{\rm N}~{\rm m}^2}$
+
+$|\vec F| = \dfrac{G m_1 m_2}{r^2}$ (gravitation)
+
+$|\vec F| = \kvalue \dfrac{|q_1 q_2|}{r^2}$ (coulombs law)
+
+whenever $4\pi$, shows up, something with a sphere is happening.
+
+$\kvalue = k = 8.988\times 10^9 \dfrac{{\rm N}~{\rm m}^2}{{\rm C}^2}$
+
+ratio of $F_G$ and $F_E$ for two $\alpha$ particles (helium particles): $\dfrac{F_E}{F_G} = \dfrac{\dfrac 1{4\pi\varepsilon_0}\dfrac{q^2}{r^2}}{G\dfrac{m^2}{r^2}} = \dfrac 1 {4\pi\varepsilon_0 G} \dfrac{q^2}{m^2} \approx 3.1 \times 10^{35}$
+
+for planetary scale (Earth): $\dfrac{F_E}{F_G} \approx 6.1 \times 10^{-9}$
+
+$g$ is really the gravitational field strength (as well as the gravitational acceleration)
+
+electrostatics is a conservative force.
+
+$\mu = 10^{-6}$ (micro)
+
+$n = 10^{-9}$ (nano)
+
+$p = 10^{-12}$ (pico)
+
+3 $\alpha$ particles, with 1m in-between them (in a line):
+
+$F_A = F_{BA} + F_{CA}$
+
+$F_A = \kvalue \dfrac{q_A q_B}{r_{AB}^2} + \kvalue \dfrac{q_A q_C}{r_{AC}^2} = 1.15nN (-\ihat)$
+
+problem 3 (see the PNG): split forces into components. the y-components cancel out.
+
+$F = 2 \cdot \kvalue \dfrac{q^2}{r^2}$
+
+$F_x = F \cos \alpha$
+
+$\vec F_x = 0.46 N \, \ihat$
+
+(NOTE: a lightning bolt is up to 100C).
+
+check your math to make sure your answer values are in the right ballpark.
+
+\newpage
+\restoregeometry
+
+Electric field: $\vec E = \dfrac{\vec F}{q_0}$, $\vec F = q_0 \vec E$.
+
+tells you what sort of force a charge would feel given a net charge.
+
+electric fields are the first things to be called fields.
+
+$\vec F_G = m\vec g$ is kind of the same thing as this (by analogy).
+
+$\vec E = \kvalue \dfrac q{r^2}\hat r$
+
+$\vec F = \kvalue \dfrac {q q_0}{r^2}\hat r$
+
+the point is to get away from ``point charge".
+
+charge points away from a more positive charge, and points towards more negative charge.
+
+units for electric field are $\dfrac{\rm N}{\rm C}$ because it is a force per unit charge.
+
+electric field is also often given in volts per meter.
+
+volt\,:\,energy\,::\,electric field\,:\,force
+
+you can add electric field contributions to get a net electric field thing, like how you can get net force.
+
+$\dstyle E_{\rm total} = \sum_i \kvalue \dfrac{q_i}{r_i^2}\hat r_i$
+
+this isn't a very good way to do this, but it works conceptually.
+
+It is better to use continuous integrals rather than discrete sums.
+
+$\dstyle E_{\rm total} = \int \dfrac 1{4\pi \varepsilon_0} \dfrac \dq{r^2} = \kvalue \int \dfrac 1{r^2}\dq$
+
+\begin{tabular}{p{50px}|p{35px}|p{112px}|p{28px}|p{52px}}
+	dimension & symbol & name & units & in integral\\ \hline
+	0 & $Q,q$ & charge & C & d$q$\\ \hline
+	1 & $\lambda$ & linear charge density & C/m & $\lambda$d$l$\\ \hline
+	2 & $\sigma$ & surface charge density & C/${\rm m}^2$ & $\sigma$d$A$\\ \hline
+	3 & $\rho$ & volume charge density & C/${\rm m}^3$ & $\rho$d$V$
+\end{tabular}
+
+charge from far away things can be approximated as a point charge.
+
+Example 21.9: ring of charge; distance $x$ from the center into the 3rd dimension: $E = \kvalue \dfrac{Qx}{\left(x^2 + a^2\right)^{3/2}}\ihat$
+
+Example 21.10: electric field a distance $x$ from the center of a segment of charge. the y field contributions all cancel.
+
+$\d\vec E = \dE_X \ihat = \kvalue \dfrac \dQ {r^2} \cos \alpha~\ihat$.
+
+$\dE_x = \kvalue \dfrac{\dQ x}{\left(x^2 + y^2\right)^{3/2}}$
+
+$\dQ = \lambda \dl = \dfrac Q{2a} \dl$. (in terms of the variables in the problem, it is $\dy$)
+
+$\dstyle \int \dE_x = \kvalue \dfrac {Qx}{2a} \int \dfrac 1{\left(x^2 + y^2\right)^{3/2}}\dy$
+
+$\dstyle \int \dfrac \dy {\left(x^2 + y^2\right)^{3/2}} = \dfrac 1{x^2} \dfrac y{\sqrt{x^2 + y^2}}$
+
+$E_x = \left. \kvalue \dfrac {Qx}{2a} \dfrac 1{x^2} \dfrac y{\sqrt{x^2 + y^2}} \right|_{y=-a}^{y=a} = \kvalue \dfrac Q{x\sqrt{x^2 + a^2}}$
+
+$\hfill a \ll x \implies \vec E \approx \kvalue \dfrac Q{x^2} \hat r \hfill a \gg x \implies \vec E \approx \kvalue \dfrac {2 \lambda} x \hat r\hfill$
+
+$Q = \lambda 2a$ (at least for this problem)
+
+\newpage
+
+Evaluate $E$ a distance $x$ (out of the disk, into the third dimension) from the center of a uniformly-charged disk. you can either do a double integral, or use the ring result and do a single integral.
+
+$\vec E = \kvalue \dfrac{Qx}{\left(x^2 + a^2\right)^{3/2}} \ihat$, for a ring.
+
+$\dE_x = \kvalue \dfrac{x \, \dQ}{\left(x^2 + r^2\right)^{3/2}}$
+
+$\dQ = \sigma \dA = \sigma 2\pi r\dr$
+
+$\dE_x = \kvalue \dfrac{x \sigma 2\pi r\dr}{\left(x^2 + r^2\right)^{3/2}} \dr$
+
+$\dstyle \int \!\! \dE_x = \dfrac{x \sigma}{4 \varepsilon_0} \int_0^R \!\! \dfrac{2r}{\left(x^2 + r^2\right)^{3/2}}\dr.~~\text{v-sub}~x^2 + r^2 \mapsto r \implies \int \dE_x = \dfrac{x \sigma}{4 \varepsilon_0} \int_{x^2}^{x^2 + R^2} \hspace{-10px} r^{-3/2}\dr$
+
+$E_x = \dfrac \sigma{2 \varepsilon_0} \! \left[1 - \dfrac x{\sqrt{x^2 + R^2}}\right] \ihat$
+
+$\hfill R \ll x \implies \vec E \stackrel?\approx \vec 0 \hfill R \gg x \implies \vec E \approx \dfrac \sigma {2 \varepsilon_0} \hfill$
+
+two parallel sheets make a constant electric field because of the $R \gg x$ approximation one.
+
+This can be used to make a capacitor.
+
+Gauss's Law for electricity depends on electric flux ($\Phi$)
+
+$\Phi_E = \vec E \cdot \vec A$ ($A$ is the surface the electric field passes through)
+
+And in  general, $\dstyle \Phi_E = \iint \! \vec E \cdot \d\vec A$
+
+there isn't a better way to do it than by using an area vector. It is just a normal vector.
+
+Electric flux is a measure of the electric field over a surface.
+
+$+$flux if electric fields is exiting the object
+
+$-$flux if electric fields is entering the object
+
+for any charge external to a 3D surface, the net flux through that surface is \underline{0} since whatever flux enters must leave again.
+
+Gauss's Law for Electricity: $\dstyle \Phi_E = \oiint \vec E \cdot \d\vec A = EA = \dfrac{q_\encl}{\varepsilon_0}$
+
+NOTE: $q_\encl = q_{\rm enclosed}$
+
+The $\circ$ on the integral means through a closed surface (surface integral). there can be folds and dents, but no gaps, etc.
+
+Electric flux units is $\dfrac{{\rm N}\,{\rm m}^2}{\rm C} = \dfrac{{\rm kg}\,{\rm m}^3}{{\rm C}\,{\rm s}^2}$
+
+$\varepsilon_0$ is the vacuum permittivity constant.
+
+For a positive charge, the electric force will be in the \emph{same direction} as the electric field, and for a negative charge, the electric force will be in the \emph{opposite direction} as the electric field. NOTE: the electric force points from high to low
+
+Q: how do you know what the direction of the electric field is?
+
+Electric Potential (Voltage):
+
+$W = - \Delta U (= mgh$ for gravity).
+
+this is directly analogous to what is happening in a uniform electric field.
+
+$W = - \Delta U = \vec F \cdot \vec r$ still holds. $W = q_0 E d$ for two parallel plates that have opposite charge and a distance $d$ apart.
+
+$\dstyle W = - \Delta U = \int_a^b \vec F(r) \cdot \vec \dr$ (2 point charges)
+
+$\dstyle W = \int_{r_a}^{r_b}\kvalue \dfrac{q q_0}{r^2} \dr$ (this gives $W = -\Delta U$)
+
+\newpage
+
+Electrostatic force is a conservative force.
+
+\begin{equation*} \vec F = q_0 \vec E \implies \vec E = \dfrac{\vec F}{q_0} \end{equation*}
+\begin{equation*} U = q_0 V \implies V = \dfrac U{q_0} \end{equation*}
+
+$\dstyle \Delta V = -\int_{r_a}^{r_b} \!\!\! \vec E \cdot \vec \dr$
+
+$\dstyle V = \kvalue \sum_i \dfrac{q_i}{r_i} = \kvalue \int \dfrac \dq r = \dfrac U{q_0}$
+
+$r$ is the distance from the charge to the place you are calculating $V$. 
+
+$\vec E = - \vec \nabla V$
+
+Self Capacitance: the ability to hold charge $C = \dfrac Q V$.
+
+There are two types of capacitance. self capacitance and mutual capacitance.
+
+Mutual Capacitance is what you are probably talking about.
+
+The units of $C$ are $1 {\rm F} = 1\,{\rm farad} = 1\dfrac{\rm C}{\rm V} = 1 \dfrac{{\rm C}^2}{\rm N \, m}$
+
+For two opposite parallel infinite plates in open air: $C = \dfrac{\varepsilon_0 A} d$
+
+If $1 {\rm F}$ is a lot, a more realistic value is $c\;\mu {\rm F}$ or even $c\;p{\rm F}$.
+
+If instead of equal length parallel plates, you have a short one and a long one, you have
+a battery. I forgot which one is the positive and which is the negative. Capacitors don't
+actually have to use parallel plates, that is just what the symbol is. Most commonly (or
+just the ones in the lab idk), they are like parallel plates but wrapped around or something.
+
+this is the symbol for a capacitor: \capacitor. the lines have even length.
+
+Two capacitors that are in sequence are ``in series".
+
+Charge is not supposed to jump across the plates in a capacitor. If they do, it will pop,
+smoke, and no longer be usable.
+
+Equivalent capacitance in sequence formula: $\dstyle C_{\rm eq} = \left[\sum_i \dfrac 1 {C_i}\right]^{-1}$
+
+Equivalent capacitance in parallel formula: $\dstyle C_{\rm eq} = \sum_i C_i$
+
+The charges for parallel capacitors can be different, whereas for capacitors in series,
+the charge has to be the same. The change in voltage has to be the same in either case.
+
+If you have two capacitors in parallel, you are basically just creating a larger area,
+and thus a larger capacitance.
+
+The rules for resistors in parallel and in series are the same as in capacitors, but flipped.
+
+Capacitance goes down when you put them in series.
+
+$\dstyle U = \dfrac 1 2 \dfrac{Q^2} C = \dfrac 1 2 C V^2 = \dfrac 1 2 Q V$
+
+$u$ = energy density
+
+For two parallel plates (inside a capacitor), $u = \dfrac {\varepsilon_0} 2 \dfrac {V^2}{d^2} = \dfrac {\varepsilon_0} 2 E^2$.
+
+this is going to come back up later.
+
+NOTE: next will be resistors, and then inductors.
+
+\newpage
+
+$C = K C_0$, where $K = \dfrac C {C_0} = \dfrac \varepsilon {\varepsilon_0}$
+
+$K$ (Dielectric constant) is a dimensionless quantity.
+
+In general, most formulas should use $\varepsilon$ instead of $\varepsilon_0$.
+
+The smallest possible $K$ is 1 (vacuum condition).
+The permittivity of air is $K \approx 1.00059$ at standard atmosphere.
+There is a table in chapter 24 of the text book with values of $K$.
+In most cases, $K$ is a number less than 10.
+For specially created materials, you can get $K$ on the order of like 300.
+
+Most capacitors will have a Dielectric constant measurably different from air.
+
+For a capacitor where the dielectric constant isn't uniform, you can pretend it is parallel capacitors.
+
+moving charge is both current and the source of magnetism.
+
+Current is defined as the flow of charge. $\dstyle I = \dfrac \dQ \dt = \dot Q$
+
+1 Ampere/Amp ($A$) = 1 $\dfrac Cs$. flow of charge.
+
+electron movement is mostly a ``random walk". The drift velocity is how much they actually
+move along in a direction. The regular velocity is just them bouncing around.
+
+$\left|\vec v_{\rm electron} \right| \sim 10^6 \rm m/s$.
+
+drift velocity: $\left|\vec v_{\rm drift} \right| \sim 10^{-4} \rm m/s$
+
+current goes the opposite way as the charge carries (usually). It isn't strictly necessary that electrons are the charge carriers for current, but they usually are.
+
+$I = |q| nAv_d$. $v_d$ is the drift velocity. $A$ is the cross-sectional area, $n$ is concentration
+of free charge carriers (electrons per cubic meter that are free to move around; volume density
+of free electrons).
+
+$n \approx 10^{28} \left[{\rm m}^{-3}\right]$, for good conductors, but varies from material to material.
+
+Alternating current (AC) has a sinusoidal oscillation.
+
+Direct current (DC) has no oscillation. direct charge movement.
+
+AC is used for the power grid, but normal batteries and stuff use DC.
+
+AC doesn't make sense without magnetism.
+
+Current density: $J = \dfrac I A \left[\dfrac{\rm A}{{\rm m}^2}\right]$
+
+Current is always a scalar, but current density can be a vector quantity.
+
+Current isn't a vector because the direction doesn't really matter at all, but the current density
+is more of a real-world physical definition.
+
+A realistic diameter of a wire is 1.02mm. They are usually given in gauge though.
+
+Most metalic conductors have a free electron density of around $10^{28}$ per cubic meter.
+
+Current densities can be very large, even when the current is small.
+
+$I$ is sensible to be between the scale of like $10^{-3}$A and $10$A in normal scenarios.
+
+In more than 15A, the circuit breaker will trip in households.
+
+Resistivity: $\rho = \dfrac E J \left[\dfrac{\rm V\, m}{\rm A}\right]$ (Ohm's Law). High for insulating materials, low for conductors.
+
+In circuits, electric field values will be small, $E = 10^{-3}$ would be a reasonable value.
+
+Ohm's Law is like Hooke's law, where it doesn't always work, but it is still useful.
+
+Resistance: $R = \dfrac V I = \dfrac{\rho L} A$
+
+Resistivity is a property of a material. Resistance is a property of a circuit element.
+
+$V = I R$ is also sometimes referred to as Ohm's Law. This is the one we usually mean.
+
+Resistance is also in Ohms, denoted by $\Omega$. the symbol for a resistor is \resistor.
+
+Electromotive force (EMF) $\varepsilon$, is the \emph{voltage} a battery supplies.
+
+As a 9V battery wears down, it is still 9V, but the resistance changes? $\varepsilon = I r$ ($r$ = internal resistance)
+
+Batteries aren't a source of energy, they are just a source of potential difference.
+
+\newpage
+
+The symbol for a battery is \battery.
+
+In a battery, the longer terminal is positive and the shorter terminal is negative.
+
+Ammeter: amp measuring tool. Voltmeter: volt measuring tool
+
+$\Omega {\rm A} = {\rm V}$p
+
+parallel plate:
+$C = \dfrac Q V = \dfrac{\varepsilon A} d$,
+$E = \dfrac V d = \dfrac Q {C d} = \dfrac Q {\varepsilon A}$,
+$d = \dfrac{\varepsilon A}{C} = \dfrac{\varepsilon A V} Q$.
+
+% C = Q^2/W = Q/(E d)
+
+capacitance is always positive.
+
+in a series circuit, charge is conserved across all capacitors.
+
+capacitors in parallel have the same voltage. the voltage for each is the same as $V_{\rm in}$.
+
+Kirchhoff's Rules:
+Junction rule: $\dstyle \sum I = 0$.
+Current entering a junction is positive.
+Current exiting a junction is negative.
+A junction is any circuit node with 3 or more connections.
+$I$ flowing inwards = $I$ flowing outwards.
+
+Loop rule: $\dstyle \sum V = 0$.
+Any path you take on a closed loop in the circuit should get you back to the same voltage.
+
+NOTE: normally go from the negative to the positive, which would have a positive EMF ($\varepsilon$).
+
+NOTE: there is a concept of negative resistance, but we will not be using it.
+
+If you walk along conventional current, $V = -IR$ for a resistor,
+or $V = IR$ if you walk against conventional current.
+
+Normally, you get positive voltage from the battery, and negative voltage from resisters.
+
+rechargable batteries will have the current flowing the wrong way when they are recharging.
+You can also have bad circuit design where the current will be flowing the wrong way.
+
+NOTE: conventional current flow is that positive charge comes out of the longer (+) side of the battery.
+
+It is usually easier to apply the junction rule before everything else.
+
+NOTE: ${\rm A} \cdot \Omega = {\rm V}$
+
+Q: Does a capacitor change the voltage? Yes, $V_{\rm drop} = \dfrac Q C$
+
+Starting at the negative terminal of the biggest battery and following conventional current flow likely
+makes the problem easier for the loop rule. Not a rule, but kind of a guideline.
+
+Every system of resistors has an $R_{\rm eq}$ if you measure across the whole system.
+
+negative current just means current flowing the opposite direction that you defined.
+
+RC Circuits: Circuits with both resistors and capacitors in them.
+
+Grounding circuits is important for some reason.
+
+When you walk from the negative terminal to the positive terminal of a battery,
+voltage goes up by $\varepsilon$.
+
+You can't assume that a circuit with capacitors will reach equilibrium almost immedately,
+like you can with resistors.
+
+charging RC circuit equation: $\varepsilon - IR - \dfrac Q C = 0$.
+
+formulas for charging RC circuits:
+
+$\dstyle Q(t) = C \varepsilon \! \left(1 - e^{-t / \tau}\right) = Q_f \! \left(1 - e^{t / \tau}\right)$
+
+$\dstyle I(t) = \dfrac \varepsilon R e^{-t/\tau} = I_0 e^{-t/\tau}$
+\hspace{20px}
+$V(t) = V_0 \left(1 - e^{-t/\tau}\right)$
+
+Characteristic time scale:
+$\tau = RC$ (RC time constant.)
+
+discharging RC circuit equation: $\dfrac Q C - I R = 0$.
+
+$Q(t) = Q_0 e^{-t/\tau}$, $I(t) = \dfrac{Q_0} \tau e^{-t/\tau} = \dfrac{V_0} R e^{-t/\tau}$
+
+$V(t) = V_0 e^{-t/\tau}$
+
+$P = V I$.
+
+\newpage
+
+capacitors will sometimes supply power, and sometimes disperse power.
+
+batteries supply power, and resistors disperse power.
+
+$R = \rho \dfrac L A$
+
+{\Large Magnetism:}
+
+The root cause of magnetism is because of a combination of electricity and relativity.
+
+A magnetic dipole is set up a bit differently than an electric dipole.
+
+magnetic field creates closed loops exiting the north and entering the south.
+
+the field lines on magnetic fields never end.
+
+an electric mono-pole is just a single charge. a magnetic mono-pole doesn't exist.
+
+The symbol for magnetism is $\vec B$.
+
+NOTE: for an Electric Field: $\vec F = q \vec E$ (effect of net charge)
+
+For Magnetism: $\vec F = q \vec v \times \vec B$, $|F| = q v B \sin \theta$ (effect of charge motion)
+
+Sometimes you get both, $F = q \, (\vec E + \vec v \times \vec B)$
+
+1 $\dfrac {\rm N}{\rm A \, m}$ = 1 Tesla = 1 T.
+
+The Tesla is the SI unit, but the CGS units for magnetism is 1 Gauss = 1 G.
+
+NOTE: Surface magnetism on Earth is around 1.5 G.
+
+NOTE: 1 G = $10^{-4}$ T.
+
+Reasonable values will be like a few Gauss.
+
+The moving charge in a magnet is in the motion of the electrons.
+Billions of them added together leads to a net magnetic effect.
+That is just for a stationary magnet, it is different for an electromagnet.
+
+the convention used for magnetic force direction in 2D points with the magnetism
+when drawn by hand is: dots imply out of the board, xs imply into the board.
+
+$\vec F = |q| |v| B = m \dfrac{v^2} R \implies R = \dfrac{m v}{|q| B}$
+
+% $\omega = \dfrac v R = \dfrac{|q| B} m$, $f = \dfrac \omega {2 \pi}$
+% $T = \dfrac{2 \pi R} v$ (period for full rotation)
+
+this formula assumes the magnetic field is orthogonal to the motion. The value of $v$
+is the one that ties to the force: $v_x$, $v_y$, etc., whatever that happens to be.
+
+\emph{hitch}: distance orthogonal to circle a helix moves per full revolution of the circle.
+
+$q (v_x \ihat + v_z \khat) \times B \ihat = v_z \khat \times B \ihat = \ldots$
+
+massive? Like low taper fade?
+
+Q: what is the difference between an ``external" and ``internal" magnetic field?
+
+If you have a capacitor inside an \emph{external} magnetic field, you will have force from both
+the electric field and the magnetic field. Make sure the signs are correct, it could be $-E$.
+$v = E/B$ (velocity selector).
+
+Point charges in a magnetic field move in a circle?
+
+$F$ = (number of charges) $\times$ (force per charge).
+
+$F = (n A l) (q v B)$
+
+$F = (n q v_d A) (l B) = I l B$
+
+$n$ is defined the same as before. this is for a line of charges or something like that.
+It also assumes $90^\circ$ between the field and the velocity.
+
+$F = I \vec l \times \vec B$.
+$|\vec l| = l$, and the direction is the direction of the current.
+
+$\vec F = q \vec v \times \vec B = I \vec \ell \times \vec B$
+
+You can get a net effect even if the magnetic force is 0. (torque)
+
+$\vec \tau = \vec r \times \vec F \implies \tau = I \vec A \times \vec B$,
+where $\vec A$ is perpendicular to the actual area.
+
+$\vec \mu := I \vec A \text{ (magnetic moment)} \implies \vec \tau = \vec \mu \times \vec B$
+
+Bohr Magneton?
+
+You can make a motor with electrons rotating around an external magnetic field.
+
+\newpage
+
+$\dstyle U = \int \! \tau \, \d\theta
+= \int \! \mu B \sin \theta \, \d\theta
+= -\mu B \cos \theta
+= -\vec \mu \cdot \! \vec B$
+
+For $N$ loops of copper wire, you will have approximately $N$ times the torque as for one loop:
+
+$\tau \to N \tau$ and $\mu \to N \mu$
+
+A single particle can't speed up or slow down due to the magnetic effect because it works at right angles,
+it can only change direction.
+
+Hall Effect: $J_x = \dfrac I A = n q v_d = \dfrac{n q E_z}{B_y}$ and $n \stackrel?= \dfrac{J_x B_y}{q E_z}$.
+
+$P = V I = \dfrac{V^2} R = I^2 R$
+
+% $\vec v \times \vec B = \vec E$?
+
+High potential $\to$ low potential $\implies$ negative voltage (e.g. resistor).
+
+Q: does a circuit create a magnetic field since charge is moving through the crcuit?
+
+You need like at least $10^5$ before you can expect measurable magnetic field.
+
+Point charge:
+$\vec E = \kvalue \dfrac q {r^2} \hat r$,
+$\vec F_E = q \vec E$
+
+$\vec B = \dfrac{\mu_0}{4\pi} \dfrac{q \vec v \times \hat r}{r^2}$,
+$\vec F_B = q \vec v \times \vec B$
+
+$B = \dfrac{\mu_0}{4\pi} \dfrac{q \vec v \sin \phi}{r^2}$
+
+thumb points towards positive charge, magnetic field curls around. right hand rule.
+
+magnetic field rotates around the charge, instead of just eminating out of it like electric field does.
+
+$\mu_0 = 4\pi \times 10^{-7} \dfrac{\rm T\,m}{\rm A}$: permeability of free space. (NOTE: not permittivity)
+
+$c^2 = \dfrac 1 {\mu_0 \varepsilon_0} \implies \mu_0 = \dfrac 1 {c^2 \varepsilon_0}$
+
+for a force from magnetism, use the velocity of the thing being acted on, rather than the thing doing the acting.
+
+For two particles moving in opposite directions with the same speed, $\dfrac{F_B}{F_E} = \dfrac{v^2}{c^2}$.
+
+Law of Biot and Savart:
+
+% I can't tell if this is supposed to use \vec p or \hat r.
+$\dstyle \int \d\vec B = \int \dfrac{\mu_0}{4\pi} \dfrac{I \d\ell \times \hat r}{r^2}
+	\implies \vec B = \dfrac{\mu_0}{4\pi} \int \dfrac{I \d\ell \times \hat r}{r^2}$
+
+Line of current, distance $x$ perpendicular:
+$\dstyle \vec B = -\dfrac{\mu_0 I}{4\pi} \dfrac{2a}{x \sqrt{x^2 + a^2}} \khat$
+
+$\dstyle a \gg x \implies \dstyle \lim_{a\to\infty}B = -\dfrac{\mu_0 I}{2\pi r}$
+
+loop of current, distance $x$ perpendicular in the direction to where $I$ is clockwise:
+$B = \dfrac{\mu_0 I}{4\pi} \dfrac a {\left(x^2 + a^2\right)^{3/2}} 2\pi a$
+
+$a \gg x \implies B = \dfrac{\mu_0 I}{2a}$. Or multiply by $N$ for with $N$ loops (to an extent)
+
+Electricity:
+$\dstyle \Phi_E = \int \vec E \cdot \d\vec A = EA\cos \theta. \hpx{38}
+\oint \vec E \cdot \d\vec A = EA = \dfrac{Q_\encl}{\varepsilon_0}$
+
+Magnetism: $\dstyle \Phi_B = \int \vec B \cdot \d\vec A = |\vec B| |\vec A| \cos \theta. \hpx{20}
+\oint \vec B \cdot \d\vec A = BA = 0$
+
+Ampere's Law: $\dstyle \oint \vec B \cdot \d\ell = \mu_0 I_\encl$
+
+If a wire is modeled as a cylinder (radius $r$) or a line, you get the same magnetic field.
+
+Inside: $B = \dfrac{\mu_0}{2 \pi} I \dfrac r {R^2}$
+Outside: $B = \dfrac{\mu_0}{2 \pi} \dfrac I r$
+
+Ferromagnetic materials have strong magnetic properties and have high permeability (e.g. iron).
+
+copper isn't very magnetic, so you can approximate $\mu$ it to $\mu_0$ for copper.
+
+Inside a cylindrical solenoid: $B = \mu_0 \dfrac N L I = \mu_0 n I$ ($n$ is a density of something)
+Outside a cylindrical solenoid: $B = 0$
+
+Inside the enpty part of a Toroidal solenoid: $B = 0$ (no enclosed current)
+Inside a Toroidal solenoid: $B = \dfrac{\mu_0} {2 \pi r} N I$ (with $N$ loops)
+Outside a Toroidal solenoid: $B = 0$ (enclosed current cancels out)
+
+The $r$ is a variable, but sometimes you can just pretend it is just always the average radius instead.
+
+Faraday's Law of Electromagnetic Induction:
+$\varepsilon_{\rm induced} = - N \dfrac{\d\Phi_B} \dt$~~~~(for $N$ loops)
+
+if $A$ (thumb) and $I$ (curl) is right handed, $\varepsilon$ is positive, otherwise it is negative.
+
+Lenz's law: Faraday's law is always a back-reaction of the other stuff that is happening (pushback against change).
+
+For this stuff, you can just use $\Phi_B = \vec B \cdot \vec A$ instead of the full integral.
+
+You can drop the negative on the $\varepsilon$ calculation, calculate the magnitude, and then
+get the direction from Lenz's law.
+
+$\varepsilon_{\rm ind} = IR$ ~~~~ (induced current is an Ohm's law thing)
+
+$\dstyle \varepsilon_{\rm ind} = \oint (\vec v \times \vec B) \cdot \d\vec \ell
+= \int \vec E \cdot \d\vec \ell$
+
+Another Faraday's Law form:
+$\dstyle \int \vec E_{\rm ind} \cdot \d\vec \ell = - \dfrac{\d\Phi_B} \dt$
+
+$\dstyle \oint \vec E \cdot \d\vec\ell = \varepsilon_{\rm ind} = - \dfrac{\d\Phi_B} \dt$
+
+Coiled Wire Solenoid: $E = \dfrac{A \mu_0 n}{2 \pi r} \dfrac \dI \dt$
+
+charge on a capacitor: $Q(t) = \varepsilon \Phi_E \implies I(t) = \varepsilon \dfrac {\d\Phi_E} \dt$.
+
+electric field $E$, current $I_C$ (conventional current). $I_D = I(t)$ (displacement current).
+
+Electrostatic Ampere's Law: $\dstyle \oint \vec B \cdot \d\vec\ell = \mu_0 I_\encl$
+
+Complete Ampere's Law: $\dstyle \oint \vec B \cdot \d\vec\ell = \mu_0 (I_C + I_D)_\encl
+= \mu_0 \! \left(I_C + \varepsilon \dfrac {\d\Phi_E} \dt\right)_\encl$
+
+{\Large Maxwell's Equations in Vacuum (Integral forms):}
+
+~~~~~ - Gauss 1: $\dstyle \oint \vec E \cdot \d\vec A = \dfrac {Q_\encl}{\varepsilon_0}$
+
+~~~~~ - Gauss 2: $\dstyle \oint \vec B \cdot \d\vec A = 0$
+
+~~~~~ - Faraday: $\dstyle \oint \vec E \cdot \d\vec\ell = -\dfrac {\d\Phi_B} \dt$
+
+~~~~~ - Ampere: $\dstyle \oint \vec B \cdot \d\vec\ell = \mu_0 \! \left(I_C + \varepsilon \dfrac {\d\Phi_E} \dt\right)_\encl$
+
+\vpx{20}
+{\Large Maxwell's Equations in Vacuum (Derivative forms):}
+
+~~~~~ - Gauss 1: $\dstyle \nabla \cdot \vec E = \dfrac \rho {\varepsilon_0}$
+
+~~~~~ - Gauss 2: $\nabla \cdot \vec B = 0$
+
+~~~~~ - Faraday: $\nabla \times \vec E = -\dfrac {\partial \vec B}{\partial t}$
+
+~~~~~ - Ampere: $\nabla \times \vec B = \mu_0 \varepsilon_0 \dfrac{\partial \vec E}{\partial t} + \mu_0 \vec J$
+
+\newpage
+
+inner and outer solenoid (solenoid 2 is inside solenoid 1):
+
+$\varepsilon_1 = - N_1 N_2 \dfrac {A_2} \ell \mu_0 \dfrac {\dI_2} \dt = - M \dfrac {\dI_2} \dt$
+
+$\varepsilon_2 = - N_1 N_2 \dfrac {A_2} \ell \mu_0 \dfrac {\dI_1} \dt = - M \dfrac {\dI_1} \dt$
+
+$\Phi = \mu_0 \dfrac {N} \ell I$
+
+$M = \dfrac {N_2 \Phi_{B2}}{I_1} = \dfrac {N_1 \Phi_{B1}}{I_2}$
+
+$M$ is a mutual inductance. The unit is a Henry (H). $H = \dfrac{\rm J}{{\rm A}^2}$
+
+$M = \dfrac {N_2 \Phi_{B2}}{I_1} = \dfrac{N_1 B_2 A_2}{I_2} = \dfrac{N_1 \mu_0 N_2 I_2}{I_2 L} A_2 = \dfrac{\mu_0 A_2 N_1 N_2} L$
+
+Mutual inductance should be small, like how Farads are a lot of capacitance.
+
+We will probably have $\mu$H and mH and stuff.
+
+Capacitance means mutual capacitance, but inductance means self inductance
+% TODO: this might be wrong. C = Q / V may or may not be self capacitance.
+
+$L$ is for self inductance because it was named after John L. Inductor. And $I$ is already for current.
+
+$L = \dfrac{N \Phi_B} I$
+
+Inductors are given in circuits by \inductor.
+
+Capacitor: $V = \dfrac Q C$
+
+Resistor: $V = I R$
+
+Inductor: $V = L \dfrac \dI \dt$
+
+Toroidal solenoid of radius $R  =\dfrac{r_{\rm min} + r_{\rm max}} 2$ (thin wire so $r_{\rm min} \approx r_{\rm max}$):
+
+$L = \dfrac {\mu_0 N^2 A} {2 \pi R}$
+
+$\dstyle P = V I = - L \dfrac \dI \dt I \implies \int P \dt = \int L I \dI \implies U = \dfrac 1 2 L I^2$
+
+$u = \dfrac 1 2 \dfrac{L I^2}{2 \pi R A} = \dfrac 1 {2 \mu_0} \left[\dfrac{\mu_0 N I}{2 \pi R}\right]$
+
+For capacitors: $U = \dfrac {Q^2} {2 C}, u = \dfrac 1 2 \varepsilon_0 E^2$
+
+For inductors: $U = \dfrac 1 2 L I^2, u = \dfrac {B^2} {2 \mu_0}$
+
+Capacitors and inductors are similar in that the both store something. Capacitors store electric field, and inductors store magnetic field.
+
+{\Large R-L circuit} (battery then resistor then inductor):
+
+$\varepsilon - I R - L \dfrac \dI \dt = 0 \implies \dfrac \dI \dt = \dfrac \varepsilon L - \dfrac {I R} L$
+
+$\tau = \dfrac L R$
+
+$\dstyle I(t) = \dfrac \varepsilon R (1 - e^{-t/\tau})$
+
+$\dstyle \dfrac \dI \dt = \dfrac \varepsilon L e^{-t/\tau}$
+
+\vpx{20}
+The inductor makes it so, instead of changing the current instantaneously, it happens over a longer period of time.
+
+\newpage
+
+{\Large L-C circuit:}
+
+A battery is not required. just assume the capacitor is already fully charged.
+
+$V_L = -L \dfrac \dI \dt = -L \dfrac {\d^2 Q}{\dt^2}$
+
+$L \dfrac {\d^2 Q}{\dt^2} = - \dfrac {-1} {LC} Q$
+
+$Q(t) = Q_0 \cos(\omega t + \phi)$
+
+$\omega = \sqrt{\dfrac 1 {LC}}$
+
+$I(t) = - \omega Q_0 \sin(\omega t + \phi)$
+
+usually $\phi = 0$ is used.
+
+{\Large L-R-C circuit:}
+
+$-I R - L \dfrac \dI \dt - \dfrac Q C = 0$
+
+$\dfrac {\d^2 Q}{\dt^2} + \dfrac R L \dfrac \dQ \dt + \dfrac 1 {L C} Q = 0$
+
+For $R < 2 \sqrt{\dfrac L C}$, $Q(t) = Q_0 \exp\!\left(-\frac R {2L} t\right) \cos\!\left(t \sqrt{\dfrac 1 {LC} - \dfrac{R^2}{4 L^2}}\right)$. (under damped)
+
+For $R = 2 \sqrt{\dfrac L C}$, $Q(t) = Q_0 \exp\!\left(-\frac R {2L} t\right)$. (critically damped)
+
+For $R > 2 \sqrt{\dfrac L C}$, $Q(t) = Q_0 \exp\!\left(-\frac R {2L} t\right) \exp\!\left(-t \sqrt{\dfrac{R^2}{4 L^2} - \dfrac 1 {L C}}\right)$. (over damped)
+
+
+AC: $V(t) = V_0 \cos \omega t$. (sin also works, and may vary between textbooks).
+
+an AC ``battery" has its own circuit diagram component picture thing. A circle with $\sim$ in it.
+
+It usually just means plugging into a wall outlet, or signal generator or something.
+
+60Hz is used in the U.S. 50Hz in Europe.
+
+the Average current is 0, but that isn't really accurate, because we wouldn't be using it if AC power had
+an average of 0 power. Instead, the RMS is used. $I_{\rm RMS} = \sqrt{\frac 1 {b - a} \int_a^b I^2(t) \dt}$.
+\raisebox{-10px}{\acpower}.
+\vpx{-5}
+
+$(I^2)_{\rm av} = \dfrac {I_{\rm max}^2} 2$
+
+$I_{\rm RMS} = \sqrt {(I^2)_{\rm max}} = \dfrac {I_{\rm max}} {\sqrt 2}$.
+
+$V_{\rm RMS} = \dfrac {V_{\rm max}} {\sqrt 2}$. $V_{\rm RMS} = 170\,\rm V$ (in the U.S.)
+
+A 110 V voltage in the U.S. means they are using rectified current.
+
+circuit with AC power source and resistor:
+
+$\varepsilon_0 \cos \omega t = IR \implies I(t) = \dfrac {\varepsilon_0} R \cos \omega t$
+
+Phasor diagram?
+
+circuit with AC power source and capacitor:
+
+$\varepsilon_0 \cos \omega t = \dfrac Q C
+\implies Q(t) = C \varepsilon_0 \cos \omega t
+\implies I(t) = - \omega C \varepsilon_0 \sin (\omega t + 90^\circ)$
+
+circuit with AC power source and inductor:
+
+$\varepsilon_0 \cos \omega t = L \dfrac \dI \dt
+\implies \dfrac \dI \dt = \dfrac {\varepsilon_0} L \cos \omega t
+\implies I(t) = \dfrac {\varepsilon_0} {\omega L} \sin (\omega t - 90^\circ)$
+
+I don't know where the $I(t)$ phase angles came from.
+
+$\omega L = X_L = $ inductive reactance
+
+$\dfrac 1 {\omega C} = X_C = $ capacitive reactance
+
+\newpage
+
+Inductors are good for low pass filters and capacitor are good for high pass filters.
+
+Anything you can do with a DC circuit, you can, in principle, set it up for an AC circuit.
+
+Q: can you swap the order of circuit components in series? (e.g. R\,C\,L vs. L\,R\,C)
+% I think you can swap them. not sure though
+
+$V_L = I_0 X_L = I_0 \omega L$. $90^\circ$ ahead (+) of $I$
+
+$V_R = I_0 R$. in phase with $I$
+
+$V_C = I_0 X_C = I_C \dfrac 1 {\omega C}$. $90^\circ$ behind (-) of $I$
+
+$I(t) = I_0 \cos (\omega t)$
+
+$V(t) = V_0 \cos(\omega t + \phi)$
+
+impedence: $Z = \sqrt{R^2 + (X_L - X_C)^2}$.
+
+this is the magnitude of the impedence, but it is actually $R + (X_L - X_C) i$
+
+$\phi$ is called ``phase".
+
+$X_L - X_C = R \tan \phi \implies \phi = \tan^{-1}\left(\dfrac{X_L - X_C} R\right)$
+
+$V_0 = I_0 Z$, $V_{\rm RMS} = I_{\rm RMS} Z$.
+
+L, R, C $\longrightarrow$ +, 0, - ~~~~ ($V$ phase offsets from $I$, in $\pi/2$)
+
+$\vec E$ is a gradient field, but only in electrostatics. $\vec B$ is never a gradient field
+
+Hall effect voltage: $V_G = \dfrac {B I d} {n e}$. $d$ is the thickness of the material.
+
+For a charged particle, the magnetic force behaves like a centripetal force.
+
+To find the radius of the circle, set $F_C = F_B$,
+$\dfrac {m v^2} R = B q v \implies m v = B q R$
+
+Two parallel wires with current in the same direction attract each other.
+parallel wires with opposite current repel.
+
+$B$ into the page is negative flux, $B$ out of the page is positive flux.
+
+Magnetic flux is in units of Weber (Wb = ${\rm T}\,{\rm m}^2$)
+
+increase flux $\Rightarrow$ support magnetic field
+
+decrease flux $\Rightarrow$ go against magnetic field
+
+you only care about the magnetic field \emph{inside} the loop.
+
+induced current opposes the change in flux (does the opposite thing as it).
+
+the $\varepsilon$ and $I$ have the same direction.
+
+Power: $P(t) = V(t) I(t)$. these two are in phase with each other.
+
+for R: $P_{\rm av} = V_{\rm RMS} I_{\rm RMS} = \dfrac {V_0} {\sqrt 2} \dfrac {I_0} {\sqrt 2} = \dfrac 1 2 V_0 I_0$.
+
+for L and C: instantaneously, the power is not zero, but the average is zero ($P_{\rm av} = 0$)
+
+L-R-C: $P(t) = V(t) I(t) = V_0 \cos(\omega t + \phi) + I_0 \cos \omega t
+= V_0 I_0 \cos \phi \cos^2 \omega t - V_0 I_0 \sin \phi \cos(\omega t) \sin(\omega t)$
+
+$P_{\rm av} = \dfrac 1 2 V_0 I_0 \cos \phi$.
+
+$\cos \phi$ is called the power factor.
+
+$I_0 = \dfrac {V_0} Z \implies P_{\rm av} = \dfrac 1 2 \dfrac {V_0^2} {\sqrt{R^2 + (X_L - X_C)^2}} \cos \phi$.
+
+To maximize power output, set $X_L = X_C
+\implies \omega L = \dfrac 1 {\omega C}
+\implies \omega = \dfrac 1 {\sqrt {L C}}$.
+
+You will have the same resonance peak ($P$ max value) if you change $R$, but a larger $R$, the peak will be less drastic.
+
+transformers. there are step up ($N_2 > N_1$) transformers, and step down ($N_2 < N_1$) transformers.
+
+$N_1$ is the number of inductor coils on the source side, and $N_2$ is the number of inductor coils on the other side.
+
+transformers are from faraday's law. it only works for AC because in DC, magnetic flux doesn't change.
+
+\newpage
+
+the voltage is \emph{higher} in the part with more turns. if $N_2 = k N_1$, then $V_2 = k V_1$, etc.
+
+the current is \emph{lower} in the part with more turns. if $N_2 = k N_1$, then $I_2 = \frac 1 k I_1$, etc.
+
+It takes about 5-6 time constants for a capacitor to charge in an RC circuit.
+
+The EMF induced by an inductor is the same as the voltage across it. So if the voltage drop is 2 V, the EMF is -2 V.
+
+% RL circuit:
+	% increasing current => positive emf
+	% decreasing current => negative emf
+	% this is because an inductor tries to oppose the change in current.
+	% The power delivered by the battery is the same as the total power consumed by the resistor and inductor. (conservation of energy)
+\end{document}

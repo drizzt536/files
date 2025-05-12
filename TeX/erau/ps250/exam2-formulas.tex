@@ -1,0 +1,96 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+]{geometry}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+
+\color{lightgray}
+\pagecolor{black}
+
+\providecommand \dstyle \displaystyle
+\providecommand \dQ {\text dQ}
+\providecommand \dt {\text dt}
+
+\begin{document}
+\newgeometry{
+	top    = 0in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+}
+
+\title{PS 250 Exam 2 formulas}
+\author{Daniel E. Janusch}
+\maketitle
+
+\begin{equation}
+	C = \dfrac Q V
+\end{equation}
+
+\begin{equation}
+	\hfill \begin{array}{ccc}
+		\vspace{10px}
+		\text{equivalences} & \text{Series} & \text{Parallel} \\
+
+		\vspace{10px}
+		\text{Capacitor} & \left[\sum \dfrac 1 {C_i}\right]^{-1} & \sum C_i \\
+		\text{Resistor} & \sum R_i & \left[\sum \dfrac 1 {R_i}\right]^{-1}
+	\end{array} \hfill
+\end{equation}
+
+\begin{equation}
+	U = \dfrac 1 2 \dfrac{Q^2} C = \dfrac 1 2 C V^2 = \dfrac 1 2 Q V
+\end{equation}
+
+\begin{equation}
+	u = \dfrac {\varepsilon_0} 2 \dfrac {V^2}{d^2} = \dfrac {\varepsilon_0} 2 E^2~~\text{(energy density inside a capacitor)}
+\end{equation}
+
+\begin{equation}
+	\text{dielectric: } C = K C_0,~K = \dfrac{C}{C_0} = \dfrac{\varepsilon}{\varepsilon_0}
+\end{equation}
+
+\begin{equation}
+	I = \dfrac \dQ \dt = |q| n A v_d \ni n \sim 20^{28} ~\left[{\rm m}^{-3}\right]
+\end{equation}
+
+\begin{equation}
+	J = \dfrac I A = \dfrac E \rho ~~ \text{(current density)}
+\end{equation}
+
+\begin{equation}
+	|\vec v_{\rm electron}| \sim 10^6, ~~ |\vec v_d| \sim 10^{-4}
+\end{equation}
+
+\begin{equation}
+	R = \dfrac V I = \dfrac {\rho L} A
+\end{equation}
+
+\begin{equation}
+	P = V I = \dfrac{V^2} R = I^2 R
+\end{equation}
+
+% equal and opposite parallel plates (capacitor)
+\begin{equation}
+	\text{parallel plate: }
+		C = \dfrac Q V = \dfrac{\varepsilon A} d,
+		E = \dfrac V d = \dfrac Q {C d} = \dfrac Q {\varepsilon A},
+		d = \dfrac{\varepsilon A} C = \dfrac{\varepsilon A V} Q
+\end{equation}
+
+\begin{equation}
+	\text{Junction/Current rule: } \sum I_{\rm in} = \sum I_{\rm out}
+\end{equation}
+
+\begin{equation}
+	\text{Loop/Voltage rule: } \sum V = 0 ~~ \text{(around a closed loop)}
+\end{equation}
+
+\end{document}

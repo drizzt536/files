@@ -1,0 +1,185 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor, graphics}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+]{geometry}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+
+\color{lightgray}
+\pagecolor{black}
+
+\newcommand \dstyle \displaystyle
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \vpx [1]{\vspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+\newcommand \nvpx [1]{\vspace{-#1px}}
+
+\renewcommand \implies {\ensuremath{\hpx 4 \raisebox{-0.14px}{\scalebox{1.051} =} \nhpx{5.2} \Rightarrow \hpx 3}}
+
+\providecommand \dstyle \displaystyle
+\renewcommand \d {\mathrm d}
+\providecommand \dQ {\d Q}
+\providecommand \dA {\d A}
+\providecommand \dt {\d t}
+
+\begin{document}
+\newgeometry{
+	top    = 0in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+}
+
+\title{PS 250 Exam 3 formulas}
+\author{Daniel E. Janusch}
+\maketitle
+
+% TODO: what are sensible values of magnetism?
+
+\begin{equation}
+	1\,{\rm T} = 1\,\dfrac{\rm N}{\rm A\,m}
+\end{equation}
+
+\begin{equation}
+	\mu_0 = 4\pi \times 10^{-7} ~ \left[\dfrac{\rm T\,m}{\rm A}\right] ~~ (\text{permeability of free space})
+\end{equation}
+
+\begin{equation}
+	n = \text{charge density}
+\end{equation}
+
+\begin{equation}
+	1\,{\rm G} = 10^{-4}\,{\rm T}
+\end{equation}
+
+\begin{equation}
+	\vec F = F_E + F_B = q (\vec E + \vec v \times \vec B) \implies |\vec F| = q (E + v B \sin \theta)
+\end{equation}
+
+\noindent \text{this one assumes magnetic field is orthogonal to motion:}
+
+\begin{equation}
+	F_B = (\text{\# of charges}) \left(\dfrac{\rm force}{\rm charge}\right)
+		= (n A \ell)(q v B)
+		= (n q v_d A) (\ell B)
+		= I \ell B
+\end{equation}
+
+\begin{equation}
+	\vec F_B = q \vec v \times \vec B = I \vec \ell \times \vec B
+\end{equation}
+
+\begin{equation}
+	\vec \mu = N I \vec A ~~ (\text{magnetic moment})
+\end{equation}
+
+\begin{equation}
+	% this one can be multiplied by N for N loops.
+	\vec \tau = N I \vec A \times \vec B = \vec \mu \times \vec B ~~ (\text{torque})
+\end{equation}
+
+\begin{equation}
+	U = \int \tau \d\theta = -\vec \mu \cdot \vec B ~~ (\text{magnetic potential energy})
+\end{equation}
+
+\begin{equation}
+	\text{point charge: } B = 10^{-7} \dfrac{q \vec v \times \hat r}{r^2}
+\end{equation}
+
+\begin{equation}
+	% R is the radius of the arc the particle goes in.
+	\text{point charge: } m v = |q| B R
+\end{equation}
+
+\begin{equation}
+	\oint \vec B \cdot \d\ell = \mu_0 I_{\rm encl}
+\end{equation}
+
+\begin{equation}
+	\mathcal E = - N \dfrac{\d\Phi_B} \dt = - N \dfrac{\d(A B \cos \theta)} \dt = B \ell v \sin \theta = I R
+\end{equation}
+
+\begin{equation}
+	% r hat is from the source to the test location
+	\vec B = 10^{-7} \int \dfrac{I \d\ell \times \hat r}{r^2}
+\end{equation}
+
+\newpage
+\restoregeometry
+
+\begin{equation}
+	%  B_\perp
+	\Phi_B = \int B \cos \theta \dA = \int \vec B \cdot \d\vec A = A B \cos \theta ~~ [{\rm Wb}={\rm T}\,{\rm m}^2]
+\end{equation}
+
+\begin{equation}
+	\oint \vec B \cdot \d\vec A = 0
+\end{equation}
+
+\begin{equation}
+	\text{velocity selector: } F_E = F_B \implies v = \dfrac E B
+\end{equation}
+
+\begin{equation}
+	% magnetic force between two wires
+	% this is really F_i / L_i, but usually L_1 = L_2.
+	% F_1 / L_1 = F_2 / L_2.
+	\dfrac F L = \dfrac {\mu_0 I_1 I_2} {2 \pi r}
+\end{equation}
+
+\text{magnetic field outside a solenoid is zero}
+
+\begin{equation}
+	\text{cylindrical solenoid: } B = \mu_0 n I = \mu_0 \dfrac N \ell I
+\end{equation}
+
+\begin{equation}
+	\text{toroidal solenoid: } B = \dfrac{\mu_0}{2 \pi} N \dfrac I r, r_{\rm min} < r < r_{\rm max}
+\end{equation}
+
+\begin{equation}
+	\text{distance $r$ away from a radius-$R$ wire center: } B = \dfrac{\mu_0}{2 \pi} \begin{cases}
+		\vpx 5
+		\dfrac {I r} {R^2}, r < R \\
+		\dfrac I r, r \ge R
+	\end{cases}
+\end{equation}
+
+\begin{equation}
+	\text{torus of current at $a < r < b$: } B = \dfrac {\mu_0} {2 \pi} \dfrac I r \begin{cases}
+		0, r < a \\
+		\dfrac {r^2 - a^2} {b^2 - a^2}, a < r < b \\
+		1, b < r \land \vec I \text{ into/out of page} \\
+		0, b < r \land \vec I \text{ around loop} \\
+	\end{cases}
+\end{equation}
+
+% NOTE: ch. 27 p 926 (actual p 906)
+% TODO: ch. 28 p 962 (actual p 942)
+% TODO: ch. 29 p 997 (actual p 977)
+
+% TODO: realistic unit ranges
+	% B ~ [10^-6, 10]
+	% \Phi_B ~ [?, ?]
+	% F_B ~ [10^-15, 10^15]
+	% emf ~ [10^-3, 10^3]
+
+% TODO: hall effect stuff
+	% electric field magnitude and direction
+	% drift velocity
+	% hall emf
+
+% simplifications for B
+	% outside a toroid (r < r_a, or r > r_b): B = 0
+	% outside a long ideal solenoid: B \approx 0
+	% inside a hollow region: often B = 0 (via ampere's law)
+	% drift velocity
+
+
+\end{document}

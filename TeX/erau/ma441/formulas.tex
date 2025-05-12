@@ -1,0 +1,220 @@
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.50in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor, wasysym}
+
+\pagecolor{black}
+\color[RGB]{170, 170, 170}
+
+\newcommand \dstyle \displaystyle
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+\newcommand \abs [1]{\left|#1\right|}
+
+\newcommand \zerovec {\nhpx 1 \vec{\hpx 1 0}}
+\newcommand \rvec {\nhpx 1 \vec{\hpx 1 r}}
+\newcommand \nvec {\nhpx 1 \vec{\hpx 1 n}}
+\newcommand \Fvec {\vec F}
+\newcommand \Nvec {\nhpx 0 \vec{\hpx 0 N}}
+
+\newcommand \ihat {\hat{\nhpx 1 \textit \i}}
+\newcommand \jhat {\hat{\nhpx 1 \textit \j}}
+\newcommand \khat {\hpx 2 \hat{\nhpx 2\textit k}}
+\newcommand \xhat {\hpx 2 \hat{\nhpx 2\textit x}}
+\newcommand \yhat {\hpx 2 \hat{\nhpx 2\textit y}}
+\newcommand \zhat {\hpx 2 \hat{\nhpx 2\textit z}}
+
+\renewcommand \d {\mathrm d}
+\newcommand \drvec {\d\rvec}
+\newcommand \ds {\d s}
+\newcommand \dt {\d t}
+\newcommand \du {\d u}
+\newcommand \dv {\d v}
+\newcommand \dx {\d x}
+\newcommand \dy {\d y}
+\newcommand \dz {\d z}
+\newcommand \dV {\d V} % dV = dV = dx dy dz
+\newcommand \dA {\d A} % dA = dx dy
+
+\renewcommand \iint {\int \!\!\! \int}
+\renewcommand \iiint {\int \!\!\! \iint}
+% TODO: \oiint
+
+\begin{document}
+
+\newgeometry{
+	top    = 0.00in,
+	left   = 1.25in,
+	right  = 1.25in,
+	bottom = 1.00in,
+}
+
+\title{MA 441 Formulas}
+\author{Daniel E. Janusch}
+\maketitle
+
+\begin{equation}
+	\left\langle A, B \right\rangle \equiv A \cdot B
+\end{equation}
+
+\begin{equation}
+	W = \int_C \Fvec \cdot \drvec = \int_C M \dx + N \dy = \int_C \left(\Fvec \cdot \dfrac \drvec \dt\right) \dt
+\end{equation}
+
+\begin{equation}
+	\int_{C_1 + C_2} \Fvec \cdot \drvec = \int_{C_1} \Fvec \cdot \drvec + \int_{C_2} \Fvec \cdot \drvec
+\end{equation}
+
+\begin{equation}
+	\drvec = \left\langle \dx, \dy \right\rangle~~\text{(in 2d)}
+\end{equation}
+
+\begin{equation}
+	\dz = z_x \dx + z_y \dy
+\end{equation}
+
+% on a level curve (z = constant)
+% \begin{equation}
+% 	\dfrac \dz \dt = \nabla f \cdot \rvec'(t) = 0
+% \end{equation}
+
+\begin{equation}
+	W = \int_C \nabla f \cdot \drvec = f(p_2) - f(p_1) \implies \oint_C \nabla f \cdot \drvec = 0
+\end{equation}
+
+\begin{equation}
+	N_x - M_y = 0 \iff \Fvec = \nabla f~~\text{(in 2d)}
+\end{equation}
+
+% this one is from lectures 5-6
+\begin{equation}
+	\oint_C \Fvec \cdot \drvec = \iint_D \left(N_x - M_y\right) \dA
+\end{equation}
+
+% $\hfill \text{NOTE: Green's and Divergence theorems fail if there are holes in the domain.} \hfill$
+
+\begin{equation}
+	\oint_{C_1} \nabla f \cdot \drvec = \oint_{C_2} \nabla f \cdot \drvec
+\end{equation}
+
+\begin{equation}
+	f(x, y) = \int M \dx + \int N \dy~~\text{(ignoring duplicate terms in the addition)}
+\end{equation}
+
+\begin{equation}
+	\text{curl}(\Fvec) = \nabla \times \Fvec = \zerovec \iff \Fvec = \nabla f
+\end{equation}
+
+\begin{equation}
+	\text{Flux on $S$} = \iint \Fvec \cdot \nvec \ds 
+\end{equation}
+
+\begin{equation}
+	\oiint_S \Fvec \cdot \nvec \ds = \iiint_E \text{div}(\Fvec) \dV = \iiint_E \nabla \cdot \Fvec \dV
+\end{equation}
+
+% to find the sign, look at the graph from the direction of the normal, so if the normal is in the +z-axis
+% you should be looking down on it. if the curve is moving counter-clockwise, it is +, and clockwise is -.
+\begin{equation}
+	\nvec \ds = \pm \left\langle -f_x, -f_y, 1 \right\rangle \dx \dy \ni z = f(x, y)
+\end{equation}
+
+\begin{equation}
+	\nvec \ds = \dfrac \Nvec {\Nvec \cdot \ihat} \dy \dz = \dfrac \Nvec {\Nvec \cdot \jhat} \dx \dz = \dfrac \Nvec {\Nvec \cdot \khat} \dx \dy
+\end{equation}
+
+\newpage
+\restoregeometry
+
+\begin{equation}
+	\oint_C \Fvec \cdot \drvec = \iint_S (\nabla \times \Fvec) \cdot \nvec \ds
+\end{equation}
+
+\begin{equation}
+	u_t = k\left(u_{xx} + u_{yy} + u_{zz}\right) = -\text{div}(\Fvec) = \text{div}(k\nabla u)
+\end{equation}
+
+\begin{equation}
+	\int_C g(x, y, z) \ds = \int_C g(x, y, z) \dfrac \ds \dt \dt = \int_C g(x(t), y(t), z(t)) \abs{r'(t)} \dt
+\end{equation}
+
+\begin{equation}
+	\dfrac \ds \dt = \abs{r'(t)} = \sqrt{x'(t)^2 + y'(t)^2 + z'(t)^2} = \sqrt{r'(\theta)^2 + r^2 + z'(t)^2}
+\end{equation}
+
+\begin{equation}
+	\iint_S g(x, y, z) \ds = \iint_D g(x, y, f(x, y)) \sqrt{1 + f_x^2 + f_y^2} \, \dx \dy
+\end{equation}
+
+\begin{equation}
+	\iint_S g(x, y, z) \ds = \iint_D g(x(u, v), y(u, v), z(u, v)) \abs{\rvec_u \times \rvec _v} \du \dv
+\end{equation}
+
+\begin{equation}
+	\iint_S g(x, y, z) \ds = \iint_D g(x, y, z) \dfrac{|\Nvec|}{\Nvec \cdot \khat} \dx \dy
+\end{equation}
+
+\begin{equation}
+	\text{vertices: }(x_0, 0, 0), (0, y_0, 0), (0, 0, z_0) \implies \Nvec = \left\langle\dfrac 1{x_0}, \dfrac 1{y_0}, \dfrac 1{z_0}\right\rangle
+\end{equation}
+
+\begin{equation}
+	G(x, y, z) = 0 \implies \Nvec = \nabla G(x, y, z) ~~~ \text{($G$ defines the surface)}
+\end{equation}
+
+\begin{align}
+	\ihat \times \jhat &= \khat ~~~~ & \xhat \times \yhat &= \zhat \\
+	\jhat \times \khat &= \ihat ~~~~ & \yhat \times \zhat &= \xhat \\
+	\khat \times \ihat &= \jhat ~~~~ & \zhat \times \xhat &= \yhat
+\end{align}
+
+\vspace{-20px}
+\begin{align*}
+	& \text{counterclockwise circle paramaterization: (cosine one) $\times$ (sine one) = (missing one)} \\
+	& \text{example: $\xhat \times \yhat = \zhat \implies x = r\cos \theta, y = r \sin \theta$} \\
+	& \text{for clockwise, just switch them. (missing one) is the direction of the normal.} \\
+\end{align*}
+
+\begin{equation}
+	\int_C \ds = \text{length of curve $C$}
+\end{equation}
+
+\begin{equation}
+	\iint_S \ds = \text{surface area of $S$}
+\end{equation}
+
+\begin{equation}
+	\ds = r^2 \sin \theta \d\theta \d\phi ~~~ (\text{on a sphere})
+\end{equation}
+
+\begin{equation}
+	\iint_S (x^n = y^n = z^n) \ds = \begin{cases}
+		0, \text{$n$ odd}\\
+		\dfrac{4 \pi r^{n + 2}}{n + 1}, \text{$n$ even}
+	\end{cases} ~~ S : x^2 + y^2 + z^2 = r^2
+\end{equation}
+
+\begin{equation}
+	\iint_S z^n \ds = \dfrac{2 \pi r^{n + 2}}{n + 1} ~~ S : x^2 + y^2 + z^2 = r^2, z \ge 0
+\end{equation}
+
+\begin{equation}
+	\iint_S (x^n = y^n) \ds = \begin{cases}
+		0, \text{$n$ odd}\\
+		\dfrac{2 \pi r^{n + 2}}{n + 1}, \text{$n$ even}
+	\end{cases} ~~ S : x^2 + y^2 + z^2 = r^2, z \ge 0
+\end{equation}
+
+\vspace{-20px}
+\begin{align*}
+	& \text{$\dstyle \iint_S (\nabla \times \vec F) \cdot \vec n\ds$ is surface independent} \\
+	& \text{$\dstyle \iint_S \vec F \cdot \vec n\ds$ is not surface independent}
+\end{align*}
+
+\end{document}

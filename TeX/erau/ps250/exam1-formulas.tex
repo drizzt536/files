@@ -1,0 +1,162 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+]{geometry}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+
+\color{lightgray}
+\pagecolor{black}
+
+\newcommand \E [1] {\textsc{e}\!#1\!}
+\newcommand \dV {\text dV}
+\newcommand \dx {\text dx}
+\newcommand \dq {\text dq}
+
+\begin{document}
+\newgeometry{
+	top    = 0in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+}
+
+\title{PS 250 Exam 1 formulas}
+\author{Daniel E. Janusch}
+\maketitle
+
+\section{Units}
+\begin{equation}
+	\textrm{exponents (negative): } c, m, \mu, n, p = 2, 3, 6, 9, 12
+\end{equation}
+
+\begin{equation}
+	{\rm F} = \dfrac{\rm C}{\rm V} = \dfrac{{\rm C}^2\;{\rm s}^2}{{\rm kg}\;{\rm m}^2}
+\end{equation}
+
+\begin{equation}
+	{\rm V} = \dfrac{\rm J}{\rm C} = \dfrac{{\rm kg} \; {\rm m}^2}{{\rm C} \; {\rm s}^2}
+\end{equation}
+
+\begin{equation}
+	{\rm N} = \dfrac{{\rm kg} \; {\rm m}}{{\rm s}^2}
+\end{equation}
+
+\begin{equation}
+	{\rm J} = {\rm N} \; {\rm m} = \dfrac{{\rm kg} \; {\rm m}^2}{{\rm s}^2}
+\end{equation}
+
+\begin{equation}
+	1\,{\rm eV} = |e|\,{\rm C}
+\end{equation}
+
+\section{Constants}
+\setcounter {equation} 0
+
+\begin{equation}
+	k = 8.987551787\E+9 ~~~~ \left[\dfrac{\rm m}{\rm F}\right]
+\end{equation}
+
+\begin{equation}
+	\varepsilon_0 = 8.8541878188\E-12 ~~~~ \left[\dfrac{\rm F}{\rm m}\right]
+\end{equation}
+
+\begin{equation}
+	e = 1.602176634\E-19 ~~~~ \left[{\rm C}\right]
+\end{equation}
+
+\begin{equation}
+	m_e	= 9.10938356\E-31 ~~~~ \left[{\rm kg}\right]
+\end{equation}
+
+\begin{equation}
+	m_p	= 1.672621898\E-27 ~~~~ \left[{\rm kg}\right]
+\end{equation}
+
+\begin{equation}
+	m_n	= 1.674927471\E-27 ~~~~ \left[{\rm kg}\right]
+\end{equation}
+
+\newpage
+\restoregeometry
+
+\section{Formulas}
+\setcounter {equation} 0
+
+\begin{equation}
+	F = k \dfrac{\left|q_1 q_2\right|}{r^2}
+\end{equation}
+
+\begin{equation}
+	E = \dfrac F {q_t} = k \dfrac{|Q|}{r^2} = -\nabla V = -\dfrac \dV \dx
+\end{equation}
+
+\begin{equation}
+	W = -\Delta U = q_t \Delta V = \int {\bf F} \cdot {\rm d}{\bf r}
+\end{equation}
+
+\begin{equation}
+	W = q_t E d~~~(\textrm{uniform field. $d$ is the displacement})
+\end{equation}
+
+\begin{equation}
+	U = k \dfrac{q_1 q_2} r
+\end{equation}
+
+\begin{equation}
+	U_{\rm sys} = k \sum_{i < j} \dfrac{q_i q_j}{r_{i,j}}
+\end{equation}
+
+\begin{equation}
+	\Phi_E = \oint {\bf E} \cdot {\rm d}{\bf A} = \dfrac{Q_{\rm encl}}{\varepsilon_0}
+\end{equation}
+
+\begin{equation}
+	V = \sum k \dfrac{Q_i}{r_i} = \dfrac U {q_t} = \int \dfrac \dq r
+\end{equation}
+
+\begin{equation}
+	E_{\rm tot} = \sum_i E_i
+\end{equation}
+
+\section{Specific Situations: Electric Field}
+\setcounter {equation} 0
+
+\begin{equation}
+	\text{Line: } E = \dfrac{k \lambda} d \left[\dfrac a{\sqrt{a^2 + d^2}} + \dfrac b{\sqrt{b^2 + d^2}}\right] \approx \dfrac{2 k \lambda} d
+\end{equation}
+
+\begin{equation}
+	\text{Disk: } E = \dfrac \sigma{2 \varepsilon_0} \left[1 - \dfrac d{\sqrt{d^2 + R^2}}\right] \approx \dfrac \sigma{2 \varepsilon_0} = 2 \pi k \sigma
+\end{equation}
+
+\begin{equation}
+	\text{Ring: } E = \dfrac{k Q d}{\left(d^2 + R^2\right)^{3/2}}, Q = 2 \pi \lambda R
+\end{equation}
+
+\begin{equation}
+	\text{Sphere: } E = k \dfrac Q{r^2} \; \text{if outside, else 0}
+\end{equation}
+
+\begin{equation}
+	\text{non-conducting uniformly charged cylinder: } E = \dfrac{2 k \lambda d}{R^2}
+\end{equation}
+
+\section{Specific Situations: Voltage}
+\setcounter {equation} 0
+
+\begin{equation}
+	\text{Conducting Cylinder radius $R$ (line): } V = 2 k \lambda \ln \dfrac R d \text{ if $d > R$ else 0}
+\end{equation}
+
+\begin{equation}
+	\text{Ring: } V = \dfrac{k Q}{\sqrt{d^2 + R^2}}
+\end{equation}
+
+\end{document}
