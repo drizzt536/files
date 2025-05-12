@@ -1,4 +1,4 @@
-// TODO: if you click the next button and nothing changed, there are no more pages
+// EBSCO-pdf-rip.js
 
 
 // DIRECTIONS:
@@ -45,15 +45,15 @@ const author = iframeDocument.querySelector("span#author").innerHTML
 // sanitize \/:*?"<>| from the name, as well as change % to %% so decodeURIComponent(filename) works.
 // this sanitation is probably required in order to work on windows.
 const filename = `${title} - ${author}.pdf`
-	.replace("%", "%%")
-	.replace("\\", "%5C")
-	.replace("/", "%2F")
-	.replace(":", "%3A")
-	.replace("*", "%2A")
-	.replace("?", "%3F")
-	.replace("<", "%3C")
-	.replace(">", "%3E")
-	.replace("|", "%7C")
+	.replaceAll("%", "%%")
+	.replaceAll("\\", "%5C")
+	.replaceAll("/", "%2F")
+	.replaceAll(":", "%3A")
+	.replaceAll("*", "%2A")
+	.replaceAll("?", "%3F")
+	.replaceAll("<", "%3C")
+	.replaceAll(">", "%3E")
+	.replaceAll("|", "%7C")
 
 window.fullPDF = null
 
