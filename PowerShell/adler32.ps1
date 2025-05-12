@@ -381,7 +381,7 @@ function adler32-combine {
 	$len2 %= $BASE
 
 
-	$bw <# backwards #> = [int] ($len -lt 0)
+	$bw <# backwards #> = [int] ($len2 -lt 0)
 	$fw <# forewards #> = 1 - $bw
 	# sgn(len2), but with sgn(0) -> 1. (i.e. a zero-length string is forewards)
 	# using sgn(0) -> 0 breaks things.
@@ -397,7 +397,7 @@ function adler32-combine {
 	# I just tried things until the reversing worked.
 
 	[uint32] $a = ($a1 + $BASE + $sign*$a2 - $sign) % $BASE
-	[uint32] $b = ($b1 + $BASE + $sign*$b2 + ($a1 - $a2*$bw)*$len2 - $len2*$fw) % $BASE
+	[uint32] $b = ($b1 + $BASE*($BASE + 1) + $sign*$b2 + ($a1 - $a2*$bw)*$len2 - $len2*$fw) % $BASE
 
 	return ($b -shl 16) -bor $a
 }
