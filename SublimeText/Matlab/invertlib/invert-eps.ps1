@@ -55,20 +55,20 @@ ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2
 
 
-$gs   = (gcm gs       -type app -errorAct silent)?.name
-$gs ??= (gcm gswin64c -type app -errorAct silent)?.name
-$gs ??= (gcm gswin32c -type app -errorAct silent)?.name
+$gs   = (gcm gs       -type app -ea ignore)?.name
+$gs ??= (gcm gswin64c -type app -ea ignore)?.name
+$gs ??= (gcm gswin32c -type app -ea ignore)?.name
 
 if ($gs -eq $null) {
 	throw "Required program GhostScript ``gs / gswin64c / gswin32c`` was not found."
 }
-if (!(gcm pdftocairo -type app -ErrorAct silent)) {
+if (!(gcm pdftocairo -type app -ea ignore)) {
 	throw "Required program (Poppler) ``pdftocairo`` was not found."
 }
-if (!(gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
+if (!(gcm ${invert-svg.ps1} -type externalScript -ea ignore)) {
 	throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
 }
-if (!(gcm cairosvg -type app -ErrorAct silent)) {
+if (!(gcm cairosvg -type app -ea ignore)) {
 	# assume that GTK2/3 is installed and properly setup for CairoSVG.
 	throw "Required program ``cairosvg`` was not found."
 }

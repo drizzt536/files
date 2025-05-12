@@ -45,6 +45,10 @@ if ($help.isPresent -or $infile -eq "--help") {
 	exit 0
 }
 
+if (!(gcm python -type app -ea ignore)) {
+	throw "Required program ``python`` was not found."
+}
+
 if (!(test-path -type leaf $infile)) {
 	throw "input file does not exist"
 }

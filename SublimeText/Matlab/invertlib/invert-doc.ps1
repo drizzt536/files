@@ -68,18 +68,18 @@ $pdf = [IO.Path]::ChangeExtension($infile, ".tmp.pdf")
 if ($logging -ne "none") { write-host "${indent}converting $inExt to PDF" }
 $document = $word.documents.open(
 	$infile,         # file path
-	$false,          # don't prompt to confirm conversions
+	$false,          # dont prompt to confirm conversions
 	[type]::missing,
-	$false           # don't add to recent file list
+	$false           # dont add to recent file list
 )
 $document.SaveAs(
 	$pdf,            # file path
 	17,              # file format code for pdf
 	[type]::missing,
 	[type]::missing,
-	$false,          # don't add to recent files
+	$false,          # dont add to recent files
 	[type]::missing,
-	$false           # don't recommend read-only
+	$false           # dont recommend read-only
 )
 
 # free up the pdf for other processes.
@@ -105,11 +105,12 @@ if ($logging -ne "none") { write-host "${indent}inverting PDF colors" }
 # or maybe I am just stupid, idk.
 
 write-host "${indent}converting PDF to $outExt"
+
 $document = $word.documents.open(
 	$pdf,   # input file
-	$false, # don't prompt for file conversion
-	$false, # don't open as read-only
-	$false  # don't add to recent files
+	$false, # dont prompt for file conversion
+	$false, # dont open as read-only
+	$false  # dont add to recent files
 )
 
 $document.SaveAs(
@@ -117,9 +118,9 @@ $document.SaveAs(
 	$outExt -eq "DOC" ? 0 : 24, # file format. DOC or DOCX
 	[type]::missing,
 	[type]::missing,
-	$false,                     # don't add to recent files
+	$false,                     # dont add to recent files
 	[type]::missing,
-	$false                      # don't recommend read-only
+	$false                      # dont recommend read-only
 )
 
 $document.close()

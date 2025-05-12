@@ -35,7 +35,7 @@ param (
 	[ValidateSet("doc", "docx", "html", "latex", "pdf", "ppt", "pptx", "xml")] [string] $format = "pdf",
 	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 
-	# the inversion tools are at `./invertlib/invert-???.ps1` with respect to build.ps1
+	# the inversion tools are at `./invertlib/invert-xyz.ps1` with respect to build.ps1
 	[Alias("DOCTool", "DOCXTool")] [string] ${invert-doc.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-doc.ps1",
 	[Alias("EPSTool")]             [string] ${invert-eps.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-eps.ps1",
 	[Alias("PDFTool")]             [string] ${invert-pdf.ps1} = "$($MyInvocation.MyCommand.Source)/../invertlib/invert-pdf.ps1",
@@ -51,7 +51,7 @@ param (
 	# so all the temporary files will be in that directory.
 
 function version {
-	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.3.1"
+	write-host "Inverted-Color Buildsystem for Matlab (ICBM) v1.3.2"
 }
 
 if ($version.isPresent) {
@@ -61,7 +61,7 @@ if ($version.isPresent) {
 
 if ($infile -eq "") { throw "input file was not provided." }
 
-if (!(gcm matlab -type app -ErrorAct silent)) {
+if (!(gcm matlab -type app -ea ignore)) {
 	throw "Required program ``matlab`` was not found."
 }
 
@@ -123,7 +123,7 @@ if ($lastExitCode -ne 0) {
 if (!$keepLightMode) {
 	switch ($format) {
 		"doc" {
-			if (!(gcm ${invert-doc.ps1} -type externalScript -ErrorAct silent)) {
+			if (!(gcm ${invert-doc.ps1} -type externalScript -ea ignore)) {
 				throw "Required program ``invert-doc.ps1`` was not found.`nlooking at ``${invert-doc.ps1}``."
 			}
 
@@ -193,22 +193,22 @@ if (!$keepLightMode) {
 			#>
 			cd tmp
 
-			$gs   = (gcm gs       -type app -ErrorAct silent)?.name
-			$gs ??= (gcm gswin64c -type app -ErrorAct silent)?.name
-			$gs ??= (gcm gswin32c -type app -ErrorAct silent)?.name
+			$gs   = (gcm gs       -type app -ea ignore)?.name
+			$gs ??= (gcm gswin64c -type app -ea ignore)?.name
+			$gs ??= (gcm gswin32c -type app -ea ignore)?.name
 
 			if ($gs -eq $null) {
 				throw "Required program GhostScript ``gs / gswin64c / gswin32c`` was not found."
 			}
-			if (!(gcm pdftocairo -type app -ErrorAct silent)) {
+			if (!(gcm pdftocairo -type app -ea ignore)) {
 				throw "Required program (Poppler) ``pdftocairo`` was not found."
 			}
-			if (!(gcm ${invert-eps.ps1} -type externalScript -ErrorAct silent)) {
+			if (!(gcm ${invert-eps.ps1} -type externalScript -ea ignore)) {
 				throw "Required program ``invert-eps.ps1`` was not found.`nlooking at ``${invert-eps.ps1}``."
 			}
-			if (!(gcm cairosvg -type app -ErrorAct silent)) {
+			if (!(gcm inkscape -type app -ea ignore) -and !(gcm cairosvg -type app -ea ignore)) {
 				# assume that GTK2/3 is installed and properly setup for CairoSVG.
-				throw "Required program ``cairosvg`` was not found."
+				throw "One of ``inkscape`` or ``cairosvg`` is required and neither was found."
 			}
 
 			# step 1
@@ -245,7 +245,7 @@ if (!$keepLightMode) {
 			move -force ./tmp/* .
 		}
 		"pdf" {
-			if (-not (gcm ${invert-pdf.ps1} -type externalScript -ErrorAct silent)) {
+			if (-not (gcm ${invert-pdf.ps1} -type externalScript -ea ignore)) {
 				throw "Required program ``invert-pdf.ps1`` was not found.`nlooking at ``${invert-pdf.ps1}``."
 			}
 
@@ -269,7 +269,7 @@ if (!$keepLightMode) {
 				-logging $logging       `
 				-svgTool ${invert-svg.ps1}
 
-			move -force ./tmp/$outfile ./$basename-light.pdf
+			move-item -force ./tmp/$outfile ./$basename-light.pdf
 		}
 		"ppt" {
 			# TODO: implement PPT and PPTX
@@ -291,7 +291,7 @@ if (!$keepLightMode) {
 				}
 			}
 
-			move -force ./tmp/* .
+			move-item -force ./tmp/* .
 		}
 		"xml" {
 			# I don't really understand the XML formatting, so I am
@@ -300,8 +300,12 @@ if (!$keepLightMode) {
 			# doesn't even have any styling, so it doesn't really
 			# make sense to "invert" the XML file's colors.
 
+			if (-not (gcm magick -type app -ea ignore)) {
+				throw "Required program ``magick`` was not found"
+			}
+
 			ls ./tmp/*.png | % name | % { magick $_ -negate $_ }
-			move -force ./tmp/* .
+			move-item -force ./tmp/* .
 		}
 		default {
 			throw "unknown file format ``$format``"

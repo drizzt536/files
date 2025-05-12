@@ -5,6 +5,9 @@
 		- pdftocairo - choco install miktex.
 						MiKTeX has Poppler as a dependency.
 						I don't know the real way to get pdftocairo.
+		- inkscape   - choco install inkscape or from https://inkscape.org
+						one of two options for converting SVG to PDF
+						the other option is CairoSVG
 		- cairosvg   - pip install cairosvg,
 						also install gtk3 runtime, or gtk2 for 32-bit.
 		- magick     - choco install imagemagick
@@ -41,18 +44,18 @@ if ($help.isPresent -or $infile -eq "--help") {
 	exit 0
 }
 
-if (!(gcm pdftocairo -type app -ErrorAct silent)) {
+if (!(gcm pdftocairo -type app -ea ignore)) {
 	throw "Required program (Poppler) ``pdftocairo`` was not found."
 }
-if (!(gcm ${invert-svg.ps1} -type externalScript -ErrorAct silent)) {
+if (!(gcm ${invert-svg.ps1} -type externalScript -ea ignore)) {
 	throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
 }
-if (!(gcm cairosvg -type app -ErrorAct silent)) {
-	# assume that GTK2/3 is installed and properly setup for CairoSVG.
-	throw "Required program ``cairosvg`` was not found."
-}
-if (!(gcm pdftk -type app -ErrorAct silent)) {
+if (!(gcm pdftk -type app -ea ignore)) {
 	throw "Required program ``pdftk`` was not found."
+}
+
+if (-not (test-path -type leaf $infile)) {
+	throw "input file '$infile' does not exist"
 }
 
 $indent     = $indTyp * $indLvl
@@ -60,17 +63,20 @@ ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2
 
 try {
-	$canSetCursorVisibility = $true
+	$canSetCursorVisibility = $logging -ne "none"
+	$naturalExit = $false
 
-	try {
-		# sometimes this can throw an error, for example if it
-		# is being run through Sublime Text.
+	if ($logging -ne "none") {
+		try {
+			# sometimes this can throw an error, for example if it
+			# is being run through Sublime Text.
 
-		$startingCursorVisibility = [Console]::CursorVisible
-		[Console]::CursorVisible = $false
-	}
-	catch {
-		$canSetCursorVisibility = $false
+			$startingCursorVisibility = [Console]::CursorVisible
+			[Console]::CursorVisible = $false
+		}
+		catch {
+			$canSetCursorVisibility = $false
+		}
 	}
 
 	pdftk $infile dump_data output pdfdata.tmp.txt *> $null
@@ -92,9 +98,7 @@ try {
 	$elapsedTime =  [math]::round(([DateTime]::Now - $startTime).totalSeconds, 1)
 	if ($logging -eq "overwrite") {
 		write-host $(
-			"`r${indent+1}"                                                 +
-			" " * "converting page $i/$pages".length                        +
-			"`r${indent+1}done. Finished $pages pages in ${elapsedTime}s`n" +
+			"`r`e[0K${indent+1}done. Finished $pages page$($pages -eq 1 ? '' : 's') in ${elapsedTime}s`n" +
 			"${indent}inverting SVG colors (step 2/6)"
 		)
 	}
@@ -123,7 +127,7 @@ try {
 	}
 
 	if ($infile -eq $outfile) {
-		move $infile text.tmp.pdf
+		move-item $infile text.tmp.pdf
 	}
 	else {
 		# keep the old file, but get a hardlink to the same file data.
@@ -140,15 +144,22 @@ try {
 			write-host "${indent+1}converting page $i/$pages"
 		}
 
-		cairosvg page-$i.tmp.svg -o page-$i.tmp.pdf *> $null
+		if (gcm inkscape -type app -ea ignore) {
+			inkscape ./page-$i.tmp.svg --export-type pdf *> $null
+		}
+		elseif (gcm cairosvg -type app -ea ignore) {
+			# assume that GTK2/3 is installed and properly set up.
+			cairosvg page-$i.tmp.svg -o page-$i.tmp.pdf *> $null
+		}
+		else {
+			throw "One of ``inkscape`` or ``cairosvg`` is required and neither was found."
+		}
 	}
 
 	$elapsedTime = [math]::round(([DateTime]::Now - $startTime).totalSeconds, 1)
 	if ($logging -eq "overwrite") {
 		write-host $(
-			"`r${indent+1}"                                                 +
-			" " * "converting page $i/$pages".length                        +
-			"`r${indent+1}done. Finished $pages pages in ${elapsedTime}s`n" +
+			"`r`e[0K${indent+1}done. Finished $pages page$($pages -eq 1 ? '' : 's') in ${elapsedTime}s`n" +
 			"${indent}combining PDF pages (step 4/6)"
 		)
 	}
@@ -175,11 +186,19 @@ try {
 	}
 
 	if ($logging -ne "none") { write-host "${indent}done" }
+
+	$naturalExit = $true
 }
 finally {
 	# in case of ^C.
+
+	if (-not $naturalExit -and $logging -ne "none") {
+		write-host "`n`e[1;31maborting pdf inversion`e[0m"
+	}
+
 	if ($canSetCursorVisibility) {
 		[Console]::CursorVisible = $startingCursorVisibility
 	}
 }
+
 exit 0

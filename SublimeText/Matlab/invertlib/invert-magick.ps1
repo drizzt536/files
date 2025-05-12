@@ -169,7 +169,7 @@ $indent = $indTyp * $indLvl
 ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2 # unused
 
-if (!(gcm magick -type app -ErrorAct silent)) {
+if (!(gcm magick -type app -ea ignore)) {
 	throw "Required program ImageMagick ``magick`` was not found."
 }
 

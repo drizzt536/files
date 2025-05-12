@@ -8,8 +8,9 @@
 
 	assumes the SVG is valid (probably, at least it doesn't check that it is).
 
-	the bgcolor argument is the background color *before* inversion.
+	The bgcolor argument is the background color *before* inversion.
 	It can be any valid SVG color thing. (e.g. hex, name, hsl, etc.)
+	If `-bgcolor none` is given, the background rectangle check is skipped.
 #>
 param (
 	[string] $infile,
@@ -38,6 +39,21 @@ if ($help.isPresent -or $infile -eq "--help") {
 	& $MyInvocation.MyCommand.Source -?
 	exit 0
 }
+
+# TODO: remove comments before everything, so background checking doesn't find
+	# commented out rectangles as the potential background.
+
+# TODO: invert the colors of CSS color styling.
+# TODO: what happens if you have something like <rect width="50" height="50">
+	# without a fill, stroke, or style.
+# TODO: for every externally-linked raster image, embed the image directly.
+	# do this before reversing the image colors.
+# TODO: make a boolean argument to decide if masks should be inlined.
+	# meaning removing masks and masking the images that are given.
+	# more thought is required for masking stuff that isn't raster.
+# TODO: everything without fill="..." or fill-opacity="..." needs fill-opacity="0"
+	# this is so SVG to PDF and SVG rasterization programs will work.
+	# this is in addition to the previous todo for removing masks.
 
 # all 147 named colors. maps name to hex color.
 $namedColorMap = @{
@@ -194,6 +210,7 @@ foreach ($name in $namedColorMap.keys) {
 	$hex = $namedColorMap.$name
 
 	if ($name.length -le $hex.length) {
+		# write-host "`$hexToNameMap.$hex = $name"
 		$hexToNameMap.$hex = $name
 	}
 }
@@ -202,10 +219,15 @@ foreach ($name in $namedColorMap.keys) {
 .synopsis
 	https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
 	h \in [0, 360]
-	s, l \in [0, 1]
+	s, l \in [0, 100]
+
+	returns #RRGGBB
 #>
 function hsl-to-hex([double] $h, [double] $s, [double] $l) {
 	$h /= 360
+	# normalize into [0, 1]
+	$s /= 100
+	$l /= 100
 
 	function hue-to-rgb([double] $p, [double] $q, [double] $t) {
 		if ($t -lt 0) { $t++ }
@@ -234,7 +256,7 @@ function hsl-to-hex([double] $h, [double] $s, [double] $l) {
 	$g = "{0:x2}" -f ([int] (255 * $g))
 	$b = "{0:x2}" -f ([int] (255 * $b))
 
-	return optimize-hex "#$r$g$b"
+	return "#$r$g$b"
 }
 
 <#
@@ -252,17 +274,17 @@ function optimize-hex([string] $color) {
 
 	## convert double characters to single characters where available.
 
-	# "#RRGGBBAA" -> "#RGBA"
+	# #RRGGBBAA -> #RGBA
 	if ($color -match "^#([\da-f])\1([\da-f])\2([\da-f])\3([\da-f])\4$") {
 		$color = "#" + $color[1] + $color[3] + $color[5] + $color[7]
 	}
 
-	# "#RRGGBB" -> "#RGB"
+	# #RRGGBB -> #RGB
 	if ($color -match "^#([\da-f])\1([\da-f])\2([\da-f])\3$") {
 		$color = "#" + $color[1] + $color[3] + $color[5]
 	}
 
-	# "#RrGgBbff" -> "#RrGgBb"
+	# #RrGgBb00 -> #RGB0
 	if ($color -match "^#[\da-f]{6}00$") {
 		# this is an approximation of the color, but since it
 		# is fully transparent, it doesn't matter anyway.
@@ -271,12 +293,12 @@ function optimize-hex([string] $color) {
 
 	## remove unnecessary alpha channels
 
-	# "#RGBf" -> "#RGB"
+	# #RGBf -> #RGB
 	if ($color -match "^#[\da-f]{3}f$") {
 		$color = $color.substring(0, 4)
 	}
 
-	# "#RrGgBbff" -> "#RrGgBb"
+	# #RrGgBbff -> #RrGgBb
 	if ($color -match "^#[\da-f]{6}ff$") {
 		$color = $color.substring(0, 7)
 	}
@@ -307,8 +329,8 @@ function optimize-color([string] $color) {
 
 	$color = $color.trim()
 
-	if ($color -eq "none") {
-		return "none"
+	if ($color -in "none", "transparent") {
+		return $color.toLower()
 	}
 
 	if ($color.length -in 3, 4, 6, 8 -and $color -match "^[\da-f]+$") {
@@ -317,73 +339,76 @@ function optimize-color([string] $color) {
 
 	## convert from function form to hex form
 
+	# [math]::round rounds to the nearest even integer,
+	# instead of the nearest integer, so it won't work.
+	# instead round(x) == floor(x + 1/2) is used.
+	# The 0.5 is put on the left side for casting purposes.
+
 	if ($color -match "^rgb\(" + "\s*(\d+(?:\.\d+)?)\s*,"*3 + "{0}\)$") {
-		$color = "#"                        + `
-			("{0:x2}" -f [int] $matches[1]) + `
-			("{0:x2}" -f [int] $matches[2]) + `
-			("{0:x2}" -f [int] $matches[3])
+		$color = "#"                                             + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[1])) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[2])) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[3]))
 	}
 	if ($color -match "^rgb\(" + "\s*(\d+(?:\.\d+)?)%\s*,"*3 + "{0}\)$") {
-		$color = "#"                                      + `
-			("{0:x2}" -f [int] (255 * $matches[1] / 100)) + `
-			("{0:x2}" -f [int] (255 * $matches[2] / 100)) + `
-			("{0:x2}" -f [int] (255 * $matches[3] / 100))
+		$color = "#"                                                         + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + 255 * $matches[1] / 100)) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + 255 * $matches[2] / 100)) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + 255 * $matches[3] / 100))
 	}
 	if ($color -match "^rgba\(" + "\s*(\d+(?:\.\d+)?)\s*,"*4 + "{0}%?\)$") {
-		if ($color -match "%\s*)$") {
+		if ([regex]::match($color, "%\s*\)$").success) {
 			# change percent to a regular integer the
 			# alpha channel can always be a percent,
 			# even if the other channels are not.
 			$matches[4] = 255 * $matches[4] / 100
 		}
 
-		$color = "#"                        + `
-			("{0:x2}" -f [int] $matches[1]) + `
-			("{0:x2}" -f [int] $matches[2]) + `
-			("{0:x2}" -f [int] $matches[3]) + `
-			("{0:x2}" -f [int] $matches[4])
+		$color = "#"                                             + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[1])) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[2])) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[3])) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[4]))
 	}
 	if ($color -match "^rgba\(" + "\s*(\d+(?:\.\d+)?)%\s*,"*4 + "{0}%?\)$") {
-		if ($color -match "%\s*)$") {
-			# see the comment for the rgba section
-			$matches[4] = 255 * $matches[4]
-		}
-
-		$color = "#"                                      + `
-			("{0:x2}" -f [int] (255 * $matches[1] / 100)) + `
-			("{0:x2}" -f [int] (255 * $matches[2] / 100)) + `
-			("{0:x2}" -f [int] (255 * $matches[3] / 100)) + `
-			("{0:x2}" -f [int] $matches[4])
-	}
-	if ($color -match "^hsl\("    +
-		"\s*(\d+(?:\.\d+)?)\s*,"  +
-		"\s*(\d+(?:\.\d+)?)%\s*," +
-		"\s*(\d+(?:\.\d+)?)%\s*"  +
-		"\)$"
-	) {
-		$color = hsl-to-hex      `
-			$([int] $matches[1]) `
-			$([int] $matches[2]) `
-			$([int] $matches[3])
-	}
-	if ($color -match "^hsla\("   +
-		"\s*(\d+(?:\.\d+)?)\s*,"  +
-		"\s*(\d+(?:\.\d+)?)%\s*," +
-		"\s*(\d+(?:\.\d+)?)%\s*," +
-		"\s*(\d+(?:\.\d+)?)%?\s*" +
-		"\)$"
-	) {
-		if ($color -match "%\s*)$") {
+		if ([regex]::match($color, "%\s*\)$").success) {
 			# see the comment for the rgba section
 			$matches[4] = 255 * $matches[4] / 100
 		}
 
-		$color = hsl-to-hex      `
-			$([int] $matches[1]) `
-			$([int] $matches[2]) `
-			$([int] $matches[3])
+		$color = "#"                                                   + `
+			("{0:x2}" -f [int] [math]::floor(255 * $matches[1] / 100 + 0.5)) + `
+			("{0:x2}" -f [int] [math]::floor(255 * $matches[2] / 100 + 0.5)) + `
+			("{0:x2}" -f [int] [math]::floor(255 * $matches[3] / 100 + 0.5)) + `
+			("{0:x2}" -f [int] [math]::floor(0.5 + $matches[4]))
+	}
+	if ($color -match "^hsl\("      +
+		"\s*(\d+(?:\.\d+)?)\s*,"    +
+		"\s*(\d+(?:\.\d+)?)%\s*,"*2 +
+		"{0}\)$"
+	) {
+		$color = hsl-to-hex         `
+			$([double] $matches[1]) `
+			$($matches[2]) `
+			$($matches[3])
+	}
+	if ($color -match "^hsla\("     +
+		"\s*(\d+(?:\.\d+)?)\s*,"    +
+		"\s*(\d+(?:\.\d+)?)%\s*,"*2 +
+		"\s*(\d+(?:\.\d+)?)%?\s*"   +
+		"\)$"
+	) {
+		if ([regex]::match($color, "%\s*\)$").success) {
+			# see the comment for the rgba section
+			$matches[4] = 255 * $matches[4] / 100
+		}
 
-		$color += "{0:x2}" -f [int] $matches[4]
+		$color = hsl-to-hex         `
+			$([double] $matches[1]) `
+			$([double] $matches[2]) `
+			$([double] $matches[3])
+
+		$color += "{0:x2}" -f [int] [math]::floor(0.5 + $matches[4])
 	}
 
 	return optimize-hex $color
@@ -425,7 +450,7 @@ function invert-hex([string] $color) {
 		("{0:x2}" -f (255 - $b))
 
 	if ($color.length -eq 7) {
-		return optimize-color $outstr
+		return optimize-hex $outstr
 	}
 
 	[byte] $a = "0x" + $color.substring(7, 2)
@@ -459,8 +484,8 @@ function invert-color([string] $color) {
 
 	$color = $color.trim()
 
-	if ($color -eq "none") {
-		return "none"
+	if ($color -in "none", "transparent") {
+		return $color.toLower()
 	}
 
 	if ($color.length -in 3, 4, 6, 8 -and $color -match "^[\da-f]+$") {
@@ -498,7 +523,16 @@ function invert-color([string] $color) {
 		}
 	}
 
-	if ($match.success) {
+	if ($type -in "hsl", "hsla") {
+		$a = [double] $a
+		$b = [double] $b.substring(0, $b.length - 1)
+		$c = [double] $c.substring(0, $c.length - 1)
+
+		if ($type -eq "hsla") {
+			$d = [double] ($d.endsWith("%") ? $d.substring(0, $d.length - 1) : $d)
+		}
+	}
+	elseif ($match.success) {
 		# either they all have percents or none of them do.
 		$percents = $a.endsWith("%")
 
@@ -535,8 +569,8 @@ function invert-color([string] $color) {
 				"rgba($(100 - $a)%,$(100 - $b)%,$(100 - $c)%,$d)" :
 				"rgba($(255 - $a),$( 255 - $b),$( 255 - $c),$d)"
 		}
-		"hsl"  { "hsl($( ($a % 360 + 180) % 360), $b%, $(100 - $c)%)"    }
-		"hsla" { "hsla($(($a % 360 + 180) % 360), $b%, $(100 - $c)%,$d)" }
+		"hsl"  { "hsl($( ($a + 180) % 360), $b%, $(100 - $c)%)"     }
+		"hsla" { "hsla($(($a + 180) % 360), $b%, $(100 - $c)%, $d)" }
 		"named or invalid" {
 			$ret = invert-color $namedColorMap.$color
 
@@ -601,11 +635,7 @@ function look-for-bg-rect(
 			if ($options.verb) {
 				if ($options.overwrite) {
 					# overwrite the previous line
-					write-host $(
-						"`r${indent+1}" +
-						" " * "found background candidate $counter at bytes $stt-$end".length +
-						"`r"
-					) -noNewline
+					write-host -noNewline "`r`e[0K"
 				}
 
 				write-host "${indent+1}background found. no insertion required."
@@ -619,11 +649,7 @@ function look-for-bg-rect(
 	if ($options.verb -and !$bgFound) {
 		if ($options.overwrite) {
 			# overwrite the previous line
-			write-host $(
-				"`r${indent+1}" +
-				" " * "found background candidate $counter at bytes $actualStt-$end".length +
-				"`r"
-			) -noNewline
+			write-host -noNewline "`r`e[0K"
 		}
 
 		write-host "${indent+1}background not found. inserting one."
@@ -680,11 +706,7 @@ function invert-stroke-colors([hashtable] $options) {
 		if ($options.verb) {
 			if ($options.overwrite) {
 				# overwrite the previous line
-				write-host $(
-					"`r${indent+1}"                                               + # indentation
-					" " * "found stroke $counter at bytes $actualStt-$end".length + # clear line
-					"`r${indent+1}done. $counter found"                             # new content
-				)
+				write-host "`r`e[0K${indent+1}done. $counter found"
 			}
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
@@ -728,11 +750,7 @@ function invert-fill-colors([hashtable] $options) {
 		if ($options.verb) {
 			if ($options.overwrite) {
 				# overwrite the previous line
-				write-host $(
-					"`r${indent+1}"                                             + # indentation
-					" " * "found fill $counter at bytes $actualStt-$end".length + # clear line
-					"`r${indent+1}done. $counter found"                           # new content
-				)
+				write-host "`r`e[0K${indent+1}done. $counter found"
 			}
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
@@ -745,14 +763,15 @@ function invert-fill-colors([hashtable] $options) {
 	because of how image masks work, images used in masks don't
 	have to be inverted.
 
-	returns the IDs of mask images that use `<use ...>` and the
-	indices of embedded <image> tags within `<mask>`.
+	returns the IDs of mask images that use `<use ...>`, the
+	indices of embedded <image> tags within `<mask>`, and the index
+	of the first image. this index may or may not be within a <mask>.
 .description
 	Assumes all images used for masks (via <use>) are not used for
 	anything else. Technically they *can* be used for both, but I
 	don't think that is likely, so I don't care.
 #>
-function find-image-masks([hashtable] $options) {
+function find-masks([hashtable] $options) {
 	${indent+1} = $options.indentPlus1
 	# TODO: deal with masks that have stuff like <rect>, <circle>, etc.
 		# find masks before everything else.
@@ -760,7 +779,8 @@ function find-image-masks([hashtable] $options) {
 		# don't invert the colors of anything in any of the ranges.
 
 	$end = $actualStt = $counter = 0
-	$firstImageIndex  = $end = $stt = $options.content.indexOf("<image", $end)
+	# there used to be an `$end = ` in the next line, but I think it was a mistake.
+	$firstImageIndex  = $stt = $options.content.indexOf("<image", $end)
 	$maskImageIds     = @()
 	$maskImageIndices = @()
 
@@ -776,10 +796,10 @@ function find-image-masks([hashtable] $options) {
 		$end = $options.content.indexOf("</mask>", $stt + 6)
 
 		if ($options.overwrite) {
-			write-host "`r${indent+1}found image mask $counter at bytes $stt-$end" -noNewline
+			write-host "`r${indent+1}found mask $counter at bytes $stt-$end" -noNewline
 		}
 		elseif ($options.verb) {
-			write-host "${indent+1}found image mask $counter at bytes $stt-$end"
+			write-host "${indent+1}found mask $counter at bytes $stt-$end"
 		}
 
 		$mask = $options.content.substring($stt, $end - $stt + 1)
@@ -811,15 +831,11 @@ function find-image-masks([hashtable] $options) {
 		if ($options.verb) {
 			if ($options.overwrite) {
 				# overwrite the previous line
-				write-host $(
-					"`r${indent+1}"                                                   + # indentation
-					" " * "found image mask $counter at bytes $actualStt-$end".length + # clear line
-					"`r${indent+1}done. $counter found"                                 # new content
-				)
+				write-host "`r`e[0K${indent+1}done. $counter found"
 			}
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
-		else { write-host "       - found $counter" }
+		else { write-host "             - found $counter" }
 	}
 
 	return @{
@@ -859,7 +875,7 @@ function invert-image-colors(
 			continue
 		}
 
-		if (!(gcm magick -type app -ErrorAct silent)) {
+		if (!(gcm magick -type app -ea ignore)) {
 			throw "Required program ImageMagick ``magick`` was not found. embedded images are left un-inverted."
 		}
 
@@ -928,16 +944,79 @@ function invert-image-colors(
 				# overwrite the previous line
 				# $end gets set to $stt + 5 after every iteration, so $actualEnd
 				# is used so the value used in the string length can be stored.
-				write-host $(
-					"`r${indent+1}" +
-					" " * "found embedded image $counter at bytes $actualStt-$actualEnd".length +
-					"`r${indent+1}done. $counter found"
-				)
+				write-host "`r`e[0K${indent+1}done. $counter found"
 			}
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
 		else { write-host " - found $counter" }
 	}
+}
+
+<#
+.synopsis
+	It condenses and optimizes the paths descriptors for <path> tags.
+
+	Here is a list of what it does, in order:
+		1. condense spaces
+		2. replace `l x 0` with `h x`
+		3. replace `l 0 x` with `v x`
+		4. replace things like `ZzZzz` or `zzzZzZ` with just the first `z` or `Z`.
+		5. replace `h n h k` with `h (n+k)`, as long as their signs are the same.
+			at this time, it also does the same thing with `v`.
+#>
+function optimize-paths($options) {
+	$pnum = "(?:\d*\.)?\d+(?:e[+\-]?\d+)?"
+	$nnum = "-" + "$pnum"
+	$number = "-?" + $pnum
+
+	# condense spaces
+	# `h 1 z v 2 l 2 3 L 1 -1` -> `h1zv2l2 3L1-1`
+	$options.content =
+	$options.content -creplace "d\s*=\s*(['`"])(?<path>[^'`"]*)\1", {
+		$path = $_.groups | ? name -eq path | % value
+		$path = $path -replace "[\s,]+", " " -replace "(?<!\d)\s|\s(?!\d)", ""
+
+		return "d=`"$path`""
+	}
+
+	$options.content =
+	$options.content `
+		-creplace "l($number) 0", 'h$1' `
+		-creplace "l0 ?($number)", 'v$1'
+
+	# optimize consecutive `z` and `Z` commands.
+	# only the first one can actually do anything.
+	$options.content = $options.content -replace "(z)z+", { $_.groups[1] }
+
+	# optimize consecutive `h` and `v` commands
+	# `h2 h2 h-2 h2` -> `h4h-2h2`. this could just be h4 though
+	# `v-2 v-2 v-2 v-2` -> `v-8`
+	do {
+		$continue = $false
+
+		$options.content =
+		$options.content -creplace "(?<type>[hv])(?<n1>$number)\k<type>(?<n2>$number)", {
+			$type        = $_.groups | ? name -eq type | % value
+			[double] $n1 = $_.groups | ? name -eq n1   | % value
+			[double] $n2 = $_.groups | ? name -eq n2   | % value
+
+			if ([math]::sign($n1) -eq [math]::sign($n2)) {
+				$continue = $true
+
+				"$type$($n1 + $n2)"
+			}
+			else {
+				$_.groups[0].value
+			}
+
+		}
+	} while ($continue)
+
+	# TODO: optimize consecutive `l` commands, but only if they have the same slope.
+
+	# TODO: optimize backtracking. h4 h-2 h3 -> h5.
+		# however, something like `h4 h-5 h3` isn't entirely contained in
+		# the previous line, so it isn't really simplifiable.
 }
 
 <#
@@ -1062,10 +1141,12 @@ function invert-svg(
 		write-host "${indent}looking for background rectangle"
 	}
 
-	look-for-bg-rect $options `
-		-width       $width   `
-		-height      $height  `
-		-svgEndIndex $svgEndIndex
+	if ($bgcolor -ne "none") {
+		look-for-bg-rect $options `
+			-width       $width   `
+			-height      $height  `
+			-svgEndIndex $svgEndIndex
+	}
 
 	if ($logging -ne "none") {
 		write-host "${indent}inverting stroke colors" -noNewline
@@ -1080,10 +1161,10 @@ function invert-svg(
 	invert-fill-colors $options
 
 	if ($logging -ne "none") {
-		write-host "${indent}finding image masks" -noNewline
+		write-host "${indent}finding masks" -noNewline
 		if ($verb) { write-host "" } # add the newline.
 	}
-	$masks = find-image-masks $options
+	$masks = find-masks $options
 
 	if ($logging -ne "none") {
 		write-host "${indent}inverting embedded images" -noNewline
@@ -1099,21 +1180,29 @@ function invert-svg(
 
 	$options.content = $options.content.trim()
 
+	optimize-paths $options
+
 	if ($outfile -eq "-") { echo $options.content }
 	else { $options.content > $outfile }
-}
+} # function invert-svg
+
 
 try {
-	$canSetCursorVisibility = $true
+	# for `-logging none`, keep the cursor visible (pretend it cant be hidden).
+	$canSetCursorVisibility = $logging -ne "none"
+	$naturalExit = $false
 
-	try {
-		# sometimes this can throw an error, for example if it
-		# is being run through Sublime Text.
-		$startingCursorVisibility = [Console]::CursorVisible
-		[Console]::CursorVisible = $false
-	}
-	catch {
-		$canSetCursorVisibility = $false
+	if ($logging -ne "none") {
+		try {
+			# sometimes this can throw an error, for example if it
+			# is being run through Sublime Text.
+
+			$startingCursorVisibility = [Console]::CursorVisible
+			[Console]::CursorVisible = $false
+		}
+		catch {
+			$canSetCursorVisibility = $false
+		}
 	}
 
 	invert-svg            `
@@ -1124,9 +1213,15 @@ try {
 		-logging $logging `
 		-bgcolor $bgcolor `
 		-keepInt $keepIntermediateFiles
+
+	$naturalExit = $true
 }
 finally {
-	# in case of ^C, reset visibility.
+	# in case of ^C.
+
+	if (-not $naturalExit -and $logging -ne "none") {
+		write-host "`n`e[1;31maborting svg inversion`e[0m"
+	}
 
 	if ($canSetCursorVisibility) {
 		[Console]::CursorVisible = $startingCursorVisibility
