@@ -7,7 +7,7 @@
 		// CS-xy == ctrl+shift+x, ctrl+shift+y
 		// DOWN  == down 
 		// ESC   == escape
-		// ... 
+		// ...
 
 	// page up and page down stuff
 	{ "keys": ["alt+up"], "command": "move", "args": {"by": "pages", "forward": false } },
@@ -47,6 +47,7 @@
 	{ "keys": ["alt+x", "alt+a"          ], "command": "focus_side_bar" }, // use ENTER or C-<N> to exit the side bar
 	{ "keys": ["alt+x", "alt+s"          ], "command": "toggle_side_bar" },
 	{ "keys": ["alt+x", "alt+t"          ], "command": "title_case" },
+	{ "keys": ["alt+x", "alt+e"          ], "command": "command_repeated" },
 	{ "keys": ["alt+x", "ctrl+alt+down"  ], "command": "spawn_below_last_cursor" },
 
 	// these next 8 might get removed. idk if I like them.
@@ -62,6 +63,8 @@
 	{ "keys": ["alt+x", "ctrl+up"], "command": "scroll_repeated", "args": {"forward": false} },
 	{ "keys": ["alt+x", "ctrl+down"], "command": "scroll_repeated", "args": {"forward": true} },
 
+	{ "keys": ["ctrl+k", "ctrl+r"], "command": "command_repeated" },
+
 	// TODO: consider moving the pane stuff from C-k to A-x
 	// TODO: consider unbinding either C-= or C--
 
@@ -76,8 +79,9 @@
 	{ "keys": ["ctrl+shift+e"    ], "command": "move_to", "args": {"to": "eol", "extend": true } },
 	{ "keys": ["ctrl+alt+shift+e"], "command": "move_to", "args": {"to": "eof", "extend": true } },
 
-	{ "keys": ["ctrl+y"], "command": "yank"},
-	{ "keys": ["alt+v"], "command": "paste_from_history" },
+	// TODO: change C-y back to a C-k command, but closer to the left side. like C-ks or something
+	{ "keys": ["alt+y"], "command": "paste_from_history" },
+	{ "keys": ["alt+v"], "command": "yank"},
 
 	{ "keys": ["ctrl+alt+x"      ], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete to Hard EOL.sublime-macro"} },
 	{ "keys": ["ctrl+shift+x"    ], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete Line.sublime-macro"} },
@@ -98,16 +102,24 @@
 	{ "keys": ["alt+e"      ], "command": "single_selection"     , "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
 	{ "keys": ["alt+shift+e"], "command": "single_selection_last", "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
 
+	{ "keys": ["ctrl+k", "ctrl+d"], "command": "clear_bookmarks", "args": {"name": "mark"} },
+
+
+	{ "keys": ["alt+x", "alt+w"], "command": "close" },
+	{ "keys": ["alt+x", "alt+shift+w"], "command": "close_window" },
+
 	/////////////////////////////////// remove keybinds ///////////////////////////////////
 	// the comments give what to use instead, or none if it is completely removed
 
 	{ "keys": ["ctrl+g"], "command": "noop" }, // CS-d
 	{ "keys": ["ctrl+h"], "command": "noop" }, // CS-f
-	{ "keys": ["ctrl+f4"], "command": "noop" }, // C-w (similar)
+	{ "keys": ["ctrl+w"], "command": "noop" }, // A-xw
+	{ "keys": ["ctrl+shift+w"], "command": "noop" }, // A-xw
+	{ "keys": ["ctrl+f4"], "command": "noop" }, // A-xw (similar)
 	{ "keys": ["insert"], "command": "noop" }, // C-INSERT
 	{ "keys": ["shift+insert"], "command": "noop" }, // C-v
 	{ "keys": ["ctrl+k", "ctrl+b"], "command": "noop" }, // A-xs
-	{ "keys": ["ctrl+k", "ctrl+d"], "command": "noop" }, // CA-d
+	{ "keys": ["ctrl+k", "ctrl+g"], "command": "noop" }, // C-kd
 	{ "keys": ["ctrl+k", "ctrl+j"], "command": "noop" }, // C-]
 	{ "keys": ["ctrl+k", "ctrl+k"], "command": "noop" }, // CA-x
 	{ "keys": ["ctrl+k", "ctrl+l"], "command": "noop" }, // CS-u
@@ -120,7 +132,6 @@
 	{ "keys": ["alt+shift+w"], "command": "noop" }, // none
 	{ "keys": ["ctrl+shift+space"], "command": "noop" }, // none
 	{ "keys": ["ctrl+shift+k"], "command": "noop"}, // CS-x
-	{ "keys": ["ctrl+0"], "command": "noop" }, // A-xa
 	{ "keys": ["ctrl+`"], "command": "noop" }, // A-q
 	{ "keys": ["ctrl+break"], "command": "noop" }, // A-b
 	{ "keys": ["alt+o"], "command": "noop" }, // none
@@ -175,4 +186,59 @@ TODO: consider unbinding these. I almost never move by subwords
 	alt+shift+right
 TODO: consider unbinding CS-delete (AS-x) and C-backspace (CAS-x)
 */
+
+	// these are for unbinding the ones with context.
+	{ "keys": ["alt+1"], "command": "noop" },
+	{ "keys": ["alt+2"], "command": "noop" },
+	{ "keys": ["alt+3"], "command": "noop" },
+	{ "keys": ["alt+4"], "command": "noop" },
+	{ "keys": ["alt+5"], "command": "noop" },
+	{ "keys": ["alt+6"], "command": "noop" },
+	{ "keys": ["alt+7"], "command": "noop" },
+	{ "keys": ["alt+8"], "command": "noop" },
+	{ "keys": ["alt+9"], "command": "noop" },
+	{ "keys": ["alt+0"], "command": "noop" },
+
+	{ "keys": ["alt+1"], "command": "focus_group", "args": { "group": 0 } },
+	{ "keys": ["alt+2"], "command": "focus_group", "args": { "group": 1 } },
+	{ "keys": ["alt+3"], "command": "focus_group", "args": { "group": 2 } },
+	{ "keys": ["alt+4"], "command": "focus_group", "args": { "group": 3 } },
+	{ "keys": ["alt+5"], "command": "focus_group", "args": { "group": 4 } },
+	{ "keys": ["alt+6"], "command": "focus_group", "args": { "group": 5 } },
+	{ "keys": ["alt+7"], "command": "focus_group", "args": { "group": 6 } },
+	{ "keys": ["alt+8"], "command": "focus_group", "args": { "group": 7 } },
+	{ "keys": ["alt+9"], "command": "focus_group", "args": { "group": 8 } },
+	{ "keys": ["alt+0"], "command": "focus_group", "args": { "group": 9 } },
+
+	{ "keys": ["alt+shift+1"], "command": "move_to_group", "args": { "group": 0 } },
+	{ "keys": ["alt+shift+2"], "command": "move_to_group", "args": { "group": 1 } },
+	{ "keys": ["alt+shift+3"], "command": "move_to_group", "args": { "group": 2 } },
+	{ "keys": ["alt+shift+4"], "command": "move_to_group", "args": { "group": 3 } },
+	{ "keys": ["alt+shift+5"], "command": "move_to_group", "args": { "group": 4 } },
+	{ "keys": ["alt+shift+6"], "command": "move_to_group", "args": { "group": 5 } },
+	{ "keys": ["alt+shift+7"], "command": "move_to_group", "args": { "group": 6 } },
+	{ "keys": ["alt+shift+8"], "command": "move_to_group", "args": { "group": 7 } },
+	{ "keys": ["alt+shift+9"], "command": "move_to_group", "args": { "group": 8 } },
+
+	{ "keys": ["ctrl+1"], "command": "select_by_index", "args": { "index": 0 } },
+	{ "keys": ["ctrl+2"], "command": "select_by_index", "args": { "index": 1 } },
+	{ "keys": ["ctrl+3"], "command": "select_by_index", "args": { "index": 2 } },
+	{ "keys": ["ctrl+4"], "command": "select_by_index", "args": { "index": 3 } },
+	{ "keys": ["ctrl+5"], "command": "select_by_index", "args": { "index": 4 } },
+	{ "keys": ["ctrl+6"], "command": "select_by_index", "args": { "index": 5 } },
+	{ "keys": ["ctrl+7"], "command": "select_by_index", "args": { "index": 6 } },
+	{ "keys": ["ctrl+8"], "command": "select_by_index", "args": { "index": 7 } },
+	{ "keys": ["ctrl+9"], "command": "select_by_index", "args": { "index": 8 } },
+	{ "keys": ["ctrl+0"], "command": "select_last_tab" },
+
+	{ "keys": ["ctrl+1"], "command": "focus_by_index", "args": { "index": 0 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+2"], "command": "focus_by_index", "args": { "index": 1 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+3"], "command": "focus_by_index", "args": { "index": 2 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+4"], "command": "focus_by_index", "args": { "index": 3 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+5"], "command": "focus_by_index", "args": { "index": 4 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+6"], "command": "focus_by_index", "args": { "index": 5 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+7"], "command": "focus_by_index", "args": { "index": 6 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+8"], "command": "focus_by_index", "args": { "index": 7 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+9"], "command": "focus_by_index", "args": { "index": 8 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+0"], "command": "focus_by_index", "args": { "index": 9 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
 ]

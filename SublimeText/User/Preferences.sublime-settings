@@ -30,4 +30,5 @@
 		".Trash", ".Trash-*",
 		"__pycache__"
 	],
+	"index_files": true,
 }
