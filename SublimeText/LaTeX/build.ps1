@@ -7,8 +7,11 @@ param (
 	[string] $pdfViewer = $isWindows ? "SumatraPDF.exe" : "evince",
 	[switch] $buildOnly,
 	[switch] $alwaysBuild,
+	[switch] $shellEscape,
 	[switch] $keepIntermediateFiles
 )
+
+$shell = $shellEscape.isPresent
 
 # use the directory name if no file was given.
 $texfile ??= get-location | split-path -leaf
@@ -29,6 +32,7 @@ function open-pdf {
 		# pass
 	}
 	elseif ($verbose_) { echo "build.ps1: Opening PDF: ``$pdfViewer ./$texfile.pdf``" }
+
 	# Assumes SumatraPDF `ReuseInstance` option is set to `true`
 	# although, technically it shouldn't matter either way.
 	start-process $pdfViewer -args ./$texfile.pdf
@@ -74,8 +78,23 @@ cleanup
 
 # compiling
 $pdflatex = "pdflatex -c-style-errors -interaction=nonstopmode -halt-on-error"
-if ($verbose_) { latexmk -pdflatex="$pdflatex" -time -pdf ./$texfile.tex         }
-else           { latexmk -silent -f                  -pdf ./$texfile.tex > $null }
+
+if ($verbose_) {
+	if ($shell) {
+		latexmk -pdf -pdflatex="$pdflatex" -shell-escape ./$texfile.tex
+	}
+	else {
+		latexmk -pdf -pdflatex="$pdflatex"               ./$texfile.tex
+	}
+}
+else {
+	if ($shell) {
+		latexmk -pdf -silent -f -shell-escape ./$texfile.tex *> $null
+	}
+	else {
+		latexmk -pdf -silent -f               ./$texfile.tex *> $null
+	}
+}
 
 $latexmkExitCode = $lastExitCode
 
