@@ -1,21 +1,25 @@
 %YAML 1.2
 
 # this is a fork of this:
-  # https://github.com/13xforever/x86-assembly-textmate-bundle/blob/master/x86_64 Assembly.tmbundle/Syntaxes/Nasm Assembly.sublime-syntax
-  # - it is up to date, but missing key things like preprocessor functions, `%if 0` comment blocks, support for `ctrl+/`, `%rmacro`, etc.
-  # - I don't have control of it, or its update cycle/content.
-  # - it was made for YASM and highlights things like `ddq` and `dqword` which don't work in NASM.
+    # https://github.com/13xforever/x86-assembly-textmate-bundle/blob/master/x86_64 Assembly.tmbundle/Syntaxes/Nasm Assembly.sublime-syntax
+    # - it is up to date, but missing key things like preprocessor functions, `%if 0` comment blocks, support for `ctrl+/`, `%rmacro`, etc.
+    # - I don't have control of it, or its update cycle/content.
+    # - it was made for YASM and highlights things like `ddq` and `dqword` which don't work in NASM.
 
-# Last Known NASM Commit:
-  # Merge remote-tracking branch 'github/nasm-2.16.xx'
-  # 699684bf1782eeb8e5b03135820aef83ef2d990c
+# Last Used NASM Commit:
+    # (https://github.com/netwide-assembler/nasm/commit/<commit>)
+
+    # Merge remote-tracking branch 'github/nasm-2.16.xx'
+    # 699684bf1782eeb8e5b03135820aef83ef2d990c
+
+    # this one is also used, but none in-between these were used
+    # 8d62e99e140f20dcab6d1568fe9b3734b5f3b61d
 
 # TODO: everywhere that has identifers, allow macro indirection in it.
 
 # TODO: add autocomplete things:
-  # header guard
-  # common non-preprocessor things
-# TODO: add syntax for the TASM compatability stuff?
+    # header guard
+    # common non-preprocessor things
 # TODO: add single line comments to the rest of the preprocessor directives.
 
 file_extensions: [nasm, asm, inc, mac]
@@ -37,22 +41,22 @@ variables:
   # *? to stop at the first one that appears.
   line_rem: (?:[^\s;].*?(?=;|\\?$\n?))
 
-  # For some reason, NASM allows you truncated cpu names, like this:
-    # cpu katmai
-    # cpu katma
-    # cpu katm
-    # cpu kat
-    # cpu ka
-    # cpu k
+  # For some reason, NASM allows truncated cpu names like this:
+      # cpu katmai
+      # cpu katma
+      # cpu katm
+      # cpu kat
+      # cpu ka
+      # cpu k
   # If you do something like `p`, it is unclear if it is p2, pentium, ppro, etc.
   # these are some intuitive ones (the rest are not highlighted):
-    # def   -> default
-    # ivy   -> ivybridge
-    # kat   -> katmai
-    # pent  -> pentium? (I think.)
-    # sandy -> sandybridge
-    # west  -> westmere
-    # will  -> willamette
+      # def   -> default
+      # ivy   -> ivybridge
+      # kat   -> katmai
+      # pent  -> pentium? (I think.)
+      # sandy -> sandybridge
+      # west  -> westmere
+      # will  -> willamette
   valid_cpu: (?i:(?:80|[1-6])86|x86(?:-64)?|ia-?64|p[2346]|itani(?:c|um)|(?:sandy|ivy)(?:bridge)?|pent(?:ium(?:mmx|pro|ii)?)?|(?:late|e)?vex|ppro|x64|kat(?:mai)?|will(?:amette)?|prescott|merced|nehalem|west(?:mere)?|def(?:ault)?|any|all)
   num_bin_exp: (?:p[+-]?{{num_dec}})
   num_dec_exp: (?:e[+-]?{{num_dec}})
@@ -183,7 +187,7 @@ contexts:
       scope: punctuation.separator.comma.nasm
     - match: '{{stt_b}}(?i:seg|wrt){{end_b}}'
       scope: keyword.operator.word.nasm
-    # TODO: ternary operator things don't have to be surrpinded by space
+    # TODO: ternary operator things don't have to be surrounded by space
     # for instance, `1234? 4 : 5` is fine. I haven't checked any other cases.
     - match: (?:^|\s)(\?)(?:\s|$)
       captures:
@@ -196,8 +200,8 @@ contexts:
   directives:
     # TODO: add line continuations in directives.
     # TODO: for the directives like `BITS 64` that transform to `[BITS 64]`,
-      # add separate highlighting for it.
-      # and change these to only work at the start of lines.
+        # add separate highlighting for it.
+        # and change these to only work at the start of lines.
     - match: (?i){{stt_b}}(?:ideal|jumps|p[345]86|end){{end_b}}
       scope: invalid.deprecated.tasm.nasm
     - match: (?i){{stt_b}}(?:section|segment){{end_b}}
@@ -344,7 +348,7 @@ contexts:
   bracket-directives:
     # everything after `]` and up to a newline is ignored as of NASM 2.16.03.
     # this seems like it might be an implementation detail rather than a design choice.
-    # If this becomes not the case, replace applicable instances of
+    # TODO: If this ^^^^^ becomes not the case, replace applicable instances of
     # `set: comment-line-remainder` with `pop: true`.
     # also do the same for `directive-pragma` and `directive-pragma-unknown`.
     - match: (?i)^\s*(\[)\s*(warning){{end_b}}
@@ -825,12 +829,14 @@ contexts:
     # TODO: ifn?difi is a comment even in the elif/else branches.
       # this requires a separate match and context from this one.
     - include: single-line-comments-cont
-    - match: (?i)^\s*(%)(?:(if)\s+({{zero}})\s*$\n?|(ifn?difi){{end_b}})
+    # TODO: `%if 0\` doesn't highlight as a comment block
+    - match: (?i)^\s*(%)(?:(if)\s+({{zero}})\s*(;.*)?$\n?|(ifn?difi){{end_b}})
       captures:
         1: punctuation.definition.keyword.preprocessor.nasm
         2: meta.preprocessor.nasm keyword.control.preprocessor.nasm
         3: constant.numeric.nasm
-        4: meta.preprocessor.nasm keyword.control.preprocessor.nasm
+        4: punctuation.definition.comment.nasm
+        5: meta.preprocessor.nasm keyword.control.preprocessor.nasm
       push:
         - meta_content_scope: comment.block.nasm
         - match: (?i)^\s*%{{if_directive}}{{end_b}}
@@ -1159,7 +1165,7 @@ contexts:
     - match: '{{line_rem}}'
       # unknown pragma. not an error for future compatability (NASM says so).
       # underlined to indicate it is unknown.
-      # in some cases, an argument might be given this scope. that is a bug.
+      # TODO: in some cases, an argument might be given this scope. that is a bug.
       scope: entity.name.tag.pragma.unknown.nasm markup.underline.nasm
   preprocessor-single-line-macro:
     - match: (?i)^\s*(%)((?:ix?|xi?)?define){{end_b}}
@@ -1217,8 +1223,10 @@ contexts:
         - meta_content_scope: invalid.illegal.nasm
         - include: whitespace
     - match: (?i)^\s*(%)(include|require|depend){{end_b}}
+      # %include is like C's `#include`, but `%require` is like `#include` with `#pragma once`.
       # TODO: `%include` resolves macros. Idk about the other two, but probably.
       # Probably wait until this gets added to `warning|error|fatal` to add it here.
+      # TODO: figure out what this previous line is talking about.
       captures:
         1: punctuation.definition.keyword.preprocessor.nasm
         2: meta.preprocessor.nasm keyword.control.import.preprocessor.nasm
@@ -1308,7 +1316,13 @@ contexts:
         - match: \w+{{end_b}}
           scope: invalid.illegal.storage.type.nasm
         - include: whitespace
-    - match: (?i)^\s*(%)(null){{end_b}}
+    - match: (?i)^\s*(%)(null|note){{end_b}}
+      # TODO: `%note` isn't actually in the language full release yet as of 1/19/25,
+      # so I don't actually know what the syntax is. The commit that added it says
+      # adds a note in the list file. It doesn't give an example so idk.
+      #     8d62e99e140f20dcab6d1568fe9b3734b5f3b61d
+      #     (https://github.com/netwide-assembler/nasm/commit/<commit>)
+      #
       captures:
         1: punctuation.definition.keyword.preprocessor.nasm
         2: meta.preprocessor.nasm keyword.control.preprocessor.nasm
@@ -1548,6 +1562,12 @@ contexts:
     - match: \"
       scope: punctuation.definition.string.begin.nasm
       push: string-double
+  string-end:
+    - include: line-continuation
+    - match: \n
+      # strings have to end on the same line
+      scope: invalid.illegal.string.end.nasm
+      pop: true
   string-content:
     - match: \\U[\da-fA-F]{8}
       scope: constant.character.escape.nasm
@@ -1561,6 +1581,7 @@ contexts:
       scope: constant.character.escape.nasm
     - match: \\.
       scope: invalid.illegal.constant.character.escape.nasm
+    - include: string-end
   string-backquote:
     - meta_scope: string.quoted.other.nasm
     - meta_include_prototype: false
@@ -1571,12 +1592,14 @@ contexts:
   string-single:
     - meta_scope: string.quoted.single.nasm
     - meta_include_prototype: false
+    - include: string-end
     - match: \'
       scope: punctuation.definition.string.end.nasm
       pop: true
   string-double:
     - meta_scope: string.quoted.double.nasm
     - meta_include_prototype: false
+    - include: string-end
     - match: \"
       scope: punctuation.definition.string.end.nasm
       pop: true

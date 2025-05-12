@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[%ifdef ${1:x}
+	${2; if defined}
+%endif]]></content>
+	<tabTrigger>%ifdef</tabTrigger>
+	<scope>source.nasm</scope>
+	<description>%ifdef …  %endif</description>
+</snippet>
