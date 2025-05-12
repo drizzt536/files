@@ -93,10 +93,8 @@ function clean {
 	if (($clean -or $remoteInput) -and (test-path -pathtype leaf $inFile)) { rm $inFile }
 }
 function Get-ChromeUserAgent {
-	# these values might not ever need to be
-	# updated. it will just be increasingly
-	# likely over time that the server won't
-	# believe it, and block the request.
+	# these values might not ever need to be updated. it will just be increasingly
+	# likely over time that the server won't believe it, and block the request.
 	# NOTE: the user agent is at `navigator.userAgent` in the JS terminal
 
 	# the value given by [Microsoft.PowerShell.Commands.PSUserAgent]::Chrome
@@ -106,7 +104,7 @@ function Get-ChromeUserAgent {
 		$isMacOS ? "Macintosh; Intel Mac OS X 10_15_7" :
 			"X11; Linux x86_64"
 
-	$chromeVersion = "131.0.0.0"
+	$chromeVersion = "136.0.0.0"
 	$webkitVersion = "537.36"
 
 	return "Mozilla/5.0 ($osInfo) AppleWebKit/$webkitVersion" +
@@ -121,9 +119,9 @@ $requestHeaders = @{
 	"DNT" = 1;
 	"sec-ch-ua-mobile" = "?0";
 	"sec-ch-ua-platform" = "`"$(
-		$isWindows ? 'Windows' :
-		$isMacOS ? 'MacOS' :
-			'Linux'
+		$isWindows ? "Windows" :
+		$isMacOS ? "MacOS" :
+			"Linux"
 	)`"";
 	"sec-ch-ua"        = $(
 		"`"Not)A;Brand`";v=`"99`", " +
@@ -283,7 +281,7 @@ else {
 # `$relativeDir` includes the `/` at the end. and is normalized to have no backslashes.
 
 #                   | egrep -v "^#|^$"
-$urls = cat $inFile | where { -not [regex]::isMatch($_, "^#|^$") } | foreach {
+$urls = cat $inFile | where { -not [regex]::isMatch($_, '^#|^$') } | foreach {
 	$url = $_
 
 	if ([regex]::isMatch($url, "^file:///?")) {
@@ -292,6 +290,7 @@ $urls = cat $inFile | where { -not [regex]::isMatch($_, "^#|^$") } | foreach {
 			write-error "remote input files cannot use local segment files."
 			exit 4
 		}
+
 		return $url
 	}
 
@@ -306,10 +305,12 @@ $urls = cat $inFile | where { -not [regex]::isMatch($_, "^#|^$") } | foreach {
 			write-error "remote input files cannot use local segment files."
 			exit 4
 		}
+
 		if (-not $isWindows) {
 			write-error "local Windows-style absolute paths can only be used on Windows."
 			exit 5
 		}
+
 		return "file:///$url"
 	}
 
@@ -368,8 +369,10 @@ foreach ($url in $urls) {
 	$i++
 
 	if (-not $silent) {
+		# TODO: figure out what the upper bound means
+		# is that a *guess* at an upper bound, or is that the actual upper bound?
 		$remainingSeconds = $i -eq 1 ?
-			11.77 * $urls.count : # 11.769s /segment is an upper bound.
+			11.77 * $urls.count : # 11.77s /segment is an upper bound.
 			($iterationStartTime - $startTime).totalSeconds*($urls.count/($i-1) - 1)
 
 		write-progress "Downloading video segments" " $i/$($urls.count)" -id 1 `
@@ -383,6 +386,7 @@ foreach ($url in $urls) {
 			if (-not $silent) {
 				write-host "file is a directory. removing and redownloading"
 			}
+
 			rm $segfile
 		}
 		elseif ($alwaysWriteSegments) {
@@ -394,6 +398,7 @@ foreach ($url in $urls) {
 			if (-not $silent) {
 				write-host "    download not required."
 			}
+
 			continue
 		}
 	}
@@ -410,10 +415,12 @@ foreach ($url in $urls) {
 		write-error "segment file $i does not exist. $httpStatus.`n    $url"
 		exit 7
 	}
+
 	if ($lastExitCode -shr 32 -eq 429) {
 		write-error "segment file $i could not be accessed. $httpStatus. Retry after $($lastExitCode -band 0xFFFFFFFFul) seconds."
 		exit 8
 	}
+
 	if ($lastExitCode -ne 0) {
 		write-error "segment file $i could not be accessed. $httpStatus.`n    $url"
 		exit 8
@@ -432,17 +439,20 @@ if (test-path segments.txt) {
 	# recurse in case it is a folder for some reason.
 	rm -r segments.txt
 }
+
 ls ./segments/*.ts | foreach { "file '$($_.name)'" } | out-file segments.txt
 
 if ($leaveSegmented) {
 	$lines = cat $inFile
+
 	$urls = ls ./segments/*.ts | foreach { "./segments/$($_.name)" }
 	$j = 0
 	$fileLines = for ($i = 0; $i -lt $lines.count; $i++) {
-		[regex]::isMatch($lines[$i], "^#|^$") ?
+		[regex]::isMatch($lines[$i], '^#|^$') ?
 			$lines[$i] :
 			$urls[$j++]
 	}
+
 	$fileLines > $inFile
 	exit 0
 }
