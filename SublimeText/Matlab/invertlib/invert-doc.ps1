@@ -1,11 +1,11 @@
 <#
 .synopsis
-	requirements, and where I have them from:
+	requirements:
 		- Microsoft Word
 			- requires (new-object -ComObject Word.Application);
 
 	works for both DOC and DOCX files.
-	can also do DOC -> inverted DOCX and DOCX -> inverted DOC.
+	can also do DOC -> inverted DOCX, and DOCX -> inverted DOC.
 
 	input and output formats are determined by the file extensions.
 
@@ -14,6 +14,7 @@
 		2. invert PDF colors
 		3. convert PDF to DOC/DOCX (output format)
 #>
+[CmdletBinding()]
 param (
 	[string] $infile,
 	[string] $outfile = $infile,
@@ -22,6 +23,7 @@ param (
 	[string] $indTyp = "`t",
 	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
+	[bool] $optimize = $false,
 	[switch] $help,
 
 	[Alias("SVGTool")] [string] ${invert-svg.ps1} = "$($MyInvocation.MyCommand.Source)/../invert-svg.ps1",
@@ -38,7 +40,7 @@ param (
 if ($infile -eq "") { throw "input file was not provided." }
 
 if ($help.isPresent -or $infile -eq "--help") {
-	& $MyInvocation.MyCommand.Source -?
+	get-help -full $MyInvocation.MyCommand.Source
 	exit 0
 }
 
@@ -88,20 +90,20 @@ $document.close()
 
 if ($logging -ne "none") { write-host "${indent}inverting PDF colors" }
 
-& ${invert-pdf.ps1} `
-	-infile  $pdf   `
-	-outfile $pdf   `
-	-dpi     $dpi   `
-	-indLvl  $($indLvl+2) `
-	-indTyp  $indTyp      `
-	-logging $logging     `
-	-svgTool ${invert-svg.ps1} `
-	-keep    $keepIntermediateFiles
+& ${invert-pdf.ps1}  `
+	-infile   $pdf   `
+	-outfile  $pdf   `
+	-dpi      $dpi   `
+	-indLvl   $($indLvl+2) `
+	-indTyp   $indTyp      `
+	-logging  $logging     `
+	-optimize $optimize    `
+	-svgTool  ${invert-svg.ps1} `
+	-keep     $keepIntermediateFiles
 
-# for some reason, if you have never converted from PDF
-# within Word before, the program will just hang. It is
-# waiting for you to check a box, but the box is only
-# there when $word.visible is $true, which it won't be.
+# for some reason, if you have never converted from PDF within Word before,
+# the program will just hang. It is waiting for you to check a box, but the
+# box is only there when $word.visible is $true, which it won't be.
 # or maybe I am just stupid, idk.
 
 write-host "${indent}converting PDF to $outExt"
@@ -127,9 +129,11 @@ $document.close()
 $word.quit()
 
 if (-not $keepIntermediateFiles) {
-	rm $pdf
+	remove-item $pdf
+
+	# TODO: I'm not sure this is correct. Why would it delete the input file?
 	if ($infile -ne $outfile) {
-		rm $infile
+		remove-item $infile
 	}
 }
 

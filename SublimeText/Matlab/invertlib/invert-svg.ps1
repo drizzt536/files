@@ -1,25 +1,86 @@
 <#
 .synopsis
 	inverts the colors of an SVG image.
-	requires ImageMagick if the SVG has embedded images (PNG, JPG, etc.)
 
-	to supress messages, either use `-logging none` or
-	`invert-svg.ps1 [ARGS] 6> $null`
+	assumes a moderate level of simplicity (no events, gradiants, filters, vector masks, etc.).
+		basically the input should be something that a PNG could theoretically render.
 
-	assumes the SVG is valid (probably, at least it doesn't check that it is).
+	assumes the SVG is valid (for the most part).
 
-	The bgcolor argument is the background color *before* inversion.
-	It can be any valid SVG color thing. (e.g. hex, name, hsl, etc.)
-	If `-bgcolor none` is given, the background rectangle check is skipped.
+	requires ImageMagick if the SVG has embedded images (PNG/JPEG/WEBP)
+	It must be a new enough version to be called `magick`.
+	If it is required but missing, an error won't be thrown until most of the way through inversion.
+
+	to suppress all messages, either use `-logging none` or `invert-svg.ps1 [ARGS] 6> $null`
+.description
+	process:
+		1. set the background color
+			1a. find the dimensions of the whole SVG.
+			1b. look for `rect` elements where the shape matches one of these:
+				- svg width, svg height
+				- 100%, 100%
+				- svg width, 100%
+				- 100%, svg height
+			1c. add one to the start of the SVG if there isn't one.
+		2. invert the colors on every `stroke` attribute.
+		3. invert the colors on every `fill` attribute.
+		4. invert the colors on every inline CSS `style` attribute.
+		5. invert the colors on embedded raster images that aren't used as a mask.
+		6. write the new contents to the outfile.
+			- or write to stdout if the outfile is "-".
+			- default outfile is the infile (in-place inversion).
+.parameter infile
+	The input file to invert the colors of. should be a valid SVG.
+.parameter outfile
+	The output file. Use "-" for stdout, and leave blank for an in-place inversion.
+.parameter indLvl
+	starting indentation level. 0 for no indentation.
+	Use a higher level if needed for if this is called as a subprogram.
+.parameter indTyp
+	type of indentation. probably either "`t" or "    ".
+	defaults to tab indentation.
+.parameter logging
+	specifies the logging type and verbosity of the program.
+
+	- none: don't print anything, and don't hide the cursor
+	- basic: prints major steps and number of things found for each major step.
+	- verbose: prints out every opteration that happens on a separate line. also prints debug information.
+	- overwrite: prints in a similar format as "verbose", but doesn't print debug information, and prints
+		the "found ..." lines and overwrite them as it finds new ones.
+		Doesn't print properly on terminals that don't support ANSI escape sequence.
+.parameter keepIntermediateFiles
+	if given as true, intermediate files will be kept, which amounts to
+	./tmp-$counter.$imageType files for embedded raster images being kept.
+.parameter optimize
+	controls whether or not extra optimizations are performed on the SVG.
+
+	NOTE: color optimization happens regardless, e.g. these inversions:
+		"#1234560"                 -> "#eca0"
+		"rgb(128, 128, 128)"       -> "gray"
+		"hsl(209.5, 58.5%, 47.5%)" -> "peru"
+		"rgba(54, 127, 65, 47%)"   -> "#c980be78"
+.parameter help
+	prints help text and exit. equivalent to `get-help -full invert-svg.ps1`.
+	`invert-svg.ps1 --help` also works, but `--help` must be the first argument.
+	`invert-svg.ps1 -?` is different, and equivalent to `get-help invert-svg.ps1`
+.parameter bgcolor
+	set the assumed background color of the input SVG (before inverting).
+	if `-bgcolor "none"` is given, the step for inserting a background is skipped.
+	if the SVG already has a background and the color is wrong, nothing happens.
+
+	if the SVG doesn't have a background already, one will be added with the given color.
+	This is most useful for auto-generated SVGs from `pdftocairo` and stuff.
 #>
+[CmdletBinding()]
 param (
-	[string] $infile,
-	[string] $outfile = $infile,
+	[Parameter(Mandatory=$true)] [string] $infile,
+	[Alias("o")] [string] $outfile = $infile,
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
 	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
+	[bool] $optimize = $false,
 	[switch] $help,
 
 	# -SVGTool   - DOC/DOCX, EPS, PDF, and PPT/PPTX
@@ -36,24 +97,41 @@ param (
 if ($infile -eq "") { throw "input file was not provided." }
 
 if ($help.isPresent -or $infile -eq "--help") {
-	& $MyInvocation.MyCommand.Source -?
+	get-help -full $MyInvocation.MyCommand.Source
 	exit 0
 }
 
 # TODO: remove comments before everything, so background checking doesn't find
 	# commented out rectangles as the potential background.
 
+# TODO: for x="...", y="...", limit to 3 decimal places? maybe also d="..."?
 # TODO: invert the colors of CSS color styling.
+	# it would need to do both inline CSS and the standalone CSS.
+	# the inline CSS will be much easier.
 # TODO: what happens if you have something like <rect width="50" height="50">
 	# without a fill, stroke, or style.
 # TODO: for every externally-linked raster image, embed the image directly.
 	# do this before reversing the image colors.
+	# or maybe just warn that they won't invert properly
 # TODO: make a boolean argument to decide if masks should be inlined.
 	# meaning removing masks and masking the images that are given.
 	# more thought is required for masking stuff that isn't raster.
 # TODO: everything without fill="..." or fill-opacity="..." needs fill-opacity="0"
 	# this is so SVG to PDF and SVG rasterization programs will work.
 	# this is in addition to the previous todo for removing masks.
+# TODO: <g> groups with only one thing in it can get removed.
+	# the attributes have to get moved to the sub-object.
+	# attributes might have to get merged, e.g. `<rect id="a b"/>` instead of `<rect id="a" id="b"/>`.
+# TODO: empty <g> groups can be removed and so can all references to them by id.
+# TODO: all instances of `xlink:href=` can be replaced with `href=`. (I think)
+# TODO: <g> groups without any id or anything don't matter and can be removed.
+# TODO: add extra checks and throw errors for bad input.
+	# a lot of assumptions are made, and for bad input, they don't work.
+# TODO: implement a color tolerance where `-optimize $true` will change colors like "#cc863f"
+	# to "peru" ("#cd853f") if the distance is under a certain tolerance (3? 4?).
+	# this would only take place after inversion, and only if it makes the color name shorter.
+	# use a Euclidean-like distance to the nearest short color
+	# sqrt(abs(ΔR² sgn ΔR + ΔG² sgn ΔG + ΔB² sgn ΔB))
 
 # all 147 named colors. maps name to hex color.
 $namedColorMap = @{
@@ -210,8 +288,43 @@ foreach ($name in $namedColorMap.keys) {
 	$hex = $namedColorMap.$name
 
 	if ($name.length -le $hex.length) {
-		# write-host "`$hexToNameMap.$hex = $name"
+		# write-host "`$hexToNameMap.'$hex' = $name"
 		$hexToNameMap.$hex = $name
+	}
+}
+
+if (-not (get-typedata -typeName Text.StringBuilder).members.indexOf) {
+	update-typedata -typeName Text.StringBuilder -memberType ScriptMethod -memberName indexOf -value {
+		param ([string] $str, [uint] $stt = 0)
+
+		for ($i = $stt; $i -lt $this.length - $str.length; $i++) {
+			for ($j = 0; $j -lt $str.length; $j++) {
+				if ($this[$i + $j] -ne $str[$j]) {
+					break
+				}
+
+				if ($j + 1 -eq $str.length) {
+					# the whole string matched.
+					return $i
+				}
+			}
+		}
+
+		# nothing matched
+		return -1
+	}
+}
+
+if (-not (get-typedata -typeName Text.StringBuilder).members.chunkCount) {
+	update-typedata -typeName Text.StringBuilder -memberType ScriptMethod -memberName chunkCount -value {
+		$count = 0
+		$chunks = $this.getChunks()
+
+		while ($chunks.moveNext()) {
+			$count++
+		}
+
+		$count
 	}
 }
 
@@ -224,8 +337,8 @@ foreach ($name in $namedColorMap.keys) {
 	returns #RRGGBB
 #>
 function hsl-to-hex([double] $h, [double] $s, [double] $l) {
-	$h /= 360
 	# normalize into [0, 1]
+	$h /= 360
 	$s /= 100
 	$l /= 100
 
@@ -376,7 +489,7 @@ function optimize-color([string] $color) {
 			$matches[4] = 255 * $matches[4] / 100
 		}
 
-		$color = "#"                                                   + `
+		$color = "#"                                                         + `
 			("{0:x2}" -f [int] [math]::floor(255 * $matches[1] / 100 + 0.5)) + `
 			("{0:x2}" -f [int] [math]::floor(255 * $matches[2] / 100 + 0.5)) + `
 			("{0:x2}" -f [int] [math]::floor(255 * $matches[3] / 100 + 0.5)) + `
@@ -389,7 +502,7 @@ function optimize-color([string] $color) {
 	) {
 		$color = hsl-to-hex         `
 			$([double] $matches[1]) `
-			$($matches[2]) `
+			$($matches[2])          `
 			$($matches[3])
 	}
 	if ($color -match "^hsla\("     +
@@ -411,6 +524,18 @@ function optimize-color([string] $color) {
 		$color += "{0:x2}" -f [int] [math]::floor(0.5 + $matches[4])
 	}
 
+	if ($namedColorMap.$color -ne $null) {
+		$color = $namedColorMap.$color
+	}
+
+	if (-not $color.startsWith("#")) {
+		# NOTE: this might not be the color that was originally given to the function.
+		throw "invalid color ``$color``."
+	}
+
+	# write-host $color
+
+	# NOTE: hex is almost always the shortest form. except for sometimes when the named form is shorter.
 	return optimize-hex $color
 }
 
@@ -440,9 +565,14 @@ function invert-hex([string] $color) {
 		throw "invalid hash RGB color ``$color``. must be either #RRGGBB or #RRGGBBAA"
 	}
 
-	[byte] $r = "0x" + $color.substring(1, 2)
-	[byte] $g = "0x" + $color.substring(3, 2)
-	[byte] $b = "0x" + $color.substring(5, 2)
+	try {
+		[byte] $r = "0x" + $color.substring(1, 2)
+		[byte] $g = "0x" + $color.substring(3, 2)
+		[byte] $b = "0x" + $color.substring(5, 2)
+	} catch {
+		# NOTE: this isn't always the color that was originally given to the function.
+		throw "invalid color ``$color``"
+	}
 
 	$outstr = "#"                + `
 		("{0:x2}" -f (255 - $r)) + `
@@ -477,7 +607,7 @@ function invert-hex([string] $color) {
 #>
 function invert-color([string] $color) {
 	# TODO: figure out what to do if the rgb values are outside of [0, 256)
-	# TODO: separate this into different functions
+	# TODO: separate this into different functions?
 		# invert-named
 		# invert-rgb/invert-rgba
 		# invert-hsl/invert-hsla
@@ -524,15 +654,20 @@ function invert-color([string] $color) {
 	}
 
 	if ($type -in "hsl", "hsla") {
+		if (-not $b.endsWith("%")) {
+			throw "invalid HSL/HSLA saturation percent '$b'"
+		}
+
+		if (-not $c.endsWith("%")) {
+			throw "invalid HSL/HSLA lightness percent '$c'"
+		}
+
 		$a = [double] $a
 		$b = [double] $b.substring(0, $b.length - 1)
 		$c = [double] $c.substring(0, $c.length - 1)
-
-		if ($type -eq "hsla") {
-			$d = [double] ($d.endsWith("%") ? $d.substring(0, $d.length - 1) : $d)
-		}
 	}
 	elseif ($match.success) {
+		# RGB and RGBA
 		# either they all have percents or none of them do.
 		$percents = $a.endsWith("%")
 
@@ -551,11 +686,34 @@ function invert-color([string] $color) {
 	}
 	else { $type = "named or invalid" }
 
+	# clamp to the allowable color range and normalize
+	if ($type -in "rgb", "rgba") {
+		$a = [double]::clamp($a, 0, $percents ? 100 : 255)
+		$b = [double]::clamp($b, 0, $percents ? 100 : 255)
+		$c = [double]::clamp($c, 0, $percents ? 100 : 255)
+		# $d gets clamped later
+	}
+	elseif ($type -in "hsl", "hsla") {
+		if ($a -lt 0) { $a = $a % 360 + 360 } # e.g. (-500) % 360 -> -140
+		$b = [double]::clamp($b, 0, 100)
+		$c = [double]::clamp($c, 0, 100)
+	}
+
+	if ($type -in "rgba", "hsla") {
+		try {
+			$d = $d.endsWith("%") ?
+				"$( [double]::clamp($d.substring(0, $d.length - 1), 0, 100) )%" :
+				[int]::clamp($d, 0, 255)
+		} catch {
+			throw "invalid color ``$color``."
+		}
+	}
+
 	#### end setup ####
 
 	$ret = switch ($type) {
 		# for rgb and rgba, either they are all percentages or none of them are.
-		# this does not include the alpha value, which can actually be different
+		# this does not include the alpha value, which can be different
 
 		# for hsl and hsla, it is always f(no percent, percent, percent)
 		# the alpha can again be whatever.
@@ -569,14 +727,11 @@ function invert-color([string] $color) {
 				"rgba($(100 - $a)%,$(100 - $b)%,$(100 - $c)%,$d)" :
 				"rgba($(255 - $a),$( 255 - $b),$( 255 - $c),$d)"
 		}
-		"hsl"  { "hsl($( ($a + 180) % 360), $b%, $(100 - $c)%)"     }
-		"hsla" { "hsla($(($a + 180) % 360), $b%, $(100 - $c)%, $d)" }
+		"hsl"  { "hsl($( ($a + 180) % 360),$b%,$(100 - $c)%)"    }
+		"hsla" { "hsla($(($a + 180) % 360),$b%,$(100 - $c)%,$d)" }
 		"named or invalid" {
-			$ret = invert-color $namedColorMap.$color
-
-			if ($ret -eq $null) { throw "invalid color ``$color``" }
-
-			$ret
+			if ($namedColorMap.$color -eq $null) { throw "invalid color ``$color``" }
+			invert-color $namedColorMap.$color
 		}
 	}
 
@@ -590,6 +745,31 @@ function invert-color([string] $color) {
 
 	returns nothing; updates the content
 	found at the $options.content argument.
+.description
+	there are a few major issues I am aware of with the approach this function takes,
+	but they don't seem super common, at least for SVGs exported from programs I've used,
+	and the supported ways of doing backgrouns are better in basically every way,
+	so it is probably fine to put off fixing these issues.
+
+	# TODO: (todo line just for file searching)
+	issue 1:
+		if `<rect width="100%" height="100%"/>` is in <defs>, it doesn't actually render.
+		this will still recognize it and assume it is the whole document background.
+		It might be, depending on how that id is used in the SVG, but probably not,
+		otherwise it would just be outside the <defs> block.
+		There is almost certainly the same issue with <mask> as well as <defs>
+	issue 2:
+		this can find a "background" rectangle midway through
+		the SVG, in which case, you would be covering up everything that
+		was previously drawn, which is stupid, and there might as well be
+		nothing before the background rectangle, unless they have events
+		or something more advanced like that.
+		(<style> and <defs> probably would go before it, but it doesn't really matter).
+	issue 3:
+		technically, you can use <circle>, <path>, <polygon>, and stuff other than <rect>
+		as a document background, as long as it covers the whole SVG area. This will not
+		recognize those, and will only find <rect> It is exceedingly unlikely that anyone
+		or any program would intentionally use any of those when <rect> is simpler.
 #>
 function look-for-bg-rect(
 	[hashtable] $options,
@@ -598,25 +778,17 @@ function look-for-bg-rect(
 	[int] $svgEndIndex
 ) {
 	${indent+1} = $options.indentPlus1
-
-	<#
-	technically, this can find a "background" rectangle midway through
-	the SVG, in which case, you would be covering up everything that
-	was previously drawn, which is stupid, and there might as well be
-	nothing before the background rectangle, unless they have events
-	or something more advanced like that.
-	#>
 	$bgFound = $false
 	$counter = 0
-	$actualStt = 0
 	$end = $svgEndIndex
-	while ($true) {
-		$stt = $options.content.indexOf("<rect", $end)
 
-		if ($stt -eq -1) { break }
-		$actualStt = $stt
+	while (($stt = $options.content.indexOf("<rect", $end)) -ne -1) {
 		$counter++
 		$end = $options.content.indexOf(">", $stt + 5)
+
+		if ($end -eq -1) {
+			throw "unterminated rectangle"
+		}
 
 		if ($options.overwrite) {
 			write-host "`r${indent+1}found background candidate $counter at bytes $stt-$end" -noNewline
@@ -625,7 +797,7 @@ function look-for-bg-rect(
 			write-host "${indent+1}found background candidate $counter at bytes $stt-$end"
 		}
 
-		$rect = $options.content.substring($stt, $end - $stt + 1)
+		$rect = $options.content.toString($stt, $end - $stt + 1) # +1 to include the '>' character.
 
 		# TODO: make this match any number, and then test it externally.
 		$rectWidth  = [regex]::match($rect, "width\s*=\s*`"(?:100(?:\.0+)?%|$width)`"")
@@ -656,16 +828,12 @@ function look-for-bg-rect(
 	}
 
 	if (!$bgFound) {
-		$rectStr  = "<rect width=`""
-		$rectStr += "$width".length -gt 4 ? "100%" : $width
-		$rectStr += "`" height=`""
-		$rectStr += "$height".length -gt 4 ? "100%" : $height
-		$rectStr += "`" fill=`"$bgcolor`"/>"
+		# use the shorter between "100%", and the actual width.
+		$rectStr =	"<rect width=`"" + ("$width".length -gt 4 ? "100%" : $width) + `
+					"`" height=`"" + ("$height".length -gt 4 ? "100%" : $height) + `
+					"`" fill=`"$bgcolor`"/>"
 
-		$options.content = $options.content.insert($svgEndIndex + 1, $rectStr)
-	}
-	else {
-		write-host "${indent+1}not inserting background"
+		[void] $options.content.insert($svgEndIndex + 1, $rectStr)
 	}
 }
 
@@ -677,17 +845,18 @@ function look-for-bg-rect(
 function invert-stroke-colors([hashtable] $options) {
 	${indent+1} = $options.indentPlus1
 	$counter = 0
-	$actualStt = 0
 	$end = 0
-	while ($true) {
-		$stt = $options.content.indexOf("stroke=", $end)
 
-		if ($stt -eq -1) { break }
-		$actualStt = $stt
+	while (($stt = $options.content.indexOf("stroke=", $end)) -ne -1) {
 		$counter++
 		$stt += 7
 
-		$end = $options.content.indexOf('"', $stt + 1)
+		# `$options.content[$stt]` should be either ' or ".
+		$end = $options.content.indexOf($options.content[$stt], $stt + 1)
+
+		if ($end -eq -1) {
+			throw "unterminated ``stroke`` attribute"
+		}
 
 		if ($options.overwrite) {
 			write-host "`r${indent+1}found stroke $counter at bytes $stt-$end" -noNewline
@@ -696,54 +865,15 @@ function invert-stroke-colors([hashtable] $options) {
 			write-host "${indent+1}found stroke $counter at bytes $stt-$end"
 		}
 
-		$color = invert-color $( $options.content.substring($stt + 1, $end - $stt - 1) )
+		$stt++ # skip after the open quote.
+		$oldColor = $options.content.toString($stt, $end - $stt)
+		$newColor = invert-color $oldColor
 
-		$options.content = $options.content.substring(0, $stt + 1) + `
-			$color + $options.content.substring($end)
-	}
+		[void] $options.content.replace($oldColor, $newColor, $stt, $end - $stt)
 
-	if ($options.logging -ne "none") {
-		if ($options.verb) {
-			if ($options.overwrite) {
-				# overwrite the previous line
-				write-host "`r`e[0K${indent+1}done. $counter found"
-			}
-			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
-		}
-		else { write-host "   - found $counter" }
-	}
-}
-
-<#
-.synopsis
-	invert all fill colors in the SVG.
-	returns nothing; updates $options.content.
-#>
-function invert-fill-colors([hashtable] $options) {
-	${indent+1} = $options.indentPlus1
-	$counter = 0
-	$actualStt = 0
-	$end = 0
-	while ($true) {
-		$stt = $options.content.indexOf("fill=", $end)
-
-		if ($stt -eq -1) { break }
-		$actualStt = $stt
-		$counter++
-		$stt += 5
-
-		$end = $options.content.indexOf('"', $stt + 1)
-
-		if ($options.overwrite) {
-			write-host "`r${indent+1}found fill $counter at bytes $stt-$end" -noNewline
-		}
-		elseif ($options.verb) {
-			write-host "${indent+1}found fill $counter at bytes $stt-$end"
-		}
-
-		$color = invert-color $( $options.content.substring($stt + 1, $end - $stt - 1) )
-
-		$options.content = $options.content.substring(0, $stt + 1) + $color + $options.content.substring($end)
+		$end = $stt + $newColor.length + 1 # update the index for the new content. +1 for the end quote.
+		# don't assume this is the last one for the element. technically, you can do
+		# `<rect stroke="red" stroke="blue"/>`, even though that doesn't make sense.
 	}
 
 	if ($options.logging -ne "none") {
@@ -755,6 +885,164 @@ function invert-fill-colors([hashtable] $options) {
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
 		else { write-host "     - found $counter" }
+	}
+}
+
+<#
+.synopsis
+	invert all fill colors in the SVG.
+	returns nothing; updates $options.content.
+#>
+function invert-fill-colors([hashtable] $options) {
+	${indent+1} = $options.indentPlus1
+	$counter = 0
+	$end = 0
+
+	while (($stt = $options.content.indexOf("fill=", $end)) -ne -1) {
+		$counter++
+		$stt += 5
+
+		# `$options.content[$stt]` should be either ' or ".
+		$end = $options.content.indexOf($options.content[$stt], $stt + 1)
+
+		if ($end -eq -1) {
+			throw "unterminated ``fill`` attribute"
+		}
+
+		if ($options.overwrite) {
+			write-host "`r${indent+1}found fill $counter at bytes $stt-$end" -noNewline
+		}
+		elseif ($options.verb) {
+			write-host "${indent+1}found fill $counter at bytes $stt-$end"
+		}
+
+		$stt++ # skip after the open quote.
+		$oldColor = $options.content.toString($stt, $end - $stt)
+		$newColor = invert-color $oldColor
+
+		[void] $options.content.replace($oldColor, $newColor, $stt, $end - $stt)
+
+		$end = $stt + $newColor.length + 1 # update the index for the new content. +1 for the end quote.
+		# don't assume this is the last one for the element. technically, you can do
+		# `<rect fill="red" fill="blue"/>` even though that doesn't make sense.
+	}
+
+	if ($options.logging -ne "none") {
+		if ($options.verb) {
+			if ($options.overwrite) {
+				# overwrite the previous line
+				write-host "`r`e[0K${indent+1}done. $counter found"
+			}
+			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
+		}
+		else { write-host "       - found $counter" }
+	}
+}
+
+<#
+.synopsis
+	invert colors of inline CSS style colors in the SVG.
+	returns nothing; updates $options.content.
+#>
+function invert-inline-css-colors([hashtable] $options) {
+	${indent+1} = $options.indentPlus1
+	$counter = $end = 0
+
+	while (($stt = $options.content.indexOf("style=", $end)) -ne -1) {
+		if ($stt -eq -1) { break }
+		$counter++
+		$stt += 6
+
+		$outerQuoteType = $options.content[$stt]
+		$innerQuoteType = $outerQuoteType -eq '"' ? "'" : '"'
+
+		# `$outerQuoteType` should be either ' or ".
+		$end = $options.content.indexOf($outerQuoteType, $stt + 1)
+
+		if ($end -eq -1) {
+			throw "unterminated ``style`` attribute"
+		}
+
+		if ($options.overwrite) {
+			write-host -noNewline "`r${indent+1}found inline CSS style $counter at bytes $stt-$end"
+		}
+		elseif ($options.verb) {
+			write-host "${indent+1}found inline CSS style $counter at bytes $stt-$end"
+		}
+
+		$stt++ # skip over the open quote
+		$oldStyle = $options.content.toString($stt, $end - $stt)
+
+		# TODO: when full <style> inversion is added, this code will need to be moved to its own function.
+		#       because it covers the inversion of the stuff in the curly brackets.
+		$styles = [Collections.ArrayList] (($oldStyle -creplace "[\t\r\n]", " ") -split ";")
+
+		for ($i = 0; $i -lt $styles.count; $i++) {
+			$styles[$i] = $styles[$i].trim()
+
+			if ($styles[$i].length -eq 0) {
+				# empty element. probably a double or trailing semicolon in the source.
+
+				$styles.removeAt($i)
+				$i-- # counteract the $i++
+				continue
+			}
+
+			# make stuff like `content: 'x; y';` back into one element in the list.
+			if ($styles[$i].toCharArray().where({ $_ -eq $innerQuoteType }).count -band 1) {
+				# an odd number of quote characters means there is an unterminated string. technically,
+				# you could be doing &quot; or something, but that is weird and you should stop that.
+				if ($i -eq $styles.count -1) {
+					throw "unterminated string in inline CSS styling"
+				}
+
+				$styles[$i] += ";" + $styles[$i + 1]
+				$styles.removeAt($i + 1)
+
+				# in case the style continues into a third line.
+				$i-- # counteract the $i++
+				continue
+			}
+
+			if ($styles[$i] -like "filter\s*:.+") {
+				# TODO: filter is not implemented.
+				# this one's arguments are different I think.
+				# I don't know the semantics of how stuff like `grayscale(70%)` works.
+				continue
+			}
+
+			# parse out the parts of the style
+			$match = [regex]::match($styles[$i], "^(\w+(?:\-\w+)*)\s*:\s*(.+)$")
+
+			# invert anything that looks like a color
+			if ($match.success) {
+				$styleTokens = $match.groups[2].value -split "\s+"
+
+				for ($j = 0; $j -lt $styleTokens.count; $j++) {
+					try { $styleTokens[$j] = invert-color $styleTokens[$j] }
+					catch {} # leave the token the same.
+				}
+
+				$styles[$i] = "$($match.groups[1].value): $styleTokens"
+				continue
+			}
+		} # end for loop
+
+		$newStyle = $styles -join ";"
+		# NOTE: $style is still the original style.
+		[void] $options.content.replace($oldStyle, $newStyle, $stt, $end - $stt)
+		$end = $stt + $newStyle.length + 1 # update the index for the new content. +2 for the quotes.
+	} # end while loop
+
+	if ($options.logging -ne "none") {
+		if ($options.verb) {
+			if ($options.overwrite) {
+				# overwrite the previous line
+				write-host "`r`e[0K${indent+1}done. $counter found"
+			}
+			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
+		}
+		else { write-host " - found $counter" }
 	}
 }
 
@@ -778,7 +1066,7 @@ function find-masks([hashtable] $options) {
 		# change the image indices to be mask index ranges.
 		# don't invert the colors of anything in any of the ranges.
 
-	$end = $actualStt = $counter = 0
+	$end = $counter = 0
 	# there used to be an `$end = ` in the next line, but I think it was a mistake.
 	$firstImageIndex  = $stt = $options.content.indexOf("<image", $end)
 	$maskImageIds     = @()
@@ -789,11 +1077,14 @@ function find-masks([hashtable] $options) {
 		$stt = $options.content.indexOf("<mask", $end)
 
 		if ($stt -eq -1) { break }
-		$actualStt = $stt
 		$counter++
 
 		# 6 == "<mask>".length
 		$end = $options.content.indexOf("</mask>", $stt + 6)
+
+		if ($end -eq -1) {
+			throw "unterminated ``<mask>`` element"
+		}
 
 		if ($options.overwrite) {
 			write-host "`r${indent+1}found mask $counter at bytes $stt-$end" -noNewline
@@ -802,7 +1093,7 @@ function find-masks([hashtable] $options) {
 			write-host "${indent+1}found mask $counter at bytes $stt-$end"
 		}
 
-		$mask = $options.content.substring($stt, $end - $stt + 1)
+		$mask = $options.content.toString($stt, $end - $stt + 1)
 
 		$useMatches = [regex]::matches($mask,
 			"<use[^>]*xlink:href\s*=\s*" +
@@ -835,7 +1126,7 @@ function find-masks([hashtable] $options) {
 			}
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
-		else { write-host "             - found $counter" }
+		else { write-host "               - found $counter" }
 	}
 
 	return @{
@@ -855,10 +1146,13 @@ function invert-image-colors(
 	[bool] $keepIntermediateFiles,
 	[hashtable] $masks
 ) {
-	${indent+1} = $options.indentPlus1
 	# TODO: also work with images that use files for their colors?
+	#       e.g. <image href="file.png"/>
+
+	${indent+1} = $options.indentPlus1
 	$counter = 0
-	$actualStt = $stt = $actualEnd = $end = $masks.firstImageIndex
+	$stt = $end = $masks.firstImageIndex
+
 	while ($stt -ne -1) {
 		# I looked into vectorizing the embedded raster image, but I couldn't
 		# find a single tool that does it well, even for a simple graph PNG.
@@ -867,7 +1161,6 @@ function invert-image-colors(
 		$stt = $options.content.indexOf("<image", $end)
 
 		if ($stt -eq -1) { break }
-		$actualStt = $stt
 		$counter++
 
 		if ($stt -in $masks.imageIndices) {
@@ -876,11 +1169,17 @@ function invert-image-colors(
 		}
 
 		if (!(gcm magick -type app -ea ignore)) {
+			# Ideally, this check would be at the start of the program,
+			# but it technically isn't always required.
 			throw "Required program ImageMagick ``magick`` was not found. embedded images are left un-inverted."
 		}
 
-		# 7 == "<image/".length. it can never be shorter than that.
-		$actualEnd = $end = $options.content.indexOf(">", $stt + 7)
+		# 7 == "<image/".length. the data can never be shorter than that.
+		$end = $options.content.indexOf(">", $stt + 7)
+
+		if ($end -eq -1) {
+			throw "unterminated ``<image>`` element"
+		}
 
 		if ($options.overwrite) {
 			write-host "`r${indent+1}found embedded image $counter at bytes $stt-$end" -noNewline
@@ -889,9 +1188,10 @@ function invert-image-colors(
 			write-host "${indent+1}found embedded image $counter at bytes $stt-$end"
 		}
 
-		$image = $options.content.substring($stt, $end - $stt + 1)
+		$image = $options.content.toString($stt, $end - $stt + 1)
 
 		# the "preamble" is just the stuff before the base64.
+		# TODO: is the `xlink:` part required?
 		$match = [regex]::match($image,
 			"(?<preamble>xlink:href\s*=\s*"    +
 			"(?<startquote>[`"'])data:image/)" +
@@ -913,45 +1213,52 @@ function invert-image-colors(
 
 		$imageType = ($groups | where name -eq type).value
 		$image = [Convert]::FromBase64String(($groups | where name -eq base64).value)
-		[IO.File]::WriteAllBytes("./tmp-$counter.$imageType", $image)
 
-		magick ./tmp-$counter.$imageType -negate ./tmp-$counter.$imageType
+		# TODO: if this script is being called from `invert-pdf.ps1`, this temporary
+		#       file might conflict with the one for other pages.
+		#       consider changing the naming convention to avoid this.
+		#       this is only an issue with `-keep $true`
+		$tmpfile = "./tmp-$counter.$imageType"
+		[IO.File]::WriteAllBytes($tmpfile, $image)
 
-		$image = [IO.File]::ReadAllBytes("./tmp-$counter.$imageType")
+		magick $tmpfile -negate $tmpfile
+
+		$image = [IO.File]::ReadAllBytes($tmpfile)
 		$image = [Convert]::ToBase64String($image)
 		if (!$keepIntermediateFiles) {
-			rm ./tmp-$counter.$imageType 2> $null
+			rm $tmpfile 2> $null
 		}
 
-		$options.content =
-			$options.content.substring(0,
-				$stt         +
-				$match.index +
-				($groups | where name -eq preamble).value.length
-			)                          + `
-			"$imageType;base64,$image" + `
-			$options.content.substring($stt + ($groups | where name -eq endquote).index)
+		$replStt = $stt + $match.index + ($groups | where name -eq preamble).value.length
+		$replEnd = $stt + ($groups | where name -eq endquote).index
+		$repl = "$imageType;base64,$image"
+
+		# TODO: change these StringBuilder methods from remove+insert to replace.
+		[void] $options.content.remove($replStt, $replEnd - $replStt)
+		[void] $options.content.insert($replStt, $repl)
 
 		# somehow, inverting the colors of a PNG can make the base64
 		# version of it signifcantly shorter, so if you keep $end the
 		# same, it you could completely miss the next <image> element
-		$end = $stt + 5
+
+		# this assumes that the xlink:href thing is very last in the image, which is not always the case.
+		# NOTE: 3 -eq "'/>".length
+		$end = $replStt + $repl.length + 3
 	}
 
 	if ($options.logging -ne "none") {
 		if ($options.verb) {
 			if ($options.overwrite) {
 				# overwrite the previous line
-				# $end gets set to $stt + 5 after every iteration, so $actualEnd
-				# is used so the value used in the string length can be stored.
 				write-host "`r`e[0K${indent+1}done. $counter found"
 			}
 			elseif ($counter -eq 0) { write-host "${indent+1}none found" }
 		}
-		else { write-host " - found $counter" }
+		else { write-host "   - found $counter" }
 	}
 }
 
+# TODO: make this take a [Text.StringBuilder] instead of [string] for the file content.
 <#
 .synopsis
 	It condenses and optimizes the paths descriptors for <path> tags.
@@ -965,8 +1272,8 @@ function invert-image-colors(
 			at this time, it also does the same thing with `v`.
 #>
 function optimize-paths($options) {
-	$pnum = "(?:\d*\.)?\d+(?:e[+\-]?\d+)?"
-	$nnum = "-" + "$pnum"
+	$pnum = "(?:\d*\.)?\d+(?:e[+\-]?\d+)?" # positive number
+	$nnum = "-" + "$pnum" # negative nummber
 	$number = "-?" + $pnum
 
 	# condense spaces
@@ -974,7 +1281,7 @@ function optimize-paths($options) {
 	$options.content =
 	$options.content -creplace "d\s*=\s*(['`"])(?<path>[^'`"]*)\1", {
 		$path = $_.groups | ? name -eq path | % value
-		$path = $path -replace "[\s,]+", " " -replace "(?<!\d)\s|\s(?!\d)", ""
+		$path = $path -creplace "[\s,]+", " " -creplace "(?<!\d)\s|\s(?!\d)", ""
 
 		return "d=`"$path`""
 	}
@@ -1022,26 +1329,7 @@ function optimize-paths($options) {
 <#
 .synopsis
 	invert the colors of a whole SVG.
-	assumes a moderate level of simplicity (no events, gradiants, etc.).
-		basically the input should be something that a PNG can render.
-	assumes the SVG is valid.
-.description
-	process:
-
-	1. set the background color
-		1a. find the dimensions of the whole SVG.
-		1b. look for `rect` elements where the shape matches one of these:
-			- svg width, svg height
-			- 100%, 100%
-			- svg width, 100%
-			- 100%, svg height
-		1c. add one to the start of the SVG if there isn't one.
-	2. invert the colors on every `stroke` attribute.
-	3. invert the colors on every `fill` attribute.
-	4. invert the colors on embedded images.
-	5. write the new contents to the outfile.
-		- or write to stdout if the outfile is "-".
-		- default outfile is the infile (in-place inversion).
+	assumes a moderate level of simplicity and assumes the SVG is valid (for the most part).
 #>
 function invert-svg(
 	[string] $infile,
@@ -1049,28 +1337,27 @@ function invert-svg(
 
 	[string] $indLvl = 0,
 	[string] $indTyp = "`t",
-	[ValidateSet("none", "basic", "overwrite", "verbose")]
-		[string] $logging = "basic",
+	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
+	[bool] $optimize = $false,
 	[bool] $keepIntermediateFiles,
 
 	# -SVGTool is for EPS and PDF
 	# -dpi is only for EPS and PDF
 	[string] $bgcolor = "#fff"
 ) {
-	# the `$actualXYZ` variables are used for overwriting previous lines.
-
 	# TODO: don't invert fill, stroke, or embedded image colors within <mask> tags.
-	# TODO: don't load the entire file content into memory at once, if possible
+	# TODO: don't load the entire file content into memory at once, if possible.
 	if ($infile -eq "") { throw "input file was not provided" }
+
+	$logging = $logging.toLower()
 
 	if (!(test-path -type leaf $infile)) {
 		throw "invalid path. either not a file or does not exist"
 	}
 
-	$verb = $logging -in "none", "basic" ? $false : $true
+	$verb = $logging -cin "overwrite", "verbose"
 
-	$overwrite = $logging -eq "overwrite"
-	$verb = [bool] $verb
+	$overwrite = $logging -ceq "overwrite"
 
 	$numRegex = "\d+(?:\.\d+)?|\.\d+"
 
@@ -1078,7 +1365,7 @@ function invert-svg(
 	${indent+1} = $indent + $indTyp*1
 	${indent+2} = $indent + $indTyp*2 # unused.
 
-	# required if there are embedded images.
+	# required if there are embedded images because .NET uses its own working directory
 	[IO.Directory]::SetCurrentDirectory((pwd))
 
 	$content = cat $infile -raw
@@ -1105,7 +1392,8 @@ function invert-svg(
 	}
 	# viewBox="min_x min_y width height"
 
-	# these can stay as strings, it is fine.
+	# these can stay as strings, it is fine. they will be coerced to the correct types.
+	# it can't be coerced because sometimes it is null and it is used in string operations.
 	$width  = $matches[3]
 	$height = $matches[4]
 
@@ -1122,65 +1410,78 @@ function invert-svg(
 	}
 
 	if ($width  -in $null, "") {
-		throw  "width is not specified or is in the wrong format"
+		throw "width is not specified or is in the wrong format"
 	}
 	if ($height -in $null, "") {
 		throw "height is not specified or is in the wrong format"
 	}
 
 	$options = @{
-		content     = $content
+		content     = [Text.StringBuilder] $content.trim()
+		# TODO: the next two properties are not actually required.
+		#       make sure they are used enough to warrant having them.
 		overwrite   = $overwrite
 		verb        = $verb
 		logging     = $logging
 		indentPlus1 = ${indent+1}
 	}
-	$content = $null
-
-	if ($verb) {
-		write-host "${indent}looking for background rectangle"
-	}
+	$content = $null # let the garbage collecter clear the string's memory.
 
 	if ($bgcolor -ne "none") {
+		# `-bgcolor none` won't add a non-existing backgound, but it also won't remove existing ones.
+		if ($verb) {
+			write-host "${indent}looking for background rectangle"
+		}
 		look-for-bg-rect $options `
 			-width       $width   `
 			-height      $height  `
 			-svgEndIndex $svgEndIndex
 	}
 
-	if ($logging -ne "none") {
+	if ($logging -cne "none") {
 		write-host "${indent}inverting stroke colors" -noNewline
-		if ($verb) { write-host "" } # add the newline.
+		if ($verb) { write-host "" }
 	}
 	invert-stroke-colors $options
 
-	if ($logging -ne "none") {
+	if ($logging -cne "none") {
 		write-host "${indent}inverting fill colors" -noNewline
-		if ($verb) { write-host "" } # add the newline.
+		if ($verb) { write-host "" }
 	}
 	invert-fill-colors $options
 
-	if ($logging -ne "none") {
+	if ($logging -cne "none") {
+		write-host "${indent}inverting inline CSS colors" -noNewline
+		if ($verb) { write-host "" }
+	}
+	invert-inline-css-colors $options
+
+	if ($logging -cne "none") {
 		write-host "${indent}finding masks" -noNewline
-		if ($verb) { write-host "" } # add the newline.
+		if ($verb) { write-host "" }
 	}
 	$masks = find-masks $options
 
-	if ($logging -ne "none") {
+	if ($logging -cne "none") {
 		write-host "${indent}inverting embedded images" -noNewline
-		if ($verb) { write-host "" } # add the newline.
+		if ($verb) { write-host "" }
 	}
-	invert-image-colors $options `
-		-masks   $masks          `
-		-keepInt $keepIntermediateFiles
+	invert-image-colors $options -masks $masks -keep $keepIntermediateFiles
 
-	if ($logging -ne "none") {
+	if ($logging -ceq "verbose") {
+		write-host "${indent}`e[1;34mDEBUG: file StringBuilder chunk count = $($options.content.chunkCount())"
+	}
+
+	$options.content = [string] $options.content
+
+	if ($logging -cne "none") {
 		write-host "${indent}done"
 	}
 
-	$options.content = $options.content.trim()
-
-	optimize-paths $options
+	if ($optimize) {
+		# if ($logging -cne "none") { write-host "optimizing SVG" }
+		optimize-paths $options
+	}
 
 	if ($outfile -eq "-") { echo $options.content }
 	else { $options.content > $outfile }
@@ -1205,26 +1506,28 @@ try {
 		}
 	}
 
-	invert-svg            `
-		-infile  $infile  `
-		-outfile $outfile `
-		-indLvl  $indLvl  `
-		-indTyp  $indTyp  `
-		-logging $logging `
-		-bgcolor $bgcolor `
-		-keepInt $keepIntermediateFiles
+	invert-svg              `
+		-infile   $infile   `
+		-outfile  $outfile  `
+		-indLvl   $indLvl   `
+		-indTyp   $indTyp   `
+		-logging  $logging  `
+		-bgcolor  $bgcolor  `
+		-optimize $optimize `
+		-keep     $keepIntermediateFiles
 
 	$naturalExit = $true
 }
 finally {
 	# in case of ^C.
 
-	if (-not $naturalExit -and $logging -ne "none") {
-		write-host "`n`e[1;31maborting svg inversion`e[0m"
-	}
-
 	if ($canSetCursorVisibility) {
 		[Console]::CursorVisible = $startingCursorVisibility
+	}
+
+	if (-not $naturalExit -and $logging -ne "none") {
+		write-host "`n`e[1;31maborting svg inversion"
+		exit 1
 	}
 }
 

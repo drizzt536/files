@@ -1,30 +1,63 @@
 <#
 .synopsis
+	# TODO: this is currently inaccurate. it recomputes the character map with the default values.
+
 	requires python if the font arguments are not the default.
 
 	uses character brightness levels, and maps character with
 	index `i` to the character with index `len - i - 1`. non-
 	printable characters are treated as a space.
 
-	The default is Consolas (normal) 228px. When using the
-	default font path, size, and index, it will use the
-	pre-computed value.
+	The default font is Consolas (normal) 288px. When using
+	the default font path, size, and index, it will use a
+	pre-computed brightness list.
 
-	Uses single-byte UTF-8 characters, or extended ASCII,
-	so character codes from 0 to 255.
-
+	Uses single-byte UTF-8 characters, or extended ASCII (character codes 0-255).
+.description
 	NOTE: inverting a text file twice may not give the same
 	file as the original, specifically if it has non-printable
 	characters in the file, or multiple-byte utf-8 values.
+.parameter infile
+	The input file to invert the brightness of. should only contain ASCII bytes.
+.parameter outfile
+	The output file. Leave blank for an in-place brightness inversion.
+	if $outfile == $infile, but a file "$infile.tmp" exists, it will be overwritten.
+.parameter indLvl
+	starting indentation level. 0 for no indentation.
+	Use a higher level if needed for if this is called as a subprogram.
+.parameter indTyp
+	type of indentation. probably either "`t" or "    ".
+	defaults to tab indentation.
+.parameter logging
+	specifies the logging level.
+	overwrite logging is not supported. it does the same thing as basic.
+	verbose logging is mostly the same as basic, except for it prints some extra stuff.
+.parameter keepIntermediateFiles
+	specifies whether or not intermediate files should be kept.
+.parameter help
+	prints help text and exit. equivalent to `get-help -full invert-pdf.ps1`.
+	`invert-pdf.ps1 --help` also works, but `--help` must be the first argument.
+	`invert-pdf.ps1 -?` is different, and equivalent to `get-help invert-pdf.ps1`
+.parameter fontPath
+	the font path given to Pillow ImageFont.truetype
+.parameter fontIndex
+	the subfont index for fonts that have more than one type.
+.parameter fontSize
+	font size in pixels.
+.parameter tabLength
+	the length in spaces to replace tabs with.
+	it does a direct text replacement with no tab stops.
 #>
+[CmdletBinding()]
 param (
-	[string] $infile,
+	[Parameter(Mandatory=$true)] [string] $infile,
 	[string] $outfile = $infile,
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
 	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
+	# -optimize  - EPS, PDF, SVG
 	[switch] $help,
 
 	# -SVGTool   - DOC/DOCX, EPS, PDF, and PPT/PPTX
@@ -41,39 +74,29 @@ param (
 if ($infile -eq "") { throw "input file was not provided." }
 
 if ($help.isPresent -or $infile -eq "--help") {
-	& $MyInvocation.MyCommand.Source -?
+	get-help -full $MyInvocation.MyCommand.Source
 	exit 0
 }
-
-if (!(gcm python -type app -ea ignore)) {
-	throw "Required program ``python`` was not found."
-}
-
+`
 if (!(test-path -type leaf $infile)) {
 	throw "input file does not exist"
 }
 
-if ($logging -eq "none") {
-	$quiet = $true
-	$verb = $false
-}
-else {
-	$quiet = $false
+$python   = (gcm python   -type app -ea ignore)?.name
+$python ??= (gcm python3  -type app -ea ignore)?.name
+$python ??= gcm python3.* -type app -ea ignore | % name | sort -descending | select -index 0
+$python ??= (gcm py       -type app -ea ignore)?.name
+# the error for python not being found happens later because it isn't needed if it is cached.
 
-	if ($logging -eq "basic") {
-		# $verb can only be $true or $false for this script.
-		$verb = $true
-	}
-}
-
-$indent = $indTyp * $indLvl
+$indent     = $indTyp * $indLvl
 ${indent+1} = $indent + $indTyp
 
 # these also work if the path is already rooted.
 $infile  = [IO.Path]::Combine((pwd), $infile)
 $outfile = [IO.Path]::Combine((pwd), $outfile)
 
-# this next line is required so PowerShell and Python both use the same encoding
+# this next operation is required so PowerShell and Python both use the same encoding
+$oldEncoding = [Console]::OutputEncoding
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 # TODO: make this use numpy, but correctly. I did it before, but it broke everything.
@@ -146,42 +169,49 @@ ${charmap - consola.ttf[0] 3000}  = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJlt}{xY[F
 ${charmap - consola.ttf[0] 10000} = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJlt}{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
 
 if ("$fontPath[$fontIndex]" -eq "consola.ttf[0]" -and $fontSize -ge 1493) {
-	# avoid recomputing it, since it takes about a second.
+	# avoid recomputing it since the character map is known
 	# the character map converges after about 1493px. (I've only checked up to 10,000px)
 
-	if (!$quiet) { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
+	if ($logging -ne "none") { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
 	$charmap = iex "`${charmap - consola.ttf[0] 1493}"
+	# TODO: figure out why this ^^^^ is using `iex` and not just using the variable directly.
+}
+elseif ("$fontPath[$fontIndex]" -eq "consola.ttf[0]" -and $fontSize -in 100, 1000, 1250, 1375, 1438, 1469, 1485, 1489) {
+	if ($logging -ne "none") { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
+	$charmap = iex "`${charmap - consola.ttf[0] $fontSize}"
 }
 else {
-	if (!(gcm -type app python)) {
-		throw "Required application ``python`` was not found"
+	# the character map isn't known, so it must be recomputed.
+
+	if ($python -eq $null) {
+		throw "Required program (Python 3) ``python / python3 / py / python3.*`` was not found."
 	}
 
-	if (!$quiet) { write-host "${indent}computing character map for font ``$fontPath[$fontIndex]`` (${fontSize}px) (step 1/2)" }
+	if ($logging -ne "none") { write-host "${indent}computing character map for font ``$fontPath[$fontIndex]`` (${fontSize}px) (step 1/2)" }
 
 	$charmapScript = $charmapScript        `
-		-creplace "__VERBOSE__", "$verb"    `
+		-creplace "__VERBOSE__", "$($logging -eq "verbose")" `
 		-creplace "__FONT_PATH__", $fontPath `
 		-creplace "__FONT_SIZE__", $fontSize  `
 		-creplace "__FONT_INDEX__", $fontIndex `
-		-creplace "__INDENT__", $(${indent+1} -replace "`t", "\t")
+		-creplace "__INDENT__", $(${indent+1} -creplace "`t", "\t")
 
-	if ($verb) {
-		python -X utf8 -c $charmapScript | tee -var charmap
+	if ($logging -eq "verbose") {
+		& $python -X utf8 -c $charmapScript | tee -var charmap
 
 		# get rid of the `calculating ... for index ...` messages.
 		$charmap = $charmap[-1]
 	}
 	else {
-		$charmap = python -X utf8 -c $charmapScript
+		$charmap = & $python -X utf8 -c $charmapScript
 	}
 }
 
-if (!$quiet) { write-host "${indent}inverting file using character map (step 2/2)" }
+if ($logging -ne "none") { write-host "${indent}inverting file using character map (step 2/2)" }
 if ($infile -eq $outfile) {
-	move $oldinfile = $infile
+	$oldinfile = $infile
 	$infile = "$infile.tmp"
-	move $oldinfile $infile
+	move-item -force $oldinfile $infile
 }
 
 try {
@@ -204,6 +234,8 @@ try {
 		if ($i -eq -1) { $i = 0 } # $charmap.indexOf(" ").
 
 		if ($byte -eq 9) { # \t
+			# TODO: a direct "\t" for "    " replacement isn't accurate.
+			#      it should really be doing tab stops.
 			$newbyte = [byte] $charmap[-1]
 
 			for ($i = 0; $i -lt $tabLength; $i++) {
@@ -215,8 +247,9 @@ try {
 				[byte] $byte : # \n and \r
 				[byte] $charmap[$charmap.length - $i - 1]
 
-			if ($verb) { write-host "${indent+1}inverting byte $index/$total value from $byte to $newbyte" }
+			if ($logging -eq "verbose") { write-host "${indent+1}inverting byte $index/$total value from $byte to $newbyte" }
 		}
+
 		$ofs.writebyte($newbyte)
 		$index++
 	}
@@ -229,8 +262,11 @@ catch {
 }
 
 if (!$keepIntermediateFiles -and $oldinfile -ne $null) {
-	rm $infile # the .tmp one.
+	remove-item -force $infile 2> $null # the .tmp one.
 }
+
+[Console]::OutputEncoding = $oldEncoding
+exit 0
 
 <#
 ${invert-txt.ps1} = "$env:Appdata/Sublime Text/Packages/Matlab/invertlib/invert-txt.ps1"
