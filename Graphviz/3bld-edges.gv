@@ -1,0 +1,157 @@
+// sfdp -O -Tpdf 3bld-edges.gv
+
+// the node names are based on the generic 3BLD sticker lettering.
+// the node color is based on the face it is in, and the font color is based on the slice it is in.
+// L slice is red (1), M slice is blue (2), R slice is green (3)
+
+// the edge color is based on the type of relationship the stickers have.
+	// same edge compliment: red (1)
+	// alphabetical next sticker: blue (2)
+	// M2 compliment: green (3)
+	// U2 compliment: purple (4)
+	// R2 compliment: orange (5)
+	// next face first color: yellow (6). only applies to the first sticker on a given face.
+
+graph BldEdgeGraph {
+	overlap = prism;
+	nodesep = 0.25;
+	ranksep = 0;
+	splines = ortho;
+	rankdir = LR;
+	bgcolor = black;
+	margin = 0;
+
+	edge [colorscheme = set16];
+	node [colorscheme = set16];
+	// 1: red
+	// 2: blue
+	// 3: green
+	// 4: purple
+	// 5: orange
+	// 6: yellow
+
+	node [color=white]; // white face
+	A [fontcolor=2];
+	B [fontcolor=3];
+	C [fontcolor=2];
+	D [fontcolor=1];
+
+	node [color=5]; // orange face
+	E [fontcolor=1];
+	F [fontcolor=1];
+	G [fontcolor=1];
+	H [fontcolor=1];
+
+	node [color=3]; // green face
+	I [fontcolor=2];
+	J [fontcolor=3];
+	K [fontcolor=2];
+	L [fontcolor=1];
+
+	node [color=1]; // red face
+	M [fontcolor=3];
+	N [fontcolor=3];
+	O [fontcolor=3];
+	P [fontcolor=3];
+
+	node [color=2]; // blue face
+	Q [fontcolor=2];
+	R [fontcolor=1];
+	S [fontcolor=2];
+	T [fontcolor=3];
+
+	node [color=6]; // yellow face
+	U [fontcolor=2];
+	V [fontcolor=3];
+	W [fontcolor=2];
+	X [fontcolor=1];
+
+	// same edge compliments. (1, red)
+	{
+		edge [color=1];
+		A -- Q;
+		B -- M;
+		C -- I;
+		D -- E;
+		F -- L;
+		G -- X;
+		H -- R;
+		J -- P;
+		K -- U;
+		N -- T;
+		O -- V;
+		S -- W;
+	}
+
+	// alphabetical order (next/prev sticker). (2, blue)
+	{
+		edge [color=2];
+		A -- B -- C -- D --
+		E -- F -- G -- H --
+		I -- J -- K -- L --
+		M -- N -- O -- P --
+		Q -- R -- S -- T --
+		U -- V -- W -- X -- A;
+	}
+
+	// M2 compliments. (3, green)
+	{
+		edge [color=3];
+		A -- U;
+		B -- X;
+		C -- W;
+		D -- V;
+
+		E -- O;
+		F -- N;
+		G -- M;
+		H -- P;
+
+		I -- S;
+		J -- R;
+		K -- Q;
+		L -- T;
+	}
+
+	// U2 (across) compliments. (4, purple)
+	{
+		edge [color=4];
+		A -- C;
+		B -- D;
+		E -- G;
+		F -- H;
+		I -- K;
+		J -- L;
+		M -- O;
+		N -- P;
+		Q -- S;
+		R -- T;
+		U -- W;
+		V -- X;
+	}
+
+	// R2 (through) compliments. (5, orange)
+	{
+		edge [color=5];
+		A -- W;
+		B -- V;
+		C -- U;
+		D -- X;
+
+		E -- M;
+		F -- P;
+		G -- O;
+		H -- N;
+
+		I -- Q;
+		J -- T;
+		K -- S;
+		L -- R;
+	}
+
+	// next face first color (6, yellow)
+	{
+		edge [color=6];
+		A -- E -- I -- M -- Q -- U -- A;
+	}
+}
