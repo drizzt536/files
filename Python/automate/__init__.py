@@ -1,3 +1,12 @@
+"""
+uses pynput: https://pypi.org/project/pynput/
+file location:
+C:/Python[version]/Lib/site-packages/automate/__init__.py
+
+basically provides a functional/procedural? wrapper around pynput.
+pynput uses classes and that is icky
+"""
+
 from pynput.keyboard import (
 	Key,
 	Controller as KeyboardController,
@@ -12,15 +21,6 @@ from pynput.mouse import (
 	Listener as MouseListener,
 	Events as MouseEvents
 )
-"""
-uses pynput: https://pypi.org/project/pynput/
-file location:
-C:/Python[version]/Lib/site-packages/automate/__init__.py
-
-basically provides a functional/procedural? wrapper around pynput.
-pynput uses classes and that is icky
-"""
-
 
 
 # variables
