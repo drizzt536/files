@@ -3,22 +3,24 @@
 --> key : value  ==>  game-name : price
 --> "TODO: early access" is a note for me to check if the price changes after early access ends
 
-var duplicate = "duplicate"
+{ <!-- start block
+let duplicate = "duplicate"
+let free      = 0
 
 var OwnedApplications = {
 	"20 Minutes Till Dawn": 4.99
 	, "20XX": 14.99
-	, "3 out of 10, EP 1: \"Welcome To Shovelworks\"": 0
+	, "3 out of 10, EP 1: \"Welcome To Shovelworks\"": free
 	, "3 out of 10, EP 1": duplicate
-	, "3 out of 10, EP 2: \"Foundation 101\"": 0
+	, "3 out of 10, EP 2: \"Foundation 101\"": free
 	, "3 out of 10, EP 2": duplicate
-	, "3 out of 10, EP 3: \"Pivot Like A Champion\"": 0
+	, "3 out of 10, EP 3: \"Pivot Like A Champion\"": free
 	, "3 out of 10, EP 3": duplicate
-	, "3 out of 10, EP 4: \"Thank You For Being An Asset\"": 0
+	, "3 out of 10, EP 4: \"Thank You For Being An Asset\"": free
 	, "3 out of 10, EP 4": duplicate
-	, "3 out of 10, EP 5: \"The Rig Is Up!\"": 0
+	, "3 out of 10, EP 5: \"The Rig Is Up!\"": free
 	, "3 out of 10, EP 5": duplicate
-	, "3 out of 10: Season Two": 0
+	, "3 out of 10: Season Two": free
 	, "3 out of 10 Season Two": duplicate
 	, "A Game Of Thrones: The Board Game Digital Edition": 19.99
 	, "A Game Of Thrones": duplicate
@@ -29,37 +31,42 @@ var OwnedApplications = {
 	, "ABZU": 19.99
 	, "Adios": 17.99
 	, "AER Memories of Old": 14.99
-	, "Against All Odds": 0
-	, "Against The Storm Royal Woodlands Demo": 0
+	, "Against All Odds": free
+	, "Against The Storm Royal Woodlands Demo": free
 	, "Alan Wake's American Nightmare": 8.99
 	, "Alba - A Wildlife Adventure": 16.99
 	, "Alba": duplicate
-	, "Alder Choke DEMO": 0
+	, "Albion Online": free
+	, "Albion Online Free Welcome Gift": free
+	, "Alder Choke DEMO": free
 	, "Amnesia: A Machine for Pigs": 19.99
 	, "Among The Sleep - Enhanced Edition": 16.99
 	, "Among Us": 4.99
 	, "Ancient Enemy": 14.99
-	, "Animation Throwdown: The Quest For Cards": 0
+	, "Animation Throwdown: The Quest For Cards": free
 	, "Anodyne 2: Return To Dust": 19.99
 	, "APE OUT": 14.99
-	, "Apex Legends™": 0
+	, "Apex Legends™": free
 	, "Apex Legends": duplicate
-	, "Apex Legends™: Conduit Free Unlock Bundle": 0
+	, "Apex Legends™: Conduit Free Unlock Bundle": free
 	, "Apex Legends: Conduit Free Unlock Bundle": duplicate
+	, "Apex Legends™: Loba Free Unlock Bundle": free
+	, "Apex Legends: Loba Free Unlock Bundle": duplicate
 	, "Arcade Paradise": 19.99
-	, "ARK Editor": 0
+	, "ARK Editor": free
 	, "ARK: Survival Evolved": 29.99 // 1 add-on
-	, "Armored Warfare": 0
+	, "Armored Warfare": free
 	, "Art of Rally": 24.99
 	, "Assassins Creed Syndicate": 29.99
-	, "Astra Nova": 0
-	, "Astro Wars": 0
-	, "Atlas Mod Kit": 0
-	, "Auto Chess": 0
-	, "Auto Chess Experimental": 0
+	, "Astra Nova": free
+	, "Astro Wars": free
+	, "Atlas Mod Kit": free
+	, "Auto Chess": free
+	, "Auto Chess Experimental": free
 	, "Automachef": 14.99
 	, "Aven Colony": 29.99
 	, "Aztez": 19.99
+	, "Backpack Hero": 19.99
 	, "Bad North: Jotunn Edition": 14.99
 	, "Bad North": duplicate
 	, "Barony": 14.99
@@ -69,14 +76,15 @@ var OwnedApplications = {
 	, "Batman Arkham City": duplicate
 	, "Batman™ Arkham Knight": 19.99
 	, "Batman Arkham Knight": duplicate
-	, "Battalion Dev Kit": 0
-	, "Battle Breakers": 0
+	, "Battalion Dev Kit": free
+	, "Battle Breakers": free
 	, "Bear and Breakfast": 19.99
+	, "Behind the Frame: The Finest Scenery": 12.99
 	, "Beyond Blue": 19.99
-	, "Beyond CAD": 0
-	, "Beyond Two Souls [Demo]": 0
+	, "Beyond CAD": free
+	, "Beyond Two Souls [Demo]": free
 	, "Beyond Two Souls Demo": duplicate
-	, "Beyond Typicals": 0
+	, "Beyond Typicals": free
 	, "BioShock 2 Remastered": 19.99
 	, "BioShock Infinite: Complete Edition": 54.97
 	, "BioShock Remastered": 19.99
@@ -86,26 +94,27 @@ var OwnedApplications = {
 	, "Black Widow: Recharged": 9.99
 	, "Black Widow": duplicate
 	, "Blair Witch": 29.99
-	, "Blankos Block Party": 0
-	, "BLOCKLORDS": 0
-	, "Blood of Steel": 0
+	, "Blankos Block Party": free
+	, "BLOCKLORDS": free
+	, "Blood of Steel": free
 	, "Bloons TD 6": 13.99
 	, "Bloons TD6": duplicate
-	, "Book of Yog Idle RPG": 0
+	, "Book of Yog Idle RPG": free
 	, "Book of Yog": duplicate
 	, "Borderlands 2": 19.99
 	, "Borderlands 3": 59.99
 	, "Borderlands: The Pre-Sequel": 39.99
 	, "Borderlands": duplicate
-	, "Brave": 0
-	, "Brawlhalla": 0
+	, "Botanicula": 14.99
+	, "Brave": free
+	, "Brawlhalla": free
 	, "Breathedge": 24.99
 	, "Bridge Constructor: The Walking Dead": 9.99
 	, "Bridge Constructor": duplicate
 	, "Brotato": 4.99
 	, "Brothers - A Tale Of Two Sons": 14.99
 	, "Brothers": duplicate
-	, "Bus Simulator 21 - Modding Kit": 0
+	, "Bus Simulator 21 - Modding Kit": free
 	, "Bus Simulator 21 Modding Kit": duplicate
 	, "Bus Simulator 21 Next Stop": 34.99
 	, "Bus Simulator 21": duplicate
@@ -113,39 +122,42 @@ var OwnedApplications = {
 	, "Car Mechanic Simulator 2018": 19.99
 	, "Carcassonne": 9.99
 	, "Cat Quest": 12.99
+	, "Cat Quest II": 14.99
+	, "Cat Quest 2": duplicate
 	, "Cave Story+": 14.99
 	, "Cave Story Plus": duplicate
 	, "Celeste": 19.99
 	, "Centipede Recharged": 9.99
-	, "Century: Age of Ashes": 0
+	, "Century: Age of Ashes": free
 	, "Century": duplicate
 	, "Chess Ultra": 12.99
-	, "Chimeraland": 0
+	, "Chimeraland": free
 	, "Chivalry 2": 39.99
-	, "Chorus Demo": 0
-	, "Chronoshot": 0
+	, "Chorus Demo": free
+	, "Chronoshot": free
+	, "CHUCHEL": 9.99
 	, "Circus Electrique": 19.99
 	, "Cities: Skylines": 29.99
 	, "City of Gangsters": 29.99
 	, "Close to the Sun": 19.99
-	, "Conan Exiles Dev Kit": 0
-	, "Conan Exiles Mod Dev Kit Test Live": 0
+	, "Conan Exiles Dev Kit": free
+	, "Conan Exiles Mod Dev Kit Test Live": free
 	, "Control": 29.99
 	, "Cook, Serve, Delicious! 3?!": 19.99
-	, "Core": 0
+	, "Core": free
 	, "Costume Quest": 9.99
 	, "Costume Quest 2": 14.99
 	, "Crashlands": 14.99
-	, "Crayta": 0
+	, "Crayta": free
 	, "Creature in the Well": 14.99
 	, "Cris Tales": 34.99
-	, "Crosshair V2": 0
-	, "CRSED: F.O.A.D.": 0
+	, "Crosshair V2": free
+	, "CRSED: F.O.A.D.": free
 	, "CRSED": duplicate
 	, "Crying Suns": 24.99
-	, "Crying Suns Demo": 0
+	, "Crying Suns Demo": free
 	, "Cursed to Golf": 19.99
-	, "CurseForge": 0
+	, "CurseForge": free
 	, "CYGNI: All Guns Blazing": 29.99
 	, "Dandara: Trials of Fear Edition": 14.99
 	, "Dandara": duplicate
@@ -157,34 +169,39 @@ var OwnedApplications = {
 	, "Darkwood": 13.99
 	, "DARQ: Complete Edition": 19.99
 	, "DARQ": duplicate
-	, "Days of War Editor": 0
+	, "Days of War Editor": free
 	, "Dead by Daylight": 19.99
+	, "Dead Island 2": 49.99
+	, "Deadtime Defenders": 9.99
 	, "DEATH STRANDING": 29.99
+	, "DEATHLOOP": 59.99
+	, "Decimated - Early Access": free
+	, "Deliver At All Costs": 29.99
 	, "Deliver Us Mars": 29.99
-	, "Delores: A Thimbleweed Park mini-adventure": 0
+	, "Delores: A Thimbleweed Park mini-adventure": free
 	, "Delores": duplicate
 	, "DEMON'S TILT": 19.99
 	, "Destiny 2: Bungie 30th Anniversary Pack": 24.99
 	, "Destiny 2: Legacy Collection (2023)": 59.99
-	, "Destiny 2": 0
-	, "Destroy All Humans! - Clone Carnage": 0
-	, "Detroit Become Human [Demo]": 0
+	, "Destiny 2": free
+	, "Destroy All Humans! - Clone Carnage": free
+	, "Detroit Become Human [Demo]": free
 	, "Detroit Become Human Demo": duplicate
-	, "Diabolical": 0
-	, "Diesel Brothers: Truck Building Simulator Editor": 0
+	, "Diabolical": free
+	, "Diesel Brothers: Truck Building Simulator Editor": free
 	, "Diesel Brothers": duplicate
-	, "Discord": 0
+	, "Discord": free
 	, "Dishonored - Definitive Edition": 19.99
 	, "Dishonored®: Death of the Outsider™": 29.99
 	, "Dishonored: Death of the Outsider": duplicate
 	, "Dishonored": duplicate
-	, "Disney Speedstorm": 0
-	, "Disney Speedstorm Monochromatic Pack": 0
-	, "Divine Knockout (DKO)": 0
+	, "Disney Speedstorm": free
+	, "Disney Speedstorm Monochromatic Pack": free
+	, "Divine Knockout (DKO)": free
 	, "Divine Knockout": duplicate
-	, "DLC The Game - Track Editor": 0
+	, "DLC The Game - Track Editor": free
 	, "DNF Duel": 49.99
-	, "Dogfight - Demo": 0
+	, "Dogfight - Demo": free
 	, "Dogfight Demo": duplicate
 	, "DOOM 64": 4.99
 	, "Doors: Paradox": 14.99
@@ -193,35 +210,39 @@ var OwnedApplications = {
 	, "Dragon Age: Inquisition - Game of the Year Edition": duplicate
 	, "Dragon Age: Inquisition": duplicate
 	, "Dragon Age Inquisition": duplicate
-	, "Dragonheir: Silent Gods": 0
+	, "Dragonheir: Silent Gods": free
 	, "Drawful 2": 9.99
+	, "DREDGE": 24.99
 	, "Dungeons 3": 29.99
 	, "Duskers": 19.99
 	, "Dying Light Enhanced Edition": 29.99
 	, "Dying Light": duplicate
 	, "EARTHLOCK": 29.99
 	, "Elite Dangerous": 29.99
+	, "Elite Strike Team": free
 	, "Empyrion - Galactic Survival": 19.99
 	, "Enter the Gungeon": 14.99
-	, "Epic Cheerleader Pack": 0
+	, "Epic Cheerleader Pack": free
 	, "Epistory - Typing Chronicles": 14.99
 	, "Escape Academy": 19.99
 	, "Europa Universalis IV": 39.99
 	, "Europa Universalis 4": duplicate
-	, "EVE Online": 0
-	, "EVE Online - Superluminal Pack": 0
+	, "EVE Online": free
+	, "EVE Online - Superluminal Pack": free
 	, "EVE Online Superluminal Pack": duplicate
 	, "Evoland Legendary Edition": 19.99
 	, "Evoland": duplicate
 	, "Eximius: Seize the Frontline": 29.99
 	, "Eximius": duplicate
-	, "Eyes in the Dark Demo": 0
+	, "Eyes in the Dark Demo": free
+	, "F1® Manager 2024": 34.99
+	, "F1 Manager 2024": duplicate
 	, "Faeria": 19.99
-	, "Fall Guys": 0
+	, "Fall Guys": free
 	, "Fall Guys Giddy Gift": duplicate
 	, "Fall Guys Snowberry": duplicate
-	, "Fall Guys - Giddy Gift": 0
-	, "Fall Guys - Snowberry": 0
+	, "Fall Guys - Giddy Gift": free
+	, "Fall Guys - Snowberry": free
 	, "Fallout® Classic Collection": 19.99 // fallout 1, 2, tactics
 	, "Fallout Classic Collection": duplicate
 	, "Fallout: A Post Nuclear Role Playing Game": duplicate
@@ -236,34 +257,34 @@ var OwnedApplications = {
 	, "Fallout: New Vegas - Ultimate Edition": 19.99
 	, "Fallout: New Vegas": duplicate
 	, "Fallout New Vegas": duplicate
-	, "Fangs": 0 // TODO: early access
-	, "Far Cry 6 - Free Trial": 0
-	, "Farlight 84": 0
+	, "Fangs": free // TODO: early access
+	, "Far Cry 6 - Free Trial": free
+	, "Farlight 84": free
 	, "Farming Simulator 19": 19.99
 	, "Farming Simulator 22": 29.99
-	, "Fault: Elder Orb": 0
+	, "Fault: Elder Orb": free
 	, "FTL: Faster Than Light": 9.99
 	, "Faster Than Light": duplicate
 	, "FTL": duplicate
 	, "Fez": 9.99
 	, "Figment": 19.99
 	, "Firestone Free Offer": 99.99
-	, "Firestone Online Idle RPG": 0
+	, "Firestone Online Idle RPG": free
 	, "First Class Trouble": 14.99
 	, "F.I.S.T.: Forged In Shadow Torch": 29.99
 	, "FIST: Forged In Shadow Torch": duplicate
 	, "F.I.S.T.": duplicate
 	, "FIST": duplicate
-	, "Flat Heroes Demo": 0
+	, "Flat Heroes Demo": free
 	, "Floppy Knights": 19.99
 	, "Football Manager 2020": 54.99
-	, "Football Manager 2022 Demo": 0
-	, "Football Manager 2023 Demo": 0
-	, "Football Manager 2024 Demo": 0
+	, "Football Manager 2022 Demo": free
+	, "Football Manager 2023 Demo": free
+	, "Football Manager 2024 Demo": free
 	, "For The King": 19.99
-	, "Fortnite": 0 // ~$10 purchases. some battle passes. 700 vbucks
-	, "Fortnite Battle Royale": 0
-	, "Fortnite Festival": 0
+	, "Fortnite": free // ~$50 purchases. some battle passes. 5700 vbucks
+	, "Fortnite Battle Royale": free
+	, "Fortnite Festival": free
 	, "Fort Triumph": 19.99
 	, "Frostpunk": 29.99
 	, "Galactic Civilizations III": 24.99
@@ -272,72 +293,78 @@ var OwnedApplications = {
 	, "Galactic Civilizations 3 [Test branch]": duplicate
 	, "Gamedec - Definitive Edition": 29.99
 	, "Gamedec": duplicate
+	, "Garden Story": 19.99
 	, "Geneforge 1: Mutagen": 19.95
 	, "Geneforge 1": duplicate
-	, "Genshin Impact": 0
+	, "Genshin Impact": free
 	, "Genshin": duplicate
-	, "Ghost Recon Breakpoint Demo": 0
+	, "Ghost Recon Breakpoint Demo": free
 	, "Ghostbusters The Video Game Remastered": 24.99
 	, "Ghostbusters The Video Game": duplicate
 	, "Ghostbusters Remastered": duplicate
 	, "Ghostbusters": duplicate
 	, "Ghostrunner": 29.99
-	, "Ghostwire: Tokyo - Prelude": 0
+	, "Ghostwire: Tokyo - Prelude": free
 	, "Ghostwire: Tokyo": 59.99
 	, "GigaBash": 24.99
+	, "Gigapocalypse": 9.99
 	, "Gloomhaven": 34.99
 	, "God's Trigger": 14.99
 	, "Godfall": 19.99 // not ultimate. Ultimate is $34.99 and "upgrade to ultimate" is $14.99. math. - 1¢
 	, "Gods Will Fall": 14.99
-	, "GOG GALAXY": 0
+	, "GOG GALAXY": free
 	, "Golden Light": 19.99
 	, "Gone Home": 14.99
 	, "GoNNer": 9.99
-	, "Good Company Demo": 0
-	, "Griftlands Demo": 0
+	, "Good Company Demo": free
+	, "Griftlands Demo": free
 	, "Guacamelee! 2": 19.99
 	, "Guacamelee! Super Turbo Championship Edition": 14.99
 	, "Guacamelee 2": duplicate
 	, "Guacamelee Super Turbo Championship Edition": duplicate
 	, "Guild of Dungeoneering": 11.99 // doesn't exist anywhere. not ultimate, but ultimate is $19.99
 	, "Halcyon 6 Starbase Commander": 14.99
-	, "Heavy Rain [Demo]": 0
+	, "Happy Game": 13.13
+	, "Heavy Rain [Demo]": free
 	, "Heavy Rain Demo": duplicate
-	, "Helium Rain Mod Kit": 0
+	, "Helium Rain Mod Kit": free
 	, "Hell is Others": 14.99
 	, "Hell is other demons": 9.99
-	, "Hello Mod Kit": 0
+	, "Hell Let Loose": 49.99
+	, "Hello Mod Kit": free
 	, "Hello Neighbor Mod Kit": duplicate
-	, "Hello Neighbor Hide and Seek Demo": 0
-	, "Heroes & Generals WWII": 0
+	, "Hello Neighbor Hide and Seek Demo": free
+	, "Heroes & Generals WWII": free
 	, "Heroes & Generals WW2": duplicate
 	, "Heroes and Generals WWII": duplicate
 	, "Heroes and Generals WW2": duplicate
 	, "HITMAN - Game of the Year Edition": 59.99
-	, "HITMAN World of Assassination - Free Starter Pack": 0
+	, "HITMAN World of Assassination - Free Starter Pack": free
 	, "HITMAN World of Assassination Demo": duplicate
 	, "HITMAN": duplicate
 	, "Hob": 19.99
-	, "Homeworld 3 - Mod Tools & Editor": 0
+	, "Homeworld 3 - Mod Tools & Editor": free
 	, "Homeworld Remastered Collection": 34.99
-	, "Honkai: Star Rail": 0
-	, "Honkai Impact 3rd": 0
+	, "Honkai: Star Rail": free
+	, "Honkai Impact 3rd": free
 	, "Hood: Outlaws & Legends": 19.99
 	, "Hood: Outlaws and Legends": duplicate
 	, "Hood": duplicate
 	, "Horace": 14.99
 	, "Horizon Chase Turbo": 19.99
 	, "Hue": 14.99
-	, "Humble": 0
+	, "Humble": free
+	, "HUMANKIND™": 49.99
+	, "HUMANKIND": duplicate
 	, "Hundred Days - Winemaking Simulator": 24.99
 	, "Hundred Days": duplicate
-	, "Hundred Days - Winemaking Simulator DEMO": 0
+	, "Hundred Days - Winemaking Simulator DEMO": free
 	, "Hyper Light Drifter": 19.99
-	, "Idle Champions of the Forgotten Realms": 0
-	, "Idle Champions of the Forgotten Realms Dark Justiciar Shadowheart Party Pack": 0
-	, "iHeart: Radio, Music, Podcasts": 0
+	, "Idle Champions of the Forgotten Realms": free
+	, "Idle Champions of the Forgotten Realms Dark Justiciar Shadowheart Party Pack": free
+	, "iHeart: Radio, Music, Podcasts": free
 	, "iHeart": duplicate
-	, "Illuvium Zero": 0
+	, "Illuvium Zero": free
 	, "INDUSTRIA": 19.99
 	, "Infinifactory": 24.99
 	, "Insurgency: Sandstorm": 29.99
@@ -348,34 +375,37 @@ var OwnedApplications = {
 	, "Iratus": duplicate
 	, "IronCast": 14.99
 	, "It Takes Two": 39.99 // owned and not owned simultaneously
-	, "itch.io": 0
+	, "itch.io": free
 	, "Jitsu Squad": 19.99
 	, "Jotun Valhalla Edition": 14.99
 	, "Jotun": duplicate
 	, "Jurassic World Evolution": 44.99
+	, "Jurassic World Evolution 2": 59.99
 	, "Just Cause 4": 29.99 // used from just cause 4 reloaded but minus 10
 	, "Just Die Already": 14.99
 	, "Kao the Kangaroo": 29.99
-	, "KARDS - The WWII Card Game": 0
+	, "KARDS - The WWII Card Game": free
 	, "KARDS - The WW2 Card Game": duplicate
 	, "KARDS": duplicate
-	, "Karos": 0
+	, "Karos": free
 	, "Kerbal Space Program": 39.99
-	, "KID A MNESIA EXHIBITION": 0
+	, "KID A MNESIA EXHIBITION": free
+	, "KILL KNIGHT": 14.99
 	, "Killing Floor 2": 29.99
-	, "KillingFloor2Beta": 0
+	, "KillingFloor2Beta": free
 	, "Killing Floor 2 Beta": duplicate
+	, "Kingdom Come: Deliverance": 29.99
 	, "Kingdom New Lands": 14.99
-	, "Knockout City™": 0
+	, "Knockout City™": free
 	, "Knockout City": duplicate
-	, "Last Oasis ModKit": 0
-	, "Last Oasis Mod Kit": 0 // duplicagte
+	, "Last Oasis ModKit": free
+	, "Last Oasis Mod Kit": duplicate
 	, "Lawn Mowing Simulator": 19.99
 	, "Layers of Fear 2": 19.99
-	, "League of Legends": 0
+	, "League of Legends": free
 	, "LOL": duplicate
-	, "LEAP Mod Editor": 0
-	, "Legends of Runeterra": 0
+	, "LEAP Mod Editor": free
+	, "Legends of Runeterra": free
 	, "LEGO® Batman™ 2 DC Super Heroes": 19.99
 	, "LEGO Batman 2": duplicate
 	, "LEGO® Batman™ 3 Beyond Edition": 19.99
@@ -385,7 +415,7 @@ var OwnedApplications = {
 	, "LEGO® Builder's Journey": 19.99
 	, "LEGO Builder's Journey": duplicate
 	, "LEGO Builder's Journey": duplicate
-	, "LEGO® Fortnite®": 0
+	, "LEGO® Fortnite®": free
 	, "LEGO® Fortnite": duplicate
 	, "LEGO Fortnite®": duplicate
 	, "LEGO Fortnite": duplicate
@@ -393,99 +423,106 @@ var OwnedApplications = {
 	, "LEGO Star Wars: The Skywalker Saga": duplicate
 	, "Lifeless Planet: Premier Edition": 19.99
 	, "Lifeless Planet": duplicate
-	, "LISA: The Definitive Edition": 0
+	, "LISA: The Definitive Edition": free
 	, "LISA": duplicate
 	, "Loop Hero": 14.99
 	, "LOVE": 2.99
-	, "Magic The Gathering Arena": 0
+	, "Mages of Mystralia": 19.99
+	, "Magic The Gathering Arena": free
 	, "Magic: Legends": 0 // early access, canceled
 	, "Maid of Sker": 24.99
 	, "Maneater": 39.99
-	, "Mars 2030 Editor": 0
-	, "Mars Battle": 0
+	, "Mars 2030 Editor": free
+	, "Mars Battle": free
 	, "Marvel's Guardians of the Galaxy": 59.99
 	, "Marvel's Midnight Suns": 59.99
-	, "MechWarrior 5 Editor": 0
+	, "Marvel Rivals": free
+	, "MechWarrior 5 Editor": free
 	, "Melvor Idle": 9.99
-	, "Metalstorm": 0
+	, "Metalstorm": free
 	, "Midnight Ghost Hunt": 19.99
-	, "Might & Magic: Chess Royale": 0
+	, "Might & Magic: Chess Royale": free
 	, "Might and Magic: Chess Royale": duplicate
 	, "Might & Magic": duplicate
 	, "Might and Magic": duplicate
 	, "Mighty Fight Federation": 29.99
 	, "Minit": 9.99
-	, "MONOPOLY® MADNESS DEMO": 0
+	, "MONOPOLY® MADNESS DEMO": free
 	, "MORDHAU": 29.99
 	, "Mortal Shell": 29.99
-	, "Mortal Shell Tech Beta": 0
+	, "Mortal Shell Tech Beta": free
 	, "MudRunner": 19.99
-	, "MultiVersus": 0
+	, "MultiVersus": free
 	, "Murder by Numbers": 14.99
-	, "My Pet Hooligan": 0
-	, "Myth of Empires - Mod Kit": 0
+	, "My Pet Hooligan": free
+	, "Myth of Empires - Mod Kit": free
 	, "Myth of Empires Mod Kit": duplicate
-	, "N0va Desktop": 0
-	, "NAIRI Rising Tide": 0 // coming soon
-	, "NARAKA: BLADEPOINT": 0
-	, "NASA XOSS MarsXR Editor": 0
+	, "N0va Desktop": free
+	, "NAIRI: Rising Tide - Prologue": free // coming soon. demo.
+	, "NAIRI: Rising Tide Prologue": duplicate
+	, "NAIRI: Rising Tide Demo": duplicate
+	, "NARAKA: BLADEPOINT": free
+	, "NASA XOSS MarsXR Editor": free
 	, "NBA 2k21": 59.99
 	, "NBA 2021": duplicate
+	, "Neko Ghost, Jump!": 9.99
 	, "Never Alone (Kisima Ingitchuna)": 14.99
 	, "Never Alone": duplicate
-	, "NeverWinter": 0
+	, "NeverWinter": free
 	, "Next Up Hero": 19.99
 	, "Night in the Woods": 19.99
 	, "Nioh: The Complete Edition": 49.99
 	, "Nioh": duplicate
-	, "No Straight Roads Mother and Child Demo": 0
-	, "Nova Lands: Emilia's Mission Demo": 0
+	, "No Straight Roads Mother and Child Demo": free
+	, "Nova Lands: Emilia's Mission Demo": free
 	, "Nuclear Throne": 11.99
-	, "Off The Grid - Early Access": 0
+	, "Off The Grid - Early Access": free
 	, "Offworld Trading Company": 29.99
-	, "OHDcore Mod Kit": 0
-	, "Once Human": 0
-	, "Opera GX - The First Browser for Gamers": 0
+	, "Ogu and the Secret Forest": 24.99
+	, "OHDcore Mod Kit": free
+	, "Once Human": free
+	, "Opera GX - The First Browser for Gamers": free
 	, "Opera GX": duplicate
+	, "Orcs Must Die! 3": 29.99
 	, "Outliver: Tribulation": 7.99
-	, "Overclocked Combo Pack": 0
+	, "Overclocked Combo Pack": free
 	, "Fortnite Overclocked Combo Pack": duplicate
 	, "Overcooked": 16.99
 	, "Overcooked! 2": 24.99
-	, "OverTrip": 0
-	, "Outplayed": 0
-	, "Paladins": 0
-	, "Palia": 0
+	, "OverTrip": free
+	, "Outplayed": free
+	, "Paladins": free
+	, "Palia": free
 	, "Paradigm": 14.99
-	, "Paragon: The Overprime": 0
-	, "Path of Exile": 0
+	, "Paragon: The Overprime": free
+	, "Path of Exile": free
 	, "Pathway": 15.99
 	, "PAYDAY 2": 9.99
-	, "PC Building Simulator 2 Demo": 0
-	, "Phantasy Star Online 2 New Genesis": 0
+	, "PC Building Simulator 2 Demo": free
+	, "Phantasy Star Online 2 New Genesis": free
 	, "Phantasy Star Online 2": duplicate
-	, "Phantom Blade: Executioners": 0
+	, "Phantom Blade: Executioners": free
 	, "Pikuniku": 12.99
-	, "Pinball FX": 0
+	, "Pinball FX": free
 	, "Poker Club": 19.99
-	, "Post Scriptum Modding SDK": 0
+	, "Post Scriptum Modding SDK": free
 	, "Predecessor": 8.99
 	, "Prey": 39.99
-	, "Primordials: Battle of Gods": 0
+	, "Primordials: Battle of Gods": free
 	, "Primordials": duplicate
 	, "Prison Architect": 29.99
-	, "PUBG BATTLEGROUNDS": 0
-	, "PUBG Founder's Pack": 0
+	, "PUBG BATTLEGROUNDS": free
+	, "PUBG Founder's Pack": free
 	, "Rage 2": 39.99
-	, "RiichiCity": 0
+	, "RiichiCity": free
 	, "Rise of Industry": 29.99
-	, "Radiant Arena": 0
+	, "Radiant Arena": free
 	, "Railway Empire": 29.99
-	, "Rainbow Six Extraction Demo": 0
+	, "Rainbow Six Extraction Demo": free
 	, "Ravenous Devils": 4.99
 	, "Rayman Legends": 29.99
-	, "Razer Cortex": 0
-	, "Realm Royale Reforged": 0
+	, "Razer Cortex": free
+	, "Realm Royale Reforged": free
 	, "Rebel Galaxy": 19.99
 	, "Recipe For Disaster": 16.99
 	, "Redout: Enhanced Edition": 19.99
@@ -494,33 +531,33 @@ var OwnedApplications = {
 	, "Relicta": 19.99
 	, "Remnant: From the Ashes": 39.99
 	, "Remnant": duplicate
-	, "RENNSPORT Open Beta": 0
-	, "Replikant": 0
+	, "RENNSPORT Open Beta": free
+	, "Replikant": free
 	, "Ring of Pain": 19.99
 	, "Rise of the Tomb Raider: 20 Year Celebration": 29.99
 	, "Rise of the Tomb Raider": duplicate
 	, "Rising Hell": 9.99
 	, "Rising Storm 2: Vietnam": 24.99
 	, "Rising Storm 2": duplicate
-	, "Rocket League®": 0
+	, "Rocket League®": free
 	, "Rocket League": duplicate
-	, "Rogue Company": 0
+	, "Rogue Company": free
 	, "Rogue Legacy": 14.99
-	, "Roller Champions™": 0
+	, "Roller Champions™": free
 	, "Roller Champions": duplicate
 	, "RollerCoaster Tycoon® 3: Complete Edition": 19.99
 	, "RollerCoaster Tycoon 3": duplicate
 	, "RPG in a Box": 29.99
-	, "Rumbleverse™": 0
+	, "Rumbleverse™": free
 	, "Rumbleverse": duplicate
-	, "Rumbleverse™ - Boom Boxer Content Pack": 0
+	, "Rumbleverse™ - Boom Boxer Content Pack": free
 	, "Rumbleverse - Boom Boxer Content Pack": duplicate
 	, "Rumbleverse Boom Boxer Content Pack": duplicate
 	, "Rumbleverse Boom Boxer Pack": duplicate
 	, "Runbow": 14.99
 	, "Sail Forth": 19.99
 	, "Saints Row": 29.99
-	, "Saints Row Boss Factory": 0
+	, "Saints Row Boss Factory": free
 	, "Saints Row IV Re-Elected": 19.99
 	, "Saints Row 4 Re-Elected": duplicate
 	, "Saints Row 4": duplicate
@@ -528,7 +565,7 @@ var OwnedApplications = {
 	, "Saints Row The Third": duplicate
 	, "Saturnalia": 19.99
 	, "SAMURAI SHODOW NEOGEO COLLECTION": 39.99
-	, "Scavengers": 0
+	, "Scavengers": free
 	, "Second Extinction™": 24.99
 	, "Second Extinction": duplicate
 	, "Severed Steel": 24.99
@@ -551,6 +588,7 @@ var OwnedApplications = {
 	, "Sid Meier's Civilization® VI": 59.99 // 1 add-on
 	, "Sid Meier's Civilization VI": duplicate
 	, "Sid Meier's Civilization 6": duplicate
+	, "Sifu": 39.99
 	, "Civilization VI": duplicate
 	, "Civilization 6": duplicate
 	, "Skybound Only Up": 0
@@ -607,6 +645,7 @@ var OwnedApplications = {
 	, "Tales of the Neon Sea": 16.99
 	, "Tannenburg": 19.99
 	, "Teamfight Tactics": 0
+	, "TerraTech": 24.99
 	, "TFT": duplicate
 	, "Terraforming Mars": 19.99
 	, "Tharsis": 14.99
@@ -630,6 +669,10 @@ var OwnedApplications = {
 	, "The Fall": 9.99
 	, "The Last Friend: First Bite": 14.99
 	, "The Last Friend": duplicate
+	, "The Lord of the Rings: Return to Moria™": 24.99
+	, "The Lord of the Rings: Return to Moria": duplicate
+	, "The Lord of the Rings Return to Moria": duplicate
+	, "Lord of the Rings Return to Moria": duplicate
 	, "The Messenger": 19.99
 	, "The Riftbreaker Prologue Demo": 0
 	, "The Silent Age": 9.99
@@ -668,6 +711,7 @@ var OwnedApplications = {
 	, "Torchlight 2": duplicate
 	, "Tormentor X Punisher": 7.99
 	, "Totally Reliable Delivery Service": 14.99
+	, "Touch Type Tale": 19.99
 	, "Tower of Fantasy": 0
 	, "Towerfall Ascencion": 19.99
 	, "Town of Salem 2": 0
@@ -675,6 +719,7 @@ var OwnedApplications = {
 	, "Tropico 5": 19.99
 	, "True Fear: Forsaken Souls Part 1 Demo": 0
 	, "Tunche": 19.99
+	, "Undying": 19.99
 	, "UnMetal Demo": 0
 	, "Unrailed!": 19.99
 	, "Unreal Editor For Fortnite": 0
@@ -682,6 +727,7 @@ var OwnedApplications = {
 	, "UT Editor": 0
 	, "Valor Rising: Quest for the 7": 0
 	, "VALORANT": 0
+	, "Vampire Survivors": 4.99
 	, "Vertical Third Tech Demo": 0
 	, "Video Horror Society": 0
 	, "Voicemod: Real-Time AI Voice Changer & Soundboard": 0
@@ -719,7 +765,9 @@ var OwnedApplications = {
 	, "World of Warships - Starter Pack: Ishizuchi": duplicate
 	, "World of Warships — Frosty Celebration Pack": 0
 	, "World of Warships — Starter Pack: Ishizuchi": 23.47
+	, "World of Warships — Anniversary Party Favor": 30
 	, "World War Z": 19.99
+	, "World War Z Aftermath": 39.99
 	, "XCOM® 2": 59.99
 	, "XCOM 2": duplicate
 	, "XDefiant": 0
@@ -744,3 +792,4 @@ appsInclude = (() => {
 
 	return app => keys.includes( app.lower() );
 })();
+} <!-- end block
