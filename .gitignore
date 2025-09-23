@@ -22,6 +22,7 @@ test.*
 *.test.*
 *.tmp
 *._*.*
+*.ignore
 *.old
 
 node_modules
@@ -32,6 +33,7 @@ __pycache__
 *.obj
 *.class
 
+MATLAB/erau-egr115-final-project/test_suite.m
 /TeX/circuit-diagrams/originals/
 /TeX/circuit-diagrams/*.png
 
