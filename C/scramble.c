@@ -13,10 +13,10 @@ static uint8_t powuc(uint8_t x, uint8_t y) {
 	uint8_t result = 1;
 
 	while (y > 0) {
-		if ((y & 1) == 0) // even; zero-digit
-			x *= x;
+		if (y & 1) // odd; nonzero-digit
+			result *= x;
 
-		result *= x;
+		x *= x;
 		y >>= 1;
 	}
 
