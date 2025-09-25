@@ -81,6 +81,8 @@
 	Also: -t
 
 	equivalent to `-skipAll -keepStale
+.parameter help
+	an alias of --help and -?
 .example
 	PS C:\> ./backup.ps1 D E path/to/root README.md -y -c
 
@@ -122,7 +124,8 @@ param (
 	[switch] [Alias("bypassVerification")] $skipVerify,
 	[switch] $skipCorruptionCheck,
 	[switch] $skipAll,
-	[switch] $transferOnly
+	[switch] $transferOnly,
+	[switch] $help
 )
 # For some reason, I can't get the aliases to auto populate in the help text, so I put them in manually.
 
@@ -131,6 +134,11 @@ param (
 #       write-error puts "Write-Error: " at the start of every message it prints.
 # NOTE: write-host doesn't respect ANSI color escape sequences, so [Console]::WriteLine is used when
 #       applicable. it only respects it if the color is contained to the current message.
+
+if ($help -or $inputDrive -eq "--help") {
+	get-help -full $MyInvocation.MyCommand.source
+	exit 0
+}
 
 if ($transferOnly) {
 	$skipAll = $true
@@ -155,6 +163,8 @@ $arrayComparer = [Collections.Generic.SortedSet[byte]]::CreateSetComparer()
 	does not compare metadata.
 	takes in paths to two files.
 	assumes they exist, are readable, and are not directories.
+
+	does not work if directories are passed in
 #>
 function files-equal([string] $path1, [string] $path2) {
 	# NOTE: $cmpBufLen, $cmpBuf1, $cmpBuf2, ad $arrayComparer are script variables
@@ -163,8 +173,14 @@ function files-equal([string] $path1, [string] $path2) {
 	[Array]::Clear($cmpBuf1)
 	[Array]::Clear($cmpBuf2)
 
-	$file1 = [IO.File]::OpenRead($path1)
-	$file2 = [IO.File]::OpenRead($path2)
+	try {
+		$file1 = [IO.File]::OpenRead($path1)
+		$file2 = [IO.File]::OpenRead($path2)
+	} catch {
+		# one or both is a directory, non readable, or doesn't exist
+		# so just assume they are different.
+		return $false
+	}
 
 	try {
 		# assume $file1.canRead and $file2.canRead are true.
@@ -207,40 +223,40 @@ $confirmOptions = @(
 [Console]::ResetColor() # in case the background color is wrong for some reason.
 
 if ($inputDrive.length -gt 1) {
-	write-host "`e[31minput drive '$inputDrive' should only be a single character`e[0m"
+	write-host "`e[31minput drive '$inputDrive' should only be a single character"
 	exit 1
 }
 
 if ($outputDrive.length -gt 1) {
-	write-host "`e[31moutput drive '$outputDrive' should only be a single character`e[0m"
+	write-host "`e[31moutput drive '$outputDrive' should only be a single character"
 	exit 1
 }
 
 $alphabet = 'a'..'z'
 
 if ($inputDrive -notin $alphabet) {
-	write-host "`e[31minvalid input drive letter '$inputDrive'`e[0m"
+	write-host "`e[31minvalid input drive letter '$inputDrive'"
 	exit 1
 }
 
 if ($outputDrive -notin $alphabet) {
-	write-host "`e[31minvalid output drive letter '$outputDrive'`e[0m"
+	write-host "`e[31minvalid output drive letter '$outputDrive'"
 	exit 1
 }
 
 if (-not (test-path -type container "${inputDrive}:")) {
-	write-host "`e[31msource drive '${inputDrive}:' does not exist.`e[0m"
+	write-host "`e[31msource drive '${inputDrive}:' does not exist."
 	exit 1
 }
 
 if (-not (test-path -type container "${outputDrive}:")) {
-	write-host "`e[31mdestination drive '${outputDrive}:' does not exist.`e[0m"
+	write-host "`e[31mdestination drive '${outputDrive}:' does not exist."
 	exit 1
 }
 
 if ($reference -eq "") {
 	# making it empty is probably the user trying to make it a folder, which isn't allowed.
-	write-host "`e[31mreference file cannot be an empty string`e[0m"
+	write-host "`e[31mreference file cannot be an empty string"
 	exit 1
 }
 
@@ -264,7 +280,7 @@ if ($reference[0] -eq "/") {
 # if it already has the drive letter at the start, there isn't a need to override it.
 if (-not $reference.startsWith("${outputDrive}:/")) {
 	if ($reference -like "[a-zA-Z]:/*") {
-		write-host "`e[31mreference file cannot be outside of the output drive`e[0m"
+		write-host "`e[31mreference file cannot be outside of the output drive"
 		exit 1
 	}
 
@@ -274,7 +290,7 @@ if (-not $reference.startsWith("${outputDrive}:/")) {
 
 ###########################################################
 
-write-host "`e[1;37mattempting backup of drive ${inputDrive}: to drive ${outputDrive}:`e[0m"
+write-host "`e[1;37mattempting backup of drive ${inputDrive}: to drive ${outputDrive}:"
 
 write-host "using `"/$root`" as the root directory"
 write-host "using `"$reference`" for modify-time reference"
@@ -285,7 +301,7 @@ write-host "using firstTime = $firstTime"
 write-host "using dryRun = $dryRun`n"
 
 if (test-path -type container $reference) {
-	write-host "`e[31mreference file cannot be a directory`e[0m"
+	write-host "`e[31mreference file cannot be a directory"
 	exit 1
 }
 
@@ -295,12 +311,12 @@ if ($inputDrive -eq "C") {
 	$isAdmin = [bool] ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -eq "S-1-5-32-544")
 
 	if (-not $isAdmin) {
-		write-host "`e[1;33mNOTE: corruption heuristics might not be accurate for C: without administrator`e[0m"
+		write-host "`e[1;33mNOTE: corruption heuristics might not be accurate for C: without administrator"
 	}
 }
 
 if ($outputDrive -eq "C") {
-	write-host "`e[31mcannot use C: as the backup drive.`e[0m"
+	write-host "`e[31mcannot use C: as the backup drive."
 	exit 1
 }
 
@@ -310,14 +326,14 @@ if (-not (test-path $reference)) {
 		write-host "creating reference file."
 
 		if ($dryRun) {
-			write-host "`e[1;34mcmd: new-item -force -type file $reference`e[0m"
+			write-host "`e[1;34mcmd: new-item -force -type file $reference"
 		}
 		else {
 			new-item -force -type file $reference
 		}
 	}
 	else {
-		write-host "`e[31mreference file does not exist.`naborting backup`e[0m"
+		write-host "`e[31mreference file does not exist.`naborting backup"
 		exit 1
 	}
 }
@@ -328,7 +344,7 @@ if ($skipCorruptionCheck) {
 	write-host "skipping corruption heuristic checks"
 }
 else {
-	write-host "`e[1;37mchecking corruption heuristics`e[0m"
+	write-host "`e[1;37mchecking corruption heuristics"
 
 	$inputCount = (ls -r -force "${inputDrive}:/$root").count
 	$outputCount = (ls -r -force "${outputDrive}:/$root").count
@@ -339,75 +355,75 @@ else {
 	$outputVolume = get-volume -drive $outputDrive
 
 	if ((fsutil dirty query "${inputDrive}:") -eq "Volume - ${inputDrive}: is Dirty") {
-		write-host "`e[31minput drive is marked as dirty.`e[0m"
+		write-host "`e[31minput drive is marked as dirty."
 		$inputPossiblyCorrupt = $true
 	}
 
 	if ($inputVolume.operationalStatus -ne "OK") {
-		write-host "`e[31minput drive operational status is not 'OK'.`e[0m"
+		write-host "`e[31minput drive operational status is not 'OK'."
 		$inputPossiblyCorrupt = $true
 	}
 
 	if ($inputVolume.healthStatus -ne "Healthy") {
-		write-host "`e[31minput drive health status is not 'Healthy'.`e[0m"
+		write-host "`e[31minput drive health status is not 'Healthy'."
 		$inputPossiblyCorrupt = $true
 	}
 
 	if ($inputVolume.size -lt 12uGB) {
 		# I haven't heard of drives smaller than 16 GiB, except for maybe SD cards.
-		write-host "`e[31minput drive is smaller than 12 GiB (suspiciously small).`e[0m"
+		write-host "`e[31minput drive is smaller than 12 GiB (suspiciously small)."
 		$inputPossiblyCorrupt = $true
 	}
 
 	if (-not $firstTime) { # nothing to compare to for a first time backup.
 		# if the input drive has significantly less files, it might be corrupted.
 		if ($inputCount -lt ($outputCount * 3 -shr 2)) {
-			write-host "`e[31minput drive has less than 75% as many objects than the output drive.`e[0m"
+			write-host "`e[31minput drive has less than 75% as many objects than the output drive."
 			$inputPossiblyCorrupt = $true
 		}
 
 		if ($outputCount - $inputCount -gt 1000) {
-			write-host "`e[31minput drive has more than 1,000 less files than the output drive.`e[0m"
+			write-host "`e[31minput drive has more than 1,000 less files than the output drive."
 			$inputPossiblyCorrupt = $true
 		}
 	}
 
 	if ($inputPossiblyCorrupt) {
 		# write-host "input, output file counts: $inputCount, $outputCount"
-		write-host "`e[31mthe input drive might be corrupted or failing.`e[0m"
+		write-host "`e[31mthe input drive might be corrupted or failing."
 
 		if ($confirmOptions -notcontains (read-host "do you wish to continue?")) {
-			write-host "`e[31maborting backup`e[0m"
+			write-host "`e[31maborting backup"
 			exit 1
 		}
 	}
 
 
 	if ((fsutil dirty query "${ourputDrive}:") -eq "Volume - ${outputDrive}: is Dirty") {
-		write-host "`e[31moutput drive is marked as dirty.`e[0m"
+		write-host "`e[31moutput drive is marked as dirty."
 		$outputPossiblyCorrupt = $true
 	}
 
 	if ($outputVolume.operationalStatus -ne "OK") {
-		write-host "`e[31moutput drive operational status is not 'OK'.`e[0m"
+		write-host "`e[31moutput drive operational status is not 'OK'."
 		$outputPossiblyCorrupt = $true
 	}
 
 	if ($outputVolume.healthStatus -ne "Healthy") {
-		write-host "`e[31moutput drive health status is not 'Healthy'.`e[0m"
+		write-host "`e[31moutput drive health status is not 'Healthy'."
 		$outputPossiblyCorrupt = $true
 	}
 
 	if ($outputVolume.size -lt 12uGB) {
-		write-host "`e[31moutput drive is smaller than 12 GiB (suspiciously small).`e[0m"
+		write-host "`e[31moutput drive is smaller than 12 GiB (suspiciously small)."
 		$outputPossiblyCorrupt = $true
 	}
 
 	if ($outputPossiblyCorrupt) {
-		write-host "`e[31mthe output drive might be corrupted or failing.`e[0m"
+		write-host "`e[31mthe output drive might be corrupted or failing."
 
 		if ($confirmOptions -notcontains (read-host "do you wish to continue?")) {
-			write-host "`e[31maborting backup`e[0m"
+			write-host "`e[31maborting backup"
 			exit 1
 		}
 	}
@@ -422,34 +438,46 @@ else {
 
 $reftime = ([IO.FileInfo] $reference).lastWriteTime
 
-write-host "`n`e[1;37msearching for new and updated files`e[0m"
+write-host "`n`e[1;37msearching for new and updated files"
 
 
-$updatedFiles = [string[]] (ls -r "${inputDrive}:/$root" | where lastWriteTime -gt $reftime | % fullname)
-
+$updatedFiles = [string[]] (ls -r -force "${inputDrive}:/$root" | where {
+	# the file is newer, copy it only if the destination is an existing directory.
+	# copy if it only exists in the source drive.
+	$dst = $outputDrive + $_.fullname.substring(1);
+	($_.lastWriteTime -gt $reftime -and -not (test-path -type container $dst)) -or -not (test-path $dst)
+} | % fullname)
 
 for ($i = 0; $i -lt $updatedFiles.count; $i++) {
-	$infile = $updatedFiles[$i]
-	$outfile = $outputDrive + $infile.substring(1)
+	$src = $updatedFiles[$i]
+	$dst = $outputDrive + $src.substring(1)
 
-	write-host "`e[1;32mbacking up file $($i + 1)/$($updatedFiles.count): $($infile -replace '\\', '/')`e[0m"
+	write-host "`e[1;32mbacking up file $($i + 1)/$($updatedFiles.count): $($src -replace '\\', '/')"
 
 	# make sure the directory exists
-	$outdir = split-path $outfile
-	if (-not (test-path -type container $outdir)) {
+	$dstDir = split-path $dst
+	if (-not (test-path -type container $dstDir)) {
 		if ($dryRun) {
-			write-host "`e[1;34mcmd: new-item -force -type dir $outdir`e[0m"
+			write-host "`e[1;34mcmd: new-item -force -type dir $dstDir"
 		}
 		else {
 			# NOTE: this resets the console color for some reason.
 			#       that is why the foreground color is set to green every iteration.
-			new-item -force -type dir $outdir
+			[void] (new-item -force -type dir $dstDir)
 		}
 	}
 
 	# back up the file
 	if (-not $dryRun) {
-		copy-item -force $infile $outfile
+		if (test-path -type container $src) {
+			# don't copy the folder.
+			# a copy only needs to happen at all
+			if (-not (test-path -type container $dst)) {
+				[void] (new-item -force -type dir $dst)
+			}
+		} else {
+			copy-item -force $src $dst
+		}
 	}
 }
 
@@ -464,7 +492,7 @@ if ($updatedFiles.count -eq 0) {
 elseif (-not $skipVerify) {}
 # only verify these now if it isn't verifying them again later.
 elseif ($dryRun) {
-	write-host "`n`e[1;33mNOTE: newly copied files cannot be verified in a dry run`e[0m"
+	write-host "`n`e[1;33mNOTE: newly copied files cannot be verified in a dry run"
 }
 else {
 	write-host "`nverifying newly copied files"
@@ -473,12 +501,21 @@ else {
 	start-sleep -ms 100 # wait for it to flush to disk or something, idk.
 
 	for ($i = 0; $i -lt $updatedFiles.count; $i++) {
-		$infile = $updatedFiles[$i]
-		$outfile = $outputDrive + $infile.substring(1)
+		$src = $updatedFiles[$i]
+		$dst = $outputDrive + $src.substring(1)
 
-		if (-not (files-equal $infile $outfile)) {
+		if (test-path -type container $src) {
+			# directories don't need to be verified.
+			# they are already guaranteed to exist on both drives.
+
+			# increment it anyway so the estimate will be more accurate
+			# and it will also make it seem like it is doing more work than it really is.
+			continue
+		}
+
+		if (-not (files-equal $src $dst)) {
 			$verifyErrors++
-			write-host "`e[38;5;172mbackup does not reflect source file: $outfile`e[0m"
+			write-host "`e[38;5;172mbackup does not reflect source file: $dst"
 		}
 	}
 
@@ -494,18 +531,20 @@ if ($keepStale) {
 }
 else {
 	# check for files that only exist on the backup drive.
-	write-host "`n`e[1;37mchecking for stale backup files`e[0m"
+	write-host "`n`e[1;37mchecking for stale backup files"
 
 	$staleFiles = @()
 	$staleSubfileCount = 0 # stale files part of stale folders
 	$abortDelete = $false
 
 	# for each file, add it to the stale file list if it is applicable
-	ls -r -force "${outputDrive}:/$root" | foreach {
+	ls -recurse -force "${outputDrive}:/$root" | foreach {
 		$dst = $_.fullname
 		$src = $inputDrive + $dst.substring(1)
 
-		if ((split-path $dst) -in $staleFiles) {
+		if (($staleFiles | foreach {
+			if ($dst.toLower().startsWith($_.toLower())) { 1 }
+		}).count -ne 0) {
 			# directories get listed first, so sub directories don't need to be put in the list.
 			$staleSubfileCount++
 			return # continue
@@ -513,7 +552,7 @@ else {
 
 		if (-not (test-path $src)) {
 			# it doesn't exist in the source drive, so it doesn't need to be backed up anymore.
-			$staleFiles += $dst # add to the list
+			$staleFiles += @($dst) # add to the list
 		}
 	}
 
@@ -523,7 +562,7 @@ else {
 	}
 	else {
 		# stale backups found
-		write-host "`e[1;33mfound $($staleSubfileCount + $staleFiles.count) stale backups:`e[0m"
+		write-host "`e[1;33mfound $($staleSubfileCount + $staleFiles.count) stale backups:"
 		$staleFiles | % { " - $_" } | write-host
 		write-host "" # extra newline
 
@@ -531,20 +570,20 @@ else {
 			write-host "skipping deletion confirmation"
 		}
 		elseif ($confirmOptions -notcontains (read-host "do you wish to delete them?")) {
-			write-host "`e[1;33maborting deletion`e[0m"
+			write-host "`e[1;33maborting deletion"
 
 			$abortDelete = $true
 		}
 
 		if (-not $abortDelete) {
-			write-host "`e[1;32mdeleting stale backups`e[0m"
+			write-host "`e[1;32mdeleting stale backups"
 		}
 	}
 
 	if (-not $abortDelete) {
 		if ($dryRun) {
 			foreach ($file in $staleFiles) {
-				write-host "`e[1;34mcmd: remove-item -recurse -force $file`e[0m"
+				write-host "`e[1;34mcmd: remove-item -recurse -force $file"
 			}
 		}
 		else {
@@ -573,7 +612,7 @@ else {
 
 	# the object count should always be the input drive object count,
 	# except for if 
-	write-host "`n`e[1;37mperforming full backup verification on ~$inputCount files`e[0m"
+	write-host "`n`e[1;37mperforming full backup verification on ~$inputCount files"
 
 	$i = 1
 
@@ -609,7 +648,7 @@ else {
 		if (-not $equal) {
 			# this doesn't necessarily imply corruption.
 			# if you edit the file in between when it gets copied and verified, it may say this.
-			write-host "`e[38;5;172mbackup does not reflect source file: $dst`e[0m"
+			write-host "`e[38;5;172mbackup does not reflect source file: $dst"
 			$verifyErrors++
 		}
 
@@ -624,10 +663,10 @@ else {
 		0 {"no file mismatches"}
 		1 {"1 file mismatch"}
 		default {"$verifyErrors file mismatches"}
-	})`e[0m"
+	})"
 }
 
 ###########################################################
 
-write-host $($dryRun ? "dry run complete. no changes were made." : "done.")
+write-host $($dryRun ? "dry run complete. `e[1;33mno changes were made." : "done.")
 exit 0
