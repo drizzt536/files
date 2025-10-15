@@ -1,0 +1,102 @@
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, xcolor}
+
+\newcommand \dstyle \displaystyle
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+\renewcommand \d [1] {\mathrm{d}{#1}}
+\newcommand \dx {{\d x}}
+\newcommand \dy {{\d y}}
+\newcommand \dydx {\dfrac{\dy}{\dx}}
+\newcommand \ndydx [1]{\dfrac{\mathrm{d}^{#1} y}{\dx^{#1}}}
+\newcommand \dd [2]{\dfrac{\d{#1}}{\d{#2}}}
+\newcommand \ddn [3]{\dfrac{\mathrm{d}^{#3}{#1}}{\d{#2}^{#3}}}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{
+	top    = 0in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+}
+
+\title{MA 345 Exact Equations Method Justification}
+\author{Daniel E. Janusch}
+\maketitle
+
+\vspace{-10px}
+
+\begin{equation}
+	M(x,y) \dx + N(x,y) \dy = 0
+\end{equation}
+
+Given an exact ODE (1), where $M_y = N_x$, the following equation holds for the solution:
+
+\begin{equation}
+	\int M \dx \uplus \int N \dy = c
+\end{equation}
+
+where $a \uplus b$ means add and ignore duplicates. Let $f(x, y)$ be the solution to the differential equation. 
+
+$\dstyle M_1(x) + M_2(x, y) = \int M(x, y) \dx$, where $M_1(x)$ has all the terms with only $x$, and $M_2(x, y)$ has all the terms that can't be separated further. $\dstyle N_1(y) + N_2(x, y) = \int N(x, y) \dy$, where $N_1(y)$ has all the terms with only $y$, and $N_2(x, y)$ has all the terms that can't be separated further.
+
+\begin{equation}
+	f(x, y) = \int M(x, y) \dx + g(y) = M_1(x) + M_2(x, y) + g(y)
+\end{equation}
+
+\begin{equation}
+	f(x, y) = \int N(x, y) \dy + h(x) = N_1(y) + N_2(x, y) + h(x)
+\end{equation}
+
+Given (3) and (4), by the transitive property, $M_1(x) + M_2(x, y) + g(y) = N_1(y) + N_2(x, y) + h(x)$. Each side has a term of just $x$, a term of just $y$, and a term with both. Separating gives the following three equations:
+
+\begin{equation}
+	M_1(x) = h(x)
+\end{equation}
+
+\begin{equation}
+	M_2(x, y) = N_2(x, y)
+\end{equation}
+
+\begin{equation}
+	g(y) = N_1(y)
+\end{equation}
+
+Equation (3) can be rearranged into $\dstyle \int N(x, y) \dy - N_2(x, y) = N_1(y) = g(y)$.\\
+Substituting this into Equation (2) gives:
+
+\begin{equation}
+	f(x, y) = \int M(x, y) \dx + \left[\int N(x, y) \dy - N_2(x, y)\right]
+\end{equation}
+
+This is then equivalent to the following by equations (1) and (6):
+
+\begin{equation}
+	f(x, y) = [M_1(x) + N_2(x, y)] - N_2(x, y) + \int N(x, y) \dy
+\end{equation}
+
+\newpage
+\restoregeometry
+
+But this is just the sum of the integrals with the duplicates ($M_2$ and $N_2$) subtracted off.
+
+Thus, the original equation holds (also because the integral of $0$ is a constant).
+
+\vspace{20px}
+
+NOTE: stopping after equation 7 is sufficient proof for on exams, so long as the functions are defined concretely.
+
+\end{document}

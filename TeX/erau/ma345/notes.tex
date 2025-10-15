@@ -1,0 +1,341 @@
+\documentclass[12pt]{article}
+
+\usepackage[
+	top    = 0.5in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+]{geometry}
+
+\usepackage{amsmath, amssymb, latexsym, mathrsfs, xcolor, hyperref, tocloft}
+
+\newcommand \dstyle \displaystyle
+\newcommand \hpx [1]{\hspace{#1px}}
+\newcommand \vpx [1]{\vspace{#1px}}
+\newcommand \nhpx [1]{\hspace{-#1px}}
+\newcommand \nvpx [1]{\vspace{-#1px}}
+
+\newcommand \Laplace [3] {\ensuremath{\mathscr{L}_{#1}\!\left\{#2\right\}\!\left(#3\right)}}
+\newcommand \ILaplace [3] {\ensuremath{\mathscr{L}_{#1}^{-1}\!\left\{#2\right\}\!\left(#3\right)}}
+
+\renewcommand \d [1] {\mathrm{d}{#1}}
+\newcommand \ds {{\d s}}
+\newcommand \dt {{\d t}}
+\newcommand \du {{\d u}}
+\newcommand \dx {{\d x}}
+\newcommand \dy {{\d y}}
+\newcommand \dz {{\d z}}
+\newcommand \dydx {\dfrac \dy\dx}
+\newcommand \ndydx [1] {\dfrac{\mathrm{d}^{#1} y}{\dx^{#1}}}
+\newcommand \ddf [2] {\dfrac{\d{#1}}{\d{#2}}}
+\newcommand \dd [1] {\dfrac{\mathrm{d}}{\d{#1}}}
+\newcommand \ddfn [3] {\dfrac{\mathrm{d}^{#3}{#1}}{\d{#2}^{#3}}}
+\newcommand \ddn [2] {\dfrac{\mathrm{d}^{#2}}{\d{#1}^{#2}}}
+% \dd x = d/dx
+% \ddf y x = dy/dx
+% \ddfn y x n == d^n y / dx^n
+% \ddn x n == d^n / dx^n
+\DeclareMathOperator \Res {Res}
+
+\newcommand \numberthis {\addtocounter{equation}{1}\tag{\theequation}}
+
+\setcounter{tocdepth}{5}
+\renewcommand \cftsecleader {\cftdotfill 3}
+\renewcommand \contentsname {Table of Contents}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\newgeometry{ % temporary just for page 1
+	top    = 0in,
+	left   = 1in,
+	right  = 1in,
+	bottom = 1in,
+}
+
+% \pdfbookmark[0]{MA 345 Notes}{bmk:title}
+
+\title{MA 345 Notes}
+\author{Daniel E. Janusch}
+\maketitle
+
+% add the table of contents as a bookmark but don't add it to the table of contents table
+\pdfbookmark[1]{Table of Contents}{bmk:table-of-contents}
+\tableofcontents
+
+\newpage
+\restoregeometry
+
+\section{Initial-Value Problems (IVPs)}
+
+Initial value problems are just a differential equation with initial conditions attached to it, where for an $n$th order equation, you need $n$ conditions for $y$, $y'$, etc. each at the same $x$ value. They are solved like normal differential equations, and then the initial condition is applied afterwards.
+
+\subsection{Existence-Uniqueness Theorem}\label{ivp-exist-uniq-thm}
+
+Given the IVP $\ddf yx = f(x, y), y(x_0) = y_0$, it is sufficient for the existence of a solution if $f$ is continuous on $R$. For uniqueness, $\dfrac {\partial f}{\partial y}$ must also be continuous on $R$. $R$ is a rectangle around $(x_0, y_0)$.
+
+\section{Methods of Solving First Order ODEs}
+
+These methods mainly have to do with solving first order ODEs, and not $n$th order ODEs.
+A couple of them can be expanded for others, but for the course, they only need to be done with first ordder ODEs.
+
+\subsection{Guess and Check}
+
+Self explanitory. If you have $\ndydx 2 = -y$, for example, just guess that $y = A \sin x + B \cos x + c$ is a solution, and then find that $c=0$. Not exactly a good method of solving \emph{all} solutions unless the Existence-Uniqueness Theorem says there is only one solution; in this example $y = 0$ is also a solution, etc.
+
+\subsection{Separable Equations}
+
+A differential equation equation is separable if it can be written in the form: $\dstyle \ndydx n = g(x) h(y)$. This isn't exactly the whole truth, since it is only a minor expansion on the first-order definition. They can be solved implicitly by splitting up the functions and integrating separately:
+\begin{equation}
+	\int\!\dfrac {\dy^n}{h(y)} = \int \! g(x) \, \dx^n
+\end{equation}
+
+Remember to add $\dstyle \sum_{k=0}^n c_k x^k$ to the right side. To get an explicit solution, apply the inverse function of the left side to both sides.
+
+\subsection{Linear ODEs}
+
+An $n$th-order differential equation is linear if it can be written in the following form:
+
+\begin{equation*}
+	\sum_{k=0}^n a_k(x) \ndydx k = g(x)
+\end{equation*}
+
+1st-order linear ODEs can be solved as follows: Given $\dydx + P(x) y = f(x)$, multiply the whole equation by an integrating factor $\mu(x)$ so the left side becomes $\dstyle \dfrac{\mathrm d}\dx \left[\mu(x) y(x)\right]$. An integrating factor is $\dstyle \mu(x) = \exp\!\left(\int \! P(x) \, \dx\right)$ (NOTE: any integrating factor will work, but this one is the easiest); this can be derived from the original equation. The solution for the differential equation is also derivable on the spot, and will be the following:
+
+\begin{equation}
+	\dstyle y = \dfrac 1 \mu \int \! \mu f \, \dx = \dfrac{\int \exp\!\left(\int \! P(x) \, \dx\right) \! f(x) \, \dx}{\exp\!\left(\int \! P(x) \, \dx\right)}
+\end{equation}
+
+\subsection{Exact Equations}
+
+A differential equation is exact if it satisfies the following two qualities.
+\begin{enumerate}
+	\item $M$ and $N$ are from the equation $M(x, y) \dx + N(x, y) \dy = 0$
+	\item $M_y = N_x$
+\end{enumerate}
+
+NOTE: if you have an equation $\dfrac a b \dx + \dfrac c d \dy = 0$ that is exact, it is not necessarily true that $a\,d\,\dx + b\,c\,\dy = 0$ is also exact. An example would be $(x + y) \dx + x \dy = 0$, which is exact, and the version when dividing through by $x$: $\left(1 + \dfrac y x\right) \dx + \dy = 0$, which is not exact. The way you solve an exact equation is by directly integrating the equation. $M \dx + N \dy = 0$ becomes $\dstyle \int\!M \dx \, \uplus \int\!N \dy = c$, where $\uplus$ means you add while ignoring duplicates; for example, $(x + y) \uplus (x + z) = x + y + z$. This can also be turned into another mini differential equation instead of just integrating, but that is a bit more yucky, though also a bit more rigorous. This stems from the fact that $f(x, y) = \int M \dx + g(y) = \int N \dy + h(x)$.
+
+\subsection{Substitution}
+
+Substitution can help in solving differential equations of the form $\dydx = f(x, y)$ which can be expressed in terms of a single effective variable $u = g(x, y)$, simplifying the equation into into either $\dydx = F(u)$, for some function $g$. Not every substitution is useful, for example $g = f$ does nothing, but if it reduces complexity, it is probably a step in the right direction. After substituting, solve for the new differential equation using another method, and then replace back the original substitution for an implicit solution.
+
+\subsubsection{Homogeneous Equations}
+
+A homogeneous function of degree $\alpha$ is a function where $f(tx, ty) = t^\alpha f(x, y)$; $\alpha$ can be any value, including 0, negative numbers, and non-integers. A homogeneous differential equation is one where, given $M(x, y) \dx + N(x, y) \dy = 0$ or $\dstyle \dydx = -\dfrac{M(x, y)}{N(x, y)}$, $M$ and $N$ are homogeneous of the same degree. To solve a homogeneous differential equation, substitute either $y = ux$ or $x = v y$. Both will work the same, but one might be easier depending on the original equation. After the substitution, the output will always be separable. NOTE: use $y = u x \implies \dydx = \ddf ux x + u$.
+	
+\subsubsection{Bernoulli's Equation}
+
+Given $\dydx + P(x) y = f(x) y^n$, substitute $u = y^{1 - n}$, and the equation becomes linear.
+
+\subsubsection{Reduction to Separation of Variables}
+
+A differential equation of form $\dydx = f(Ax + By + C)$ can always be reduced to an equation with separable variables given $u = Ax + By + C$.
+
+\subsection{Euler's Method}
+
+Given an IVP, $\dydx = f(x, y), y(x_0) = y_0$ and some scaling factor $h$, Euler's Method can be iterated as follows:
+\begin{equation}
+	(x_n, y_n) \to (x_n, y_n) + h \cdot (1, f(x_n, y_n))
+\end{equation}
+
+\section{Methods of Solving Arbitrary Order Linear ODEs}
+
+These methods all require understanding of the difference between a general linear ODE and a homogeneous ODE (where $g(x)$ on the RHS is 0). For homogeneous equations, since the equations are linear, the $L[a y_1 + b y_2] = a L[y_1] + b L[y_2]$ holds, so the overall solution will be of the form $\dstyle y_c(x) = \sum_{k=1}^n c_k y_k(x)$, where $c_k$ are arbitrary constants, $n$ is the order of the ODE (there are always $n$ linearly independent solutions), $y_c$ is the ``complimentary solution" (more on this later), and $\{y_1, y_2, \cdots, y_n\}$ forms the basis of the solution space to the ODE (more commonly referred to as a ``fundamental set" of solutions). The fundamental solutions are all linearly independent, so no $y_i$ can be any linear combination of the other $y_j$ functions. This can be checked using the Wronskian, which is defined as follows:
+
+\begin{equation}
+	W(y_1, y_2, \cdots \!, y_n) := \begin{vmatrix}
+		y_1 & y_2 & y_3 & \cdots & y_n \\
+		y_1' & y_2' & y_3' & \cdots & y_n' \\
+		y_1'' & y_2''& y_3'' & \cdots & y_n'' \\
+		\vdots & \vdots	& \vdots & \ddots & \vdots \\
+		y_1^{(n)} & y_2^{(n)} & y_3^{(n)} & \cdots & y_n^{(n)}
+	\end{vmatrix}
+\end{equation}
+
+If the Wronskian is zero, then the list of functions given is linearly dependent, meaning one of them is a linear combination of the others, though it does not give any indication as to which it is or what coefficients would be used. The simplest way to check is likely to remove functions and continue checking the Wronskian until it is nonzero to find the list of linearly independent functions. For nonhomogenous equations, their solutions can be broken up as follows: $y(x) = y_c(x) + y_p(x)$, where $y_c$ is the ``complimentary" solution (solves the associated homogeneous ODE), and $y_p$ is the ``particular" solution (solves the actual ODE). The particular solution will never have free variables in it other than $x$, but the complimentary solution will always have free variables (usually $c_1, c_2$, etc. or $A, B$, etc.). Essentially, the particular solution is what makes the ODE true, and the complimentary solution is there because it is always zero, and thus doesn't contribute at all and is always valid.
+
+\subsection{Reduction of Order}
+
+Given an equation of the form $\dstyle \sum_{k=0}^n a_k(x) \ndydx k = f(x)$, the equation can be reduced to an equation of the following form: $\dstyle \sum_{k=0}^{n-1} b_k(x) \ddfn \omega x k = g(x)$. This requires a solution $y_1$ to the associated homogeneous ODE. Essentially, instead of using $y_2 = c y_1$, you replace $c$ with some function $u(x)$ and get $y_2 = u y_1$. Then you plug $y_2$ in to the ODE, expand it out, and collect by each level of derivative of $u$. The $u$ term will always be zero, since its coefficient is just the original ODE with $y_1$, which is 0 since it solves the homogenenous ODE. After this, you will have an ODE of $x$ and $u(x)$, where there is no $u$ term, and every $u$ has at least one derivative on it. At this point, you can do $\omega := u'$, and you now have an ODE in terms of $x$ and $\omega$ that is one degree lower than the original one interms of $y$ an $x$. You can solve this using whatever other methods you want, and then you essentially back track using $u = \int \! \omega \, \dx$ and $y_2 = u y_1$ again. For a 2nd order ODE of the form $y'' + p(x) y' + q(x) y = 0$, there is an explicit formula that isn't too complicated:
+\begin{equation}
+	y_2 = y_1 \!\! \int \dfrac{\exp\!\left(- \! \int \! p \, \dx\right)}{y_1^2}\dx
+\end{equation}
+
+Interestingly, the exponential in the integral is the same as in first order linear ODEs, except for $p$ is the coefficient of $y'$ here and not $y$, and the integral is negated. Similar explicit formulas exist for higher order ODEs. NOTE: if you use reduction of order more than once, you need a solution to each subsequent ODE; e.g. for doing reduction of order to make a 5th order into a 1st order, you need a solution to the associated homogeneous ODEs for the 5th, 4th, 3rd, and 2nd order ODEs.
+
+\subsection{Homogeneous Linear ODEs with Constant Coefficients}
+Given an ODE $\dstyle \sum_{k=0}^n a_k \ndydx k = 0$, plug in $y = e^{r x}$ as a guess, and you will get $\dstyle \sum_{k=0}^n a_k r^k = 0$, which is can be solved via the associated formula (e.g. quadratic formula). NOTE: this equation of $r$ is called the ``characteristic eqution". The solution will be of the form $\dstyle y = \sum_{k=1}^n C_k e^{r_k x}$. There are 2 cases to note for each root, and there is also the case for repeated roots. If there are no repeated roots and all the roots are real, the solution will be exactly of the aforementioned form (sum of exponentials). In the case where some of the roots are not real, they will always come in pairs (e.g. $\dstyle C_1 e^{\alpha + \beta i} + C_2 e^{\alpha - \beta i}$), so they can be simplified into a $\sin$ and $\cos$ pair using Euler's Identity ($\dstyle e^{ix} = \cos x + i \sin x$). The eqution for both roots combined will be as follows: $\dstyle e^{\alpha x} \left[A \cos \beta x + B \sin \beta x\right]$ where $A$ and $B$ are free variables, and $r = \alpha \pm \beta i$ solves the characteristic eqution. In the case where you have multiple roots, for instance if the characteristic eqution is $r^4 (r - 2)^3 (r + 5) \left[(r + 3 + 2i) (r + 3 - 2i) \right]^2 = 0$, the solution will be as follows: $y = (A x^3 + B x^2 + C x + D) + (E x^2 + F x + G) e^{2 x} + H e^{-5 x} + e^{-3 x}\left[x (I \cos 2x + J \sin 2x) + (K \cos 2x + L \sin 2x)\right]$. Essentially, for a root that appears $n$ times, you have an arbitrary $n - 1$ degree polynomial multiplying the solution, except for the $\sin + \cos$ case, where you have to expand it out and use multiple polynomials, since you don't get enough degrees of freedom if you multiply both terms by the same single polynomial.
+
+
+\subsection{Undetermined Coefficients}
+
+This method allows you to find a solution to a nonhomogenous linear ODE given an equation of the form $\dstyle \sum_{k=0}^n a_k \ndydx k = f(x)$, where $a_k$ are all constants, and $f(x)$ is of the following form:
+$\dstyle f(x) = \sum_{n=0}^N \left[\sum_{k=0}^K C_{n,k} x^k\right] e^{r_n x} \begin{cases}
+	\cos \omega_n x \\
+	\sin \omega_n x
+\end{cases}$, or a sum of terms where each term is a polynomial times an exponential times either a $\sin$ or $\cos$ term. NOTE: if $\omega_n = 0$ for cosine, or $r_n = 0$, some of the terms will not be there, so for example, it would be valid to have $f(x) = (2x^2 - 1) + \cos 4x - x e^{-x}$ Since the ODE is linear, you can basically split up these terms into different problems, do them separately, and recombine the results (or you can do it all in one problem, either way works). I will assume here that you split each term into a different subproblem, but if you do it all at once, you basically just add the subproblems together. The first step is to find the complimentary solution (the solution to the associated homogeneous equation). This can likely be solved using the characteristic equation or Laplace transforms. You will need to note the terms in the homogeneous equation for later. For each term, you essentially guess a solution that looks like the original term, so if it is $(x^2 - 1) e^x \sin 3x$, then you guess $y_p = (Ax^2 + Bx + C) e^x \sin 3x + (Dx^2 + Ex + F) e^x \cos 3x$. NOTE: if you have one of the trig functions, then you have to include both in your guess, which essentially doubles the amount of work if the question includes a trig function in it. Another example is if your term is $2 e^x$, you guess $y_p = A e^x$ ($A$ is an arbitrary 0th degree polynomial). There is a slight catch: if (after expanding), any term in your $y_p$ matches a term in the complimentary solution, you have to multiply $y_p$ by $x$. In general, you will have to multiply $y_p$ by $x^s$, where $s$ is the highest number of repeats of a single root the associated homogeneous ODE has. From here, you just take derivatives of $y_p$ until you get all the ones you need, plug it into the original ODE, and solve for the coefficients. NOTE: if the $f(x)$ term has a trig function, but the ODE only has even derivatives, you only need to include the one trig function in your guess. Your overall general solution to the ODE will be $\dstyle y = y_c + \sum_{\rm terms} y_p$.
+
+\subsection{Variation of Parameters}
+
+Other than the explicit formula in the 2nd-order case (and perhaps also the 1st-order case too), Variation of Parameters doesn't matter that much. Variation of Parameters is basically where you guess $\dstyle y_p = \sum_{k=1}^n u_k y_k$ with functions $u$ instead of constants $c$. Then you give a bunch of restriction equations to make the solution simpler, and you need to have $n$ linearly-independent solutions to the associated homogeneous ODE. 
+
+\subsubsection{1st order ODE, explicit formula}
+
+given the ODE $y' + p(x) y = f(x)$, and a function $y_1$ that solves the associated homogeneous ODE, the particular solution is as follows:
+
+\begin{equation}
+	y_p = y_1 \! \int \! \dfrac f {y_1} \dx
+\end{equation}
+
+\subsubsection{2nd order ODE, explicit formula}
+
+given the ODE $y'' + p(x) y' + q(x) = f(x)$, and two linearly-independent functions $y_1$ \& $y_2$ that solve the associated homogeneous ODE, the particular solution is as follows:
+
+\begin{equation}
+	y_p = -y_1 \! \int \! \dfrac{f \, y_2}{W(y_1, y_2)} \dx + y_2 \! \int \! \dfrac{f \, y_1}{W(y_1, y_2)} \dx
+\end{equation}
+
+\noindent NOTE: if $u_1(x) = 0$ or $u_2(x) = 0$, this reduces to Reduction of Order.
+
+\subsubsection{General order ODE}
+
+Given an ODE $\dstyle \sum_{k=0}^n a_k(x) \ndydx k = f(x) \ni a_n(x) \equiv 1$, and $y_1, y_2, \cdots, y_n$ are linearly-independent solutions to the associated homogeneous ODE, guess a particular solution of the form: $\dstyle y_p = \sum_{k=1}^n u_k(x) y_k(x)$. Then you impose a bunch of simplification constraints, which are all $\dstyle \sum_{i=1}^n u_i'(x) y_i^{(k)}(x) = 0$, each for a different $k$th derivative of $y$ up to the $n-2$nd. NOTE: only the last derivative term will include $f(x)$. Then you plug $y_p$ into the ODE; a bunch of the terms die off, so you might as well just plug in $y_p^{(n)}$ instead. This then becomes an equation on an $n \times n$ matrix (it doesn't really matter though). By Cramer's Rule and integration, it gives $\dstyle u_k(x) = \int \dfrac{W_k(x)}{W(x)} \dx$, where $W(x)$ is the Wronskian determinant, and $W_k(x)$ is the Wronskian determinant of the basis with the $i$th column replaced by $\dstyle \begin{bmatrix} 0 & 0 & \cdots & f(x)\end{bmatrix}$. The full solution is the following:
+
+\begin{equation}
+	y_p(x) = \sum_{k=1}^n y_k(x) \int \dfrac{W_k(x)}{W(x)} \dx
+\end{equation}
+
+As is likely obvious from the tediousness of computing the Wronskian for an $n \times n$ matrix, this method is not generally used in this form, and is more often given as an explicit formula in the second degree case.
+
+\subsection{Laplace Transforms}
+
+Laplace transforms are defined by an integral equation (\ref{eqn:laplace-tfm}). Usually the intended method to solve them is to use properties or a table lookup, but all the formulas can be computed manually as well, though some not as easily.
+
+\begin{equation}\label{eqn:laplace-tfm}
+	\Laplace{t}{f(t)}{s} := \int_0^\infty \!\! e^{-st} f(t) \, \dt
+\end{equation}
+
+\subsubsection{List of Properties}\label{sec:laplace-properties}
+
+\begin{align}
+	\Laplace{t}{\sum_k c_k f_k(t)}{s} & = \sum_k c_k \Laplace{t}{f_k(t)}{s} \\
+	\Laplace{t}{f(ct)}{s} & = \dfrac 1 c \Laplace{t}{f(t)}{\dfrac s c} \\
+	\Laplace{t}{e^{c t} f(t)}{s} & = \Laplace{t}{f(t)}{s - c} \\ 
+	\Laplace{t}{\ddn t n f(t)}{s} & = s^n \Laplace{t}{f(t)}{s} - \sum_{k = 0}^{n - 1} s^{n - k - 1} f^{(k)}(0) \\
+	\Laplace{t}{\int_0^t f(\tau) \d\tau}{s} & = \dfrac 1 s \Laplace{t}{f(t)}{s} \\
+	\Laplace{t}{t^n f(t)}{s} & = (-1)^n \ddn s n \Laplace{t}{f(t)}{s} \\
+	\Laplace{t}{\dfrac {f(t)} t}{s} & = \int_s^\infty \Laplace{t}{f(t)}{u} \du \\
+	\Laplace{t}{f(t)}{s} & = \dfrac {\int_0^T \! e^{-sT} f(t) \, \dt} {\dstyle 1 - e^{-s T}} \ni f(t + T) = f(t) \\
+	\Laplace{t}{u(t - c) f(t - c)}{s} & = e^{-c s} \Laplace{t}{f(t)}{s} \\
+	\Laplace{t}{u(t - c) f(t)}{s} & = e^{-c s} \Laplace{t}{f(t + c)}{s} \\
+	\Laplace{t}{\delta(at - b) f(ct - d)}{s} & = \dfrac{f\!\left(\tfrac{b c} a - d\right) u\! \left(\tfrac b a\right)}{|a| \exp\!\left(\tfrac b a s\right)} \\
+	\Laplace{t}{f(t) * g(t)}{s} & = \Laplace{t}{f(t)}{s} \Laplace{t}{g(t)}{s}
+\end{align}
+
+\subsubsection{Table of Transforms}\label{sec:laplace-table}
+
+\begin{align}
+	\Laplace{t}{t^p}{s} & = \dfrac{\Gamma(p + 1)}{s^{p + 1}} \ni p > -1 \\
+	\Laplace{t}{t^{n + \tfrac 1 2}}{s} & = \dfrac{(2n + 1)!!} {(2s)^{n+1}} \sqrt{\dfrac \pi s\,} \ni n \in \mathbb N_0 \\
+	\Laplace{t}{\sin a t}{s} & = \dfrac a {s^2 + a^2} \\
+	\Laplace{t}{\cos a t}{s} & = \dfrac s {s^2 + a^2}
+\end{align}
+
+\subsection{Inverse Laplace Transforms}
+
+Like with forward Laplace transforms, usually the intended method of computing inverse Laplace transforms is to do a table lookup, though this time partial fractions is usually needed first to do that. That method will be discussed in Section~\ref{sec:ilaplace-table} and is usually easier, assuming the function is both in the table and you remember it. Computating inverse laplace transforms manually will be discussed in Section~\ref{sec:ilaplace-compute}; the method itself is quite simple (especially if the multiplicity of each root is less than $\sim 3$), though the reasoning behind it is more complex (pun intended). NOTE: some of the formulas use the gamma function, which is defined as follows:
+
+\begin{equation}
+	\Gamma(x) := \int_0^\infty \!\! e^{-t} t^{x - 1} \, \dt = (x - 1)!
+\end{equation}
+
+\subsubsection{List of Properties}\label{sec:ilaplace-properties}
+
+Most of the generic properties are the exact inverse of properties of the forwared Laplace transform. Some of them are excluded since they aren't as fundamental.
+
+\begin{align}
+	\ILaplace{s}{\sum_k c_k F_k(s)}{t} & = \sum_k c_k \ILaplace{s}{F_k(s)}{t} \\
+	\ILaplace{s}{e^{-cs} F(s)}{t} & = u(t - c) \ILaplace{s}{F(s)}{t - c} \\
+	\ILaplace{s}{F^{(n)}(s)}{t} & = (-t)^n \ILaplace{s}{F(s)}{t} \\
+	\ILaplace{s}{\dfrac{F(s)} s}{t} & = \int_0^t \! \ILaplace{s}{F(s)}{\tau} \d\tau \\
+	\ILaplace{s}{F(s) G(s)}{t} & = \int_0^t \! \Big[ \ILaplace{s}{F(s)}{\tau} \Big] \Big[\ILaplace{s}{G(s)}{t - \tau} \Big] \d\tau \\
+	\ILaplace{s}{F(a s)}{t} & = \dfrac 1 a \ILaplace{s}{F(s)}{\tfrac t a}
+\end{align}
+
+\subsubsection{Table of Transforms}\label{sec:ilaplace-table}
+
+These transforms are the exact same as transforms in the regular Laplace transform table, but with the constants shifted around to be in the output instead.
+
+\begin{align}
+	\ILaplace{s}{\dfrac 1 {s^p}}{t} & = \dfrac{t^{p - 1}}{\Gamma(p)} \ni p > 0 \\
+	\ILaplace{s}{\dfrac 1 {(s - a)^p}}{t} & = \dfrac{t^{p - 1} e^{at}}{\Gamma(p)} \\
+	\ILaplace{s}{\dfrac 1 {s^2 + a^2}}{t} & = \dfrac{\sin a t} a
+	% the rest of the ones usually in the table are for stuff like sin(a t) + cos(b t) but at the same time for some reason.
+\end{align}
+
+\subsubsection{Computing Manually}\label{sec:ilaplace-compute} 
+
+There are a few formulas for the inverse laplace transform, but the most common of them is this (the Bromwich integral):
+
+\begin{equation}
+	\ILaplace{s}{F(s)}{t} = \dfrac 1 {2 \pi i} \int_{\gamma - \infty i}^{\gamma + \infty i} e^{s t} F(s) \ds
+\end{equation}
+
+Where $\gamma$ is any real number greater than the real part of the rightmost pole. For example for $F(s) = \dfrac 1 {(s + 1)(s - i) (e - 2 + i)}$, $\gamma > \max\Big(\Re(-1), \Re(i), \Re(2 - i)\Big) = \max(-1, 0, 2) = 2$. This integral can be rewritten as an integral over a line, which is as follows:
+
+\phantomsection \addcontentsline{toc}{paragraph}{Jordan's Lemma}
+\begin{equation}
+	I_1 := \ILaplace{s}{F(s)}{t} = \dfrac 1 {2 \pi i} \lim_{R \to \infty} \int_{C_1} e^{st} F(s) \ds \ni C_1 : \gamma - R i \text{ to } \gamma + R i
+\end{equation}
+
+Then you can add another term, $\dstyle I_2 := \dfrac 1 {2 \pi i} \lim_{R \to \infty} \int_{C_2} \!\! e^{st} F(s) \, \ds$, where $C_2$ is the left hemisphere of radius $R$ (it has to be left so it contains all the poles of $F$), centered at $(\gamma, 0)$. This term converges to zero due to Jordan's Lemma; the main idea of it is that the $\dstyle e^{st}$ factor kills the integral. The equation then becomes this:
+
+\begin{align*}
+	\ILaplace{s}{F(s)}{t}
+		& = I_1 + I_2 \\
+		& = \dfrac 1 {2 \pi i} \lim_{R \to \infty} \left[\int_{C_1} \!\! e^{st} F(s) \, \ds + \int_{C_2} \!\! e^{st} F(s) \, \ds\right] \\
+		& = \dfrac 1 {2 \pi i} \oint_C \! e^{st} F(s) \, \ds \numberthis
+\end{align*}
+
+Where $C$ is the left hemisphere in the limit as $R$ goes to infinity. This complex contour integral can be simplified via the Residue theorem, which says the following:
+
+\phantomsection \addcontentsline{toc}{paragraph}{Residue Theorem}
+\begin{equation*}\label{eqn:residue-thm}
+	\oint_D \! f(z) \, \dz = 2 \pi i \sum_{k=1}^n [a_k \in D] \Res(f, a_k) = 2 \pi i \!\! \sum_{p \in \rm poles} \!\! \Res(f, p)
+\end{equation*}
+
+In the next formula, $g(s)$ is defined to be exact same as $f(s)$, but with the $(s - p)^n$ term removed, or $\dstyle g(s) := (s - p)^n f(s)$. The residue of a pole $s = p$ of $f$ that appears $n$ times is given in (\ref{eqn:residue-def}). NOTE: the inside of the summation is essentially $(t + g(p))^{n - 1}$, except for instead of rasing $g$ to a power, it is taken to that derivative instead.
+
+\begin{equation}\label{eqn:residue-def}
+	\Res(f, p) := \dfrac 1 {\Gamma(n)} \lim_{s \to p} \ddn s {n - 1} \Big[ (s - p)^n f(s) \Big]
+	= \dfrac {e^{p t}} {\Gamma(n)} \sum_{k = 0}^n \binom n k t^{n - 1 - k} g^{(k)}(p)
+\end{equation}
+
+Plugging in the contour integral from before into the Residue Theorem equation, the $2 \pi i$ from each cancels out and it becomes:
+
+\begin{equation}
+	\ILaplace{s}{F(s)}{t} = \!\!\! \sum_{p \in {\rm poles}} \!\! \Res(e^{s t} F(s), p)
+\end{equation}
+
+In the case that each pole only occurs once, this is even simpler since the residue limits can all be computed by direct substitution after canceling out the single term that causes the issue.
+
+\begin{equation}
+	\ILaplace{s}{F(s)}{t} = \!\!\! \sum_{p \in {\rm poles}} \!\! e^{p t} \lim_{s \to p} \, (s - p) F(s)
+\end{equation}
+
+By combining the final residual sum formula with the expanded sum formula for the residual, the following formula can be computed (NOTE: $n_p$ is the multiplicity of the pole at $s=p$):
+
+\phantomsection \addcontentsline{toc}{paragraph}{Final Equation -- (eqn. \ref{eqn:ilaplace-final-eqn})}
+\begin{equation}\label{eqn:ilaplace-final-eqn}
+	\ILaplace{s}{F(s)}{t} = \sum_{p \in {\rm poles}} \dfrac {e^{p t}} {\Gamma(n_p)} \sum_{k = 0}^{n_p} \binom{n_p}{k} t^{n_p - 1 - k} g^{(k)}(p)
+\end{equation}
+
+These formulas for the inverse Laplace transform work best if $F(s)$ doesn't have addition at the top level, but if there is, you can just use the linearity of inverse Laplace transforms to separate them and apply the formulas on them separately. Also, interestingly, if $\gamma = 0$ in the original Bromwich integral, it becomes identical to the inverse Fourier transform.
+
+% NOTE: the final formula is wrong if the original f(t) is piecewise, e.g. include u(t - c) or something	
+
+\end{document}
