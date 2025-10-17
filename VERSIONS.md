@@ -1,0 +1,47 @@
+## Program Versions
+
+- 7zip: 25.01
+- Brave: 1.83.118 (Chromium: 141.0.7390.108)
+- C/C++/GAS/Fortran: MinGW-w64 GCC 15.2.0
+- Chocolatey: 2.5.1
+- Deno: 2.5.4
+- dotnet: 8.0.415
+- Emacs: 30.1.0
+- FFmpeg: 8.0
+- Go: 1.25.3
+- Git: 2.51.0.windows.2
+- Ghidra: 11.4.2
+- Ghostscript: 10.06.0
+- GTK Runtime: 3.24.31
+- Graphviz: 14.0.1 (20251006.0113)
+- Haskell GHC: 9.8.2
+- Inkscape: 1.4.2 (f4327f4, 2025-05-13)
+- Intel FPGA Lite: 24.1std.0
+- ImageMagick: 7.1.2-5 Q16-HDRI 4a620c2:20251006
+- Java: OpenJDK 25 2025-09-16
+- LaTeX: MiKTeX-pdfTeX 4.21 (MiKTeX 25.3)
+- MinGW-w64 devkit: 2.4.0
+- MongoDB: 8.2.1
+- MSVC cl: 19.36.32537
+- NASM: version 2.16.03 compiled on Apr 17 2024
+- NodeJS: 25.0.0
+- OpenSSL: 3.6.0 (Oct 1, 2025)
+- pdftk: 2.02
+- PowerShell: 7.5.3
+- Python: 3.13.9 & 3.14.0
+	- IPython: 9.6.0
+	- numpy: 2.2.6 & 2.3.4
+	- scipy: 1.16.2
+	- sympy: 1.14.0
+- QEMU: v10.1.0-12094-g5fa1466eb8-dirty
+- Roslyn: 4.6.0-3.23259.8 (c3cc1d0c) (Visual Studio version)
+- Ruby: 3.4.6 (2025-09-16 revision dbd83256b1)
+- Rust: 1.90.0 (1159e78c4 2025-09-14)
+- RustDesk: 1.4.2 (2025-09-15)
+- SumatraPDF: 3.5.2
+- Sublime Text: UNREGISTERED. Stable Channel, Build 4200
+- TI Connect CE: 6.0.1.344
+- VirtualBox: 7.2.2
+- Windows Terminal: 1.23.12811.0
+- Wolfram Language Engine: 14.3.0
+- WolframScript: 1.13.0 (file version 1.3.30900.8618)
