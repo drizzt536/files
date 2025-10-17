@@ -1,5 +1,4 @@
 // this file is basically just notes for https://guessthiscode.com/
-// this file requires ./../JavaScript/lib.js
 
 // null means either idk or N/A. "null" means the string "null"
 // language extenders probably don't include keywords of the languages they extend
@@ -22,7 +21,7 @@
  * examples: self explanitory
 **/
 
-var o = dict({
+{
 	"Abap": {
 		"extension": null,
 		"paradigm": null,
@@ -226,7 +225,7 @@ var o = dict({
 		"misc": null,
 		"examples": [
 			"Labelname: statement;",
-			'for (size_t a = 10; i --> 0 ;)\n\tprintf("%i\\n", i);',
+			"for (size_t a = 10; i --> 0 ;)\n\tprintf(\"%i\\n\", i);",
 			"#define error(str, err) ({fprintf(stderr, \"ERROR:%s:%llu: %s\\n\", __FILE__, __LINE__, (char *)str); exit((int) err); 0ULL;})",
 			"#define swap(x, y) ({ typeof(x) t = x; x = (typeof(t)) y; y = (typeof(t)) t; 0ULL;})",
 			"#include <stdio.h>\n\nint main(void){\n\tprintf(\"Hello World\\n\");\n\treturn 0;\n}",
@@ -341,7 +340,7 @@ var o = dict({
 		],
 		"examples": null,
 	}, "CMake": {
-		"extension": { name: "MakeFile" },
+		"extension": { "name": "MakeFile" },
 		"paradigm": null,
 		"function": null,
 		"variable": null,
@@ -491,7 +490,7 @@ var o = dict({
 			"if ... : ... elif ...: ... else: ...",
 			"try/except/finally/raise",
 			"def name(arg: T = defval, /, either: T = defval, *, kwarg: T = defval) -> T: ...",
-			'with open(filename, "r") as file:',
+			"with open(filename, 'r') as file:",
 			"as",
 			"global a, b",
 			"print ... (python 2)",
@@ -499,7 +498,7 @@ var o = dict({
 			"try/except/finally",
 			"break/continue/pass",
 			"match/case",
-			'if __name__ == "__main__":\n\tmain()',
+			"if __name__ == \"__main__\":\n\tmain()",
 		],
 		"misc": [
 			"blocks are based on whitespace. *cringe*",
@@ -592,7 +591,7 @@ var o = dict({
 			"print('4 times two is ${timesTwo(4)}');",
 		],
 	}, "Dockerfile": {
-		"extension": { name: "Dockerfile" },
+		"extension": { "name": "Dockerfile" },
 		"paradigm": null,
 		"function": null,
 		"variable": "$?",
@@ -787,7 +786,7 @@ var o = dict({
 		],
 		"examples": null,
 	}, "Git Config": {
-		"extension": { name: ".gitconfig" },
+		"extension": { "name": ".gitconfig" },
 		"paradigm": "N/A",
 		"function": "N/A",
 		"variable": "N/A",
@@ -907,11 +906,11 @@ var o = dict({
 			"a -- b -- c",
 			"a -- {b, c} -- d",
 			"a -- {b, c} -- d",
-			'{"1 2", "3 4"} -- {"5 6", "7 8"}',
+			"{\"1 2\", \"3 4\"} -- {\"5 6\", \"7 8\"}",
 			"a -> b -> d",
 			"layout = neato;\noverlap = false;\nbgcolor = black;",
 			"node [color=red, shape=house];\nedge [color=green]\ngraph [labelloc = t, labeljust = c];",
-			'label = "asdf"'
+			"label = \"asdf\""
 		],
 		"misc": [
 			"single quote strings are not allowed"
@@ -991,7 +990,7 @@ var o = dict({
 			"main :: IO ()\nmain = do ...",
 			"fork sem action",
 			"import System.Exit (exitSuccess)",
-			"next :: WithCounter a -> (a -> WithCounter b) -> WithCounter b\nf `next` g = \i -> let (r, i') = f i\n                   in  g r i'",
+			"next :: WithCounter a -> (a -> WithCounter b) -> WithCounter b\nf `next` g = \\i -> let (r, i') = f i\n                   in  g r i'",
 		],
 	}, "HCL": {
 		"extension": null,
@@ -1360,7 +1359,7 @@ var o = dict({
 		"misc": null,
 		"examples": [
 			"function Int() closure = () -> x + y;",
-			'console.println($"{f()}");',
+			"console.println($\"{f()}\");",
 		],
 	}, "Lua": {
 		"extension": "lua",
@@ -1431,7 +1430,7 @@ var o = dict({
 			"high",
 			"... : f32", // float32
 			"... : i64", // int64
-			'module attributes {llvm.data_layout = ""} { ... }',
+			"module attributes {llvm.data_layout = \"\"} { ... }",
 		],
 		"misc": null,
 		"examples": [
@@ -1489,7 +1488,7 @@ var o = dict({
 		"examples": [
 			"mov rax, 123",
 			"section .bss:\nmessage: db \"Hello World\", 10\nmessage_len: equ $ - message",
-			'segment rdata\n\tmsg\t\tdb \t\t"Hello World", 10, 0\n\nsegment text\n\tbits\t64\n\tglobal\tmain\n\textern\tprintf\n\nmain:\n\tsub \trsp, 32\n\tmov \trcx, [msg]\n\tmov \trdx, 13\n\tcall\tprintf\n\n\tadd \trsp, 32\n\txor \trax, rax\n\tret\n'
+			"segment rdata\n\tmsg\t\tdb \t\t\"Hello World\", 10, 0\n\nsegment text\n\tbits\t64\n\tglobal\tmain\n\textern\tprintf\n\nmain:\n\tsub \trsp, 32\n\tmov \trcx, [msg]\n\tmov \trdx, 13\n\tcall\tprintf\n\n\tadd \trsp, 32\n\txor \trax, rax\n\tret\n"
 		],
 	}, "Nginx": {
 		"extension": null,
@@ -1651,7 +1650,7 @@ var o = dict({
 			"foreach",
 			"clear",
 			"|",
-			'"${variable name}asdf$(expression ... )"',
+			"\"${variable name}asdf$(expression ... )\"",
 			"[<Type>]",
 			"[CmdletBinding()]",
 			"param ( ... )",
@@ -1689,7 +1688,7 @@ var o = dict({
 		],
 		"misc": [
 			"everything is case insensitive like in Batch",
-			'directories can use either "/" or "\\"',
+			"directories can use either \"/\" or \"\\\"",
 			"# single-line comment",
 			"<# multi-line comment #>",
 			"made by Microsoft. probably has things that refer to Microsoft",
@@ -1723,7 +1722,7 @@ var o = dict({
 			"halt",
 			"run()",
 			"cek()",
-			'λ()'
+			"λ()"
 		],
 		"misc": [
 			"logic (declarative) programming",
@@ -1785,7 +1784,7 @@ var o = dict({
 			"~",
 		],
 		"misc": [
-			"I think R is good for data science",
+			"R is good for data science",
 		],
 		"examples": [
 			"ggplot(mtcars, aes(drat, mpg, colour = gear)) + geom_point() + \n\tggforce::facet_zoom (x = gear == 3)",
@@ -2013,7 +2012,7 @@ var o = dict({
 		"examples": [
 			"def test1(): Unit = assert(poorPigs(8, 1, 1) == 3)",
 			"if arr(mid) == target then return true\nelse if arr(mid) > target then hi = mid\n else lo = mid+1 // arr(mid) < target",
-			'val prg2 = IO.raiseError[Int](new RuntimeException("PRG1 - BOOM!!!")).attempt',
+			"val prg2 = IO.raiseError[Int](new RuntimeException(\"PRG1 - BOOM!!!\")).attempt",
 			"def retryUntilRight[A, B](io: IO[Either[A, B]]): IO[B] = { ... }",
 			"retryUntilRight(prg2).timeout(3.seconds).unsafeRunSync()"
 		],
@@ -2173,18 +2172,8 @@ var o = dict({
 		"misc": null,
 		"examples": [
 			"function getContractOwnerAddress () private view returns(address) {",
-			`function functionCall(
-				address target,
-				bytes memory data,
-				string memory errorMessage
-			) internal returns (bytes memory) {
-				return functionCallWithValue(target, data, 0, errorMessage);
-			}`,
-			`interface ERC20 {
-				function balanceOf(address account) external view returns (uint256);
-				function transfer(address recipient, uint256 amount) external returns (bool);
-				function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-			}`,
+			"function functionCall(\n\taddress target,\n\tbytes memory data,\n\tstring memory errorMessage\n) internal returns (bytes memory) {\n\treturn functionCallWithValue(target, data, 0, errorMessage);\n}",
+			"interface ERC20 {\n\tfunction balanceOf(address account) external view returns (uint256);\n\tfunction transfer(address recipient, uint256 amount) external returns (bool);\n\tfunction transferFrom(address sender, address recipient, uint256 amount) external returns (bool);\n}",
 			"pragma solidity >=0.7.0 <0.9.0;",
 			"contract SadDamn is Initializable, OwnableUpgradeable { ... }",
 			" participants = new address payable[](0);",
@@ -2647,4 +2636,4 @@ var o = dict({
 		"misc": null,
 		"examples": null,
 	}
-});
+}
