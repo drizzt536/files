@@ -1,8 +1,9 @@
 from sublime_plugin import TextCommand
 from functools import partial
 
-class ChangeTabSizeCommand(TextCommand):
+class ChangeTabSizeInteractive(TextCommand):
 	# CS-p csz RET a RET
+	# TODO: add the functionality where f or S stop the input early.
 
 	def run(self, edit):
 		self.view.window().show_input_panel("n = ", "", self.on_done, None, None)

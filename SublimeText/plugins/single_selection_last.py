@@ -1,6 +1,6 @@
 from sublime_plugin import TextCommand
 
-class SingleSelectionLastCommand(TextCommand):
+class SingleSelectionLast(TextCommand):
 	def run(self, edit):
 		regions = self.view.selection
 

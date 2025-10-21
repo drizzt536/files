@@ -1,7 +1,7 @@
 from sublime import Region
 from sublime_plugin import TextCommand
 
-class MoveLastCursorCommand(TextCommand):
+class MoveLastCursor(TextCommand):
 	def run(self, edit, *, by="lines", forward = True):
 		cur_loc = self.view.selection[-1]
 		tab_size = self.view.settings().get("tab_size", 4)

@@ -1,7 +1,7 @@
 from sublime_plugin import WindowCommand
 import ast # for sanitizing the argument string.
 
-class CommandRepeatedWithArgsCommand(WindowCommand):
+class CommandRepeatedWithArgsInteractive(WindowCommand):
 	def run(self):
 		self.window.show_input_panel("n = ", "", self.on_get_n, None, None)
 

@@ -1,7 +1,9 @@
 from sublime import Region
 from sublime_plugin import TextCommand
 
-class TransposeLeftCommand(TextCommand):
+# TODO: fix this for if there is more than one cursor
+
+class TransposeLeft(TextCommand):
 	def run(self, edit):
 		# transpose right, and then move all the cursors back two characters
 		self.view.run_command("transpose")

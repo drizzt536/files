@@ -2,7 +2,7 @@ from sublime_plugin import WindowCommand
 from sublime import set_clipboard
 from os import name as osname
 
-class CopyFilenameCommand(WindowCommand):
+class CopyFilename(WindowCommand):
 	def run(self):
 		"copy the file name without the full path"
 		view = self.window.active_view()

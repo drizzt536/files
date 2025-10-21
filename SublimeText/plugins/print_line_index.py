@@ -2,7 +2,7 @@ from sublime_plugin import TextCommand
 
 # view.run_command("print_line_index")
 
-class PrintLineIndexCommand(TextCommand):
+class PrintLineIndex(TextCommand):
 	def run(self, edit):
 		"insert the current line number at the start of every cursor selection."
 

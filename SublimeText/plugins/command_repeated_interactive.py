@@ -1,6 +1,6 @@
 from sublime_plugin import WindowCommand
 
-class CommandRepeatedCommand(WindowCommand):
+class CommandRepeatedInteractive(WindowCommand):
 	def run(self):
 		self.window.show_input_panel("n = ", "", self.on_get_n, self.on_change_n, None)
 

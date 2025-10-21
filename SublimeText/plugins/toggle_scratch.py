@@ -1,6 +1,6 @@
 from sublime_plugin import TextCommand
 
-class ToggleScratchCommand(TextCommand):
+class ToggleScratch(TextCommand):
 	def run(self, edit, verbose: bool = False):
 		value = not self.view.is_scratch()
 

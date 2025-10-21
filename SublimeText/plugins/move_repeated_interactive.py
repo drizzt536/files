@@ -1,6 +1,6 @@
 from sublime_plugin import WindowCommand
 
-class MoveRepeatedCommand(WindowCommand):
+class MoveRepeatedInteractive(WindowCommand):
 	def run(self, *, by = "l", forward = True, extend = False):
 		if   by == "l": by = "lines"
 		elif by == "c": by = "characters"

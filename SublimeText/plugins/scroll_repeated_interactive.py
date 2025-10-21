@@ -1,7 +1,7 @@
 from sublime_plugin import WindowCommand
 from functools import partial
 
-class ScrollRepeatedCommand(WindowCommand):
+class ScrollRepeated(WindowCommand):
 	def run(self, *, by = "l", forward = True):
 		self._base_amount = -1.0 if forward else 1.0
 

@@ -1,6 +1,6 @@
 from sublime_plugin import WindowCommand
 
-class ReloadProjectFilesCommand(WindowCommand):
+class ReloadProjectFiles(WindowCommand):
 	def run(self):
 		proj_data = self.window.project_data()
 
