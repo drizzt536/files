@@ -635,7 +635,7 @@ else {
 			return
 		}
 
-		$message = "verifying file $i/${inputCount}: $dst"
+		$message = "`r`e[0Kverifying file $i/${inputCount}: $dst"
 
 		if ($message.length -ge [Console]::BufferWidth) {
 			$message = $message.substring(0, [Console]::BufferWidth - 4) + "..."
@@ -643,12 +643,11 @@ else {
 
 		write-host -noNewline $message
 		$equal = files-equal $src $dst
-		write-host -noNewline "`r`e[0K" # erase line
 
 		if (-not $equal) {
 			# this doesn't necessarily imply corruption.
 			# if you edit the file in between when it gets copied and verified, it may say this.
-			write-host "`e[38;5;172mbackup does not reflect source file: $dst"
+			write-host "`r`e[0K`e[38;5;172mbackup does not reflect source file: $dst"
 			$verifyErrors++
 		}
 
