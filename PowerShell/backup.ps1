@@ -63,7 +63,7 @@
 	If this option is passed, it indicates it is creating a backup instead of updating one.
 	This skips the size comparison check, and changes behavior slightly.
 .parameter dryRun
-	Alias: whatIf
+	Alias: -whatIf
 
 	don't actually move or delete anything, but print out what would normally happen.
 	some parts print out the exact command, and some parts don't.
