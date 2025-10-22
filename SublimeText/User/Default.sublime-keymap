@@ -35,8 +35,13 @@
 	{ "keys": ["ctrl+alt+f"], "command": "show_panel", "args": {"panel": "find_in_files"} },
 	{ "keys": ["ctrl+alt+s"], "command": "select_all" },
 
-	{ "keys": ["ctrl+i"], "command": "print_indices", "args": {"start": 1} },
-	{ "keys": ["ctrl+shift+i"], "command": "print_indices", "args": {"start": 0} },
+	{ "keys": ["ctrl+i"], "command": "print_sequence" },
+	{ "keys": ["ctrl+shift+i"], "command": "print_sequence", "args":     {"start": 0, "incr": 1, "bw": false} },
+	{ "keys": ["ctrl+alt+i"], "command": "print_sequence", "args":       {"start": 1, "incr": 1, "bw": true} },
+	{ "keys": ["ctrl+alt+shift+i"], "command": "print_sequence", "args": {"start": 0, "incr": 1, "bw": true} },
+
+	{ "keys": ["alt+i"], "command": "print_sequence", "args":            {"start": 1, "incr": 2, "bw": false} },
+	{ "keys": ["alt+shift+i"], "command": "print_sequence", "args":      {"start": 2, "incr": 2, "bw": false} },
 
 	{ "keys": ["ctrl+alt+d"], "command": "find_under_expand_skip" },
 	{ "keys": ["ctrl+shift+d"], "command": "show_overlay", "args": {"overlay": "goto", "text": ":"} },
@@ -47,23 +52,23 @@
 	{ "keys": ["alt+x", "alt+a"          ], "command": "focus_side_bar" }, // use ENTER or C-<N> to exit the side bar
 	{ "keys": ["alt+x", "alt+s"          ], "command": "toggle_side_bar" },
 	{ "keys": ["alt+x", "alt+t"          ], "command": "title_case" },
-	{ "keys": ["alt+x", "alt+e"          ], "command": "command_repeated" },
+	{ "keys": ["alt+x", "alt+e"          ], "command": "command_repeated_interactive" },
 	{ "keys": ["alt+x", "ctrl+alt+down"  ], "command": "spawn_below_last_cursor" },
 
 	// these next 8 might get removed. idk if I like them.
-	{ "keys": ["alt+x", "alt+up"         ], "command": "move_repeated", "args": {"by": "l", "forward": false} },
-	{ "keys": ["alt+x", "alt+down"       ], "command": "move_repeated", "args": {"by": "l", "forward": true } },
-	{ "keys": ["alt+x", "alt+right"      ], "command": "move_repeated", "args": {"by": "c", "forward": true } },
-	{ "keys": ["alt+x", "alt+left"       ], "command": "move_repeated", "args": {"by": "c", "forward": false} },
-	{ "keys": ["alt+x", "alt+shift+up"   ], "command": "move_repeated", "args": {"by": "l", "forward": false, "extend": true} },
-	{ "keys": ["alt+x", "alt+shift+down" ], "command": "move_repeated", "args": {"by": "l", "forward": true , "extend": true} },
-	{ "keys": ["alt+x", "alt+shift+right"], "command": "move_repeated", "args": {"by": "c", "forward": true , "extend": true} },
-	{ "keys": ["alt+x", "alt+shift+left" ], "command": "move_repeated", "args": {"by": "c", "forward": false, "extend": true} },
+	{ "keys": ["alt+x", "alt+up"         ], "command": "move_repeated_interactive", "args": {"by": "l", "forward": false} },
+	{ "keys": ["alt+x", "alt+down"       ], "command": "move_repeated_interactive", "args": {"by": "l", "forward": true } },
+	{ "keys": ["alt+x", "alt+right"      ], "command": "move_repeated_interactive", "args": {"by": "c", "forward": true } },
+	{ "keys": ["alt+x", "alt+left"       ], "command": "move_repeated_interactive", "args": {"by": "c", "forward": false} },
+	{ "keys": ["alt+x", "alt+shift+up"   ], "command": "move_repeated_interactive", "args": {"by": "l", "forward": false, "extend": true} },
+	{ "keys": ["alt+x", "alt+shift+down" ], "command": "move_repeated_interactive", "args": {"by": "l", "forward": true , "extend": true} },
+	{ "keys": ["alt+x", "alt+shift+right"], "command": "move_repeated_interactive", "args": {"by": "c", "forward": true , "extend": true} },
+	{ "keys": ["alt+x", "alt+shift+left" ], "command": "move_repeated_interactive", "args": {"by": "c", "forward": false, "extend": true} },
 
-	{ "keys": ["alt+x", "ctrl+up"], "command": "scroll_repeated", "args": {"forward": false} },
-	{ "keys": ["alt+x", "ctrl+down"], "command": "scroll_repeated", "args": {"forward": true} },
+	{ "keys": ["alt+x", "ctrl+up"], "command": "scroll_repeated_interactive", "args": {"forward": false} },
+	{ "keys": ["alt+x", "ctrl+down"], "command": "scroll_repeated_interactive", "args": {"forward": true} },
 
-	{ "keys": ["ctrl+k", "ctrl+r"], "command": "command_repeated" },
+	{ "keys": ["ctrl+k", "ctrl+r"], "command": "command_repeated_interactive" },
 
 	// TODO: consider moving the pane stuff from C-k to A-x
 	// TODO: consider unbinding either C-= or C--
@@ -99,11 +104,10 @@
 	// use AS-e for collapsing multiple cursors to the last one
 	{ "keys": ["alt+e"      ], "command": "noop" },
 	{ "keys": ["alt+shift+e"], "command": "noop" },
-	{ "keys": ["alt+e"      ], "command": "single_selection"     , "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
-	{ "keys": ["alt+shift+e"], "command": "single_selection_last", "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
+	{ "keys": ["alt+e"      ], "command": "single_selection"     , "context": [{"key": "num_selections", "operator": "not_equal", "operand": 1}] },
+	{ "keys": ["alt+shift+e"], "command": "single_selection_last", "context": [{"key": "num_selections", "operator": "not_equal", "operand": 1}] },
 
 	{ "keys": ["ctrl+k", "ctrl+d"], "command": "clear_bookmarks", "args": {"name": "mark"} },
-
 
 	{ "keys": ["alt+x", "alt+w"], "command": "close" },
 	{ "keys": ["alt+x", "alt+shift+w"], "command": "close_window" },
@@ -115,9 +119,11 @@
 	{ "keys": ["ctrl+h"], "command": "noop" }, // CS-f
 	{ "keys": ["ctrl+w"], "command": "noop" }, // A-xw
 	{ "keys": ["ctrl+shift+w"], "command": "noop" }, // A-xw
-	{ "keys": ["ctrl+f4"], "command": "noop" }, // A-xw (similar)
 	{ "keys": ["insert"], "command": "noop" }, // C-INSERT
 	{ "keys": ["shift+insert"], "command": "noop" }, // C-v
+	{ "keys": ["ctrl+shift+delete"], "command": "noop" }, // CA-x
+
+	{ "keys": ["ctrl+k", "ctrl+0"], "command": "noop" }, // C-]
 	{ "keys": ["ctrl+k", "ctrl+b"], "command": "noop" }, // A-xs
 	{ "keys": ["ctrl+k", "ctrl+g"], "command": "noop" }, // C-kd
 	{ "keys": ["ctrl+k", "ctrl+j"], "command": "noop" }, // C-]
@@ -142,6 +148,7 @@
 	{ "keys": ["shift+f3"], "command": "noop" }, // AS-d
 	{ "keys": ["alt+f3"], "command": "noop" }, // none
 	{ "keys": ["ctrl+f3"], "command": "noop" }, // none
+	{ "keys": ["ctrl+f4"], "command": "noop" }, // A-xw (similar)
 	{ "keys": ["ctrl+shift+f3"], "command": "noop" }, // none
 
 	{ "keys": ["pageup"], "command": "noop" }, // A-UP
@@ -162,7 +169,6 @@
 	{ "keys": ["ctrl+keypad_plus"], "command": "noop" }, // C-ENTER
 	{ "keys": ["ctrl+shift+keypad_plus"], "command": "noop" }, // CS-+
 
-
 	// I added C-a and C-e commands for all this stuff. this is to stop me from using these
 	{ "keys": ["home"], "command": "noop" }, // C-a
 	{ "keys": ["end"], "command": "noop" }, // C-e
@@ -173,19 +179,8 @@
 	{ "keys": ["ctrl+shift+home"], "command": "noop" }, // CS-a
 	{ "keys": ["ctrl+shift+end"], "command": "noop" }, // CS-e
 
-	// this command is stupid
-	{ "keys": ["ctrl+shift+a"], "command": "noop", "context": [{ "key": "selector", "operator": "equal", "operand": "(text.html, text.xml) - source", "match_all": true }] },
-
 	// A-e or AS-e
-	{ "keys": ["escape"], "command": "noop", "context": [{ "key": "num_selections", "operator": "not_equal", "operand": 1 }] },
-/*
-TODO: consider unbinding these. I almost never move by subwords
-	alt+left
-	alt+right
-	alt+shift+left
-	alt+shift+right
-TODO: consider unbinding CS-delete (AS-x) and C-backspace (CAS-x)
-*/
+	{ "keys": ["escape"], "command": "noop", "context": [{"key": "num_selections", "operator": "not_equal", "operand": 1}] },
 
 	// these are for unbinding the ones with context.
 	{ "keys": ["alt+1"], "command": "noop" },
@@ -199,46 +194,46 @@ TODO: consider unbinding CS-delete (AS-x) and C-backspace (CAS-x)
 	{ "keys": ["alt+9"], "command": "noop" },
 	{ "keys": ["alt+0"], "command": "noop" },
 
-	{ "keys": ["alt+1"], "command": "focus_group", "args": { "group": 0 } },
-	{ "keys": ["alt+2"], "command": "focus_group", "args": { "group": 1 } },
-	{ "keys": ["alt+3"], "command": "focus_group", "args": { "group": 2 } },
-	{ "keys": ["alt+4"], "command": "focus_group", "args": { "group": 3 } },
-	{ "keys": ["alt+5"], "command": "focus_group", "args": { "group": 4 } },
-	{ "keys": ["alt+6"], "command": "focus_group", "args": { "group": 5 } },
-	{ "keys": ["alt+7"], "command": "focus_group", "args": { "group": 6 } },
-	{ "keys": ["alt+8"], "command": "focus_group", "args": { "group": 7 } },
-	{ "keys": ["alt+9"], "command": "focus_group", "args": { "group": 8 } },
-	{ "keys": ["alt+0"], "command": "focus_group", "args": { "group": 9 } },
+	{ "keys": ["alt+1"], "command": "focus_group", "args": {"group": 0} },
+	{ "keys": ["alt+2"], "command": "focus_group", "args": {"group": 1} },
+	{ "keys": ["alt+3"], "command": "focus_group", "args": {"group": 2} },
+	{ "keys": ["alt+4"], "command": "focus_group", "args": {"group": 3} },
+	{ "keys": ["alt+5"], "command": "focus_group", "args": {"group": 4} },
+	{ "keys": ["alt+6"], "command": "focus_group", "args": {"group": 5} },
+	{ "keys": ["alt+7"], "command": "focus_group", "args": {"group": 6} },
+	{ "keys": ["alt+8"], "command": "focus_group", "args": {"group": 7} },
+	{ "keys": ["alt+9"], "command": "focus_group", "args": {"group": 8} },
+	{ "keys": ["alt+0"], "command": "focus_group", "args": {"group": 9} },
 
-	{ "keys": ["alt+shift+1"], "command": "move_to_group", "args": { "group": 0 } },
-	{ "keys": ["alt+shift+2"], "command": "move_to_group", "args": { "group": 1 } },
-	{ "keys": ["alt+shift+3"], "command": "move_to_group", "args": { "group": 2 } },
-	{ "keys": ["alt+shift+4"], "command": "move_to_group", "args": { "group": 3 } },
-	{ "keys": ["alt+shift+5"], "command": "move_to_group", "args": { "group": 4 } },
-	{ "keys": ["alt+shift+6"], "command": "move_to_group", "args": { "group": 5 } },
-	{ "keys": ["alt+shift+7"], "command": "move_to_group", "args": { "group": 6 } },
-	{ "keys": ["alt+shift+8"], "command": "move_to_group", "args": { "group": 7 } },
-	{ "keys": ["alt+shift+9"], "command": "move_to_group", "args": { "group": 8 } },
+	{ "keys": ["alt+shift+1"], "command": "move_to_group", "args": {"group": 0} },
+	{ "keys": ["alt+shift+2"], "command": "move_to_group", "args": {"group": 1} },
+	{ "keys": ["alt+shift+3"], "command": "move_to_group", "args": {"group": 2} },
+	{ "keys": ["alt+shift+4"], "command": "move_to_group", "args": {"group": 3} },
+	{ "keys": ["alt+shift+5"], "command": "move_to_group", "args": {"group": 4} },
+	{ "keys": ["alt+shift+6"], "command": "move_to_group", "args": {"group": 5} },
+	{ "keys": ["alt+shift+7"], "command": "move_to_group", "args": {"group": 6} },
+	{ "keys": ["alt+shift+8"], "command": "move_to_group", "args": {"group": 7} },
+	{ "keys": ["alt+shift+9"], "command": "move_to_group", "args": {"group": 8} },
 
-	{ "keys": ["ctrl+1"], "command": "select_by_index", "args": { "index": 0 } },
-	{ "keys": ["ctrl+2"], "command": "select_by_index", "args": { "index": 1 } },
-	{ "keys": ["ctrl+3"], "command": "select_by_index", "args": { "index": 2 } },
-	{ "keys": ["ctrl+4"], "command": "select_by_index", "args": { "index": 3 } },
-	{ "keys": ["ctrl+5"], "command": "select_by_index", "args": { "index": 4 } },
-	{ "keys": ["ctrl+6"], "command": "select_by_index", "args": { "index": 5 } },
-	{ "keys": ["ctrl+7"], "command": "select_by_index", "args": { "index": 6 } },
-	{ "keys": ["ctrl+8"], "command": "select_by_index", "args": { "index": 7 } },
-	{ "keys": ["ctrl+9"], "command": "select_by_index", "args": { "index": 8 } },
+	{ "keys": ["ctrl+1"], "command": "select_by_index", "args": {"index": 0} },
+	{ "keys": ["ctrl+2"], "command": "select_by_index", "args": {"index": 1} },
+	{ "keys": ["ctrl+3"], "command": "select_by_index", "args": {"index": 2} },
+	{ "keys": ["ctrl+4"], "command": "select_by_index", "args": {"index": 3} },
+	{ "keys": ["ctrl+5"], "command": "select_by_index", "args": {"index": 4} },
+	{ "keys": ["ctrl+6"], "command": "select_by_index", "args": {"index": 5} },
+	{ "keys": ["ctrl+7"], "command": "select_by_index", "args": {"index": 6} },
+	{ "keys": ["ctrl+8"], "command": "select_by_index", "args": {"index": 7} },
+	{ "keys": ["ctrl+9"], "command": "select_by_index", "args": {"index": 8} },
 	{ "keys": ["ctrl+0"], "command": "select_last_tab" },
 
-	{ "keys": ["ctrl+1"], "command": "focus_by_index", "args": { "index": 0 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+2"], "command": "focus_by_index", "args": { "index": 1 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+3"], "command": "focus_by_index", "args": { "index": 2 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+4"], "command": "focus_by_index", "args": { "index": 3 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+5"], "command": "focus_by_index", "args": { "index": 4 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+6"], "command": "focus_by_index", "args": { "index": 5 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+7"], "command": "focus_by_index", "args": { "index": 6 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+8"], "command": "focus_by_index", "args": { "index": 7 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+9"], "command": "focus_by_index", "args": { "index": 8 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
-	{ "keys": ["ctrl+0"], "command": "focus_by_index", "args": { "index": 9 }, "context": [{ "key": "group_has_multiselect", "operator": "equal", "operand": true }] },
+	{ "keys": ["ctrl+1"], "command": "focus_by_index", "args": {"index": 0}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+2"], "command": "focus_by_index", "args": {"index": 1}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+3"], "command": "focus_by_index", "args": {"index": 2}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+4"], "command": "focus_by_index", "args": {"index": 3}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+5"], "command": "focus_by_index", "args": {"index": 4}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+6"], "command": "focus_by_index", "args": {"index": 5}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+7"], "command": "focus_by_index", "args": {"index": 6}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+8"], "command": "focus_by_index", "args": {"index": 7}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+9"], "command": "focus_by_index", "args": {"index": 8}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
+	{ "keys": ["ctrl+0"], "command": "focus_by_index", "args": {"index": 9}, "context": [{"key": "group_has_multiselect", "operator": "equal", "operand": true}] },
 ]

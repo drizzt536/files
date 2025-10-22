@@ -1,11 +1,11 @@
 {
-	"font_size": 18,
-	"save_on_focus_lost": true,
+	"font_size": 17,
 	"word_wrap": true,
 	"light_color_scheme": "Mariana.sublime-color-scheme",
 	"match_brackets_content": true,
 	"move_to_limit_on_up_down": true,
 	"control_character_style": "names",
+	"save_on_focus_lost": true,
 	"update_system_recent_files": false,
 	"minimap_horizontal_scrolling": true,
 	"theme": "Adaptive.sublime-theme",
@@ -22,7 +22,7 @@
 		"*.suo", ".DS_Store",
 		".directory", "desktop.ini",
 		"*.sublime-workspace",
-		"*.mp4"
+		"*.mp4", "*.bin"
 	],
 
 	"folder_exclude_patterns": [
@@ -31,4 +31,6 @@
 		"__pycache__"
 	],
 	"index_files": true,
+	"hide_new_tab_button": true,
+	"hardware_acceleration": "opengl",
 }
