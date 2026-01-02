@@ -11,7 +11,7 @@
 %define SETUP_ARGC_ARGV_INC
 
 ; approximate C implementation
-%if 0
+%ifdifi
 typedef union {
 	wchar_t *wc;
 	char *c;
@@ -24,10 +24,10 @@ static inline __attribute__((always_inline)) void wstr_to_str_inplace_macro(wcha
 
 	for (i = 0; str.wc[i] != L'\0'; i++) {
 		// this part could probably be slightly more efficient
-		if (str.wc[i] > 255)
-			str.wc[i] = 63; // '?'
+		if (str.wc[i] > UINT8_MAX)
+			str.wc[i] = '?';
 
-		str.c[i] = str.wc[i] & 255;
+		str.c[i] = str.wc[i];
 	}
 
 	str.c[i] = '\0';
@@ -37,7 +37,7 @@ static inline __attribute__((always_inline)) void wstr_to_str_inplace_macro(wcha
 // returns argc and argv through rdi and rsi, ignoring the ABI stuff.
 void setup_argc_argv(void) {
 	// pretend the compiler won't restore these two values after the function ends.
-	register int argc asm("rdi");
+	register int argc asm("edi");
 	register wchar_t **argv asm("rsi") = CommandLineToArgvW(GetCommandLineW(), &argc);
 
 	for (int i = 0; i < argc; i++)
@@ -52,7 +52,7 @@ void setup_argc_argv(void) {
 	
 %macro wstr_to_str_inplace_macro 1
 	; wstr_to_str: returns nothing. the argument must be usable as a base register
-	xor 	r8, r8
+	xor 	r8d, r8d
 %%loop:
 	mov 	ax, [%1 + 2*r8]
 
@@ -72,78 +72,50 @@ void setup_argc_argv(void) {
 
 %if 0
 win_wstr_to_str_inplace:
-	xor 	r8, r8
-.loop:
-	mov 	ax, word [rcx + 2*r8]
-
-	test	ax, ax
-	jz  	.done	; null character
-
-	test	ah, ah	; test if the upper byte is 0
-	jz  	.ascii
-	mov 	al, '?'	; default to a question mark for non-ascii characters.
-.ascii:
-	mov 	[rcx + r8], al
-	inc 	r8
-	jmp 	.loop
-.done:
-	mov 	byte [rcx + r8], `\0` ; set the ending null byte
+	wstr_to_str_inplace_macro rcx
 	ret
 %endif
 
-%ifndef SETUP_ARGC_ARGV_MACRO_ONLY
-setup_argc_argv:
-	; moves argc into edi and argv into rsi.
-	; ignores the ABI convention of rdi and rsi being non-volatile. 
-	push	rbp
-	mov 	rbp, rsp
-	sub 	rsp, 48 ; 32-bit shadow space + 4-byte integer. 32 seems to work though too.
-
-	call	GetCommandLineW
-
-	mov 	rcx, rax
-	lea 	rdx, [rsp + 44]
-	call	CommandLineToArgvW
-
-	mov 	edi, [rsp + 44]	; rdi = argc
-	mov 	rsi, rax		; rsi = argv
-
-	xor 	r9, r9			; int i = 0;
-.loop:
-	mov 	rcx, [rsi + 8*r9] ; rcx = argv[i]
-	wstr_to_str_inplace_macro rcx
-;	call	win_wstr_to_str_inplace
-
-	inc 	r9
-	cmp 	r9, rdi
-	jl  	.loop
-
-	leave
-	ret
-%endif ; %ifndef SETUP_ARGC_ARGV_MACRO_ONLY
-
 %macro setup_argc_argv_macro 0
 	; moves argc into edi and argv into rsi.
+	;; assumes you have already done `sub rsp, 48` (or more)
 
-	;; assumes you have already done `sub rsp, 56` (or more)
-	;; 32 for the shadow space, then 4 for the dword stack variable,
-	;; and then 12 to align it to 16 bytes, and then 8 more to counteract the return address's 8 bytes
 	call	GetCommandLineW
 
 	mov 	rcx, rax
 	lea 	rdx, [rsp + 32]
 	call	CommandLineToArgvW
 
-	mov 	edi, [rsp + 32]	; rdi = argc
-	mov 	rsi, rax		; rsi = argv
+	mov 	edi, dword [rsp + 32]	; rdi = argc
+	mov 	rsi, rax				; rsi = argv
 
-	xor 	r9, r9			; int i = 0;
+	xor 	r9d, r9d				; int i = 0;
 %%loop:
-	mov 	rcx, [rsi + 8*r9] ; rcx = argv[i]
+	mov 	rcx, qword [rsi + 8*r9]	; rcx = argv[i]
 	wstr_to_str_inplace_macro rcx
 
-	inc 	r9
-	cmp 	r9, rdi
-	jl  	%%loop
+	inc 	r9d
+	cmp 	r9d, edi
+	jb  	%%loop
 %endm
+
+%ifndef SETUP_ARGC_ARGV_MACRO_ONLY
+setup_argc_argv:
+	; moves argc into edi and argv into rsi.
+	; ignores the ABI convention of rdi and rsi being non-volatile.
+
+	;; 48 comes from 32 for the shadow space, then 4 for the dword stack
+	;; variable, then 12 more to align to the next 16-byte boundary.
+	;; the `push rbp` counteracts the return address.
+	;; `sub rsp, 32` seems to also work, which indicates that none of the sub functions
+	;; actually use the shadow space. except for 16 doesn't work.
+	push	rbp
+	mov 	rbp, rsp
+	sub 	rsp, 48 ; 32-bit shadow space + 4-byte integer.
+
+	setup_argc_argv_macro
+
+	leave
+	ret
+%endif ; %ifndef SETUP_ARGC_ARGV_MACRO_ONLY
 %endif ; %ifndef SETUP_ARGC_ARGV_INC
