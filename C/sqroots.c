@@ -5,9 +5,9 @@
 #include <stdbool.h>
 
 #ifdef _WIN32
-	void Sleep(uint32_t ms); // windows.h
+	void Sleep(uint32_t ms); // <windows.h>
 #else
-	int usleep(uint32_t usec); // unistd.h
+	int usleep(uint32_t usec); // <unistd.h>
 #endif
 
 static inline __attribute__((always_inline)) void msleep(unsigned ms) {
@@ -20,6 +20,7 @@ static inline __attribute__((always_inline)) void msleep(unsigned ms) {
 }
 
 typedef uint8_t u8;
+typedef uint32_t u32;
 
 int main(int argc, const char **argv) {
 	argc--; argv++;
@@ -143,7 +144,7 @@ int main(int argc, const char **argv) {
 	msleep(wait_ms);
 
 	bool all_done;
-	uint32_t iteration = 1;
+	u32 iteration = 1;
 	while (true) {
 		all_done = true;
 
