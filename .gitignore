@@ -13,8 +13,6 @@
 /TeX/JSAANLFE/
 /PicoDucky/scripts/
 /Python/manim/*/*
-# TypeScript version of lib.js
-/JavaScript/Library/
 # This is a separate repository and I can't get submodules to work.
 /HTML/File-Sharing/
 
