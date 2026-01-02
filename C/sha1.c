@@ -346,7 +346,7 @@ A2338FE30996EF39FD8B1DB911276C13B5B16269
 // 0x67452301 0xEFCDAB89 0x98BADCFE 0x10325476 0xC3D2E1F0
 // 0x67452301EFCDAB8998BADCFE10325476C3D2E1F0
 
-#define eprintf(STR, ...) printf("\x1b[31mERROR: " STR "\x1b[0m\n" __VA_OPT__(,) __VA_ARGS__)
+#define eprintf(STR, ...) printf("\e[31mERROR: " STR "\e[0m\n" __VA_OPT__(,) __VA_ARGS__)
 
 int main(int argc, const char *argv[]) {
 	// printf("sizeof(SHA1_CTX) : %zu bytes\n", sizeof(SHA1_CTX));
