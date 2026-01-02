@@ -63,8 +63,8 @@ def void(*args, **kwargs) -> None:
 	"takes in any number of arguments and return nothing."
 	pass
 
-def monitors() -> list[dict["top", "left", "width", "height"], ...]:
-	"returns a list of all connected monitors."
+def monitors() -> list[dict["top", "left", "width", "height"]]:
+	"returns a list of all connected monitors. windows only."
 
 	from ctypes.wintypes import RECT
 	from ctypes import (
