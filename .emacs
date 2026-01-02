@@ -163,19 +163,20 @@ works for `dired-mode` and `archive-mode` major modes."
 
 (custom-set-variables
 	'(archive-zip-extract '("unzip" "-q" "-p")) ; BusyBox version
-	'(auto-save-default nil)
+	'(auto-save-default nil) ; don't create `#filename#` files.
 	'(blink-cursor-mode nil)
-	'(buffer-file-coding-system 'utf-8-dos t)
+	'(buffer-file-coding-system 'utf-8 t)
+	'(c-syntactic-indentation nil) ; don't do 2-space tab nonsense in C
 	'(column-number-indicator-zero-based nil)
 	'(column-number-mode t)
-	'(create-lockfiles nil)
+	'(create-lockfiles nil) ; don't create `.#filename` files
 	'(custom-enabled-themes '(wombat))
-	'(default-buffer-file-coding-system 'utf-8-dos)
+	'(default-buffer-file-coding-system 'utf-8)
 	'(default-directory home-directory t)
-	'(default-file-name-coding-system 'utf-8-dos t)
-	'(default-keyboard-coding-system 'utf-8-dos t)
-	'(default-process-coding-system '(utf-8-dos . utf-8-dos) t)
-	'(default-terminal-coding-system 'utf-8-dos t)
+	'(default-file-name-coding-system 'utf-8 t)
+	'(default-keyboard-coding-system 'utf-8 t)
+	'(default-process-coding-system '(utf-8 . utf-8) t)
+	'(default-terminal-coding-system 'utf-8 t)
 	'(delete-trailing-lines t)
 	'(dired-hide-details-hide-information-lines nil)
 	'(display-line-numbers-type t)
@@ -213,7 +214,7 @@ works for `dired-mode` and `archive-mode` major modes."
 			(nthcdr 3 (directory-files "C:/Users/djanu/AppData/Roaming/.emacs.d/Elpa/" t))
 			(nthcdr 3 (directory-files (concat home-directory ".emacs.d/elpa/") t)))
 		t)
-	'(make-backup-files nil)
+	'(make-backup-files nil) ; don't create `filename~` files.
 	'(menu-bar-mode nil)
 	'(require-final-newline t)
 	'(savehist-file (concat home-directory ".emacs.d/.history"))
@@ -340,6 +341,7 @@ works for `dired-mode` and `archive-mode` major modes."
 
 ;;; TODOS ;;;
 
+; use `display-line-numbers-mode` instead of `linum-mode`, which doesn't work anymore.
 ; Make C-↓ go down by 5 lines, or less if at the end of the buffer
 ; Make C-↑ go up by 5 lines, or less if at the start of the buffer
 ; S-← <key> should override characters
