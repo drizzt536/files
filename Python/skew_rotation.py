@@ -1,33 +1,34 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Requires Python 3.10 or higher.
 	or-operator type-unions (`|`)
 
-Built for NumPy 1.26.0, but probably works with other versions too.
-	things used: where, zeros, sum, any, ndarray.
-
-Built for Sympy 1.12, but probably works with other versions too.
-	things used: sin, tan, Float, Integer, Basic
+requires numpy: where, zeros, sum, any, rot90, ndarray.
+requires sympy: pi, sin, tan, Integer, Basic
+it should work with basically any versions of these that work in the version of Python being used.
 
 Provides 4 functions (1 external, 3 internal):
-	- rotate: rotate an image, preserving all pixels.
+	- rotate_image: rotate an image, preserving the existence of all pixels.
 	- _apply_x_skew: skew image in x direction
 	- _apply_y_skew: skew image in y direction
 	- _without_borders: removes black borders from the edges of images
 
+probably doesn't work with images that have alpha channels.
+
 inspired by: https://youtu.be/1LCEiVDHJmc
 """
 
-from sys import version_info
+from sys import version_info as py_version
 
-if version_info < (3, 10):
-	raise Exception("This script requires Python 3.10 or newer.")
-
-del version_info
+if py_version < (3, 10):
+	raise Exception("This module requires Python 3.10 or newer.")
 
 import numpy as np
 import sympy as sp
+from fractions import Fraction
+
+pi = sp.pi
 ndarray = np.ndarray
 
 
@@ -49,7 +50,7 @@ def _apply_x_skew(image: ndarray, x: float | int) -> ndarray:
 	if x == 0:
 		return image
 
-	if type(image) is not ndarray:
+	if not isinstance(image, ndarray):
 		raise TypeError("image must be an ndarray")
 
 	if len(image.shape) < 2:
@@ -89,7 +90,7 @@ def _apply_y_skew(image: ndarray, y: float | int) -> ndarray:
 	refer to `_apply_x_skew`'s docstring for an explanation.
 	"""
 
-	if type(image) is not ndarray:
+	if not isinstance(image, ndarray):
 		raise TypeError("image must be an ndarray")
 
 	if len(image.shape) != 3:
@@ -112,9 +113,9 @@ def _without_borders(image: ndarray) -> ndarray:
 	"""
 
 	# TODO: figure out which sides will have the border based on the angle, and only do those.
-	# maybe could use the original (height, width), and shrink the image down  to (width, height)
+	# maybe could use the original (height, width), and shrink the image down to (width, height)
 
-	if type(image) is not ndarray:
+	if not isinstance(image, ndarray):
 		raise TypeError("image must be an ndarray")
 
 	if len(image.shape) not in {2, 3}:
@@ -131,8 +132,8 @@ def _without_borders(image: ndarray) -> ndarray:
 	]
 
 def rotate_image(image: ndarray, *,
-	degrees: float | int | None = None,
-	radians: float | int | None = None,
+	degrees: float | int | Fraction | sp.Basic | None = None,
+	radians: float | int | Fraction | sp.Basic | None = None,
 	direction: str = "counterclockwise",
 	keep_border: bool = False
 ) -> ndarray:
@@ -148,16 +149,16 @@ def rotate_image(image: ndarray, *,
 	returns a new image.
 	"""
 
-	if type(image) is not ndarray:
+	if not isinstance(image, ndarray):
 		raise TypeError("image must be an ndarray")
 
 	if len(image.shape) != 3:
 		raise TypeError("image must be an 3-dimensional ndarray")
 
-	if type(keep_border) is not bool:
+	if not isinstance(keep_border, bool):
 		raise TypeError("keep_border must be a boolean")
 
-	if type(direction) is not str:
+	if not isinstance(direction, str):
 		raise TypeError("direction must be a string")
 
 	if direction not in {"clockwise", "cw", "counterclockwise", "ccw"}:
@@ -165,46 +166,58 @@ def rotate_image(image: ndarray, *,
 
 	if degrees is not None:
 		if radians is not None:
-			raise Exception("only onw od \"radians\" or \"degrees\" keyword arguments can be passed")
+			raise Exception("only one of \"radians\" or \"degrees\" keyword arguments can be passed")
+
+		if isinstance(degrees, float):
+			degrees = Fraction(degrees).limit_denominator()
+
 		# TODO: assert type
-		θ = sp.rad(sp.sympify(degrees))
+		θ = sp.sympify(degrees) * pi / 180 # convert to radians
 	elif radians is not None:
+		if isinstance(radians, float):
+			radians = Fraction(radians).limit_denominator()
+
 		# TODO: assert type
 		θ = sp.sympify(radians)
 	else:
-		raise ValueError("either the \"radians\" or \"degrees\" keyword argument must be passed")
+		raise ValueError("one of \"radians\" or \"degrees\" keyword argument must be passed")
 
 	if direction == "clockwise" or direction == "cw":
 		θ *= -1
 
-	θ %= 2*sp.pi
+	θ %= 2*pi
 
 	# trivial rotations (can be done without skewing)
 
+	# transform θ to be less than pi/2 (90°)
+	# NOTE: (0, 1) are the default axes for rot90.
+	if θ >= 3*pi/2:
+		θ -= 3*pi/2 # 270°
+		image = np.rot90(image, k=3).copy()
+	elif θ >= pi:
+		θ -= pi # 180°
+		image = np.rot90(image, k=2).copy()
+	elif θ >= pi/2:
+		θ -= pi/2 # 90°
+		image = np.rot90(image, k=1).copy()
+
 	if θ == 0:
+		# this covers 0, pi/2, pi, and 3*pi/2
 		return image.copy()
 
-	if θ == sp.pi/2:
-		return np.rot90(image, k=1, axes=(0, 1)).copy()
-
-	if θ == sp.pi:
-		return np.rot90(image, k=2, axes=(0, 1)).copy()
-
-	if θ == 3 * sp.pi / 2:
-		return np.rot90(image, k=1, axes=(1, 0)).copy()
-
-	# all the other rotations
-
 	# math.tan(math.pi) != 0
-	x_skew = sp.tan(-θ/2)
-	y_skew = sp.sin(-θ)
+	x_skew = -sp.tan(θ/2)
+	y_skew = -sp.sin(θ)
 
-	x_skew = int(x_skew) if type(x_skew) is sp.Integer else float(x_skew)
-	y_skew = int(y_skew) if type(y_skew) is sp.Integer else float(y_skew)
+	x_skew = int(x_skew) if isinstance(x_skew, sp.Integer) else float(x_skew)
+	y_skew = int(y_skew) if isinstance(y_skew, sp.Integer) else float(y_skew)
 
 	image = _apply_x_skew(image, x_skew)
 	image = _apply_y_skew(image, y_skew)
 	image = _apply_x_skew(image, x_skew)
 
 	return image if keep_border else _without_borders(image)
-	
+
+if __name__ == "__main__":
+	print("skew_rotation.py should not be used on its own")
+	exit(1)
