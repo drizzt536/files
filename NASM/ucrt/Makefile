@@ -1,10 +1,6 @@
 START_TIME := $(shell date +%s)
 
-DEPENDENCIES = $(shell ls *.nasm 2>/dev/null \
-	| tr '\n' ' ' \
-	| sed 's/\.nasm/\.exe/g')
-
-all: $(DEPENDENCIES)
+all: $(shell ls -1 *.nasm 2>/dev/null | sed 's/\.nasm/\.exe/g' | tr '\n' ' ')
 	@echo "Duration: $$(( $$(date +%s) - $(START_TIME) )) seconds"
 
 %.exe: %.nasm
