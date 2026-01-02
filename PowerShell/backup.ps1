@@ -10,7 +10,8 @@
 
 	Doesn't work with mounted paths, but just don't have more than 26 drives at a time.
 
-	Only works on Windows, but doesn't rely on anything other than PowerShell 7 and fsutil.exe.
+	Only works on Windows, because it uses fsutil.exe, Windows drive letter scheming,
+	and [Security.Principal.WindowsIdentity]::GetCurrent
 
 	returns an exit code of 0 on success and 1 on fail. read the messages for the exit reason.
 
@@ -308,7 +309,7 @@ if (test-path -type container $reference) {
 if ($inputDrive -eq "C") {
 	# fsutil sometimes doesn't work for the C drive.
 	# NOTE: this assumes Windows is in the C drive, which is almost always the case.
-	$isAdmin = [bool] ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -eq "S-1-5-32-544")
+	$isAdmin = [bool] ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -eq "S-1-5-32-544").count
 
 	if (-not $isAdmin) {
 		write-host "`e[1;33mNOTE: corruption heuristics might not be accurate for C: without administrator"
