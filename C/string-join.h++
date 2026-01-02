@@ -1,5 +1,5 @@
 #ifdef STRING_JOIN_H
-	#warning "including string-join.h and string-join.h++ is a bad idea."
+	#warning "including both string-join.h and string-join.h++ is a bad idea."
 #endif
 
 #ifndef STRING_JOIN_HPP
@@ -10,8 +10,14 @@
 		#define STRING_JOIN_DEFAULT_JOINER ' '
 	#endif
 
-	#include <cstdlib> // calloc, realloc, free
-	#include <cstring> // strlen, strdup, memcpy, size_t
+	#ifndef STRING_JOIN_NOINCLUDE
+		#include <cstdlib> // calloc, realloc, free
+		#include <cstring> // strlen, strdup, memcpy, size_t
+	#endif
+
+	#ifndef FORCE_INLINE
+		#define FORCE_INLINE inline __attribute__((always_inline))
+	#endif
 
 	typedef struct {
 		char *s;   // string
@@ -40,21 +46,21 @@
 			.l = 1                     \
 		}                               \
 	)
-	static inline string atos(const char *const str) {
+	static FORCE_INLINE string atos(const char *const str) {
 		// ascii to string
 		return (string) {
 			.s = (char *) str,
 			.l = std::strlen(str)
 		};
 	}
-	static inline string ctons(const char c) {
+	static FORCE_INLINE string ctons(const char c) {
 		// character to new (heap) string
 		return (string) {
 			.s = std::strdup((char []) {c, '\0'}),
 			.l = 1
 		};
 	}
-	static inline string atons(const char *const str) {
+	static FORCE_INLINE string atons(const char *const str) {
 		// ascii to new (heap) string
 		return (string) {
 			.s = (char *) std::strdup(str),
@@ -152,7 +158,7 @@
 		std::free(dst.s);
 		return (string) {nullptr, 0};
 	}
-	static inline string strjoin(
+	static FORCE_INLINE string strjoin(
 		string dst,
 		const size_t argc,
 		const string *argv,
@@ -160,15 +166,15 @@
 	) {
 		// struct string join (char joiner) into destination. sstrjoinci
 
-		return sstrjoinsi(dst, argc, argv, ctos(joiner));
+		return strjoin(dst, argc, argv, ctos(joiner));
 	}
-	static inline string strjoin(const string dst, const size_t argc, const string *argv) {
+	static FORCE_INLINE string strjoin(const string dst, const size_t argc, const string *argv) {
 		// struct string join (implicit space joiner) into destination. sstrjoini
 
-		return sstrjoinsi(dst, argc, argv, (string) {nullptr, 0});
+		return strjoin(dst, argc, argv, (string) {nullptr, 0});
 	}
 
-	static inline string strjoin(
+	static FORCE_INLINE string strjoin(
 		const char *dst,
 		const size_t argc,
 		const char *const *const argv,
@@ -181,9 +187,9 @@
 		for (size_t i = 0; i < argc; i++)
 			argv_strings[i] = atos(argv[i]);
 
-		return sstrjoinsi(atos(dst), argc, argv_strings, joiner);
+		return strjoin(atos(dst), argc, argv_strings, joiner);
 	}
-	static inline string strjoin(
+	static FORCE_INLINE string strjoin(
 		const char *dst,
 		const size_t argc,
 		const char *const *const argv,
@@ -191,41 +197,41 @@
 	) {
 		// string join (char joiner) into destination. strjoinci
 
-		return strjoinsi(dst, argc, argv, ctos(joiner));
+		return strjoin(dst, argc, argv, ctos(joiner));
 	}
-	static inline string strjoin(
+	static FORCE_INLINE string strjoin(
 		const char *dst,
 		const size_t argc,
 		const char *const *const argv
 	) {
 		// string join (implicit space joiner) into destination. strjoini
 
-		return strjoinci(dst, argc, argv, STRING_JOIN_DEFAULT_JOINER);
+		return strjoin(dst, argc, argv, STRING_JOIN_DEFAULT_JOINER);
 	}
 
 
 	/// create new string
 
-	static inline string strjoin(const size_t argc, const string *argv, const string joiner) {
+	static FORCE_INLINE string strjoin(const size_t argc, const string *argv, const string joiner) {
 		// struct string join (string joiner). sstrjoins
 
-		return sstrjoinsi((string) {
+		return strjoin((string) {
 			.s = std::calloc(1, sizeof(char)),
 			.l = 0
 		}, argc, argv, joiner);
 	}
-	static inline string strjoin(const size_t argc, const string *argv, const char joiner) {
+	static FORCE_INLINE string strjoin(const size_t argc, const string *argv, const char joiner) {
 		// struct string join (char joiner). sstrjoinc
 
-		return sstrjoins(argc, argv, ctos(joiner));
+		return strjoin(argc, argv, ctos(joiner));
 	}
-	static inline string strjoin(const size_t argc, const string *argv) {
+	static FORCE_INLINE string strjoin(const size_t argc, const string *argv) {
 		// struct string join (implicit space joiner). sstrjoin
 
-		return sstrjoinc(argc, argv, STRING_JOIN_DEFAULT_JOINER);
+		return strjoin(argc, argv, STRING_JOIN_DEFAULT_JOINER);
 	}
 
-	static inline string strjoin(
+	static FORCE_INLINE string strjoin(
 		const size_t argc,
 		const char *const *const argv,
 		const string joiner
@@ -236,21 +242,21 @@
 		for (size_t i = 0; i < argc; i++)
 			argv_strings[i] = atos(argv[i]);
 
-		return sstrjoins(argc, argv_strings, joiner);
+		return strjoin(argc, argv_strings, joiner);
 	}
-	static inline string strjoin(
+	static FORCE_INLINE string strjoin(
 		const size_t argc,
 		const char *const *const argv,
 		const char joiner
 	) {
 		// string join (char joiner). strjoinc
 
-		return strjoins(argc, argv, ctos(joiner));
+		return strjoin(argc, argv, ctos(joiner));
 	}
-	static inline string strjoin(const size_t argc, const char *const *const argv) {
+	static FORCE_INLINE string strjoin(const size_t argc, const char *const *const argv) {
 		// string join (implicit space joiner). strjoin
 
-		return strjoinc(argc, argv, STRING_JOIN_DEFAULT_JOINER);
+		return strjoin(argc, argv, STRING_JOIN_DEFAULT_JOINER);
 	}
 
 

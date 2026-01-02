@@ -1,5 +1,5 @@
 #ifdef STRING_JOIN_HPP
-	#warning "including string-join.h and string-join.h++ is a bad idea."
+	#warning "including both string-join.h and string-join.h++ is a bad idea."
 #endif
 
 #ifndef STRING_JOIN_H
@@ -10,8 +10,14 @@
 		#define STRING_JOIN_DEFAULT_JOINER ' '
 	#endif
 
-	#include <stdlib.h> // calloc, realloc, free, NULL
-	#include <string.h> // strlen, strdup, memcpy, size_t
+	#ifndef STRING_JOIN_NOINCLUDE
+		#include <stdlib.h> // calloc, realloc, free, NULL
+		#include <string.h> // strlen, strdup, memcpy, size_t
+	#endif
+
+	#ifndef FORCE_INLINE
+		#define FORCE_INLINE inline __attribute__((always_inline))
+	#endif
 
 	typedef struct {
 		char *s;   // string
@@ -27,21 +33,21 @@
 			.l = 1                     \
 		}                               \
 	)
-	static inline string atos(const char *const str) {
+	static FORCE_INLINE string atos(const char *const str) {
 		// ascii to string
 		return (string) {
 			.s = (char *) str,
 			.l = strlen(str)
 		};
 	}
-	static inline string ctons(const char c) {
+	static FORCE_INLINE string ctons(const char c) {
 		// character to new (heap) string
 		return (string) {
 			.s = strdup((char []) {c, '\0'}),
 			.l = 1
 		};
 	}
-	static inline string atons(const char *const str) {
+	static FORCE_INLINE string atons(const char *const str) {
 		// ascii to new (heap) string
 		return (string) {
 			.s = (char *) strdup(str),
@@ -138,7 +144,7 @@
 		free(dst.s);
 		return (string) {NULL, 0};
 	}
-	static inline string sstrjoinci(
+	static FORCE_INLINE string sstrjoinci(
 		const string dst,
 		const size_t argc,
 		const string *argv,
@@ -146,11 +152,11 @@
 	) {
 		return sstrjoinsi(dst, argc, argv, ctos(joiner));
 	}
-	static inline string sstrjoini(const string dst, const size_t argc, const string *argv) {
+	static FORCE_INLINE string sstrjoini(const string dst, const size_t argc, const string *argv) {
 		return sstrjoinsi(dst, argc, argv, (string) {NULL, 0});
 	}
 
-	static inline string strjoinsi(
+	static FORCE_INLINE string strjoinsi(
 		const char *dst,
 		const size_t argc,
 		const char *const *const argv,
@@ -163,7 +169,7 @@
 
 		return sstrjoinsi(atos(dst), argc, argv_strings, joiner);
 	}
-	static inline string strjoinci(
+	static FORCE_INLINE string strjoinci(
 		const char *dst,
 		const size_t argc,
 		const char *const *const argv,
@@ -171,7 +177,7 @@
 	) {
 		return strjoinsi(dst, argc, argv, ctos(joiner));
 	}
-	static inline string strjoini(
+	static FORCE_INLINE string strjoini(
 		const char *dst,
 		const size_t argc,
 		const char *const *const argv
@@ -182,7 +188,7 @@
 
 	/// create new string
 
-	static inline string sstrjoins(
+	static FORCE_INLINE string sstrjoins(
 		const size_t argc,
 		const string *argv,
 		const string joiner
@@ -192,14 +198,14 @@
 			.l = 0
 		}, argc, argv, joiner);
 	}
-	static inline string sstrjoinc(const size_t argc, const string *argv, const char joiner) {
+	static FORCE_INLINE string sstrjoinc(const size_t argc, const string *argv, const char joiner) {
 		return sstrjoins(argc, argv, ctos(joiner));
 	}
-	static inline string sstrjoin(const size_t argc, const string *argv) {
+	static FORCE_INLINE string sstrjoin(const size_t argc, const string *argv) {
 		return sstrjoinc(argc, argv, STRING_JOIN_DEFAULT_JOINER);
 	}
 
-	static inline string strjoins(
+	static FORCE_INLINE string strjoins(
 		const size_t argc,
 		const char *const *const argv,
 		const string joiner
@@ -211,14 +217,14 @@
 
 		return sstrjoins(argc, argv_strings, joiner);
 	}
-	static inline string strjoinc(
+	static FORCE_INLINE string strjoinc(
 		const size_t argc,
 		const char *const *const argv,
 		const char joiner
 	) {
 		return strjoins(argc, argv, ctos(joiner));
 	}
-	static inline string strjoin(const size_t argc, const char *const *const argv) {
+	static FORCE_INLINE string strjoin(const size_t argc, const char *const *const argv) {
 		return strjoinc(argc, argv, STRING_JOIN_DEFAULT_JOINER);
 	}
 
