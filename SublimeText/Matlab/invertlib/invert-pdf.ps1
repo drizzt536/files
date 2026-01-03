@@ -17,16 +17,18 @@
 		- ghostscript		(gs / gswin64c / gswin32c)
 							used for PDF optimization.
 							at least one of ghostscript and qpdf must exist for `-optimize $true` to work,
-							but if both are present, both will be used in series.
+							but if both are present, both will be used in series. (ghostscript first)
 		- qpdf				used for PDF optimization
 .description
 	process:
-		1. convert PDF to SVGs
-		2. invert SVGs
-		3. convert SVGs to PDFs
-		4. combine PDFs into one PDF
-		5. copy over text layer from the original PDF
-		6. copy over bookmarks and stuff from the original PDF
+		1. optimize input file (if `-optimize $true` given)
+		2. convert PDF to SVGs
+		3. invert SVGs
+		4. convert SVGs to PDFs
+		5. combine PDFs into one PDF
+		6. copy over text layer from the original PDF
+		7. copy over bookmarks and stuff from the original PDF
+		8. optimize output file (if `-optimize $true` given)
 .parameter infile
 	The input file to invert the colors of. should be a valid PDF.
 .parameter outfile
@@ -184,7 +186,7 @@ try {
 				write-host "${indent+1}qpdf optimizing"
 			}
 
-			# NOTE: some of these argumetns aren't required.
+			# NOTE: some of these arguments aren't required.
 			qpdf $optimizedTmpFile --force-version=1.7 --coalesce-contents `
 				--remove-unreferenced-resources=yes --object-streams=generate `
 				--compress-streams=y --stream-data=compress --recompress-flate `
@@ -292,7 +294,7 @@ try {
 				[void] (new-item text.tmp.pdf -target $optimizedInput -type symboliclink)
 			} catch {
 				# hardlinks/symlinks are not available on the given drive, so just copy it instead.
-				copy-item text.tmp.pdf $optimizedInput
+				copy-item $optimizedInput text.tmp.pdf
 			}
 		}
 	}

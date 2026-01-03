@@ -12,16 +12,17 @@
 
 	The formats are determined to be valid or invalid based on version:
 	ImageMagick 7.1.1-38 Q16-HDRI x64 b0ab922:20240901
-		Compiled with Visual Studio 2022 (194134120)
 #>
+[CmdletBinding()]
 param (
-	[string] $infile,
+	[Parameter(Mandatory=$true)] [string] $infile,
 	[string] $outfile = $infile,
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
 	[ValidateSet("none", "basic", "overwrite", "verbose")] [string] $logging = "basic",
 	[bool] $keepIntermediateFiles = $false,
+	# -optimize  - EPS, PDF, SVG
 	[switch] $help,
 
 	# -SVGTool   - DOC/DOCX, EPS, PDF, and PPT/PPTX
@@ -36,6 +37,8 @@ param (
 )
 
 if ($infile -eq "") { throw "input file was not provided." }
+
+$logging = $logging.toLower()
 
 <#
 formats that ImageMagick supports for reading and writing,
@@ -121,7 +124,7 @@ if ($help.isPresent -or $infile -eq "--help") {
 
 # valid extensions
 $allExtensions = -split [string[]] $validFormats.values `
-	| sort -unique                                      `
+	| sort -uniq                                        `
 	| % { $_.substring(1) }
 
 # root the paths. also works if they are already rooted.
@@ -173,10 +176,10 @@ if (!(gcm magick -type app -ea ignore)) {
 	throw "Required program ImageMagick ``magick`` was not found."
 }
 
-if ($logging -ne "none") { write-host "${indent}inverting colors on `"$infile`"" }
+if ($logging -cne "none") { write-host "${indent}inverting colors on `"$infile`"" }
 magick $infile         `
 	-negate            `
 	-compress Lossless `
-	-debug $($logging -in "none", "basic" ? "None" : "All") `
+	-debug $($logging -cin "none", "basic" ? "None" : "All") `
 	$outfile                         `
 	| % { write-host "${indent+1}$_" }

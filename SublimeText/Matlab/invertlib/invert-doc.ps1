@@ -16,8 +16,8 @@
 #>
 [CmdletBinding()]
 param (
-	[string] $infile,
-	[string] $outfile = $infile,
+	[Parameter(Mandatory=$true)] [string] $infile,
+	[Alias("o")] [string] $outfile = $infile,
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
@@ -55,11 +55,13 @@ if ($outExt -notin "doc", "docx") {
 	throw "input file extension (``$outExt``) must be be either ``doc`` or ``docx``"
 }
 
+$logging = $logging.toLower()
+
 # root the paths. also works if they are already rooted.
 $infile  = [IO.Path]::Combine((pwd).path, $infile)
 $outfile = [IO.Path]::Combine((pwd).path, $outfile)
 
-if ($logging -ne "none") { write-host "${indent}opening Microsoft Word" }
+if ($logging -cne "none") { write-host "${indent}opening Microsoft Word" }
 try { $word = new-object -ComObject Word.Application }
 catch { throw "Required program Microsoft Word ``Word.Application`` (ComObject) was not found." }
 
@@ -67,7 +69,7 @@ catch { throw "Required program Microsoft Word ``Word.Application`` (ComObject) 
 # to put it in the OneDrive directory.
 $pdf = [IO.Path]::ChangeExtension($infile, ".tmp.pdf")
 
-if ($logging -ne "none") { write-host "${indent}converting $inExt to PDF" }
+if ($logging -cne "none") { write-host "${indent}converting $inExt to PDF" }
 $document = $word.documents.open(
 	$infile,         # file path
 	$false,          # dont prompt to confirm conversions
@@ -88,7 +90,7 @@ $document.SaveAs(
 # For some reason, Word locks the file without doing this.
 $document.close()
 
-if ($logging -ne "none") { write-host "${indent}inverting PDF colors" }
+if ($logging -cne "none") { write-host "${indent}inverting PDF colors" }
 
 & ${invert-pdf.ps1}  `
 	-infile   $pdf   `
@@ -128,13 +130,8 @@ $document.SaveAs(
 $document.close()
 $word.quit()
 
-if (-not $keepIntermediateFiles) {
+if (!$keepIntermediateFiles) {
 	remove-item $pdf
-
-	# TODO: I'm not sure this is correct. Why would it delete the input file?
-	if ($infile -ne $outfile) {
-		remove-item $infile
-	}
 }
 
 exit 0

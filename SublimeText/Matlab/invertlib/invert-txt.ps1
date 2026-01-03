@@ -77,10 +77,12 @@ if ($help.isPresent -or $infile -eq "--help") {
 	get-help -full $MyInvocation.MyCommand.Source
 	exit 0
 }
-`
+
 if (!(test-path -type leaf $infile)) {
 	throw "input file does not exist"
 }
+
+$logging = $logging.toLower()
 
 $python   = (gcm python   -type app -ea ignore)?.name
 $python ??= (gcm python3  -type app -ea ignore)?.name
@@ -95,7 +97,7 @@ ${indent+1} = $indent + $indTyp
 $infile  = [IO.Path]::Combine((pwd), $infile)
 $outfile = [IO.Path]::Combine((pwd), $outfile)
 
-# this next operation is required so PowerShell and Python both use the same encoding
+# these next two lines is required so PowerShell and Python both use the same encoding
 $oldEncoding = [Console]::OutputEncoding
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
@@ -172,12 +174,11 @@ if ("$fontPath[$fontIndex]" -eq "consola.ttf[0]" -and $fontSize -ge 1493) {
 	# avoid recomputing it since the character map is known
 	# the character map converges after about 1493px. (I've only checked up to 10,000px)
 
-	if ($logging -ne "none") { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
-	$charmap = iex "`${charmap - consola.ttf[0] 1493}"
-	# TODO: figure out why this ^^^^ is using `iex` and not just using the variable directly.
+	if ($logging -cne "none") { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
+	$charmap = ${charmap - consola.ttf[0] 1493}
 }
 elseif ("$fontPath[$fontIndex]" -eq "consola.ttf[0]" -and $fontSize -in 100, 1000, 1250, 1375, 1438, 1469, 1485, 1489) {
-	if ($logging -ne "none") { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
+	if ($logging -cne "none") { write-host "${indent}using pre-computed character map for font ``consola[0]`` (${fontSize}px) (step 1/2)" }
 	$charmap = iex "`${charmap - consola.ttf[0] $fontSize}"
 }
 else {
@@ -187,7 +188,7 @@ else {
 		throw "Required program (Python 3) ``python / python3 / py / python3.*`` was not found."
 	}
 
-	if ($logging -ne "none") { write-host "${indent}computing character map for font ``$fontPath[$fontIndex]`` (${fontSize}px) (step 1/2)" }
+	if ($logging -cne "none") { write-host "${indent}computing character map for font ``$fontPath[$fontIndex]`` (${fontSize}px) (step 1/2)" }
 
 	$charmapScript = $charmapScript        `
 		-creplace "__VERBOSE__", "$($logging -eq "verbose")" `
@@ -196,7 +197,7 @@ else {
 		-creplace "__FONT_INDEX__", $fontIndex `
 		-creplace "__INDENT__", $(${indent+1} -creplace "`t", "\t")
 
-	if ($logging -eq "verbose") {
+	if ($logging -ceq "verbose") {
 		& $python -X utf8 -c $charmapScript | tee -var charmap
 
 		# get rid of the `calculating ... for index ...` messages.
@@ -207,7 +208,7 @@ else {
 	}
 }
 
-if ($logging -ne "none") { write-host "${indent}inverting file using character map (step 2/2)" }
+if ($logging -cne "none") { write-host "${indent}inverting file using character map (step 2/2)" }
 if ($infile -eq $outfile) {
 	$oldinfile = $infile
 	$infile = "$infile.tmp"
@@ -271,8 +272,8 @@ exit 0
 <#
 ${invert-txt.ps1} = "$env:Appdata/Sublime Text/Packages/Matlab/invertlib/invert-txt.ps1"
 for ([int] $i = 1; $i -lt 1000; $i++) {
-    if (!(test-path -type leaf ./consola-$i.txt)) {
-        & ${invert-txt.ps1} ./tmp.txt ./consola-$i.txt -verb $true -fontSize $i
-    }
+	if (!(test-path -type leaf ./consola-$i.txt)) {
+		& ${invert-txt.ps1} ./tmp.txt ./consola-$i.txt -verb $true -fontSize $i
+	}
 }
 #>

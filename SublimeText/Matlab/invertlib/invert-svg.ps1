@@ -132,6 +132,29 @@ if ($help.isPresent -or $infile -eq "--help") {
 	# this would only take place after inversion, and only if it makes the color name shorter.
 	# use a Euclidean-like distance to the nearest short color
 	# sqrt(abs(ΔR² sgn ΔR + ΔG² sgn ΔG + ΔB² sgn ΔB))
+# TODO: try and figure out a way that something like this can be inverted:
+	# use `dot -Tsvg in.gv -o out.svg` to generate this given some graphviz file.
+	# <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	# <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+	#  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<#
+idea to invert <style> ... </style> CSS styling
+
+for each external stylesheet reference,
+	if it is a repeat reference, delete it and continue.
+	replace it with a regular <style> ... </style> block containing the same contents.
+
+for each <style> ... </style> tag:
+	Strip out comments because they make everything more difficult.
+	Find all instances of `{` and `}` that are not inside strings.
+	for each of the curly braces
+		match with the ending brace and extract the rules string in between.
+	for each set of rules,
+		pretend it is inline and invert the colors using the inline inverter function.
+		replace the uninverted rules with the inverted rules in the string.
+	replace the <style> block with the new style block.
+#>
 
 # all 147 named colors. maps name to hex color.
 $namedColorMap = @{
@@ -297,8 +320,14 @@ if (-not (get-typedata -typeName Text.StringBuilder).members.indexOf) {
 	update-typedata -typeName Text.StringBuilder -memberType ScriptMethod -memberName indexOf -value {
 		param ([string] $str, [uint] $stt = 0)
 
-		for ($i = $stt; $i -lt $this.length - $str.length; $i++) {
-			for ($j = 0; $j -lt $str.length; $j++) {
+		# I don't think KMP is worth it here, and I don't think it is ever worth it.
+		# this is already O(n m), but much closer to O(n) than that, so O(n + m) is
+		# barely an immprovement for a ton of extra complexity.
+
+		for ($i = $stt; $i -lt $this.length - $str.length; $i++) { # for each character in the builder
+			# TODO: instead of just $i++, skip to the next instance of the first character
+			#       or if there was none, do $i += $j
+			for ($j = 0; $j -lt $str.length; $j++) { # try and match it to the string
 				if ($this[$i + $j] -ne $str[$j]) {
 					break
 				}
@@ -977,6 +1006,7 @@ function invert-inline-css-colors([hashtable] $options) {
 		#       because it covers the inversion of the stuff in the curly brackets.
 		$styles = [Collections.ArrayList] (($oldStyle -creplace "[\t\r\n]", " ") -split ";")
 
+		# NOTE: it does the line collapsing and actual inverting in one iteration.
 		for ($i = 0; $i -lt $styles.count; $i++) {
 			$styles[$i] = $styles[$i].trim()
 
@@ -1004,10 +1034,17 @@ function invert-inline-css-colors([hashtable] $options) {
 				continue
 			}
 
+			# TODO: if there are unmatched open quotes that aren't in strings, collapse the lines together.
+
 			if ($styles[$i] -like "filter\s*:.+") {
 				# TODO: filter is not implemented.
 				# this one's arguments are different I think.
 				# I don't know the semantics of how stuff like `grayscale(70%)` works.
+				continue
+			}
+
+			if ($styles[$i] -like "invert\s*:.+") {
+				# TODO: invert is not implemented either
 				continue
 			}
 

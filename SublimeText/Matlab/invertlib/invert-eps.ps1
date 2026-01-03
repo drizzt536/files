@@ -4,7 +4,9 @@
 
 	requirements:
 		- invert-svg.ps1	used to invert SVG colors
-		- ghostscript		(gs/gswin64c/gswin32c). used for EPS to PDF conversion
+		- ghostscript		(gs/gswin64c/gswin32c). used for EPS to PDF conversion and
+		- qpdf				optionally used for optimization at PDF stages if `-optimize $true` is given.
+							if qpdf isn't found, this step is skipped.
 		- pdftocairo		used for PDF to SVG conversion
 		- magick			required for invert-svg.ps1 if the SVGs have embedded raster images.
 		- inkscape			one of two options for converting SVG to PDF
@@ -53,7 +55,7 @@
 [CmdletBinding()]
 param (
 	[Parameter(Mandatory=$true)] [string] $infile,
-	[string] $outfile = $infile,
+	[Alias("o")] [string] $outfile = $infile,
 
 	[uint32] $indLvl = 0,
 	[string] $indTyp = "`t",
@@ -84,8 +86,6 @@ if (-not (test-path -type leaf $infile)) {
 	throw "input file '$infile' does not exist"
 }
 
-# TODO: maybe use qpdf to optimize at the PDF steps?
-
 $indent     = $indTyp * $indLvl
 ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2
@@ -98,26 +98,41 @@ $gs ??= (gcm gswin64c -type app -ea ignore)?.name
 $gs ??= (gcm gswin32c -type app -ea ignore)?.name
 
 if ($gs -eq $null) {
-	throw "Required program (GhostScript) ``gs / gswin64c / gswin32c`` was not found."
+	throw "Required program ``gs / gswin64c / gswin32c`` (GhostScript) was not found."
 }
 if (!(gcm pdftocairo -type app -ea ignore)) {
-	throw "Required program (Poppler) ``pdftocairo`` was not found."
+	throw "Required program ``pdftocairo`` (Poppler) was not found."
 }
 if (!(gcm ${invert-svg.ps1} -type externalScript -ea ignore)) {
 	throw "Required program ``invert-svg.ps1`` was not found.`nlooking at ``${invert-svg.ps1}``."
 }
 if (!(gcm inkscape -type app -ea ignore) -and !(gcm cairosvg -type app -ea ignore)) {
+	# assume that GTK2/3 is installed and properly setup for CairoSVG if it is the one used.
 	throw "One of ``inkscape`` or ``cairosvg`` is required and neither was found."
+}
+if ($optimize -and !(gcm qpdf -type app -ea ignore)) {
+	throw "``-optimize`` was given a value of True, and ``qpdf`` was not found."
 }
 
 if ($logging -cne "none") { write-host "${indent}inverting colors of $infile" }
 $sttTime = [DateTime]::Now
 
-$pdf = [IO.Path]::ChangeExtension($infile, "tmp.pdf")
-$svg = [IO.Path]::ChangeExtension($infile, "tmp.svg")
+$pdf  = [IO.Path]::ChangeExtension($infile, "tmp.pdf")
+$pdf2 = $optimize ? [IO.Path]::ChangeExtension($infile, "tmp2.pdf") : $pdf
+$svg  = [IO.Path]::ChangeExtension($infile, "tmp.svg")
 
 if ($logging -cne "none") { write-host "${indent+1}converting EPS to PDF" }
-& $gs -dNOPAUSE -dBATCH -dQUIET -sDEVICE=pdfwrite -dEPSCrop "-sOutputFile=$pdf" $infile *> $null
+& $gs -dNOPAUSE -dBATCH -dQUIET -sDEVICE=pdfwrite -dEPSCrop `
+	"-dCompatibilityLevel=1.7" "-sOutputFile=$pdf2" $infile *> $null
+
+if ($optimize) {
+	if ($logging -cne "none") { write-host "${indent+1}optimizing PDF" }
+
+	qpdf $pdf2 --force-version=1.7 --coalesce-contents `
+		--remove-unreferenced-resources=yes --object-streams=generate `
+		--compress-streams=y --stream-data=compress --recompress-flate `
+		--compression-level=9 $pdf
+}
 
 if ($logging -cne "none") { write-host "${indent+1}converting PDF to SVG" }
 pdftocairo -svg -f 1 -l 1 -r $dpi $pdf $svg *> $null
