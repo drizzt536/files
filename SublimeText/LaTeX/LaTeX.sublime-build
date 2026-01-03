@@ -3,28 +3,28 @@
 	"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
 	"selector": "text.tex.latex",
 
-	"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose" },
-	"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose" },
-	"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose" },
+	"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -optimize" },
+	"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -optimize" },
+	"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -optimize" },
 
 	"variants": [
 		{
 			"name": "Run",
-			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose" },
-			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose" },
-			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose" },
+			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -optimize" },
+			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -optimize" },
+			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -optimize" },
 		},
 		{
 			"name": "Shell Escape",
-			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -shellEscape" },
-			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -shellEscape" },
-			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -shellEscape" },
+			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -optimize -shellEscape" },
+			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -optimize -shellEscape" },
+			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -buildOnly -alwaysBuild -verbose -optimize -shellEscape" },
 		},
 		{
 			"name": "Shell Escape, Run",
-			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -shellEscape" },
-			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -shellEscape" },
-			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -shellEscape" },
+			"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -optimize -shellEscape" },
+			"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -optimize -shellEscape" },
+			"osx"    : { "shell_cmd": "pwsh \"~/Library/Application Support/Sublime Text/Packages/LaTeX/build.ps1\" ${file_base_name} -alwaysBuild -verbose -optimize -shellEscape" },
 		},
 	]
 }

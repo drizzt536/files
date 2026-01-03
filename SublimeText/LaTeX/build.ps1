@@ -8,6 +8,7 @@ param (
 	[switch] $buildOnly,
 	[switch] $alwaysBuild,
 	[switch] $shellEscape,
+	[switch] $optimize,
 	[switch] $keepIntermediateFiles
 )
 
@@ -24,14 +25,14 @@ $pdfOpened = $false
 
 function open-pdf {
 	if ($buildOnly.isPresent -or $pdfOpened) {
-		if ($verbose_) { echo "build.ps1: Skipping opening PDF." }
+		if ($verbose_) { write-host "build.ps1: Skipping opening PDF." }
 		return
 	}
 
 	if ($pdfViewBaseName -eq "SumatraPDF" -and (get-process | where name -eq SumatraPDF).count) {
 		# pass
 	}
-	elseif ($verbose_) { echo "build.ps1: Opening PDF: ``$pdfViewer ./$texfile.pdf``" }
+	elseif ($verbose_) { write-host "build.ps1: Opening PDF: ``$pdfViewer ./$texfile.pdf``" }
 
 	# Assumes SumatraPDF `ReuseInstance` option is set to `true`
 	# although, technically it shouldn't matter either way.
@@ -43,13 +44,13 @@ function open-pdf {
 function cleanup {
 	if (-not $keepIntermediateFiles.isPresent) {
 		if ($verbose_) {
-			echo "build.ps1: Removing intermediate files"
+			write-host "build.ps1: Removing intermediate files"
 			latexmk -c
 		}
 		else { latexmk -c > $null }
 	}
 	elseif ($verbose_) {
-		echo "build.ps1: Keeping intermediate files"
+		write-host "build.ps1: Keeping intermediate files"
 	}
 }
 
@@ -60,7 +61,7 @@ if (test-path -type leaf ./$texfile.pdf) {
 
 	# if the pdf is newer than the source, no compilation is needed (probably)
 	if (-not $alwaysBuild.isPresent -and (ls ./$texfile.pdf | % lastWriteTime) -gt (ls ./$texfile.tex | % lastWriteTime)) {
-		if ($verbose_) { echo "build.ps1: No edits have been made since last compilation. Exiting." }
+		if ($verbose_) { write-host "build.ps1: No edits have been made since last compilation. Exiting." }
 
 		open-pdf
 		exit 0
@@ -98,11 +99,46 @@ else {
 
 $latexmkExitCode = $lastExitCode
 
+if ($latexmkExitCode -eq 0 -and $optimize.isPresent) {
+	# don't complain if either of them don't exist.
+	# I'm in a silent error type of mood.
+	$gs   = (gcm gs       -type app -ea ignore)?.name
+	$gs ??= (gcm gswin64c -type app -ea ignore)?.name
+	$gs ??= (gcm gswin32c -type app -ea ignore)?.name
+
+	if ($gs -ne $null) {
+		# NOTE: this doesn't actually optimize anything,
+		#       but it frequently makes it smaller anyway.
+		if ($verbose_) { write-host "build.ps1: normalizing PDF with ghostscript" }
+		& $gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=pdfwrite -dDetectDuplicateImages `
+			"-dCompatibilityLevel=1.7" -dConvertCMYKImagesToRGB `
+			"-sOutputFile=$texfile.tmp.pdf" ./$texfile.pdf
+
+		rm ./$texfile.pdf
+	}
+	else {
+		mv ./$texfile.pdf ./$texfile.tmp.pdf
+	}
+
+	if (gcm qpdf -type app -ea ignore) {
+		if ($verbose_) { write-host "build.ps1: optimizing PDF with qpdf" }
+		qpdf ./$texfile.tmp.pdf --force-version=1.7 --coalesce-contents `
+			--remove-unreferenced-resources=yes --object-streams=generate `
+			--compress-streams=y --stream-data=compress --recompress-flate `
+			--compression-level=9 ./$texfile.pdf
+
+		rm ./$texfile.tmp.pdf
+	}
+	else {
+		mv ./$texfile.tmp.pdf ./$texfile.pdf
+	}
+}
+
 cleanup
 
-if ($verbose_) { echo "`n" }
+if ($verbose_) { write-host "`n" }
 
 # if it was Sumatra, the PDF is already open, unless the pdf didn't exist before now.
 open-pdf
-if ($verbose_) { echo "build.ps1: latexmk exit code $latexmkExitCode" }
+if ($verbose_) { write-host "build.ps1: latexmk exit code $latexmkExitCode" }
 exit $latexmkExitCode
