@@ -1,0 +1,11 @@
+{
+	"selector": "source.c++, source.cpp",
+	"working_dir": "${file_path}",
+	"file_regex": "^(.*):(\\d+):(\\d+):\\s+(.*)$",
+
+	"windows": { "shell_cmd": "pwsh \"%AppData%/Sublime Text/Packages/arduino-build.ps1\" -in ${file_name}" },
+	"linux"  : { "shell_cmd": "pwsh \"~/.config/sublime-text/Packages/arduino-build.ps1\" -in ${file_name}" },
+
+	// dirty mac users
+	"osx"    : { "shell_cmd": "echo \"build process encoundered an unexpected error. please try again\"" },
+}
