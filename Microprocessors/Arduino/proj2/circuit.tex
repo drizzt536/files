@@ -1,0 +1,71 @@
+\documentclass{standalone}
+
+\usepackage[american]{circuitikz}
+\usepackage[dvipsnames]{xcolor}
+
+\definecolor{lightgray}{RGB}{170, 170, 170}
+\definecolor{dullorange}{RGB}{210,140,40}
+
+\color{lightgray}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	% wires between the Arduino and the MAX7129
+	\draw [BrickRed]   (3, 2.25) -- (2.4, 2.25) -- (2.4, 3); % Vcc
+	\draw [OliveGreen] (3, 1.75) -- (1.8, 1.75) -- (1.8, 3); % GND
+	\draw [dullorange] (3, 1.25) -- (1.2, 1.25) -- (1.2, 3); % Din
+	\draw [violet]     (3, 0.75) -- (0.6, 0.75) -- (0.6, 3); % CS
+	\draw [RoyalBlue]  (3, 0.25) -- (0.0, 0.25) -- (0.0, 3); % CLK
+
+	% MCU Board
+	\draw (-0.5, 3) rectangle (3, 4.5);
+	\node at (1.25, 4.21) [below] {Arduino Mega 2560};
+
+	\node at (2.4, 3) [circ] {};
+	\node at (1.8, 3) [circ] {};
+	\node at (1.2, 3) [circ] {};
+	\node at (0.6, 3) [circ] {};
+	\node at (0.0, 3) [circ] {};
+
+	% NOTE: the `~`s are so the pin text doesn't overlap. "GND" takes up a lot of space.
+	\node at (0.0, 3) [above] {44~~~};
+	\node at (0.6, 3) [above] {46~~~};
+	\node at (1.2, 3) [above] {48~~~};
+	\node at (1.8, 3) [above] {GND};
+	\node at (2.4, 3) [above] {~~\,5V};
+
+	% MCU volt source
+	\draw (4, 4.25) to[V, v={\!9V barrel}] (4, 3.25);
+	\draw [BrickRed] (3, 4.25) -- (4, 4.25);
+	\draw [OliveGreen] (3, 3.25) -- (4, 3.25);
+	\node [circ] at (3, 4.25) {};
+	\node [circ] at (3, 3.25) {};
+
+	% MAX7219
+	\draw (3, 0) rectangle (6, 2.5);
+	\node at (4.5, 2.5) [above, align=center] {MAX7219\,\&\,1088AS};
+
+	% MAX7219 inputs
+	\node at (3, 2.25) [circ] {}; \node at (3, 2.25) [right, align=left] {$\rm V_{CC}$};
+	\node at (3, 1.75) [circ] {}; \node at (3, 1.75) [right, align=left] {GND};
+	\node at (3, 1.25) [circ] {}; \node at (3, 1.25) [right, align=left] {$\rm D_{in}$};
+	\node at (3, 0.75) [circ] {}; \node at (3, 0.75) [right, align=left] {CS};
+	\node at (3, 0.25) [circ] {}; \node at (3, 0.25) [right, align=left] {CLK};
+
+	% MAX7219 outputs. none used.
+	\node at (6, 2.25) [ocirc, fill=black] {}; \node at (6, 2.25) [left, align=right] {$\rm V_{CC}$};
+	\node at (6, 1.75) [ocirc, fill=black] {}; \node at (6, 1.75) [left, align=right] {GND};
+	\node at (6, 1.25) [ocirc, fill=black] {}; \node at (6, 1.25) [left, align=right] {$\rm D_{out}$};
+	\node at (6, 0.75) [ocirc, fill=black] {}; \node at (6, 0.75) [left, align=right] {CS};
+	\node at (6, 0.25) [ocirc, fill=black] {}; \node at (6, 0.25) [left, align=right] {CLK};
+
+	\node [ground, scale=0.5, OliveGreen] at (1.8, 1.75) {};
+
+	% diagram borders
+	\node at (-0.75, -0.25) {};
+	\node at (6.25, 4.75) {};
+\end{circuitikz}
+
+\end{document}
