@@ -1,0 +1,40 @@
+pin usages:
+ - 2, 3: composition mode
+	- off, off : NAND
+	- on, off  : AND
+	- off, on  : XOR
+	- on, on   : OR
+ - 5: joystick mode toggle
+	- on : live
+	- off: frozen
+ - 22-29: row toggles
+	- 22: topmost
+	- 29: bottom-most
+ - 30-37: column toggles
+	- 30: leftmost
+	- 37: rightmost
+ - 42, 43, 45, 47: miscellaneous toggles
+	- 42: n=1 hollow corners
+	- 43: n=2 hollow corners
+	- 45: n=3 hollow corners
+	- 47: n=1 main diagonal
+ - 44, 46, 48: MAX7219-7221 SPI controller pins
+	- 44: CLK
+	- 46: CD
+	- 48: Din
+ - 53: joystick module drift recalibration pin
+ - A14 (68), A15 (69): joystick position analog pins
+	- 68: VRY, Y axis position
+	- 69: VRY, Y axis position
+
+joystick:
+ - the joystick controls both inversions and rotations of the image, which take place after  the other operations.
+ - the joystick is only updated when the switch on pin 5 is on. otherwise it is frozen at the last read value.
+ - pressing in the joystick causes the program to recalibrate for stick drift. This would only be important if the stick wasn't in a neutral position when the MCU booted.
+ - if x > 0, then the image is inverted on the x axis
+ - if y > 0, then the image is inverted on the y axis
+ - from the start of each quadrant, there is are four ranges for the rotations.
+	- 00.000° to 15.085°: no rotation
+	- 15.086° to 45.000°: 90° ccw rotation
+	- 45.001° to 74.914°: 180° rotation
+	- 74.915° to 89.999°: 90° cw rotation
