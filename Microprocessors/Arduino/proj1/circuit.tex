@@ -1,0 +1,53 @@
+\documentclass{standalone}
+
+\usepackage{circuitikz}
+\usepackage[dvipsnames]{xcolor}
+
+\color[RGB]{170, 170, 170}
+\pagecolor{black}
+
+\begin{document}
+
+\begin{circuitikz}
+	\node at ( 0, 4) [circ, label=above:{GPIO 48}] {};
+	\node at ( 2, 4) [circ, label=above:{GPIO 46}] {};
+	\node at ( 4, 4) [circ, label=above:{GPIO 44}] {};
+	\node at ( 6, 4) [circ, label=above:{GPIO 42}] {};
+	\node at ( 8, 4) [circ, label=above:{GPIO 40}] {};
+	\node at (10, 4) [circ, label=above:{GPIO 38}] {};
+	\node at (12, 4) [circ, label=above:{GPIO 36}] {};
+	\node at (14, 4) [circ, label=above:{GPIO 34}] {};
+	\node at (16, 4) [circ, label=above:{GPIO 32}] {};
+	\node at (18, 4) [circ, label=above:{GPIO 30}] {};
+	\node at (20, 4) [circ, label=above:{GPIO 2}] {};
+	\node at (22, 4) [circ, label=above:GND] {};
+
+	\draw ( 0, 4) to[led, color=white]     ( 0, 2) to[R, l=$330\,\Omega$] ( 0, 0);
+	\draw ( 2, 4) to[led, color=RoyalBlue] ( 2, 2) to[R, l=$330\,\Omega$] ( 2, 0);
+	\draw ( 4, 4) to[led, color=RoyalBlue] ( 4, 2) to[R, l=$330\,\Omega$] ( 4, 0);
+	\draw ( 6, 4) to[led, color=RoyalBlue] ( 6, 2) to[R, l=$330\,\Omega$] ( 6, 0);
+	\draw ( 8, 4) to[led, color=RoyalBlue] ( 8, 2) to[R, l=$330\,\Omega$] ( 8, 0);
+	\draw (10, 4) to[led, color=RoyalBlue] (10, 2) to[R, l=$330\,\Omega$] (10, 0);
+	\draw (12, 4) to[led, color=RoyalBlue] (12, 2) to[R, l=$330\,\Omega$] (12, 0);
+	\draw (14, 4) to[led, color=RoyalBlue] (14, 2) to[R, l=$330\,\Omega$] (14, 0);
+	\draw (16, 4) to[led, color=RoyalBlue] (16, 2) to[R, l=$330\,\Omega$] (16, 0);
+	\draw (18, 4) to[led, color=RoyalBlue] (18, 2) to[R, l=$330\,\Omega$] (18, 0);
+
+	\draw (20, 4) -- (20, 2) to[push button, fill=black] (20, 0);
+
+	\draw (0, 0) -- (20, 0) to[R, l=$2\,{\rm k}\Omega$] (22, 0) -- (22, 4);
+	\node [ground] at (22, 0) {};
+
+	\node [right, align=left] at (-0.25, -1.25) {
+		Equivalent resistance is $2033\,\Omega$. the $2\,{\rm k}\Omega$ resistor is actualy two $1\,{\rm k}\Omega$ resistors in series. \\
+		Intended for Ardino Mega 2560. Pins are all digital, but are arbitrary otherwise.\\
+		Only two out of the four terminals on the push button are used.\\
+		The first LED is white because the other blue LED burned out.
+	};
+
+	\node at (-0.75, -2.25) {};
+	\node at (22.75, 4.75) {};
+
+\end{circuitikz}
+
+\end{document}
