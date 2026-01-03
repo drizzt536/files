@@ -47,7 +47,13 @@ if {[llength $entities] == 1} {
 
 proc force-clock {signal time} {
 	# force clock with falling edge at the start
-	force -freeze $signal 0 0, 1 "[expr {$time / 2.}] ns" -repeat $time
+	# the times are already in nanoseconds, so adding "ns" is redundant.
+	# NOTE: if you have 0 A, 1 B -repeat C
+	#        - C must be less than or equal to A + 2B to make sense.
+	#        - the signal starts getting zero-driven at t=A ns
+	#        - the signal starts getting one-driven at t=A ns
+	#        - the signal repeats every C - A ns
+	force -freeze $signal 0 0, 1 [expr {$time / 2.}] -repeat $time
 }
 
 proc sig-name {signal} {
@@ -87,7 +93,7 @@ proc add-waves {type} {
 				}
 			}
 		} else {
-			upvar 0 bus signal; # not actually a bus
+			upvar 0 bus signal; # not actually a bus. alias the variable to `signal`.
 
 			add wave -height $height [sig-name $signal]
 
@@ -103,4 +109,8 @@ proc add-waves {type} {
 add-waves in
 add-waves out
 add-waves internal
-run ${totalTime}ns
+run $totalTime; # implicitly in nanoseconds.
+
+# NOTE: the `wave zoom` command is used for zooming the waveform window. Examples:
+	# wave zoom full # same as the "f" keybind
+	# wave zoom range 10 300 # 0ns to 300ns range
