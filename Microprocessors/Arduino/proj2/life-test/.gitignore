@@ -1,0 +1,6 @@
+# this is a compile .pyc file, renamed to be .py
+analyze.py
+
+# disassembly files
+life.exe
+life-launch.exe
