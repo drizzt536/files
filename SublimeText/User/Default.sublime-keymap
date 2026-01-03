@@ -112,6 +112,8 @@
 	{ "keys": ["alt+x", "alt+w"], "command": "close" },
 	{ "keys": ["alt+x", "alt+shift+w"], "command": "close_window" },
 
+	{ "keys": ["alt+o"], "command": "open_dir", "args": {"dir": "$file_path"} }, // overrides a default bind
+
 	/////////////////////////////////// remove keybinds ///////////////////////////////////
 	// the comments give what to use instead, or none if it is completely removed
 
@@ -140,7 +142,6 @@
 	{ "keys": ["ctrl+shift+k"], "command": "noop"}, // CS-x
 	{ "keys": ["ctrl+`"], "command": "noop" }, // A-q
 	{ "keys": ["ctrl+break"], "command": "noop" }, // A-b
-	{ "keys": ["alt+o"], "command": "noop" }, // none
 	{ "keys": ["alt+shift+o"], "command": "noop" }, // none
 
 	{ "keys": ["f3"], "command": "noop" }, // A-d
