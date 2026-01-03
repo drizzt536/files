@@ -1,17 +1,19 @@
-#!/usr/bin/env python312
+#!/usr/bin/env python3
 
 """
-2D vector Field Animation using Manim.
+2D vector field animation using Manim.
 
-requires Python <=3.12 because manim doesn't support Python 3.13 yet.
+requires Python 3.11 to 3.13 (manim doesn't support Python 3.14 yet).
 
 run the following command for help:
-	python312 generate-fields.py help
+	python generate-fields.py help
 
 this script uses `./fields.txt` for vector fields function storage
 
-no dependencies other than manim and its dependendcies
+there are no dependencies other than manim and its dependendcies.
 """
+
+# NOTE: all the the previously computed IDs are for Python 3.12
 
 if __name__ != "__main__":
 	raise Exception("don't use this file as a module. use Manim directly for rendering stuff, or run this as a script")
@@ -166,6 +168,7 @@ def is_safe_2d_fn(expr: str) -> bool:
 	if expr[0] == "(" and expr[-1] == ")":
 		# the input has to be a no-parentheses tuple
 		# this is kind of heuristicy, and if it becomes a problem I will fix it.
+		# ... I forgot what the point of this restriction is.
 		return False
 
 	allowed_funcs = {
@@ -307,6 +310,9 @@ def find_best_file(id: str, criteria: list[str]) -> str:
 	return best["file"]
 
 def ignore_sigint(fn: Callable) -> Callable:
+	"""
+	decorator function to ignore KeyboardInterrupt exceptions while inside the function
+	"""
 	from signal import signal as set_signal, SIGINT
 	from functools import wraps
 
