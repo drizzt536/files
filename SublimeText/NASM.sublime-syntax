@@ -9,17 +9,43 @@
 # Last Used NASM Commit:
     # (https://github.com/netwide-assembler/nasm/commit/<commit>)
 
-    # Merge remote-tracking branch 'github/nasm-2.16.xx'
-    # 699684bf1782eeb8e5b03135820aef83ef2d990c
+    # NASM 3.00rc15: 35bd26e17ab7bc04b95cbdfa4b746f3bf916100e
 
-    # this one is also used, but none in-between these were used
-    # 8d62e99e140f20dcab6d1568fe9b3734b5f3b61d
+# TODO: add %pathsearch() and %depend() preproc functions: 0843052f058e5f23716f01c6d93d62beb02e46dd
+# TODO: add %iffile, %isfile(), and %realpath(): 0c533873f0024ad120b7960a58798a3b308a544e
+  # see the doc/preproc.src diff for the documentation on these
+  # TODO: and also add whatever these things are, from tokens.dat:
+  # this stuff appears in test/ccmp.asm.
+  # % TOKEN_PREFIX, PPS_NF, TFLAG_BRC, P_*
+  # nf
+  #
+  # % TOKEN_PREFIX, PPS_ZU, TFLAG_BRC, P_*
+  # zu
+  #
+  # % TOKEN_BRCCONST, IF_DFV, TFLAG_BRC, 0
+  # dfv=
+  #
+  # % TOKEN_BRCCONST, IF_DFV, TFLAG_BRC | TFLAG_ORBIT, DFV_{dfv=*}
+  # dfv=cf
+  # dfv=zf
+  # dfv=sf
+  # dfv=of
+# TODO: add {pt} and {pn} branch hint prefixes: 80225b47220b718383a7142cdd9c0335dffcb424
+# TODO: add `dollarhex` directive: 178a1b7443d5681f57241a54c0997a9b043e6d26
+# TODO: add missing instructions. there are a lot of them introduced at various times. look at insns.dat
+  # probably use the following locations to find the instruction list:
+    # https://github.com/netwide-assembler/nasm/tree/master/travis/test/*.asm
+    # https://github.com/netwide-assembler/nasm/blob/master/x86/insns.dat
+# TODO: add %null/%note/%warning/%error/%fatal preproc functions: d5bd136ced2133a586b5995f2643dcc9952b0d24
+  # or perhaps don't add them?: 7276cfde994e657b83126bab901ba67f216bda6d
+# TODO: add %ifdirective preproc directive: 31a160759d93a574c9863538d6109a23cf94873d
+# TODO: add __?NASM_HAS_IFDIRECTIVE?__: 4cf4333ba21069e60877467714c66271beca5dd2
+# TODO: add __?DEFAULT?__ macro: 4ccdf7e6fe41eb5ab55077c3803573a430fa9501
+# TODO: change the if-endif matching. %ifASDF still matches an %endif: 1f1f3266d60281c81fd87b3bdea6eb90aeb54000
+# TODO: register index 16-31 (APX instruction set)
 
 # TODO: everywhere that has identifers, allow macro indirection in it.
 
-# TODO: add autocomplete things:
-    # header guard
-    # common non-preprocessor things
 # TODO: add single line comments to the rest of the preprocessor directives.
 
 file_extensions: [nasm, asm, inc, mac]
@@ -77,7 +103,7 @@ variables:
 
   # this is the order the conditions are mentioned in nasmdoc4.
   # `%ifdifi` doesn't actually exist. it ignores its argument and is always false. so basically just `%comment` from when that existed in like 2011.
-  valid_condition: (?:n?(?:def|macro|ctx|idni?|id|num|str|token|empty|env|defalias|usable|using|difi)?)
+  valid_condition: (?:n?(?:def|macro|ctx|idni?|id|num|str|token|empty|env|defalias|usable|using|difi|file)?)
   valid_identifier: (?:[\w$?@]{{identifier_body}})
 
   # the same as line_rem, but with `\]` as an additional stop character.
@@ -1025,7 +1051,7 @@ contexts:
         - match: \)
           scope: meta.brackets.nasm punctuation.macro.arguments.brackets.end.nasm
           pop: true
-    - match: (?i)(%)(abs|cond|count|eval|hex|is{{valid_condition}}|map|num|sel|str(?:cat|len)?|substr|tok)\s*(\()
+    - match: (?i)(%)(abs|cond|count|eval|hex|map|num|sel|is{{valid_condition}}|str(?:cat|len)?|substr|tok|pathsearch|realpath|depend|findi?|chr|ord|hs2b|b2hs)\s*(\()
       captures:
         1: punctuation.definition.keyword.preprocessor.nasm
         2: support.function.preprocessor.nasm
