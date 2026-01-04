@@ -62,13 +62,11 @@ constexpr u64 states[] = {
 // 0b0000000000011000001001000010010001000010010000100100001001000010llu, // V
 // 0b0010010000100100011111100101101001011010010000100100001001000010llu, // W
 
-constexpr u32 DELAY = 500;
-
 void loop(void) {
 	static u8 i = 0;
 
-	Max7219::update(states[i]); delay(DELAY >> 1);
-	Max7219::update(0llu);      delay(DELAY >> 1);
+	Max7219::update(states[i]); delay(250);
+	Max7219::update(0llu);      delay(250);
 
 	if (++i == sizeof(states) / sizeof(*states))
 		i = 0;
