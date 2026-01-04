@@ -11,8 +11,7 @@
 /Rust/
 /.emacs.d/
 /TeX/JSAANLFE/
-/PicoDucky/scripts/
-/Python/manim/*/*
+
 # This is a separate repository and I can't get submodules to work.
 /HTML/File-Sharing/
 
@@ -29,12 +28,7 @@ __pycache__
 *.exe
 *.o
 *.obj
+*.gcda
 *.class
 
-MATLAB/erau-egr115-final-project/test_suite.m
-/TeX/circuit-diagrams/originals/
-/TeX/circuit-diagrams/*.png
-
 !/JavaScript/test.js
-!/Python/manim/*/*.py
-!/Python/manim/*/manim.cfg

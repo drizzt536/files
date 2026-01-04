@@ -1,0 +1,3 @@
+/manim/*/*
+!/manim/*/*.py
+!/manim/*/manim.cfg

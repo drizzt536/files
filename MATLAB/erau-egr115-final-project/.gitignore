@@ -1,2 +1,6 @@
 # embedded code data for proposal.pdf and report.pdf
 _minted
+
+# this file is mostly duplicate code. ignored so it
+# doesn't pollute the GitHub language percent
+/test_suite.m
