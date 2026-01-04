@@ -54,7 +54,6 @@ const u8 periods_names[20] = {
 // this has to be at least 143 with TABLE_BITS=9 and FAST_HASHING=true
 #define ARENA_LEN		256
 
-#define PY_BASE "analyze" // base name of the python file
 #define DATAFILE "data.json"
 
 ////////////////////////////////// config end /////////////////////////////////
@@ -67,6 +66,10 @@ const u8 periods_names[20] = {
 #ifndef _WIN64
 	// NOTE: windows is always little endian, so I don't have to check that as well.
 	#error This program will only compile on 64-bit windows
+#endif
+
+#ifndef PY_BASE
+	#define PY_BASE "analyze" // base name of the python file
 #endif
 
 #ifndef __MINGW64__
@@ -216,7 +219,7 @@ static u32 sleep_ms[2] = {
 
 #if HELP
 static const char *const help_string =
-	"usage: life [FLAGS] COMMAND [ARGS]"
+	"usage: life [FLAGS] COMMAND [OPERANDS]"
 	"\n"
 	"\nflags:"
 #if CLIPBOARD
@@ -239,6 +242,8 @@ static const char *const help_string =
 	"\n    help           print this message and exit"
 	"\n    run,nrun       runs simulations and gives in-depth statistics"
 	"\n    sim,sim1,nsim  runs simulations visually without statistics"
+	"\n    step           step to the next state and print out the result"
+	"\n                   takes an optional second operand for the number of steps"
 	"\n"
 	"\n    dump           runs `./" PY_BASE ".py -s " DATAFILE "` and exit"
 	"\n    fold           runs `./" PY_BASE ".py -f " DATAFILE "` and exit"
@@ -312,7 +317,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 			goto help_flag;
 
 		c0 = flag[0];
-		if (c0 && flag[1])
+		if (c0 != '\0' && flag[1] != '\0')
 			goto flag_unknown;
 
 		// NOTE: if you do something like `-T -q`, then the `-q` will be the
@@ -327,7 +332,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 		#if CLIPBOARD
 		case 'c': copy    = true; break;
 		#endif
-		case 'T':
+		case 'T': FALLTHROUGH;
 		case 'S': {
 			if (operand == NULL)
 				goto flag_no_operand;
@@ -344,7 +349,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 			argc--; argv++;
 			break;
 		}
-		case 's':
+		case 's': FALLTHROUGH;
 		case 'u': {
 			if (operand == NULL)
 				goto flag_no_operand;
@@ -408,7 +413,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 			// Windows falls back to HIGH if it can't do REALTIME.
 			SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 			break;
-		case 'h':
+		case 'h': FALLTHROUGH;
 		case '?':
 			goto help_flag;
 		default:
@@ -461,12 +466,13 @@ void mainCRTStartup(void)
 		: "rax", "rcx", "rdx", "r8", "r9", "rdi", "rsi", "memory"
 	);
 
-	printf("\e[0m\e[?25l"); // remove terminal styling if there is any and hide the cursor.
-
+	if (_isatty(1)) {
+		printf("\e[0m\e[?25l"); // remove terminal styling if there is any and hide the cursor.
+		atexit(&show_cursor);
+	}
 #if DEBUG
 	atexit(&log_collisions);
 #endif
-	atexit(&show_cursor);
 
 	argc--; argv++; // the file name is not needed.
 	parse_flags(&argc, &argv);
@@ -487,7 +493,7 @@ void mainCRTStartup(void)
 	unlikely_if (argv[0][3] && argv[0][4])
 		goto unknown_command;
 
-	u32 n; // for nrun and nsim
+	u64 n; // for nrun and nsim
 
 	// parse the first argument as a 32-bit unsigned integer.
 	// these branches aren't worth putting in helper functions because they are tiny.
@@ -586,7 +592,7 @@ void mainCRTStartup(void)
 			putchar('\n');
 		#endif
 		break;
-	case CHARS4_TO_U32('s', 'i', 'm', '1'):
+	case CHARS4_TO_U32('s', 'i', 'm', '1'): {
 		if (argc == 0)
 			__builtin_unreachable();
 
@@ -612,6 +618,7 @@ void mainCRTStartup(void)
 
 		cli_sim_one(state);
 		break;
+	}
 	case CHARS4_TO_U32('n', 's', 'i', 'm'):
 		if (argc == 0)
 			__builtin_unreachable();
@@ -656,6 +663,44 @@ void mainCRTStartup(void)
 			putchar('\n');
 		#endif
 		break;
+	case CHARS4_TO_U32('s', 't', 'e', 'p'): {
+		if (argc == 0)
+			__builtin_unreachable();
+
+		unlikely_if (argc < 2 && argc > 3) {
+			eprintf("command `%s` expected %s operands, found %u.\n", "step", "1 or 2", argc - 1);
+			exit(4);
+		}
+
+		char *str_end;
+
+		Matx8 state = (Matx8) {.matx = strtoull(argv[1], &str_end, 0)};
+
+		if (*str_end != '\0') {
+			eprintf("command `%s` given with an invalid value at position %u.\n", "step", 1);
+			exit(4);
+		}
+
+		if (argc == 2) {
+			n = 1;
+		}
+		else {
+			n = strtoull(argv[2], &str_end, 0);
+
+			if (*str_end != '\0') {
+				eprintf("command `%s` given with an invalid value at position %u.\n", "step", 2);
+				exit(4);
+			}
+		}
+
+		while (n --> 0)
+			state = Matx8_next(state);
+
+		printf("0x%016llx\n", state.matx);
+		print_state(state);
+		putchar('\n');
+		break;
+	}
 	case CHARS4_TO_U32('d', 'u', 'm', 'p'):
 		exit(system(PY_BASE " -s " DATAFILE));
 		__builtin_unreachable();
@@ -692,7 +737,7 @@ void mainCRTStartup(void)
 		__builtin_unreachable();
 	}
 	case CHARS4_TO_U32('c', 'n', 't',  0 ): {
-		const u32 fd = _open(DATAFILE, O_RDONLY | O_BINARYw);
+		const u32 fd = _open(DATAFILE, O_RDONLY | O_BINARY);
 		if (fd == ~0u) {
 			i32 error; _get_errno(&error);
 			eprintf("can't %s %s: errno=%u.\n", "read", DATAFILE, error);
