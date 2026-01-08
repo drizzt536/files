@@ -534,7 +534,9 @@ if __name__ == "__main__":
 			"\n    -h, -?, -help, --help    print this message and exit" \
 			"\n    -s, --summarize [PATH]   folds the datafile and prints statistics" \
 			"\n    -f, --fold [PATH]        folds the datafile array into one element" \
-			"\n    -m, --merge PATHS        folds the datafile and print statistics"
+			"\n    -m, --merge PATHS        folds the datafile and print statistics." \
+			"\n                             the first path given is the output file." \
+			"\n                             all other inputs are deleted."
 		)
 	else:
 		print(f"argv: {argv}\nunknown command {command}")
