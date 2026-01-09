@@ -1,60 +1,58 @@
-// compile with `make -B DEBUG=true CLIP=true TIMER=true OPTIMIZE=native`
+// compile with `make -B DEBUG=true CLIP=true TIMER=true NEIGHBORHOOD=MOORE RULESET=B3/S23 OPTIMIZE=avx2`
 // requires an MSVCRT version of GCC, despite not actually linking to MSVCRT.
 
 // TODO: maybe allow coalescing flags together? like -abqTfSd <a> <T> <S> <d>
 
-// TODO: consider implementing this idea:
-/*
-// NOTE: If this is implemented, the code for sprintf_summary will have to change.
-//       I could skip the check for which periods exist, because it is always just
-//       those 20. But I would still need to check if the period is zero vs nonzero.
-//       also this is likely much slower than the current way, which is the trade off
-//       I don't think that is a trade I am willing to make though.
-// NOTE: 155 is the only multiplier that this works with, otherwise it would have to
-//       have a shift less than 3 and double the elements in the table.
-
-#define periods_i(x) ptable[((u8) x) * 155 >> 3]
-
-u64 periods[21] = {0}; // 20 options, plus one extra in case you get an invalid ptable entry
-const u8 ptable[32] = {
-	// e.g. use periods[periods_i(period)]++ instead of periods[period]++
-	20,  7, 16, 12, 20, 20,  1, 20,
-	 8, 20, 17, 20, 15,  3,  6,  9,
-	20, 13, 20,  0,  4, 20, 10, 14,
-	18, 20,  2,  5, 11, 19, 20, 20
-};
-const u8 periods_names[20] = {
-	 1,  2,  3,  4,  6,  8,  9, 10, 12,  14,
-	16, 18, 20, 24, 26, 32, 48, 60, 64, 132,
-};
-*/
-
 ///////////////////////////////// config start ////////////////////////////////
 
-#define ALIVE_CHAR_DEF	'#' // character to print for alive cells
-#define DEAD_CHAR_DEF	' ' // character to print for  dead cells
+#ifndef ALIVE_CHAR_DEF
+	#define ALIVE_CHAR_DEF	'#' // character to print for alive cells
+#endif
+#ifndef DEAD_CHAR_DEF
+	#define DEAD_CHAR_DEF	' ' // character to print for  dead cells
+#endif
 
 // period after which `nrun inf` logs the summary and resets.
 // granularity lower than like 250 likely won't do anything.
 // the timer is only checked every 267,378,720 trials. (INT16_MAX * UINT8_MAX * 4 * 8)
 // 43200 == 12*60*60. this definition has to be the final expression result.
-#define TIMER_PERIOD	43200 // seconds
+#ifndef TIMER_PERIOD
+	#define TIMER_PERIOD	43200 // seconds
+#endif
+
+// NOTE: these values and comments are for NEIGHBORHOOD=NH_MOORE and RULESET=B3/S23
+//       other ones may need way more memory
 
 // use 8 for hyperthreading. 9  the fastest on a single core.
 // unless your L1 cache is 64KiB, in which case 9 or maybe even 10 is probably better.
 // this has to be at least 2, or the program will not work.
-#define TABLE_BITS		9
+#ifndef TABLE_BITS
+	#define TABLE_BITS		9
+#endif
 
 // 512 makes them one page of memory.
 // these have to be at least 133 and 424 respectively.
-#define PERIOD_LEN		136
-#define TRANSIENT_LEN	448
+#ifndef PERIOD_LEN
+	#define PERIOD_LEN		136
+#endif
+#ifndef TRANSIENT_LEN
+	#define TRANSIENT_LEN	448
+#endif
 
 // max number of collisions per trial before errors.
 // this has to be at least 143 with TABLE_BITS=9 and FAST_HASHING=true
-#define ARENA_LEN		256
+#ifndef ARENA_LEN
+	#define ARENA_LEN		256
+#endif
 
-#define DATAFILE "data.json"
+#ifndef PY_BASE
+	// base name of the python file
+	#define PY_BASE "analyze"
+#endif
+
+#ifndef DATAFILE
+	#define DATAFILE "data.json"
+#endif
 
 ////////////////////////////////// config end /////////////////////////////////
 
@@ -66,10 +64,6 @@ const u8 periods_names[20] = {
 #ifndef _WIN64
 	// NOTE: windows is always little endian, so I don't have to check that as well.
 	#error This program will only compile on 64-bit windows
-#endif
-
-#ifndef PY_BASE
-	#define PY_BASE "analyze" // base name of the python file
 #endif
 
 #ifndef __MINGW64__
@@ -127,9 +121,9 @@ const u8 periods_names[20] = {
 
 	// this has to be before the includes. The headers don't actually
 	// prototype _crt_at_quick_exit, so I have to make it prototype it.
-	#define atexit _crt_at_quick_exit
-	#define exit quick_exit
-	#define strtoull _strtoui64 // these are the same underlying function anyway
+	#define atexit		_crt_at_quick_exit
+	#define exit		quick_exit
+	#define strtoull	_strtoui64 // these are the same underlying function anyway
 
 	// this shouldn't do anything since _UCRT is defined,
 	// but I really don't want it to use the __mingw functions.
@@ -138,6 +132,16 @@ const u8 periods_names[20] = {
 
 #define ememcpy(dst, src, len) (__builtin_memcpy(dst, src, len) + len /* point to the end */)
 #define streq(x, y) (__builtin_strcmp(x, y) == 0)
+#define POPCNT(x) __builtin_stdc_count_ones(x)
+#define TOSTRING(x) #x
+#define TOSTRING_EXPANDED(x) TOSTRING(x)
+#define INT_LEN(x) (      \
+	(x) <      10 ? 1 :   \
+	(x) <     100 ? 2 :   \
+	(x) <   1'000 ? 3 :   \
+	(x) <  10'000 ? 4 :   \
+	(x) < 100'000 ? 5 : 6 \
+)
 
 // static branch prediction hinting is still used to build prof.exe.
 // NOTE: these default branch probability is 90%
@@ -174,10 +178,6 @@ const u8 periods_names[20] = {
 #define CHARS8_TO_U64(c0, c1, c2, c3, c4, c5, c6, c7) \
 	((u64)CHARS4_TO_U32(c4, c5, c6, c7) << 32 | (u64)CHARS4_TO_U32(c0, c1, c2, c3))
 
-#define PRINT_TABLE_HEADERS() printf( /* no ending newline */ \
-	"timestamp        | start state        | int | per | trs | n | trial\n" \
-	"--------------------------------------------------------------------")
-
 #include <string.h> // strcmp, sprintf, memcpy
 #include <time.h>   // _localtime64, _timespec64_get, struct _timespec64, struct tm
 #include <sys/stat.h> // S_IWRITE
@@ -185,10 +185,30 @@ const u8 periods_names[20] = {
 #include "error-print.h" // stdlib.h, stdio.h, fcntl.h (io.h (_open, _write, ...), O_CREAT, ...)
 #include "windows.h"
 #include "matx8-table.h"
+#include "matx8-next.h" // Matx8_next
+
+__attribute__((optimize("unroll-loops")))
+static FORCE_INLINE void print_table_headers(void) {
+#if INT_LEN(PERIOD_LEN) == 3 && INT_LEN(TRANSIENT_LEN) == 3
+	printf(
+		"timestamp        | start state        | int | per | trs | n | trial\n"
+		"--------------------------------------------------------------------"
+	);
+#else
+	printf(
+		"timestamp        | start state        | int | %*s | %*s | n | trial\n"
+		"--------------------------------------------------------------------",
+		INT_LEN(PERIOD_LEN), "per", INT_LEN(TRANSIENT_LEN), "trs"
+	);
+
+	for (u8 i = 0; i < max(INT_LEN(PERIOD_LEN), 3) + max(INT_LEN(TRANSIENT_LEN), 3) - 6; i++)
+		putchar('-');
+#endif
+}
 
 typedef enum <% EMPTY, CONST, CYCLE %> sttyp_t; // state type
 
-// hashtable and total_collisions are actually defined in matx8-table.h now.
+// hashtable and total_collisions are defined in matx8-table.h now.
 
 // static HashTable hashtable        = {0};
 static u64 counts[3]                 = {0}; // EMPTY, CONST, CYCLE
@@ -220,6 +240,28 @@ static u32 sleep_ms[2] = {
 #if HELP
 static const char *const help_string =
 	"usage: life [FLAGS] COMMAND [OPERANDS]"
+	"\n"
+	"\nbuild config:"
+	"\n    NEIGHBORHOOD="
+	#if NEIGHBORHOOD == NH_MOORE
+		"MOORE"
+	#elif NEIGHBORHOOD == NH_VON_NEUMANN
+		"VON_NEUMANN"
+	#elif NEIGHBORHOOD == NH_DIAGONAL
+		"DIAGONAL"
+	#endif
+	#ifdef PY_VERSION
+	"\n    PY_VERSION=\""	PY_VERSION "\""
+	#endif
+	"\n    RULESET=\""		RULESET "\""
+	"\n    TABLE_BITS="		TOSTRING_EXPANDED(TABLE_BITS)
+	"\n    PERIOD_LEN="		TOSTRING_EXPANDED(PERIOD_LEN)
+	"\n    TRANSIENT_LEN="	TOSTRING_EXPANDED(TRANSIENT_LEN)
+	"\n    ARENA_LEN="		TOSTRING_EXPANDED(ARENA_LEN)
+	"\n    TIMER="			TOSTRING_EXPANDED(TIMER)
+	"\n    CLIPBOARD="		TOSTRING_EXPANDED(CLIPBOARD)
+	"\n    FAST_HASHING="	TOSTRING_EXPANDED(FAST_HASHING)
+	"\n    DEBUG="			TOSTRING_EXPANDED(DEBUG)
 	"\n"
 	"\nflags:"
 #if CLIPBOARD
@@ -306,7 +348,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 	u32 argc    = *pargc;
 	char **argv = *pargv;
 	char *flag, *operand;
-	char c0;
+	char c0; // flag character 0
 
 	while (argc > 0 && **argv == '-') {
 		flag = *argv + 1; // first argument, but skip the dash.
@@ -502,7 +544,7 @@ void mainCRTStartup(void)
 	switch (*(u32 *) *argv) {
 	case CHARS4_TO_U32('n', 'r', 'u', 'n'):
 		if (!silent)
-			PRINT_TABLE_HEADERS();
+			print_table_headers();
 
 		if (argc == 0)
 			__builtin_unreachable();
@@ -533,7 +575,7 @@ void mainCRTStartup(void)
 		__builtin_unreachable();
 	case CHARS4_TO_U32('r', 'u', 'n',  0 ):
 		if (!silent)
-			PRINT_TABLE_HEADERS();
+			print_table_headers();
 
 		if (argc == 0)
 			__builtin_unreachable();
@@ -753,14 +795,14 @@ void mainCRTStartup(void)
 
 		u32 objects = 0;
 		u8 tmp_len = 0;
-		i32 n;
+		i32 len;
 		char *const restrict buf = hashtable.scratch;
 
 		// NOTE: it doesn't make sense for a file to end with "\n{\n\t".
 		//       without at least like 20 or so extra characters.
 		_Static_assert(SCRATCH_SIZE > 15, "SCRATCH_SIZE should be at least like 16.");
 
-		while ((n = _read(fd, buf, SCRATCH_SIZE)) > 8) {
+		while ((len = _read(fd, buf, SCRATCH_SIZE)) > 8) {
 			i32 i = 0;
 
 			switch (tmp_len) {
@@ -784,22 +826,22 @@ void mainCRTStartup(void)
 				break;
 			}
 
-			for (; i <= n - 4; i++)
+			for (; i <= len - 4; i++)
 				objects += *(u32 *)(hashtable.scratch + i) ==
 							CHARS4_TO_U32('\n', '{', '\n', '\t');
 
-			if (*(u16 *)(buf + n - 3) == CHARS2_TO_U16('\n', '{') &&
-				hashtable.scratch[n - 1] == '\n')
+			if (*(u16 *)(buf + len - 3) == CHARS2_TO_U16('\n', '{') &&
+				hashtable.scratch[len - 1] == '\n')
 				tmp_len = 3;
-			else if (*(u16 *)(buf + n - 2) == CHARS2_TO_U16('\n', '{'))
+			else if (*(u16 *)(buf + len - 2) == CHARS2_TO_U16('\n', '{'))
 				tmp_len = 2;
-			else if (buf[n - 1] == '\n')
+			else if (buf[len - 1] == '\n')
 				tmp_len = 1;
 			else
 				tmp_len = 0;
 		}
 
-		if (n == -1) {
+		if (len == -1) {
 			i32 error; _get_errno(&error);
 			eprintf("can't %s %s: errno=%u.\n", "read", DATAFILE, error);
 			exit(3);

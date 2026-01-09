@@ -50,17 +50,6 @@ constexpr u64 Matx8_xroll_masks[8] = {
 	0b0000000100000001000000010000000100000001000000010000000100000001, // 7
 };
 
-// `c` is the carry bit on the addition of the 0th bit.
-// NOTE: adds a 1-bit value `x` to a 3-bit accumulator. 8 wraps around to 0.
-//       this doesn't matter because 8 and 0 give the same result in all cases.
-//       and it can't wrap around multiple times like it could with a 2-bit accumulator.
-#define _3BIT_ADD(n2, n1, n0, x) ({ \
-	const u64 c = n0 & x;           \
-	n2 ^= n1 & c;                   \
-	n1 ^= c;                        \
-	n0 ^= x;                        \
-})
-
 //////////////////////////////// Matx8 methods ////////////////////////////////
 
 #if FAST_HASHING
@@ -97,6 +86,7 @@ static u32 Matx8__hash_u(const u64 state) {
 	v2 ^= 0xff;
 
 	SIP_SINGLE_ROUND(v0, v1, v2, v3);
+
 	// the last two rounds don't reduce collisions, so I removed them.
 
 	return (v0 ^ v1 ^ v2 ^ v3) & (TABLE_LEN - 1);
@@ -141,66 +131,6 @@ static FORCE_INLINE Matx8 Matx8__yroll(const Matx8 this, u8 x) {
 #define Matx8_hash(s) _Generic(s, Matx8: Matx8__hash, u64: Matx8__hash_u)(s)
 #define Matx8_xroll(s, x) _Generic(s, Matx8: Matx8__xroll, u64: Matx8__xroll_u)(s, x)
 #define Matx8_yroll(s, x) _Generic(s, Matx8: Matx8__yroll, u64: Matx8__yroll_u)(s, x)
-
-static Matx8 Matx8_next(const Matx8 this) {
-	// NOTE: in the addition, 8 wraps around to 0, but it doesn't matter
-	//       because 8 and 0 give the same result in all cases.
-
-	// this should be between 73 and 82 instructions if I counted right.
-
-	register u64 // neighbor counter stuff:
-		n_bit2 = 0, // counter output bit 2. e.g. (n >> 2) & 1
-		n_bit1 = 0, // counter output bit 1. e.g. (n >> 1) & 1
-		n_bit0 = 0; // counter output bit 0. e.g. (n >> 0) & 1
-
-	// all of these constants except for cl and cr will likely be inlined since they are only used once.
-
-	const u64 // axis-aligned neighbors (Von Neumann neighborhood):
-		cl = Matx8_xroll(this.matx, -1), // center left
-		cr = Matx8_xroll(this.matx, +1), // center right
-		uc = Matx8_yroll(this.matx, -1), // up center
-		dc = Matx8_yroll(this.matx, +1), // down center
-
-		// diagonal neighbors (the rest of the Moore neighborhood):
-		ul = Matx8_yroll(cl, -1), // up left
-		ur = Matx8_yroll(cr, -1), // up right
-		dl = Matx8_yroll(cl, +1), // down left
-		dr = Matx8_yroll(cr, +1); // down right
-
-	// 27 instructions for the declarations, a lot of which can be pipelined by the CPU.
-
-	// the code with the _3BIT_ADD stuff is basically just this:
-	// neighbors = (ul + uc + ur) + (cl + cr) + (dl + dc + dr)
-	// but avoiding the issue that is it is trying to fit potentially 4 bits of information
-	// into each bit, which will overflow all over the place and return garbage,
-	// so instead the adders have each bit separated out so there are no overflows.
-
-	// a lot of the instructions will likely be pipelined to run in parallel.
-
-	// this can possibly be made faster by having 2 adders for 4 values each,
-	// and then a 3-bit full adder at the end to combine them.
-	// that seems like too much work for the benefit, so I will not be doing it.
-	// also, even then it would only be *potentially* faster because of CPU pipelining.
-
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, ul);
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, uc);
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, ur);
-
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, cl);
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, cr);
-
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, dl);
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, dc);
-	_3BIT_ADD(n_bit2, n_bit1, n_bit0, dr);
-
-	// output == 3, or this.matx is 1 and output == 2.
-	return (Matx8) {
-		.matx = ~n_bit2 & n_bit1 & (n_bit0 | this.matx)
-	};
-	// same as ~n_bit2 & n_bit1 & (n_bit0 | ~n_bit0 & this.matx)
-	// a = n_bit0, b = this.matx
-	// a + !a b == (a + !a) (a + b) == a + b, (in boolean algebra)
-}
 
 static Matx8 Matx8_random(void) {
 	u64 buffer;

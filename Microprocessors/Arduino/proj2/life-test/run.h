@@ -1,11 +1,6 @@
 #pragma once
 #define RUN_H
 
-#define POPCNT(x) __builtin_stdc_count_ones(x)
-
-#define TOSTRING(x) #x
-#define TOSTRING_EXPANDED(x) TOSTRING(x)
-
 static void log_if_interesting(Matx8 s0, Matx8 s1, sttyp_t type, u32 step, u32 period) {
 	// returns an integer where the magnitude reflects how interesting the state is.
 	u8 interest = 0;
@@ -105,15 +100,65 @@ static void log_if_interesting(Matx8 s0, Matx8 s1, sttyp_t type, u32 step, u32 p
 		s0.matx, interest
 	);
 
+	// pick the alignment based on the length of the max value, up to 5 digits.
 	unlikely_if (interest & (2 | 16))
-		printf("%3u | ", period);
+		#if INT_LEN(PERIOD_LEN) == 1
+			printf( "%u | ", period);
+		#elif INT_LEN(PERIOD_LEN) == 2
+			printf("%2u | ", period);
+		#elif INT_LEN(PERIOD_LEN) == 3
+			printf("%3u | ", period);
+		#elif INT_LEN(PERIOD_LEN) == 4
+			printf("%4u | ", period);
+		#elif INT_LEN(PERIOD_LEN) == 5
+			printf("%5u | ", period);
+		#else // 6
+			printf("%6u | ", period);
+		#endif
 	else
-		printf("    | ");
+		#if INT_LEN(PERIOD_LEN) == 1
+			printf(     "  | ");
+		#elif INT_LEN(PERIOD_LEN) == 2
+			printf(    "   | ");
+		#elif INT_LEN(PERIOD_LEN) == 3
+			printf(   "    | ");
+		#elif INT_LEN(PERIOD_LEN) == 4
+			printf(  "     | ");
+		#elif INT_LEN(PERIOD_LEN) == 5
+			printf( "      | ");
+		#else // 6
+			printf("       | ");
+		#endif
 
 	likelyp_if (interest & (1 | 8), 0.999)
-		printf("%3u | ", step);
+		#if INT_LEN(TRANSIENT_LEN) == 1
+			printf( "%u | ", step);
+		#elif INT_LEN(TRANSIENT_LEN) == 2
+			printf("%2u | ", step);
+		#elif INT_LEN(TRANSIENT_LEN) == 3
+			printf("%3u | ", step);
+		#elif INT_LEN(TRANSIENT_LEN) == 4
+			printf("%4u | ", step);
+		#elif INT_LEN(TRANSIENT_LEN) == 5
+			printf("%5u | ", step);
+		#else // 6
+			printf("%6u | ", step);
+		#endif
 	else
-		printf("    | ");
+		#if INT_LEN(TRANSIENT_LEN) == 1
+			printf(     "  | ");
+		#elif INT_LEN(TRANSIENT_LEN) == 2
+			printf(    "   | ");
+		#elif INT_LEN(TRANSIENT_LEN) == 3
+			printf(   "    | ");
+		#elif INT_LEN(TRANSIENT_LEN) == 4
+			printf(  "     | ");
+		#elif INT_LEN(TRANSIENT_LEN) == 5
+			printf( "      | ");
+		#else // 6
+			printf("       | ");
+		#endif
+
 
 	if (POPCNT(interest) > 1)
 		printf("%u | ", POPCNT(interest));
@@ -161,12 +206,9 @@ static void _run_once1(const Matx8 start_state) {
 
 	unlikelyp_if (invalid != 0, 0.9999999) {
 		eprintf(
-			"\ninvalid start state: out of bounds value, reason=%u\n"
-			"\treasons: 1: p, 2: t, 3: both\n"
-			"\tp=%u\n"
-			"\tt=%u\n"
-			"\ts=0x%016llx",
-			invalid,
+			"\ninvalid start state: out of bounds value, reason=\"%s\""
+			": p=%03u, t=%03u, s=0x%016llx",
+			invalid == 1 ? "p" : invalid == 2 ? "p+t"+2 : "p+t",
 			period,
 			step,
 			start_state.matx
@@ -213,11 +255,11 @@ start:
 	bool update_pressed = false;
 
 	while (true) {
-#if TIMER
+	#if TIMER
 		// only check the timer like every 64 to 515 seconds or so,
 		// depending on how fast your computer is.
 		for (u16 j = 0; j < INT16_MAX; j++) {
-#endif
+	#endif
 			// only check key states every 8160 trials.
 			// sometimes if you just tap the stop or update button, it will miss it.
 			// pressing and holding for a slightest amount of time fixes it.
@@ -241,7 +283,7 @@ start:
 
 			unlikelyp_if (GetAsyncKeyState(stop_key) & 0x8000, 0.9999)
 				return;
-#if TIMER
+	#if TIMER
 		} // for, j
 
 		if (!usefile)
@@ -280,6 +322,6 @@ start:
 				" seconds have passed since timer last check. restarting.");
 			goto start;
 		}
-#endif
+	#endif
 	} // while
 }

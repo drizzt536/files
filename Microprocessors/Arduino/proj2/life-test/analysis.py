@@ -3,6 +3,8 @@ Some high level operations and statistics on the data for the life simulations.
 
 This file used to contain an implementation for the simulations, but it
 has since been removed because the C version is like 4,000 times faster
+
+requires >=Python 3.12 for nested f-strings.
 """
 
 from collections import defaultdict

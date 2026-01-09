@@ -1,11 +1,11 @@
 # the following things are required:
-	# basic linux tools: mv, rm, awk, stat, grep
-	# other linux tools: make, gcc
+	# basic linux tools: mv, rm, awk, stat, grep, tail
+	# other linux tools: gcc (must be MSVCRT), make
 	# binutils: ld, strip, objcopy, objdump
 	# VC build tools: dumpbin, editbin
-	# misc: 7z, nasm, python
+	# misc: 7z, nasm, python (>=3.12)
 
-# it works for sure with MinGW devkit 2.5 (GCC 15.2)
+# it works for sure with MinGW devkit 2.5 (GCC 15.2, binutils 2.45)
 # the MSYS2 version of GCC won't work because it is UCRT and not MSVCRT.
 
 CFLAGS     := -std=gnu23 -masm=intel -I../../../../C/ -Werror -Wall -Wextra \
@@ -32,13 +32,41 @@ else
 	ifeq ($(OPTIMIZE),avx512)
 		COPTZ += -march=x86-64-v4
 	else
-		# default to a somewhat modern architecture but without AVX512.
-		COPTZ += -march=x86-64-v3
+		ifeq ($(OPTIMIZE),avx2)
+			COPTZ += -march=x86-64-v3
+		else
+			# default to a super old one
+			COPTZ += -march=x86-64-v2
+		endif
 	endif
 endif
 
-ifdef FAST_HASHING 
-	CFLAGS += -DFAST_HASHING=$(FAST_HASHING)
+ifdef ALIVE_CHAR_DEF
+	CFLAGS += -DALIVE_CHAR_DEF=$(ALIVE_CHAR_DEF)
+endif
+
+ifdef DEAD_CHAR_DEF
+	CFLAGS += -DDEAD_CHAR_DEF=$(DEAD_CHAR_DEF)
+endif
+
+ifdef TIMER_PERIOD
+	CFLAGS += -DTIMER_PERIOD=$(TIMER_PERIOD)
+endif
+
+ifdef TABLE_BITS
+	CFLAGS += -DTABLE_BITS=$(TABLE_BITS)
+endif
+
+ifdef PERIOD_LEN
+	CFLAGS += -DPERIOD_LEN=$(PERIOD_LEN)
+endif
+
+ifdef TRANSIENT_LEN
+	CFLAGS += -DTRANSIENT_LEN=$(TRANSIENT_LEN)
+endif
+
+ifdef ARENA_LEN
+	CFLAGS += -DARENA_LEN=$(ARENA_LEN)
 endif
 
 ifdef CLIP
@@ -49,6 +77,10 @@ ifdef TIMER
 	CFLAGS += -DTIMER=$(TIMER)
 endif
 
+ifdef FAST_HASHING
+	CFLAGS += -DFAST_HASHING=$(FAST_HASHING)
+endif
+
 ifdef HELP
 	CFLAGS += -DHELP=$(HELP)
 endif
@@ -57,6 +89,14 @@ ifdef DEBUG
 	CFLAGS += -DDEBUG=$(DEBUG)
 endif
 
+ifdef NEIGHBORHOOD
+	CFLAGS += -DNEIGHBORHOOD=NH_$(NEIGHBORHOOD)
+endif
+
+ifdef RULESET
+	CFLAGS += -DRULESET="\"$(RULESET)\""
+	CFLAGS += -DNEXT_COND="$(shell python gen-next-cond.py '$(RULESET)')"
+endif
 
 all: requirements life.7z life.txt life-launch.txt
 
@@ -64,7 +104,7 @@ all: requirements life.7z life.txt life-launch.txt
 
 requirements: req-7z req-nasm req-vcbtools req-python req-gcc
 
-ifeq ($(REQUIRE), false)
+ifeq ($(REQUIRE),false)
 req-7z:
 req-nasm:
 req-gcc:
@@ -137,10 +177,10 @@ init-crt.o: init-crt.nasm req-nasm req-binutils
 	nasm -fwin64 $< -o $@
 	strip -S $@
 
-ifeq ($(PROFILE),FALSE)
-life.o: $(CFILES) req-gcc
+ifeq ($(PROFILE),false)
+life.o: $(CFILES) req-gcc req-python
 	@# can't use `-ffreestanding` for some reason
-	gcc -c -nostdlib $(CFLAGS) $(COPTZ) $< -o $@
+	gcc -c -nostdlib $(CFLAGS) -DPY_VERSION="\"$$(python --version | tail -c +8)\""  $(COPTZ) $< -o $@
 else
 prof.exe: init-crt.o $(CFILES) req-gcc
 	gcc -fprofile-generate -DPROFILING $(CFLAGS) $(COPTZ) $< life.c -o $@
@@ -150,7 +190,7 @@ life.gcda: prof.exe req-linux
 	mv prof-life.gcda $@
 
 life.o: $(CFILES) life.gcda req-gcc
-	gcc -c -fprofile-use -nostdlib -ffreestanding $(CFLAGS) $(COPTZ) $(CPROF_OPTZ) $< -o $@.tmp
+	gcc -c -fprofile-use -nostdlib -ffreestanding $(CFLAGS) -DPY_VERSION="\"$$(python --version | tail -c +8)\"" $(COPTZ) $(CPROF_OPTZ) $< -o $@.tmp
 
 	objcopy $@.tmp --remove-section .pdata --remove-section .xdata $@
 	strip -S $@
@@ -163,7 +203,9 @@ analyze.py: analysis.py req-linux req-python
 
 life.exe: init-crt.o life.o req-binutils req-vcbtools
 	ld $(LDFLAGS) init-crt.o life.o $(LDLIBS) -o $@
+ifneq ($(RESERVE),long)
 	editbin -nologo -heap:32768,4096 -stack:32768,4096 $@
+endif
 
 life.txt: life.exe req-binutils req-vcbtools
 	objdump -Mintel -D $< > $@
@@ -179,7 +221,9 @@ life-launch.o: life-launch.nasm req-nasm req-binutils
 life-launch.exe: life-launch.o req-binutils req-vcbtools
 	ld $(LDFLAGS) $< -lucrtbase -lkernel32 -o $@
 	strip -s $@
+ifneq ($(RESERVE),long)
 	editbin -nologo -heap:4096,4096 -stack:4096,4096 $@
+endif
 
 life-launch.txt: life-launch.exe req-binutils req-vcbtools
 	objdump -Mintel -D $< > $@
@@ -189,7 +233,7 @@ life-launch.txt: life-launch.exe req-binutils req-vcbtools
 # cleanup stuff
 
 clean: req-linux
-	rm -f *.o *.tmp prof.exe life.gcda
+	rm -f *.o *.tmp *.gcda prof.exe
 
 distclean: req-linux
-	rm -f *.o *.tmp *.exe life.gcda life.7z life.txt life-launch.txt analyze.py
+	rm -f *.o *.tmp *.gcda *.exe life.7z life.txt life-launch.txt analyze.py
