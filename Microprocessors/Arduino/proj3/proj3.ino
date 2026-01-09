@@ -17,7 +17,8 @@
 // radius of the deadzone. percentage is DEADZONE/1023
 #define DEADZONE 51
 
-using Max7219::state;
+namespace Matrix = Max7219::Matrix;
+using Matrix::state;
 
 static FORCE_INLINE void apply_state_AND(bool nand) {
 	state.raw = ~0llu; // set to all ones instead of all zeros.
@@ -155,7 +156,7 @@ void setup(void) {
 	DDRB &= ~0b00000001;
 	PORTB |= 0b00000001;
 
-	Max7219::init();
+	Matrix::init();
 }
 
 void loop(void) {
@@ -285,5 +286,5 @@ apply_tfms:
 		tmp = state.rows[3]; state.rows[3] = state.rows[4]; state.rows[4] = tmp;
 	}
 
-	Max7219::sync();
+	Matrix::sync();
 }

@@ -22,7 +22,7 @@ alive = (alive_neighbors == 3) | ((alive_neighbors == 2) & current(row, col))
 */
 
 static FORCE_INLINE u8 _getCell(u8 row, u8 col) {
-	return (Max7219::state.rows[row] >> col) & 1;
+	return (Matrix::state.rows[row] >> col) & 1;
 }
 
 static FORCE_INLINE u8 getCell(u8 row, u8 col) {
@@ -66,13 +66,13 @@ void loop(void) {
 	// if any of the cells changed, then the state is still changing.
 	// otherwise, reset the device and get a new state.
 
-	if (next.raw == Max7219::state.raw) {
+	if (next.raw == Matrix::state.raw) {
 		// wait 2 seconds first so it is clear why it is reseting
 		delay(2000);
 		asm volatile ("jmp 0");
 		__builtin_unreachable();
 	}
 
-	Max7219::update(next);
+	Matrix::update(next);
 	delay(100);
 }

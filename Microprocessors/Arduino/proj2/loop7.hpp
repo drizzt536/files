@@ -10,7 +10,7 @@ static FORCE_INLINE u64 permute(u64 x) {
 }
 
 void loop(void) {
-	Max7219::state.raw = permute(Max7219::state.raw);
-	Max7219::sync();
+	Matrix::state.raw = permute(Matrix::state.raw);
+	Matrix::sync();
 	delay(250);
 }

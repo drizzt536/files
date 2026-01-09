@@ -65,8 +65,8 @@ constexpr u64 states[] = {
 void loop(void) {
 	static u8 i = 0;
 
-	Max7219::update(states[i]); delay(250);
-	Max7219::update(0llu);      delay(250);
+	Matrix::update(states[i]); delay(250);
+	Matrix::update(0llu);      delay(250);
 
 	if (++i == sizeof(states) / sizeof(*states))
 		i = 0;

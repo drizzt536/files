@@ -723,9 +723,8 @@ void mainCRTStartup(void)
 			exit(4);
 		}
 
-		if (argc == 2) {
+		if (argc == 2)
 			n = 1;
-		}
 		else {
 			n = strtoull(argv[2], &str_end, 0);
 

@@ -13,7 +13,7 @@ void loop(void) {
 		(random(256) < 85) << 1 |
 		(random(256) < 85);
 
-	Max7219::send(i, x);
+	Matrix::Core::send(i, x);
 
 	i++;
 	if (i == 9) {

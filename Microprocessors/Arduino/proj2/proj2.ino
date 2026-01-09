@@ -13,8 +13,10 @@
 #define MAX7219_CLK 44
 #include <Max7219-8x8-ns1.hpp>
 
+namespace Matrix = Max7219::Matrix;
+
 #ifdef SKETCH4
-static Max7219::state_t next = (Max7219::state_t) {.raw =
+static Matrix::State next = (Matrix::State) {.raw =
 	#ifdef S4_LOOP // some random one that loops and kind of looks cool
 		0b0000000000011000000011000000011000000000000000000000000000000000llu
 	#elif defined S4_P3
@@ -34,22 +36,27 @@ static Max7219::state_t next = (Max7219::state_t) {.raw =
 	#endif
 };
 #elif defined SKETCH5
-static state_t next;
+static State next;
 #endif
 
 void setup(void) {
-	Max7219::init();
+	Matrix::init();
 
 #ifdef SKETCH4
-	Max7219::update(next); // use the hardcoded matrix as the start state
+	Matrix::update(next); // use the hardcoded matrix as the start state
 #elif defined(SKETCH5) || defined(SKETCH7)
 	u16 tmp = (analogRead(A0) ^ millis()) | analogRead(A5) << 5;
 	randomSeed((tmp << 9 | tmp >> 7) + (analogRead(A14) ^ micros()));
 
-	Max7219::update(
+	Matrix::update(
 		random(255), random(255), random(255), random(255),
 		random(255), random(255), random(255), random(255)
 	);
+#endif
+
+#ifdef SKETCH7
+	if (Matrix::state.raw == 0)
+		Matrix::state.raw = 1;
 #endif
 }
 

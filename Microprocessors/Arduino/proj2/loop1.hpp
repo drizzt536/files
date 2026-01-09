@@ -3,7 +3,7 @@
 void loop(void) {
 	static u64 display = 0;
 
-	Max7219::update(
+	Matrix::update(
 		(display >> 8*7) & 0xFF,
 		(display >> 8*6) & 0xFF,
 		(display >> 8*5) & 0xFF,
