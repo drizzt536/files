@@ -2,12 +2,13 @@
 #pragma once
 
 #ifdef MAX7219_7221_8X8_MATRIX_IMPL
-	#error only one implementation of Max7219 can be used
+	#error only one implementation of the Max7219 matrix controller can be used
 #endif
 
 #define MAX7219_7221_8X8_MATRIX_IMPL
 
-#include <arduino-avr-fdgpio.hpp>
+#include <fdgpio.hpp>
+#include <Max7219-opcodes.hpp>
 
 #ifndef MAX7219_DIN
 	#define MAX7219_DIN 2
@@ -16,14 +17,14 @@
 	#define MAX7219_CS 3
 #endif
 #ifndef MAX7219_CLK
-	#define MAX7219_CLK 4
+	#define MAX7219_CLK 5
 #endif
 
-namespace Max7219 {
-	namespace Private {
-		static constexpr u8 DIN = MAX7219_DIN;
-		static constexpr u8 CS  = MAX7219_CS;
-		static constexpr u8 CLK = MAX7219_CLK;
+namespace Max7219::Matrix {
+	namespace Core {
+		constexpr u8 DIN = MAX7219_DIN;
+		constexpr u8 CS  = MAX7219_CS;
+		constexpr u8 CLK = MAX7219_CLK;
 
 		static u8 bit_din, bit_cs, bit_clk;
 		static volatile u8 *port_out;
@@ -53,7 +54,7 @@ namespace Max7219 {
 			W_PORT(port_out, bit_din, operand &   2); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 			W_PORT(port_out, bit_din, operand &   1); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 		#else
-			for (u8 i = 0; i < 8; i++) {
+			for (u8 i = 8; i --> 0 ;) {
 				W_PORT(port_out, bit_din, operand & 128);
 				operand <<= 1;
 
@@ -61,7 +62,7 @@ namespace Max7219 {
 				W_LOW(port_out, bit_clk);
 			}
 
-			for (u8 i = 0; i < 8; i++) {
+			for (u8 i = 8; i --> 0 ;) {
 				W_PORT(port_out, bit_din, opcode & 128);
 				opcode <<= 1;
 
@@ -70,74 +71,66 @@ namespace Max7219 {
 			}
 		#endif
 		}
+
+		[[maybe_unused]]
+		static FORCE_INLINE void send(u8 opcode, u8 operand) {
+			W_LOW(port_out, bit_cs); // start reading
+			_send(opcode, operand);
+			W_HIGH(port_out, bit_cs); // latch value
+		}
+
+		[[maybe_unused]]
+		static FORCE_INLINE void send(u8 *data) {
+			send(data[0], data[1]);
+		}
 	}
 
-	using namespace Private;
+	using namespace Max7219::Opcodes;
+	using namespace Core;
 
-	static constexpr u8 OP_NOOP        =  0; // operand ignored. does nothing
-	// opcode 9 does nothing.
-	static constexpr u8 OP_INTENSITY   = 10; // operand in [0, 15]. sets the current draw.
-	static constexpr u8 OP_SCANLIMIT   = 11; // operand in in [0, 7] for rows 1-8
-	static constexpr u8 OP_SHUTDOWN    = 12; // operand is 0 (normal) or 1 (power saving)
-	// opcodes 13 and 14 don't exist
-	static constexpr u8 OP_DISPLAYTEST = 15; // operand is 1/on or 0/off. turns on all LEDs with intensity 15.
-
-	typedef union {
+	using State = union {
 		u64 raw;
 		u8 rows[8];
-	} state_t;
+	};
 
-	static state_t state;
+	static State state;
 	static u8 led_intensity; // NOTE: `intensity` is the setter function.
 
 	[[maybe_unused]]
-	static FORCE_INLINE void send(u8 opcode, u8 operand) {
-		W_LOW(port_out, bit_cs); // start reading
-		_send(opcode, operand);
-		W_HIGH(port_out, bit_cs); // latch value
-	}
-
-	[[maybe_unused]]
 	static FORCE_INLINE void sync(u8 row) {
-		send(row + 1, state.rows[row]);
+		send(OP_ROW(row), state.rows[row]);
 	}
 
 	[[maybe_unused]]
 	static FORCE_INLINE void sync(void) {
 		// sync the device with the state that this controller has.
-		send(1, state.rows[0]); send(2, state.rows[1]);
-		send(3, state.rows[2]); send(4, state.rows[3]);
-		send(5, state.rows[4]); send(6, state.rows[5]);
-		send(7, state.rows[6]); send(8, state.rows[7]);
+		sync(0); sync(1); sync(2); sync(3);
+		sync(4); sync(5); sync(6); sync(7);
 	}
 
 	[[maybe_unused]]
 	static FORCE_INLINE void intensity(u8 value) {
-		if (value > 15)
-			value = 15;
-
-		if (value == led_intensity)
-			return;
+		value &= 15;
 
 		led_intensity = value;
 		send(OP_INTENSITY, value);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void update(u8 r1, u8 r2, u8 r3, u8 r4, u8 r5, u8 r6, u8 r7, u8 r8) {
-		state.rows[0] = r1; state.rows[1] = r2;
-		state.rows[2] = r3; state.rows[3] = r4;
-		state.rows[4] = r5; state.rows[5] = r6;
-		state.rows[6] = r7; state.rows[7] = r8;
+	static FORCE_INLINE void update(u8 r0, u8 r1, u8 r2, u8 r3, u8 r4, u8 r5, u8 r6, u8 r7) {
+		state.rows[0] = r0; state.rows[1] = r1;
+		state.rows[2] = r2; state.rows[3] = r3;
+		state.rows[4] = r4; state.rows[5] = r5;
+		state.rows[6] = r6; state.rows[7] = r7;
 
-		send(1, r1); send(2, r2);
-		send(3, r3); send(4, r4);
-		send(5, r5); send(6, r6);
-		send(7, r7); send(8, r8);
+		send(OP_ROW0, r0); send(OP_ROW1, r1);
+		send(OP_ROW2, r2); send(OP_ROW3, r3);
+		send(OP_ROW4, r4); send(OP_ROW5, r5);
+		send(OP_ROW6, r6); send(OP_ROW7, r7);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void update(state_t s) {
+	static FORCE_INLINE void update(State s) {
 		update(
 			s.rows[0], s.rows[1], s.rows[2], s.rows[3],
 			s.rows[4], s.rows[5], s.rows[6], s.rows[7]
@@ -151,7 +144,7 @@ namespace Max7219 {
 
 	[[maybe_unused]]
 	static FORCE_INLINE void update(u64 s) {
-		update((state_t) {.raw = s});
+		update((State) {.raw = s});
 	}
 
 	[[maybe_unused]]
@@ -160,7 +153,7 @@ namespace Max7219 {
 			return;
 
 		state.rows[row] = x;
-		send(row + 1, x);
+		send(OP_ROW(row), x);
 	}
 
 	[[maybe_unused]]
@@ -168,13 +161,11 @@ namespace Max7219 {
 		if (col > 7)
 			return;
 
-		const u8 mask = 1 << col;
+		for (u8 row = 8; row --> 0 ;) {
+			if (x & 128) state.rows[row] |=  bit(col); // set the bit
+			else         state.rows[row] &= ~bit(col); // clear the bit
 
-		for (u8 i = 0; i < 8; i++) {
-			if (x & 1) state.rows[i] |=  mask; // set the bit
-			else       state.rows[i] &= ~mask; // clear the bit
-
-			x >>= 1;
+			x <<= 1;
 		}
 
 		sync();
@@ -185,29 +176,28 @@ namespace Max7219 {
 		if (row > 7 || col > 7)
 			return;
 
-		if (b)	state.rows[row] |= bit(col);
+		if (b)	state.rows[row] |=  bit(col);
 		else	state.rows[row] &= ~bit(col);
-		send(row + 1, state.rows[row]);
+
+		sync(row);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void toggleRow(u8 row, u8 x) {
+	static FORCE_INLINE void toggleRow(u8 row, u8 mask = 0xFF) {
 		if (row > 7)
 			return;
 
-		state.rows[row] ^= x;
-		send(row + 1, state.rows[row]);
+		state.rows[row] ^= mask;
+		sync(row);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void toggleCol(u8 col, u8 x) {
+	static FORCE_INLINE void toggleCol(u8 col, u8 mask = 0xFF) {
 		if (col > 7)
 			return;
 
-		for (u8 i = 0; i < 8; i++) {
-			state.rows[i] ^= (x & 1) << col;
-			x >>= 1;
-		}
+		for (u8 row = 8; row --> 0 ;)
+			state.rows[row] ^= ((mask >> row) & 1) << col;
 
 		sync();
 	}
@@ -218,7 +208,7 @@ namespace Max7219 {
 			return;
 
 		state.rows[row] ^= bit(col);
-		send(row + 1, state.rows[row]);
+		sync(row);
 	}
 
 	[[maybe_unused]]

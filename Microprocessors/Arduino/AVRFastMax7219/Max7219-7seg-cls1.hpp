@@ -1,13 +1,14 @@
 // nocompile
 #pragma once
 
-#ifdef MAX7219_7221_8X8_MATRIX_IMPL
-	#error only one implementation of Max7219 can be used
+#ifdef MAX7219_7221_SEVEN_SEGMENT_IMPL
+	#error only one implementation of the Max7219 7-segment controller can be used
 #endif
 
-#define MAX7219_7221_8X8_MATRIX_IMPL
+#define MAX7219_7221_SEVEN_SEGMENT_IMPL
 
-#include <arduino-avr-fdgpio.hpp>
+#include <fdgpio.hpp>
+#include <Max7219-opcodes.hpp>
 
 #ifndef MAX7219_DIN
 	#define MAX7219_DIN 2
@@ -16,10 +17,14 @@
 	#define MAX7219_CS 3
 #endif
 #ifndef MAX7219_CLK
-	#define MAX7219_CLK 4
+	#define MAX7219_CLK 5
 #endif
 
-class Max7219 {
+namespace Max7219 {
+
+using namespace Max7219::Opcodes;
+
+class SevenSegment {
 private:
 	u8 bit_din, bit_cs, bit_clk;
 	volatile u8 *port_out;
@@ -49,7 +54,7 @@ private:
 		W_PORT(port_out, bit_din, operand &   2); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 		W_PORT(port_out, bit_din, operand &   1); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 	#else
-		for (u8 i = 0; i < 8; i++) {
+		for (u8 i = 8; i --> 0 ;) {
 			W_PORT(port_out, bit_din, operand & 128);
 			operand <<= 1;
 
@@ -57,7 +62,7 @@ private:
 			W_LOW(port_out, bit_clk);
 		}
 
-		for (u8 i = 0; i < 8; i++) {
+		for (u8 i = 8; i --> 0 ;) {
 			W_PORT(port_out, bit_din, opcode & 128);
 			opcode <<= 1;
 
@@ -66,23 +71,35 @@ private:
 		}
 	#endif
 	}
-
 public:
-	static constexpr u8 OP_NOOP        =  0; // operand ignored. does nothing
-	// opcode 9 does nothing.
-	static constexpr u8 OP_INTENSITY   = 10; // operand in [0, 15]. sets the current draw.
-	static constexpr u8 OP_SCANLIMIT   = 11; // operand in in [0, 7] for rows 1-8
-	static constexpr u8 OP_SHUTDOWN    = 12; // operand is 0 (normal) or 1 (power saving)
-	// opcodes 13 and 14 don't exist
-	static constexpr u8 OP_DISPLAYTEST = 15; // operand is 1/on or 0/off. turns on all LEDs with intensity 15.
+	constexpr u8 BCD_0 = 0x0;
+	constexpr u8 BCD_1 = 0x1;
+	constexpr u8 BCD_2 = 0x2;
+	constexpr u8 BCD_3 = 0x3;
+	constexpr u8 BCD_4 = 0x4;
+	constexpr u8 BCD_5 = 0x5;
+	constexpr u8 BCD_6 = 0x6;
+	constexpr u8 BCD_7 = 0x7;
+	constexpr u8 BCD_8 = 0x8;
+	constexpr u8 BCD_9 = 0x9;
 
-	typedef union {
+	// Max7219-specific Extended BCD
+	constexpr u8 EBCD_HYPHEN = 0xA;
+	constexpr u8 EBCD_E = 0xB;
+	constexpr u8 EBCD_H = 0xC;
+	constexpr u8 EBCD_L = 0xD;
+	constexpr u8 EBCD_P = 0xE;
+	constexpr u8 EBCD_BLANK = 0xF;
+	// after 0xF, I think it just wraps around to 0.
+
+	using State = union {
 		u64 raw;
-		u8 rows[8];
-	} state_t;
+		u8 digits[8];
+	};
 
-	state_t state;    // row values
+	State state;      // digit values
 	u8 led_intensity; // NOTE: `intensity` is the setter function.
+	u8 decode_state;
 
 	FORCE_INLINE void send(u8 opcode, u8 operand) const {
 		W_LOW(port_out, bit_cs); // start reading
@@ -90,45 +107,48 @@ public:
 		W_HIGH(port_out, bit_cs); // latch value
 	}
 
-	FORCE_INLINE void sync(u8 row) const {
-		send(row + 1, state.rows[row]);
+	FORCE_INLINE void send(u8 *data) {
+		send(data[0], data[1]);
+	}
+
+	FORCE_INLINE void sync(u8 digit) const {
+		send(OP_DIGIT(digit), state.digits[digit]);
 	}
 
 	FORCE_INLINE void sync(void) const {
 		// sync the device with the state that this controller has.
-		send(1, state.rows[0]); send(2, state.rows[1]);
-		send(3, state.rows[2]); send(4, state.rows[3]);
-		send(5, state.rows[4]); send(6, state.rows[5]);
-		send(7, state.rows[6]); send(8, state.rows[7]);
+		sync(0); sync(1); sync(2); sync(3);
+		sync(4); sync(5); sync(6); sync(7);
 	}
 
 	FORCE_INLINE void intensity(u8 value) {
-		if (value > 15)
-			value = 15;
-
-		if (value == led_intensity)
-			return;
+		value &= 15;
 
 		led_intensity = value;
 		send(OP_INTENSITY, value);
 	}
 
-	FORCE_INLINE void update(u8 r1, u8 r2, u8 r3, u8 r4, u8 r5, u8 r6, u8 r7, u8 r8) {
-		state.rows[0] = r1; state.rows[1] = r2;
-		state.rows[2] = r3; state.rows[3] = r4;
-		state.rows[4] = r5; state.rows[5] = r6;
-		state.rows[6] = r7; state.rows[7] = r8;
-
-		send(1, r1); send(2, r2);
-		send(3, r3); send(4, r4);
-		send(5, r5); send(6, r6);
-		send(7, r7); send(8, r8);
+	FORCE_INLINE void decode(u8 value) {
+		decode_state = value;
+		send(OP_DECODE, value);
 	}
 
-	FORCE_INLINE void update(state_t s) {
+	FORCE_INLINE void update(u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7) {
+		state.digits[0] = d0; state.digits[1] = d1;
+		state.digits[2] = d2; state.digits[3] = d3;
+		state.digits[4] = d4; state.digits[5] = d5;
+		state.digits[6] = d6; state.digits[7] = d7;
+
+		send(OP_DIGIT0, d0); send(OP_DIGIT1, d1);
+		send(OP_DIGIT2, d2); send(OP_DIGIT3, d3);
+		send(OP_DIGIT4, d4); send(OP_DIGIT5, d5);
+		send(OP_DIGIT6, d6); send(OP_DIGIT7, d7);
+	}
+
+	FORCE_INLINE void update(State s) {
 		update(
-			s.rows[0], s.rows[1], s.rows[2], s.rows[3],
-			s.rows[4], s.rows[5], s.rows[6], s.rows[7]
+			s.digits[0], s.digits[1], s.digits[2], s.digits[3],
+			s.digits[4], s.digits[5], s.digits[6], s.digits[7]
 		);
 	}
 
@@ -137,68 +157,41 @@ public:
 	}
 
 	FORCE_INLINE void update(u64 s) {
-		update((state_t) {.raw = s});
+		update((State) {.raw = s});
 	}
 
-	FORCE_INLINE void setRow(u8 row, u8 x) {
-		if (row > 7)
+	FORCE_INLINE void setDigit(u8 digit, u8 x) {
+		if (digit > 7)
 			return;
 
-		state.rows[row] = x;
-		send(row + 1, x);
+		state.digits[digit] = x;
+		send(OP_DIGIT(digit), x);
 	}
 
-	FORCE_INLINE void setCol(u8 col, u8 x) {
-		if (col > 7)
+	FORCE_INLINE void setSegment(u8 digit, u8 segment, u8 b) {
+		if (digit > 7 || segment > 7)
 			return;
 
-		const u8 mask = 1 << col;
+		if (b) state.digits[digit] |= bit(segment);
+		else   state.digits[digit] &= ~bit(segment);
 
-		for (u8 i = 0; i < 8; i++) {
-			if (x & 1) state.rows[i] |=  mask; // set the bit
-			else       state.rows[i] &= ~mask; // clear the bit
-
-			x >>= 1;
-		}
-
-		sync();
+		sync(digit);
 	}
 
-	FORCE_INLINE void setCell(u8 row, u8 col, u8 b) {
-		if (row > 7 || col > 7)
+	FORCE_INLINE void toggleDigit(u8 digit, u8 mask = 0xFF) {
+		if (digit > 7)
 			return;
 
-		if (b)	state.rows[row] |= bit(col);
-		else	state.rows[row] &= ~bit(col);
-		send(row + 1, state.rows[row]);
+		state.digits[digit] ^= mask;
+		sync(digit);
 	}
 
-	FORCE_INLINE void toggleRow(u8 row, u8 x) {
-		if (row > 7)
+	FORCE_INLINE void toggleSegment(u8 digit, u8 segment) {
+		if (digit > 7 || segment > 7)
 			return;
 
-		state.rows[row] ^= x;
-		send(row + 1, state.rows[row]);
-	}
-
-	FORCE_INLINE void toggleCol(u8 col, u8 x) {
-		if (col > 7)
-			return;
-
-		for (u8 i = 0; i < 8; i++) {
-			state.rows[i] ^= (x & 1) << col;
-			x >>= 1;
-		}
-
-		sync();
-	}
-
-	FORCE_INLINE void toggleCell(u8 row, u8 col) {
-		if (row > 7 || col > 7)
-			return;
-
-		state.rows[row] ^= bit(col);
-		send(row + 1, state.rows[row]);
+		state.digits[digit] ^= bit(segment);
+		sync(digit);
 	}
 
 	FORCE_INLINE void all(u8 b) {
@@ -206,7 +199,7 @@ public:
 		sync();
 	}
 
-	FORCE_INLINE Max7219(u8 DIN, u8 CS, u8 CLK) {
+	FORCE_INLINE void init(u8 DIN, u8 CS, u8 CLK, bool decodeMode = true) {
 		auto clk_port_id = digitalPinToPort(CLK);
 
 		port_out = (volatile u8 *) portOutputRegister(clk_port_id);
@@ -252,16 +245,27 @@ public:
 		W_HIGH(port_out, bit_cs); // latch
 
 		send(OP_DISPLAYTEST, 0); // turn off display test
-		send(OP_SCANLIMIT, 7);   // use all rows
+		send(OP_SCANLIMIT, 7);   // use all digits
+		decode(decodeMode);
 		intensity(0);            // lowest intensity
 		all(0);                  // blank the display
 		send(OP_SHUTDOWN, 1);    // turn off power saving mode
 	}
 
-	FORCE_INLINE Max7219(void) {
-		Max7219(MAX7219_DIN, MAX7219_CS, MAX7219_CLK);
+	FORCE_INLINE void init(bool decodeMode = true) {
+		init(MAX7219_DIN, MAX7219_CS, MAX7219_CLK, decodeMode);
 	}
-}
+
+	FORCE_INLINE Matrix(u8 DIN, u8 CS, u8 CLK, bool decodeMode = true) {
+		init(DIN, CS, CLK, decodeMode);
+	}
+
+	FORCE_INLINE Matrix(bool decodeMode = true) {
+		init(decodeMode);
+	}
+} // SevenSegment
+
+} // Max7219
 
 #undef MAX7219_DIN
 #undef MAX7219_CS

@@ -2,12 +2,13 @@
 #pragma once
 
 #ifdef MAX7219_7221_8X8_MATRIX_IMPL
-	#error only one implementation of Max7219 can be used
+	#error only one implementation of the Max7219 matrix controller can be used
 #endif
 
 #define MAX7219_7221_8X8_MATRIX_IMPL
 
-#include <arduino-avr-fdgpio.hpp>
+#include <fdgpio.hpp>
+#include <Max7219-opcodes.hpp>
 
 #ifndef MAX7219_DIN
 	#define MAX7219_DIN 2
@@ -16,24 +17,22 @@
 	#define MAX7219_CS 3
 #endif
 #ifndef MAX7219_CLK
-	#define MAX7219_CLK 4
+	#define MAX7219_CLK 5
 #endif
 #ifndef MAX7219_MAXDEVICES
 	// probably don't set this higher than 16
 	#define MAX7219_MAXDEVICES 8
 #endif
 
-namespace Max7219 {
-	// still not actually private, but it is better I think
-	namespace Private {
-		static constexpr u8 DIN = MAX7219_DIN;
-		static constexpr u8 CS  = MAX7219_CS;
-		static constexpr u8 CLK = MAX7219_CLK;
+namespace Max7219::Matrix {
+	namespace Core {
+		constexpr u8 DIN = MAX7219_DIN;
+		constexpr u8 CS  = MAX7219_CS;
+		constexpr u8 CLK = MAX7219_CLK;
 
 		static u8 bit_din, bit_cs, bit_clk;
 		static volatile u8 *port_out;
 
-		[[maybe_unused]]
 		static void _send(u8 opcode, u8 operand) {
 			// emulates something like SPI communication.
 			// sends `opcode << 8 | operand` to a shift register, MSB first.
@@ -59,7 +58,7 @@ namespace Max7219 {
 			W_PORT(port_out, bit_din, operand &   2); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 			W_PORT(port_out, bit_din, operand &   1); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 		#else
-			for (u8 i = 0; i < 8; i++) {
+			for (u8 i = 8; i --> 0 ;) {
 				W_PORT(port_out, bit_din, operand & 128);
 				operand <<= 1;
 
@@ -67,82 +66,84 @@ namespace Max7219 {
 				W_LOW(port_out, bit_clk);
 			}
 
-			for (u8 i = 0; i < 8; i++) {
+			for (u8 i = 8; i --> 0 ;) {
 				W_PORT(port_out, bit_din, opcode & 128);
 				opcode <<= 1;
 
 				W_HIGH(port_out, bit_clk);
 				W_LOW(port_out, bit_clk);
-			}	
+			}
 		#endif
+		}
+
+		[[maybe_unused]]
+		static FORCE_INLINE void send(u8 device, u8 opcode, u8 operand) {
+			// device is 0 indexed
+			u8 i = ndevices;
+			device++; // avoid off-by-one error
+
+			W_LOW(port_out, bit_cs); // start reading
+
+			while (i --> device) _send(OP_NOOP, 0);
+			_send(opcode, operand);
+			while (i --> 0) _send(OP_NOOP, 0);
+
+			W_HIGH(port_out, bit_cs); // latch value
+		}
+
+		[[maybe_unused]]
+		static FORCE_INLINE void send(u8 opcode, u8 operand) {
+			// send the same thing to all the devices
+			W_LOW(port_out, bit_cs); // start reading
+
+			for (u8 i = ndevices; i --> 0 ;)
+				_send(opcode, operand);
+
+			W_HIGH(port_out, bit_cs); // latch value
+		}
+
+		[[maybe_unused]]
+		static FORCE_INLINE void send(u8 *data) {
+			// data must be at least `2*ndevices` bytes long.
+			// the first two bytes go to the farthest device.
+			// use this if you want to give different commands to each device.
+			// for setting rows, use `update`.
+
+			for (u8 i = 0; i < 2*ndevices; i += 2)
+				send(data[i], data[i + 1]);
 		}
 	}
 
-	using namespace Private;
+	using namespace Max7219::Opcodes;
+	using namespace Core;
 
-
-	static constexpr u8 OP_NOOP        =  0; // operand ignored. does nothing
-	// opcode 9 does nothing.
-	static constexpr u8 OP_INTENSITY   = 10; // operand in [0, 15]. sets the current draw.
-	static constexpr u8 OP_SCANLIMIT   = 11; // operand in in [0, 7] for rows 1-8
-	static constexpr u8 OP_SHUTDOWN    = 12; // operand is 0 (normal) or 1 (power saving)
-	// opcodes 13 and 14 don't exist
-	static constexpr u8 OP_DISPLAYTEST = 15; // operand is 1/on or 0/off. turns on all LEDs with intensity 15.
-
-	typedef union {
+	using State = union {
 		u64 raw;
 		u8 rows[8];
-	} state_t;
+	};
 
-	typedef union {
-		state_t devices[MAX7219_MAXDEVICES];
+	using StateChain = union {
+		State devices[MAX7219_MAXDEVICES];
 		u8 raw[8*MAX7219_MAXDEVICES];
-	} states_t;
+	};
 
-	static states_t state;
+	static StateChain state;
 	static u8 ndevices;
 	static u8 intensities[MAX7219_MAXDEVICES];
-
-	[[maybe_unused]]
-	static FORCE_INLINE void send(u8 device, u8 opcode, u8 operand) {
-		// device is 0 indexed
-		u8 i = ndevices;
-		device++;
-
-		W_LOW(port_out, bit_cs); // start reading
-
-		while (i --> device) _send(OP_NOOP, 0);
-		_send(opcode, operand);
-		while (i --> 0) _send(OP_NOOP, 0);
-
-		W_HIGH(port_out, bit_cs); // latch value
-	}
-
-	[[maybe_unused]]
-	static FORCE_INLINE void send(u8 opcode, u8 operand) {
-		// send the same thing to all the devices
-		W_LOW(port_out, bit_cs); // start reading
-
-		for (u8 i = ndevices; i --> 0 ;)
-			_send(opcode, operand);
-
-		W_HIGH(port_out, bit_cs); // latch value
-	}
 
 	[[maybe_unused]]
 	static FORCE_INLINE void sync(u8 row) {
 		W_LOW(port_out, bit_cs);
 		for (u8 i = ndevices; i --> 0 ;)
-			_send(row + 1, state.devices[i].rows[row]);
+			_send(OP_ROW(row), state.devices[i].rows[row]);
 		W_HIGH(port_out, bit_cs);
 	}
 
 	[[maybe_unused]]
 	static FORCE_INLINE void sync(void) {
 		// update the devices with the state that this controller has.
-
-		for (u8 row = 0; row < 8; row++)
-			sync(row);
+		sync(0); sync(1); sync(2); sync(3);
+		sync(4); sync(5); sync(6); sync(7);
 	}
 
 	[[maybe_unused]]
@@ -150,8 +151,7 @@ namespace Max7219 {
 		if (device >= ndevices)
 			return;
 
-		if (value > 15)
-			value = 15;
+		value &= 15;
 
 		intensities[device] = value;
 		send(device, OP_INTENSITY, value);
@@ -159,33 +159,32 @@ namespace Max7219 {
 
 	[[maybe_unused]]
 	static FORCE_INLINE void intensity(u8 value) {
-		if (value > 15)
-			value = 15;
+		value &= 15;
 
-		for (u8 i = 0; i < ndevices; i++)
+		for (u8 i = ndevices; i --> 0 ;)
 			intensities[i] = value;
 
 		send(OP_INTENSITY, value);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void update(u8 device, u8 r1, u8 r2, u8 r3, u8 r4, u8 r5, u8 r6, u8 r7, u8 r8) {
+	static FORCE_INLINE void update(u8 device, u8 r0, u8 r1, u8 r2, u8 r3, u8 r4, u8 r5, u8 r6, u8 r7) {
 		// this multiplexes over rows and not devices,
 		// so this can not be done more efficiently.
-		state.devices[device].rows[0] = r1; state.devices[device].rows[1] = r2;
-		state.devices[device].rows[2] = r3; state.devices[device].rows[3] = r4;
-		state.devices[device].rows[4] = r5; state.devices[device].rows[5] = r6;
-		state.devices[device].rows[6] = r7; state.devices[device].rows[7] = r8;
+		state.devices[device].rows[0] = r0; state.devices[device].rows[1] = r1;
+		state.devices[device].rows[2] = r2; state.devices[device].rows[3] = r3;
+		state.devices[device].rows[4] = r4; state.devices[device].rows[5] = r5;
+		state.devices[device].rows[6] = r6; state.devices[device].rows[7] = r7;
 
-		send(device, 1, r1); send(device, 2, r2);
-		send(device, 3, r3); send(device, 4, r4);
-		send(device, 5, r5); send(device, 6, r6);
-		send(device, 7, r7); send(device, 8, r8);
+		send(device, OP_ROW0, r0); send(device, OP_ROW1, r1);
+		send(device, OP_ROW2, r2); send(device, OP_ROW3, r3);
+		send(device, OP_ROW4, r4); send(device, OP_ROW5, r5);
+		send(device, OP_ROW6, r6); send(device, OP_ROW7, r7);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void update(u8 device, state_t s) {
-		update(device, 
+	static FORCE_INLINE void update(u8 device, State s) {
+		update(device,
 			s.rows[0], s.rows[1], s.rows[2], s.rows[3],
 			s.rows[4], s.rows[5], s.rows[6], s.rows[7]
 		);
@@ -198,12 +197,12 @@ namespace Max7219 {
 
 	[[maybe_unused]]
 	static FORCE_INLINE void update(u8 device, u64 s) {
-		update(device, (state_t) {.raw = s});
+		update(device, (State) {.raw = s});
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void update(states_t s) {
-		for (u8 i = 0; i < ndevices; i++)
+	static FORCE_INLINE void update(StateChain s) {
+		for (u8 i = ndevices; i --> 0 ;)
 			state.devices[i].raw = s.devices[i].raw;
 
 		sync();
@@ -215,7 +214,7 @@ namespace Max7219 {
 			return;
 
 		state.devices[device].rows[row] = x;
-		send(device, row + 1, x);
+		send(device, OP_ROW(row), x);
 	}
 
 	[[maybe_unused]]
@@ -224,24 +223,22 @@ namespace Max7219 {
 		if (row > 7)
 			return;
 
-		for (u8 i = 0; i < ndevices; i++)
+		for (u8 i = ndevices; i --> 0 ;)
 			state.devices[i].rows[row] = xs[i];
 
 		sync(row);
 	}
 
 	[[maybe_unused]]
-	static void setCol(u8 device, u8 col, u8 x) {
+	static FORCE_INLINE void setCol(u8 device, u8 col, u8 x) {
 		if (device >= ndevices || col > 7)
 			return;
 
-		const u8 mask = bit(col);
+		for (u8 row = 8; row --> 0 ;) {
+			if (x & 128) state.devices[device].rows[row] |=  bit(col); // set the bit
+			else         state.devices[device].rows[row] &= ~bit(col); // clear the bit
 
-		for (u8 i = 0; i < 8; i++) {
-			if (x & 1) state.devices[device].rows[i] |=  mask; // set the bit
-			else       state.devices[device].rows[i] &= ~mask; // clear the bit
-
-			x >>= 1;
+			x <<= 1;
 		}
 
 		sync();
@@ -253,16 +250,15 @@ namespace Max7219 {
 		if (col > 7)
 			return;
 
-		const u8 mask = bit(col);
+		for (u8 row = 8; row --> 0 ;) {
+			if (x & 128)
+				for (u8 i = ndevices; i --> 0 ;)
+					state.devices[i].rows[row] |=  bit(col); // set the bit
+			else
+				for (u8 i = ndevices; i --> 0 ;)
+					state.devices[i].rows[row] &= ~bit(col); // clear the bit
 
-		for (u8 i = 0; i < ndevices; i++) {
-			u8 y = x; // tmp value
-			for (u8 row = 0; row < 8; row++) {
-				if (y & 1) state.devices[i].rows[row] |=  mask; // set the bit
-				else       state.devices[i].rows[row] &= ~mask; // clear the bit
-
-				y >>= 1;
-			}
+			x <<= 1;
 		}
 
 		sync();
@@ -273,9 +269,10 @@ namespace Max7219 {
 		if (device >= ndevices || row > 7 || col > 7)
 			return;
 
-		if (b) state.devices[device].rows[row] |= bit(col);
+		if (b) state.devices[device].rows[row] |=  bit(col);
 		else   state.devices[device].rows[row] &= ~bit(col);
-		send(device, row + 1, state.devices[device].rows[row]);
+
+		sync(row);
 	}
 
 	[[maybe_unused]]
@@ -284,60 +281,82 @@ namespace Max7219 {
 			return;
 
 		if (b)
-			for (u8 d = 0; d < ndevices; d++)
-				state.devices[d].rows[row] |= bit(col);
+			for (u8 i = ndevices; i --> 0 ;)
+				state.devices[i].rows[row] |= bit(col);
 		else
-			for (u8 d = 0; d < ndevices; d++)
-				state.devices[d].rows[row] &= ~bit(col);
+			for (u8 i = ndevices; i --> 0 ;)
+				state.devices[i].rows[row] &= ~bit(col);
 
 		sync(row);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void toggleRow(u8 device, u8 row) {
+	static FORCE_INLINE void toggleRow(u8 device, u8 row, u8 mask = 0xFF) {
 		if (device >= ndevices || row > 7)
 			return;
 
-		state.devices[device].rows[row] ^= 0xFF;
-		send(device, row + 1, state.devices[device].rows[row]);
+		state.devices[device].rows[row] ^= mask;
+		sync(row);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void toggleRow(u8 row) {
+	static FORCE_INLINE void toggleRow(u8 row, u8 mask = 0xFF) {
 		// toggle a mega row.
 		if (row > 7)
 			return;
 
-		for (u8 i = 0; i < ndevices; i++)
-			state.devices[i].rows[row] ^= 0xFF;
+		for (u8 i = ndevices; i --> 0 ;)
+			state.devices[i].rows[row] ^= mask;
 
 		sync(row);
 	}
 
 	[[maybe_unused]]
-	static FORCE_INLINE void toggleCol(u8 device, u8 col) {
+	static FORCE_INLINE void toggleRow(u8 row, u8 *masks) {
+		// toggle a mega row with a given mask for each row.
+		// masks should be at least `ndevices` elements long.
+		if (row > 7)
+			return;
+
+		for (u8 i = ndevices; i --> 0 ;)
+			state.devices[i].rows[row] ^= masks[i];
+
+		sync(row);
+	}
+
+	[[maybe_unused]]
+	static FORCE_INLINE void toggleCol(u8 device, u8 col, u8 mask = 0xFF) {
 		if (device >= ndevices || col > 7)
 			return;
 
-		const u8 mask = bit(col);
-
-		for (u8 row = 0; row < 8; row++)
-			state.devices[device].rows[row] ^= mask;
+		for (u8 row = 8; row --> 0 ;)
+			state.devices[device].rows[row] ^= ((mask >> row) & 1) << col;
 
 		sync();
 	}
 
 	[[maybe_unused]]
-	static void toggleCol(u8 col) {
+	static void toggleCol(u8 col, u8 mask = 0xFF) {
 		// toggle the same column on all devices
 		if (col > 7)
 			return;
 
-		const u8 mask = bit(col);
+		for (u8 i = ndevices; i --> 0 ;)
+			for (u8 row = 8; row --> 0 ;)
+				state.devices[i].rows[row] ^= ((mask >> row) & 1) << col;
 
-		for (u8 i = 0; i < ndevices; i++)
-			for (u8 row = 0; row < 8; row++)
-				state.devices[i].rows[row] ^= mask;
+		sync();
+	}
+
+	[[maybe_unused]]
+	static void toggleCol(u8 col, u8 *masks) {
+		// probably just use `toggleRow` with the transposed masks if possible.
+		if (col > 7)
+			return;
+
+		for (u8 i = ndevices; i --> 0 ;)
+			for (u8 row = 8; row --> 0;)
+				state.devices[i].rows[row] ^= ((masks[i] >> row) & 1) << col;
 
 		sync();
 	}
@@ -348,7 +367,7 @@ namespace Max7219 {
 			return;
 
 		state.devices[device].rows[row] ^= bit(col);
-		send(device, row + 1, state.devices[device].rows[row]);
+		sync(row);
 	}
 
 	[[maybe_unused]]
@@ -356,8 +375,8 @@ namespace Max7219 {
 		if (row > 7 || col > 7)
 			return;
 
-		for (u8 d = 0; d < ndevices; d++)
-			state.devices[d].rows[row] ^= bit(col);
+		for (u8 i = ndevices; i --> 0 ;)
+			state.devices[i].rows[row] ^= bit(col);
 
 		sync(row);
 	}
@@ -365,27 +384,27 @@ namespace Max7219 {
 	[[maybe_unused]]
 	static FORCE_INLINE void all(u8 b) {
 		if (b)
-			for (u8 i = 0; i < ndevices; i++)
+			for (u8 i = ndevices; i --> 0 ;)
 				state.devices[i].raw = ~0llu;
 		else
-			for (u8 i = 0; i < ndevices; i++)
+			for (u8 i = ndevices; i --> 0 ;)
 				state.devices[i].raw = 0llu;
 
 		sync();
 	}
 
-	static FORCE_INLINE void init(u8 ndevices_) {
+	static FORCE_INLINE void init(u8 num_devices = MAX7219_MAXDEVICES) {
 		static_assert((MAX7219_MAXDEVICES) > 1, "max devices can not be 0 or 1");
 
-		ndevices = ndevices_;
+		ndevices = num_devices;
 		auto clk_port_id = digitalPinToPort(CLK);
 
 		port_out = (volatile u8 *) portOutputRegister(clk_port_id);
 
 		if (__builtin_expect(!ndevices || ndevices > MAX7219_MAXDEVICES || port_out == NOT_A_PORT || clk_port_id != digitalPinToPort(DIN) || clk_port_id != digitalPinToPort(CS), 0)) {
-			cLi();
+			cli();
 		#ifdef LED_BUILTIN
-			// th should not happen. give some kind of data to the user to show
+			// this should not happen. give some kind of data to the user to show
 			// something bad happened.
 
 			// NOTE: on the Mega 2560, Nano, and the Uno Rev3, these are all port B,

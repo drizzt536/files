@@ -4,6 +4,7 @@
 
 // Don't use any of these macros if you plan on switching a pin between analog and digital
 // for some reason. these all assume the pin is on digital mode before they run.
+// call `turnOffPWM(digitalPinToTimer(pin))` to turn an analog pin into a digital pin.
 
 // pinouts: https://docs.arduino.cc/resources/pinouts/<ID>-full-pinout.pdf
 // Uno Rev3:  A000066
@@ -20,7 +21,7 @@ using u32 = uint32_t;
 using u64 = uint64_t;
 
 #ifndef FORCE_INLINE
-	#define FORCE_INLINE inline __attribute__((always_inline))
+	#define FORCE_INLINE inline [[gnu::always_inline]]
 #endif
 
 // write
@@ -101,4 +102,8 @@ using u64 = uint64_t;
 		(mode) == INPUT_PULLUP ? pinInputPullup(pin) : \
 		pinOutput(pin)                                 \
 	)
+#endif
+
+#ifndef analogToDigital
+	#define analogToDigital(pin) turnOffPWM(digitalPinToTimer(pin))
 #endif
