@@ -11,8 +11,8 @@ Rulesets are something like `B\<nums\>/S\<nums\>`. The B numbers are the neighbo
 <!-- ruleset B012568/S03478 has the longest condition -->
 
 life.7z is a maximally compressed LZMA2 7zip archive with
- - life.exe, compiled with -march=x86-64-v3 (AVX2)
- - life-launch.exe
- - analyze.py (for the Python version specified in `life --help`)
+ - `life.exe`, compiled with -march=x86-64-v3 (AVX2)
+ - `life-launch.exe`
+ - `analyze.py` (for the Python version specified in `life --help`)
 
-for help on individual programs, use the `--help` argument
+for help on individual programs, use the `--help` argument. Except for `life-launch.exe` which doesn't take any arguments and always runs `life -f nrun inf`.
