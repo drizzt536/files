@@ -9,17 +9,17 @@ static const u8 pins[LED_CNT] = {48, 46, 44, 42, 40, 38, 36, 34, 32, 30};
 
 void setup(void) {
 	for (u8 i = 0; i < LED_CNT; i++)
-		pinMode(pins[i], OUTPUT);
+		pinOutput(pins[i]);
 
-	pinMode(BTN_PIN, INPUT_PULLUP);
+	pinInputPullup(BTN_PIN);
 
-	while (digitalRead(BTN_PIN) == 0);
+	while (!fastRead(BTN_PIN));
 		// don't start until the button is pressed.
 }
 
 void loop(void) {
 	for (u8 i = 0; i < LED_CNT; i++)
-		digitalWrite(pins[i], random(RAND_MAX) < select);
+		fastWrite(pins[i], random(RAND_MAX) < select);
 
 	delay(DELAY);
 }

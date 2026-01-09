@@ -8,11 +8,11 @@ static const u8 pins[LED_CNT] = {48, 46, 44, 42, 40, 38, 36, 34, 32, 30};
 
 void setup(void) {
 	for (u8 i = 0; i < LED_CNT; i++)
-		pinMode(pins[i], OUTPUT);
+		pinOutput(pins[i]);
 
-	pinMode(BTN_PIN, INPUT_PULLUP);
+	pinInputPullup(BTN_PIN);
 
-	while (digitalRead(BTN_PIN) == 0);
+	while (!fastRead(BTN_PIN));
 		// don't start until the button is pressed.
 }
 
@@ -21,13 +21,13 @@ void loop(void) {
 
 	// enable all LEDs
 	for (; i < LED_CNT; i++)
-		digitalWrite(pins[i], 1);
+		fastWrite(pins[i], 1);
 
 	delay(DELAY);
 
 	// disable all LEDs
 	while (i --> 0)
-		digitalWrite(pins[i], 0);
+		fastWrite(pins[i], 0);
 
 	delay(DELAY);
 }

@@ -14,9 +14,9 @@ static const u8 states[STATE_CNT][LED_CNT] = {
 
 void setup(void) {
 	for (u8 i = 0; i < LED_CNT; i++)
-		pinMode(pins[i], OUTPUT);
+		pinOutput(pins[i]);
 
-	pinMode(BTN_PIN, INPUT_PULLUP);
+	pinInputPullup(BTN_PIN);
 }
 
 void loop(void) {
@@ -24,10 +24,10 @@ void loop(void) {
 	static u8 btn   = 1;
 	
 	// only poll the button value once per cycle because the it is a toggle
-	btn ^= ~digitalRead(BTN_PIN);
+	btn ^= ~fastRead(BTN_PIN);
 
 	for (u8 i = 0; i < LED_CNT; i++)
-		digitalWrite(pins[i], btn & states[state][i]);
+		fastWrite(pins[i], btn & states[state][i]);
 
 	state++;
 	if (state == STATE_CNT)
