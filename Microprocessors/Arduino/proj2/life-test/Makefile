@@ -8,7 +8,7 @@
 # it works for sure with MinGW devkit 2.5 (GCC 15.2, binutils 2.45)
 # the MSYS2 version of GCC won't work because it is UCRT and not MSVCRT.
 
-CFLAGS     := -std=gnu23 -masm=intel -I../../../../C/ -Werror -Wall -Wextra \
+CFLAGS     := -std=gnu23 -masm=intel -I../../../../C/ -Iinclude -Werror -Wall -Wextra \
 			-Wno-parentheses -Wno-missing-profile -DPY_BASE=\"analyze\"
 COPTZ      := -Ofast -fdelete-dead-exceptions -ffinite-loops -fgcse-las -fgcse-sm \
 			-fipa-pta -fira-loop-pressure -flive-range-shrinkage -frename-registers \
@@ -21,8 +21,7 @@ LDFLAGS    := -s -O --as-needed --gc-sections --relax --exclude-all-symbols \
 			--nxcompat --dynamicbase --high-entropy-va \
 			--fatal-warnings --warn-common --warn-constructors
 LDLIBS     := -lcryptbase -lkernel32 -lshell32 -lucrtbase -luser32
-CFILES     := life.c matx8-table.h run.h sim.h du64.h summary.h windows.h \
-			../../../../C/error-print.h
+CFILES     := life.c $(wildcard ./include/*.h) ../../../../C/error-print.h
 
 # configuration stuff:
 
