@@ -15,4 +15,4 @@ life.7z is a maximally compressed LZMA2 7zip archive with
  - `life-launch.exe`
  - `analyze.py` (for the Python version specified in `life --help`)
 
-for help on individual programs, use the `--help` argument. Except for `life-launch.exe` which doesn't take any arguments and always runs `life -f nrun inf`.
+for help on individual programs, use the `--help` argument. Except for `life-launch.exe` which doesn't take any arguments and always runs `life -Hf nrun inf`.

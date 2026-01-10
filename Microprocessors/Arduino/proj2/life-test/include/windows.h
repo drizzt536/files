@@ -45,7 +45,7 @@ bool SetPriorityClass(void *process, u32 priorityClass);
 
 #define GMEM_MOVEABLE 0x0002
 #define ERROR_ALREADY_EXISTS 183
-#define REALTIME_PRIORITY_CLASS 0x100
+#define HIGH_PRIORITY_CLASS 0x80
 
 // define the real names for the stupid functions
 #define WaitForMutexUnlock WaitForSingleObject

@@ -320,6 +320,10 @@ start:
 
 			enputs("More than " TOSTRING_EXPANDED(TIMER_PERIOD)
 				" seconds have passed since timer last check. restarting.");
+
+			if (usebell)
+				bell();
+
 			goto start;
 		}
 	#endif

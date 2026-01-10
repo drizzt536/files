@@ -1,8 +1,6 @@
 // compile with `make -B DEBUG=true CLIP=true TIMER=true NEIGHBORHOOD=MOORE RULESET=B3/S23 OPTIMIZE=avx2`
 // requires an MSVCRT version of GCC, despite not actually linking to MSVCRT.
 
-// TODO: maybe allow coalescing flags together? like -abqTfSd <a> <T> <S> <d>
-
 ///////////////////////////////// config start ////////////////////////////////
 
 #ifndef ALIVE_CHAR_DEF
@@ -227,6 +225,7 @@ static bool copy       = false;
 #endif
 
 static bool usefile    = false;
+static bool usebell    = false;
 static bool silent     = false;
 static u8 stop_key     = VK_F1;
 static u8 update_key   = VK_INSERT;
@@ -241,6 +240,50 @@ static u32 sleep_ms[2] = {
 #if HELP
 static const char *const help_string =
 	"usage: life [FLAGS] COMMAND [OPERANDS]"
+	"\n"
+	"\nflags:"
+#if CLIPBOARD
+	"\n    -c   in run modes, copy the summary to the clipboard as well as printing."
+#endif
+	"\n    -f   in run modes, concatenate the summary data together into " DATAFILE "."
+	"\n    -q   quiet mode. suppresses output beyond what is necessary."
+	"\n    -s   specify a key code to stop in `nrun inf` `nsim inf`, and `sim1`."
+	"\n    -u   specify a key code to update the user in `nrun inf`."
+	"\n    -T   specify a wait in ms between trials in sim modes. default=1500."
+	"\n    -S   specify a wait in ms between states in sim modes. default=90."
+	"\n    -a   specify a character to print for dead cells in sim modes."
+	"\n    -d   specify a character to print for alive cells in sim modes."
+	"\n    -b   print a bell character when the program exits."
+	"\n    -H   use HIGH process priority class."
+	"\n    -h, -?, and --help are the same as the `help` command."
+	"\n"
+	"\n    key codes for -s and -u can be an integer or a string. integer codes are here:"
+	"\n     - https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes"
+	"\n     - string codes are for the top key row: f0 for Esc, f1-f9, fA-fC for F10-F12,"
+	"\n       and fD-fJ for the remaining keys. Software only function keys for F13-F19"
+	"\n       are given as 'f:', 'f;', 'f<', 'f=', 'f>', 'f?', and 'f@' respectively."
+	"\n"
+	"\n    flags can be coalesced together, e.g. `-fsquT <s> <u> <T>`."
+	"\n    --help can't be coalesced with anything, and must be passed by itself."
+	"\n    any flags must appear before the command."
+	"\n"
+	"\ncommands:"
+	"\n    help           print this message and exit"
+	"\n    run,nrun       runs simulations and gives in-depth statistics"
+	"\n    sim,sim1,nsim  runs simulations visually without statistics"
+	"\n    step           step to the next state and print out the result"
+	"\n                   takes an optional second operand for the number of steps"
+	"\n"
+	"\n    dump           runs `./" PY_BASE ".py -s " DATAFILE "` and exit"
+	"\n    fold           runs `./" PY_BASE ".py -f " DATAFILE "` and exit"
+	"\n    cnt            counts the number of objects in " DATAFILE
+	"\n    merg A B       runs `./" PY_BASE ".py -m A B` and exit"
+	"\n"
+	"\n    nrun and nsim take one argument with the number of trials to run."
+	"\n      'inf' can be given to make it run indefinitely."
+	"\n    run and sim take a list of integers for the starting states."
+	"\n    sim1 takes a single integer for the starting state."
+	"\n    all modes other than sim1 stop trials at the first repeated state."
 	"\n"
 	"\nbuild config:"
 	"\n    NEIGHBORHOOD="
@@ -267,51 +310,16 @@ static const char *const help_string =
 	"\n    FAST_HASHING="	TOSTRING_EXPANDED(FAST_HASHING)
 	"\n    DEBUG="			TOSTRING_EXPANDED(DEBUG)
 	"\n"
-	"\nflags:"
-#if CLIPBOARD
-	"\n    -c   in run modes, copy the summary to the clipboard as well as printing."
-#endif
-	"\n    -f   in run modes, concatenate the summary data together into " DATAFILE "."
-	"\n    -q   quiet mode. suppresses output beyond what is necessary."
-	"\n    -s   specify a key code to stop in `nrun inf` `nsim inf`, and `sim1`."
-	"\n    -u   specify a key code to update the user in `nrun inf`."
-	"\n    -T   specify a wait in ms between trials in sim modes. default=1500."
-	"\n    -S   specify a wait in ms between states in sim modes. default=90."
-	"\n    -a   specify a character to print for dead cells in sim modes."
-	"\n    -d   specify a character to print for alive cells in sim modes."
-	"\n    -b   print a bell character when the program exits."
-	"\n    -H   use REALTIME process priority in admin mode, or HIGH in user mode."
-	"\n    -h, -?, -help, and --help are the same as the `help` command."
-	"\n    flags must be given one at a time, e.g. no `-fHq` or anything."
-	"\n"
-	"\ncommands:"
-	"\n    help           print this message and exit"
-	"\n    run,nrun       runs simulations and gives in-depth statistics"
-	"\n    sim,sim1,nsim  runs simulations visually without statistics"
-	"\n    step           step to the next state and print out the result"
-	"\n                   takes an optional second operand for the number of steps"
-	"\n"
-	"\n    dump           runs `./" PY_BASE ".py -s " DATAFILE "` and exit"
-	"\n    fold           runs `./" PY_BASE ".py -f " DATAFILE "` and exit"
-	"\n    cnt            counts the number of objects in " DATAFILE
-	"\n    merg A B       runs `./" PY_BASE ".py -m A B` and exit"
-	"\n"
-	"\n    nrun and nsim take one argument with the number of trials to run."
-	"\n      'inf' can be given to make it run indefinitely."
-	"\n    run and sim take a list of integers for the starting states."
-	"\n    sim1 takes a single integer for the starting state."
-	"\n    all modes other than sim1 stop trials at the first repeated state."
-	"\n"
 	"\nexit codes:"
 	"\n    1  [unused]"
 	"\n    2  [unused]"
 	"\n    3  could not perform an operation on the datafile for an unknown reason"
 	"\n    4  command given with invalid arguments or the wrong amount of arguments"
 	"\n    5  flag given with invalid arguments or the wrong amount of arguments"
-	"\n    6  an unknown command was given"
-	"\n    7  an unknown flag was given"
+	"\n    6  an unknown or empty command was given"
+	"\n    7  an unknown or empty flag was given"
 	"\n"
-	"\nstate interest bit meanings:"
+	"\nstate interest bit meanings (for run modes):"
 	"\n    7  end state is not empty and is a perfect inverse of the start state"
 	"\n    6  end state is not empty. start and end states together total the board"
 	"\n    5  constant end state with a number of alive bits in (26, 32)"
@@ -324,13 +332,13 @@ static const char *const help_string =
 static const char *const help_string = "help text was not included in this build";
 #endif
 
+static void show_cursor(void) { printf("\e[?25h"); }
+static void bell(void) { putchar('\x07'); }
+
 #include "du64.h"
 #include "summary.h"
 #include "sim.h"
 #include "run.h"
-
-static void show_cursor(void) { printf("\e[?25h"); }
-static void bell(void) { putchar('\x07'); }
 
 #if DEBUG
 static void log_collisions(void) {
@@ -349,141 +357,168 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 	// NOTE: this uses goto, but the label is always to an exit routine
 	//       and it never jumps backwards in the code.
 
-	u32 argc    = *pargc;
-	char **argv = *pargv;
-	char *flag, *operand;
-	char c0; // flag character 0
+	u32 argc = *pargc;
+	char **argv, *flag, *full_flag, *operand, fc;
 
-	while (argc > 0 && **argv == '-') {
-		flag = *argv + 1; // first argument, but skip the dash.
-		argc--; argv++;
+	argv = *pargv;
 
-		// these are the only two flags that can be more than one character
-		if (streq(flag, "-help") || streq(flag, "-help" + 1))
+	while (argc > 0 && **argv == '-') { // for each flag set
+		full_flag = *argv;
+		flag = full_flag + 1; // first argument, but skip the dash.
+		argc--; argv++; // move the argument pointer to the first operand (if there is one)
+
+		// --help is the only flag that can be more than one character
+		if (streq(flag, "-help"))
 			goto help_flag;
 
-		c0 = flag[0];
-		if (c0 != '\0' && flag[1] != '\0')
-			goto flag_unknown;
+		fc = *flag; // flag character
 
-		// NOTE: if you do something like `-T -q`, then the `-q` will be the
-		//       operand to `-T`, and that will be an error because it isn't
-		//       a valid value, and not because it looks like a flag.
-		operand = argc > 0 ? *argv : NULL;
+		if (fc == '\0')
+			goto flag_empty;
 
-		switch (c0) {
-		case 'b': atexit(&bell);  break;
-		case 'q': silent  = true; break;
-		case 'f': usefile = true; break;
-		#if CLIPBOARD
-		case 'c': copy    = true; break;
-		#endif
-		case 'T': FALLTHROUGH;
-		case 'S': {
-			if (operand == NULL)
-				goto flag_no_operand;
+		for (; fc != '\0'; fc = *++flag) { // for each flag in the flag set
+			// NOTE: if you do something like `-T -q`, then the `-q` will be the
+			//       operand to `-T`, and that will be an error because it isn't
+			//       a valid value, and not because it looks like a flag.
+			operand = argc > 0 ? *argv : NULL;
 
-			u32 *const pvar = sleep_ms + (c0 == 'S');
+			switch (fc) {
+			case 'b': usebell = true; break;
+			case 'q': silent  = true; break;
+			case 'f': usefile = true; break;
+			#if CLIPBOARD
+			case 'c': copy    = true; break;
+			#endif
+			case 'T': FALLTHROUGH;
+			case 'S': {
+				if (operand == NULL)
+					goto flag_no_operand;
 
-			char *arg_end;
-			const u64 tmp = strtoull(operand, &arg_end, 0);
+				u32 *const pvar = sleep_ms + (fc == 'S');
 
-			if (*arg_end != '\0')
-				goto flag_invalid_operand;
-
-			*pvar = tmp;
-			argc--; argv++;
-			break;
-		}
-		case 's': FALLTHROUGH;
-		case 'u': {
-			if (operand == NULL)
-				goto flag_no_operand;
-
-			u8 *const pkey = c0 == 's' ? &stop_key : &update_key;
-
-			// allow strings for the ones I plan on using. (f1 - f9)
-			// fA, fB, and fC instead of f10, f11, and f12
-			likely_if (operand[0] == 'f' && operand[1] && !operand[2]) {
-				switch (operand[1]) {
-				case '1': *pkey = VK_F1; break;
-				case '2': *pkey = VK_F2; break;
-				case '3': *pkey = VK_F3; break;
-				case '4': *pkey = VK_F4; break;
-				case '5': *pkey = VK_F5; break;
-				case '6': *pkey = VK_F6; break;
-				case '7': *pkey = VK_F7; break;
-				case '8': *pkey = VK_F8; break;
-				case '9': *pkey = VK_F9; break;
-				// NOTE: there are 7 characters between '9' and 'A'. With that
-				//       distance, the compiler's discretion is probably better
-				//       than mine on if an if-else chain or a jump table is better.
-				case 'A': *pkey = VK_F10; break;
-				case 'B': *pkey = VK_F11; break;
-				case 'C': *pkey = VK_F12; break;
-				default : goto flag_invalid_operand; // print a message and exit.
-				}
-			}
-			else {
-				// argument is not a function key
 				char *arg_end;
-				const u64 vkey = strtoull(operand, &arg_end, 0);
+				const u64 tmp = strtoull(operand, &arg_end, 0);
 
-				if (*arg_end != '\0' || vkey > UINT8_MAX)
+				if (*arg_end != '\0')
 					goto flag_invalid_operand;
 
-				*pkey = vkey;
+				*pvar = tmp > UINT32_MAX ? UINT32_MAX : tmp;
+				argc--; argv++;
+				break;
 			}
+			case 's': FALLTHROUGH;
+			case 'u': {
+				if (operand == NULL)
+					goto flag_no_operand;
 
-			argc--; argv++;
-			break;
-		}
-		case 'a':
-		case 'd': {
-			char *const pchar = **argv == 'a' ? &alive_char : &dead_char;
+				u8 *const pkey = fc == 's' ? &stop_key : &update_key;
 
-			if (operand == NULL)
-				goto flag_no_operand;
+				// allow strings top row keys and some software-only keys
+				likely_if (operand[0] == 'f' && operand[1] && !operand[2]) {
+					switch (operand[1]) {
+					case '0': *pkey = VK_ESCAPE; break;
+					case '1': *pkey = VK_F1; break;
+					case '2': *pkey = VK_F2; break;
+					case '3': *pkey = VK_F3; break;
+					case '4': *pkey = VK_F4; break;
+					case '5': *pkey = VK_F5; break;
+					case '6': *pkey = VK_F6; break;
+					case '7': *pkey = VK_F7; break;
+					case '8': *pkey = VK_F8; break;
+					case '9': *pkey = VK_F9; break;
+					// software-only keys
+					case ':': *pkey = VK_F13; break;
+					case ';': *pkey = VK_F14; break;
+					case '<': *pkey = VK_F15; break;
+					case '=': *pkey = VK_F16; break;
+					case '>': *pkey = VK_F17; break;
+					case '?': *pkey = VK_F18; break;
+					case '@': *pkey = VK_F19; break;
+					// no f20-f24
+					// the rest of the function row keys
+					case 'A': *pkey = VK_F10; break;
+					case 'B': *pkey = VK_F11; break;
+					case 'C': *pkey = VK_F12; break;
+					case 'D': *pkey = VK_INSERT; break;
+					case 'E': *pkey = VK_SNAPSHOT; break; // print screen
+					case 'F': *pkey = VK_DELETE; break;
+					case 'G': *pkey = VK_HOME; break;
+					case 'H': *pkey = VK_END; break;
+					case 'I': *pkey = VK_PRIOR; break; // page up
+					case 'J': *pkey = VK_NEXT; break;  // page down
+					default : goto flag_invalid_operand; // print a message and exit.
+					}
+				}
+				else {
+					// argument is not a function key
+					char *arg_end;
+					const u64 vkey = strtoull(operand, &arg_end, 0);
 
-			if (*operand == '\0')
-				goto flag_invalid_operand;
+					if (*arg_end != '\0' || vkey > UINT8_MAX)
+						goto flag_invalid_operand;
 
-			// NOTE: characters after the first are ignored.
-			*pchar = *operand;
-			argc--; argv++;
-			break;
-		}
-		case 'H':
-			// REALTIME priority requires administrator permissions.
-			// HIGH priority doesn't, so it always succeeds.
-			// Windows falls back to HIGH if it can't do REALTIME.
-			SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
-			break;
-		case 'h': FALLTHROUGH;
-		case '?':
-			goto help_flag;
-		default:
-			goto flag_unknown;
-		} // switch
-	} // while
+					*pkey = vkey;
+				}
+
+				argc--; argv++;
+				break;
+			}
+			case 'a': FALLTHROUGH;
+			case 'd': {
+				char *const pchar = fc == 'a' ? &alive_char : &dead_char;
+
+				if (operand == NULL)
+					goto flag_no_operand;
+
+				if (*operand == '\0')
+					goto flag_invalid_operand;
+
+				// NOTE: characters after the first are ignored.
+				*pchar = *operand;
+				argc--; argv++;
+				break;
+			}
+			case 'H':
+				SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+				break;
+			case 'h': FALLTHROUGH;
+			case '?':
+				goto help_flag;
+			default:
+				goto flag_unknown;
+			} // switch, (decide what flag operation to dispatch)
+		} // for, (iterate flag characters)
+	} // while, (iterate arguments)
 
 	*pargc = argc;
 	*pargv = argv;
 	return;
+
 help_flag:
 	puts(help_string);
 	exit(0);
+
 flag_no_operand:
-	eprintf("flag `-%s` given without an argument.\n", flag);
+	eprintf("flag `-%c` (in flag `%s`) given without an argument.\n", *flag, full_flag);
 	exit(5);
+
 flag_invalid_operand:
-	eprintf("flag `-%s` given with an invalid value `%s`\n", flag, operand);
+	eprintf("flag `-%c` (in flag `%s`) given with an invalid value `%s`\n", *flag, full_flag, operand);
 	exit(5);
+
+flag_empty:
+#if HELP
+	eputs("empty flag given. use command `help` for options.");
+#else
+	eputs("empty flag given.");
+#endif
+
+	exit(7);
 flag_unknown:
 #if HELP
-	eprintf("unknown flag `-%s`. use command `help` for options.\n", flag);
+	eprintf("unknown flag `-%c` (in flag `%s`). use command `help` for options.\n", *flag, full_flag);
 #else
-	eprintf("unknown flag `-%s`.\n", flag);
+	eprintf("unknown flag `-%c` (in flag `%s`).\n", *flag, full_flag);
 #endif
 
 	exit(7);
@@ -522,6 +557,9 @@ void mainCRTStartup(void)
 
 	argc--; argv++; // the file name is not needed.
 	parse_flags(&argc, &argv);
+
+	if (usebell)
+		atexit(&bell);
 
 	if (argc == 0) {
 		// no arguments given. just print the help text.
@@ -730,6 +768,7 @@ void mainCRTStartup(void)
 		if (argc == 2)
 			n = 1;
 		else {
+			// NOTE: negative numbers are bit cast to unsigned and will be very large.
 			n = strtoull(argv[2], &str_end, 0);
 
 			if (*str_end != '\0') {
