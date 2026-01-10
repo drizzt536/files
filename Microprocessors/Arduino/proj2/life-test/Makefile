@@ -1,9 +1,9 @@
 # the following things are required:
-	# basic linux tools: mv, rm, awk, stat, grep, tail
+	# basic linux tools: mv, rm, sed, awk, stat, grep, tail, touch
 	# other linux tools: gcc (must be MSVCRT), make
 	# binutils: ld, strip, objcopy, objdump
-	# VC build tools: dumpbin, editbin
-	# misc: 7z, nasm, python (>=3.12)
+	# VC build tools: dumpbin, editbin (optional)
+	# misc: 7z, wmic, nasm, python (>=3.12)
 
 # it works for sure with MinGW devkit 2.5 (GCC 15.2, binutils 2.45)
 # the MSYS2 version of GCC won't work because it is UCRT and not MSVCRT.
@@ -23,22 +23,39 @@ LDFLAGS    := -s -O --as-needed --gc-sections --relax --exclude-all-symbols \
 LDLIBS     := -lcryptbase -lkernel32 -lshell32 -lucrtbase -luser32
 CFILES     := life.c $(wildcard ./include/*.h) ../../../../C/error-print.h
 
+CFLAGS_LIFE_O = -c -fprofile-use -nostdlib -ffreestanding $(CFLAGS) \
+	-DPY_VERSION="\"$$(python --version | tail -c +8)\"" $(COPTZ) $(CPROF_OPTZ)
+
 # configuration stuff:
 
+ifdef NO_VC
+	override RESERVE := long
+endif
+
+# architecture to optimize for
 ifeq ($(OPTIMIZE),native)
 	COPTZ += -march=native
+	# CFLAGS is updated for native later, except for if profiling is off
+
+	ifeq ($(PROFILE),false)
+		CFLAGS += -DOPTIMIZE=\"native\"
+	endif
 else
+	CFLAGS += -DOPTIMIZE=\"$(OPTIMIZE)\"
+
 	ifeq ($(OPTIMIZE),avx512)
 		COPTZ += -march=x86-64-v4
 	else
 		ifeq ($(OPTIMIZE),avx2)
 			COPTZ += -march=x86-64-v3
 		else
-			# default to a super old one
+			override OPTIMIZE := super-old
+			# default to a super old one (SSE4.2)
 			COPTZ += -march=x86-64-v2
 		endif
 	endif
 endif
+
 
 ifdef ALIVE_CHAR_DEF
 	CFLAGS += -DALIVE_CHAR_DEF=$(ALIVE_CHAR_DEF)
@@ -93,8 +110,8 @@ ifdef NEIGHBORHOOD
 endif
 
 ifdef RULESET
-	CFLAGS += -DRULESET="\"$(RULESET)\""
-	CFLAGS += -DNEXT_COND="$(shell python gen-next-cond.py '$(RULESET)')"
+	CFLAGS += -DRULESET=\"$(RULESET)\"
+	CFLAGS += -DNEXT_COND="$$(cat next-cond.tmp)"
 endif
 
 all: requirements life.7z life.txt life-launch.txt
@@ -143,10 +160,12 @@ req-gcc: req-linux req-binutils
 
 req-linux:
 	@# basic linux utilities \
-	if ! command -v mv   > /dev/null; then echo "# program not found: \`mv\`";   exit 1; fi; \
-	if ! command -v rm   > /dev/null; then echo "# program not found: \`rm\`";   exit 1; fi; \
-	if ! command -v awk  > /dev/null; then echo "# program not found: \`awk\`";  exit 1; fi; \
-	if ! command -v stat > /dev/null; then echo "# program not found: \`stat\`"; exit 1; fi; \
+	if ! command -v mv    >/dev/null; then echo "# program not found: \`mv\`";   exit 1; fi; \
+	if ! command -v rm    >/dev/null; then echo "# program not found: \`rm\`";   exit 1; fi; \
+	if ! command -v awk   >/dev/null; then echo "# program not found: \`awk\`";  exit 1; fi; \
+	if ! command -v sed   >/dev/null; then echo "# program not found: \`sed\`";  exit 1; fi; \
+	if ! command -v stat  >/dev/null; then echo "# program not found: \`stat\`"; exit 1; fi; \
+	if ! command -v touch >/dev/null; then echo "# program not found: \`touch\`";exit 1; fi; \
 	echo "# linux utilities found"
 
 req-binutils:
@@ -158,11 +177,13 @@ req-binutils:
 	echo "# binutils found"
 
 req-vcbtools:
+ifndef NO_VC
 	@\
 	if ! command -v editbin >/dev/null;then echo "# program not found: \`editbin\`"; exit 1;fi; \
 	if ! command -v dumpbin >/dev/null;then echo "# program not found: \`dumpbin\`"; exit 1;fi; \
 	echo "# VC Build Tools found"
-endif
+endif # no vc
+endif # require
 
 life.7z: life.exe life-launch.exe req-7z analyze.py req-linux
 	7z a -t7z -mx=9 -bso0 -bsp0 $@ life.exe life-launch.exe analyze.py
@@ -172,28 +193,46 @@ life.7z: life.exe life-launch.exe req-7z analyze.py req-linux
 	launch=$$(stat -c %s life.exe); \
 	awk "BEGIN {print \"# 7zip reduction: \" 100 - $$zip*100 / ($$main + $$launch) \"%\"}"
 
+next-cond.tmp: gen-next-cond.py req-python
+ifdef RULESET
+	python $< '$(RULESET)' > $@
+else
+next-cond.tmp: req-linux
+	@# the content doesn't matter, just the file has to exist.
+	touch $@
+endif
+
 init-crt.o: init-crt.nasm req-nasm req-binutils
 	nasm -fwin64 $< -o $@
 	strip -S $@
 
 ifeq ($(PROFILE),false)
-life.o: $(CFILES) req-gcc req-python
+
+life.o: $(CFILES) req-gcc next-cond.tmp
 	@# can't use `-ffreestanding` for some reason
-	gcc -c -nostdlib $(CFLAGS) -DPY_VERSION="\"$$(python --version | tail -c +8)\""  $(COPTZ) $< -o $@
+	gcc -c -nostdlib $(CFLAGS) -DPY_VERSION="\"$$(python --version | tail -c +8)\"" $(COPTZ) $< -o $@
 else
-prof.exe: init-crt.o $(CFILES) req-gcc
+prof.exe: init-crt.o $(CFILES) next-cond.tmp req-gcc
 	gcc -fprofile-generate -DPROFILING $(CFLAGS) $(COPTZ) $< life.c -o $@
 
 life.gcda: prof.exe req-linux
 	./$< nrun 1000000 > /dev/null
 	mv prof-life.gcda $@
 
-life.o: $(CFILES) life.gcda req-gcc
-	gcc -c -fprofile-use -nostdlib -ffreestanding $(CFLAGS) -DPY_VERSION="\"$$(python --version | tail -c +8)\"" $(COPTZ) $(CPROF_OPTZ) $< -o $@.tmp
+life.o: $(CFILES) life.gcda next-cond.tmp req-gcc
+ifeq ($(OPTIMIZE),native)
+	@# this is only in this branch. the non-profiling branch can have the regular name
+	flags=$$(gcc -march=native -Q --help=target 2>/dev/null | awk '/enabled/ {print $$1}'); \
+	isa=$$(for f in AVX512 AVX2 AVX SSE4.2 SSE4.1 SSSE3 SSE3 SSE2; do echo "$$flags" | grep -iq $$f && { echo $$f; break; }; done); \
+	cpu=$$(wmic cpu get name | sed -n 2p | awk '{$$1=$$1; print}'); \
+	gcc $(CFLAGS_LIFE_O) -DOPTIMIZE="\"native (ISA='$$isa', CPU='$$cpu')\"" $< -o $@.tmp
+else
+	gcc $(CFLAGS_LIFE_O) $< -o $@.tmp
+endif # optimize
 
 	objcopy $@.tmp --remove-section .pdata --remove-section .xdata $@
 	strip -S $@
-endif
+endif # profile
 
 analyze.py: analysis.py req-linux req-python
 	python -O -m compileall -b $< > /dev/null
@@ -208,8 +247,10 @@ endif
 
 life.txt: life.exe req-binutils req-vcbtools
 	objdump -Mintel -D $< > $@
+ifndef NO_VC
 	echo "-----------------------------------" >> $@
 	dumpbin -nologo -headers $< >> $@
+endif
 
 # wrapper program so double clicking from explorer does something other than exit.
 
@@ -226,8 +267,10 @@ endif
 
 life-launch.txt: life-launch.exe req-binutils req-vcbtools
 	objdump -Mintel -D $< > $@
+ifndef NO_VC
 	echo "-----------------------------------" >> $@
 	dumpbin -nologo -headers $< >> $@
+endif
 
 # cleanup stuff
 

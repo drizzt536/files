@@ -20,8 +20,9 @@
 	#define TIMER_PERIOD	43200 // seconds
 #endif
 
-// NOTE: these values and comments are for NEIGHBORHOOD=NH_MOORE and RULESET=B3/S23
-//       other ones may need way more memory
+// NOTE: these values and comments are for NEIGHBORHOOD=MOORE and RULESET=B3/S23
+//       other ones may need way more memory for stuff like the transients
+//       for example, VON_NEUMANN with B23/S23 needs TRANSIENT_LEN >= 2048
 
 // use 8 for hyperthreading. 9  the fastest on a single core.
 // unless your L1 cache is 64KiB, in which case 9 or maybe even 10 is probably better.
@@ -252,6 +253,9 @@ static const char *const help_string =
 	#endif
 	#ifdef PY_VERSION
 	"\n    PY_VERSION=\""	PY_VERSION "\""
+	#endif
+	#ifdef OPTIMIZE // the profiling version doesn't always have this
+	"\n    OPTIMIZE=\""		OPTIMIZE "\""
 	#endif
 	"\n    RULESET=\""		RULESET "\""
 	"\n    TABLE_BITS="		TOSTRING_EXPANDED(TABLE_BITS)
