@@ -1,10 +1,11 @@
 ## Program Versions
 
 - 7zip: 25.01
+- Arduino CLI: 1.3.1 (08ff7e2b, 2025-08-28)
 - Brave: 1.85.118 (Chromium: 143.0.7499.169)
 - C/C++/GAS/Fortran: MinGW-w64 GCC 15.2.0
 - Chocolatey: 2.6.0
-- Deno: 2.6.3
+- Deno: 2.6.4
 - dotnet: 8.0.416
 - Emacs: 30.1.0
 - FFmpeg: 8.0.1
@@ -29,7 +30,7 @@
 - pdftk: 2.02
 - PowerShell: 7.5.4
 - Python: 3.13.11 & 3.14.2
-	- IPython: 9.8.0
+	- IPython: 9.9.0
 	- numpy: 2.2.6 & 2.4.0
 	- scipy: 1.16.3
 	- sympy: 1.14.0
