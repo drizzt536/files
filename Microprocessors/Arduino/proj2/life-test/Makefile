@@ -8,8 +8,11 @@
 # it works for sure with MinGW devkit 2.5 (GCC 15.2, binutils 2.45)
 # the MSYS2 version of GCC won't work because it is UCRT and not MSVCRT.
 
-CFLAGS     := -std=gnu23 -masm=intel -I../../../../C/ -Iinclude -Werror -Wall -Wextra \
-			-Wno-parentheses -Wno-missing-profile -DPY_BASE=\"analyze\"
+VERSION := 1.0.0
+
+CFLAGS     := -Werror -Wall -Wextra -Wno-parentheses -Wno-missing-profile -std=gnu23 \
+			-masm=intel -DPY_BASE=\"analyze\" -DVERSION=\"$(VERSION)\" \
+			-I../../../../C/ -Iinclude
 COPTZ      := -Ofast -fdelete-dead-exceptions -ffinite-loops -fgcse-las -fgcse-sm \
 			-fipa-pta -fira-loop-pressure -flive-range-shrinkage -frename-registers \
 			-fshort-enums -ftree-loop-if-convert -ftree-vectorize -fvpt -fweb -fwrapv \

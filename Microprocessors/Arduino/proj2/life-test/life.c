@@ -108,6 +108,10 @@
 	#define DEBUG false
 #endif
 
+#ifndef VERSION
+	#error "VERSION must be defined"
+#endif
+
 #define     ARENA_MAX (-1 +     ARENA_LEN)
 #define    PERIOD_MAX (-1 +    PERIOD_LEN)
 #define TRANSIENT_MAX (-1 + TRANSIENT_LEN)
@@ -228,7 +232,8 @@ static u32 sleep_ms[2] = {
 
 #if HELP
 static const char *const help_string =
-	"usage: life [FLAGS] COMMAND [OPERANDS]"
+	"life v" VERSION
+	"\nusage: life [FLAGS] COMMAND [OPERANDS]"
 	"\n"
 	"\nflags:"
 #if CLIPBOARD
@@ -245,7 +250,8 @@ static const char *const help_string =
 	"\n    -d   specify a character to print for alive cells in sim modes."
 	"\n    -b   print a bell character when the program exits."
 	"\n    -H   use HIGH process priority class."
-	"\n    -h, -?, and --help are the same as the `help` command."
+	"\n    -v   print the version string and exit."
+	"\n    -h, -?, --help   print this message and exit"
 	"\n"
 	"\n    key codes for -s and -u can be an integer or a string. integer codes are here:"
 	"\n     - https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes"
@@ -262,7 +268,7 @@ static const char *const help_string =
 	"\n    any flags must appear before the command."
 	"\n"
 	"\ncommands:"
-	"\n    help           print this message and exit"
+	"\n    help           alias of `-h` flag"
 	"\n    run,nrun       runs simulations and gives in-depth statistics"
 	"\n    sim,sim1,nsim  runs simulations visually without statistics"
 	"\n    step           step to the next state and print out the result"
@@ -537,6 +543,12 @@ static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict 
 			case 'h': FALLTHROUGH;
 			case '?':
 				goto help_flag;
+			case 'v':
+				if (!quiet)
+					puts("life v" VERSION);
+				else likely_if (!silent)
+					puts(VERSION);
+				exit(0);
 			default:
 				goto flag_unknown;
 			} // switch, (decide what flag operation to dispatch)
