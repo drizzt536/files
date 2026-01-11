@@ -38,6 +38,10 @@
 	#define TRANSIENT_LEN	448
 #endif
 
+#ifndef RAND_BUF_LEN
+	#define RAND_BUF_LEN	128
+#endif
+
 // max number of collisions per trial before errors.
 // this has to be at least 143 with TABLE_BITS=9 and FAST_HASHING=true
 #ifndef ARENA_LEN
@@ -305,6 +309,11 @@ static const char *const help_string =
 	"\n    TABLE_BITS="		TOSTRING_EXPANDED(TABLE_BITS)
 	"\n    PERIOD_LEN="		TOSTRING_EXPANDED(PERIOD_LEN)
 	"\n    TRANSIENT_LEN="	TOSTRING_EXPANDED(TRANSIENT_LEN)
+	#if RAND_BUF_LEN == 1
+	"\n    RAND=\"RDRAND, unbuffered\""
+	#else
+	"\n    RAND=\"RtlGenRandom, buffer=" TOSTRING_EXPANDED(RAND_BUF_LEN) "\""
+	#endif
 	"\n    ARENA_LEN="		TOSTRING_EXPANDED(ARENA_LEN)
 	"\n    TIMER="			TOSTRING_EXPANDED(TIMER)
 	"\n    CLIPBOARD="		TOSTRING_EXPANDED(CLIPBOARD)

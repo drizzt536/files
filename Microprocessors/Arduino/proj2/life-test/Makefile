@@ -81,6 +81,10 @@ ifdef TRANSIENT_LEN
 	CFLAGS += -DTRANSIENT_LEN=$(TRANSIENT_LEN)
 endif
 
+ifdef RAND_BUF_LEN
+	CFLAGS += -DRAND_BUF_LEN=$(RAND_BUF_LEN)
+endif
+
 ifdef ARENA_LEN
 	CFLAGS += -DARENA_LEN=$(ARENA_LEN)
 endif
@@ -111,7 +115,7 @@ endif
 
 ifdef RULESET
 	CFLAGS += -DRULESET=\"$(RULESET)\"
-	CFLAGS += -DNEXT_COND="$$(cat next-cond.tmp)"
+	CFLAGS += -DNEXT_COND="$$(cat ruleset.tmp)"
 endif
 
 all: requirements life.7z life.txt life-launch.txt
@@ -193,11 +197,11 @@ life.7z: life.exe life-launch.exe req-7z analyze.py req-linux
 	launch=$$(stat -c %s life.exe); \
 	awk "BEGIN {print \"# 7zip reduction: \" 100 - $$zip*100 / ($$main + $$launch) \"%\"}"
 
-next-cond.tmp: gen-next-cond.py req-python
+ruleset.tmp: gen-ruleset.py req-python
 ifdef RULESET
 	python $< '$(RULESET)' > $@
 else
-next-cond.tmp: req-linux
+ruleset.tmp: req-linux
 	@# the content doesn't matter, just the file has to exist.
 	touch $@
 endif
@@ -208,18 +212,18 @@ init-crt.o: init-crt.nasm req-nasm req-binutils
 
 ifeq ($(PROFILE),false)
 
-life.o: $(CFILES) req-gcc next-cond.tmp
+life.o: $(CFILES) req-gcc ruleset.tmp
 	@# can't use `-ffreestanding` for some reason
 	gcc -c -nostdlib $(CFLAGS) -DPY_VERSION="\"$$(python --version | tail -c +8)\"" $(COPTZ) $< -o $@
 else
-prof.exe: init-crt.o $(CFILES) next-cond.tmp req-gcc
+prof.exe: init-crt.o $(CFILES) ruleset.tmp req-gcc
 	gcc -fprofile-generate -DPROFILING $(CFLAGS) $(COPTZ) $< life.c -o $@
 
 life.gcda: prof.exe req-linux
-	./$< nrun 1000000 > /dev/null
+	./$< nrun 2000000 > /dev/null
 	mv prof-life.gcda $@
 
-life.o: $(CFILES) life.gcda next-cond.tmp req-gcc
+life.o: $(CFILES) life.gcda ruleset.tmp req-gcc
 ifeq ($(OPTIMIZE),native)
 	@# this is only in this branch. the non-profiling branch can have the regular name
 	flags=$$(gcc -march=native -Q --help=target 2>/dev/null | awk '/enabled/ {print $$1}'); \

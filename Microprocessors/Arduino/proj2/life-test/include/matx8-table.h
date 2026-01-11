@@ -31,8 +31,8 @@
 
 #define TABLE_LEN (1 << TABLE_BITS)
 
-#define FALLTHROUGH __attribute__((fallthrough))
-#define FORCE_INLINE inline __attribute__((always_inline))
+#define FALLTHROUGH	__attribute__((fallthrough))
+#define FORCE_INLINE inline __attribute__((gnu_inline, always_inline))
 
 typedef union {
 	u64 matx;   // the whole matrix as a single integer
@@ -132,11 +132,56 @@ static FORCE_INLINE Matx8 Matx8__yroll(const Matx8 this, u8 x) {
 #define Matx8_xroll(s, x) _Generic(s, Matx8: Matx8__xroll, u64: Matx8__xroll_u)(s, x)
 #define Matx8_yroll(s, x) _Generic(s, Matx8: Matx8__yroll, u64: Matx8__yroll_u)(s, x)
 
-static Matx8 Matx8_random(void) {
-	u64 buffer;
-	RtlGenRandom(&buffer, sizeof buffer);
-	return (Matx8) {.matx = buffer};
+#if RAND_BUF_LEN < 1
+	#error "RAND_BUF_LEN must be at least 1"
+#elif RAND_BUF_LEN > 256
+	#error "RAND_BUF_LEN must be 256 or less"
+#elif RAND_BUF_LEN == 1
+static FORCE_INLINE Matx8 Matx8_random(void) {
+	// RDRAND is only faster than RtlGenRandom in the unbuffered case
+	// 1.53% faster than unbuffered RtlGenRandom
+	u64 value;
+	until (__builtin_ia32_rdrand64_step(&value));
+	return (Matx8) {.matx = value};
 }
+#else
+// plain RDRAND is always slower for these cases.
+// those cap at around 2.6% speedup
+
+// speedup for each buffer size using RtlGenRandom:
+	//   1: 0% (base case, no buffering)
+	//   2: 1.74%
+	//   4: 3.3%
+	//   8: 3.27%
+	//  16: 3.43%
+	//  32: 5.63%
+	//  64: 5.7%
+	// 128: 6.21%
+	// 256: 5.28%
+	// 512 (u16 idx): 6.19%
+	// 512 (u32 idx): 6.23%
+
+static Matx8 Matx8_random(void) {
+	_Static_assert((RAND_BUF_LEN & (RAND_BUF_LEN - 1)) == 0, "RAND_BUF_LEN must be power of two");
+
+	static u64 buffer[RAND_BUF_LEN] __attribute__((aligned(64)));
+	static u8 idx = 0; // initialize the first time it is called.
+
+#if RAND_BUF_LEN < 256
+	if (idx >= RAND_BUF_LEN)
+		__builtin_unreachable();
+#endif
+
+	unlikelyp_if (idx == 0, 1.0 - 1.0 / RAND_BUF_LEN) {
+		RtlGenRandom(buffer, sizeof buffer);
+		idx = RAND_BUF_LEN & UINT8_MAX; // NOTE: still fine for 256
+	}
+
+	return (Matx8) {
+		.matx = buffer[--idx]
+	};
+}
+#endif
 
 ///////////////////////////////// Table stuff /////////////////////////////////
 
