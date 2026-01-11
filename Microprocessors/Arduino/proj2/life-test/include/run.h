@@ -222,7 +222,7 @@ static void _run_once1(const Matx8 start_state) {
 	// update this one first so the logs work properly.
 	++counts[type];
 
-	likely_if (!silent)
+	likely_if (!quiet)
 		log_if_interesting(start_state, state, type, step, period);
 
 	// update the global data
@@ -271,8 +271,8 @@ start:
 
 			// if you are pressing both keys, print the trial first and then exit.
 			unlikelyp_if (GetAsyncKeyState(update_key) & 0x8000, 0.999999) {
-				if (!update_pressed) {
-					putchar(silent ? '\r' : '\n');
+				if (!update_pressed && likely(!silent)) {
+					putchar(quiet ? '\r' : '\n');
 					printf("trial: ");
 					print_du64(counts[EMPTY] + counts[CONST] + counts[CYCLE]);
 				}
@@ -321,8 +321,8 @@ start:
 			enputs("More than " TOSTRING_EXPANDED(TIMER_PERIOD)
 				" seconds have passed since timer last check. restarting.");
 
-			if (usebell)
-				bell();
+			if (unlikely(usebell) && likely(!silent))
+				putchar('\x07'); // bell
 
 			goto start;
 		}

@@ -57,8 +57,8 @@
 #define ERRLOG_ALL   0u // print everything. functionally equivalent to ERRLOG_DEBUG
 
 #ifdef ERRLOG_USE_RUNTIME_LOG_LEVEL
-	// this has to be explicitly turned on, mostly because *I* don't want it on.
-	unsigned char ERRLOG_LEVEL = ERRLOG_NOTE;
+	// this has to be explicitly turned on, mostly because I don't want it on.
+	static unsigned char /* uint8_t */ ERRLOG_LEVEL = ERRLOG_NOTE;
 #else
 	#define ERRLOG_LEVEL ERRLOG_NOTE
 #endif

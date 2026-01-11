@@ -39,13 +39,27 @@ static void _cli_sim2(const u64 trial, const Matx8 start_state) {
 	u32 step, h, table_value, period;
 	Matx8 state = start_state;
 
+	Table_clear();
+
+	unlikely_if (silent) {
+		do {
+			Sleep(sleep_ms[1]);
+
+			if (unlikelyp(Table_get(state) != TABLE_NO_VALUE, 0.97129) ||
+				unlikelyp(Table_add(state, 0), 0.999999))
+				return;
+
+			state = Matx8_next(state);
+		} until (GetAsyncKeyState(stop_key) & 0x8000);
+
+		return;
+	}
+
 	// clear the screen, clear scrollback lines, move cursor to (0, 0),
 	// and print the start state
 	printf("\e[2J\e[3J");
 	printf("\e[Hstate %3u:          \n", 0);
 	print_state(state);
-
-	Table_clear();
 
 	step = 0;
 
@@ -90,6 +104,7 @@ sim_done:
 
 #if DEBUG
 	printf("\e[9;22HC=%u", hashtable.arena_pos);
+
 	if (hashtable.arena_pos > max_collisions) {
 		max_collisions = hashtable.arena_pos;
 		max_collisions_state = start_state.matx;
@@ -109,6 +124,11 @@ static FORCE_INLINE void _cli_sim1(const u64 trial) {
 	VA_IF(_cli_sim2(trial, start_state), _cli_sim1(trial), start_state)
 
 static void _cli_sim_one1(Matx8 state) {
+	unlikely_if (silent) {
+		do Sleep(sleep_ms[1]); until (GetAsyncKeyState(stop_key) & 0x8000);
+		return;
+	}
+
 	// simulate until the process is killed.
 	printf("\e[2J\e[3J\e[H");
 	print_state(state);
@@ -122,7 +142,7 @@ static void _cli_sim_one1(Matx8 state) {
 	} until (GetAsyncKeyState(stop_key) & 0x8000);
 
 #if DEBUG
-	if (!silent)
+	if (!quiet)
 		putchar('\n');
 #endif
 }

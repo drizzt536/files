@@ -148,12 +148,15 @@ static void give_summary(const bool returns) {
 	char *const buf_stt = hashtable.scratch;
 	char *buf_end = sprintf_summary(buf_stt);
 
-	unlikely_if (silent)
-		printf("\r\e[0K");
-	else
-		puts("\nSummary:");
+	likely_if (!silent) {
+		if (quiet)
+			printf("\r\e[0K");
+		else
+			puts("\nSummary:");
 
-	puts(buf_stt);
+		puts(buf_stt);
+	}
+
 
 	// length not including the null byte.
 	u64 len = buf_end - buf_stt;
@@ -224,7 +227,8 @@ static void give_summary(const bool returns) {
 		// ReleaseMutex(mutex);
 		// CloseHandle(mutex);
 	#if DEBUG
-		printf("summary written to %s.\n", "clipboard");
+		likely_if (!silent)
+			printf("summary written to %s.\n", "clipboard");
 	#endif
 
 		// the program exits basically right after this.
@@ -273,7 +277,8 @@ static void give_summary(const bool returns) {
 			// the local jump is faster than the DLL syscall if the program doesn't need the call.
 			_close(fd);
 	#if DEBUG
-		printf("summary written to %s.\n", DATAFILE);
+		likely_if (!silent)
+			printf("summary written to %s.\n", DATAFILE);
 	#endif
 	}
 

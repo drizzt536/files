@@ -186,29 +186,12 @@
 #include <time.h>   // _localtime64, _timespec64_get, struct _timespec64, struct tm
 #include <sys/stat.h> // S_IWRITE
 #include <sys/locking.h> // LK_NBLCK
+
+#define ERRLOG_USE_RUNTIME_LOG_LEVEL
 #include "error-print.h" // stdlib.h, stdio.h, fcntl.h (io.h (_open, _write, ...), O_CREAT, ...)
 #include "windows.h"
 #include "matx8-table.h"
 #include "matx8-next.h" // Matx8_next
-
-__attribute__((optimize("unroll-loops")))
-static FORCE_INLINE void print_table_headers(void) {
-#if INT_LEN(PERIOD_LEN) == 3 && INT_LEN(TRANSIENT_LEN) == 3
-	printf(
-		"timestamp        | start state        | int | per | trs | n | trial\n"
-		"--------------------------------------------------------------------"
-	);
-#else
-	printf(
-		"timestamp        | start state        | int | %*s | %*s | n | trial\n"
-		"--------------------------------------------------------------------",
-		INT_LEN(PERIOD_LEN), "per", INT_LEN(TRANSIENT_LEN), "trs"
-	);
-
-	for (u8 i = 0; i < max(INT_LEN(PERIOD_LEN), 3) + max(INT_LEN(TRANSIENT_LEN), 3) - 6; i++)
-		putchar('-');
-#endif
-}
 
 typedef enum <% EMPTY, CONST, CYCLE %> sttyp_t; // state type
 
@@ -232,6 +215,7 @@ static bool copy       = false;
 static bool usefile    = false;
 static bool usebell    = false;
 static bool silent     = false;
+static bool quiet      = false;
 static u8 stop_key     = VK_F1;
 static u8 update_key   = VK_INSERT;
 static char alive_char = ALIVE_CHAR_DEF;
@@ -251,7 +235,8 @@ static const char *const help_string =
 	"\n    -c   in run modes, copy the summary to the clipboard as well as printing."
 #endif
 	"\n    -f   in run modes, concatenate the summary data together into " DATAFILE "."
-	"\n    -q   quiet mode. suppresses output beyond what is necessary."
+	"\n    -q   quiet mode. suppresses most non-error output messages."
+	"\n    -Q   silent mode. suppresses all terminal output including error messages."
 	"\n    -s   specify a key code to stop in `nrun inf` `nsim inf`, and `sim1`."
 	"\n    -u   specify a key code to update the user in `nrun inf`."
 	"\n    -T   specify a wait in ms between trials in sim modes. default=1500."
@@ -264,9 +249,13 @@ static const char *const help_string =
 	"\n"
 	"\n    key codes for -s and -u can be an integer or a string. integer codes are here:"
 	"\n     - https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes"
-	"\n     - string codes are for the top key row: f0 for Esc, f1-f9, fA-fC for F10-F12,"
-	"\n       and fD-fJ for the remaining keys. Software only function keys for F13-F19"
-	"\n       are given as 'f:', 'f;', 'f<', 'f=', 'f>', 'f?', and 'f@' respectively."
+	"\n    string codes for the top key row are as follows: f0 for Esc, f1-f9, fA-fC"
+	"\n    for F10-F12, and fD-fJ for the remaining keys. F13-F24 are given as 'f+', 'f,',"
+	"\n    'f-', 'f.', 'f/', 'f:', 'f;', 'f<', 'f=', 'f>', 'f?', and 'f@', respectively. If"
+	"\n    fa-fz are given, then the second character (as uppercase) is used as the keycode,"
+	"\n    e.g `-s fc` is the same as `-s 67`. Also, fK: control, fL: lmouse, fM: mid-mouse,"
+	"\n    fN: r-mouse, fO: side mouse 1, fP: side mouse 2, fQ: backspace, fR is return"
+	"\n    (enter), fS: space, fT: tab."
 	"\n"
 	"\n    flags can be coalesced together, e.g. `-fsquT <s> <u> <T>`."
 	"\n    --help can't be coalesced with anything, and must be passed by itself."
@@ -342,8 +331,30 @@ static const char *const help_string =
 static const char *const help_string = "help text was not included in this build";
 #endif
 
-static void show_cursor(void) { printf("\e[?25h"); }
-static void bell(void) { putchar('\x07'); }
+__attribute__((optimize("unroll-loops")))
+static FORCE_INLINE void print_table_headers(void) {
+	if (quiet)
+		return;
+
+#if INT_LEN(PERIOD_LEN) == 3 && INT_LEN(TRANSIENT_LEN) == 3
+	printf(
+		"timestamp        | start state        | int | per | trs | n | trial\n"
+		"--------------------------------------------------------------------"
+	);
+#else
+	printf(
+		"timestamp        | start state        | int | %*s | %*s | n | trial\n"
+		"--------------------------------------------------------------------",
+		INT_LEN(PERIOD_LEN), "per", INT_LEN(TRANSIENT_LEN), "trs"
+	);
+
+	for (u8 i = 0; i < max(INT_LEN(PERIOD_LEN), 3) + max(INT_LEN(TRANSIENT_LEN), 3) - 6; i++)
+		putchar('-');
+#endif
+}
+
+static void show_cursor(void) { likely_if (!silent) printf("\e[?25h"); }
+static void bell(void) { likely_if (!silent) putchar('\x07'); }
 
 #include "du64.h"
 #include "summary.h"
@@ -352,7 +363,7 @@ static void bell(void) { putchar('\x07'); }
 
 #if DEBUG
 static void log_collisions(void) {
-	if (silent || total_collisions == 0)
+	if (quiet || total_collisions == 0)
 		return;
 
 	printf("hash collisions: total="); print_du64(total_collisions, '_');
@@ -395,8 +406,12 @@ static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict 
 			operand = argc > 0 ? *argv : NULL;
 
 			switch (fc) {
+			case 'Q':
+				silent  = true;
+				ERRLOG_LEVEL = ERRLOG_NONE;
+				FALLTHROUGH; // also set quiet to true
+			case 'q': quiet   = true; break;
 			case 'b': usebell = true; break;
-			case 'q': silent  = true; break;
 			case 'f': usefile = true; break;
 			#if CLIPBOARD
 			case 'c': copy    = true; break;
@@ -427,7 +442,15 @@ static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict 
 
 				// allow strings top row keys and some software-only keys
 				likely_if (operand[0] == 'f' && operand[1] && !operand[2]) {
+					// function key
 					switch (operand[1]) {
+					// software-only function keys f13-f17
+					case '+': *pkey = VK_F13; break;
+					case ',': *pkey = VK_F14; break;
+					case '-': *pkey = VK_F15; break;
+					case '.': *pkey = VK_F16; break;
+					case '/': *pkey = VK_F17; break;
+					// top row keys
 					case '0': *pkey = VK_ESCAPE; break;
 					case '1': *pkey = VK_F1; break;
 					case '2': *pkey = VK_F2; break;
@@ -438,15 +461,14 @@ static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict 
 					case '7': *pkey = VK_F7; break;
 					case '8': *pkey = VK_F8; break;
 					case '9': *pkey = VK_F9; break;
-					// software-only keys
-					case ':': *pkey = VK_F13; break;
-					case ';': *pkey = VK_F14; break;
-					case '<': *pkey = VK_F15; break;
-					case '=': *pkey = VK_F16; break;
-					case '>': *pkey = VK_F17; break;
-					case '?': *pkey = VK_F18; break;
-					case '@': *pkey = VK_F19; break;
-					// no f20-f24. users can pass integer codes for those.
+					// software-only function keys f18-f24
+					case ':': *pkey = VK_F18; break;
+					case ';': *pkey = VK_F19; break;
+					case '<': *pkey = VK_F20; break;
+					case '=': *pkey = VK_F21; break;
+					case '>': *pkey = VK_F22; break;
+					case '?': *pkey = VK_F23; break;
+					case '@': *pkey = VK_F24; break;
 					// the rest of the function row keys
 					case 'A': *pkey = VK_F10; break;
 					case 'B': *pkey = VK_F11; break;
@@ -458,7 +480,26 @@ static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict 
 					case 'H': *pkey = VK_END; break;
 					case 'I': *pkey = VK_PRIOR; break; // page up
 					case 'J': *pkey = VK_NEXT; break;  // page down
-					default : goto flag_invalid_operand; // print a message and exit.
+					// stuff other than top row keys
+					case 'K': *pkey = VK_CONTROL; break;
+					case 'L': *pkey = VK_LBUTTON; break; // left mouse button
+					case 'M': *pkey = VK_MBUTTON; break; // middle mouse button
+					case 'N': *pkey = VK_RBUTTON; break; // right mouse button
+					case 'O': *pkey = VK_XBUTTON1; break; // side mouse button 1
+					case 'P': *pkey = VK_XBUTTON2; break; // side mouse button 2
+					case 'Q': *pkey = VK_BACK; break; // backspace
+					case 'R': *pkey = VK_RETURN; break; // enter
+					case 'S': *pkey = VK_SPACE; break;
+					case 'T': *pkey = VK_TAB; break;
+					default :
+						// parse stuff like -s fn as -s 110
+						// basically make it uppercase and use that as the key code
+						if ('a' <= operand[1] && operand[1] <= 'z') {
+							*pkey = operand[1] & ~32;
+							break;
+						}
+						else
+							goto flag_invalid_operand; // print a message and exit.
 					}
 				}
 				else {
@@ -507,7 +548,8 @@ static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict 
 	return true;
 
 help_flag:
-	puts(help_string);
+	likely_if (!silent)
+		puts(help_string);
 	exit(0);
 
 flag_no_operand:
@@ -559,14 +601,6 @@ void mainCRTStartup(void)
 		: "rax", "rcx", "rdx", "r8", "r9", "rdi", "rsi", "memory"
 	);
 
-	if (_isatty(1)) {
-		printf("\e[0m\e[?25l"); // remove terminal styling if there is any and hide the cursor.
-		atexit(&show_cursor);
-	}
-#if DEBUG
-	atexit(&log_collisions);
-#endif
-
 	POP_ARG(); // the executable path is not needed.
 	do { // do while false
 		const bool flags_given = parse_flags(&argc, &argv);
@@ -585,10 +619,20 @@ void mainCRTStartup(void)
 		}
 		else {
 			// no arguments given. just print the help text.
-			puts(help_string);
+			likely_if (!silent)
+				puts(help_string);
 			exit(0);
 		}
 	} while (false);
+
+	if (_isatty(1) && likely(!silent)) {
+		printf("\e[0m\e[?25l"); // remove terminal styling if there is any and hide the cursor.
+		atexit(&show_cursor);
+	}
+
+#if DEBUG
+	atexit(&log_collisions);
+#endif
 
 	if (usebell)
 		atexit(&bell);
@@ -610,8 +654,7 @@ void mainCRTStartup(void)
 	//       so it takes up at least 4 bytes including the null terminator.
 	switch (*(u32 *) *argv) {
 	case CHARS4_TO_U32('n', 'r', 'u', 'n'):
-		if (!silent)
-			print_table_headers();
+		print_table_headers();
 
 		if (argc == 0)
 			__builtin_unreachable();
@@ -641,8 +684,7 @@ void mainCRTStartup(void)
 		give_summary(false);
 		__builtin_unreachable();
 	case CHARS4_TO_U32('r', 'u', 'n',  0 ):
-		if (!silent)
-			print_table_headers();
+		print_table_headers();
 
 		if (argc == 0)
 			__builtin_unreachable();
@@ -656,7 +698,8 @@ void mainCRTStartup(void)
 				Matx8 state = (Matx8) {.matx = strtoull(argv[i], &str_end, 0)};
 
 				if (*str_end != '\0') {
-					putchar('\n');
+					likely_if (!silent)
+						putchar('\n');
 					eprintf("command `%s` given with an invalid value at position %u.\n", "run", i);
 					exit(4);
 				}
@@ -673,7 +716,7 @@ void mainCRTStartup(void)
 		unlikely_if (argc == 1) {
 			cli_sim(1);
 		#if DEBUG
-			if (!silent)
+			if (!quiet)
 				putchar('\n');
 		#endif
 			exit(0);
@@ -697,7 +740,7 @@ void mainCRTStartup(void)
 		}
 
 		#if DEBUG
-		if (!silent)
+		if (!quiet)
 			putchar('\n');
 		#endif
 		break;
@@ -768,7 +811,7 @@ void mainCRTStartup(void)
 		cli_sim(n);
 
 		#if DEBUG
-		if (!silent)
+		if (!quiet)
 			putchar('\n');
 		#endif
 		break;
@@ -805,9 +848,13 @@ void mainCRTStartup(void)
 		while (n --> 0)
 			state = Matx8_next(state);
 
-		printf("0x%016llx\n", state.matx);
-		print_state(state);
-		putchar('\n');
+		likely_if (!silent)
+			printf("0x%016llx\n", state.matx);
+
+		if (!quiet) {
+			print_state(state);
+			putchar('\n');
+		}
 		break;
 	}
 	case CHARS4_TO_U32('d', 'u', 'm', 'p'):
@@ -914,11 +961,13 @@ void mainCRTStartup(void)
 			exit(3);
 		}
 
-		printf("found %u objects\n", objects);
+		likely_if (!silent)
+			printf(quiet ? "%u\n" : "found %u objects\n", objects);
 		break;
 	}
 	case CHARS4_TO_U32('h', 'e', 'l', 'p'):
-		puts(help_string);
+		likely_if (!silent)
+			puts(help_string);
 		break;
 	default:
 	unknown_command:
