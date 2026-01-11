@@ -132,6 +132,7 @@
 #define ememcpy(dst, src, len) (__builtin_memcpy(dst, src, len) + len /* point to the end */)
 #define streq(x, y) (__builtin_strcmp(x, y) == 0)
 #define POPCNT(x) __builtin_stdc_count_ones(x)
+#define POP_ARG() (argc--, *argv++ /* return what was just popped */)
 #define TOSTRING(x) #x
 #define TOSTRING_EXPANDED(x) TOSTRING(x)
 #define INT_LEN(x) (      \
@@ -350,22 +351,24 @@ static void log_collisions(void) {
 }
 #endif
 
-static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict *const restrict pargv) {
+static FORCE_INLINE bool parse_flags(u32 *const restrict pargc, char **restrict *const restrict pargv) {
 	// assumes neither argument is null. if you pass null, then you are stupid.
 
 	// modifies the arguments and also modifies global state.
 	// NOTE: this uses goto, but the label is always to an exit routine
 	//       and it never jumps backwards in the code.
 
-	u32 argc = *pargc;
-	char **argv, *flag, *full_flag, *operand, fc;
+	u32    argc = *pargc;
+	char **argv = *pargv;
 
-	argv = *pargv;
+	char fc, *flag, *full_flag, *operand;
 
-	while (argc > 0 && **argv == '-') { // for each flag set
-		full_flag = *argv;
+	if (argc == 0 || **argv != '-')
+		return false;
+
+	do { // for each flag set
+		full_flag = POP_ARG();
 		flag = full_flag + 1; // first argument, but skip the dash.
-		argc--; argv++; // move the argument pointer to the first operand (if there is one)
 
 		// --help is the only flag that can be more than one character
 		if (streq(flag, "-help"))
@@ -403,7 +406,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 					goto flag_invalid_operand;
 
 				*pvar = tmp > UINT32_MAX ? UINT32_MAX : tmp;
-				argc--; argv++;
+				POP_ARG();
 				break;
 			}
 			case 's': FALLTHROUGH;
@@ -434,7 +437,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 					case '>': *pkey = VK_F17; break;
 					case '?': *pkey = VK_F18; break;
 					case '@': *pkey = VK_F19; break;
-					// no f20-f24
+					// no f20-f24. users can pass integer codes for those.
 					// the rest of the function row keys
 					case 'A': *pkey = VK_F10; break;
 					case 'B': *pkey = VK_F11; break;
@@ -460,7 +463,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 					*pkey = vkey;
 				}
 
-				argc--; argv++;
+				POP_ARG();
 				break;
 			}
 			case 'a': FALLTHROUGH;
@@ -475,7 +478,7 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 
 				// NOTE: characters after the first are ignored.
 				*pchar = *operand;
-				argc--; argv++;
+				POP_ARG();
 				break;
 			}
 			case 'H':
@@ -488,27 +491,27 @@ static FORCE_INLINE void parse_flags(u32 *const restrict pargc, char **restrict 
 				goto flag_unknown;
 			} // switch, (decide what flag operation to dispatch)
 		} // for, (iterate flag characters)
-	} // while, (iterate arguments)
+	} while (argc > 0 && **argv == '-'); // while, (iterate arguments)
 
 	*pargc = argc;
 	*pargv = argv;
-	return;
+	return true;
 
 help_flag:
 	puts(help_string);
 	exit(0);
 
 flag_no_operand:
-	eprintf("flag `-%c` (in flag `%s`) given without an argument.\n", *flag, full_flag);
+	eprintf("flag `-%c` (in `%s`) given without an operand.\n", *flag, full_flag);
 	exit(5);
 
 flag_invalid_operand:
-	eprintf("flag `-%c` (in flag `%s`) given with an invalid value `%s`\n", *flag, full_flag, operand);
+	eprintf("flag `-%c` (in `%s`) given with an invalid value `%s`\n", *flag, full_flag, operand);
 	exit(5);
 
 flag_empty:
 #if HELP
-	eputs("empty flag given. use command `help` for options.");
+	eputs("empty flag given. use command `-h` for help.");
 #else
 	eputs("empty flag given.");
 #endif
@@ -516,9 +519,9 @@ flag_empty:
 	exit(7);
 flag_unknown:
 #if HELP
-	eprintf("unknown flag `-%c` (in flag `%s`). use command `help` for options.\n", *flag, full_flag);
+	eprintf("unknown flag `-%c` (in `%s`). use command `-h` for help.\n", *flag, full_flag);
 #else
-	eprintf("unknown flag `-%c` (in flag `%s`).\n", *flag, full_flag);
+	eprintf("unknown flag `-%c` (in `%s`).\n", *flag, full_flag);
 #endif
 
 	exit(7);
@@ -555,18 +558,31 @@ void mainCRTStartup(void)
 	atexit(&log_collisions);
 #endif
 
-	argc--; argv++; // the file name is not needed.
-	parse_flags(&argc, &argv);
+	POP_ARG(); // the executable path is not needed.
+	do { // do while false
+		const bool flags_given = parse_flags(&argc, &argv);
+
+		if (argc != 0)
+			break;
+
+		// example: `./life` should print the help text, but `./life -H` shouldn't
+		if (flags_given) {
+		#if HELP
+			eputs("no command given. use `-h` for help.");
+		#else
+			eputs("no command given.");
+		#endif
+			exit(6);
+		}
+		else {
+			// no arguments given. just print the help text.
+			puts(help_string);
+			exit(0);
+		}
+	} while (false);
 
 	if (usebell)
 		atexit(&bell);
-
-	if (argc == 0) {
-		// no arguments given. just print the help text.
-		puts(help_string);
-		exit(0);
-	}
-
 
 	// NOTE: all the commands are at least 3 characters long, so if any of the
 	//       first 3 characters are null, then it is definitely not a known commands
@@ -621,7 +637,7 @@ void mainCRTStartup(void)
 
 		if (argc == 0)
 			__builtin_unreachable();
-		
+
 		if (argc == 1)
 			run_once();
 		else
@@ -896,15 +912,14 @@ void mainCRTStartup(void)
 		puts(help_string);
 		break;
 	default:
-		goto unknown_command;
+	unknown_command:
+	#if HELP
+		eprintf("unknown command `%s`. use `-h` for help.\n", *argv);
+	#else
+		eprintf("unknown command `%s`.\n", *argv);
+	#endif
+		exit(6);
 	}
 
 	exit(0);
-unknown_command:
-#if HELP
-	eprintf("unknown command `%s`. use `help` for help.\n", *argv);
-#else
-	eprintf("unknown command `%s`.\n", *argv);
-#endif
-	exit(6);
 }
