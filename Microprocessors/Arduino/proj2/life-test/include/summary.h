@@ -73,7 +73,7 @@ void comptime_error(void) __attribute__((error("")));
 #define BUF_WRITE(buf, x1, x2plus...) \
 	VA_IF(_BUF_WRITE2plus(buf, x1, x2plus), _BUF_WRITE1(buf, x1), x2plus)
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 static char *sprintf_summary(char *buf) {
 	// assumes the buffer is long enough. it has to be like 8KiB or something.
@@ -148,15 +148,10 @@ static void give_summary(const bool returns) {
 	char *const buf_stt = hashtable.scratch;
 	char *buf_end = sprintf_summary(buf_stt);
 
-	likely_if (!silent) {
-		if (quiet)
-			printf("\r\e[0K");
-		else
-			puts("\nSummary:");
-
-		puts(buf_stt);
-	}
-
+	if (!quiet)
+		puts("\nSummary:");
+	else likely_if (!silent)
+		printf("\r\e[0K");
 
 	// length not including the null byte.
 	u64 len = buf_end - buf_stt;
@@ -165,43 +160,45 @@ static void give_summary(const bool returns) {
 	if (copy && !returns) {
 		// never copy to the clipboard if the function will be returning for a few reasons:
 		// 1. I don't want to have to DLL import the mutex and clipboard closing functions
-		// 2. it would be really bad UX if randomly every 12 hours your clipboard is overwritten
-		//    regardless of what you're doing outside this program.
+		// 2. it would be really bad UX if randomly every 12 hours your clipboard is
+		//    overwritten regardless of what you're doing outside this program.
 
-		// the mutex is cross-program. Since the Windows API is retarded, this is the only way to
-		// achieve the goal that I need in a way that works remotely well..
+		// the mutex is cross-program. Since the Windows API is retarded, this is the only
+		// way to achieve the goal that I need in a way that works remotely well..
 
 		// here are the reasons the API for this sucks:
-		// 1. OpenClipboard locks the clipboard to the window and not to the process. This means
-		//    if you have two threads or even two separate processes that have the same window,
-		//    OpenClipboard will just shrug its shoulders and let both processes have an unresolved
-		//    data race. This matters in situations like with Windows Terminal, where if you have
-		//    two processes in two separate tabs, or in two split panes, they have the same window.
-		// 2. Creating a unique window and passing the window handle to OpenClipboard doesn't work
-		//    either. While it is true that it will then lock the clipboard to each dummy window,
-		//    Windows decides that once you call SetClipboardData, you are done with the clipboard,
-		//    and it does not wait for you to call `CloseClipboard`, and it does not wait for the
-		//    data to settle in the clipboard. So if you write something in one process, and then
-		//    immediately write something else in a different process, the windows+v clipboard
-		//    stack will only contain the newer item.
-		// 3. When you call CloseClipboard, it doesn't actually wait for the clipboard to update to
-		//    the new value before exiting, so when the second process gets the clipboard, Windows
-		//    wasn't actually done with the previous data, so when you update the clipboard,
-		//    Windows says "you know what? whoever gave me the first data: fuck you. im skipping
-		//    your data." This is part of why I have to do Sleep even after WaitForSingleObject.
-		// 4. There is no function to do anything along the lines of "wait until the clipboard is
-		//    done". So you have to just wait for like 250ms or 500ms or something and hope that it
-		//    was enough time. And this is also the reason you have to just poll until
-		//    OpenClipboard returns true.
+		// 1. OpenClipboard locks the clipboard to the window and not to the process. This
+		//    means if you have two threads or even two separate processes that have the same
+		//    window, OpenClipboard will just shrug its shoulders and let both processes have
+		//    an unresolved data race. This matters in situations like with Windows Terminal,
+		//    where if you have two processes in two separate tabs, or in two split panes,
+		//    they have the same window.
+		// 2. Creating a unique window and passing the window handle to OpenClipboard doesn't
+		//    work either. While it is true that it will then lock the clipboard to each
+		//    dummy window, Windows decides that once you call SetClipboardData, you are done
+		//    with the clipboard, and it does not wait for you to call `CloseClipboard`, and
+		//    it does not wait for the data to settle in the clipboard. So if you write
+		//    something in one process, and then immediately write something else in a
+		//    different process, the win+v clipboard stack will only contain the newer item.
+		// 3. When you call CloseClipboard, it doesn't actually wait for the clipboard to
+		//    update to the new value before exiting, so when the second process gets the
+		//    clipboard, Windows wasn't actually done with the previous data, so when you
+		//    update the clipboard, Windows says "you know what? whoever gave me the first
+		//    data: fuck you. im skipping your data." This is part of why I have to do Sleep
+		//    even after WaitForSingleObject.
+		// 4. There is no function to do anything along the lines of "wait until the
+		//    clipboard is done". So you have to just wait for like 250ms or 500ms or
+		//    something and hope that it was enough time. And this is also the reason you
+		//    have to just poll until OpenClipboard returns true.
 		// 5. You cannot just pass SetClipboardData a pointer and length for the memory you
-		//    already have, and then it copies it into its internal buffer stuff, and moves on.
-		//    No, you have to use GlobalAlloc to generate the internal memory for the kernel,
-		//    because of course it can't just do it itself. And then you have to use GlobalLock
-		//    to turn it into a real pointer, then memcpy into the buffer, then you have to call
-		//    GlobalUnlock for god knows what reason. Then you give the handle to that stuff to
-		//    SetClipboardData. I'm surprised that there isn't some internal Windows API
-		//    GlobalMemoryCopy function, to where if you don't use that function to write to
-		//    global allocated memory, your whole program crashes.
+		//    already have, and then it copies it into its internal buffer stuff, and moves
+		//    on. No, you have to use GlobalAlloc to generate the internal memory for the
+		//    kernel, because of course it can't just do it itself. And then you have to use
+		//    GlobalLock to turn it into a real pointer, then memcpy into the buffer, then
+		//    you have to call GlobalUnlock for god knows what reason. Then you give the
+		//    handle to that stuff to SetClipboardData. I'm surprised that there isn't some
+		//    internal Windows API GlobalMemoryCopy function, to where if you don't use that
+		//    function to write to global allocated memory, your whole program crashes.
 
 		void *const windows_fuckass_bullshit_global_memory_handle_nonsense = AllocateWindowsFuckassBullshitGlobalMemoryNonsense(GMEM_MOVEABLE, len + 1);
 		memcpy(RealPointerFromWindowsFuckassBullshitGlobalMemoryNonsense(windows_fuckass_bullshit_global_memory_handle_nonsense), buf_stt, len + 1);
@@ -274,7 +271,7 @@ static void give_summary(const bool returns) {
 		// _locking(fd, _LK_UNLCK, INT32_MAX);
 
 		if (returns)
-			// the local jump is faster than the DLL syscall if the program doesn't need the call.
+			// the local jump is faster than the DLL syscall if the syscall isn't needed
 			_close(fd);
 	#if DEBUG
 		likely_if (!silent)
