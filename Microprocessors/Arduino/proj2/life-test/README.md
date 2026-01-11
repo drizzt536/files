@@ -6,7 +6,7 @@ Almost all configuration macros in life.c are passed directly from the makefile,
 
 Valid neighborhoods are MOORE (all 8), VON_NEUMANN (cardinal only), and DIAGONAL.
 
-Rulesets are something like `B\<nums\>/S\<nums\>`. The B numbers are the neighbors counts for a dead cell to become alive and the S numbers are the neighbor counts for a living cell to continue living. For example, the default ruleset of B3/S23 means dead cells with 3 neighbors become alive and alive cells with 2 or 3 neighbors continue living. Since the counters are only 3 bits, the neighbor counts are the same modulo 8, so neither of the counts can have 8 without 0 or 0 without 8.
+Rulesets are something like `B<nums>/S<nums>`. The B numbers are the neighbors counts for a dead cell to become alive and the S numbers are the neighbor counts for a living cell to continue living. For example, the default ruleset of B3/S23 means dead cells with 3 neighbors become alive and alive cells with 2 or 3 neighbors continue living. Since the counters are only 3 bits, the neighbor counts are the same modulo 8, so neither of the counts can have 8 without 0 or 0 without 8.
 
 <!-- ruleset B012568/S03478 has the longest condition -->
 
