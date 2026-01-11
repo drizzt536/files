@@ -220,7 +220,7 @@ prof.exe: init-crt.o $(CFILES) ruleset.tmp req-gcc
 	gcc -fprofile-generate -DPROFILING $(CFLAGS) $(COPTZ) $< life.c -o $@
 
 life.gcda: prof.exe req-linux
-	./$< nrun 2000000 > /dev/null
+	./$< nrun 2500000
 	mv prof-life.gcda $@
 
 life.o: $(CFILES) life.gcda ruleset.tmp req-gcc
