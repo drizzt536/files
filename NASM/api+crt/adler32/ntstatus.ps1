@@ -6,10 +6,11 @@
 function generate-full-table([bool] $includeAliases = $false) {
 	# generates a dictionary that maps string -> string[] or string -> string
 	# assumes GCC is installed and in path.
-	# requires MinGW or MSYS2
+	# requires MinGW
 
 	$ntstatus = @{}
 
+	# NOTE: -print-sysroot only works for the MinGW version of GCC. not MSYS2
 	cat "$(gcc -print-sysroot)/include/ntstatus.h" | sls -simpleMatch "(NTSTATUS)" | foreach {
 		$match = [regex]::match(
 			[string] $_,

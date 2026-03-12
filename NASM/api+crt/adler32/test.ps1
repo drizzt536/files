@@ -1,29 +1,24 @@
 #requires -version 7
-# requires MinGW (cat.exe)
-# requires ./ntstatus.ps1 or ../../../PowerShell/ntstatus.ps1
+
+# requires MinGW or MSYS2 for cat.exe
+# requires ntstatus.ps1 to be in PATH, ./, or ../../../PowerShell/
 
 # these are the tests for the main build with no configuration
 
-# TODO: the output values used in test cases 17 and 18 seem wrong. compare against zlib's implementation.
+# NOTE: test case 33 gets skipped usually because -DEFAULT disables long arguments.
+
 # TODO: test `-c - *`, `-c * -`, and `-c - -`.
 # TODO: test cases:
-	# ./adler32 -x ""
-	# ./adler32 -x "0"
-	# ./adler32 -x "zz"
-	# ./adler32 -x - (expect error)
+	# test cases for argfiles
+	# a test case for files that are a weird length
+	# a test case for using different unroll sizes
 	# ./adler32 -o s.log -s a -s b -s c -o - -x 64 -x 65 -x 66
 	# echo "12345678 abc" | ./adler32 -! -r -p - -p - -
 		# make sure it doesn't overread the buffer
-		# the error value would be like probably "abc45678"
+		# the error would be probably "abc45678" as the value or something
 
 	# echo a | ./adler32 -r - -l -
 	# echo - | ./adler32 - -f - -
-	# ./adler32 --format-raw --str-data asdf
-
-	# echo DATA | ./adler32
-	# echo DATA | ./adler32 -
-	# echo DATA | ./adler32 -! -
-	# echo DATA | ./adler32 -!
 
 	# echo DATA | ./adler32 - file1.tmp file2.tmp
 	# echo DATA | ./adler32 file1.tmp file2.tmp
@@ -54,12 +49,11 @@
 	# ./adler32 -p $cksm1 -c $cksm2 1024 -p $cksm3 -c $cksm4 2048
 	# echo "data" | ./adler32 -! -s "test" file1.tmp -
 
-# TODO: add testing for builds with features removed.
-# TODO: add tests for how different things work together.
+# this should be the highest natural exit code for adler32.exe.
+# if it is higher, than the program crashed
+$MAX_EXITCODE = 27
 
-# this should be the highest natural exit code for adler32.exe, other than -1.
-$MAX_EXITCODE = 21
-
+[Console]::ResetColor()
 
 if (gcm -type externalscript ./ntstatus.ps1 -ea ignore | % name) {
 	$ntstatus = "./ntstatus.ps1"
@@ -68,25 +62,25 @@ elseif (gcm -type externalscript ../../../PowerShell/ntstatus.ps1 -ea ignore | %
 	$ntstatus = "../../../PowerShell/ntstatus.ps1"
 }
 elseif (gcm -type externalscript ntstatus.ps1 -ea ignore | % name) {
-	# if it is in PATH
+	# this will work if it is in PATH
 	$ntstatus = "ntstatus.ps1"
 }
 else {
 	throw 'cannot find `ntstatus.ps1`. checked `./`, `../../../PowerShell/`, and PATH'
 }
 
-if ($args[0] -eq "--help") {
+if ($args[0] -in @("-h", "-?", "--help")) {
 	write-host "Options:"
-	write-host "    --help         print this message and exit"
-	write-host "    --case N       run only test case N"
-	write-host "    --case def-N   run only test case N. also print the definition of the test case"
-	write-host "    --recompile    Recompile ./adler32 before running the tests. uses default build"
+	write-host "    -h, -?, --help     print this message and exit"
+	write-host "    -c, --case N       run only test case N"
+	write-host "    -c, --case def-N   run only test case N. also print the definition of the test case"
+	write-host "    -r, --recompile    Recompile ./adler32 before running the tests. uses default build"
 
 	exit 0
 }
 
-if ($args[0] -eq "--recompile") {
-	../../assemble adler32 --infer
+if ($args[0] -in @("-r", "--recompile")) {
+	make adler32.exe
 	write-host "`n###### test cases ######" # blank line
 }
 
@@ -94,9 +88,15 @@ $i = $args.indexOf("--case")
 if ($i -ne -1) {
 	$case = [string] $args[$i + 1]
 }
+else {
+	$i = $args.indexOf("-c")
+	if ($i -ne -1) {
+		$case = [string] $args[$i + 1]
+	}
+}
 
 if (-not (gcm ./adler32 -type app -ea ignore)) {
-	write-host 'Error: `./adler32` was not found'
+	write-host "`e[1;31mError: ``./adler32`` was not found`e[0m"
 	exit 1
 }
 
@@ -115,6 +115,11 @@ function test-case([uint32] $i) {
 		return
 	}
 
+	if ($exit_code -eq "skipped") {
+		write-host "`e[33mskip"
+		return
+	}
+
 	$script:overall_pass = $false
 
 	$error_condition = switch ($exit_code) {
@@ -124,7 +129,7 @@ function test-case([uint32] $i) {
 		default {"miscellaneous error: $exit_code"}
 	}
 
-	write-host "fail ($error_condition)"
+	write-host "`e[31mfail ($error_condition)`e[0m" # medium red
 }
 
 ########################### test cases ###########################
@@ -348,7 +353,7 @@ function test-case-12 {
 	[char[]] $chars = "pcxseof"
 	for ($i = 0; $i -lt $chars.count; $i++) {
 		$arg = $chars[$i]
-		$str = "$($i + 1)/$($chars.count)"
+		$str = "$($i + 1)/$($chars.count) "
 
 		write-host -nonewline $str
 		$output = ./adler32 -$arg 2> errors.tmp
@@ -383,7 +388,7 @@ function test-case-15 {
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
 	if ((cat errors.tmp).length -ne 0) { return 1 }
-	if ($cksm1 -ne "00e10001") { return 2 }
+	if ($cksm1 -ne "00000001") { return 2 }
 
 	$cksm2 = ./adler32 -r -c 00000001h 18446744073709551615 2> errors.tmp
 
@@ -405,7 +410,7 @@ function test-case-17 {
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
 	if ((cat errors.tmp).length -ne 0) { return 1 }
-	if ($cksm1 -ne "00e10001") { return 2 }
+	if ($cksm1 -ne "00000001") { return 2 }
 
 	# treat unknown length values as 0.
 	$cksm2 = ./adler32 -r -c 00000001h asdfqwer 2> errors.tmp
@@ -420,7 +425,7 @@ function test-case-18 {
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
 	if ((cat errors.tmp).length -ne 0) { return 1 }
-	if ($cksm -ne "bee20253") { return 2 }
+	if ($cksm -ne "be010253") { return 2 }
 }
 
 function test-case-19 {
@@ -428,7 +433,7 @@ function test-case-19 {
 
 	for ($i = 0; $i -lt $options.count; $i++) {
 		$arg = $options[$i]
-		$str = "$($i + 1)/$($options.count)"
+		$str = "$($i + 1)/$($options.count) "
 
 		write-host -nonewline $str
 		$output = ./adler32 $arg 2> errors.tmp
@@ -462,23 +467,43 @@ function test-case-22 {
 	$cksm = cat.exe file1.tmp | ./adler32 -r -l -r -u -d 2> errors.tmp
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
+	if ($cksm -ne "406d0653") { return 2 }
 
-	$errors = (cat errors.tmp) -join "`n"
-	if ($errors.length -eq 0) { return 1 }
-	if (!$errors.startsWith("WARNING: 5 misplaced argument(s)")) { return 1 }
-	if ($cksm -ne "406d0653") { return 2 } # cat.exe
 
 	$cksm = cat file1.tmp | ./adler32 -r -D -D 2> errors.tmp
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
 
-	$errors = (cat errors.tmp) -join "`n"
-	if ($errors.length -eq 0) { return 1 }
-	if (!$errors.startsWith("WARNING: 3 misplaced argument(s)")) { return 1 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
 	if ($cksm -ne "4d37066a") { return 2 } # cat adds \r\n to the end, and it isn't collapsed to \n.
 }
 
 function test-case-23 {
+	$cksm = "DATA" | ./adler32 -! -r -l -r -u -d 2> errors.tmp
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+
+	$errors = (cat errors.tmp) -join "`n"
+	if ($errors.length -eq 0) { return 1 }
+	if (!$errors.startsWith("WARNING: 5 misplaced argument(s)")) { return 1 }
+	if ($cksm -ne $null) { return 2 }
+}
+
+function test-case-24 {
+	$cksm = "DATA" | ./adler32 -! -r -l -r - -u -d 2> errors.tmp
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+
+	$errors = (cat errors.tmp) -join "`n"
+	if ($errors.length -eq 0) { return 1 }
+	if (!$errors.startsWith("WARNING: 2 misplaced argument(s)")) { return 1 }
+	if ($cksm -ne "051a0132") { return 2 } # "DATA`r`n"
+
+	# "DATA" | ./adler32 -! -r -l -r - -u -d
+}
+
+function test-case-25 {
 	[IO.File]::WriteAllText("./file.tmp", "")
 	$cksm = write-output "90860b20" | ./adler32 -! -r -p - file.tmp 2> errors.tmp
 
@@ -487,7 +512,7 @@ function test-case-23 {
 	if ($cksm -ne "90860b20") { return 2 }
 }
 
-function test-case-24 {
+function test-case-26 {
 	[IO.File]::WriteAllText("./file1.tmp", "12345")
 	[IO.File]::WriteAllText("./file2.tmp", "ABCDEFG")
 	[IO.File]::WriteAllText("./file3.tmp", "")
@@ -503,7 +528,7 @@ function test-case-24 {
 	if ($cksms[2] -ne "0000a2f4") { return 2 }
 }
 
-function test-case-25 {
+function test-case-27 {
 	[IO.File]::WriteAllText("./--option-as-file.tmp", "12345")
 
 	$cksm = ./adler32 -r -f --option-as-file.tmp 2> errors.tmp
@@ -513,7 +538,7 @@ function test-case-25 {
 	if ($cksm -ne "02f80100") { return 2 }
 }
 
-function test-case-26 {
+function test-case-28 {
 	$cksm = ./adler32 -r -s 'akgnqrgqmfpqn;qwfmqwp4;ql23`' 2> errors.tmp
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
@@ -521,7 +546,7 @@ function test-case-26 {
 	if ($cksm -ne "a5ce0ade") { return 2 }
 }
 
-function test-case-27 {
+function test-case-29 {
 	# the same string as for case 26, but with \0\e appended to the end.
 	$cksm = ./adler32 -r -x 616b676e717267716d6670716e3b7177666d717770343b716c323360001b 2> errors.tmp
 
@@ -530,7 +555,24 @@ function test-case-27 {
 	if ($cksm -ne "bba50af9") { return 2 }
 }
 
-function test-case-28 {
+function test-case-30 {
+	$arguments = @("-", "0", "zz", "abc", "12XX34")
+
+	for ($i = 0; $i -lt $arguments.count; $i++) {
+		$hex = $arguments[$i]
+		$str = "$($i + 1)/$($arguments.count) "
+
+		write-host -noNewline $str
+		$cksm = ./adler32 -r -x $hex 2> errors.tmp
+		write-host -noNewline $("`b"*$str.length + "`e[0K")
+
+		if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+		if ((cat errors.tmp).length -eq 0) { return 1 }
+		if ($cksm -ne $null) { return 2 }
+	}
+}
+
+function test-case-31 {
 	$output = ./adler32 - 2> errors.tmp
 
 	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
@@ -538,8 +580,8 @@ function test-case-28 {
 	if ($output -ne "00000001`t[PIPE]") { return 2 }
 }
 
-function test-case-29 {
-	# test to make sure a decent number of different combinations of builds work.
+function test-case-32 {
+	# test to make sure a decent number of different combinations of builds compile
 	[string[][]] $optionlist = @(
 		@(),
 		@("-DEFAULT"),
@@ -547,36 +589,220 @@ function test-case-29 {
 		@("-DMINIMAL"),
 		@("-DBARE_BONES"),
 		@("-DNO_DIRECTIONS"),
-		@("-DLEAN", "-DNO_MEM_CLEANUP"),
+		@("-DLEAN", "-DNO_ARGFILES"),
 		@("-DFMT_SWAP_ARGS", "-DNO_COLOR"),
 		@("-DNO_COLOR_ERROR", "-DNO_PIPE", "-DNO_ARG_O"),
 		@("-DNO_ARG_E", "-DNO_ARG_C", "-DNO_ARG_I"),
-		@("-DBARE_BONES", "-DNO_FATAL_MESSAGES", "-DNO_ALIGN", "-DFMT_RAW_DEFAULT", "-DNO_MEM_CLEANUP", "-DNO_FOLDER_CHECK", "-DNO_WARN_UNUSED"),
-		@("-DNO_ARG_O", "-DNO_FOLDER_CHECK")
+		@("-DMSVCRT", "-DNO_ARGFILES", "-DASCII_ONLY_DATA", "-DUNROLL=4"),
+		@("-DBARE_BONES", "-DNO_FATAL_MESSAGES", "-DNO_ALIGN", "-DFMT_RAW_DEFAULT", "-DNO_FOLDER_CHECK", "-DNO_WARN_UNUSED"),
+		@("-DNO_ARG_O", "-DNO_FOLDER_CHECK", "-DBUF_LEN=4096"),
+		@("-DLL"),
+		@("-DLL", "-DUNROLL_N=8", "-DSCRATCH_BUF_LEN=16384"),
+		@("-DSTATIC", "-DEFAULT")
 	)
 
-	if ($iswindows) {
-		$format = "win64"
-		$libs = @("-lkernel32", "-lshell32", "-lucrtbase")
-	}
-	else {
-		$format = "elf64"
-		$libs = @("-lc")
-	}
+	if (-not (gcm -ea ignore ./adler32.nasm)) { return "couldn't find './adler32.nasm'" }
+	if (-not (gcm -ea ignore -type app nasm)) { return "couldn't find 'nasm'" }
+	if (-not (gcm -ea ignore -type app ld  )) { return "couldn't find 'ld'" }
 
 	for ($i = 0; $i -lt $optionlist.count; $i++) {
 		$options = $optionlist[$i]
-		$str = "$($i + 1)/$($optionlist.count)"
+		$str = "$($i + 1)/$($optionlist.count) "
 
 		write-host -nonewline $str
-		nasm -f $format -Werror adler32.nasm -o adler32.o.tmp @options *> $null
+		nasm -fwin64 -Werror adler32.nasm -o adler32.o.tmp @options *> $null
 		$nasm_exitcode = $lastExitCode
-		ld adler32.o.tmp @libs --entry main -o adler32.exe.tmp *> $null
+		$libc = $options -contains "-DMSVCRT" ? "-lmsvcrt" : "-lucrtbase"
+		ld adler32.o.tmp -lkernel32 -lshell32 $libc -o adler32.exe.tmp *> $null
 		$ld_exitcode = $lastExitCode
-		write-host -nonewline $("`b" * $str.length + " " * $str.length + "`b" * $str.length)
+		write-host -nonewline $("`b"*$str.length + "`e[0K")
 
-		if ($nasm_exitcode -ne 0) { return "``$options``, assembler error" }
-		if ($ld_exitcode -ne 0) { return "``$options``, linker error" }
+		if ($nasm_exitcode -ne 0) { return "options=``$options``, assembler error" }
+		if ($ld_exitcode -ne 0) { return "options=``$options``, linker error" }
+	}
+}
+
+function test-case-33 {
+	if ((./adler32 -v)[1].indexOf("no long-form arguments") -eq -1) {
+		# the program build doesn't support long-form arguments.
+		# this is the case with `-DEFAULT`.
+		$cksms = ./adler32 --incremental --format-raw --str-data asdf --reverse --format-swap --hex-data 66 2> errors.tmp
+	}
+	else {
+		$cksms = ./adler32 -i -r -s "asdf" -u -F -x "66" 2> errors.tmp
+	}
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
+	if ($cksms.count -ne 2) { return 2 }
+	if ($cksms[0] -ne "040f019f") { return 2 }
+	if ($cksms[1] -ne "02700139`t[STRING]") { return 2 }
+}
+
+function test-case-34 {
+	write-host -noNewline "1/4 "
+	$cksm = "DATA" | ./adler32 2> errors.tmp
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
+	if ($cksm -ne "051a0132`t[PIPE]") { return 2 }
+
+	write-host -noNewline "`b`b`b`b2/4 "
+	$cksm = "DATA" | ./adler32 - 2> errors.tmp
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
+	if ($cksm -ne "051a0132`t[PIPE]") { return 2 }
+
+	write-host -noNewline "`b`b`b`b3/4 "
+	$cksm = "DATA" | ./adler32 -! - 2> errors.tmp
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
+	if ($cksm -ne "051a0132`t[PIPE]") { return 2 }
+
+	write-host -noNewline "`b`b`b`b4/4 "
+	$cksm = "DATA" | ./adler32 -! 2> errors.tmp
+
+	if (($lastExitCode -bor 0u) -gt $MAX_EXITCODE) { return 3 }
+	if ((cat errors.tmp).length -ne 0) { return 1 }
+	if ($cksm -ne $null) { return 2 }
+
+	write-host -noNewline "`b`b`b`b`e[0K"
+}
+
+function test-case-35 {
+	# I used the zlib implementation to get these values.
+	$datalist = @(
+		# @(cksm1, cksm2, length, cksm3)
+		@("e5515dd5", "a9ad0f14", "2558285149", "d8736ce8"),           #  1
+		@("b78ae5d8", "c6cc234c", "527008047", "33520932"),            #  2
+		@("d0c6ad21", "98c4aad0", "2541846987", "bdf757ff"),           #  3
+		@("bd2b0467", "27e258ef", "3952467847", "bde75d55"),           #  4
+		@("d9a88837", "aad4997a", "2302967491", "338621bf"),           #  5
+		@("ca03ea43", "fd64c3fd", "2792048284", "e09fae4e"),           #  6
+		@("5983085e", "785d7d34", "1013247149", "59af8591"),           #  7
+		@("f509811a", "d6a20bb5", "346931814", "037d8cce"),            #  8
+		@("45d15432", "f53de930", "3805469489", "e1a43d70"),           #  9
+		@("8735551e", "14e39c7f", "988595164", "64cbf19c"),            # 10
+		@("192576d1", "c055072d", "4051806381", "01a47dfd"),           # 11
+		@("b37a47bc", "378841df", "3673669051", "304e899a"),           # 12
+		@("6b7ecae7", "8ff8aa3d", "3885750623", "85e47532"),           # 13
+		@("463850de", "ab5f287b", "514036454", "a4f37958"),            # 14
+		@("b49b59e8", "4e348007", "54230954", "55cad9ee"),             # 15
+		@("c6080f9b", "a41d85be", "0", "6a349558"),                    # 16
+		@("5fcae566", "86125c17", "37", "0f73418b"),                   # 17
+		@("24bf768c", "dd3a6946", "132", "2547dfd1"),                  # 18
+		@("5ad910b6", "c0e1019f", "1423532409", "1d581254"),           # 19
+		@("7d4a2c88", "7a0ade12", "3729509027", "a0e10aa8"),           # 20
+		@("1f005d4d", "65818ae6", "3927623400", "434ee832"),           # 21
+		@("c1f2dde1", "d29d250e", "962975555", "9cee02fd"),            # 22
+		@("483c71cc", "4f43b098", "2050838619", "31672272"),           # 23
+		@("ff2a792d", "b2a06825", "1239631547", "d427e151"),           # 24
+		@("152a6ac6", "d85dd5e2", "2083508514", "f1f540b6"),           # 25
+		@("9b9f3fd3", "0b35e6ff", "262114694", "5bfa26e0"),            # 26
+		@("4e6fd2bc", "444f8046", "807488683", "c8345310"),            # 27
+		@("ee7ee587", "bdae1fe8", "421299218", "7c8b057d"),            # 28
+		@("68cc0045", "8fb8ce22", "981291655", "fd5dce66"),            # 29
+		@("c0eca656", "dd7d4d87", "1262509339", "d91ff3dc"),           # 30
+		@("64b6aa18", "b4da3d80", "486101807", "43d1e797"),            # 31
+		@("096f3995", "e9c9aedb", "79478202", "6ef7e86f"),             # 32
+		@("91706a31", "34970b68", "5967154808316624924", "fc537598"),  # 33
+		@("7c421a40", "3222abaf", "15053568646243336590", "bb0ac5ee"), # 34
+		@("3157fb9f", "40d0d535", "9613929051979964687", "6959d0e2"),  # 35
+		@("a6c19630", "8082f9e3", "3939356503882465670", "34509021"),  # 36
+		@("8e248271", "17cee332", "16573195763697254006", "c62e65b1"), # 37
+		@("b3a68c46", "23f2d8fd", "15609129985592804259", "82dc6551"), # 38
+		@("9b9d6543", "4dd00dbb", "11105343764025550549", "107172fd"), # 39
+		@("ec118373", "66d7e57a", "9995100727149655190", "21a468fb"),  # 40
+		@("c39fcd99", "73184e92", "9155684840517901430", "38b01c39"),  # 41
+		@("e027d15e", "e33438b7", "6853409362276048471", "6a720a23"),  # 42
+		@("893bbca2", "325da6d8", "5988193679034449448", "e1196388"),  # 43
+		@("95600cdd", "c8d86100", "18309483323906037494", "7b4a6ddc"), # 44
+		@("263990cb", "b0d7d512", "13774492759682115810", "c1a065eb"), # 45
+		@("844d2d5a", "7cea38be", "8495007649649106052", "4f616617"),  # 46
+		@("4227377e", "1a0fdf59", "76997468889842144", "b81016e5"),    # 47
+		@("97b2c5de", "a4fdfae8", "2528496736679684781", "7f1dc0d4"),  # 48
+		@("b58eed62", "79e1b02e", "9042182928950877758", "640a9d9e"),  # 49
+		@("3284e06f", "e598b1c0", "12742360169560557249", "1272923d"), # 50
+		@("c7d671bb", "5c7321ff", "10551574414912549840", "eee693b9"), # 51
+		@("787078f4", "87d13ced", "14680019403589189239", "0057b5e0"), # 52
+		@("fa22b99a", "059db4ec", "7704609827548402217", "fab46e94"),  # 53
+		@("5b7bb003", "49340ce3", "16350458917809062957", "1e2cbce5"), # 54
+		@("9fd868a7", "0bb46dfd", "4638392346001888161", "7e30d6a3"),  # 55
+		@("df13ed3f", "ea4b74f7", "17495940476488342795", "dc546244"), # 56
+		@("fbeaba62", "e044c945", "11436419105112335899", "f1e783b5"), # 57
+		@("e265a28d", "3e3d1a3c", "14498747135848954660", "f9bfbcc8"), # 58
+		@("aec33f99", "f8ac215e", "8382540194732556840", "f5a260f6"),  # 59
+		@("dc8573e0", "96bab4a4", "584990124438303162", "e42d2892"),   # 60
+		@("c3544bb4", "37728495", "16737849157245675921", "a289d048"), # 61
+		@("e365587d", "7249aeaa", "9548770122228243343", "e4690735"),  # 62
+		@("6ad5a4b8", "9308ecaa", "10217595815427703506", "4ab79170"), # 63
+		@("f96d5262", "b4e1d8f6", "3155674175246088410", "f02e2b66")   # 64
+	)
+
+	for ($i = 0; $i -lt $datalist.count; $i++) {
+		$str = "$($i + 1)/$($datalist.count) "
+
+		$a, $b, $c, $d = $datalist[$i]
+
+		write-host -nonewline $str
+		$out1 = ./adler32 -r -p $a -c $b $c 2> errors1.tmp
+		$out2 = ./adler32 -r -p $d -u -c $b $c 2> errors2.tmp
+		write-host -nonewline $("`b"*$str.length + "`e[0K")
+
+		if ((cat errors1.tmp).length -ne 0) { return 1 }
+		if ((cat errors2.tmp).length -ne 0) { return 1 }
+		if ($out1 -ne $d) { return "n=$($i + 1), forwards mode has wrong value" }
+		if ($out2 -ne $a) { return "n=$($i + 1), backwards mode has wrong value" }
+	}
+}
+
+function test-case-36 {
+	${base seed} = 675361406
+	$size   = 4kb
+	$trials = 64
+
+	for ($i = 0; $i -lt $trials; $i++) {
+		if     ($i -eq ($trials * 1 -shr 2)) { $size = 16kb }
+		elseif ($i -eq ($trials * 2 -shr 2)) { $size = 64kb }
+		elseif ($i -eq ($trials * 3 -shr 2)) { $size = 256kb }
+		elseif ($i -eq  $trials - 1)         { $size = 1mb }
+
+		# this way I don't have to iterate if there is an issue on like trial 40
+		$rng = [System.Random]::new(${base seed} -bxor $i)
+
+		$str = "$($i + 1)/$trials "
+		write-host -nonewline $str
+
+		$buffer = new-object byte[] $size
+
+		$rng.nextBytes($buffer)
+		[IO.File]::WriteAllBytes("file1.tmp", $buffer)
+
+		$rng.nextBytes($buffer)
+		[IO.File]::WriteAllBytes("file2.tmp", $buffer)
+
+		cat.exe file1.tmp file2.tmp > file3.tmp
+
+		$out1 = ./adler32 -r file1.tmp file2.tmp file3.tmp 2> errors.tmp
+
+		if ((cat errors.tmp).length -ne 0) { return "idx $i prelim, unexpected error" }
+		if ($out1.count -ne 3) { return "idx $i prelim, wrong output count" }
+
+		# just assume these values are correct.
+		# the forwards iteration algorithm should be tested elsewhere
+		$c1, $c2, $c3 = $out1
+
+		$out2 = ./adler32 -r file1.tmp -i file3.tmp -u file2.tmp 2> errors.tmp
+		write-host -nonewline $("`b"*$str.length + "`e[0K")
+
+		if ((cat errors.tmp).length -ne 0) { return "idx $i, unexpected error" }
+		if ($out2.count -ne 3) { return "idx $i, wrong output count" }
+		$k1, $k2, $k3 = $out2
+
+		if ($k1 -ne $c1) { return "idx $i, backwards traversal value mismatch" }
+		if ($k1 -ne $k3) { return "idx $i, incorrect result" }
 	}
 }
 
@@ -584,7 +810,6 @@ $natural_exit = $false
 
 try {
 	if ($case -ne $null) {
-		write-host "testing singular test case"
 
 		if ($case.toLower().startsWith("def-")) {
 			$case = $case.substring("def-".length)
@@ -592,16 +817,18 @@ try {
 		}
 
 		if ((gcm -type function test-case-$case -ea ignore) -eq $null) {
-			write-host "test case $case does not exist"
+			write-host "`e[31mtest case $case does not exist"
 			$natural_exit = $true
 			return
 		}
 
-		test-case $case
 
 		if ($print_definition) {
-			write-host "`n############################ definition ############################"
 			write-host ((gcm test-case-$case).definition -replace "`n`t", "`n").trimEnd("`r`n")
+		}
+		else {
+			write-host "testing singular test case"
+			test-case $case
 		}
 
 		$natural_exit = $true
@@ -612,7 +839,7 @@ try {
 	for ($cases = 1; (gcm -type function test-case-$cases -ea ignore) -ne $null ;) { $cases++ }
 	$cases--
 
-	write-host "running all $cases test cases:"
+	write-host "running all $cases test cases"
 	# this assumes there is at least 1 test case, which should be a valid assumption.
 	for ($i = 1; $i -le $cases; $i++) {
 		test-case $i
@@ -622,14 +849,14 @@ try {
 }
 finally {
 	if (-not $natural_exit) {
-		write-host "canceled"
+		write-host "`e[1;33mcanceled`e[0m" # light yellow
 	}
 
 	if ($case -eq $null) {
-		write-host "overall     : $($overall_pass ? "pass" : "fail")"
+		write-host "overall     : $($overall_pass ? "pass" : "`e[31mfail`e[0m")"
 
 		if ($natural_exit -and $overall_pass) {
-			write-host "all tests passing."
+			write-host "`e[1;32mall tests passing.`e[0m" # light green
 		}
 	}
 
