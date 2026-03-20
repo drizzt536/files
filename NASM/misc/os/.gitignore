@@ -1,0 +1,8 @@
+*.bin
+
+# dynamically created files
+/flash-date
+/include/stdlib-fn-table.nasm
+
+# preliminary designs for stuff that doesn't exist yet and will likely change
+/docs/prelim/

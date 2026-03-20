@@ -1,0 +1,152 @@
+ISR 33 scancode flattening for scancode set 1
+
+unused pairs in scancode set 1:
+	(00, 80)		1 pair
+	(54-56, D4-D6)	3 pairs
+	(59-7F, D9-FF)	39 pairs
+
+	I will use (59-6D, D9-ED) for the extended codes
+
+extended codes (0xE0, byte 2):
+
+* useless. basically just pretend it doesn't exist
+** doesn't need to be separate from the non-extended version
+byte 2		function						type		mapping (starting at 0x59)
+0x10		multimedia previous track		pressed		0x65
+0x19		multimedia next track			pressed		0x66
+0x1C		keypad enter					pressed **	0x1C (enter)
+0x1D		right control					pressed **	0x1D (left control)
+0x20		multimedia mute					pressed		0x67
+0x21		multimedia calculator			pressed *	0x00
+0x22		multimedia pause/play			pressed		0x68
+0x24		multimedia stop					pressed		0x69
+0x2A		print screen fake left shift	pressed *	0x00
+0x2E		multimedia volume down			pressed		0x6A
+0x30		multimedia volume up			pressed		0x6B
+0x32		multimedia WWW home				pressed *	0x00
+0x35		keypad '/'						pressed **	0x35 ('/')
+0x37		print screen					pressed		0x6C
+0x38		right alt						pressed **	0x38 (left alt)
+0x47		home							pressed		0x60
+0x48		up arrow						pressed		0x59
+0x49		page up							pressed		0x5D
+0x4B		left arrow						pressed		0x5C
+0x4D		right arrow						pressed		0x5A
+0x4F		end								pressed		0x61
+0x50		down arrow						pressed		0x5B
+0x51		page down						pressed		0x5E
+0x52		insert							pressed		0x5F
+0x53		delete							pressed		0x62
+0x5B		left GUI (windows)				pressed		0x63
+0x5C		right GUI (windows)				pressed **	0x63 (same as left GUI)
+0x5D		context menu					pressed		0x64
+0x5E		ACPI power						pressed *	0x00
+0x5F		ACPI sleep						pressed *	0x00
+0x63		ACPI wake						pressed *	0x00
+0x65		multimedia WWW search			pressed *	0x00
+0x66		multimedia WWW favorites		pressed *	0x00
+0x67		multimedia WWW refresh			pressed *	0x00
+0x68		multimedia WWW stop				pressed *	0x00
+0x69		multimedia WWW forward			pressed *	0x00
+0x6A		multimedia WWW back				pressed *	0x00
+0x6B		multimedia my computer			pressed *	0x00
+0x6C		multimedia email				pressed *	0x00
+0x6D		multimedia media select			pressed *	0x00
+0x90		multimedia previous track		released	0xE5
+0x99		multimedia next track			released	0xE6
+0x9C		keypad enter					released **	0x9C (enter)
+0x9D		right control					released **	0x9D (left control)
+0xA0		multimedia mute					released	0xE7
+0xA1		multimedia calculator			released *	0x00
+0xA2		multimedia pause/play			released	0xE8
+0xA4		multimedia stop					released	0xE9
+0xAA		print screen					released	0xEC
+0xAE		multimedia volume down			released	0xEA
+0xB0		multimedia volume up			released	0xEB
+0xB2		multimedia WWW home				released *	0x00
+0xB7		print screen fake left shift	released *	0x00
+0xB5		keypad '/'						released **	0xB5 ('/')
+0xB8		right alt						released **	0xB8 (left alt)
+0xC7		home							released	0xE0
+0xC8		up arrow						released	0xD9
+0xC9		page up							released	0xDD
+0xCB		left arrow						released	0xDC
+0xCD		right arrow						released	0xDA
+0xCF		end								released	0xE1
+0xD0		down arrow						released	0xDB
+0xD1		page down						released	0xDE
+0xD2		insert							released	0xDF
+0xD3		delete							released	0xE2
+0xDB		left GUI (windows)				released	0xE3
+0xDC		right GUI (windows)				released **	0xE3 (same as left GUI)
+0xDD		context menu					released	0xE4
+0xDE		ACPI power						released *	0x00
+0xDF		ACPI sleep						released *	0x00
+0xE3		ACPI wake						released *	0x00
+0xE5		multimedia WWW search			released *	0x00
+0xE6		multimedia WWW favorites		released *	0x00
+0xE7		multimedia WWW refresh			released *	0x00
+0xE8		multimedia WWW stop				released *	0x00
+0xE9		multimedia WWW forward			released *	0x00
+0xEA		multimedia WWW back				released *	0x00
+0xEB		multimedia my computer			released *	0x00
+0xEC		multimedia email				released *	0x00
+0xED		multimedia media select			released *	0x00
+
+
+strange values:
+NOTE: 2A and AA are ignored, and 37 and B7 map to the actual print screen codes.
+E0 2A E0 37: print screen pressed  => 0x6C
+E0 B7 E0 AA: print screen released => 0xEC
+E1 1D 45: pause break pressed      => 0x6D
+E1 9D C5: pause break released     => 0xED
+
+basically, there is no point to implement the whole state machine because that whole aspect
+of the standard is retarded. and since pause break is the only thing that uses E1 as the first
+byte, if it sees 0xE1, then it will just consume the next bytes, and add either 6D or ED to the key ring, depending on if 45 or C5 is the last byte.
+
+
+most things not in this list map to themselves
+
+regular mappings:
+scancode	function						type		mapping
+0x36		right shift						pressed		0x2A
+0x3A		caps lock						pressed		0x00
+0x47		keypad '7'						pressed		0x08
+0x48		keypad '8'						pressed		0x09
+0x49		keypad '9'						pressed		0x0A
+0x4A		keypad '-'						pressed		0x0C
+0x4B		keypad '4'						pressed		0x05
+0x4C		keypad '5'						pressed		0x06
+0x4D		keypad '6'						pressed		0x07
+0x4F		keypad '1'						pressed		0x02
+0x50		keypad '2'						pressed		0x03
+0x51		keypad '3'						pressed		0x04
+0x52		keypad '0'						pressed		0x0B
+0x53		keypad '.'						pressed		0x34
+0x54		SysRq (sometimes?)				pressed		0x6C
+0xB6		right shift						released	0xAA
+0xBA		caps lock						released	0x3A
+0xC7		keypad '7'						released	0x88
+0xC8		keypad '8'						released	0x89
+0xC9		keypad '9'						released	0x8A
+0xCA		keypad '-'						released	0x8C
+0xCB		keypad '4'						released	0x85
+0xCC		keypad '5'						released	0x86
+0xCD		keypad '6'						released	0x87
+0xCF		keypad '1'						released	0x82
+0xD0		keypad '2'						released	0x83
+0xD1		keypad '3'						released	0x84
+0xD2		keypad '0'						released	0x8B
+0xD3		keypad '.'						released	0xB4
+0xD4		SysRq (sometimes?)				released	0xEC
+
+the following other things map to zero since they don't exist:
+	00, 55, 56, 59-80, D5, D6, D9-FF
+
+the flattening of the single-byte scancodes is just so there aren't multiple scancodes that
+mean almost identical things. Like nobody cares if you use left shift vs right shift. they are both shift.
+
+SysRq maps to the same thing as PrtSc because my keyboard sends alt+SysRq when I do alt+PrtScr, so I assumed that they are the same thing.
+
+conversion from the flattened scancode to ASCII will be in the kernel and not in ISR 33.
