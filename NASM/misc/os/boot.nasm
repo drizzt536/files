@@ -24,7 +24,7 @@ org 0x7c00
 %assign KERNEL_SIZE KERNEL_SECTORS * 512
 
 ;; the address the kernel will be loaded to in real mode
-;; 0x9FC00 : 0x9FFFF (inclusive of both) is technically usable, but sometimes the BIOS uses it.
+;; 0x9FC00:0x9FFFF (inclusive of both) is technically usable, but sometimes the BIOS uses it.
 %assign KERNEL_ADDR_1E 0x9FC00
 %assign KERNEL_ADDR_1S KERNEL_ADDR_1E - KERNEL_SIZE
 
@@ -105,7 +105,6 @@ disk_error:
 	hlt
 
 bits 32
-
 no_long_mode:
 	;; move the cursor after the message
 	mov 	ecx, %strlen(NO_LONG_MODE_MSG)
@@ -115,21 +114,12 @@ no_long_mode:
 refusing_boot:
 	;; ecx = length, esi = msg should happen prior to jumping here
 
-	;; hide the cursor
-	mov 	dx, IOPT_PS2_CRTCR	;; VGA control port
-	mov 	al, 0Ah				;; Cursor start register
-	out 	dx, al
-
-	inc 	dl				;; 0x3D5 is data port. `inc dx` isn't required because there is no overflow.
-	mov 	al, 1 << 5		;; Set bit 5 to disable the cursor
-	out 	dx, al
-
 	mov 	edi, VGA_BUF	;; print to the start of the screen
 .loop:		;; print out the error message
 	dec 	ecx
 	movsb	;; [edi] = [esi], esi++, edi++
 	inc 	edi
-	test 	ecx, ecx
+	test	ecx, ecx
 	jnz 	.loop
 
 	hlt
@@ -161,7 +151,7 @@ start32: ;; protected mode entrypoint
 	cpuid	;; basic features, part 0
 
 	mov 	eax, 01110110111110000011001000001011b
-	and  	ecx, eax	;; NOTE: this tests `CPUID.01H.ECX` there is also an EDX, but that has older stuff.
+	and 	ecx, eax	;; NOTE: there is also an EDX, but that has older stuff.
 	xor 	ecx, eax			; if ((features & mask) ^ mask != 0)
 	jnz 	missing_features	;     goto missing_features;
 
@@ -172,40 +162,51 @@ start32: ;; protected mode entrypoint
 	;; NOTE/TODO: APX (APX_F) and AVX10.1 will be in CPUID.(0x7.0x1).EDX. (indices 21 and 19 respectively)
 
 	mov 	eax, 00100000000011000000000100101000b
-	and  	ebx, eax	;; CPUID.(0x7.0x0).EBX
+	and 	ebx, eax	;; CPUID.(0x7.0x0).EBX
 	xor 	ebx, eax
 	jnz 	missing_features
 
 %if 0
 	mov 	eax, 1 << 19
-	and  	edx, eax ; CPUID.(0x7.0x1).EDX
+	and 	edx, eax ; CPUID.(0x7.0x1).EDX
 	xor 	edx, eax
 	jnz 	missing_features
 %endif
 
-	;; I basically directly copied this up until the `xgetbv` from wiki.osdev.org
-	;; TODO: figure out what this all does. I know it turns on paging, but nothing deeper than that.
-	mov 	edi, 0x1000	; page dictionary address
+%assign PAGES 3
+
+	mov 	edi, 0x1000				;; page dictionary address. PLM4 starts at 0x1000
 	mov 	cr3, edi
 	xor 	eax, eax
-	mov 	ecx, 4096
-	rep		stosd		;; clear the memory
+	mov 	ecx, 1024*(3 + PAGES)	;; clear the pages: PML4 + PDPT + PD + 2 extra pages
+	rep 	stosd
 	mov 	edi, cr3
 
-	mov 	dword [edi], 0x1003 + 4096*1
-	add 	edi, 4096
-	mov 	dword [edi], 0x1003 + 4096*2
-	add 	edi, 4096
-	mov 	dword [edi], 0x1003 + 4096*3
+	;; PML4[0] -> PDPT at 0x2000
+	mov 	dword [edi], 0x2003
 	add 	edi, 4096
 
-	mov 	ebx, 3		;; present and read/write bit
-	mov 	ecx, 512	;; number of entries in the page table
-.set_page_entry:
+	;; PDPT[0] -> PD at 0x3000
+	mov 	dword [edi], 0x3003
+	add 	edi, 4096
+
+	;; PD
+	mov 	esi, 0x4003
+	mov 	ecx, PAGES
+.set_pd_entry:
+	mov 	dword [edi], esi	;; PD[n] points to PT at 0x4000 + n*4096
+	add 	esi, 4096			;; next PT is 4KiB further in memory
+	add 	edi, 8				;; next PD entry
+	loop	.set_pd_entry
+
+	mov 	edi, 0x4000
+	mov 	ebx, 11b			;; present and read/write bit
+	mov 	ecx, 512 * PAGES	;; number of entries in the page table
+.set_pt_entry:
 	mov 	dword [edi], ebx
 	add 	ebx, 4096
 	add 	edi, 8
-	loop	.set_page_entry		;; set the next entry
+	loop	.set_pt_entry		;; set the next entry
 
 	;; update the control registers to make it actually long mode
 
@@ -213,7 +214,7 @@ start32: ;; protected mode entrypoint
 	or  	eax, 1 << 5 | 1 << 18	;; set the PAE-bit (bit 5), and the OSXSAVE bit (bit 18)
 	mov 	cr4, eax
 
-	;; turn on AVX and AVX2
+	;; turn on AVX and AVX2. (this can be moved to the kernel)
 	xor 	ecx, ecx
 	xgetbv				;; XCR0
 	or  	al, 111b	;; AVX, SSE, x87 bits

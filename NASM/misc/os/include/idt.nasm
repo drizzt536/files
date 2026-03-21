@@ -237,6 +237,7 @@ keyring_extended_scancode_map:
 	idt_hfn_%[idt_idx]_ofs: equ KERNEL_START + ($ - $$)
 	idt_hfn_%[idt_idx]:
 
+
 	%if 0x20 <= idt_idx && idt_idx <= 0x2F	;; PIC IRQs
 		;; TODO: for IRQ7 (0x27) and IRQ15 (0x2F), check for spurious interrupts
 		;;       outb(0x20, 0x0B); unsigned char irr = inb(0x20);
@@ -347,6 +348,16 @@ keyring_extended_scancode_map:
 			call	idt_hfn_default ;; log the interrupt to the screen
 		%endif
 
+		;; TODO: update how these send EOI to how you do it with x2APIC.
+		;;       Also, probably it has to send for more than the original 16 codes
+		;;       since APIC has 24 instead of like 15 or 16.
+		%if 0
+			mov 	ecx, X2APIC_EOI
+			xor 	eax, eax
+			xor 	edx, edx
+			wrmsr
+		%endif
+
 		;; send the EOI signal
 		;; legacy PIC
 		mov 	al, PIC_EOI
@@ -358,6 +369,9 @@ keyring_extended_scancode_map:
 
 		pop 	rax
 		iretq
+	%elif 0 && idt_idx == APIC_SPURIOUS_ISR
+		;; do nothing because it is a spurious request.
+		iretq
 	%else
 		;; generic default interrupt handler.
 		push	rax
@@ -367,8 +381,15 @@ keyring_extended_scancode_map:
 		call 	idt_hfn_default
 
 		pop 	rax
+
+		;; skip the error code in ISRs that have it
+		%if idt_idx == 0x08 || idt_idx == 0x0A || idt_idx == 0x0B || idt_idx == 0x0C || \
+			idt_idx == 0x0D || idt_idx == 0x0E || idt_idx == 0x11 || idt_idx == 0x15
+			add 	rsp, 8
+		%endif
+
 		iretq
-	%endif
+	%endif ;; index switch/case
 
 	%assign idt_idx idt_idx + 1
 %endrep

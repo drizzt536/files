@@ -1,35 +1,32 @@
 sources:
  - https://wiki.osdev.org/CPUID#CPU_Features
- - Intel® 64 and IA-32 Architectures Software Developer's Manual Volume 2A (June 2024) Table 3-17. Information Returned by CPUID Instruction (p. 3-218, pdf page 318)
+ - Intel® 64 and IA-32 Architectures Software Developer's Manual Volume 2A (June 2025) Table 3-17. Information Returned by CPUID Instruction (p. 3-204, pdf page 322)
 
-########################### mask for feature checks for CPUID.80000001H ###########################
-id 1 bootloader missing features error
-	bit 5 (LZCNT)
-
-bit 29 of EDX is part of the same CPUID call, but has its own error message.
+######################### mask for feature checks for CPUID.80000001H.EDX #########################
+	bit 29: long mode
 
 ############################ mask for feature checks for CPUID.01H.ECX ############################
-id 2 bootloader missing features error
+id 1 bootloader missing features error
 
-		30        20        10        00	// bit number, if multiple of 10
-	   10987654321098765432109876543210		// bit number modulo 10
+       30        20        10        00    // bit number, if multiple of 10
+	   10987654321098765432109876543210    // bit number modulo 10
 mask = 01110110111110000011001000001011b
-		│││ ││ │││││     ││  │     │ │└─ bit 00 -- SSE3
-		│││ ││ │││││     ││  │     │ └── bit 01 -- PCLMULQDQ
-		│││ ││ │││││     ││  │     └──── bit 03 -- MONITOR
-		│││ ││ │││││     ││  └────────── bit 09 -- SSSE3
-		│││ ││ │││││     │└───────────── bit 12 -- FMA
-		│││ ││ │││││     └────────────── bit 13 -- CMPXCHG
-		│││ ││ ││││└──────────────────── bit 19 -- SSE4.1
-		│││ ││ │││└───────────────────── bit 20 -- SSE4.2
-		│││ ││ ││└────────────────────── bit 21 -- X2APIC	// not an instruction set
-		│││ ││ │└─────────────────────── bit 22 -- MOVBE
-		│││ ││ └──────────────────────── bit 23 -- POPCNT
-		│││ │└────────────────────────── bit 25 -- AES
-		│││ └─────────────────────────── bit 26 -- XSAVE
-		││└───────────────────────────── bit 28 -- AVX
-		│└────────────────────────────── bit 29 -- F16C
-		└─────────────────────────────── bit 30 -- RDRAND
+        │││ ││ │││││     ││  │     │ │└─ bit 00 -- SSE3
+        │││ ││ │││││     ││  │     │ └── bit 01 -- PCLMULQDQ
+        │││ ││ │││││     ││  │     └──── bit 03 -- MONITOR
+        │││ ││ │││││     ││  └────────── bit 09 -- SSSE3
+        │││ ││ │││││     │└───────────── bit 12 -- FMA
+        │││ ││ │││││     └────────────── bit 13 -- CMPXCHG
+        │││ ││ ││││└──────────────────── bit 19 -- SSE4.1
+        │││ ││ │││└───────────────────── bit 20 -- SSE4.2
+        │││ ││ ││└────────────────────── bit 21 -- X2APIC    // not an instruction set
+        │││ ││ │└─────────────────────── bit 22 -- MOVBE
+        │││ ││ └──────────────────────── bit 23 -- POPCNT
+        │││ │└────────────────────────── bit 25 -- AES
+        │││ └─────────────────────────── bit 26 -- XSAVE
+        ││└───────────────────────────── bit 28 -- AVX
+        │└────────────────────────────── bit 29 -- F16C
+        └─────────────────────────────── bit 30 -- RDRAND
 
 this is the maximum flags that QEMU can return (with -cpu max, on my machine)
 
@@ -37,65 +34,66 @@ the EDX bits are all really old, so basically if the ECX checks pass, assume all
 
 
 excluded bits:
-	some of them don't matter, and some of them are not implemented in QEMU.
+    some of them don't matter, and some of them are not implemented in QEMU.
 
-	 2 : DTES64
-	 4 : DS_CPL
-	 5 : VMX
-	 6 : SMX
-	 7 : EST
-	 8 : TM2
-	10 : CID
-	11 : SDBG
-	14 : XTPR
-	15 : PDCM
-	17 : PCID
-	18 : DCA
-	24 : TSC
-	26 : OSXSAVE. the bit implies the OS enabled it, but bit 26 (XSAVE) is checked for support.
-	31 : HYPERVISOR	
+     2 : DTES64
+     4 : DS_CPL
+     5 : VMX
+     6 : SMX
+     7 : EST
+     8 : TM2
+    10 : CID
+    11 : SDBG
+    14 : XTPR
+    15 : PDCM
+    17 : PCID
+    18 : DCA
+    24 : TSC deadline for APIC
+    26 : OSXSAVE. this is not checked because this only means the OS enabled this.
+    31 : HYPERVISOR
 
-##################### mask for feature checks for CPUID.(EAX=01H, ECX=0H).EBX #####################
-id 3 bootloader missing features error
+##################### mask for feature checks for CPUID.(EAX=07H, ECX=0H).EBX #####################
+id 2 bootloader missing features error
 
-		30        20        10        00	// bit number, if multiple of 10
-	   10987654321098765432109876543210		// bit number modulo 10
+       30        20        10        00     // bit number, if multiple of 10
+       10987654321098765432109876543210     // bit number modulo 10
 mask = 00100000000011000000000100101000b
-		 │         ││          │  │ └─── bit 03 -- BMI1
-		 │         ││          │  └───── bit 05 -- AVX2
-		 │         ││          └──────── bit 08 -- BMI2
-		 │         │└─────────────────── bit 18 -- RDSEED
-		 │         └──────────────────── bit 19 -- ADX
-		 └────────────────────────────── bit 29 -- SHA
+         │         ││          │  │ └─── bit 03 -- BMI1
+         │         ││          │  └───── bit 05 -- AVX2
+         │         ││          └──────── bit 08 -- BMI2
+         │         │└─────────────────── bit 18 -- RDSEED
+         │         └──────────────────── bit 19 -- ADX
+         └────────────────────────────── bit 29 -- SHA
 
 
 ######################################### Notes on AVX512 #########################################
 
 AVX-512 stuff isn't required because AMD doesn't support it at all, and my CPU is an AMD chip.
 but this is everywhere that AVX-512 feature bits show up.
+^^^^^^ I don't think this is true, but I still don't care enough to implement it.
 
 CPUID.(EAX=07H, ECX=0).EBX
-	bit 16 : AVX512F
-	bit 17 : AVX512DQ
-	bit 21 : AVX512_IFMA
-	bit 26 : AVX512PF (Intel Xeon Phi only)
-	bit 27 : AVX512ER (Intel Xeon Phi only)
-	bit 28 : AVX512CD
-	bit 30 : AVX512BW
-	bit 31 : AVX512VL
+    bit 16 : AVX512F
+    bit 17 : AVX512DQ
+    bit 21 : AVX512_IFMA
+    bit 26 : AVX512PF (Intel Xeon Phi only)
+    bit 27 : AVX512ER (Intel Xeon Phi only)
+    bit 28 : AVX512CD
+    bit 30 : AVX512BW
+    bit 31 : AVX512VL
 
 CPUID.(EAX=07H, ECX=0).ECX
-	bit 01 : AVX512_VBMI
-	bit 06 : AVX512_VBMI2
-	bit 11 : AVX512_VNNI
-	bit 12 : AVX512_BITALG
-	bit 14 : AVX512_VPOPCNTDQ
+    bit 01 : AVX512_VBMI
+    bit 06 : AVX512_VBMI2
+    bit 11 : AVX512_VNNI
+    bit 12 : AVX512_BITALG
+    bit 14 : AVX512_VPOPCNTDQ
 
 CPUID.(EAX=07H, ECX=0).EDX
-	bit 02 : AVX512_4VNNIW (Intel Xeon Phi only)
-	bit 03 : AVX512_4FMAPS (Intel Xeon Phi only)
-	bit 08 : AVX512_VP2INTERSECT
+    bit 02 : AVX512_4VNNIW (Intel Xeon Phi only)
+    bit 03 : AVX512_4FMAPS (Intel Xeon Phi only)
+    bit 08 : AVX512_VP2INTERSECT
 
 CPUID.(EAX=07H, ECX=1).EAX
-	bit 04 : AVX-VNNI (VEX-encoded versions)
-	bit 05 : AVX512_BF16
+    bit 04 : AVX-VNNI (VEX-encoded versions)
+    bit 05 : AVX512_BF16
