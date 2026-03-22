@@ -20,6 +20,11 @@ org KERNEL_START
 %assign TSS_BASE	0x500
 %assign TSS_SIZE	104
 
+;; the drift with this divisor is 1 second per 17 hours.
+;; for no drift, the only two useful divisors are 14551 and 29102,
+;; which give a frequency of 82Hz and 41Hz, respectively.
+%assign PIT_DIVISOR		62799	;; divisor for ~19 Hz (1193182 / 62799)
+
 ;; page table stuff
 %assign PT_PML4_BASE		0x1000	;; this pointer is stored in cr3
 %assign PT_PDPT0_BASE		0x2000

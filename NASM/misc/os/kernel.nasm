@@ -28,7 +28,7 @@ tss:
 ;; process keys until the ISR timer gets to or above the wrap value
 proc_keys_until_timeout:
 .loop:
-	get_isr_timer8_mod 18
+	get_isr_timer8_mod 19
 	jae 	.ret
 
 	call	next_scancode
@@ -131,19 +131,18 @@ kernel_entry:
 	rep 	stosq
 
 	mov 	edi, QEMU_IOAPIC_BASE + 0x13
-	mov 	qword [PT_PDPT0_BASE + 8*  3], stack_base         + 0x03	;; PDPT[3] = PD
-	mov 	qword [stack_base    + 8*502], stack_base + 1000h + 0x03	;; PD[502] = PT
-	mov 	qword [stack_base    + 1000h], rdi							;; PT[0] = page
-	sub 	edi, 0x13
-	invlpg	[rdi]	;; probably not required, but it won't hurt to do anyway.
+	mov 	dword [PT_PDPT0_BASE + 8*  3], stack_base         + 0x03	;; PDPT[3] = PD
+	mov 	dword [stack_base    + 8*502], stack_base + 1000h + 0x03	;; PD[502] = PT
+	mov 	dword [stack_base    + 1000h], edi							;; PT[0] = page
 
 	;; set up the PIT timer. this does nothing on QEMU
 	mov 	al, 0x36			;; channel 0, lobyte/hibyte, mode 3
 	out 	IOPT_PIT, al
 
-	xor 	al, al				;; divisor for ~18.2 Hz (1193182 / 65536)
-
+	mov 	al, PIT_DIVISOR & 0xFF
 	out 	IOPT_PIT_D1, al		;; low byte
+
+	mov 	al, PIT_DIVISOR >> 8
 	out 	IOPT_PIT_D1, al		;; high byte
 
 	;; remap PIC1 from 08h-0fh to 20h-27h and PIC2 from 70h-77h to 28h-2fh
@@ -208,20 +207,22 @@ kernel_entry:
 	mov 	edi, QEMU_IOAPIC_BASE
 
 	;; TODO: figure out the address dynamically instead of using a hard-coded one.
-	;;       same thing for the pin number of the ISR timer.
+	;;       same thing for the pin numbers.
 
-	;; Idk why this is remapped to pin 2.
+%assign IRQ0_PIN 2	;; Idk why this is remapped to pin 2.
+%assign IRQ1_PIN 1
+
 	;; IRQ0
-	mov 	dword [rdi + 0x00], 0x13	;; select redtbl[2] low
-	mov 	dword [rdi + 0x10], 0x20	;; vector 0x20, fixed, edge, unmasked
-	mov 	dword [rdi + 0x00], 0x15	;; select redtbl[2] high
-	mov 	dword [rdi + 0x10], 0x00	;; destination: LAPIC ID 0
+	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ0_PIN
+	mov 	dword [rdi + 0x10], 0x20					;; vector 0x20
+	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ0_PIN + 1
+	mov 	dword [rdi + 0x10], 0x00					;; CPU core 0
 
 	;; IRQ1
-	mov 	dword [rdi + 0x00], 0x12	;; register 0x12
-	mov 	dword [rdi + 0x10], 0x21	;; vector 0x21, unmasked, edge, fixed
-	mov 	dword [rdi + 0x00], 0x13	;; register 0x13
-	mov 	dword [rdi + 0x10], 0x00	;; destination: LAPIC ID 0
+	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ1_PIN
+	mov 	dword [rdi + 0x10], 0x21					;; vector 0x21
+	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ1_PIN + 1
+	mov 	dword [rdi + 0x10], 0x00					;; CPU core 0
 
 	lidt	[idt.ptr]
 	sti 	;; enable interrupts.
