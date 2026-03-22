@@ -130,10 +130,21 @@ kernel_entry:
 	xor 	eax, eax
 	rep 	stosq
 
+	mov 	edi, QEMU_IOAPIC_BASE + 0x13
 	mov 	qword [PT_PDPT0_BASE + 8*  3], stack_base         + 0x03	;; PDPT[3] = PD
 	mov 	qword [stack_base    + 8*502], stack_base + 1000h + 0x03	;; PD[502] = PT
-	mov 	qword [stack_base    + 1000h], QEMU_IOAPIC_BASE   + 0x13	;; PT[0] = page
-	invlpg	[QEMU_IOAPIC_BASE]	;; probably not required, but it won't hurt to do anyway.
+	mov 	qword [stack_base    + 1000h], rdi							;; PT[0] = page
+	sub 	edi, 0x13
+	invlpg	[rdi]	;; probably not required, but it won't hurt to do anyway.
+
+	;; set up the PIT timer. this does nothing on QEMU
+	mov 	al, 0x36			;; channel 0, lobyte/hibyte, mode 3
+	out 	IOPT_PIT, al
+
+	xor 	al, al				;; divisor for ~18.2 Hz (1193182 / 65536)
+
+	out 	IOPT_PIT_D1, al		;; low byte
+	out 	IOPT_PIT_D1, al		;; high byte
 
 	;; remap PIC1 from 08h-0fh to 20h-27h and PIC2 from 70h-77h to 28h-2fh
 	mov 	al, PIC_ICW1_INIT | PIC_ICW1_ICW4	; 0x11
@@ -168,14 +179,7 @@ kernel_entry:
 	out 	IOPT_PIC2_D, al
 	io_wait
 
-%if 1
-	;; unmask all the IRQs
-	;; NOTE: if using `-d int -D qemu.log`, probably mask PIC1[0] (the timer bit)
-	xor 	al, al
-	out 	IOPT_PIC1_D, al
-	out 	IOPT_PIC2_D, al
-%else
-	;; disable 8259 PIC chip. (mask all the ISRs)
+	;; disable 8259 PIC. (mask all the IRQs)
 	mov 	al, 0xFF
 	out 	IOPT_PIC1_D, al
 	out 	IOPT_PIC2_D, al
@@ -201,13 +205,23 @@ kernel_entry:
 	xor 	edx, edx
 	wrmsr
 
-	;; TODO: figure out the address dynamically instead of using a hard-coded one.
-	mov dword [QEMU_IOAPIC_BASE], 0x13			;; register 0x13
-	mov dword [QEMU_IOAPIC_BASE + 0x10], 0		;; CPU 0
+	mov 	edi, QEMU_IOAPIC_BASE
 
-	mov dword [QEMU_IOAPIC_BASE], 0x12			;; register 0x12
-	mov dword [QEMU_IOAPIC_BASE + 0x10], 0x21	;; vector 0x21, unmasked
-%endif
+	;; TODO: figure out the address dynamically instead of using a hard-coded one.
+	;;       same thing for the pin number of the ISR timer.
+
+	;; Idk why this is remapped to pin 2.
+	;; IRQ0
+	mov 	dword [rdi + 0x00], 0x13	;; select redtbl[2] low
+	mov 	dword [rdi + 0x10], 0x20	;; vector 0x20, fixed, edge, unmasked
+	mov 	dword [rdi + 0x00], 0x15	;; select redtbl[2] high
+	mov 	dword [rdi + 0x10], 0x00	;; destination: LAPIC ID 0
+
+	;; IRQ1
+	mov 	dword [rdi + 0x00], 0x12	;; register 0x12
+	mov 	dword [rdi + 0x10], 0x21	;; vector 0x21, unmasked, edge, fixed
+	mov 	dword [rdi + 0x00], 0x13	;; register 0x13
+	mov 	dword [rdi + 0x10], 0x00	;; destination: LAPIC ID 0
 
 	lidt	[idt.ptr]
 	sti 	;; enable interrupts.

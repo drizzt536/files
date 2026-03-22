@@ -231,141 +231,8 @@ keyring_extended_scancode_map:
 	idt_hfn_%[idt_idx]_ofs: equ KERNEL_START + ($ - $$)
 	idt_hfn_%[idt_idx]:
 
-	%if 0x20 <= idt_idx && idt_idx <= 0x2F	;; PIC IRQs
-		;; TODO: for IRQ7 (0x27) and IRQ15 (0x2F), check for spurious interrupts
-		;;       outb(0x20, 0x0B); unsigned char irr = inb(0x20);
-		;;       then for IRQ15, still send EOI to the master PIC.
-		push	rax
-
-		%if idt_idx == 0x21
-			;; INT 0x21 (IRQ1) is the keyboard
-
-			push	rbx
-			push	rdx
-
-			mov 	dx, IOPT_PS2_KBD_D
-			in  	al, dx
-
-			cmp 	byte [rel keyring_escape], KEYRING_ESC_EXT
-			je  	.process_extended
-
-			cmp 	byte [rel keyring_escape], KEYRING_ESC_PB1
-			je  	.pause_break_byte2
-
-			cmp 	byte [rel keyring_escape], KEYRING_ESC_PB2
-			je  	.pause_break_byte3
-
-			cmp 	al, 0xE1						;; if it starts with 0xE1
-			je  	.pause_break_byte1				;;     then it is definitely a pause break
-
-			xor 	bl, bl							; esc = KEYRING_ESC_NONE;
-			mov 	dl, KEYRING_ESC_EXT
-			cmp 	al, 0xE0						; if (al == 0xE0) {
-			cmove 	ebx, edx						;     esc = true;
-			mov 	byte [rel keyring_escape], bl	; *keyring_escape = esc; // unconditional
-			je  	.keypress_exit					;     return; }
-
-			movzx	eax, al
-			mov 	al, byte [keyring_scancode_map + eax]
-			test 	al, al
-			jz  	.keypress_exit
-
-			jmp 	.write_to_keyring
-		.process_extended:
-			movzx 	eax, al
-			test	al, 1 << 7
-			jnz 	.process_extended@release		;; break sequence has bit 7 set
-
-			;; fallthrough
-		.process_extended@press:
-			mov 	al, byte [keyring_extended_scancode_map + eax - 16]
-
-			test 	al, al
-			jz  	.keypress_exit_unescape
-			jmp 	.write_to_keyring
-		.process_extended@release:
-			mov 	al, byte [keyring_extended_scancode_map + eax - 144]
-
-			;; NOTE: the zero test has to be before the increment
-			test 	al, al
-			jz  	.keypress_exit_unescape
-
-			or  	al, 1 << 7
-
-			;; fallthrough
-		.write_to_keyring:
-			mov 	dl, byte [rel keyring_write]		;; dl = write idx
-
-			inc 	dl
-			;; NOTE: in order to make it not overwrite values, it won't ever actually use
-			;;       all 256 slots, and will only use 255 of them.
-			cmp 	dl, byte [rel keyring_read]		; if (write + 1 == read)
-			je  	.keypress_exit					;     return; // drop the keypress
-
-			dec 	dl	;; separate instruction so that it wraps modulo 256.
-			movzx	edx, dl
-			mov 	byte [keyring + edx], al
-			inc 	byte [rel keyring_write]
-
-			mov 	byte [rel keyring_escape], KEYRING_ESC_NONE
-
-			jmp 	.keypress_exit
-		.pause_break_byte1: ;; E1
-			mov 	byte [rel keyring_escape], KEYRING_ESC_PB1
-
-			jmp 	.keypress_exit
-		.pause_break_byte2:	;; 1D | 9D
-			mov 	byte [rel keyring_escape], KEYRING_ESC_PB2
-
-			jmp 	.keypress_exit
-		.pause_break_byte3:	;; 45 | C5
-			cmp 	al, 0xC5
-			mov 	al, 0x6D
-			mov 	dl, 0xED
-			cmove	eax, edx
-
-			jmp 	.write_to_keyring
-		.keypress_exit_unescape:
-			mov 	byte [rel keyring_escape], KEYRING_ESC_NONE
-
-			;; fallthrough
-		.keypress_exit:
-			pop 	rdx
-			pop 	rbx
-		%elif idt_idx == 0x20
-			inc 	dword [rel isr_timer]
-		%else
-			;; INT 0x20 (IRQ0) is the timer. it happens like 20 times a second. don't print those.
-			mov 	al, %hex(idt_idx)
-			movzx	eax, al
-			call	idt_hfn_default ;; log the interrupt to the screen
-		%endif
-
-		;; TODO: update how these send EOI to how you do it with x2APIC.
-		;;       Also, probably it has to send for more than the original 16 codes
-		;;       since APIC has 24 instead of like 15 or 16.
-		%if 0
-			mov 	ecx, X2APIC_EOI
-			xor 	eax, eax
-			xor 	edx, edx
-			wrmsr
-		%endif
-
-		;; send the EOI signal
-		;; legacy PIC
-		mov 	al, PIC_EOI
-		out 	IOPT_PIC1, al
-		%if idt_idx >= 0x28
-			;; PIC2 has to send EOI to both of them.
-			out 	IOPT_PIC2, al
-		%endif
-
-		pop 	rax
-		iretq
-	%elif 0 && idt_idx == APIC_SPURIOUS_ISR
-		;; do nothing because it is a spurious request.
-		iretq
-	%elif idt_idx == 0x0E
+	%if idt_idx == 0x0E
+		;; INT 0x0E is a page fault
 		%ifdifi
 			error code (top value on the stack, QWORD)
 
@@ -379,6 +246,7 @@ keyring_extended_scancode_map:
 		test	al, 1 << 2
 		jz  	.kernel_panic
 
+		;; fallthrough
 	.normal_error:
 		;; TODO: do something else here since this will just return back to the same instruction
 		;;       that page faults. there is no user mode yet, so I don't really care.
@@ -461,6 +329,130 @@ keyring_extended_scancode_map:
 	.halt:
 		hlt
 		jmp 	.halt
+	%elif idt_idx == 0x20
+		;; INT 0x20 (IRQ0) is the PIT timer
+
+		push	rax
+		push	rcx
+		push	rdx
+
+		inc 	dword [rel isr_timer]
+
+		mov 	ecx, X2APIC_EOI
+		xor 	eax, eax
+		xor 	edx, edx
+		wrmsr
+
+		pop 	rdx
+		pop 	rcx
+		pop 	rax
+		iretq
+	%elif idt_idx == 0x21
+		;; INT 0x21 (IRQ1) is the keyboard
+
+		push	rax
+		push	rcx
+		push	rdx
+
+		mov 	dx, IOPT_PS2_KBD_D
+		in  	al, dx
+
+		cmp 	byte [rel keyring_escape], KEYRING_ESC_EXT
+		je  	.process_extended
+
+		cmp 	byte [rel keyring_escape], KEYRING_ESC_PB1
+		je  	.pause_break_byte2
+
+		cmp 	byte [rel keyring_escape], KEYRING_ESC_PB2
+		je  	.pause_break_byte3
+
+		cmp 	al, 0xE1						;; if it starts with 0xE1
+		je  	.pause_break_byte1				;;     then it is definitely a pause break
+
+		xor 	cl, cl							; esc = KEYRING_ESC_NONE;
+		mov 	dl, KEYRING_ESC_EXT
+		cmp 	al, 0xE0						; if (al == 0xE0) {
+		cmove 	ecx, edx						;     esc = true;
+		mov 	byte [rel keyring_escape], cl	; *keyring_escape = esc; // unconditional
+		je  	.keypress_exit					;     return; }
+
+		movzx	eax, al
+		mov 	al, byte [keyring_scancode_map + eax]
+		test 	al, al
+		jz  	.keypress_exit
+
+		jmp 	.write_to_keyring
+	.process_extended:
+		movzx 	eax, al
+		test	al, 1 << 7
+		jnz 	.process_extended@release		;; break sequence has bit 7 set
+
+		;; fallthrough
+	.process_extended@press:
+		mov 	al, byte [keyring_extended_scancode_map + eax - 16]
+
+		test 	al, al
+		jz  	.keypress_exit_unescape
+		jmp 	.write_to_keyring
+	.process_extended@release:
+		mov 	al, byte [keyring_extended_scancode_map + eax - 144]
+
+		;; NOTE: the zero test has to be before the increment
+		test 	al, al
+		jz  	.keypress_exit_unescape
+
+		or  	al, 1 << 7
+
+		;; fallthrough
+	.write_to_keyring:
+		mov 	dl, byte [rel keyring_write]		;; dl = write idx
+
+		inc 	dl
+		;; NOTE: in order to make it not overwrite values, it won't ever actually use
+		;;       all 256 slots, and will only use 255 of them.
+		cmp 	dl, byte [rel keyring_read]		; if (write + 1 == read)
+		je  	.keypress_exit					;     return; // drop the keypress
+
+		dec 	dl	;; separate instruction so that it wraps modulo 256.
+		movzx	edx, dl
+		mov 	byte [keyring + edx], al
+		inc 	byte [rel keyring_write]
+
+		mov 	byte [rel keyring_escape], KEYRING_ESC_NONE
+
+		jmp 	.keypress_exit
+	.pause_break_byte1: ;; E1
+		mov 	byte [rel keyring_escape], KEYRING_ESC_PB1
+
+		jmp 	.keypress_exit
+	.pause_break_byte2:	;; 1D | 9D
+		mov 	byte [rel keyring_escape], KEYRING_ESC_PB2
+
+		jmp 	.keypress_exit
+	.pause_break_byte3:	;; 45 | C5
+		cmp 	al, 0xC5
+		mov 	al, 0x6D
+		mov 	dl, 0xED
+		cmove	eax, edx
+
+		jmp 	.write_to_keyring
+	.keypress_exit_unescape:
+		mov 	byte [rel keyring_escape], KEYRING_ESC_NONE
+
+		;; fallthrough
+	.keypress_exit:
+		mov 	ecx, X2APIC_EOI
+		xor 	eax, eax
+		xor 	edx, edx
+		wrmsr
+
+		pop 	rdx
+		pop 	rcx
+		pop 	rax
+		iretq
+	%elif idt_idx == APIC_SPURIOUS_ISR
+		;; do nothing because it is a spurious request.
+		iretq
 	%else
 		;; generic default interrupt handler.
 
