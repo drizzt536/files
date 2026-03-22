@@ -3,6 +3,12 @@ get overwritten while it is loading the kernel into memory (0x100000, 1 MiB). As
 it doesn't need the second stage bootloader since it can just load the kernel in real mode and then
 move it to its final destination. once it gets large enough, it will need a second stage bootloader.
 
+the memory (low to high) for stuff below the kernel is as follows:
+	1. TSS at 0x500
+	2. GDT at 0x568 (right after the TSS)
+	3. IST1 at 0x1000
+	4. page tables from 0x1000 to 0x7FFFF
+	6. some other BIOS stuff
 the kernel+stdlib will be as follows (low to high memory):
 	1. `dq kernel_entry` at RAM 1 MiB, so the bootloader can just do `jmp qword [0x100000]`
 	2. standard library functions (readable and executable from any program, not writable)
@@ -10,6 +16,6 @@ the kernel+stdlib will be as follows (low to high memory):
 		3a. `mov rax, 0`
 		3b. `mov qword [0x100000], rax` (overwrite the `dq kernel_entry`)
 		3c. do normal kernel stuff
-	4. unused page. kernel panic if it is accessed (kernel stack overflow) (not implemented)
+	4. unmapped guard page. kernel panic if it is accessed (kernel stack overflow)
 	5. kernel stack
 	6. static memory for stuff like number of programs open, sizes allocated to programs, dlls loaded, etc. (currently doesn't exist)

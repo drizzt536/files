@@ -5,7 +5,7 @@
 
 %pragma ignore stdprint.nasm
 
-; clobbers rax, rbx, rcx, rdi
+;; clobbers rax, rbx, rcx, rdi
 cls: ; void cls(void);
 	;; clear the screen.
 	xor 	eax, eax
@@ -14,22 +14,20 @@ cls: ; void cls(void);
 fill_scr_def: ; void fill_scr_def(u8 charcode);
 	;; print using the default console color
 	mov 	ah, VGA_DEFAULT
-fill_scr: ; err fill_scr(u16 vga_char);
-	cld		; clear direction bit for forwards
+fill_scr: ; void fill_scr(u16 vga_char);
+	cld		;; clear direction bit for forwards
 
 	mov 	bx, ax
 	shl 	eax, 16
-	mov 	ax, bx		; eax = ax << 16 | ax
+	mov 	ax, bx			; eax = ax << 16 | ax
 
 	mov 	ebx, eax
 	shl 	rax, 32
-	or  	rax, rbx	; rax = eax << 32 | eax
+	or  	rax, rbx		; rax = eax << 32 | eax
 
 	mov 	ecx, TERM_SIZE >> 2
-	mov 	edi, VGA_BUF	; address fits in 32-bits so edi instead of rdi works.
-	rep 	stosq			; write to the buffer 4 characters at a time
-
-	xor 	eax, eax		; no error
+	mov 	edi, VGA_BUF	;; address fits in 32-bits so edi instead of rdi works.
+	rep 	stosq			;; write to the buffer 4 characters at a time
 	ret
 
 ;; clobbers: rax, rbx, cl, rdi

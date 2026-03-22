@@ -7,7 +7,6 @@
 ;; https://wiki.osdev.org/Interrupt_Service_Routines
 ;; https://wiki.osdev.org/PS/2_Keyboard#Scan_Code_Set_1
 
-
 %assign KEYRING_ESC_NONE	0
 %assign KEYRING_ESC_EXT		1
 %assign KEYRING_ESC_PB1		2
@@ -225,18 +224,12 @@ keyring_extended_scancode_map:
 %endrep ; keyring_extended_scancode_map
 %undef i
 
-
-%ifdef i
-	%undef i
-%endif
-
 %assign idt_idx 0
 
 ;; declare the handler vectors
 %rep 256
 	idt_hfn_%[idt_idx]_ofs: equ KERNEL_START + ($ - $$)
 	idt_hfn_%[idt_idx]:
-
 
 	%if 0x20 <= idt_idx && idt_idx <= 0x2F	;; PIC IRQs
 		;; TODO: for IRQ7 (0x27) and IRQ15 (0x2F), check for spurious interrupts
@@ -372,8 +365,111 @@ keyring_extended_scancode_map:
 	%elif 0 && idt_idx == APIC_SPURIOUS_ISR
 		;; do nothing because it is a spurious request.
 		iretq
+	%elif idt_idx == 0x0E
+		%ifdifi
+			error code (top value on the stack, QWORD)
+
+			bit 0:  1 => protection violation  0 => unmapped page
+			bit 1:  1 => fault on write        0 => fault on read
+			bit 2:  1 => fault in usermode     0 => fault in kernel
+			bit 4:  1 => instruction fetch (NX violation)
+		%endif
+
+		xchg	rax, qword [rsp]
+		test	al, 1 << 2
+		jz  	.kernel_panic
+
+	.normal_error:
+		;; TODO: do something else here since this will just return back to the same instruction
+		;;       that page faults. there is no user mode yet, so I don't really care.
+		mov 	al, 0x0E
+		movzx 	eax, al
+		call 	idt_hfn_default
+
+		pop 	rax
+		iretq
+	.kernel_panic:
+		;; preserving registers doesn't matter anymore because the kernel panic doesn't
+		;; return either way.
+		cli
+		mov 	ax, VGA_CLR(VGA_WHITE, VGA_DRK_BLUE) << 8 | ' '
+		call	fill_scr
+		call	hide_cursor
+
+		mov 	byte [VGA_BUF + 2*0], 'K'
+		mov 	byte [VGA_BUF + 2*1], 'E'
+		mov 	byte [VGA_BUF + 2*2], 'R'
+		mov 	byte [VGA_BUF + 2*3], 'N'
+		mov 	byte [VGA_BUF + 2*4], 'E'
+		mov 	byte [VGA_BUF + 2*5], 'L'
+		mov 	byte [VGA_BUF + 2*6], ' '
+		mov 	byte [VGA_BUF + 2*7], 'P'
+		mov 	byte [VGA_BUF + 2*8], 'A'
+		mov 	byte [VGA_BUF + 2*9], 'N'
+		mov 	byte [VGA_BUF + 2*10], 'I'
+		mov 	byte [VGA_BUF + 2*11], 'C'
+
+		mov 	rax, cr2
+		and 	rax, ~4095
+
+		mov 	ebx, stack_guard_page
+		cmp 	rax, rbx
+
+		jne 	.kernel_panic@generic
+		;; fallthrough
+	.kernel_panic@stack_overflow:
+		mov 	byte [VGA_BUF + 2*12], ':'
+		mov 	byte [VGA_BUF + 2*13], ' '
+		mov 	byte [VGA_BUF + 2*14], 'S'
+		mov 	byte [VGA_BUF + 2*15], 'T'
+		mov 	byte [VGA_BUF + 2*16], 'A'
+		mov 	byte [VGA_BUF + 2*17], 'C'
+		mov 	byte [VGA_BUF + 2*18], 'K'
+		mov 	byte [VGA_BUF + 2*19], ' '
+		mov 	byte [VGA_BUF + 2*20], 'O'
+		mov 	byte [VGA_BUF + 2*21], 'V'
+		mov 	byte [VGA_BUF + 2*22], 'E'
+		mov 	byte [VGA_BUF + 2*23], 'R'
+		mov 	byte [VGA_BUF + 2*24], 'F'
+		mov 	byte [VGA_BUF + 2*25], 'L'
+		mov 	byte [VGA_BUF + 2*26], 'O'
+		mov 	byte [VGA_BUF + 2*27], 'W'
+
+		jmp 	.halt
+	.kernel_panic@generic:
+		mov 	byte [VGA_BUF + 2*12], ':'
+		mov 	byte [VGA_BUF + 2*13], ' '
+		mov 	byte [VGA_BUF + 2*14], 'U'
+		mov 	byte [VGA_BUF + 2*15], 'N'
+		mov 	byte [VGA_BUF + 2*16], 'M'
+		mov 	byte [VGA_BUF + 2*17], 'A'
+		mov 	byte [VGA_BUF + 2*18], 'P'
+		mov 	byte [VGA_BUF + 2*19], 'P'
+		mov 	byte [VGA_BUF + 2*20], 'E'
+		mov 	byte [VGA_BUF + 2*21], 'D'
+		mov 	byte [VGA_BUF + 2*22], ' '
+		mov 	byte [VGA_BUF + 2*23], 'R'
+		mov 	byte [VGA_BUF + 2*24], 'E'
+		mov 	byte [VGA_BUF + 2*25], 'G'
+		mov 	byte [VGA_BUF + 2*26], 'I'
+		mov 	byte [VGA_BUF + 2*27], 'O'
+		mov 	byte [VGA_BUF + 2*28], 'N'
+
+		;; TODO: print the faulting address.
+
+		;; fallthrough
+	.halt:
+		hlt
+		jmp 	.halt
 	%else
 		;; generic default interrupt handler.
+
+		;; skip the error code in ISRs that have it
+		%if idt_idx == 0x08 || idt_idx == 0x0A || idt_idx == 0x0B || idt_idx == 0x0C || \
+			idt_idx == 0x0D || idt_idx == 0x11 || idt_idx == 0x15
+			add 	rsp, 8
+		%endif
+
 		push	rax
 
 		mov 	al, %hex(idt_idx)
@@ -381,13 +477,6 @@ keyring_extended_scancode_map:
 		call 	idt_hfn_default
 
 		pop 	rax
-
-		;; skip the error code in ISRs that have it
-		%if idt_idx == 0x08 || idt_idx == 0x0A || idt_idx == 0x0B || idt_idx == 0x0C || \
-			idt_idx == 0x0D || idt_idx == 0x0E || idt_idx == 0x11 || idt_idx == 0x15
-			add 	rsp, 8
-		%endif
-
 		iretq
 	%endif ;; index switch/case
 
@@ -396,7 +485,9 @@ keyring_extended_scancode_map:
 
 %assign idt_idx 0
 
-align 512 ; the idt is exactly 8 sectors long, so make it line up with the sector boundaries. because I decided.
+;; the idt is exactly 8 sectors long, so make it line up with the sector boundaries.
+;; because I decided.
+align 512
 idt:
 	; NOTE: for every entry, P must always be 1, and S must always be 0.
 
@@ -408,7 +499,14 @@ idt:
 .entry_%[idt_idx]:
 	dw idt_hfn_%[idt_idx]_ofs & 0xFFFF					;; offset[15:0]
 	dw GDT_KCODE										;; selector: kernel code segment
-	db 0												;; disable IST, reserved bits = 0.
+	;; reserved bits = 0.
+	%if idt_idx == 0x08 || idt_idx == 0x0E
+		;; use IST1
+		db 1
+	%else
+		;; disable IST
+		db 0
+	%endif
 	db %hex(10001110b | (idt_idx < 32 || idt_idx > 47))	;; P, DPL=00b, S, gate type (trap/interrupt)
 	dw (idt_hfn_%[idt_idx]_ofs >> 16) & 0xFFFF			;; offset[31:16]
 	dd idt_hfn_%[idt_idx]_ofs >> 32						;; offset[63:32]

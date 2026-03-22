@@ -8,10 +8,6 @@ org KERNEL_START
 %include "jtest.inc"
 %include "jcmp.inc"
 
-
-%define stack_guard_page	(kernel_end + 4095) & ~4095
-%define stack_start			stack_guard_page + 4096
-
 ;; these segment offsets shouldn't change.
 %assign GDT_NULL	0x00
 %assign GDT_KCODE	0x08
@@ -20,9 +16,23 @@ org KERNEL_START
 %assign GDT_UDATA	0x20
 %assign GDT_TSS		0x28
 
-%assign PT_PML4		0x1000
-%assign PT_PDPT		0x2000
-%assign PT_PD		0x3000
+%assign IST1_BASE	0x1000
+%assign TSS_BASE	0x500
+%assign TSS_SIZE	104
+
+;; page table stuff
+%assign PT_PML4_BASE		0x1000	;; this pointer is stored in cr3
+%assign PT_PDPT0_BASE		0x2000
+%assign PT_PD0_BASE			0x3000
+%assign PT_PT0_BASE			0x4000
+%assign PT_BOOT_PAGES		3		;; number of pages added in the bootloader
+%assign PT_PAGES			124		;; total number of pages to add.
+%assign PT_KRNL_PAGE_OFS	(2*1024*1024) * PT_BOOT_PAGES	;; 2 MiB per page
+%assign PT_KRNL_PAGES		PT_PAGES - PT_BOOT_PAGES
+
+%assign KERNEL_STACK_SIZE	65536
+%define stack_guard_page	((KERNEL_START + kernel_size + 4095) & ~4095)
+%define stack_base			(stack_guard_page + 4096 + KERNEL_STACK_SIZE)
 
 %assign PIC_ICW1_ICW4		0x01	;; Indicates that ICW4 will be present
 %assign PIC_ICW1_CASCADE	0x02	;; cascade mode
@@ -39,8 +49,12 @@ org KERNEL_START
 %assign X2APIC_EOI			0x80B	;; end of interrupt location for x2APIC
 %assign X2APIC_SVR			0x80F	;; spurious vector register
 
-%assign APIC_SPURIOUS_ISR	0xFF		;; must be less than 256, more than 31, and end in 'F'
-%assign IOAPIC_BASE			0xFEC00000	;; this should be found dynamically
+;; this should be found dynamically. this is a temporary value
+%assign QEMU_IOAPIC_BASE	0xFEC00000
+
+;; must be more than 31 and less than 256.
+;; on older systems, it also has to be equal to 15, modulo 16, but I don't care.
+%assign APIC_SPURIOUS_ISR	0xFF
 
 %assign TERM_ROWS 25
 %assign TERM_COLS 80
@@ -78,8 +92,6 @@ org KERNEL_START
 %assign VGA_BUF			0xb8000
 %assign VGA_BUF_END		VGA_BUF + 2*TERM_SIZE
 %define VGA_LOC(row, col) %hex(VGA_BUF + (TERM_COLS*(row) + (col)) % TERM_SIZE * 2)
-
-%assign KRN_STACK_SIZE	65536
 
 %macro io_wait 0
 	;; basically just kill a little bit of time so other `out` commands can finish.

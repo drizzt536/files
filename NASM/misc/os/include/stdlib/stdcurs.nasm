@@ -19,7 +19,7 @@ toggle_cursor: ; err toggle_cursor(void);
 
 ;; hide_cursor should be used with show_cursor.
 ;; if you hide and then toggle, you will get incorrect results.
-hide_cursor: ; err hide_cursor(void);
+hide_cursor: ; void hide_cursor(void);
 	mov 	dx, IOPT_PS2_CRTCR	;; VGA control port
 	mov 	al, 0Ah				;; cursor start register
 	out 	dx, al
@@ -27,13 +27,11 @@ hide_cursor: ; err hide_cursor(void);
 	inc 	dl			;; 0x3D5 is data port. dx isn't required because no overflow.
 	mov 	al, 1 << 5	;; Set bit 5 to disable the cursor
 	out 	dx, al
-
-	xor 	eax, eax	;; no error
 	ret
 
 ;; use show_cursor(0b1110) for the underline cursor and show_cursor(0b0000) for the box cursor.
 ;; bits higher than the 4th bit are ignored.
-show_cursor: ; u4, err show_cursor(u4 height);
+show_cursor: ; u4 show_cursor(u4 height);
 	mov 	bl, al
 	and 	bl, 0Fh				;; ignore higher than bit 3
 
@@ -45,8 +43,7 @@ show_cursor: ; u4, err show_cursor(u4 height);
 	mov		al, bl		;; NOTE: bit 5 zero.
 	out 	dx, al
 
-	xor 	ebx, ebx	;; no error
-	ret					;; return {height & 0xf, false};
+	ret					;; return height & 0xf;
 
 ;; NOTE: these macros don't touch the cursor position memory
 %macro _move_cursor_mac 3

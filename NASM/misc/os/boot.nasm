@@ -28,7 +28,7 @@ org 0x7c00
 %assign KERNEL_ADDR_1E 0x9FC00
 %assign KERNEL_ADDR_1S KERNEL_ADDR_1E - KERNEL_SIZE
 
-;; the address the kernel is moved to in protected mode.
+;; the address the kernel is moved to in long mode.
 %assign KERNEL_ADDR_2S 0x100000
 %assign KERNEL_ADDR_2E 0x100000 + KERNEL_SIZE
 
@@ -41,10 +41,20 @@ org 0x7c00
 %define NO_LONG_MODE_MSG "ERR:No x64"
 
 ;; NOTE: this ID number is changed programmatically. 1 is just the default.
-%xdefine MISSING_FEATURES_MSG "ERR:CPU missing features. id: 1"
-%xdefine MISSING_FEATURES_ID_ADDR missing_features_msg + %strlen(MISSING_FEATURES_MSG) - 1
+%xdefine MISSING_FEATURES_MSG "ERR:CPU missing features"
 
 %assign VGA_BUF 0xb8000
+
+%assign PT_PML4_BASE	0x1000
+%assign PT_PDPT0_BASE	0x2000
+%assign PT_PD0_BASE		0x3000
+%assign PT_PT0_BASE		0x4000
+%assign PT_PAGES		3
+
+;; both of these have to fit in 16 bits
+%assign TSS_BASE		0x500
+%assign TSS_SIZE		104		;; minimim size is 104 bytes
+%assign gdt64			TSS_BASE + TSS_SIZE
 
 start16: ;; real mode entrypoint
 	cli	;; disable maskable interrupts
@@ -54,8 +64,6 @@ start16: ;; real mode entrypoint
 	or  	al, 80h
 	out 	IOPT_CMOS, al
 
-	mov 	sp, 0x7C00	;; put the stack right before the bootloader in case something needs it
-	mov 	bp, sp
 	;; the stack segment register is updated in a couple instructions
 
 	;; NOTE: each disk read takes 19 bytes of instructions.
@@ -131,6 +139,7 @@ missing_features:
 	jmp 	refusing_boot
 
 start32: ;; protected mode entrypoint
+	cld	;; for later
 	;; CS is already set to the correct value.
 	mov 	ax, gdt.kdata_ofs
 	mov 	ds, ax
@@ -155,7 +164,6 @@ start32: ;; protected mode entrypoint
 	xor 	ecx, eax			; if ((features & mask) ^ mask != 0)
 	jnz 	missing_features	;     goto missing_features;
 
-	mov 	byte [MISSING_FEATURES_ID_ADDR], '2'	;; group 2 feature check
 	mov 	eax, 7		;; advanced features
 	xor 	ecx, ecx	;; leaf 0
 	cpuid
@@ -166,59 +174,44 @@ start32: ;; protected mode entrypoint
 	xor 	ebx, eax
 	jnz 	missing_features
 
-%if 0
-	mov 	eax, 1 << 19
-	and 	edx, eax ; CPUID.(0x7.0x1).EDX
-	xor 	edx, eax
-	jnz 	missing_features
-%endif
-
-%assign PAGES 3
-
-	mov 	edi, 0x1000				;; page dictionary address. PLM4 starts at 0x1000
+	mov 	edi, PT_PML4_BASE			;; page dictionary address. PML4 starts at 0x1000
 	mov 	cr3, edi
 	xor 	eax, eax
-	mov 	ecx, 1024*(3 + PAGES)	;; clear the pages: PML4 + PDPT + PD + 2 extra pages
+	mov 	ecx, 1024*(3 + PT_PAGES)	;; clear the pages: PML4 + PDPT + PD + 2 extra pages
 	rep 	stosd
 	mov 	edi, cr3
 
-	;; PML4[0] -> PDPT at 0x2000
-	mov 	dword [edi], 0x2003
-	add 	edi, 4096
+	;; PML4[0] = PDPT0
+	mov 	dword [edi], PT_PDPT0_BASE + 0x3
+	add 	edi, 1000h			;; edi = PDPT0_BASE
 
-	;; PDPT[0] -> PD at 0x3000
-	mov 	dword [edi], 0x3003
-	add 	edi, 4096
+	;; PDPT0[0] = PD0
+	mov 	dword [edi], PT_PD0_BASE + 0x3
+	add 	edi, 1000h			;; edi = PD0_BASE
 
-	;; PD
-	mov 	esi, 0x4003
-	mov 	ecx, PAGES
+	;; set PD0 entries
+	mov 	esi, PT_PT0_BASE + 0x3
+	mov 	ecx, PT_PAGES
 .set_pd_entry:
-	mov 	dword [edi], esi	;; PD[n] points to PT at 0x4000 + n*4096
-	add 	esi, 4096			;; next PT is 4KiB further in memory
+	mov 	dword [edi], esi	;; PD[i] points to PT at 0x4000 + 1000h*i
+	add 	esi, 1000h			;; next PT is 4KiB further in memory
 	add 	edi, 8				;; next PD entry
 	loop	.set_pd_entry
 
-	mov 	edi, 0x4000
+	mov 	edi, PT_PT0_BASE
 	mov 	ebx, 11b			;; present and read/write bit
-	mov 	ecx, 512 * PAGES	;; number of entries in the page table
+	mov 	ecx, 512 * PT_PAGES	;; number of entries in the page table
 .set_pt_entry:
 	mov 	dword [edi], ebx
-	add 	ebx, 4096
+	add 	ebx, 1000h
 	add 	edi, 8
 	loop	.set_pt_entry		;; set the next entry
 
 	;; update the control registers to make it actually long mode
 
 	mov 	eax, cr4
-	or  	eax, 1 << 5 | 1 << 18	;; set the PAE-bit (bit 5), and the OSXSAVE bit (bit 18)
+	or  	al, 1 << 5			;; set the PAE-bit (bit 5)
 	mov 	cr4, eax
-
-	;; turn on AVX and AVX2. (this can be moved to the kernel)
-	xor 	ecx, ecx
-	xgetbv				;; XCR0
-	or  	al, 111b	;; AVX, SSE, x87 bits
-	xsetbv				;; Save back to XCR0
 
 	mov 	ecx, 0xC0000080		;; EFER MSR
 	rdmsr
@@ -229,10 +222,19 @@ start32: ;; protected mode entrypoint
 	bts 	eax, 31		;; Set the PG-bit (bit 31)
 	mov 	cr0, eax
 
-	xor 	byte [gdt.kcode + 6], 1100000b	;; update the code segment flags to work with 64-bit mode.
-	;; the ring 3 user space code flags are already set to the 64-bit mode because it doesn't break anything.
+	;; update the code segment flags to work with 64-bit mode.
+	;; the ring 3 user space code flags are already set to the 64-bit mode
 
-;	lgdt	[gdt.ptr]	;; redundant instruction,  the pointer didn't change.
+	mov 	edi, gdt64
+	mov 	esi, gdt
+	xor 	ecx, ecx
+	mov 	cl, gdt.size + 3 >> 2	;; round up to the nearest 4 bytes.
+	rep 	movsd
+
+	xor 	byte [gdt64 + gdt.kcode_ofs + 6], 1100000b
+	mov 	dword [gdt64 + gdt.ptr_ofs + 2], gdt64
+
+	lgdt	[gdt64 + gdt.ptr_ofs]
 	jmp 	gdt.kcode_ofs:start64	;; Set the code segment and enter 64-bit long mode.
 
 bits 64
@@ -294,13 +296,21 @@ gdt:
 	db		11110010b
 	db		11001111b
 	db		0
-;; idk what this is for
+;; this takes up 2 GDT slots. idk if this works.
 .tss_ofs: equ $ - gdt
-	dd		0x00000068
-	dd		0x00CF8900
+	dw		%eval(TSS_SIZE - 1)	;; limit [15:0]
+	dw		TSS_BASE			;; base [15:0]
+	db		0					;; base [23:16]
+	db		0x89				;; P=1, DPL=0, type=0x9 (64-bit TSS available)
+	db		0					;; G=0, limit [19:16]
+	db		0					;; base [31:24]
+	dd		0					;; base [63:32]
+	dd		0					;; reserved
 .ptr:
+.ptr_ofs: equ $ - gdt
 	dw		$ - gdt - 1
 	dq		gdt			;; the last 4 bytes don't matter, but should be there for long mode.
+.size: equ $ - gdt
 
 %if $ - $$ <= 510
 	;; fill the rest of the sector

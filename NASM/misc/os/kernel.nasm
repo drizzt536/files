@@ -1,12 +1,29 @@
 default abs
 bits 64
 
-;; TODO: use USB HID keyboard stuff instead of a legacy PS/2 controller keyboard
+;; TODO: use USB HID keyboard stuff instead of a legacy PS/2 keyboard
 
 %include "kernel.inc"
 %include "stdlib-fn-table.nasm"
 %include "idt.nasm"		;; IDT declaration
 %include "stdlib.nasm"	;; stdlib imports
+
+tss:
+	dd	0			;; 0x00: reserved
+	dq	stack_base	;; 0x04: RSP0
+	dq	0			;; 0x0C: RSP1. unused
+	dq	0			;; 0x14: RSP2. unused
+	dq	0			;; 0x1C: reserved
+	dq	IST1_BASE	;; 0x24: IST1.
+	dq	0			;; 0x2C: IST2. unused
+	dq	0			;; 0x34: IST3. unused
+	dq	0			;; 0x3C: IST4. unused
+	dq	0			;; 0x44: IST5. unused
+	dq	0			;; 0x4C: IST6. unused
+	dq	0			;; 0x54: IST7. unused
+	dq	0			;; 0x5C: reserved
+	dw	0			;; 0x64: reserved
+	dw	TSS_SIZE	;; 0x66: IOPM offset. set to outside the TSS so all ports are restricted
 
 ;; process keys until the ISR timer gets to or above the wrap value
 proc_keys_until_timeout:
@@ -55,15 +72,68 @@ proc_keys_until_timeout:
 
 kernel_entry:
 	;; put the stack in the 64 KiB after the kernel
-	mov 	esp, kernel_end + KRN_STACK_SIZE
+	mov 	esp, stack_base
 
 	;; remove kernel_entry from the function table because it is no longer needed.
-	xor 	eax, eax
-	mov 	qword [KERNEL_START], rax
+	mov 	qword [KERNEL_START], 0
 
-	;; TODO: put more page tables at 0x7E00-0x9FFF
-	;; TODO: after that, put more page tables somewhere else.
-	;;       I need to get up to like 4 GiB so I can use x2APIC
+	mov 	rax, cr4
+	bts 	eax, 18		;; set the OSXSAVE bit for AVX to work.
+	mov 	cr4, rax
+
+	;; turn on AVX and AVX2
+	xor 	ecx, ecx
+	xgetbv				;; XCR0
+	or  	al, 111b	;; AVX, SSE, x87 bits
+	xsetbv				;; Save back to XCR0
+
+	;; set up the TSS memory section
+	mov 	eax, TSS_BASE	;; dst = TSS_BASE
+	mov 	rbx, tss		;; src = tss
+	mov 	ecx, TSS_SIZE	;; cnt = TSS_SIZE
+	call	memcpy
+
+	;; load the TSS section
+	mov 	ax, GDT_TSS
+	ltr 	ax
+
+	;; set PD0 entries 3 through 123 at 0x7000-0x7FFFF
+	mov 	edi, PT_PD0_BASE + PT_BOOT_PAGES*8	;; start at the first nonexistent entry
+	mov 	esi, PT_PT0_BASE + PT_BOOT_PAGES*4096 + 0x3
+	mov 	ecx, PT_KRNL_PAGES
+.set_pd_entry:
+	mov 	dword [edi], esi	;; PD[i] points to PT at 0x4000 + 1000h*i
+	add 	esi, 1000h			;; next PT is 4KiB further in memory
+	add 	edi, 8				;; next PD entry
+	loop	.set_pd_entry
+
+	mov 	edi, PT_PT0_BASE + 1000h*PT_BOOT_PAGES
+	mov 	ebx, PT_KRNL_PAGE_OFS + 0x3	;; present and read/write bit
+	mov 	ecx, 512*PT_KRNL_PAGES		;; number of entries in the page table
+.set_pt_entry:
+	mov 	dword [edi], ebx
+	add 	ebx, 1000h
+	add 	edi, 8
+	loop	.set_pt_entry		;; set the next entry
+
+	mov 	eax, stack_guard_page
+	shr 	eax, 12
+	and 	byte [PT_PT0_BASE + rax*8], ~1
+	invlpg	[stack_guard_page]	;; invalidate the single page in the TLB
+
+	;; setup the page tables required for 0xFEC00000
+	;; PML4[0], PDPT[3], PD[502], PT[0]
+	;; 2 pages need to be generated, a new PD and a new PT.
+	cld
+	mov 	edi, esp	;; just put these right after the stack
+	mov 	ecx, 512 * 2
+	xor 	eax, eax
+	rep 	stosq
+
+	mov 	qword [PT_PDPT0_BASE + 8*  3], stack_base         + 0x03	;; PDPT[3] = PD
+	mov 	qword [stack_base    + 8*502], stack_base + 1000h + 0x03	;; PD[502] = PT
+	mov 	qword [stack_base    + 1000h], QEMU_IOAPIC_BASE   + 0x13	;; PT[0] = page
+	invlpg	[QEMU_IOAPIC_BASE]	;; probably not required, but it won't hurt to do anyway.
 
 	;; remap PIC1 from 08h-0fh to 20h-27h and PIC2 from 70h-77h to 28h-2fh
 	mov 	al, PIC_ICW1_INIT | PIC_ICW1_ICW4	; 0x11
@@ -132,12 +202,11 @@ kernel_entry:
 	wrmsr
 
 	;; TODO: figure out the address dynamically instead of using a hard-coded one.
-	mov dword [IOAPIC_BASE], 0x13			;; register 0x13
-	mov dword [IOAPIC_BASE + 0x10], 0		;; CPU 0
+	mov dword [QEMU_IOAPIC_BASE], 0x13			;; register 0x13
+	mov dword [QEMU_IOAPIC_BASE + 0x10], 0		;; CPU 0
 
-	mov dword [IOAPIC_BASE], 0x12			;; register 0x12
-	mov dword [IOAPIC_BASE + 0x10], 0x21	;; vector 0x21, unmasked
-
+	mov dword [QEMU_IOAPIC_BASE], 0x12			;; register 0x12
+	mov dword [QEMU_IOAPIC_BASE + 0x10], 0x21	;; vector 0x21, unmasked
 %endif
 
 	lidt	[idt.ptr]
@@ -145,7 +214,6 @@ kernel_entry:
 .start:
 
 %xdefine MSG "The Low Taper Fade Meme is **MASSIVE**! " ;; 40 characters long
-	; call	hide_cursor
 
 .mainloop:
 	mov 	esi, VGA_BUF

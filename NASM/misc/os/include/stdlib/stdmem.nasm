@@ -2,9 +2,8 @@
 %define STD_MEM_NASM
 %pragma ignore stdmem.nasm
 
-
 ; memcpy: ; void *, err memcpy(u8 *dst, u8 *src, u64 count);
-	;; memcpy is an alias of memmove. or perhaps memmove.forwards?
+	;; memcpy is an alias of memmove.forwards, kind of.
 
 ;; NOTE: this can be made to use movsd or movsq under the following conditions:
 	;; movsq: (src - dst) >= 8 && count % 8 == 0 // or do the rest of the count % 8 separately
@@ -13,10 +12,10 @@
 	;; instead of forcing the divisibility, you can also do the rest separately.
 	;; the difference only matters in the first place if the data is longer than like 100 bytes
 
-%pragma ignore NOTE: also memcpy
 memmove: ; void *, err memmove(u8 *dst, u8 *src, u64 count);
 	cmp 	rax, rbx	; if (dst > src)
-	ja  	.backwards	;     goto backwards;
+	ja  	memcpy.backwards	;     goto backwards;
+memcpy:
 .forwards: ; unused label. for clarity
 	;; iterate forwards. move to lower memory
 	cld					;; forwards move
