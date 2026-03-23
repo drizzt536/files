@@ -61,6 +61,9 @@ org KERNEL_START
 ;; on older systems, it also has to be equal to 15, modulo 16, but I don't care.
 %assign APIC_SPURIOUS_ISR	0xFF
 
+%assign APIC_IRQ0_PIN	2	;; PIT timer
+%assign APIC_IRQ1_PIN	1	;; keyboard
+
 %assign TERM_ROWS 25
 %assign TERM_COLS 80
 %assign TERM_SIZE TERM_ROWS * TERM_COLS

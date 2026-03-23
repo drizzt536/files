@@ -41,6 +41,8 @@ proc_keys_until_timeout:
 	jce 	al, 5Ah, .arrow_right
 	jce 	al, 5Bh, .arrow_down
 	jce 	al, 5Ch, .arrow_left
+	jce 	al, 3Bh, .f1
+	jce 	al, 3Ch, .f2
 .log_scancode:
 	mov 	ah, VGA_DEFAULT
 	call	print_u8hex
@@ -67,6 +69,12 @@ proc_keys_until_timeout:
 	mov 	ax, -1
 	call	add_cursor
 	jmp 	.loop
+.f1:
+	;; kernel panic: stack overflow
+	mov 	al, byte [stack_guard_page]
+.f2:
+	;; kernel panic: unmapped page
+	mov 	al, byte [-1]
 .ret:
 	ret
 
@@ -130,9 +138,9 @@ kernel_entry:
 	xor 	eax, eax
 	rep 	stosq
 
-	mov 	edi, QEMU_IOAPIC_BASE + 0x13
-	mov 	dword [PT_PDPT0_BASE + 8*  3], stack_base         + 0x03	;; PDPT[3] = PD
-	mov 	dword [stack_base    + 8*502], stack_base + 1000h + 0x03	;; PD[502] = PT
+	mov 	edi, QEMU_IOAPIC_BASE + 13h
+	mov 	dword [PT_PDPT0_BASE + 8*  3], stack_base         + 03h	;; PDPT[3] = PD
+	mov 	dword [stack_base    + 8*502], stack_base + 1000h + 03h	;; PD[502] = PT
 	mov 	dword [stack_base    + 1000h], edi							;; PT[0] = page
 
 	;; set up the PIT timer. this does nothing on QEMU
@@ -209,19 +217,16 @@ kernel_entry:
 	;; TODO: figure out the address dynamically instead of using a hard-coded one.
 	;;       same thing for the pin numbers.
 
-%assign IRQ0_PIN 2	;; Idk why this is remapped to pin 2.
-%assign IRQ1_PIN 1
-
 	;; IRQ0
-	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ0_PIN
+	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ0_PIN
 	mov 	dword [rdi + 0x10], 0x20					;; vector 0x20
-	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ0_PIN + 1
+	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ0_PIN + 1
 	mov 	dword [rdi + 0x10], 0x00					;; CPU core 0
 
 	;; IRQ1
-	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ1_PIN
+	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ1_PIN
 	mov 	dword [rdi + 0x10], 0x21					;; vector 0x21
-	mov 	dword [rdi + 0x00], 0x10 + 2*IRQ1_PIN + 1
+	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ1_PIN + 1
 	mov 	dword [rdi + 0x10], 0x00					;; CPU core 0
 
 	lidt	[idt.ptr]
