@@ -303,7 +303,7 @@ keyring_extended_scancode_map:
 		mov 	byte [VGA_BUF + 2*26], 'O'
 		mov 	byte [VGA_BUF + 2*27], 'W'
 
-		jmp 	.halt
+		jmp 	halt
 	.kernel_panic@generic:
 		mov 	byte [VGA_BUF + 2*12], ':'
 		mov 	byte [VGA_BUF + 2*13], ' '
@@ -326,9 +326,7 @@ keyring_extended_scancode_map:
 		;; TODO: print the faulting address.
 
 		;; fallthrough
-	.halt:
-		hlt
-		jmp 	.halt
+		jmp 	halt
 	%elif idt_idx == 0x20
 		;; INT 0x20 (IRQ0) is the PIT timer
 

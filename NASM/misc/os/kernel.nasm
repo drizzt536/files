@@ -78,6 +78,8 @@ proc_keys_until_timeout:
 .ret:
 	ret
 
+%xdefine MSG "The Low Taper Fade Meme is **MASSIVE**! " ;; 40 characters long
+
 kernel_entry:
 	;; put the stack in the 64 KiB after the kernel
 	mov 	esp, stack_base
@@ -94,16 +96,6 @@ kernel_entry:
 	xgetbv				;; XCR0
 	or  	al, 111b	;; AVX, SSE, x87 bits
 	xsetbv				;; Save back to XCR0
-
-	;; set up the TSS memory section
-	mov 	eax, TSS_BASE	;; dst = TSS_BASE
-	mov 	rbx, tss		;; src = tss
-	mov 	ecx, TSS_SIZE	;; cnt = TSS_SIZE
-	call	memcpy
-
-	;; load the TSS section
-	mov 	ax, GDT_TSS
-	ltr 	ax
 
 	;; set PD0 entries 3 through 123 at 0x7000-0x7FFFF
 	mov 	edi, PT_PD0_BASE + PT_BOOT_PAGES*8	;; start at the first nonexistent entry
@@ -128,6 +120,55 @@ kernel_entry:
 	shr 	eax, 12
 	and 	byte [PT_PT0_BASE + rax*8], ~1
 	invlpg	[stack_guard_page]	;; invalidate the single page in the TLB
+.stdlib_avail:
+	;; NOTE: calling stdlib functions before this point is not defined
+	;;       since paging and AVX isn't fully set up before this.
+	call	cls				;; set to the default colors
+
+	;; set up the TSS memory section
+	mov 	eax, TSS_BASE	;; dst = TSS_BASE
+	mov 	rbx, tss		;; src = tss
+	mov 	ecx, TSS_SIZE	;; cnt = TSS_SIZE
+	call	memcpy
+
+	;; load the TSS section
+	mov 	ax, GDT_TSS
+	ltr 	ax
+
+	;; set up the PIT timer.
+	outb	IOPT_PIT, 0x36					;; channel 0, lobyte/hibyte, mode 3
+	outb 	IOPT_PIT_D1, PIT_DIVISOR & 0xFF	;; low byte
+	outb	IOPT_PIT_D1, PIT_DIVISOR >> 8	;; high byte
+
+	;; remap PIC1 from 08h-0fh to 20h-27h and PIC2 from 70h-77h to 28h-2fh
+	;; 0x11. starts the initialization sequence (in cascade mode)
+	outb	IOPT_PIC1, PIC_ICW1_INIT | PIC_ICW1_ICW4
+	io_wait
+
+	outb	IOPT_PIC2, PIC_ICW1_INIT | PIC_ICW1_ICW4
+	io_wait
+
+	outb	IOPT_PIC1_D, PIC_OFFS_1			;; ICW2: master PIC IDT vector offset
+	io_wait
+
+	outb	IOPT_PIC2_D, PIC_OFFS_2			;; ICW2: slave PIC IDT vector offset
+	io_wait
+
+	outb	IOPT_PIC1_D, 0000_0100b			;; ICW3: tell the master PIC the slave PIC is at IRQ2
+	io_wait
+
+	outb	IOPT_PIC2_D, PIC_ICW1_CASCADE	;; ICW3: tell the slave PIC its cascade identity
+	io_wait
+
+	outb	IOPT_PIC1_D, PIC_ICW4_8086		;; ICW4: have the PICs use 8086 mode (and not 8080 mode)
+	io_wait
+
+	outb	IOPT_PIC2_D, PIC_ICW4_8086
+	io_wait
+
+	;; disable 8259 PIC. (mask all the IRQs)
+	outb	IOPT_PIC1_D, 0xFF
+	outb	IOPT_PIC2_D, al
 
 	;; setup the page tables required for 0xFEC00000
 	;; PML4[0], PDPT[3], PD[502], PT[0]
@@ -141,55 +182,7 @@ kernel_entry:
 	mov 	edi, QEMU_IOAPIC_BASE + 13h
 	mov 	dword [PT_PDPT0_BASE + 8*  3], stack_base         + 03h	;; PDPT[3] = PD
 	mov 	dword [stack_base    + 8*502], stack_base + 1000h + 03h	;; PD[502] = PT
-	mov 	dword [stack_base    + 1000h], edi							;; PT[0] = page
-
-	;; set up the PIT timer. this does nothing on QEMU
-	mov 	al, 0x36			;; channel 0, lobyte/hibyte, mode 3
-	out 	IOPT_PIT, al
-
-	mov 	al, PIT_DIVISOR & 0xFF
-	out 	IOPT_PIT_D1, al		;; low byte
-
-	mov 	al, PIT_DIVISOR >> 8
-	out 	IOPT_PIT_D1, al		;; high byte
-
-	;; remap PIC1 from 08h-0fh to 20h-27h and PIC2 from 70h-77h to 28h-2fh
-	mov 	al, PIC_ICW1_INIT | PIC_ICW1_ICW4	; 0x11
-	out 	IOPT_PIC1, al		;; starts the initialization sequence (in cascade mode)
-	io_wait
-
-	mov 	al, PIC_ICW1_INIT | PIC_ICW1_ICW4	; 0x11
-	out 	IOPT_PIC2, al
-	io_wait
-
-	mov 	al, PIC_OFFS_1
-	out 	IOPT_PIC1_D, al		;; ICW2: master PIC IDT vector offset
-	io_wait
-
-	mov 	al, PIC_OFFS_2
-	out 	IOPT_PIC2_D, al		;; ICW2: slave PIC IDT vector offset
-	io_wait
-
-	mov 	al, 0000_0100b
-	out 	IOPT_PIC1_D, al		;; ICW3: tell the master PIC that there is a slave PIC at IRQ2 (0000 0100)
-	io_wait
-
-	mov 	al, PIC_ICW1_CASCADE
-	out 	IOPT_PIC2_D, al		;; ICW3: tell the slave PIC its cascade identity (0000 0010)
-	io_wait
-
-	mov 	al, PIC_ICW4_8086	
-	out 	IOPT_PIC1_D, al		;; ICW4: have the PICs use 8086 mode (and not 8080 mode)
-	io_wait
-
-	mov 	al, PIC_ICW4_8086
-	out 	IOPT_PIC2_D, al
-	io_wait
-
-	;; disable 8259 PIC. (mask all the IRQs)
-	mov 	al, 0xFF
-	out 	IOPT_PIC1_D, al
-	out 	IOPT_PIC2_D, al
+	mov 	dword [stack_base    + 1000h], edi						;; PT[0] = page
 
 	;; NOTE: APIC is available since X2APIC availability was checked before boot
 
@@ -215,7 +208,8 @@ kernel_entry:
 	mov 	edi, QEMU_IOAPIC_BASE
 
 	;; TODO: figure out the address dynamically instead of using a hard-coded one.
-	;;       same thing for the pin numbers.
+	;;       same thing for the pin numbers. this has something to do with the MADT
+	;;       idk what that is though.
 
 	;; IRQ0
 	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ0_PIN
@@ -231,10 +225,49 @@ kernel_entry:
 
 	lidt	[idt.ptr]
 	sti 	;; enable interrupts.
+
+	;; TODO: select the master on the primary disk
+	;;       it should already be set to that, but do it anyway.
 .start:
+	sub 	esp, 512	;; allocate space for the sectors to be read into.
+	xor 	r8d, r8d	;; sector_idx = 0;
+	call	hide_cursor
+.loop@sectors:
+	lea 	eax, [r8d + KERNEL_DISK_SECT]
+	mov 	bx, 1
+	mov		ecx, esp
+	call	disk_read
 
-%xdefine MSG "The Low Taper Fade Meme is **MASSIVE**! " ;; 40 characters long
+	cld
+	mov 	esi, esp	;; src = stack pointer
+	mov 	ebp, 512	;; ebp = index (iterate backwards.)
+.loop@words:
+	lodsb	;; al = *src++
 
+	mov 	ah, VGA_DEFAULT
+	call	print_u8hex
+
+	dec 	ebp
+	jnz 	.loop@words
+
+	wait_mac	ecx, 1 << 28
+
+	xor 	eax, eax
+	call	move_cursor
+
+	inc 	r8b
+	cmp 	r8b, kernel_size/512 + 1	;; read up until one sector after the kernel ends.
+	jne 	.loop@sectors
+
+	mov 	byte [VGA_LOC(24, 76)], 'D'
+	mov 	byte [VGA_LOC(24, 77)], 'O'
+	mov 	byte [VGA_LOC(24, 78)], 'N'
+	mov 	byte [VGA_LOC(24, 79)], 'E'
+
+	wait_mac	ecx, 1 << 30
+
+	mov 	al, CURSOR_UNDERLINE
+	call	show_cursor
 .mainloop:
 	mov 	esi, VGA_BUF
 	mov 	ah, VGA_CLR(VGA_LGT_RED, VGA_PURPLE)

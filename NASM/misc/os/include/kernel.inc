@@ -39,6 +39,11 @@ org KERNEL_START
 %define stack_guard_page	((KERNEL_START + kernel_size + 4095) & ~4095)
 %define stack_base			(stack_guard_page + 4096 + KERNEL_STACK_SIZE)
 
+;; NOTE: this is different from in the bootloader because the bootloader is at sector 0
+;;       LBA28 and LBA48, but it is sector 1 in CHS (how the bootloader does it)
+%assign KERNEL_DISK_SECT	1
+%define DISKFS_START		(KERNEL_DISK_SECT + kernel_size/512)
+
 %assign PIC_ICW1_ICW4		0x01	;; Indicates that ICW4 will be present
 %assign PIC_ICW1_CASCADE	0x02	;; cascade mode
 %assign PIC_ICW1_INIT		0x10	;; initialization
@@ -104,6 +109,7 @@ org KERNEL_START
 %macro io_wait 0
 	;; basically just kill a little bit of time so other `out` commands can finish.
 	;; the value doesn't matter so just use whatever is already in al.
+	;; I think this is guaranteed to take at least 30ns.
 	out 	IOPT_POST, al
 %endm
 
@@ -115,7 +121,7 @@ org KERNEL_START
 		loop	%%loop
 	%else
 		dec 	%1
-		test 	%1, %1
+		test	%1, %1
 		jnz 	%%loop
 	%endif
 %endm
@@ -136,12 +142,53 @@ org KERNEL_START
 	xor 	bl, bl
 	mov 	al, byte [rel isr_timer]
 	cmp 	al, %1	;; isr timer wrap value. probablly will be imm8
-	cmovae 	ax, bx
+	cmovae	ax, bx
 	mov 	byte [rel isr_timer], al	;; write back in case it was zeroed
 %endm
 
-%macro _putchar_0_0_colored 1
-	mov		[rel VGA_BUF], %1	;; VGA text buffer
+%macro outx 3
+	;; e.g. `outx 0x100, 56, ax`. port, value, al/ax/eax for size.
+	%if %isnidni(%2, %3)
+		mov 	%3, %2
+	%endif
+
+	%if %isidni(%1, dx) || %cond(%isnum(%1), (%1) < 256, 0)
+		out 	%1, %3
+	%else
+		mov 	dx, %1
+		out 	dx, %3
+	%endif
+%endm
+
+%macro outd 2
+	outx	%1, %2, eax
+%endm
+
+%macro outw 2
+	outx	%1, %2, ax
+%endm
+
+%macro outb 2
+	outx	%1, %2, al
+%endm
+
+%macro inx 2
+	;; %1 should be al, ax, or eax
+	;; %2 is either dx or an imm8 port address
+	%if %isidni(%2,dx) || %cond(%isnum(%2), (%2) < 256, 0)
+		in  	%1, %2
+	%else
+		mov 	dx, %2
+		in  	%1, dx
+	%endif
+%endm
+
+%macro inb 1
+	inx 	al, %1
+%endm
+
+%macro inw 1
+	inx 	ax, %1
 %endm
 
 %macro _putchar_colored 3

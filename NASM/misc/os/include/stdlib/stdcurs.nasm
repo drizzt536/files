@@ -3,13 +3,17 @@
 
 %pragma ignore stdcurs.nasm
 
+;; TODO: make a variable for the current type of cursor. That way
+;;       `toggle_cursor` doesn't have to be a read and a write,
+;;       and `hide_cursor` doesn't have to destroy information about
+;;       the kind of cursor.
+
 toggle_cursor: ; err toggle_cursor(void);
-	mov 	dx, IOPT_PS2_CRTCR	;; VGA control port
-	mov 	al, 0Ah				;; cursor start register
-	out 	dx, al
+	;; VGA control port and cursor start register
+	outb	IOPT_PS2_CRTCR, 0Ah
 
 	inc 	dl			;; 0x3D5 is data port. dx isn't required because no overflow.
-	in  	al, dx
+	inb 	dx
 
 	xor 	al, 1 << 5	;; toggle bit 5
 	out 	dx, al
@@ -20,14 +24,15 @@ toggle_cursor: ; err toggle_cursor(void);
 ;; hide_cursor should be used with show_cursor.
 ;; if you hide and then toggle, you will get incorrect results.
 hide_cursor: ; void hide_cursor(void);
-	mov 	dx, IOPT_PS2_CRTCR	;; VGA control port
-	mov 	al, 0Ah				;; cursor start register
-	out 	dx, al
+	;; VGA control port and cursor start register
+	outb	IOPT_PS2_CRTCR, 0Ah
 
 	inc 	dl			;; 0x3D5 is data port. dx isn't required because no overflow.
-	mov 	al, 1 << 5	;; Set bit 5 to disable the cursor
-	out 	dx, al
+	outb	dx, 1 << 5
 	ret
+
+%assign CURSOR_SQUARE		0b0000
+%assign CURSOR_UNDERLINE	0b1110
 
 ;; use show_cursor(0b1110) for the underline cursor and show_cursor(0b0000) for the box cursor.
 ;; bits higher than the 4th bit are ignored.
@@ -35,13 +40,10 @@ show_cursor: ; u4 show_cursor(u4 height);
 	mov 	bl, al
 	and 	bl, 0Fh				;; ignore higher than bit 3
 
-	mov 	dx, IOPT_PS2_CRTCR
-	mov 	al, 0Ah				;; cursor start register
-	out 	dx, al
+	outb	IOPT_PS2_CRTCR, 0Ah
 
 	inc 	dl			;; data port = 0x3D5, control port = 0x3D4. dx isn't required; no overflow.
-	mov		al, bl		;; NOTE: bit 5 zero.
-	out 	dx, al
+	outb	dx, bl
 
 	ret					;; return height & 0xf;
 
@@ -51,20 +53,16 @@ show_cursor: ; u4 show_cursor(u4 height);
 	mov 	dx, IOPT_PS2_CRTCR
 
 	%if %1
-		mov 	al, 0Eh	;; select high byte register
-		out 	dx, al
-		inc 	dl		; dx = 03D5h
-		mov 	al, %2	;; cursor position
-		out 	dx, al
+		outb	dx, 0Eh	;; high byte register
+		inc 	dl		;; dx = 03D5h
+		outb	dx, %2	;; cursor position
 
-		dec 	dl		; dx = 03D4h
+		dec 	dl		;; dx = 03D4h
 	%endif
 
-	mov 	al, 0Fh		;; select low byte register
-	out 	dx, al
-	inc 	dl			; dx = 03D5h
-	mov 	al, %3		;; low byte
-	out 	dx, al
+	outb	dx, 0Fh		;; low byte register
+	inc 	dl			;; dx = 03D5h
+	outb	dx, %3		;; low byte
 %endm
 
 %macro move_cursor_mac 0
@@ -92,12 +90,12 @@ dw 0 ;; just so you can load as a DWORD and have it work properly.
 ;; definitely won't work properly for ofs >= 32767 or ofs <= -32768.
 ;; for guaranteed correctness, don't pass anything with larger magnitude than 30768
 
+;; clobers: rax, rbx, dx
 ;; all three of these return the new position in bx.
 add_cursor: ; err, u16 add_cursor(u16 ofs);
 	mov 	bx, word [rel cursor_pos]
 	add 	ax, bx			; pos += ofs;
 	js  	.loop_neg		; if (pos > 0)
-
 .loop_pos:
 	cmp 	ax, TERM_SIZE	;     while (pos >= TERM_SIZE)
 	jb  	move_cursor
@@ -123,26 +121,19 @@ move_cursor: ; err, u16 move_cursor(u16 pos);
 	cmp 	byte [rel cursor_pos.lo], al	; if ((pos & 0xff) == cursor_pos->lo)
 	je  	.set_hi							;     goto set_hi;
 .set_lo:
-	mov 	dx, IOPT_PS2_CRTCR
-	mov 	al, 0Fh		;; cursor location low register
-	out 	dx, al
+	outb	IOPT_PS2_CRTCR, 0Fh		;; cursor location low register
 
 	inc 	dl			;; switch to data port
-	mov 	al, bl
-	out 	dx, al
-
+	outb	dx, bl
 .set_hi:
 	cmp 	byte [rel cursor_pos.hi], bh	; if ((pos >> 8) == cursor_pos->hi)
 	je  	.exit							;     goto exit;
 
 	dec 	dl			;; switch to control port
-	mov 	al, 0Eh		;; cursor location low register
-	out 	dx, al
+	outb	dx, 0Eh		;; cursor location low register
 
 	inc 	dl			;; switch to data port
-	mov 	al, bh
-	out 	dx, al
-
+	outb	dx, bh
 .exit:
 	mov 	word [rel cursor_pos], bx
 	xor 	eax, eax	;; no errors

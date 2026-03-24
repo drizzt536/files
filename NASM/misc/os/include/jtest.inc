@@ -2,7 +2,7 @@
 %define JTEST_INC
 
 %macro jtest 4
-	;; e.g. jtest eax, ebx, lt, .exit for a compare and jlt
+	;; e.g. jtest eax, ebx, lt, .exit for a test and jlt
 	test	%1, %2
 	j%3 	%4
 %endm

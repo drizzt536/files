@@ -13,6 +13,9 @@ QEMU_ARGS := -full-screen -cpu max
 # physical drive index to flash the OS to
 PDRV_IDX := none
 
+# size of the filesystem part of the disk in sectors
+FS_SIZE := 16
+
 # I guess you could use disk.img or something if you wanted.
 DISK_IMG := disk.bin
 
@@ -39,7 +42,10 @@ $(DISK_IMG): kernel.bin boot.bin
 	@if [ $$(stat -c %s boot.bin) -ne 512 ]; then \
 		printf "\e[31mWARNING: the bootloader is not one sector long\e[0m\n" 1>&2; \
 	fi
+
 	cat boot.bin kernel.bin > $(DISK_IMG)
+	disklastidx=$$(awk "BEGIN {print $$(stat -c %s disk.bin)/512 + $(FS_SIZE) - 1}"); \
+	dd if=/dev/zero of=disk.bin seek=$$disklastidx count=1 bs=1b
 
 include/stdlib-fn-table.nasm: gen-fn-table.ps1 $(filter-out $@, $(wildcard include/stdlib/*.nasm))
 	@echo pwsh -noprofile -nologo -f $< -i ./include/stdlib/stdlib.nasm -o ./$@
@@ -79,7 +85,6 @@ check-prereqs:
 	fi
 
 	# all required programs were found
-
 
 clean:
 	rm -f kernel.bin boot.bin 2>/dev/null
