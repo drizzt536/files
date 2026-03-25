@@ -103,6 +103,7 @@ org KERNEL_START
 %assign VGA_DEFAULT				VGA_CLR(VGA_DRK_GRAY, VGA_BLACK)
 %assign VGA_BUF					0xb8000
 %assign VGA_BUF_END				VGA_BUF + 2*TERM_SIZE
+%define VGA_POS(row, col)		%hex((TERM_COLS*(row) + (col)) % TERM_SIZE)
 %define VGA_LOC(row, col)		%hex(VGA_BUF + (TERM_COLS*(row) + (col)) % TERM_SIZE * 2)
 
 %define BYTES2WORD(b0, b1) (b0 | b1 << 8)

@@ -355,12 +355,19 @@ kernel_entry:
 
 	mov 	ah, 0x0E	;; backspace
 	call	keyring_has_scancode
-	mov 	al, 0x75	;; `jmp` byte 1
-	mov 	bl, 0xEB	;; `jnz` byte 1
+
+	mov 	al, 0x75	;; `jmp short` byte 1 is 0x75
+	mov 	bl, 0xEB	;; `jnz short` byte 1 is 0xEB
 	cmovnz	ax, bx		;; u8 b = keyring_has_scancode(0x0E) ? 0xEB : 0x75;
 
 	;; conditionally change from a conditional jump to unconditional
 	mov 	byte [.rand@loop@jump], al
+	setnz	al
+	xor 	ah, ah
+	mov 	word [rel cursor_pos], VGA_POS(24, 78)
+	call	_print_u8hex
+	mov 	word [rel cursor_pos], 0
+
 	;; fallthrough
 .before_mul_loop:
 	clear_keyring
