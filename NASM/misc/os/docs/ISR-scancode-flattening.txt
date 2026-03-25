@@ -35,7 +35,7 @@ byte 2		function						type		mapping (starting at 0x59)
 0x4F		end								pressed		0x61
 0x50		down arrow						pressed		0x5B
 0x51		page down						pressed		0x5E
-0x52		insert							pressed		0x5F
+0x52		insert							pressed		0x00
 0x53		delete							pressed		0x62
 0x5B		left GUI (windows)				pressed		0x63
 0x5C		right GUI (windows)				pressed **	0x63 (same as left GUI)
@@ -75,7 +75,7 @@ byte 2		function						type		mapping (starting at 0x59)
 0xCF		end								released	0xE1
 0xD0		down arrow						released	0xDB
 0xD1		page down						released	0xDE
-0xD2		insert							released	0xDF
+0xD2		insert							released	0x5F
 0xD3		delete							released	0xE2
 0xDB		left GUI (windows)				released	0xE3
 0xDC		right GUI (windows)				released **	0xE3 (same as left GUI)
@@ -113,6 +113,7 @@ scancode	function						type		mapping
 0x36		right shift						pressed		0x2A
 0x3A		caps lock						pressed		0x00
 0x45		number lock						pressed		0x00
+0x46		scroll lock						pressed		0x00
 0x47		keypad '7'						pressed		0x08
 0x48		keypad '8'						pressed		0x09
 0x49		keypad '9'						pressed		0x0A
@@ -129,6 +130,7 @@ scancode	function						type		mapping
 0xB6		right shift						released	0xAA
 0xBA		caps lock						released	0x3A
 0xC5		number lock						released	0x45
+0xC6		scroll lock						released	0x46
 0xC7		keypad '7'						released	0x88
 0xC8		keypad '8'						released	0x89
 0xC9		keypad '9'						released	0x8A

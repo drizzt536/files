@@ -46,6 +46,7 @@ idt_hfn_default:
 	mov 	edi, VGA_BUF
 	mov 	ah, VGA_DEFAULT
 .loop:
+	;; This is basically print_u8hex, but inlined with simpler and with some stuff removed.
 	lodsb	;; al = [esi]
 	stosw	;; [edi] = ax
 
@@ -91,6 +92,8 @@ keyring_scancode_map:
 		db 0x00
 	%elif i == 0x45
 		db 0x00
+	%elif i == 0x46
+		db 0x00
 	%elif i == 0x47
 		db 0x08
 	%elif i == 0x48
@@ -125,6 +128,8 @@ keyring_scancode_map:
 		db 0x2A
 	%elif i == 0xC5
 		db 0x45
+	%elif i == 0xC6
+		db 0x46
 	%elif i == 0xC7
 		db 0x88
 	%elif i == 0xC8
@@ -210,8 +215,6 @@ keyring_extended_scancode_map:
 		db 0x5B
 	%elif i == 0x51
 		db 0x5E
-	%elif i == 0x52
-		db 0x5F
 	%elif i == 0x53
 		db 0x62
 	%elif i == 0x5B
@@ -360,49 +363,44 @@ keyring_extended_scancode_map:
 		mov 	dx, IOPT_PS2_KBD_D
 		in  	al, dx
 
-		cmp 	byte [rel keyring_escape], KEYRING_ESC_EXT
-		je  	.process_extended
+		jce 	byte [rel keyring_escape], KEYRING_ESC_EXT, .process_extended
+		jce 	byte [rel keyring_escape], KEYRING_ESC_PB1, .pause_break_byte2
+		jce 	byte [rel keyring_escape], KEYRING_ESC_PB2, .pause_break_byte3
 
-		cmp 	byte [rel keyring_escape], KEYRING_ESC_PB1
-		je  	.pause_break_byte2
-
-		cmp 	byte [rel keyring_escape], KEYRING_ESC_PB2
-		je  	.pause_break_byte3
-
-		cmp 	al, 0xE1						;; if it starts with 0xE1
-		je  	.pause_break_byte1				;;     then it is definitely a pause break
+		jce 	al, 0xE1, .pause_break_byte1 ;; if it starts with 0xE1, then it is definitely a pause break
 
 		xor 	cl, cl							; esc = KEYRING_ESC_NONE;
 		mov 	dl, KEYRING_ESC_EXT
 		cmp 	al, 0xE0						; if (al == 0xE0) {
-		cmove 	ecx, edx						;     esc = true;
+		cmove	ecx, edx						;     esc = true;
 		mov 	byte [rel keyring_escape], cl	; *keyring_escape = esc; // unconditional
 		je  	.keypress_exit					;     return; }
 
 		movzx	eax, al
 		mov 	al, byte [keyring_scancode_map + eax]
-		test 	al, al
-		jz  	.keypress_exit
+		jtz 	al, al, .keypress_exit
 
 		jmp 	.write_to_keyring
 	.process_extended:
-		movzx 	eax, al
-		test	al, 1 << 7
-		jnz 	.process_extended@release		;; break sequence has bit 7 set
+		movzx	eax, al
+		jtnz	al, 1 << 7, .process_extended@release		;; break sequence has bit 7 set
 
 		;; fallthrough
 	.process_extended@press:
 		mov 	al, byte [keyring_extended_scancode_map + eax - 16]
 
-		test 	al, al
-		jz  	.keypress_exit_unescape
+		jtz 	al, al, .keypress_exit_unescape
 		jmp 	.write_to_keyring
 	.process_extended@release:
+		mov 	bl, 0x5F	;; flattened insert make code
+		cmp 	al, 0xD2	;; insert break code
+		cmove	ax, bx
+		je  	.write_to_keyring
+
 		mov 	al, byte [keyring_extended_scancode_map + eax - 144]
 
 		;; NOTE: the zero test has to be before the increment
-		test 	al, al
-		jz  	.keypress_exit_unescape
+		jtz 	al, al, .keypress_exit_unescape
 
 		or  	al, 1 << 7
 
@@ -413,8 +411,8 @@ keyring_extended_scancode_map:
 		inc 	dl
 		;; NOTE: in order to make it not overwrite values, it won't ever actually use
 		;;       all 256 slots, and will only use 255 of them.
-		cmp 	dl, byte [rel keyring_read]		; if (write + 1 == read)
-		je  	.keypress_exit					;     return; // drop the keypress
+		; if (write + 1 == read) return; // drop the keypress
+		jce 	dl, byte [rel keyring_read], .keypress_exit
 
 		dec 	dl	;; separate instruction so that it wraps modulo 256.
 		movzx	edx, dl
@@ -426,11 +424,9 @@ keyring_extended_scancode_map:
 		jmp 	.keypress_exit
 	.pause_break_byte1: ;; E1
 		mov 	byte [rel keyring_escape], KEYRING_ESC_PB1
-
 		jmp 	.keypress_exit
 	.pause_break_byte2:	;; 1D | 9D
 		mov 	byte [rel keyring_escape], KEYRING_ESC_PB2
-
 		jmp 	.keypress_exit
 	.pause_break_byte3:	;; 45 | C5
 		cmp 	al, 0xC5
