@@ -112,6 +112,7 @@ regular mappings:
 scancode	function						type		mapping
 0x36		right shift						pressed		0x2A
 0x3A		caps lock						pressed		0x00
+0x45		number lock						pressed		0x00
 0x47		keypad '7'						pressed		0x08
 0x48		keypad '8'						pressed		0x09
 0x49		keypad '9'						pressed		0x0A
@@ -127,6 +128,7 @@ scancode	function						type		mapping
 0x54		SysRq (sometimes?)				pressed		0x6C
 0xB6		right shift						released	0xAA
 0xBA		caps lock						released	0x3A
+0xC5		number lock						released	0x45
 0xC7		keypad '7'						released	0x88
 0xC8		keypad '8'						released	0x89
 0xC9		keypad '9'						released	0x8A
@@ -150,3 +152,5 @@ mean almost identical things. Like nobody cares if you use left shift vs right s
 SysRq maps to the same thing as PrtSc because my keyboard sends alt+SysRq when I do alt+PrtScr, so I assumed that they are the same thing.
 
 conversion from the flattened scancode to ASCII will be in the kernel and not in ISR 33.
+
+https://wiki.osdev.org/PS/2_Keyboard#Scan_Code_Set_1

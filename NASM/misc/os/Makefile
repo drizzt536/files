@@ -121,7 +121,7 @@ sim: all
 else
 # e.g. make sim PDRV_IDX=1
 sim: flash
-	@# run the OS in QEMU from \\.\PhysicalDriveN
+	@# run the OS in QEMU from \\.\PhysicalDrive[N]
 	@echo "$(subst \,\\,$(QEMU_CMD_FLASH))"
 	@echo "# this might take a few seconds"
 	@$(QEMU_CMD_FLASH)

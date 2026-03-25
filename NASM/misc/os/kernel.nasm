@@ -31,7 +31,7 @@ proc_keys_until_timeout:
 	get_isr_timer8_mod 19
 	jae 	.ret
 
-	call	next_scancode
+	call	get_scancode
 	jz  	.loop
 
 	jtnz	al, 1 << 7, .loop		;; skip the release scancodes
@@ -125,6 +125,9 @@ kernel_entry:
 	;;       since paging and AVX isn't fully set up before this.
 	call	cls				;; set to the default colors
 
+	mov 	al, CURS_UNDERLINE
+	call	set_cursor
+
 	;; set up the TSS memory section
 	mov 	eax, TSS_BASE	;; dst = TSS_BASE
 	mov 	rbx, tss		;; src = tss
@@ -170,20 +173,6 @@ kernel_entry:
 	outb	IOPT_PIC1_D, 0xFF
 	outb	IOPT_PIC2_D, al
 
-	;; setup the page tables required for 0xFEC00000
-	;; PML4[0], PDPT[3], PD[502], PT[0]
-	;; 2 pages need to be generated, a new PD and a new PT.
-	cld
-	mov 	edi, esp	;; just put these right after the stack
-	mov 	ecx, 512 * 2
-	xor 	eax, eax
-	rep 	stosq
-
-	mov 	edi, QEMU_IOAPIC_BASE + 13h
-	mov 	dword [PT_PDPT0_BASE + 8*  3], stack_base         + 03h	;; PDPT[3] = PD
-	mov 	dword [stack_base    + 8*502], stack_base + 1000h + 03h	;; PD[502] = PT
-	mov 	dword [stack_base    + 1000h], edi						;; PT[0] = page
-
 	;; NOTE: APIC is available since X2APIC availability was checked before boot
 
 	;; enable APIC and x2APIC. APIC should already be enabled.
@@ -205,11 +194,28 @@ kernel_entry:
 	xor 	edx, edx
 	wrmsr
 
-	mov 	edi, QEMU_IOAPIC_BASE
-
 	;; TODO: figure out the address dynamically instead of using a hard-coded one.
 	;;       same thing for the pin numbers. this has something to do with the MADT
 	;;       idk what that is though.
+	;; check 0x40e0-0x44df and 0xE0000-0xFFFFF for the other thing
+	;; then parse, looking for "RSP PTR " on 16-byte boundaries, then parse that
+	;; structure for the MADT, and then parse the MADT for the APIC base address.
+
+	;; setup the page tables required for 0xFEC00000
+	;; PML4[0], PDPT[3], PD[502], PT[0]
+	;; 2 pages need to be generated, a new PD and a new PT.
+	cld
+	mov 	edi, esp	;; just put these right after the stack
+	mov 	ecx, 512 * 2
+	xor 	eax, eax
+	rep 	stosq
+
+	mov 	edi, QEMU_IOAPIC_BASE + 13h
+	mov 	dword [PT_PDPT0_BASE + 8*  3], stack_base         + 03h	;; PDPT[3] = PD
+	mov 	dword [stack_base    + 8*502], stack_base + 1000h + 03h	;; PD[502] = PT
+	mov 	dword [stack_base    + 1000h], edi						;; PT[0] = page
+
+	sub 	edi, 13h
 
 	;; IRQ0
 	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ0_PIN
@@ -232,42 +238,204 @@ kernel_entry:
 	sub 	esp, 512	;; allocate space for the sectors to be read into.
 	xor 	r8d, r8d	;; sector_idx = 0;
 	call	hide_cursor
+
+	mov 	dword [VGA_LOC(24, 65)], DVGA_DWORD('RE')
+	mov 	dword [VGA_LOC(24, 67)], DVGA_DWORD('AD')
+	mov 	dword [VGA_LOC(24, 69)], DVGA_DWORD('IN')
+	mov 	dword [VGA_LOC(24, 71)], DVGA_DWORD('G ')
+	mov 	dword [VGA_LOC(24, 73)], DVGA_DWORD('SE')
+	mov 	dword [VGA_LOC(24, 75)], DVGA_DWORD('CT')
+	mov 	byte  [VGA_LOC(24, 77)], 'O'
+	mov 	dword [VGA_LOC(24, 78)], DVGA_DWORD('RS')
+	reset_isr_timer
 .loop@sectors:
 	lea 	eax, [r8d + KERNEL_DISK_SECT]
-	mov 	bx, 1
-	mov		ecx, esp
+	mov 	bx, 1		;; 1 sector
+	mov		ecx, esp	;; put on the stack
 	call	disk_read
 
 	cld
 	mov 	esi, esp	;; src = stack pointer
-	mov 	ebp, 512	;; ebp = index (iterate backwards.)
+	mov 	ebp, 512	;; ebp = index (iterate backwards)
 .loop@words:
 	lodsb	;; al = *src++
 
-	mov 	ah, VGA_DEFAULT
+	xor 	ah, ah
 	call	print_u8hex
 
 	dec 	ebp
 	jnz 	.loop@words
 
-	wait_mac	ecx, 1 << 28
+	timewait_mac8	6, 0
 
 	xor 	eax, eax
 	call	move_cursor
 
 	inc 	r8b
-	cmp 	r8b, kernel_size/512 + 1	;; read up until one sector after the kernel ends.
-	jne 	.loop@sectors
+	;; read up until one sector after the kernel ends.
+	jcne 	r8b, kernel_size/512 + 1, .loop@sectors
 
-	mov 	byte [VGA_LOC(24, 76)], 'D'
-	mov 	byte [VGA_LOC(24, 77)], 'O'
-	mov 	byte [VGA_LOC(24, 78)], 'N'
-	mov 	byte [VGA_LOC(24, 79)], 'E'
+	mov 	dword [VGA_LOC(24, 65)], DVGA_DWORD('  ')
+	mov 	dword [VGA_LOC(24, 67)], DVGA_DWORD('  ')
+	mov 	dword [VGA_LOC(24, 69)], DVGA_DWORD('  ')
+	mov 	dword [VGA_LOC(24, 71)], DVGA_DWORD('  ')
+	mov 	dword [VGA_LOC(24, 73)], DVGA_DWORD('  ')
+	mov 	dword [VGA_LOC(24, 75)], DVGA_DWORD(' D')
+	mov 	byte  [VGA_LOC(24, 77)], 'O'	;; already an O.
+	mov 	dword [VGA_LOC(24, 78)], DVGA_DWORD('NE')
 
-	wait_mac	ecx, 1 << 30
+	timewait_mac8	50, 1
 
-	mov 	al, CURSOR_UNDERLINE
+	;; increment the first qword in the first sector after the kernel.
+	;; this just shows that writing also works. It should show a different
+	;; value each time it boots.
+	inc 	qword [esp]
+	mov 	eax, DISKFS_START
+	mov 	bx, 1
+	mov 	ecx, esp
+	call	disk_write	; disk_write(u64 sector, u16 cnt, u16 *mem);
+
+	add 	esp, 512
+
+	call	cls
+	call	hide_cursor
+
+	xor 	ebp, ebp
+
+	mov 	rax, rbp
+	xor 	bl, bl
+	call	print_u64hex
+
+	xor 	ax, ax
+	call	move_cursor
+
+	mov 	dword [VGA_LOC(2,  0)], DVGA_DWORD('KE')
+	mov 	dword [VGA_LOC(2,  2)], DVGA_DWORD('YB')
+	mov 	dword [VGA_LOC(2,  4)], DVGA_DWORD('IN')
+	mov 	dword [VGA_LOC(2,  6)], DVGA_DWORD('DS')
+
+	mov 	dword [VGA_LOC(3,  1)], DVGA_DWORD('En')
+	mov 	dword [VGA_LOC(3,  3)], DVGA_DWORD('te')
+	mov 	dword [VGA_LOC(3,  5)], DVGA_DWORD('r ')
+	mov 	dword [VGA_LOC(3,  7)], DVGA_DWORD(': ')
+	mov 	dword [VGA_LOC(3,  9)], DVGA_DWORD('co')
+	mov 	dword [VGA_LOC(3, 11)], DVGA_DWORD('nt')
+	mov 	dword [VGA_LOC(3, 13)], DVGA_DWORD('in')
+	mov 	dword [VGA_LOC(3, 15)], DVGA_DWORD('ue')
+
+	mov 	dword [VGA_LOC(4,  1)], DVGA_DWORD('In')
+	mov 	dword [VGA_LOC(4,  3)], DVGA_DWORD('se')
+	mov 	dword [VGA_LOC(4,  5)], DVGA_DWORD('rt')
+	mov 	dword [VGA_LOC(4,  7)], DVGA_DWORD(': ')
+	mov 	dword [VGA_LOC(4,  9)], DVGA_DWORD('ra')
+	mov 	dword [VGA_LOC(4, 11)], DVGA_DWORD('nd')
+	mov 	dword [VGA_LOC(4, 13)], DVGA_DWORD('om')
+	mov 	dword [VGA_LOC(4, 15)], DVGA_DWORD('iz')
+	mov 	byte  [VGA_LOC(4, 17)], 'e'
+
+	mov 	dword [VGA_LOC(5,  1)], DVGA_DWORD('1-')
+	mov 	dword [VGA_LOC(5,  3)], DVGA_DWORD('9 ')
+	mov 	dword [VGA_LOC(5,  5)], DVGA_DWORD('  ')
+	mov 	dword [VGA_LOC(5,  7)], DVGA_DWORD(': ')
+	mov 	dword [VGA_LOC(5,  9)], DVGA_DWORD('mu')
+	mov 	dword [VGA_LOC(5, 11)], DVGA_DWORD('lt')
+	mov 	dword [VGA_LOC(5, 13)], DVGA_DWORD('ip')
+	mov 	dword [VGA_LOC(5, 15)], DVGA_DWORD('ly')
+
+	mov 	dword [VGA_LOC(6,  1)], DVGA_DWORD('ot')
+	mov 	dword [VGA_LOC(6,  3)], DVGA_DWORD('he')
+	mov 	dword [VGA_LOC(6,  5)], DVGA_DWORD('r ')
+	mov 	dword [VGA_LOC(6,  7)], DVGA_DWORD(': ')
+	mov 	dword [VGA_LOC(6,  9)], DVGA_DWORD('ad')
+	mov 	dword [VGA_LOC(6, 11)], DVGA_DWORD('d ')
+	mov 	dword [VGA_LOC(6, 13)], DVGA_DWORD('sc')
+	mov 	dword [VGA_LOC(6, 15)], DVGA_DWORD('an')
+	mov 	dword [VGA_LOC(6, 17)], DVGA_DWORD('co')
+	mov 	dword [VGA_LOC(6, 19)], DVGA_DWORD('de')
+
+	clear_keyring
+.mul_loop:
+	call	next_scancode	;; block until the next keypress
+
+	jtnz	al, 1 << 7, .mul_loop	;; skip release codes
+	;; keys 0-9 are multipliers. the rest of the keys add the scancode to the total.
+	jce 	al, 0Bh, .mul0	;; '0'
+	jce 	al, 02h, .mul1	;; '1'
+	jce 	al, 03h, .mul2	;; '2'
+	jce 	al, 04h, .mul3	;; '3'
+	jce 	al, 05h, .mul4	;; '4'
+	jce 	al, 06h, .mul5	;; '5'
+	jce 	al, 07h, .mul6	;; '6'
+	jce 	al, 08h, .mul7	;; '7'
+	jce 	al, 09h, .mul8	;; '8'
+	jce 	al, 0Ah, .mul9	;; '9'
+	jce 	al, 1Ch, .rand	;; enter => exit
+	jce 	al, 5Fh, .mul_set_rand	;; insert => randomize the value
+
+	movzx	eax, al
+	add 	rbp, rax
+.mul_loop@print:
+	mov 	rax, rbp
+	xor 	bl, bl
+	call	print_u64hex
+
+	xor 	ax, ax
+	call	move_cursor
+
+	jmp 	.mul_loop
+.mul_set_rand:
+	rdrand_mac rbp
+	jmp 	.mul_loop@print
+.mul0:
+	xor 	ebp, ebp
+	;; fallthrough
+.mul1:
+	jmp 	.mul_loop@print
+.mul2:
+	shl 	rbp, 1
+	jmp 	.mul_loop@print
+.mul3:
+	imul	rbp, rbp, 3
+	jmp 	.mul_loop@print
+.mul4:
+	shl 	rbp, 2
+	jmp 	.mul_loop@print
+.mul5:
+	imul	rbp, rbp, 5
+	jmp 	.mul_loop@print
+.mul6:
+	imul	rbp, rbp, 6
+	jmp 	.mul_loop@print
+.mul7:
+	imul	rbp, rbp, 7
+	jmp 	.mul_loop@print
+.mul8:
+	shl 	rbp, 3
+	jmp 	.mul_loop@print
+.mul9:
+	imul	rbp, rbp, 9
+	jmp 	.mul_loop@print
+.rand:
+	reset_isr_timer
+	mov 	bpl, 32
+.rand@loop:
+	mov 	eax, 2*TERM_SIZE
+	mov 	ebx, VGA_BUF
+	call	rand_fill
+
+	timewait_mac8	1, 0
+	dec 	bpl
+	jnz  	.rand@loop
+
+	timewait_mac8	7, 0
+	;; fallthrough
+.ltf:
+	call	cls
+	timewait_mac8	7, 0
+	mov 	al, CURS_UNDERLINE
 	call	show_cursor
+	clear_keyring
+	reset_isr_timer
 .mainloop:
 	mov 	esi, VGA_BUF
 	mov 	ah, VGA_CLR(VGA_LGT_RED, VGA_PURPLE)

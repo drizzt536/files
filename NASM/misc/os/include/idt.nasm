@@ -13,6 +13,7 @@
 %assign KEYRING_ESC_PB2		3
 
 keyring_escape	db KEYRING_ESC_NONE		;; written and read only in the ISR
+keyring_rw_word:						;; label for read/write, regardless of which is first
 keyring_write	db 0					;; written in the ISR, read in the kernel
 keyring_read	db 0					;; read in the ISR, written in the kernel
 keyring			times 256 db 0			;; written in the ISR, read in the kernel
@@ -88,6 +89,8 @@ keyring_scancode_map:
 		db 0x2A
 	%elif i == 0x3A
 		db 0x00
+	%elif i == 0x45
+		db 0x00
 	%elif i == 0x47
 		db 0x08
 	%elif i == 0x48
@@ -120,6 +123,8 @@ keyring_scancode_map:
 		db 0x2A
 	%elif i == 0xBA
 		db 0x2A
+	%elif i == 0xC5
+		db 0x45
 	%elif i == 0xC7
 		db 0x88
 	%elif i == 0xC8

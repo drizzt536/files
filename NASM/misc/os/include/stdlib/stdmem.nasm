@@ -13,12 +13,11 @@
 	;; the difference only matters in the first place if the data is longer than like 100 bytes
 
 memmove: ; void *, err memmove(u8 *dst, u8 *src, u64 count);
-	cmp 	rax, rbx	; if (dst > src)
-	ja  	memcpy.backwards	;     goto backwards;
+	jca 	rax, rbx, memcpy.backwards	; if (dst > src) goto backwards;
 memcpy:
 .forwards: ; unused label. for clarity
 	;; iterate forwards. move to lower memory
-	cld					;; forwards move
+	cld 				;; forwards move
 	mov 	rdi, rax
 	mov 	rsi, rbx
 	rep 	movsb
@@ -36,7 +35,7 @@ memcpy:
 	ret
 
 memset: ; void *, err memset(void *ptr, u8 value, u64 num);
-	cld					; clear direction for forwards move
+	cld 				; clear direction for forwards move
 	mov 	rdi, rax	; destination
 	xchg	rax, rbx	; `mov al, bl`, but preserve ptr
 ;	mov 	rcx, rcx	; redundant instruction
@@ -53,7 +52,7 @@ memset: ; void *, err memset(void *ptr, u8 value, u64 num);
 %pragma ignore NOTE: use strend
 strlen: ; u64, err, char * strlen(const char *str);
 	call	strend
-	xchg 	rax, rcx
+	xchg	rax, rcx
 	ret					; return (index, err code, new ptr)
 
 strend: ; char *, err, u64 strend(const char *str); // not std C
@@ -61,10 +60,10 @@ strend: ; char *, err, u64 strend(const char *str); // not std C
 	xor 	bl, bl		; search for null byte
 _memscan: ; void *, err, u64 _memscan(const void *ptr, u8 c); // not std C
 	;; basically `memchr`, but without the length end condition.
-	cld					; forwards
+	cld 				; forwards
 	mov 	rdi, rax
 	xor 	ecx, ecx	; start with index 0
-	xchg 	al, bl		; `mov al, bl`, but preserve the pointer lower byte
+	xchg	al, bl		; `mov al, bl`, but preserve the pointer lower byte
 	repne	scasb		; sets rcx to be the index of 
 	not 	rcx			; rcx = -rcx - 1
 
