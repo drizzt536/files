@@ -47,6 +47,27 @@ _next_scancode: ; u8 next_scancode(void _, u32 keyring_read);
 	inc 	byte [rel keyring_read]
 	ret
 
+;; clobbers: ax, rbx
+keyring_has_scancode: ; bool keyring_has_scancode(u8 ah /* scancode */);
+	movzx	ebx, byte [rel keyring_read]
+.loop:
+	jce 	bl, byte [rel keyring_write], .ret_false
+
+	mov 	al, byte [keyring + ebx]
+	inc 	bl
+
+	jce 	al, ah, .ret_true
+	jmp 	.loop
+.ret_false:
+	xor 	al, al
+	ret
+.ret_true:
+	;; `mov al, 1`, but update ZF
+	xor 	al, al
+	inc 	al
+	ret
+
+
 %macro clear_keyring 0
 	mov 	word [rel keyring_rw_word], 0
 %endm

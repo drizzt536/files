@@ -353,6 +353,16 @@ kernel_entry:
 	mov 	dword [VGA_LOC(6, 17)], DVGA_DWORD('co')
 	mov 	dword [VGA_LOC(6, 19)], DVGA_DWORD('de')
 
+	mov 	ah, 0x0E	;; backspace
+	call	keyring_has_scancode
+	mov 	al, 0x75	;; `jmp` byte 1
+	mov 	bl, 0xEB	;; `jnz` byte 1
+	cmovnz	ax, bx		;; u8 b = keyring_has_scancode(0x0E) ? 0xEB : 0x75;
+
+	;; conditionally change from a conditional jump to unconditional
+	mov 	byte [.rand@loop@jump], al
+	;; fallthrough
+.before_mul_loop:
 	clear_keyring
 .mul_loop:
 	call	next_scancode	;; block until the next keypress
@@ -425,6 +435,7 @@ kernel_entry:
 
 	timewait_mac8	1, 0
 	dec 	bpl
+.rand@loop@jump:
 	jnz  	.rand@loop
 
 	timewait_mac8	7, 0
