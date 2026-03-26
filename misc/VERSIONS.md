@@ -1,48 +1,50 @@
 ## Program Versions
 
-- 7zip: 25.01
-- Arduino CLI: 1.3.1 (08ff7e2b, 2025-08-28)
-- Brave: 1.85.118 (Chromium: 143.0.7499.169)
+- 7zip: 26.00
+- Arduino CLI: 1.4.1 (e39419312, 2026-01-19)
+- Brave: 1.88.136 (Chromium: 146.0.7680.164)
 - C/C++/GAS/Fortran: MinGW-w64 GCC 15.2.0
-- Chocolatey: 2.6.0
-- Deno: 2.6.4
-- dotnet: 8.0.416
+- Chocolatey: 2.7.0
+- Deno: 2.7.7
+- dotnet: 8.0.419
 - Emacs: 30.1.0
-- FFmpeg: 8.0.1
-- Go: 1.25.5
-- Git: 2.52.0.windows.1
-- Ghidra: 12.0
-- Ghostscript: 10.06.0
+- FFmpeg: 8.1
+- Go: 1.26.1
+- Git: 2.53.0.windows.2
+- Ghidra: 12.0.4
+- Ghostscript: 10.07.0
 - GTK Runtime: 3.24.31
-- Graphviz: 14.1.1 (20251213.1925)
+- Graphviz: 14.1.4 (20260321.0153)
 - Haskell GHC: 9.8.2
 - Inkscape: 1.4.3 (0d15f75, 2025-12-25)
 - Intel FPGA Lite: 24.1std.0
-- ImageMagick: 7.1.2-10 Q16-HDRI f4ce623:20251207
+- ImageMagick: 7.1.2-18 Q16-HDRI d4e4b2b:20260322
 - Java: OpenJDK 25 2025-09-16
 - LaTeX: MiKTeX-pdfTeX 4.21 (MiKTeX 25.3)
-- MatLab: R2025b Update 2
-- MinGW-w64 devkit: 2.5.0
-- MongoDB: 8.2.3
+- MatLab: R2025b Update 4
+- MinGW-w64 devkit: 2.6.0
+- MongoDB: 8.2.6
 - NASM: 3.01 (Oct 10, 2025)
-- NodeJS: 25.2.1
-- OpenSSL: 3.6.0 (Oct 1, 2025)
+- NodeJS: 25.8.2
+- OpenSSL: 3.6.1 (Jan 27, 2026)
 - pdftk: 2.02
-- PowerShell: 7.5.4
-- Python: 3.13.11 & 3.14.2
-	- IPython: 9.9.0
-	- numpy: 2.2.6 & 2.4.0
-	- scipy: 1.16.3
+- PowerShell: 7.6.0
+- Python: 3.13.11 & 3.14.3
+	- IPython: 9.11.0
+	- numpy: 2.4.3
+	- scipy: 1.17.1
 	- sympy: 1.14.0
-- QEMU: 10.2.0 (v10.2.0-12105-g0f12d445bd)
+- QEMU: 10.2.91 (v11.0.0-rc1-12118-gdc60f95ca8)
+- qpdf: 12.3.2
 - Roslyn: 4.6.0-3.23259.8 (c3cc1d0c) (Visual Studio version)
-- Ruby: 3.4.8 (2025-12-17 revision 995b59f666)
-- Rust: 1.92.0 (ded5c06cf 2025-12-08)
-- RustDesk: 1.4.4 (2025-12-19)
+- Ruby: 3.4.9 (2026-03-11 revision 76cca827ab)
+- Rust: 1.94.0 (4a4ef493e 2026-03-02)
+- RustDesk: 1.4.6 (2026-03-05)
 - SumatraPDF: 3.5.2
 - Sublime Text: UNREGISTERED. Stable Channel, Build 4200
 - TI Connect CE: 6.0.1.344
-- VirtualBox: 7.2.4
-- Windows Terminal: 1.23.12811.0
+- VirtualBox: 7.2.6
+- Windows Terminal: 1.24.10621.0
+- Wireshark: 4.6.4
 - Wolfram Language Engine: 14.3.0
 - WolframScript: 1.13.0 (file version 1.3.30900.8618)
