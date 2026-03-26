@@ -316,8 +316,8 @@ kernel_entry:
 
 	mov 	dword [VGA_LOC(3,  1)], DVGA_DWORD('En')
 	mov 	dword [VGA_LOC(3,  3)], DVGA_DWORD('te')
-	mov 	dword [VGA_LOC(3,  5)], DVGA_DWORD('r ')
-	mov 	dword [VGA_LOC(3,  7)], DVGA_DWORD(': ')
+	mov 	byte  [VGA_LOC(3,  5)], 'r'
+	mov 	byte  [VGA_LOC(3,  7)], ':'
 	mov 	dword [VGA_LOC(3,  9)], DVGA_DWORD('co')
 	mov 	dword [VGA_LOC(3, 11)], DVGA_DWORD('nt')
 	mov 	dword [VGA_LOC(3, 13)], DVGA_DWORD('in')
@@ -326,17 +326,16 @@ kernel_entry:
 	mov 	dword [VGA_LOC(4,  1)], DVGA_DWORD('In')
 	mov 	dword [VGA_LOC(4,  3)], DVGA_DWORD('se')
 	mov 	dword [VGA_LOC(4,  5)], DVGA_DWORD('rt')
-	mov 	dword [VGA_LOC(4,  7)], DVGA_DWORD(': ')
+	mov 	byte  [VGA_LOC(4,  7)], ':'
 	mov 	dword [VGA_LOC(4,  9)], DVGA_DWORD('ra')
 	mov 	dword [VGA_LOC(4, 11)], DVGA_DWORD('nd')
 	mov 	dword [VGA_LOC(4, 13)], DVGA_DWORD('om')
 	mov 	dword [VGA_LOC(4, 15)], DVGA_DWORD('iz')
 	mov 	byte  [VGA_LOC(4, 17)], 'e'
 
-	mov 	dword [VGA_LOC(5,  1)], DVGA_DWORD('1-')
-	mov 	dword [VGA_LOC(5,  3)], DVGA_DWORD('9 ')
-	mov 	dword [VGA_LOC(5,  5)], DVGA_DWORD('  ')
-	mov 	dword [VGA_LOC(5,  7)], DVGA_DWORD(': ')
+	mov 	dword [VGA_LOC(5,  1)], DVGA_DWORD('0-')
+	mov 	byte  [VGA_LOC(5,  3)], '9'
+	mov 	byte  [VGA_LOC(5,  7)], ':'
 	mov 	dword [VGA_LOC(5,  9)], DVGA_DWORD('mu')
 	mov 	dword [VGA_LOC(5, 11)], DVGA_DWORD('lt')
 	mov 	dword [VGA_LOC(5, 13)], DVGA_DWORD('ip')
@@ -344,10 +343,10 @@ kernel_entry:
 
 	mov 	dword [VGA_LOC(6,  1)], DVGA_DWORD('ot')
 	mov 	dword [VGA_LOC(6,  3)], DVGA_DWORD('he')
-	mov 	dword [VGA_LOC(6,  5)], DVGA_DWORD('r ')
-	mov 	dword [VGA_LOC(6,  7)], DVGA_DWORD(': ')
+	mov 	byte  [VGA_LOC(6,  5)], 'r'
+	mov 	byte  [VGA_LOC(6,  7)], ':'
 	mov 	dword [VGA_LOC(6,  9)], DVGA_DWORD('ad')
-	mov 	dword [VGA_LOC(6, 11)], DVGA_DWORD('d ')
+	mov 	byte  [VGA_LOC(6, 11)], 'd'
 	mov 	dword [VGA_LOC(6, 13)], DVGA_DWORD('sc')
 	mov 	dword [VGA_LOC(6, 15)], DVGA_DWORD('an')
 	mov 	dword [VGA_LOC(6, 17)], DVGA_DWORD('co')

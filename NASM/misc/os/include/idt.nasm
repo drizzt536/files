@@ -86,8 +86,20 @@ idt_hfn_default:
 keyring_scancode_map:
 %assign i 0
 %rep 256
-	%if i == 0x36
-		db 0x2A
+	%if i == 0x01
+		db 0x39
+	%elif i == 0x1C
+		db 0x35
+	%elif i == 0x1D
+		db 0x37
+	%elif i == 0x2A
+		db 0x36
+	%elif i == 0x35
+		db 0x1C
+	%elif i == 0x37
+		db 0x1D
+	%elif i == 0x39
+		db 0x01
 	%elif i == 0x3A
 		db 0x00
 	%elif i == 0x45
@@ -108,6 +120,8 @@ keyring_scancode_map:
 		db 0x06
 	%elif i == 0x4D
 		db 0x07
+	%elif i == 0x4E
+		db 0x2A
 	%elif i == 0x4F
 		db 0x02
 	%elif i == 0x50
@@ -118,14 +132,28 @@ keyring_scancode_map:
 		db 0x0B
 	%elif i == 0x53
 		db 0x34
-	%elif i == 0x54
-		db 0x6C
+	%elif i == 0x57
+		db 0x48
+	%elif i == 0x58
+		db 0x49
+	%elif i == 0x81
+		db 0xB9
+	%elif i == 0x9C
+		db 0xB5
+	%elif i == 0x9D
+		db 0xB7
 	%elif i == 0xAA
-		db 0x2A
+		db 0x36
+	%elif i == 0xB5
+		db 0x9C
 	%elif i == 0xB6
-		db 0x2A
+		db 0x36
+	%elif i == 0xB7
+		db 0x9D
+	%elif i == 0xB9
+		db 0x81
 	%elif i == 0xBA
-		db 0x2A
+		db 0x36
 	%elif i == 0xC5
 		db 0x45
 	%elif i == 0xC6
@@ -144,6 +172,8 @@ keyring_scancode_map:
 		db 0x86
 	%elif i == 0xCD
 		db 0x87
+	%elif i == 0xCE
+		db 0xAA
 	%elif i == 0xCF
 		db 0x82
 	%elif i == 0xD0
@@ -154,8 +184,10 @@ keyring_scancode_map:
 		db 0x8B
 	%elif i == 0xD3
 		db 0xB4
-	%elif i == 0xD4
-		db 0xEC
+	%elif i == 0xD7
+		db 0xC8
+	%elif i == 0xD8
+		db 0xC9
 	%elif (i | 80h) == 0x80 || (i | 80h) == 0xD5 || (i | 80h) == 0xD6 || \
 			0xD9 <= (i | 80h) && (i | 80h) <= 0xFF
 		;; these scancodes don't exist. just map them all to 0.
@@ -176,53 +208,53 @@ keyring_extended_scancode_map:
 %assign i 16
 %rep 256
 	%if i == 0x10
-		db 0x65
+		db 0x56
 	%elif i == 0x19
-		db 0x66
+		db 0x57
 	%elif i == 0x1C
-		db 0x1C
-	%elif i == 0x1D
-		db 0x1D
-	%elif i == 0x20
-		db 0x67
-	%elif i == 0x22
-		db 0x68
-	%elif i == 0x24
-		db 0x69
-	%elif i == 0x2E
-		db 0x6A
-	%elif i == 0x30
-		db 0x6B
-	%elif i == 0x35
 		db 0x35
+	%elif i == 0x1D
+		db 0x37
+	%elif i == 0x20
+		db 0x58
+	%elif i == 0x22
+		db 0x59
+	%elif i == 0x24
+		db 0x5A
+	%elif i == 0x2E
+		db 0x5B
+	%elif i == 0x30
+		db 0x5C
+	%elif i == 0x35
+		db 0x1C
 	%elif i == 0x37
-		db 0x6C
+		db 0x54
 	%elif i == 0x38
 		db 0x38
 	%elif i == 0x47
-		db 0x60
+		db 0x51
 	%elif i == 0x48
-		db 0x59
+		db 0x4A
 	%elif i == 0x49
-		db 0x5D
+		db 0x4E
 	%elif i == 0x4B
-		db 0x5C
+		db 0x4D
 	%elif i == 0x4D
-		db 0x5A
+		db 0x4B
 	%elif i == 0x4F
-		db 0x61
+		db 0x52
 	%elif i == 0x50
-		db 0x5B
+		db 0x4C
 	%elif i == 0x51
-		db 0x5E
+		db 0x4F
 	%elif i == 0x53
-		db 0x62
+		db 0x3A
 	%elif i == 0x5B
-		db 0x63
+		db 0x47
 	%elif i == 0x5C
-		db 0x63
+		db 0x47
 	%elif i == 0x5D
-		db 0x64
+		db 0x50
 		%exitrep
 	%else
 		db 0
@@ -360,12 +392,11 @@ keyring_extended_scancode_map:
 		push	rcx
 		push	rdx
 
-		mov 	dx, IOPT_PS2_KBD_D
-		in  	al, dx
+		inb 	IOPT_PS2_KBD_D
 
 		jce 	byte [rel keyring_escape], KEYRING_ESC_EXT, .process_extended
-		jce 	byte [rel keyring_escape], KEYRING_ESC_PB1, .pause_break_byte2
 		jce 	byte [rel keyring_escape], KEYRING_ESC_PB2, .pause_break_byte3
+		jce 	byte [rel keyring_escape], KEYRING_ESC_PB1, .pause_break_byte2
 
 		jce 	al, 0xE1, .pause_break_byte1 ;; if it starts with 0xE1, then it is definitely a pause break
 
@@ -392,8 +423,8 @@ keyring_extended_scancode_map:
 		jtz 	al, al, .keypress_exit_unescape
 		jmp 	.write_to_keyring
 	.process_extended@release:
-		mov 	bl, 0x5F	;; flattened insert make code
-		cmp 	al, 0xD2	;; insert break code
+		mov 	bl, 0x53	;; flattened insert keycode
+		cmp 	al, 0xD2	;; insert PS/2 break code
 		cmove	ax, bx
 		je  	.write_to_keyring
 
@@ -430,8 +461,8 @@ keyring_extended_scancode_map:
 		jmp 	.keypress_exit
 	.pause_break_byte3:	;; 45 | C5
 		cmp 	al, 0xC5
-		mov 	al, 0x6D
-		mov 	dl, 0xED
+		mov 	al, 0x55
+		mov 	dl, 0xD5
 		cmove	eax, edx
 
 		jmp 	.write_to_keyring
