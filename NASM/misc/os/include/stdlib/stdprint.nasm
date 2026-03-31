@@ -35,7 +35,7 @@ fill_scr: ; void fill_scr(u16 vga_char);
 ;; returns an error code and the new cursor position
 _print_u8hex: ; err, u16 print_u8hex(u16 ax);
 	mov 	edi, dword [rel cursor_pos]
-	lea 	edi, [VGA_BUF + 2*rdi]
+	lea 	edi, [VGA_BUF + 2*edi]
 	;; print in big endian, so upper nibble first
 .high:
 	movzx	eax, ax					;; zero the upper 48 bits for later use
@@ -47,10 +47,10 @@ _print_u8hex: ; err, u16 print_u8hex(u16 ax);
 	cmp 	al, '9'							;     'A' + x - 10
 	cmova	eax, ebx						; );
 
-	mov 	byte [rdi], al
+	mov 	byte [edi], al
 
 	jtz 	ah, ah, .low					; if (color != 0x00)
-	mov 	byte [rdi + 1], ah				;     vga_buf[i + 1] = color;
+	mov 	byte [edi + 1], ah				;     vga_buf[i + 1] = color;
 .low:
 	add 	rdi, 2
 
@@ -194,4 +194,138 @@ print_u64hex: ; err, u16 print_u64hex(u64 x, u8 color);
 
 	mov 	ax, 2
 	jmp 	add_cursor
+
+%assign ASCII_BEL	`\x07`	;;  7
+%assign ASCII_BS	`\b`	;;  8
+%assign ASCII_TAB	`\t`	;;  9
+%assign ASCII_LF	`\n`	;; 10
+%assign ASCII_VT	`\v`	;; 11
+%assign ASCII_FF	`\f`	;; 12
+%assign ASCII_CR	`\r`	;; 13
+%assign ASCII_DEL	`\x7F`	;; 127
+
+;; not actually ASCII. non-printable codes
+;; See ./docs/keycode-to-ASCII.txt for more.
+%assign enum_idx 0x80
+
+enum_next	ASCII_ESC				;; escape
+enum_next	ASCII_CTRL				;; control
+enum_next	ASCII_ALT				;; alt
+enum_next	ASCII_DELETE			;; delete
+enum_next	ASCII_SHIFT				;; shift
+enum_next	ASCII_PGUP				;; page up
+enum_next	ASCII_PGDN				;; page down
+enum_next	ASCII_CTX				;; context menu
+enum_next	ASCII_WIN				;; windows
+enum_next	ASCII_UP				;; up arrow
+enum_next	ASCII_RIGHT				;; right arrow
+enum_next	ASCII_DOWN				;; down arrow
+enum_next	ASCII_LEFT				;; left arrow
+enum_next	ASCII_HOME
+enum_next	ASCII_END
+enum_next	ASCII_SYSRQ				;; PrtScr/SysRq
+enum_next	ASCII_INS				;; insert
+enum_next	ASCII_PRTSCR			;; PrtScr/SysRq
+enum_next	ASCII_F1
+enum_next	ASCII_F2
+enum_next	ASCII_F3
+enum_next	ASCII_F4
+enum_next	ASCII_F5
+enum_next	ASCII_F6
+enum_next	ASCII_F7
+enum_next	ASCII_F8
+enum_next	ASCII_F9
+enum_next	ASCII_F10
+enum_next	ASCII_F11
+enum_next	ASCII_F12
+enum_next	ASCII_BREAK
+enum_next	ASCII_MEDIA_PT			;; multimedia previous track
+enum_next	ASCII_MEDIA_NT			;; multimedia next track
+enum_next	ASCII_NMLK				;; num lock
+enum_next	ASCII_MEDIA_MUTE		;; multimedia mute
+enum_next	ASCII_MEDIA_PAUSEPLAY	;; multimedia pause/play
+enum_next	ASCII_MEDIA_STOP		;; multimedia stop
+enum_next	ASCII_MEDIA_VOLDOWN		;; multimedia volume down
+enum_next	ASCII_MEDIA_VOLUP		;; multimedia volume up
+enum_next	ASCII_SCLK				;; scroll lock
+
+%pragma ignore variable
+putchar_cr_table:
+	times 5 db 0
+
+%pragma ignore variable
+putchar_nl_table:
+; 1-24, 0
+%assign i 1
+%rep 25
+	times 5 db i
+	%assign i i + 1
+%endrep
+	times 5 db 0
+%undef i
+
+;; clobbers: rax, rbx, rcx, dx
+putchar: ; err, u16 putchar(u16 ax);
+	mov 	ecx, dword [rel cursor_pos]
+
+	;; quickly jump to the normal part if it is not a control character
+	jcae 	al, ' ', .normal_char
+
+	jce 	al, `\n`, .newline
+	jce 	al, `\b`, .backspace
+	jce 	al, `\r`, .carriage_return
+	jce 	al, `\t`, .tab
+	jce 	al, `\x07`, .bell
+	jce 	al, `\f`, cls
+	jce 	al, `\v`, .vtab
+
+.normal_char:
+	lea 	ecx, [VGA_BUF + 2*ecx]
+
+	mov 	byte [ecx], al
+	jtz 	ah, ah, inc_cursor
+	mov 	byte [ecx + 1], ah
+	jmp 	inc_cursor
+.carriage_return:
+	shr 	ecx, 4
+	mov 	cl, byte [putchar_cr_table + ecx]
+	imul	eax, ecx, TERM_COLS
+	jmp 	move_cursor
+.newline:
+	shr 	ecx, 4
+	mov 	cl, byte [putchar_nl_table + ecx]
+	imul	eax, ecx, TERM_COLS
+	jmp 	move_cursor
+.backspace:
+	mov 	bx, TERM_SIZE - 1
+	dec 	cx
+	cmovs	cx, bx
+
+	mov 	byte [VGA_BUF + 2*ecx], ' '
+	jtz 	ah, ah, .backspace@end
+	mov 	byte [VGA_BUF + 2*ecx + 1], ah
+.backspace@end:
+	mov 	eax, ecx
+	jmp 	move_cursor
+.tab:
+	lea 	eax, [ecx + 4]
+	and 	eax, ~0b11
+	lea 	ecx, [eax - TERM_SIZE]
+	cmp 	eax, TERM_SIZE
+	cmovae	eax, ecx
+	jmp 	move_cursor
+.bell:
+	in  	al, IOPT_SYSCTRLB		;; enable speaker
+	or  	al, 0b11
+	out 	IOPT_SYSCTRLB, al
+	timewait_mac8	4, 1
+	in  	al, IOPT_SYSCTRLB
+	and 	al, ~0b11
+	out 	IOPT_SYSCTRLB, al
+	ret
+.vtab:
+	;; go down one line without returning to the start of the line.
+	mov 	ax, TERM_COLS
+	jmp 	add_cursor
+
 %endif ; %ifndef STD_PRINT_NASM

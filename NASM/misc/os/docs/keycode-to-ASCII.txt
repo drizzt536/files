@@ -5,7 +5,7 @@ the kernel/application will interpret them in some other way.
 this does not cover what to do for non-printable characters like shift, ctrl, f2, etc.
 
 code	basic	shift	comment
-0x00 => none	none	doesn't exist
+0x00 => '\0'	'\0'	doesn't exist
 0x01 => ' '		' '		shift has no effect
 0x02 => '1'		'!'
 0x03 => '2'		'@'
@@ -58,47 +58,55 @@ code	basic	shift	comment
 0x32 => 'm'		'M'
 0x33 => ','		'<'
 0x34 => '.'		'>'
-0x35 => '\r\n'	'\r\n'	shift has no effect
-0x36 => none	none	not printable: shift
-0x37 => none	none	not printable: ctrl
-0x38 => none	none	not printable: alt
-0x39 => none	none	not printable: ESC
-0x3A => none	none	not printable: DELETE (move forwards and backspace)
-0x3B => none	none	not printable: f1
-0x3C => none	none	not printable: f2
-0x3D => none	none	not printable: f3
-0x3E => none	none	not printable: f4
-0x3F => none	none	not printable: f5
-0x40 => none	none	not printable: f6
-0x41 => none	none	not printable: f7
-0x42 => none	none	not printable: f8
-0x43 => none	none	not printable: f9
-0x44 => none	none	not printable: f10
-0x45 => none	none	not printable: num lock
-0x46 => none	none	not printable: scroll lock
-0x47 => none	none	not printable: windows
-0x48 => none	none	not printable: f11
-0x49 => none	none	not printable: f12
-0x4A => none	none	not printable: UP
-0x4B => none	none	not printable: RIGHT
-0x4C => none	none	not printable: DOWN
-0x4D => none	none	not printable: LEFT
-0x4E => none	none	not printable: PgUp
-0x4F => none	none	not printable: PgDn
-0x50 => none	none	not printable: context menu
-0x51 => none	none	not printable: HOME
-0x52 => none	none	not printable: END
-0x53 => none	none	not printable: INSERT
-0x54 => none	none	not printable: PrtSc/SysRq
-0x55 => none	none	not printable: pause break
-0x56 => none	none	not printable: multimedia prev track
-0x57 => none	none	not printable: multimedia next track
-0x58 => none	none	not printable: multimedia mute
-0x59 => none	none	not printable: multimedia pause/play
-0x5A => none	none	not printable: multimedia stop
-0x5B => none	none	not printable: multimedia volume down
-0x5C => none	none	not printable: multimedia volume up
+0x35 => '\n'	'\n'	shift has no effect
+0x36 => 0x84			not printable: shift
+0x37 => 0x81			not printable: ctrl
+0x38 => 0x82			not printable: alt
+0x39 => 0x80			not printable: ESC
+0x3A => 0x83			not printable: DELETE (move forwards and backspace)
+0x3B => 0x91			not printable: f1
+0x3C => 0x92			not printable: f2
+0x3D => 0x93			not printable: f3
+0x3E => 0x94			not printable: f4
+0x3F => 0x95			not printable: f5
+0x40 => 0x96			not printable: f6
+0x41 => 0x97			not printable: f7
+0x42 => 0x98			not printable: f8
+0x43 => 0x99			not printable: f9
+0x44 => 0x9A			not printable: f10
+0x45 => 0xA0			not printable: num lock
+0x46 => 0xC0			not printable: scroll lock
+0x47 => 0x88			not printable: windows
+0x48 => 0x9B			not printable: f11
+0x49 => 0x9C			not printable: f12
+0x4A => 0x89			not printable: UP
+0x4B => 0x8A			not printable: RIGHT
+0x4C => 0x8B			not printable: DOWN
+0x4D => 0x8C			not printable: LEFT
+0x4E => 0x85			not printable: PgUp
+0x4F => 0x86			not printable: PgDn
+0x50 => 0x87			not printable: context menu
+0x51 => 0x8D			not printable: HOME
+0x52 => 0x8E			not printable: END
+0x53 => 0x90			not printable: INSERT
+0x54 => 0x8F			not printable: PrtSc/SysRq
+0x55 => 0x9D			not printable: break
+0x56 => 0x9E			not printable: multimedia prev track
+0x57 => 0x9F			not printable: multimedia next track
+0x58 => 0xA1			not printable: multimedia mute
+0x59 => 0xA2			not printable: multimedia pause/play
+0x5A => 0xA3			not printable: multimedia stop
+0x5B => 0xA4			not printable: multimedia volume down
+0x5C => 0xA5			not printable: multimedia volume up
 
-5D-7F don't exist
+keycodes 5D-7F don't exist
 
-everything above 0x7F is a release code, so they don't print anything ever.
+output codes A6-BF and C1-FF aren't used.
+
+keycodes above 0x7F are release codes, so they don't print anything.
+the only release codes that do something is ctrl, alt, and windows.
+
+output codes above 0x7F are not actually ASCII.
+they just indicate that the keycode wasn't a printable key
+NOTE: keyboard flags
+

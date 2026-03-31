@@ -10,6 +10,8 @@ param (
 	[Parameter(Mandatory=$true)] [string] $outfile
 )
 
+# TODO: figure out some kind of syntax to declare the existence of macros in the standard library
+
 write-host -noNewline "`r`e[0K    running"
 # preprocess only. all the includes are in the same folder.
 # remove instruction lines, sub-label lines, %line lines, and blank lines
@@ -34,7 +36,7 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 		$lines.insert($i, "") # insert empty line
 		$i++
 
-		$lines[$i] = "; " + $matches[1]
+		$lines[$i] = ";; " + $matches[1]
 	}
 	elseif ($line -match '^\[\s*pragma\s+ignore\s+NOTE:\s+(.+)\s*\]$') {
 		[void] $notelines.add($matches[1])
@@ -47,7 +49,7 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 	}
 	elseif ($line -match '^(\w+):$') {
 		$fn = $matches[1]
-		$lines[$i] = "dq $fn" + " "*($maxlen - $fn.length) + "; $fn_idx"
+		$lines[$i] = "dq $fn" + " "*($maxlen - $fn.length) + ";; $fn_idx"
 
 		if ($notelines.count -ne 0) {
 			$lines[$i] += " *($($notelines -join ", "))"
@@ -62,13 +64,18 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 
 		$fn_idx++
 	}
+	elseif ($line -match '^(\w+) ') {
+		# probably a multiline macro. just ignore it.
+		$lines.removeAt($i)
+		$i--
+	}
 	else {
 		# this should be unreachable, and likely means the file was processed wrong up to this point.
 		throw "unreachable"
 	}
 }
 
-"dq kernel_entry ; 0th entry, for the bootloader. zeroed in the kernel.", "",
+"dq kernel_entry ;; 0th entry, for the bootloader. zeroed in the kernel.", "",
 	";; stdlib function table", $lines > $outfile
 
 write-host "`r`e[0K    done"

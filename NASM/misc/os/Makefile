@@ -1,5 +1,5 @@
 # required programs:
-#  - NASM (2.16.02+)
+#  - NASM (3.00+)
 #  - QEMU
 #  - PowerShell 7
 #  - MinGW | MSYS2 (make, stat, awk, cat, printf, echo, rm)
@@ -8,7 +8,7 @@
 # NOTE: this won't work on linux
 
 # these are the arguments that it makes sense to change, unlike the drive input
-QEMU_ARGS := -full-screen -cpu max
+QEMU_ARGS := -full-screen -cpu max -audiodev dsound,id=snd0 -machine pcspk-audiodev=snd0
 
 # physical drive index to flash the OS to
 PDRV_IDX := none

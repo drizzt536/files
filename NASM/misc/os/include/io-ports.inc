@@ -11,8 +11,10 @@
 %assign IOPT_PIT_D2		0x41	;; PIT channel 0 data port (obsolete DRAM refresh timer)
 %assign IOPT_PIT_D3		0x42	;; PIT channel 0 data port (PC speaker freq.)
 %assign IOPT_PIT		0x43	;; PIT command port
-%assign IOPT_PS2_KBD_D	0x60	;; PS/2 keyboard data line (for scan codes)
-%assign IOPT_PS2_KBD	0x64	;; PS/2 keyboard command port
+%assign IOPT_PS2_KBD_D	0x60	;; PS/2 keyboard data line (for scan codes). System control port A
+%assign IOPT_SYSCTRLB	0x61	;; System control port B
+%assign IOPT_SYSCTRLC	0x61	;; System control port C
+%assign IOPT_PS2_KBD	0x64	;; PS/2 keyboard command port.
 %assign IOPT_CMOS		0x70	;; port used for NMI enable/disable
 %assign IOPT_POST		0x80	;; Power On Self Test
 %assign IOPT_A20		0x92	;; fast A20 line to allow memory higher than 1 MiB

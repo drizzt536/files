@@ -9,7 +9,7 @@ sources:
 id 1 bootloader missing features error
 
        30        20        10        00    // bit number, if multiple of 10
-	   10987654321098765432109876543210    // bit number modulo 10
+       10987654321098765432109876543210    // bit number modulo 10
 mask = 01110110111110000011001000001011b
         │││ ││ │││││     ││  │     │ │└─ bit 00 -- SSE3
         │││ ││ │││││     ││  │     │ └── bit 01 -- PCLMULQDQ

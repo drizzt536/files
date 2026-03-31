@@ -7,6 +7,7 @@ org KERNEL_START
 %include "io-ports.inc"
 %include "jtest.inc"
 %include "jcmp.inc"
+%include "reg.inc"
 
 ;; these segment offsets shouldn't change.
 %assign GDT_NULL	0x00
@@ -104,7 +105,7 @@ org KERNEL_START
 %assign VGA_BUF					0xb8000
 %assign VGA_BUF_END				VGA_BUF + 2*TERM_SIZE
 %define VGA_POS(row, col)		%hex((TERM_COLS*(row) + (col)) % TERM_SIZE)
-%define VGA_LOC(row, col)		%hex(VGA_BUF + (TERM_COLS*(row) + (col)) % TERM_SIZE * 2)
+%define VGA_ADDR(row, col)		%hex(VGA_BUF + 2*VGA_POS(row, col))
 
 %define BYTES2WORD(b0, b1) (b0 | b1 << 8)
 %define BYTES2DWORD(b0, b1, b2, b3) (b0 | b1 << 8 | b2 << 16 | b3 << 24)
@@ -114,7 +115,7 @@ org KERNEL_START
 %define VGA_WORD(clr, s)  (BYTES2WORD(%substr(s, 1, 1), clr))
 %define VGA_DWORD(clr, s) (BYTES2DWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr))
 %define VGA_QWORD(clr, s) (BYTES2DWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr), \
-							 BYTES2DWORD(%substr(s, 3, 1), clr, %substr(s, 4, 1), clr))
+							BYTES2DWORD(%substr(s, 3, 1), clr, %substr(s, 4, 1), clr))
 
 %define DVGA_WORD(s) (VGA_WORD(VGA_DEFAULT, s))
 %define DVGA_DWORD(s) (VGA_DWORD(VGA_DEFAULT, s))
@@ -135,8 +136,7 @@ org KERNEL_START
 		loop	%%loop
 	%else
 		dec 	%1
-		test	%1, %1
-		jnz 	%%loop
+		jtnz	%1, %1, %%loop
 	%endif
 %endm
 
@@ -162,8 +162,7 @@ org KERNEL_START
 %endif
 %%loop:
 	mov 	%3, %4 [rel isr_timer]
-	cmp 	%3, %1	;; isr timer wrap value. probablly will be imm8
-	jb  	%%loop
+	jcb 	%3, %1, %%loop
 
 	reset_isr_timer
 %endm
@@ -262,9 +261,28 @@ org KERNEL_START
 	jnc 	%%loop
 %endm
 
+%macro rdrand_nzmac 1
+%%loop:
+	rdrand	%1
+	jz  	%%loop
+%endm
+
 %macro _putchar_colored 3
 	;; _putchar_colored row, col, val
-	mov		[rel VGA_LOC(%1, %2)], %3	;; VGA text buffer
+	mov		[rel VGA_ADDR(%1, %2)], %3	;; VGA text buffer
+%endm
+
+%assign enum_idx 0
+%macro enum_next 1
+	%assign %1 enum_idx
+	%assign enum_idx enum_idx + 1
+%endm
+
+%macro enum_set 1-*
+	%rep %0
+		enum_next %1
+		%rotate 1
+	%endrep
 %endm
 	
 %endif ; %ifndef KERNEL_INC

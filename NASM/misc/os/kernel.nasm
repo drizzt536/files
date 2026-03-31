@@ -31,19 +31,19 @@ proc_keys_until_timeout:
 	get_isr_timer8_mod 19
 	jae 	.ret
 
-	call	get_scancode
+	call	get_keycode
 	jz  	.loop
 
-	jtnz	al, 1 << 7, .loop		;; skip the release scancodes
+	jtnz	al, 1 << 7, .loop		;; skip the release keycodes
 	jce 	al, 29h, .toggle_cursor	;; backtick
-	jce 	al, 01h, .reset_cursor	;; escape
-	jce 	al, 59h, .arrow_up
-	jce 	al, 5Ah, .arrow_right
-	jce 	al, 5Bh, .arrow_down
-	jce 	al, 5Ch, .arrow_left
+	jce 	al, 39h, .reset_cursor	;; escape
+	jce 	al, 4Ah, .arrow_up
+	jce 	al, 4Bh, .arrow_right
+	jce 	al, 4Ch, .arrow_down
+	jce 	al, 4Dh, .arrow_left
 	jce 	al, 3Bh, .f1
 	jce 	al, 3Ch, .f2
-.log_scancode:
+.log_keycode:
 	mov 	ah, VGA_DEFAULT
 	call	print_u8hex
 	jmp 	.loop
@@ -55,14 +55,14 @@ proc_keys_until_timeout:
 	call	move_cursor
 	jmp 	.loop
 .arrow_up:
-	mov 	ax, -80
+	mov 	ax, -TERM_COLS
 	call	add_cursor
 	jmp 	.loop
 .arrow_right:
 	call	inc_cursor
 	jmp 	.loop
 .arrow_down:
-	mov 	ax, 80
+	mov 	ax, TERM_COLS
 	call	add_cursor
 	jmp 	.loop
 .arrow_left:
@@ -91,10 +91,13 @@ kernel_entry:
 	bts 	eax, 18		;; set the OSXSAVE bit for AVX to work.
 	mov 	cr4, rax
 
-	;; turn on AVX and AVX2
+	;; turn on AVX, AVX2, and SSE
+	;; for AVX512, also set bits 5, 6, and 7.
+	;; 5=OPMASK (k-mask registers) 6=ZMM_Hi256, 7=Hi16_ZMM (ZMM16-ZMM31)
+	;; NOTE: bit 19 is for APX. Bits 17 and 18 are for AMX.
 	xor 	ecx, ecx
 	xgetbv				;; XCR0
-	or  	al, 111b	;; AVX, SSE, x87 bits
+	or  	al, 110b	;; AVX and SSE bits
 	xsetbv				;; Save back to XCR0
 
 	;; set PD0 entries 3 through 123 at 0x7000-0x7FFFF
@@ -123,10 +126,21 @@ kernel_entry:
 .stdlib_avail:
 	;; NOTE: calling stdlib functions before this point is not defined
 	;;       since paging and AVX isn't fully set up before this.
+	;; NOTE: stdlib functions that require interrupts still won't work yet.
 	call	cls				;; set to the default colors
 
 	mov 	al, CURS_UNDERLINE
 	call	set_cursor
+
+	;; initialize the PRNG state
+	rdrand_nzmac rax
+	rdrand_nzmac rbx
+	rdrand_nzmac rcx
+	rdrand_nzmac rdx
+	mov 	[pr_rand_state.0], rax
+	mov 	[pr_rand_state.1], rax
+	mov 	[pr_rand_state.2], rax
+	mov 	[pr_rand_state.3], rax
 
 	;; set up the TSS memory section
 	mov 	eax, TSS_BASE	;; dst = TSS_BASE
@@ -235,18 +249,99 @@ kernel_entry:
 	;; TODO: select the master on the primary disk
 	;;       it should already be set to that, but do it anyway.
 .start:
+	call	next_keycode
+	call	keycode_to_ascii
+
+	jce 	al, ASCII_CTRL,		.start
+	jce 	al, ASCII_ALT,		.start
+	jce 	al, ASCII_SHIFT,	.start
+	jce 	al, ASCII_WIN,		.start
+	jce 	al, ASCII_INS,		.insert
+	jce 	al, ASCII_NMLK,		.start
+	jce 	al, ASCII_SCLK,		.start
+
+	jce 	byte [kbd_data], KBD_DATA_CTRL, .ctrl
+	test	byte [kbd_data], KBD_DATA_CTRL | KBD_DATA_ALT | KBD_DATA_WIN
+	jnz 	.start
+
+	;; test regular keys
+	jce 	al, ASCII_HOME,		.home
+	jce 	al, ASCII_UP,		.arrow_up
+	jce 	al, ASCII_RIGHT,	.arrow_right
+	jce 	al, ASCII_DOWN,		.arrow_down
+	jce 	al, ASCII_LEFT,		.arrow_left
+
+	test	al, al
+	js  	.start
+
+	call	putchar
+	jmp 	.start
+.home:
+	mov 	al, `\r`
+	call	putchar
+	jmp 	.start
+.arrow_up:
+	mov 	ax, -TERM_COLS
+	call	add_cursor
+	jmp 	.start
+.arrow_right:
+	call	inc_cursor
+	jmp 	.start
+.arrow_down:
+	;; `add_cursor(TERM_COLS);` would be better, but just demonstrate that this works.
+	mov 	al, `\v`
+	call	putchar
+	jmp 	.start
+.arrow_left:
+	mov 	ax, -1
+	call	add_cursor
+	jmp 	.start
+.insert:
+	mov 	al, byte [cursor_type]
+	xor 	al, CURS_UNDERLINE
+	call	set_cursor
+	jmp 	.start
+.ctrl:
+	jce 	al, 'b', .ctrl_b	;; bell
+	jce 	al, 'l', .ltf		;; LTF
+	jce 	al, 'm', .ctrl_m	;; multiply
+	jce 	al, 'r', .rand		;; rand
+	jce 	al, 's', .before_read_sectors
+	jce 	al, 'x', .ctrl_x
+
+	jmp 	.start
+
+.ctrl_x:
+	;; also `call cls`, but this is to demonsrate that this works too.
+	mov 	al, `\f`
+	call	putchar
+	jmp 	.start
+.ctrl_b:
+	mov 	al, `\x07`
+	call	putchar
+	jmp 	.start
+.ctrl_m:
+	call	cls
+	call	hide_cursor
+	mov 	dword [VGA_ADDR(0, 0)], DVGA_DWORD('WA')
+	mov 	dword [VGA_ADDR(0, 2)], DVGA_DWORD('IT')
+	timewait_mac8 50, 1
+	jmp 	.before_mul_loop
+
+.before_read_sectors:
 	sub 	esp, 512	;; allocate space for the sectors to be read into.
 	xor 	r8d, r8d	;; sector_idx = 0;
+	call	cls
 	call	hide_cursor
 
-	mov 	dword [VGA_LOC(24, 65)], DVGA_DWORD('RE')
-	mov 	dword [VGA_LOC(24, 67)], DVGA_DWORD('AD')
-	mov 	dword [VGA_LOC(24, 69)], DVGA_DWORD('IN')
-	mov 	dword [VGA_LOC(24, 71)], DVGA_DWORD('G ')
-	mov 	dword [VGA_LOC(24, 73)], DVGA_DWORD('SE')
-	mov 	dword [VGA_LOC(24, 75)], DVGA_DWORD('CT')
-	mov 	byte  [VGA_LOC(24, 77)], 'O'
-	mov 	dword [VGA_LOC(24, 78)], DVGA_DWORD('RS')
+	mov 	dword [VGA_ADDR(24, 65)], DVGA_DWORD('RE')
+	mov 	dword [VGA_ADDR(24, 67)], DVGA_DWORD('AD')
+	mov 	dword [VGA_ADDR(24, 69)], DVGA_DWORD('IN')
+	mov 	dword [VGA_ADDR(24, 71)], DVGA_DWORD('G ')
+	mov 	dword [VGA_ADDR(24, 73)], DVGA_DWORD('SE')
+	mov 	dword [VGA_ADDR(24, 75)], DVGA_DWORD('CT')
+	mov 	byte  [VGA_ADDR(24, 77)], 'O'
+	mov 	dword [VGA_ADDR(24, 78)], DVGA_DWORD('RS')
 	reset_isr_timer
 .loop@sectors:
 	lea 	eax, [r8d + KERNEL_DISK_SECT]
@@ -275,14 +370,14 @@ kernel_entry:
 	;; read up until one sector after the kernel ends.
 	jcne 	r8b, kernel_size/512 + 1, .loop@sectors
 
-	mov 	dword [VGA_LOC(24, 65)], DVGA_DWORD('  ')
-	mov 	dword [VGA_LOC(24, 67)], DVGA_DWORD('  ')
-	mov 	dword [VGA_LOC(24, 69)], DVGA_DWORD('  ')
-	mov 	dword [VGA_LOC(24, 71)], DVGA_DWORD('  ')
-	mov 	dword [VGA_LOC(24, 73)], DVGA_DWORD('  ')
-	mov 	dword [VGA_LOC(24, 75)], DVGA_DWORD(' D')
-	mov 	byte  [VGA_LOC(24, 77)], 'O'	;; already an O.
-	mov 	dword [VGA_LOC(24, 78)], DVGA_DWORD('NE')
+	mov 	dword [VGA_ADDR(24, 65)], DVGA_DWORD('  ')
+	mov 	dword [VGA_ADDR(24, 67)], DVGA_DWORD('  ')
+	mov 	dword [VGA_ADDR(24, 69)], DVGA_DWORD('  ')
+	mov 	dword [VGA_ADDR(24, 71)], DVGA_DWORD('  ')
+	mov 	dword [VGA_ADDR(24, 73)], DVGA_DWORD('  ')
+	mov 	dword [VGA_ADDR(24, 75)], DVGA_DWORD(' D')
+	mov 	byte  [VGA_ADDR(24, 77)], 'O'	;; already an O.
+	mov 	dword [VGA_ADDR(24, 78)], DVGA_DWORD('NE')
 
 	timewait_mac8	50, 1
 
@@ -300,6 +395,8 @@ kernel_entry:
 	call	cls
 	call	hide_cursor
 
+	;; fallthrough
+.before_mul_loop:
 	xor 	ebp, ebp
 
 	mov 	rax, rbp
@@ -309,55 +406,56 @@ kernel_entry:
 	xor 	ax, ax
 	call	move_cursor
 
-	mov 	dword [VGA_LOC(2,  0)], DVGA_DWORD('KE')
-	mov 	dword [VGA_LOC(2,  2)], DVGA_DWORD('YB')
-	mov 	dword [VGA_LOC(2,  4)], DVGA_DWORD('IN')
-	mov 	dword [VGA_LOC(2,  6)], DVGA_DWORD('DS')
+	mov 	dword [VGA_ADDR(2,  0)], DVGA_DWORD('KE')
+	mov 	dword [VGA_ADDR(2,  2)], DVGA_DWORD('YB')
+	mov 	dword [VGA_ADDR(2,  4)], DVGA_DWORD('IN')
+	mov 	dword [VGA_ADDR(2,  6)], DVGA_DWORD('DS')
 
-	mov 	dword [VGA_LOC(3,  1)], DVGA_DWORD('En')
-	mov 	dword [VGA_LOC(3,  3)], DVGA_DWORD('te')
-	mov 	byte  [VGA_LOC(3,  5)], 'r'
-	mov 	byte  [VGA_LOC(3,  7)], ':'
-	mov 	dword [VGA_LOC(3,  9)], DVGA_DWORD('co')
-	mov 	dword [VGA_LOC(3, 11)], DVGA_DWORD('nt')
-	mov 	dword [VGA_LOC(3, 13)], DVGA_DWORD('in')
-	mov 	dword [VGA_LOC(3, 15)], DVGA_DWORD('ue')
+	mov 	dword [VGA_ADDR(3,  1)], DVGA_DWORD('En')
+	mov 	dword [VGA_ADDR(3,  3)], DVGA_DWORD('te')
+	mov 	byte  [VGA_ADDR(3,  5)], 'r'
+	mov 	byte  [VGA_ADDR(3,  7)], ':'
+	mov 	dword [VGA_ADDR(3,  9)], DVGA_DWORD('co')
+	mov 	dword [VGA_ADDR(3, 11)], DVGA_DWORD('nt')
+	mov 	dword [VGA_ADDR(3, 13)], DVGA_DWORD('in')
+	mov 	dword [VGA_ADDR(3, 15)], DVGA_DWORD('ue')
 
-	mov 	dword [VGA_LOC(4,  1)], DVGA_DWORD('In')
-	mov 	dword [VGA_LOC(4,  3)], DVGA_DWORD('se')
-	mov 	dword [VGA_LOC(4,  5)], DVGA_DWORD('rt')
-	mov 	byte  [VGA_LOC(4,  7)], ':'
-	mov 	dword [VGA_LOC(4,  9)], DVGA_DWORD('ra')
-	mov 	dword [VGA_LOC(4, 11)], DVGA_DWORD('nd')
-	mov 	dword [VGA_LOC(4, 13)], DVGA_DWORD('om')
-	mov 	dword [VGA_LOC(4, 15)], DVGA_DWORD('iz')
-	mov 	byte  [VGA_LOC(4, 17)], 'e'
+	mov 	dword [VGA_ADDR(4,  1)], DVGA_DWORD('In')
+	mov 	dword [VGA_ADDR(4,  3)], DVGA_DWORD('se')
+	mov 	dword [VGA_ADDR(4,  5)], DVGA_DWORD('rt')
+	mov 	byte  [VGA_ADDR(4,  7)], ':'
+	mov 	dword [VGA_ADDR(4,  9)], DVGA_DWORD('ra')
+	mov 	dword [VGA_ADDR(4, 11)], DVGA_DWORD('nd')
+	mov 	dword [VGA_ADDR(4, 13)], DVGA_DWORD('om')
+	mov 	dword [VGA_ADDR(4, 15)], DVGA_DWORD('iz')
+	mov 	byte  [VGA_ADDR(4, 17)], 'e'
 
-	mov 	dword [VGA_LOC(5,  1)], DVGA_DWORD('0-')
-	mov 	byte  [VGA_LOC(5,  3)], '9'
-	mov 	byte  [VGA_LOC(5,  7)], ':'
-	mov 	dword [VGA_LOC(5,  9)], DVGA_DWORD('mu')
-	mov 	dword [VGA_LOC(5, 11)], DVGA_DWORD('lt')
-	mov 	dword [VGA_LOC(5, 13)], DVGA_DWORD('ip')
-	mov 	dword [VGA_LOC(5, 15)], DVGA_DWORD('ly')
+	mov 	dword [VGA_ADDR(5,  1)], DVGA_DWORD('0-')
+	mov 	byte  [VGA_ADDR(5,  3)], '9'
+	mov 	byte  [VGA_ADDR(5,  7)], ':'
+	mov 	dword [VGA_ADDR(5,  9)], DVGA_DWORD('mu')
+	mov 	dword [VGA_ADDR(5, 11)], DVGA_DWORD('lt')
+	mov 	dword [VGA_ADDR(5, 13)], DVGA_DWORD('ip')
+	mov 	dword [VGA_ADDR(5, 15)], DVGA_DWORD('ly')
 
-	mov 	dword [VGA_LOC(6,  1)], DVGA_DWORD('ot')
-	mov 	dword [VGA_LOC(6,  3)], DVGA_DWORD('he')
-	mov 	byte  [VGA_LOC(6,  5)], 'r'
-	mov 	byte  [VGA_LOC(6,  7)], ':'
-	mov 	dword [VGA_LOC(6,  9)], DVGA_DWORD('ad')
-	mov 	byte  [VGA_LOC(6, 11)], 'd'
-	mov 	dword [VGA_LOC(6, 13)], DVGA_DWORD('sc')
-	mov 	dword [VGA_LOC(6, 15)], DVGA_DWORD('an')
-	mov 	dword [VGA_LOC(6, 17)], DVGA_DWORD('co')
-	mov 	dword [VGA_LOC(6, 19)], DVGA_DWORD('de')
+	mov 	dword [VGA_ADDR(6,  1)], DVGA_DWORD('ot')
+	mov 	dword [VGA_ADDR(6,  3)], DVGA_DWORD('he')
+	mov 	byte  [VGA_ADDR(6,  5)], 'r'
+	mov 	byte  [VGA_ADDR(6,  7)], ':'
+	mov 	dword [VGA_ADDR(6,  9)], DVGA_DWORD('ad')
+	mov 	byte  [VGA_ADDR(6, 11)], 'd'
+	mov 	dword [VGA_ADDR(6, 13)], DVGA_DWORD('ke')
+	mov 	dword [VGA_ADDR(6, 15)], DVGA_DWORD('yc')
+	mov 	dword [VGA_ADDR(6, 17)], DVGA_DWORD('od')
+	mov 	byte  [VGA_ADDR(6, 19)], 'e'
 
 	mov 	ah, 0x0E	;; backspace
-	call	keyring_has_scancode
+	call	keyring_has_keycode
 
+	;; change the random buffer loop to be infinite if backspace was pressed.
 	mov 	al, 0x75	;; `jmp short` byte 1 is 0x75
 	mov 	bl, 0xEB	;; `jnz short` byte 1 is 0xEB
-	cmovnz	ax, bx		;; u8 b = keyring_has_scancode(0x0E) ? 0xEB : 0x75;
+	cmovnz	ax, bx		;; u8 b = keyring_has_keycode(0x0E) ? 0xEB : 0x75;
 
 	;; conditionally change from a conditional jump to unconditional
 	mov 	byte [.rand@loop@jump], al
@@ -367,26 +465,24 @@ kernel_entry:
 	call	_print_u8hex
 	mov 	word [rel cursor_pos], 0
 
-	;; fallthrough
-.before_mul_loop:
 	clear_keyring
 .mul_loop:
-	call	next_scancode	;; block until the next keypress
+	call	next_keycode	;; block until the next keypress
 
 	jtnz	al, 1 << 7, .mul_loop	;; skip release codes
-	;; keys 0-9 are multipliers. the rest of the keys add the scancode to the total.
-	jce 	al, 0Bh, .mul0	;; '0'
-	jce 	al, 02h, .mul1	;; '1'
-	jce 	al, 03h, .mul2	;; '2'
-	jce 	al, 04h, .mul3	;; '3'
-	jce 	al, 05h, .mul4	;; '4'
-	jce 	al, 06h, .mul5	;; '5'
-	jce 	al, 07h, .mul6	;; '6'
-	jce 	al, 08h, .mul7	;; '7'
-	jce 	al, 09h, .mul8	;; '8'
-	jce 	al, 0Ah, .mul9	;; '9'
-	jce 	al, 1Ch, .rand	;; enter => exit
-	jce 	al, 5Fh, .mul_set_rand	;; insert => randomize the value
+	;; keys 0-9 are multipliers. the rest of the keys add the keycode to the total.
+	jce 	al, 0Bh, .mul0			;; '0'
+	jce 	al, 02h, .mul1			;; '1'
+	jce 	al, 03h, .mul2			;; '2'
+	jce 	al, 04h, .mul3			;; '3'
+	jce 	al, 05h, .mul4			;; '4'
+	jce 	al, 06h, .mul5			;; '5'
+	jce 	al, 07h, .mul6			;; '6'
+	jce 	al, 08h, .mul7			;; '7'
+	jce 	al, 09h, .mul8			;; '8'
+	jce 	al, 0Ah, .mul9			;; '9'
+	jce 	al, 35h, .rand			;; enter => exit
+	jce 	al, 53h, .mul_set_rand	;; tab => randomize the value
 
 	movzx	eax, al
 	add 	rbp, rax
@@ -453,38 +549,38 @@ kernel_entry:
 	call	show_cursor
 	clear_keyring
 	reset_isr_timer
-.mainloop:
+.ltf@mainloop:
 	mov 	esi, VGA_BUF
 	mov 	ah, VGA_CLR(VGA_LGT_RED, VGA_PURPLE)
-.fill_screen_1:
+.ltf@fill_screen_1:
 	mov 	ecx, %strlen(MSG)
-.print_msg_1:
+.ltf@print_msg_1:
 	dec 	ecx
 	mov 	al, byte [msg + ecx]
 	mov 	word [esi + 2*ecx], ax
-	jtnz	ecx, ecx, .print_msg_1
+	jtnz	ecx, ecx, .ltf@print_msg_1
 
 	add 	esi, TERM_COLS
-	jcb 	esi, VGA_BUF_END, .fill_screen_1
+	jcb 	esi, VGA_BUF_END, .ltf@fill_screen_1
 
 	call	proc_keys_until_timeout
 
 	;; print the same thing again but in different colors
 	mov 	esi, VGA_BUF
 	mov 	ah, VGA_CLR(VGA_CYAN, VGA_DRK_BLUE)
-.fill_screen_2:
+.ltf@fill_screen_2:
 	mov 	ecx, %strlen(MSG)
-.print_msg_2:
+.ltf@print_msg_2:
 	dec 	ecx
 	mov 	al, byte [msg + ecx]
 	mov 	word [esi + 2*ecx], ax
-	jtnz	ecx, ecx, .print_msg_2
+	jtnz	ecx, ecx, .ltf@print_msg_2
 
 	add 	esi, TERM_COLS
-	jcb 	esi, VGA_BUF_END, .fill_screen_2
+	jcb 	esi, VGA_BUF_END, .ltf@fill_screen_2
 
 	call	proc_keys_until_timeout
-	jmp 	.mainloop
+	jmp 	.ltf@mainloop
 
 msg: db MSG
 

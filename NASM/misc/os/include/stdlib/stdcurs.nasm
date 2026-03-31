@@ -12,43 +12,43 @@
 %assign CURS_LWPOS_REG	0Fh		;; low half of the cursor position
 
 %pragma ignore variable
-cursor_data: db 0
+cursor_type: db 0
 
 %pragma ignore variable
 cursor_pos:
-.lo		db 0
-.hi		db 0
+	.lo	db 0
+	.hi	db 0
 		dw 0 ;; just so you can load as a DWORD and have it work properly.
 
 toggle_cursor: ; void toggle_cursor(void);
 	;; VGA control port and cursor start register
 	outb	IOPT_PS2_CRTCR, CURS_START_REG
 
-	xor 	byte [rel cursor_data], CURS_HIDDEN
+	xor 	byte [rel cursor_type], CURS_HIDDEN
 	inc 	dl			;; control port = 0x3D4. data port = 0x3D5
-	outb	dx, byte [rel cursor_data]
+	outb	dx, byte [rel cursor_type]
 	ret
 
 hide_cursor: ; void hide_cursor(void);
 	;; VGA control port and cursor start register
 	outb	IOPT_PS2_CRTCR, CURS_START_REG
 
-	or  	byte [rel cursor_data], CURS_HIDDEN
+	or  	byte [rel cursor_type], CURS_HIDDEN
 	inc 	dl			;; control port = 0x3D4. data port = 0x3D5
-	outb	dx, byte [rel cursor_data]
+	outb	dx, byte [rel cursor_type]
 	ret
 
 show_cursor: ; u4 show_cursor(void);
 	outb	IOPT_PS2_CRTCR, CURS_START_REG
 
-	and 	byte [rel cursor_data], ~CURS_HIDDEN
+	and 	byte [rel cursor_type], ~CURS_HIDDEN
 	inc 	dl			;; control port = 0x3D4. data port = 0x3D5
-	outb	dx, byte [rel cursor_data]
+	outb	dx, byte [rel cursor_type]
 	ret					;; return height & 0xf;
 
 ;; TODO: perhaps validate the cursor value. I don't think bits 6 or 7 and maybe 4 do anything
 set_cursor: ; u4 show_cursor(u8 height);
-	mov 	byte [rel cursor_data], al
+	mov 	byte [rel cursor_type], al
 	mov 	bl, al
 
 	outb	IOPT_PS2_CRTCR, CURS_START_REG

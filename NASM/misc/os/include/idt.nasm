@@ -423,9 +423,9 @@ keyring_extended_scancode_map:
 		jtz 	al, al, .keypress_exit_unescape
 		jmp 	.write_to_keyring
 	.process_extended@release:
-		mov 	bl, 0x53	;; flattened insert keycode
+		mov 	dl, 0x53	;; flattened insert keycode
 		cmp 	al, 0xD2	;; insert PS/2 break code
-		cmove	ax, bx
+		cmove	ax, dx
 		je  	.write_to_keyring
 
 		mov 	al, byte [keyring_extended_scancode_map + eax - 144]

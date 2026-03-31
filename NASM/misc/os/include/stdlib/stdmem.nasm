@@ -14,6 +14,8 @@
 
 memmove: ; void *, err memmove(u8 *dst, u8 *src, u64 count);
 	jca 	rax, rbx, memcpy.backwards	; if (dst > src) goto backwards;
+
+%pragma ignore NOTE: forwards copy
 memcpy:
 .forwards: ; unused label. for clarity
 	;; iterate forwards. move to lower memory
