@@ -2,19 +2,20 @@
 %define STD_MEM_NASM
 %pragma ignore stdmem.nasm
 
-; memcpy: ; void *, err memcpy(u8 *dst, u8 *src, u64 count);
+; memcpy: ; void *memcpy(u8 *dst, u8 *src, u64 count);
 	;; memcpy is an alias of memmove.forwards, kind of.
 
-;; NOTE: this can be made to use movsd or movsq under the following conditions:
+;; TODO: this can be made to use movsd or movsq under the following conditions:
 	;; movsq: (src - dst) >= 8 && count % 8 == 0 // or do the rest of the count % 8 separately
 	;; movsd: (src - dst) >= 4 && count % 4 == 0 // or do the rest of the count % 8 separately
 	;; don't even bother with movsw
 	;; instead of forcing the divisibility, you can also do the rest separately.
 	;; the difference only matters in the first place if the data is longer than like 100 bytes
 
-memmove: ; void *, err memmove(u8 *dst, u8 *src, u64 count);
+memmove: ; void *memmove(u8 *dst, u8 *src, u64 count);
 	jca 	rax, rbx, memcpy.backwards	; if (dst > src) goto backwards;
 
+	;; fallthrough
 %pragma ignore NOTE: forwards copy
 memcpy:
 .forwards: ; unused label. for clarity
@@ -23,8 +24,6 @@ memcpy:
 	mov 	rdi, rax
 	mov 	rsi, rbx
 	rep 	movsb
-
-	xor 	ebx, ebx	;; no errors
 	ret
 .backwards:
 	;; iterate backwards. move to higher memory
@@ -32,11 +31,9 @@ memcpy:
 	lea 	rdi, [rax + rcx - 1]
 	lea 	rsi, [rbx + rcx - 1]
 	rep 	movsb
-
-	xor 	ebx, ebx	;; no errors
 	ret
 
-memset: ; void *, err memset(void *ptr, u8 value, u64 num);
+memset: ; void *memset(void *ptr, u8 value, u64 num);
 	cld 				; clear direction for forwards move
 	mov 	rdi, rax	; destination
 	xchg	rax, rbx	; `mov al, bl`, but preserve ptr
@@ -44,29 +41,23 @@ memset: ; void *, err memset(void *ptr, u8 value, u64 num);
 	rep 	stosb
 
 	mov 	rax, rbx	; restore rax.
-	xor 	ebx, ebx	; no errors
 	ret
 
 ;; it is recommended to use `strend` and `_memscan` over `strlen` and `_memfind`
 ;; all of the functions return both values, just the locations are swapped based on what the main value is.
-;; NOTE: _memscan and _memfind are not safe unless you know 100% that the value appears at least once.
+;; NOTE: _memscan ise not safe unless you know 100% that the value appears at least once.
 
-%pragma ignore NOTE: use strend
-strlen: ; u64, err, char * strlen(const char *str);
-	call	strend
-	xchg	rax, rcx
-	ret					; return (index, err code, new ptr)
 
-strend: ; char *, err, u64 strend(const char *str); // not std C
+cstrlen: ; char *, err, u64 cstrlen(const char *str);
 	;; returns a pointer to the end of a string
 	xor 	bl, bl		; search for null byte
-_memscan: ; void *, err, u64 _memscan(const void *ptr, u8 c); // not std C
+_memscan: ; void *, err, u64 _memscan(const void *ptr, u8 c);
 	;; basically `memchr`, but without the length end condition.
 	cld 				; forwards
 	mov 	rdi, rax
 	xor 	ecx, ecx	; start with index 0
 	xchg	al, bl		; `mov al, bl`, but preserve the pointer lower byte
-	repne	scasb		; sets rcx to be the index of 
+	repne	scasb		; sets rcx to be the index of te null byte
 	not 	rcx			; rcx = -rcx - 1
 
 	mov 	al, bl

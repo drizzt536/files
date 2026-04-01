@@ -267,10 +267,15 @@ putchar_nl_table:
 ;; clobbers: rax, rbx, rcx, dx
 putchar: ; err, u16 putchar(u16 ax);
 	mov 	ecx, dword [rel cursor_pos]
+	jcb 	al, ' ', .control
+.print:
+	lea 	ecx, [VGA_BUF + 2*ecx]
 
-	;; quickly jump to the normal part if it is not a control character
-	jcae 	al, ' ', .normal_char
-
+	mov 	byte [ecx], al
+	jtz 	ah, ah, inc_cursor
+	mov 	byte [ecx + 1], ah
+	jmp 	inc_cursor
+.control:
 	jce 	al, `\n`, .newline
 	jce 	al, `\b`, .backspace
 	jce 	al, `\r`, .carriage_return
@@ -278,14 +283,8 @@ putchar: ; err, u16 putchar(u16 ax);
 	jce 	al, `\x07`, .bell
 	jce 	al, `\f`, cls
 	jce 	al, `\v`, .vtab
-
-.normal_char:
-	lea 	ecx, [VGA_BUF + 2*ecx]
-
-	mov 	byte [ecx], al
-	jtz 	ah, ah, inc_cursor
-	mov 	byte [ecx + 1], ah
-	jmp 	inc_cursor
+	;; fall back to just printing it normally.
+	jmp 	.print
 .carriage_return:
 	shr 	ecx, 4
 	mov 	cl, byte [putchar_cr_table + ecx]
@@ -328,4 +327,5 @@ putchar: ; err, u16 putchar(u16 ax);
 	mov 	ax, TERM_COLS
 	jmp 	add_cursor
 
+; print_str:
 %endif ; %ifndef STD_PRINT_NASM

@@ -270,6 +270,7 @@ kernel_entry:
 	jce 	al, ASCII_RIGHT,	.arrow_right
 	jce 	al, ASCII_DOWN,		.arrow_down
 	jce 	al, ASCII_LEFT,		.arrow_left
+	jce 	al, ASCII_ESC,		.toggle_cursor
 
 	test	al, al
 	js  	.start
@@ -300,6 +301,9 @@ kernel_entry:
 	mov 	al, byte [cursor_type]
 	xor 	al, CURS_UNDERLINE
 	call	set_cursor
+	jmp 	.start
+.toggle_cursor:
+	call	toggle_cursor
 	jmp 	.start
 .ctrl:
 	jce 	al, 'b', .ctrl_b	;; bell

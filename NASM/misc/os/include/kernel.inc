@@ -20,6 +20,7 @@ org KERNEL_START
 %assign IST1_BASE	0x1000
 %assign TSS_BASE	0x500
 %assign TSS_SIZE	104
+%assign GDT_BASE	TSS_BASE + TSS_SIZE
 
 ;; the drift with this divisor is 1 second per 17 hours.
 ;; for no drift, the only two useful divisors are 14551 and 29102,
