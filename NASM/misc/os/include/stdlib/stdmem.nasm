@@ -43,11 +43,7 @@ memset: ; void *memset(void *ptr, u8 value, u64 num);
 	mov 	rax, rbx	; restore rax.
 	ret
 
-;; it is recommended to use `strend` and `_memscan` over `strlen` and `_memfind`
-;; all of the functions return both values, just the locations are swapped based on what the main value is.
-;; NOTE: _memscan ise not safe unless you know 100% that the value appears at least once.
-
-
+;; NOTE: _memscan is not safe unless you know 100% that the byte appears at least once.
 cstrlen: ; char *, err, u64 cstrlen(const char *str);
 	;; returns a pointer to the end of a string
 	xor 	bl, bl		; search for null byte
@@ -65,4 +61,13 @@ _memscan: ; void *, err, u64 _memscan(const void *ptr, u8 c);
 	xor 	ebx, ebx	; no errors
 	ret					; return (new ptr, err code, index)
 
+%pragma ignore NOTE: dont use this function
+strlen: ; u64 strlen(char *str);
+	mov 	rax, qword [rax - 8]
+	ret
+
+%pragma ignore NOTE: dont use this function
+strend: ; void * strend(char *str);
+	add 	rax, qword [rax - 8]
+	ret
 %endif ; %ifndef STD_MEM_NASM

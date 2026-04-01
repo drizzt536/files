@@ -11,6 +11,7 @@ param (
 )
 
 # TODO: figure out some kind of syntax to declare the existence of macros in the standard library
+# TODO: perhaps also make syntax to make stdlib extern variables?
 
 write-host -noNewline "`r`e[0K    running"
 # preprocess only. all the includes are in the same folder.
