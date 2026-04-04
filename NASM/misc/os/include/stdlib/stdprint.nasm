@@ -3,7 +3,7 @@
 
 %include "stdcurs.nasm"
 
-%pragma ignore stdprint.nasm
+%pragma ignore file stdprint.nasm
 
 ;; clobbers rax, rbx, rcx, rdi
 cls: ; void cls(void);
@@ -194,60 +194,6 @@ print_u64hex: ; err, u16 print_u64hex(u64 x, u8 color);
 
 	mov 	ax, 2
 	jmp 	add_cursor
-
-%assign ASCII_BEL	`\x07`	;;  7
-%assign ASCII_BS	`\b`	;;  8
-%assign ASCII_TAB	`\t`	;;  9
-%assign ASCII_LF	`\n`	;; 10
-%assign ASCII_VT	`\v`	;; 11
-%assign ASCII_FF	`\f`	;; 12
-%assign ASCII_CR	`\r`	;; 13
-%assign ASCII_DEL	`\x7F`	;; 127
-
-;; not actually ASCII. non-printable codes
-;; See ./docs/keycode-to-ASCII.txt for more.
-%assign enum_idx 0x80
-
-enum_next	ASCII_ESC				;; escape
-enum_next	ASCII_CTRL				;; control
-enum_next	ASCII_ALT				;; alt
-enum_next	ASCII_DELETE			;; delete
-enum_next	ASCII_SHIFT				;; shift
-enum_next	ASCII_PGUP				;; page up
-enum_next	ASCII_PGDN				;; page down
-enum_next	ASCII_CTX				;; context menu
-enum_next	ASCII_WIN				;; windows
-enum_next	ASCII_UP				;; up arrow
-enum_next	ASCII_RIGHT				;; right arrow
-enum_next	ASCII_DOWN				;; down arrow
-enum_next	ASCII_LEFT				;; left arrow
-enum_next	ASCII_HOME
-enum_next	ASCII_END
-enum_next	ASCII_SYSRQ				;; PrtScr/SysRq
-enum_next	ASCII_INS				;; insert
-enum_next	ASCII_PRTSCR			;; PrtScr/SysRq
-enum_next	ASCII_F1
-enum_next	ASCII_F2
-enum_next	ASCII_F3
-enum_next	ASCII_F4
-enum_next	ASCII_F5
-enum_next	ASCII_F6
-enum_next	ASCII_F7
-enum_next	ASCII_F8
-enum_next	ASCII_F9
-enum_next	ASCII_F10
-enum_next	ASCII_F11
-enum_next	ASCII_F12
-enum_next	ASCII_BREAK
-enum_next	ASCII_MEDIA_PT			;; multimedia previous track
-enum_next	ASCII_MEDIA_NT			;; multimedia next track
-enum_next	ASCII_NMLK				;; num lock
-enum_next	ASCII_MEDIA_MUTE		;; multimedia mute
-enum_next	ASCII_MEDIA_PAUSEPLAY	;; multimedia pause/play
-enum_next	ASCII_MEDIA_STOP		;; multimedia stop
-enum_next	ASCII_MEDIA_VOLDOWN		;; multimedia volume down
-enum_next	ASCII_MEDIA_VOLUP		;; multimedia volume up
-enum_next	ASCII_SCLK				;; scroll lock
 
 %pragma ignore variable
 putchar_cr_table:

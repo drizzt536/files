@@ -108,5 +108,3 @@ the only release codes that do something is ctrl, alt, and windows.
 
 output codes above 0x7F are not actually ASCII.
 they just indicate that the keycode wasn't a printable key
-NOTE: keyboard flags
-

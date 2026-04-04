@@ -1,7 +1,7 @@
 %ifndef STD_CURS_NASM
 %define STD_CURS_NASM
 
-%pragma ignore stdcurs.nasm
+%pragma ignore file stdcurs.nasm
 
 %assign CURS_SQUARE		0b0000
 %assign CURS_UNDERLINE	0b1110

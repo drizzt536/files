@@ -15,7 +15,7 @@ org KERNEL_START
 %assign GDT_KDATA	0x10
 %assign GDT_UCODE	0x18
 %assign GDT_UDATA	0x20
-%assign GDT_TSS		0x28
+%assign GDT_TSS		0x28	;; 2 entries long
 
 %assign IST1_BASE	0x1000
 %assign TSS_BASE	0x500
@@ -66,11 +66,49 @@ org KERNEL_START
 %assign QEMU_IOAPIC_BASE	0xFEC00000
 
 ;; must be more than 31 and less than 256.
-;; on older systems, it also has to be equal to 15, modulo 16, but I don't care.
+;; on older systems, it also has to be 15, modulo 16, but I don't care.
 %assign APIC_SPURIOUS_ISR	0xFF
 
-%assign APIC_IRQ0_PIN		2	;; PIT timer
-%assign APIC_IRQ1_PIN		1	;; keyboard
+%assign APIC_IRQ0_PIN	2	;; PIT timer
+%assign APIC_IRQ1_PIN	1	;; keyboard
+
+;; the reserved codes are basically permanently
+%assign INT_#DE			0x00	;; divide by zero
+%assign INT_#DB			0x01	;; debug
+%assign INT_NMI			0x02	;; non-maskable interrupt
+%assign INT_#BP			0x03	;; breakpoint (INT3)
+%assign INT_#OF			0x04	;; overflow (INTO when OF=1)
+%assign INT_#BR			0x05	;; bound range exceeded (BOUND when value out of range)
+%assign INT_#UD			0x06	;; invalid opcode
+%assign INT_#NM			0x07	;; device not available
+%assign INT_#DF			0x08	;; double fault
+%assign INT_CSO			0x09	;; coprocessor segment overrun (obsolete.)
+%assign INT_#TS			0x0A	;; invalid TSS
+%assign INT_#NP			0x0B	;; non-present segment
+%assign INT_#SS			0x0C	;; stack-segment fault
+%assign INT_#GP			0x0D	;; general-protection fault
+%assign INT_#PF			0x0E	;; page fault
+%assign INT_RES1		0x0F	;; reserved
+%assign INT_#MF			0x10	;; x87 Floating-Point Exception
+%assign INT_#AC			0x11	;; alignment check
+%assign INT_#MC			0x12	;; machine check
+%assign INT_#XM			0x13	;; SIMD floating-point exception
+%assign INT_#XF			0x13	;; alternate name for #XM
+%assign INT_#VE			0x14	;; virtualization exception
+%assign INT_#CP			0x15	;; control protection exception
+%assign INT_RES2		0x16	;; reserved
+%assign INT_RES3		0x17	;; reserved
+%assign INT_RES4		0x18	;; reserved
+%assign INT_RES5		0x19	;; reserved
+%assign INT_RES6		0x1A	;; reserved
+%assign INT_RES7		0x1B	;; reserved
+%assign INT_RES8		0x1C	;; reserved
+%assign INT_RES9		0x1D	;; reserved
+%assign INT_#HV			0x1E	;; hypervisor injection exception, AMD SEV-SNP specific
+%assign INT_#VC			0x1F	;; VMM Communication Exception, AMD SEV specific
+%assign INT_TIMER		0x20
+%assign INT_KBD			0x21
+%assign INT_SPURIOUS	APIC_SPURIOUS_ISR
 
 %assign TERM_ROWS			25
 %assign TERM_COLS			80
@@ -265,7 +303,7 @@ org KERNEL_START
 %macro rdrand_nzmac 1
 %%loop:
 	rdrand	%1
-	jz  	%%loop
+	jtz 	%1, %1, %%loop
 %endm
 
 %macro _putchar_colored 3
@@ -285,5 +323,11 @@ org KERNEL_START
 		%rotate 1
 	%endrep
 %endm
-	
+
+%macro inc 1-*
+	%rep %0
+		inc 	%1
+		%rotate 1
+	%endrep
+%endm
 %endif ; %ifndef KERNEL_INC

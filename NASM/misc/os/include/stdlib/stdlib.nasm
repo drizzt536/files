@@ -3,11 +3,14 @@
 ;; NOTE: `err` as a type is just u32, and means that is the error value.
 ;; NOTE: `%pragma ignore` stuff is for the stdlib function table generation
 
+%include "kernel.inc"
+
 %include "stdmem.nasm"
+%include "stdkbd.nasm"
 %include "stdcurs.nasm"
 %include "stdprint.nasm"
 
-%pragma ignore stdlib.nasm
+%pragma ignore file stdlib.nasm
 
 halt:
 	cli
@@ -15,61 +18,12 @@ halt:
 	hlt
 	jmp 	.loop
 
-;; returns keycode, keycode idx
-;; clobbers: al, rbx
-;; returns al=0 on failure.
-;; set up so `call get_keycode` can immediately be followed by
-;; either `jz .error` or `jnz .no_error` for fast processing.
-;; the other flags aren't guaranteed, only the zero flag.
-get_keycode: ; u8 get_keycode(void);
-	movzx	ebx, byte [rel keyring_read]
-_get_keycode: ; u8 _get_keycode(void _, u32 keyring_read);
-	xor 	al, al
-	jce 	bl, byte [rel keyring_write], .ret
+reboot:
+	;; reboot by causing a triple fault.
+	lidt	[0]
+	int 	INT_#DF
 
-	mov 	al, byte [keyring + ebx]
-
-	inc 	byte [rel keyring_read]
-	test	al, al
-.ret:
-	ret
-
-;; returns the next keycode and the keyring index
-;; if there isn't a keycode ready, it blocks until there is.
-;; clobbers: al, rbx
-next_keycode: ; u8 next_keycode(void);
-	movzx	ebx, byte [rel keyring_read]
-_next_keycode: ; u8 next_keycode(void _, u32 keyring_read);
-.loop:
-	jce 	bl, byte [rel keyring_write], .loop
-
-	mov 	al, byte [keyring + ebx]
-	inc 	byte [rel keyring_read]
-	ret
-
-;; clobbers: ax, rbx
-keyring_has_keycode: ; bool keyring_has_keycode(u8 ah /* keycode */);
-	movzx	ebx, byte [rel keyring_read]
-.loop:
-	jce 	bl, byte [rel keyring_write], .ret_false
-
-	mov 	al, byte [keyring + ebx]
-	inc 	bl
-
-	jce 	al, ah, .ret_true
-	jmp 	.loop
-.ret_false:
-	xor 	al, al
-	ret
-.ret_true:
-	;; `mov al, 1`, but update ZF
-	xor 	al, al
-	inc 	al
-	ret
-
-%macro clear_keyring 0
-	mov 	word [rel keyring_rw_word], 0
-%endm
+%pragma ignore subsystem RNG
 
 %pragma ignore variable
 pr_rand_state:
@@ -187,9 +141,10 @@ rand_fill: ; void rand_fill(u64 length, u8 *buffer);
 	mov 	rdi, rbx	;; restore
 	ret
 
+%pragma ignore subsystem disk
+
 ; disk_select:
 	;; TODO: implement this. and then maybe move it into the kernel startup
-;	ret
 
 ;; NOTE: on errors, it returns a pointer to the start of the memory for the failed sector read.
 ; err disk_read(u64 sector, u16 cnt, u16 *mem);
@@ -340,86 +295,5 @@ disk_write:
 .exit_dirty:
 	lea 	rax, [rsi - 512]
 	xchg	rcx, rsi
-	ret
-
-%assign KBD_DATA_CTRL_BIT	0	;; lCtrl or rCtrl
-%assign KBD_DATA_ALT_BIT	1	;; lAlt or rAlt
-%assign KBD_DATA_SHFT_BIT	2	;; lShift or rShift
-%assign KBD_DATA_WIN_BIT	3	;; lGUI or rGUI (windows key)
-%assign KBD_DATA_INS_BIT	4	;; insert
-%assign KBD_DATA_NMLK_BIT	5	;; num lock
-%assign KBD_DATA_SCLK_BIT	6	;; scroll lock
-;; bit 7 is unused
-
-%assign KBD_DATA_CTRL		1 << KBD_DATA_CTRL_BIT
-%assign KBD_DATA_ALT		1 << KBD_DATA_ALT_BIT
-%assign KBD_DATA_SHFT		1 << KBD_DATA_SHFT_BIT
-%assign KBD_DATA_WIN		1 << KBD_DATA_WIN_BIT
-%assign KBD_DATA_INS		1 << KBD_DATA_INS_BIT
-%assign KBD_DATA_NMLK		1 << KBD_DATA_NMLK_BIT
-%assign KBD_DATA_SCLK		1 << KBD_DATA_SCLK_BIT
-
-%pragma ignore variable
-kbd_data: db 0
-
-%pragma ignore variable
-keycode_to_ascii_noshift_table: db `\0 1234567890-=\b\tqwertyuiop[]/*asdfghjkl;'\`+\\zxcvbnm,.\n`
-
-%pragma ignore variable
-keycode_to_ascii_shifted_table: db `\0 !@#$%^&*()_+\b\tQWERTYUIOP{}?*ASDFGHJKL:"~+|ZXCVBNM<>\n`
-
-
-;; 0x36 => 0x84
-%pragma ignore variable
-keycode_to_non_printable_table:
-	db %hs2b("84818280839192939495969798999AA0C0889B9C898A8B8C8586878D8E908F9D9E9FA1A2A3A4A5")
-
-;; returns the ASCII character or the non-printable code
-;; see ../docs/keycode-to-ASCII.txt for input/output pairs
-;; sets ZF based on if the output is actually ASCII.
-keycode_to_ascii: ; u8, u8 keycode_to_ascii(u8 keycode);
-	movzx	eax, al
-
-	jce 	al, 0xB7, .state_clear	;; ctrl release
-	jce 	al, 0xB8, .state_clear	;; alt release
-	jce 	al, 0xC7, .state_clear	;; windows release
-	jcae 	al, 0x80, .ret			;; no other release codes do anything
-	jcb 	al, 0x36, .ascii
-
-	mov 	al, byte [keycode_to_non_printable_table + eax - 0x36]
-	jce 	al, ASCII_CTRL,  .state_toggle
-	jce 	al, ASCII_ALT,   .state_set
-	jce 	al, ASCII_SHIFT, .state_toggle
-	jce 	al, ASCII_WIN,   .state_set
-	jce 	al, ASCII_INS,   .state_toggle
-	jce 	al, ASCII_NMLK,  .state_toggle
-	jce 	al, ASCII_SCLK,  .state_toggle
-
-.ret:
-	ret
-.state_toggle:
-	;; these toggle bit 7 and also the bit they are supposed to flip
-	and 	al, ~(1 << 7)
-	xor 	byte [kbd_data], al
-	or  	al, 1 << 7
-	ret
-.state_set:
-	and 	al, ~(1 << 7)
-	or  	byte [kbd_data], al
-	or  	al, 1 << 7
-	ret
-.state_clear:
-	mov 	al, byte [keycode_to_non_printable_table + eax - 0x80 - 0x36]
-	not 	al
-	and 	al, ~(1 << 7)
-	and 	byte [kbd_data], al
-	or  	al, 1 << 7
-	ret
-.ascii:
-	mov 	ebx, keycode_to_ascii_noshift_table
-	mov 	ecx, keycode_to_ascii_shifted_table
-	test	byte [kbd_data], KBD_DATA_SHFT
-	cmovnz	ebx, ecx
-	mov 	al, byte [ebx + eax]
 	ret
 %endif ; %ifndef STDLIB_NASM

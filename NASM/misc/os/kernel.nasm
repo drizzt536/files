@@ -85,7 +85,8 @@ kernel_entry:
 	mov 	esp, stack_base
 
 	;; remove kernel_entry from the function table because it is no longer needed.
-	mov 	qword [KERNEL_START], 0
+	mov 	rax, STDLIB_FNTABLE_SIZE
+	mov 	qword [stdlib_fntable.size], rax
 
 	mov 	rax, cr4
 	bts 	eax, 18		;; set the OSXSAVE bit for AVX to work.
@@ -131,16 +132,24 @@ kernel_entry:
 
 	mov 	al, CURS_UNDERLINE
 	call	set_cursor
-
+.init_prng:
 	;; initialize the PRNG state
-	rdrand_nzmac rax
-	rdrand_nzmac rbx
-	rdrand_nzmac rcx
-	rdrand_nzmac rdx
+	;; xoshiro256** requires that the initial state is not all zeros.
+	rdrand_mac	rax
+	rdrand_mac	rbx
+	rdrand_mac	rcx
+	rdrand_mac	rdx
+
+	mov 	rdi, rax
+	or  	rdi, rbx
+	or  	rdi, rcx
+	or  	rdi, rdx
+	jz  	.init_prng
+
 	mov 	[pr_rand_state.0], rax
-	mov 	[pr_rand_state.1], rax
-	mov 	[pr_rand_state.2], rax
-	mov 	[pr_rand_state.3], rax
+	mov 	[pr_rand_state.1], rbx
+	mov 	[pr_rand_state.2], rcx
+	mov 	[pr_rand_state.3], rdx
 
 	;; set up the TSS memory section
 	mov 	eax, TSS_BASE	;; dst = TSS_BASE
@@ -251,18 +260,18 @@ kernel_entry:
 .start:
 	call	next_keycode
 	call	keycode_to_ascii
+	jz  	.start	;; generic release codes return 0
 
 	jce 	al, ASCII_CTRL,		.start
 	jce 	al, ASCII_ALT,		.start
 	jce 	al, ASCII_SHIFT,	.start
 	jce 	al, ASCII_WIN,		.start
-	jce 	al, ASCII_INS,		.insert
-	jce 	al, ASCII_NMLK,		.start
-	jce 	al, ASCII_SCLK,		.start
+	jce 	al, ASCII_INSERT,	.insert
+	jce 	al, ASCII_NUMLK,	.start
+	jce 	al, ASCII_SCRLK,	.start
 
 	jce 	byte [kbd_data], KBD_DATA_CTRL, .ctrl
-	test	byte [kbd_data], KBD_DATA_CTRL | KBD_DATA_ALT | KBD_DATA_WIN
-	jnz 	.start
+	jtnz	byte [kbd_data], KBD_DATA_CTRL | KBD_DATA_ALT | KBD_DATA_WIN, .start
 
 	;; test regular keys
 	jce 	al, ASCII_HOME,		.home
@@ -270,10 +279,8 @@ kernel_entry:
 	jce 	al, ASCII_RIGHT,	.arrow_right
 	jce 	al, ASCII_DOWN,		.arrow_down
 	jce 	al, ASCII_LEFT,		.arrow_left
-	jce 	al, ASCII_ESC,		.toggle_cursor
-
-	test	al, al
-	js  	.start
+	jce 	al, ASCII_F1,		.toggle_cursor
+	jts 	al, al, .start		;; release code
 
 	call	putchar
 	jmp 	.start
@@ -312,16 +319,16 @@ kernel_entry:
 	jce 	al, 'r', .rand		;; rand
 	jce 	al, 's', .before_read_sectors
 	jce 	al, 'x', .ctrl_x
+	jce 	al, ASCII_ESC, .ctrl_esc
 
 	jmp 	.start
-
 .ctrl_x:
 	;; also `call cls`, but this is to demonsrate that this works too.
 	mov 	al, `\f`
 	call	putchar
 	jmp 	.start
 .ctrl_b:
-	mov 	al, `\x07`
+	mov 	al, ASCII_BEL
 	call	putchar
 	jmp 	.start
 .ctrl_m:
@@ -331,7 +338,8 @@ kernel_entry:
 	mov 	dword [VGA_ADDR(0, 2)], DVGA_DWORD('IT')
 	timewait_mac8 50, 1
 	jmp 	.before_mul_loop
-
+.ctrl_esc:
+	call	reboot
 .before_read_sectors:
 	sub 	esp, 512	;; allocate space for the sectors to be read into.
 	xor 	r8d, r8d	;; sector_idx = 0;
@@ -372,7 +380,7 @@ kernel_entry:
 
 	inc 	r8b
 	;; read up until one sector after the kernel ends.
-	jcne 	r8b, kernel_size/512 + 1, .loop@sectors
+	jcne 	r8b, DISKFS_START, .loop@sectors
 
 	mov 	dword [VGA_ADDR(24, 65)], DVGA_DWORD('  ')
 	mov 	dword [VGA_ADDR(24, 67)], DVGA_DWORD('  ')
@@ -453,13 +461,13 @@ kernel_entry:
 	mov 	dword [VGA_ADDR(6, 17)], DVGA_DWORD('od')
 	mov 	byte  [VGA_ADDR(6, 19)], 'e'
 
-	mov 	ah, 0x0E	;; backspace
+	mov 	ah, KC_BACKSPACE
 	call	keyring_has_keycode
 
 	;; change the random buffer loop to be infinite if backspace was pressed.
 	mov 	al, 0x75	;; `jmp short` byte 1 is 0x75
 	mov 	bl, 0xEB	;; `jnz short` byte 1 is 0xEB
-	cmovnz	ax, bx		;; u8 b = keyring_has_keycode(0x0E) ? 0xEB : 0x75;
+	cmovnz	ax, bx		;; u8 b = keyring_has_keycode(KC_BACKSPACE) ? 0xEB : 0x75;
 
 	;; conditionally change from a conditional jump to unconditional
 	mov 	byte [.rand@loop@jump], al
@@ -471,22 +479,22 @@ kernel_entry:
 
 	clear_keyring
 .mul_loop:
-	call	next_keycode	;; block until the next keypress
+	call	next_keycode				;; block until the next keypress
 
-	jtnz	al, 1 << 7, .mul_loop	;; skip release codes
+	jtnz	al, 1 << 7, .mul_loop		;; skip release codes
 	;; keys 0-9 are multipliers. the rest of the keys add the keycode to the total.
-	jce 	al, 0Bh, .mul0			;; '0'
-	jce 	al, 02h, .mul1			;; '1'
-	jce 	al, 03h, .mul2			;; '2'
-	jce 	al, 04h, .mul3			;; '3'
-	jce 	al, 05h, .mul4			;; '4'
-	jce 	al, 06h, .mul5			;; '5'
-	jce 	al, 07h, .mul6			;; '6'
-	jce 	al, 08h, .mul7			;; '7'
-	jce 	al, 09h, .mul8			;; '8'
-	jce 	al, 0Ah, .mul9			;; '9'
-	jce 	al, 35h, .rand			;; enter => exit
-	jce 	al, 53h, .mul_set_rand	;; tab => randomize the value
+	jce 	al, KC_0,		.mul0
+	jce 	al, KC_1,		.mul1
+	jce 	al, KC_2,		.mul2
+	jce 	al, KC_3,		.mul3
+	jce 	al, KC_4,		.mul4
+	jce 	al, KC_5,		.mul5
+	jce 	al, KC_6,		.mul6
+	jce 	al, KC_7,		.mul7
+	jce 	al, KC_8,		.mul8
+	jce 	al, KC_9,		.mul9
+	jce 	al, KC_ENTER,	.rand			;; enter => exit
+	jce 	al, KC_INSERT,	.mul_set_rand	;; insert => randomize the value
 
 	movzx	eax, al
 	add 	rbp, rax

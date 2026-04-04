@@ -16,11 +16,10 @@ param (
 write-host -noNewline "`r`e[0K    running"
 # preprocess only. all the includes are in the same folder.
 # remove instruction lines, sub-label lines, %line lines, and blank lines
-[Collections.ArrayList] $lines = nasm -I./include/stdlib -e $infile | where {
+[Collections.ArrayList] $lines = nasm -I./include -I./include/stdlib -e $infile | where {
 	$_ -notmatch '^( |\.|%line|$)' -and $_ -notmatch "^\s*\b(res|d)[bwdq]\b"
 }
 [Collections.ArrayList] $notelines = @()
-
 
 $i = 0;
 $maxlen = ($lines | where {
@@ -28,36 +27,68 @@ $maxlen = ($lines | where {
 	$i++;
 } | % length | measure -max).maximum
 
+if ($maxlen -lt "kernel_entry".length) {
+	$maxlen = "kernel_entry".length
+}
+
 $fn_idx = 1
+
+$file = "<unknown.nasm>" # in case it encounters a subsystem pragma before a file pragma.
+
+$table_size = 0
+for ([int] $i = 0; $i -lt $lines.count; $i++) {
+	$line = $lines[$i]
+
+	if ($line -match '^\[\s*pragma\s+ignore\s+variable\s*\]$') {
+		# skip this line and the next one
+		$lines.removeAt($i)
+		$lines.removeAt($i--)
+	}
+	elseif ($line -match '^(\w+):$') {
+		$table_size++
+	}
+	elseif ($line -match '^(\w+) ') {
+		# probably a multiline macro. just ignore it.
+		$lines.removeAt($i--)
+	}
+	elseif ($line -match '^\[\s*(org|(?:sect)?align|warning|global|extern|section|segment|absolute|bits|common|cpu)\s+[^\]]+\]$') {
+		# exclude directives that don't matter
+		$lines.removeAt($i--)
+	}
+}
+
+$table_size++ # including the 0 index element
+
+$idx_pad = "$($table_size - 1)".length
 
 for ([int] $i = 0; $i -lt $lines.count; $i++) {
 	$line = $lines[$i]
 
-	if ($line -match '\[\s*pragma\s+ignore\s+(\w+\.nasm)\s*\]$') {
+	if ($line -match '\[\s*pragma\s+ignore\s+file\s+([^\]]+)\s*\]$') {
 		$lines.insert($i, "") # insert empty line
 		$i++
 
-		$lines[$i] = ";; " + $matches[1]
+		$file = $matches[1]
+		$lines[$i] = "`t;; " + $file
+	}
+	elseif ($line -match '\[\s*pragma\s+ignore\s+subsystem\s+([^\]]+)\s*\]$') {
+		$lines.insert($i, "") # insert empty line
+		$i++
+
+		$lines[$i] = "`t;; $file ($($matches[1]))"
 	}
 	elseif ($line -match '^\[\s*pragma\s+ignore\s+NOTE:\s+(.+)\s*\]$') {
 		[void] $notelines.add($matches[1])
 	}
-	elseif ($line -match '^\[\s*pragma\s+ignore\s+variable\s*\]$') {
-		# skip this line and the next one
-		$lines.removeAt($i)
-		$lines.removeAt($i)
-		$i--
-	}
 	elseif ($line -match '^(\w+):$') {
 		$fn = $matches[1]
-		$lines[$i] = "dq $fn" + " "*($maxlen - $fn.length) + ";; $fn_idx"
+		$lines[$i] = "`tdq $fn" + " "*($maxlen - $fn.length) + ";; " + " "*($idx_pad - "$fn_idx".length) + "$fn_idx"
 
 		if ($notelines.count -ne 0) {
 			$lines[$i] += " *($($notelines -join ", "))"
 
 			foreach ($note in $notelines) {
-				$i--
-				$lines.removeAt($i)
+				$lines.removeAt(--$i)
 			}
 
 			$notelines.clear()
@@ -65,19 +96,28 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 
 		$fn_idx++
 	}
-	elseif ($line -match '^(\w+) ') {
-		# probably a multiline macro. just ignore it.
-		$lines.removeAt($i)
-		$i--
-	}
 	else {
-		# this should be unreachable, and likely means the file was processed wrong up to this point.
-		throw "unreachable"
+		# this should be unreachable.
+		# if it executes, it likely means the file was processed wrong up to this point.
+		throw "unreachable, line ${i}: `"$line`""
 	}
 }
 
-"dq kernel_entry ;; 0th entry, for the bootloader. zeroed in the kernel.", "",
-	";; stdlib function table", $lines > $outfile
+$fn = "kernel_entry"
+
+@(
+	"%ifndef STDLIB_FN_TABLE_NASM",
+	"%define STDLIB_FN_TABLE_NASM",
+	"",
+	"stdlib_fntable:",
+	".size:",
+	("`tdq $fn" + " "*($maxlen - $fn.length) + ";; " + " "*($idx_pad - 1) + "0 *(for the bootloader, set to the table size in the kernel)"),
+	$lines,
+	"",
+	"%assign STDLIB_FNTABLE_SIZE $fn_idx"
+	""
+	"%endif ; %ifndef STDLIB_FN_TABLE_NASM"
+) > $outfile
 
 write-host "`r`e[0K    done"
 exit 0

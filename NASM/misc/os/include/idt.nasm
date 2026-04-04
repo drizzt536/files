@@ -62,7 +62,7 @@ idt_hfn_default:
 	add 	al, '0'
 	lea 	ebx, [eax + 'A' - ('9' + 1)]
 	cmp 	al, '9'
-	cmova 	eax, ebx
+	cmova	eax, ebx
 	stosw
 
 	mov 	al, cl
@@ -70,7 +70,7 @@ idt_hfn_default:
 	add 	al, '0'
 	lea 	ebx, [eax + 'A' - ('9' + 1)]
 	cmp 	al, '9'
-	cmova 	eax, ebx
+	cmova	eax, ebx
 	stosw
 
 	mov 	al, '.'
@@ -271,8 +271,8 @@ keyring_extended_scancode_map:
 	idt_hfn_%[idt_idx]_ofs: equ KERNEL_START + ($ - $$)
 	idt_hfn_%[idt_idx]:
 
-	%if idt_idx == 0x0E
-		;; INT 0x0E is a page fault
+	%if idt_idx == INT_#PF
+		;; page fault
 		%ifdifi
 			error code (top value on the stack, QWORD)
 
@@ -290,9 +290,9 @@ keyring_extended_scancode_map:
 	.normal_error:
 		;; TODO: do something else here since this will just return back to the same instruction
 		;;       that page faults. there is no user mode yet, so I don't really care.
-		mov 	al, 0x0E
-		movzx 	eax, al
-		call 	idt_hfn_default
+		mov 	al, INT_#PF
+		movzx	eax, al
+		call	idt_hfn_default
 
 		pop 	rax
 		iretq
@@ -367,7 +367,7 @@ keyring_extended_scancode_map:
 
 		;; fallthrough
 		jmp 	halt
-	%elif idt_idx == 0x20
+	%elif idt_idx == INT_TIMER
 		;; INT 0x20 (IRQ0) is the PIT timer
 
 		push	rax
@@ -385,7 +385,7 @@ keyring_extended_scancode_map:
 		pop 	rcx
 		pop 	rax
 		iretq
-	%elif idt_idx == 0x21
+	%elif idt_idx == INT_KBD
 		;; INT 0x21 (IRQ1) is the keyboard
 
 		push	rax
@@ -480,22 +480,22 @@ keyring_extended_scancode_map:
 		pop 	rcx
 		pop 	rax
 		iretq
-	%elif idt_idx == APIC_SPURIOUS_ISR
+	%elif idt_idx == INT_SPURIOUS
 		;; do nothing because it is a spurious request.
 		iretq
 	%else
 		;; generic default interrupt handler.
 
 		;; skip the error code in ISRs that have it
-		%if idt_idx == 0x08 || idt_idx == 0x0A || idt_idx == 0x0B || idt_idx == 0x0C || \
-			idt_idx == 0x0D || idt_idx == 0x11 || idt_idx == 0x15
+		%if idt_idx == INT_#DF || idt_idx == INT_#TS || idt_idx == INT_#NP || idt_idx == INT_#SS || \
+			idt_idx == INT_#GP || idt_idx == INT_#AC || idt_idx == INT_#CP
 			add 	rsp, 8
 		%endif
 
 		push	rax
 
 		mov 	al, %hex(idt_idx)
-		movzx 	eax, al
+		movzx	eax, al
 		call 	idt_hfn_default
 
 		pop 	rax
@@ -522,7 +522,7 @@ idt:
 	dw idt_hfn_%[idt_idx]_ofs & 0xFFFF					;; offset[15:0]
 	dw GDT_KCODE										;; selector: kernel code segment
 	;; reserved bits = 0.
-	%if idt_idx == 0x08 || idt_idx == 0x0E
+	%if idt_idx == INT_#DF || idt_idx == INT_#PF
 		;; use IST1
 		db 1
 	%else

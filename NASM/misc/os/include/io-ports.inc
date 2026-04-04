@@ -19,7 +19,13 @@
 %assign IOPT_POST		0x80	;; Power On Self Test
 %assign IOPT_A20		0x92	;; fast A20 line to allow memory higher than 1 MiB
 %assign IOPT_PIC2		0xA0	;; legacy 8259 PIC slave command port
-%assign IOPT_PIC2_D		0xA1	;; legacy 8259 PIC slave  data port
+%assign IOPT_PIC2_D		0xA1	;; legacy 8259 PIC slave data port
+
+;; UART ports?
+%assign IOPT_COM4				0x02E8	;; IRQ3
+%assign IOPT_COM2				0x02F8	;; IRQ3
+%assign IOPT_COM3				0x03E8	;; IRQ4
+%assign IOPT_COM1				0x03F8	;; IRQ4
 
 ;; status bits for ATA PIO
 %assign ATA_PIO_STAT_BSY	1 << 7	;; drive is busy. ignore all other bits until cleared
