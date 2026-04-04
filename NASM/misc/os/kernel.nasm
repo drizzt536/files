@@ -4,7 +4,7 @@ bits 64
 ;; TODO: use USB HID keyboard stuff instead of a legacy PS/2 keyboard
 
 %include "kernel.inc"
-%include "stdlib-fn-table.nasm"
+%include "stdlib-fntable.nasm"
 %include "idt.nasm"		;; IDT declaration
 %include "stdlib.nasm"	;; stdlib imports
 

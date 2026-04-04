@@ -6,24 +6,24 @@
 ;; NOTE: _memscan is not safe unless you know 100% that the byte appears at least once.
 
 %pragma ignore NOTE: likely to be removed
-cstrlen: ; char *, err, u64 cstrlen(const char *str);
+cstrlen: ; char *, u64 cstrlen(const char *str);
 	;; returns a pointer to the end of a string
-	xor 	bl, bl		; search for null byte
+	xor 	bl, bl		;; search for null byte
 
 %pragma ignore NOTE: unsafe unless character is guaranteed to exist
-_memscan: ; void *, err, u64 _memscan(const void *ptr, u8 c);
+_memscan: ; void *, u64 _memscan(const void *ptr, u8 c);
 	;; basically `memchr`, but without the length end condition.
-	cld 				; forwards
+	cld 				;; forwards
 	mov 	rdi, rax
-	xor 	ecx, ecx	; start with index 0
-	xchg	al, bl		; `mov al, bl`, but preserve the pointer lower byte
-	repne	scasb		; sets rcx to be the index of te null byte
-	not 	rcx			; rcx = -rcx - 1
+	xor 	ecx, ecx	;; start with index 0
+	xchg	al, bl		;; `mov al, bl`, but preserve the pointer lower byte
+	repne	scasb		;; sets rcx to be the index of te null byte
+	not 	rcx			;; rcx = -rcx - 1
 
 	mov 	al, bl
-	add 	rax, rcx	; new ptr
-	xor 	ebx, ebx	; no errors
-	ret					; return (new ptr, err code, index)
+	add 	rax, rcx	;; new ptr
+	mov 	rbx, rcx	;; no errors
+	ret					;; return (new ptr, index)
 
 %macro strlen 2
 	;; %1 = strlen(%2)
@@ -94,7 +94,7 @@ strcpy:
 	add 	rcx, 8	; len += 8;
 	;; fallthrough
 
-; memcpy: ; void *memcpy(u8 *dst, u8 *src, u64 count);
+; void *memcpy(u8 *dst, u8 *src, u64 count);
 	;; memcpy is an alias of memmove.forwards, kind of.
 
 ;; TODO: this can be made to use movsd or movsq under the following conditions:
@@ -126,12 +126,12 @@ memcpy:
 	ret
 
 memset: ; void *memset(void *ptr, u8 value, u64 num);
-	cld 				; clear direction for forwards move
-	mov 	rdi, rax	; destination
-	xchg	rax, rbx	; `mov al, bl`, but preserve ptr
+	cld 				;; clear direction for forwards move
+	mov 	rdi, rax	;; destination
+	xchg	rax, rbx	;; `mov al, bl`, but preserve ptr
 	rep 	stosb
 
-	mov 	rax, rbx	; restore rax.
+	mov 	rax, rbx	;; restore rax
 	ret
 
 %ifdifi

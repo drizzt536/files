@@ -106,8 +106,8 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 $fn = "kernel_entry"
 
 @(
-	"%ifndef STDLIB_FN_TABLE_NASM",
-	"%define STDLIB_FN_TABLE_NASM",
+	"%ifndef STDLIB_FNTABLE_NASM",
+	"%define STDLIB_FNTABLE_NASM",
 	"",
 	"stdlib_fntable:",
 	".size:",
@@ -116,7 +116,7 @@ $fn = "kernel_entry"
 	"",
 	"%assign STDLIB_FNTABLE_SIZE $fn_idx"
 	""
-	"%endif ; %ifndef STDLIB_FN_TABLE_NASM"
+	"%endif ; %ifndef STDLIB_FNTABLE_NASM"
 ) > $outfile
 
 write-host "`r`e[0K    done"

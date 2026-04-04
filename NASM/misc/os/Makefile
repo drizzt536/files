@@ -47,12 +47,12 @@ $(DISK_IMG): kernel.bin boot.bin
 	disklastidx=$$(awk "BEGIN {print $$(stat -c %s disk.bin)/512 + $(FS_SIZE) - 1}"); \
 	dd if=/dev/zero of=disk.bin seek=$$disklastidx count=1 bs=1b
 
-include/stdlib-fn-table.nasm: gen-fn-table.ps1 $(filter-out $@, $(wildcard include/stdlib/*.nasm))
+include/stdlib-fntable.nasm: gen-fntable.ps1 $(filter-out $@, $(wildcard include/stdlib/*.nasm))
 	@echo pwsh -noprofile -nologo -f $< -i ./include/stdlib/stdlib.nasm -o ./$@
 	@printf "    loading"
 	@pwsh -noprofile -nologo -f $< -i include/stdlib/stdlib.nasm -o $@
 
-kernel.bin: kernel.nasm include/stdlib-fn-table.nasm $(wildcard ./include/* ./include/*/*)
+kernel.bin: kernel.nasm include/stdlib-fntable.nasm $(wildcard ./include/* ./include/*/*)
 	nasm -fbin -Iinclude -Iinclude/stdlib kernel.nasm -o kernel.bin
 
 boot.bin: boot.nasm kernel.bin
@@ -90,7 +90,7 @@ clean:
 	rm -f kernel.bin boot.bin 2>/dev/null
 
 distclean: clean
-	rm -f $(DISK_IMG) include/stdlib-fn-table.nasm 2>/dev/null
+	rm -f $(DISK_IMG) include/stdlib-fntable.nasm 2>/dev/null
 
 # As of right now, you have to figure out the drive index yourself. Basically, the issue
 # is that the drive will likely not be formatted, which means it won't show up with a drive
