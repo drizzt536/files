@@ -126,9 +126,11 @@ snake_speed_menu:
 	mov 	dword [VGA_ADDR( 0,  0)], DVGA_DWORD('SP')
 	mov 	dword [VGA_ADDR( 0,  2)], DVGA_DWORD('EE')
 	mov 	byte  [VGA_ADDR( 0,  4)], 'D'
-	mov 	dword [VGA_ADDR( 0,  6)], DVGA_DWORD('SE')
-	mov 	dword [VGA_ADDR( 0,  8)], DVGA_DWORD('LE')
-	mov 	dword [VGA_ADDR( 0, 10)], DVGA_DWORD('CT')
+	mov 	dword [VGA_ADDR( 0,  7)], DVGA_DWORD('HI')
+	mov 	dword [VGA_ADDR( 0,  9)], DVGA_DWORD('GH')
+	mov 	byte  [VGA_ADDR( 0, 12)], 'S'
+	mov 	dword [VGA_ADDR( 0, 13)], DVGA_DWORD('CO')
+	mov 	dword [VGA_ADDR( 0, 15)], DVGA_DWORD('RE')
 
 	mov 	dword [VGA_ADDR( 1, 1)], DVGA_DWORD('01')
 	mov 	dword [VGA_ADDR( 2, 1)], DVGA_DWORD('02')
@@ -141,22 +143,42 @@ snake_speed_menu:
 	mov 	dword [VGA_ADDR( 9, 1)], DVGA_DWORD('09')
 	mov 	dword [VGA_ADDR(10, 1)], DVGA_DWORD('10')
 
+	mov 	r13b, r15b
+
+%assign i 1
+%rep 10
+	mov 	ax, VGA_POS(11 - i, 8)
+	call	move_cursor
+
+	mov 	ax, word [snake_high_score_base + 2*i]
+	mov 	bl, VGA_DEFAULT
+	call	print_u16hex
+
+	%assign i i + 1
+%endrep
+
+%undef i
+
 	sub 	r15b, 11
 	neg 	r15b
 	imul	ecx, r15d, TERM_COLS
 
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
-.loop:
+.spinloop:
 	call	next_keycode
 	jce 	al, KC_ENTER, .done
 	jce 	al, KC_UP, .up
 	jce 	al, KC_DOWN, .down
+	jce 	al, KC_ESC, .escape
 
-	jmp 	.loop
+	jmp 	.spinloop
+.escape:
+	mov 	r15b, r13b
+	jmp 	snake_entry.recall
 .up:
 	cmp 	ecx, 1*TERM_COLS
-	je  	.loop
+	je  	.spinloop
 
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_DEFAULT
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_DEFAULT
@@ -164,10 +186,10 @@ snake_speed_menu:
 
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
-	jmp 	.loop
+	jmp 	.spinloop
 .down:
 	cmp 	ecx, 10*TERM_COLS
-	je  	.loop
+	je  	.spinloop
 
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_DEFAULT
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_DEFAULT
@@ -175,7 +197,7 @@ snake_speed_menu:
 
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
-	jmp 	.loop
+	jmp 	.spinloop
 .done:
 	shr 	ecx, 4
 	mov 	cl, byte [putchar_cr_table + ecx]
@@ -185,7 +207,9 @@ snake_speed_menu:
 	;; r15b = 11 - (row / 80). (higher number => lower timer modulo)
 	jmp 	snake_entry.recall
 
-snake_high_score: dw 0
+snake_high_score_base:
+	;; indices 0-10. index 0 is unused.
+	times 11 dw 0
 
 snake_entry:
 	;; rbp  = apple position
@@ -199,6 +223,23 @@ snake_entry:
 	;; r15b = speed
 
 	call	hide_cursor
+
+	sub 	esp, 512
+	inc 	qword [esp]
+	mov 	eax, DISKFS_START
+	mov 	bx, 1
+	mov 	ecx, esp
+	call	disk_read	; disk_write(u64 sector, u16 cnt, u16 *mem);
+
+	mov 	rax, qword [esp + 10]
+	mov 	qword [snake_high_score_base + 2], rax
+
+	mov 	rax, qword [esp + 18]
+	mov 	qword [snake_high_score_base + 10], rax
+
+	mov 	eax, dword [esp + 26]
+	mov 	dword [snake_high_score_base + 18], eax
+	add 	esp, 512
 
 	zero	r15d
 
@@ -228,7 +269,7 @@ snake_entry:
 	mov 	ax, 12
 	call	move_cursor
 
-	mov 	ax, word [snake_high_score]
+	mov 	ax, word [snake_high_score_base + 2*r15]
 	mov 	bl, VGA_CLR(VGA_WHITE, VGA_ORANGE)
 	call	print_u16hex
 
@@ -278,6 +319,7 @@ snake_entry:
 	je  	.pre_mainloop
 
 	jce 	al, KC_F1, snake_speed_menu
+	jce 	al, KC_ESC, .goto_start
 
 	jmp 	.wait_for_start
 .pre_mainloop:
@@ -440,10 +482,10 @@ snake_entry:
 	movzx	eax, word [r9 + 2*r11]
 	mov 	dword [VGA_BUF + eax], VGA_DWORD(VGA_CLR_FILL(VGA_LGT_GRAY), '  ')
 .game_over:
-	mov 	ax, word [snake_high_score]
+	mov 	ax, word [snake_high_score_base + 2*r15]
 	cmp 	r12w, ax
 	cmova	ax, r12w
-	mov 	word [snake_high_score], ax
+	mov 	word [snake_high_score_base + 2*r15], ax
 
 	mov 	ax, VGA_POS(12, 36)
 	call	move_cursor
@@ -481,7 +523,7 @@ snake_entry:
 	jce 	al, KC_F1, snake_speed_menu
 	jmp 	.game_over@loop
 .victory:
-	mov 	word [snake_high_score], r12w	;; max score, so unconditionally set high score
+	mov 	word [snake_high_score_base + 2*r15], r12w	;; max score, so unconditionally set high score
 
 	mov 	ax, VGA_POS(12, 36)
 	call	move_cursor
@@ -514,8 +556,31 @@ snake_entry:
 	mov 	dword [VGA_ADDR(13, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
 	jmp 	.game_over@loop
 .goto_start:
+	sub 	esp, 512
+
+	mov 	eax, DISKFS_START
+	mov 	bx, 1
+	mov 	ecx, esp
+	call	disk_read	; disk_write(u64 sector, u16 cnt, u16 *mem);
+
+	mov 	rax, qword [snake_high_score_base + 2]
+	mov 	qword [esp + 10], rax
+
+	mov 	rax, qword [snake_high_score_base + 10]
+	mov 	qword [esp + 18], rax
+
+	mov 	eax, dword [snake_high_score_base + 18]
+	mov 	dword [esp + 26], eax
+
+	mov 	eax, DISKFS_START
+	mov 	bx, 1
+	mov 	ecx, esp
+	call	disk_write	; disk_write(u64 sector, u16 cnt, u16 *mem);
+	add 	esp, 512
+
 	call	cls
 	call	show_cursor
+	clear_keyring
 	mov 	byte [kbd_state], 0	;; clear keyboard state
 	jmp 	kernel_entry.start
 
