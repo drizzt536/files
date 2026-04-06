@@ -34,11 +34,11 @@ idt_hfn_default:
 	;; don't call `cls` because the content on the rest of the screen could help
 	;; you figure out what went wrong and/or caused the unknown interrupt
 
-	push	rbx
-	push	rcx
-	push	rdx
-	push	rdi
-	push	rsi
+;	push	rbx
+;	push	rcx
+;	push	rdx
+;	push	rdi
+;	push	rsi
 
 	cld		;; forwards iteration
 	mov 	dl, al
@@ -75,15 +75,14 @@ idt_hfn_default:
 	cmova	eax, ebx
 	stosw
 
-	mov 	al, '.'
-	stosw
+	jmp 	halt
 
-	pop 	rsi
-	pop 	rdi
-	pop 	rdx
-	pop 	rcx
-	pop 	rbx
-	ret
+;	pop 	rsi
+;	pop 	rdi
+;	pop 	rdx
+;	pop 	rcx
+;	pop 	rbx
+;	ret
 
 keyring_scancode_map:
 %assign i 0
@@ -450,9 +449,9 @@ keyring_extended_scancode_map:
 		dec 	dl	;; separate instruction so that it wraps modulo 256.
 		movzx	edx, dl
 		mov 	byte [keyring + edx], al
-		inc 	byte [rel keyring_write]
 
 		mov 	byte [rel keyring_escape], KEYRING_ESC_NONE
+		inc 	byte [rel keyring_write]
 
 		jmp 	.keypress_exit
 	.pause_break_byte1: ;; E1

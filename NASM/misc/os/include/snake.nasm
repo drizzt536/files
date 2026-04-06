@@ -403,14 +403,15 @@ snake_entry:
 	mov 	r13w, r14w
 	jmp 	.mainloop
 .paused:
-	mov 	ax, VGA_POS(12, 36)
+	mov 	ax, VGA_POS(12, 34)
 	call	move_cursor
 	mov 	byte [print_str_color], VGA_CLR(VGA_WHITE, VGA_BLUE)
 
 	sub 	esp, 18
 	mov 	qword [rsp], 10
 	mov 	word [rsp + 8], '  '
-	mov 	rax, '  PAUSED'
+
+	mov 	rax, 'PAUSED  '
 	mov 	qword [rsp + 10], rax
 
 	lea 	eax, [esp + 8]

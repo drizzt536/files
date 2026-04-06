@@ -4,7 +4,6 @@
 %pragma ignore file stdkbd.nasm
 
 ;; returns keycode, keycode idx
-;; returns keycode, keycode idx
 ;; clobbers: al, rbx
 ;; returns al=0 on failure.
 ;; set up so `call get_keycode` can immediately be followed by
@@ -14,6 +13,7 @@ get_keycode: ; u8 get_keycode(void);
 	movzx	ebx, byte [rel keyring_read]
 _get_keycode: ; u8 _get_keycode(void _, u32 keyring_read);
 	zero	al
+	cli
 	jce 	bl, byte [rel keyring_write], .ret
 
 	mov 	al, byte [keyring + ebx]
@@ -21,23 +21,33 @@ _get_keycode: ; u8 _get_keycode(void _, u32 keyring_read);
 	inc 	byte [rel keyring_read]
 	test	al, al
 .ret:
+	sti
 	ret
 
 ;; returns the next keycode and the keyring index
 ;; if there isn't a keycode ready, it blocks until there is.
 ;; clobbers: al, rbx
 next_keycode: ; u8 next_keycode(void);
+	;; NOTE: this part doesn't need to be in a critical section
+	;;       since the keyboard ISR doesn't write to it.
 	movzx	ebx, byte [rel keyring_read]
 _next_keycode: ; u8 next_keycode(void _, u32 keyring_read);
 .loop:
+	;; flush pending interrupts
+	sti
+	nop
+	cli
+
 	jce 	bl, byte [rel keyring_write], .loop
 
 	mov 	al, byte [keyring + ebx]
 	inc 	byte [rel keyring_read]
+	sti
 	ret
 
 ;; clobbers: ax, rbx
 keyring_has_keycode: ; bool keyring_has_keycode(u8 ah /* keycode */);
+	cli
 	movzx	ebx, byte [rel keyring_read]
 .loop:
 	jce 	bl, byte [rel keyring_write], .ret_false
@@ -49,11 +59,13 @@ keyring_has_keycode: ; bool keyring_has_keycode(u8 ah /* keycode */);
 	jmp 	.loop
 .ret_false:
 	zero	al
+	sti
 	ret
 .ret_true:
 	;; `mov al, 1`, but update ZF
 	zero	al
 	inc 	al
+	sti
 	ret
 
 %macro clear_keyring 0
