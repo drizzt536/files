@@ -9,18 +9,40 @@ org KERNEL_START
 %include "jcmp.inc"
 %include "reg.inc"
 
-;; these segment offsets shouldn't change.
-%assign GDT_NULL	0x00
-%assign GDT_KCODE	0x08
-%assign GDT_KDATA	0x10
-%assign GDT_UCODE	0x18
-%assign GDT_UDATA	0x20
-%assign GDT_TSS		0x28	;; 2 entries long
+%assign enum_idx 0
+%macro enum_next 1
+	%assign %1 enum_idx
+	%assign enum_idx	enum_idx + 1
+%endm
+
+%macro enum_set 1-*
+	%rep %0
+		enum_next	%1
+		%rotate 1
+	%endrep
+%endm
 
 %assign IST1_BASE	0x1000
 %assign TSS_BASE	0x500
 %assign TSS_SIZE	104
+
+;; these segment offsets shouldn't change.
+%assign GDT_NULL	0x00
+%assign GDT_KCODE	0x08
+%assign GDT_KDATA	0x10
+%assign GDT_UDATA	0x18
+%assign GDT_UCODE	0x20
+%assign GDT_TSS		0x28	;; 2 entries long
 %assign GDT_BASE	TSS_BASE + TSS_SIZE
+
+%assign EFER_MSR			0xC0000080	;; extended feature enable register
+%assign STAR_MSR			0xC0000081	;; system target address register
+%assign LSTAR_MSR			0xC0000082	;; long mode syscall handler address
+%assign CSTAR_MSR			0xC0000083	;; compatibility STAR. only for 32-bit mode.
+%assign SFMASK_MSR			0xC0000084
+%assign FS_BASE_MSR			0xC0000100
+%assign GS_BASE_MSR			0xC0000101
+%assign KRNL_GS_BASE_MSR	0xC0000102	;; IA32_KERNEL_GS_BASE. for SWAPGS
 
 ;; the drift with this divisor is 1 second per 17 hours.
 ;; for no drift, the only two useful divisors are 14551 and 29102,
@@ -73,78 +95,77 @@ org KERNEL_START
 %assign APIC_IRQ1_PIN	1	;; keyboard
 
 ;; the reserved codes are basically permanently
-%assign INT_#DE			0x00	;; divide by zero
-%assign INT_#DB			0x01	;; debug
-%assign INT_NMI			0x02	;; non-maskable interrupt
-%assign INT_#BP			0x03	;; breakpoint (INT3)
-%assign INT_#OF			0x04	;; overflow (INTO when OF=1)
-%assign INT_#BR			0x05	;; bound range exceeded (BOUND when value out of range)
-%assign INT_#UD			0x06	;; invalid opcode
-%assign INT_#NM			0x07	;; device not available
-%assign INT_#DF			0x08	;; double fault
-%assign INT_CSO			0x09	;; coprocessor segment overrun (obsolete.)
-%assign INT_#TS			0x0A	;; invalid TSS
-%assign INT_#NP			0x0B	;; non-present segment
-%assign INT_#SS			0x0C	;; stack-segment fault
-%assign INT_#GP			0x0D	;; general-protection fault
-%assign INT_#PF			0x0E	;; page fault
-%assign INT_RES1		0x0F	;; reserved
-%assign INT_#MF			0x10	;; x87 Floating-Point Exception
-%assign INT_#AC			0x11	;; alignment check
-%assign INT_#MC			0x12	;; machine check
-%assign INT_#XM			0x13	;; SIMD floating-point exception
-%assign INT_#XF			0x13	;; alternate name for #XM
-%assign INT_#VE			0x14	;; virtualization exception
-%assign INT_#CP			0x15	;; control protection exception
-%assign INT_RES2		0x16	;; reserved
-%assign INT_RES3		0x17	;; reserved
-%assign INT_RES4		0x18	;; reserved
-%assign INT_RES5		0x19	;; reserved
-%assign INT_RES6		0x1A	;; reserved
-%assign INT_RES7		0x1B	;; reserved
-%assign INT_RES8		0x1C	;; reserved
-%assign INT_RES9		0x1D	;; reserved
-%assign INT_#HV			0x1E	;; hypervisor injection exception, AMD SEV-SNP specific
-%assign INT_#VC			0x1F	;; VMM Communication Exception, AMD SEV specific
-%assign INT_TIMER		0x20
-%assign INT_KBD			0x21
+
+%assign enum_idx 0x00
+
+enum_next	INT_#DE		;; divide by zero
+enum_next	INT_#DB		;; debug
+enum_next	INT_NMI		;; non-maskable interrupt
+enum_next	INT_#BP		;; breakpoint (INT3)
+enum_next	INT_#OF		;; overflow (INTO when OF=1)
+enum_next	INT_#BR		;; bound range exceeded (BOUND when value out of range)
+enum_next	INT_#UD		;; invalid opcode
+enum_next	INT_#NM		;; device not available
+enum_next	INT_#DF		;; double fault
+enum_next	INT_CSO		;; coprocessor segment overrun (obsolete)
+enum_next	INT_#TS		;; invalid TSS
+enum_next	INT_#NP		;; non-present segment
+enum_next	INT_#SS		;; stack-segment fault
+enum_next	INT_#GP		;; general-protection fault
+enum_next	INT_#PF		;; page fault
+enum_next	INT_RES1	;; reserved
+enum_next	INT_#MF		;; x87 Floating-Point Exception
+enum_next	INT_#AC		;; alignment check
+enum_next	INT_#MC		;; machine check
+enum_next	INT_#XM		;; SIMD floating-point exception
+enum_next	INT_#VE		;; virtualization exception
+enum_next	INT_#CP		;; control protection exception
+enum_next	INT_RES2	;; reserved
+enum_next	INT_RES3	;; reserved
+enum_next	INT_RES4	;; reserved
+enum_next	INT_RES5	;; reserved
+enum_next	INT_RES6	;; reserved
+enum_next	INT_RES7	;; reserved
+enum_next	INT_RES8	;; reserved
+enum_next	INT_RES9	;; reserved
+enum_next	INT_#HV		;; hypervisor injection exception, AMD SEV-SNP specific
+enum_next	INT_#VC		;; VMM Communication Exception, AMD SEV specific
+enum_next	INT_TIMER
+enum_next	INT_KBD
+
+%assign INT_#XF INT_#XM
 %assign INT_SPURIOUS	APIC_SPURIOUS_ISR
 
-%assign TERM_ROWS			25
-%assign TERM_COLS			80
-%assign TERM_SIZE			TERM_ROWS * TERM_COLS
+%assign TERM_ROWS		25
+%assign TERM_COLS		80
+%assign TERM_SIZE		TERM_ROWS * TERM_COLS
 
 ;; probably don't use these, but they are available for clarity.
-%assign TERM_WIDTH			TERM_COLS
-%assign TERM_HEIGHT			TERM_ROWS
+%assign TERM_WIDTH		TERM_COLS
+%assign TERM_HEIGHT		TERM_ROWS
 
-%if TERM_SIZE % 4 != 0
-	%fatal terminal size is assumed to be divisible by 4. (value = TERM_SIZE)
+%if TERM_COLS % 16 != 0
+	;; this is required for include/stdlib/stdprint.nasm
+	%fatal terminal columns is assumed to be divisible by 16. (value = %[TERM_SIZE])
 %endif
 
 ;; NOTE: the colors were determined experimentally rather than from documentation.
-%assign VGA_BLACK				0x0
-%assign VGA_DRK_BLUE			0x1
-%assign VGA_GREEN				0x2
-%assign VGA_TEAL				0x3
-%assign VGA_RED					0x4
-%assign VGA_DRK_PINK			0x5 ;; bad name? is this magenta or something?
-%assign VGA_ORANGE				0x6
-%assign VGA_LGT_GRAY			0x7
-%assign VGA_DRK_GRAY			0x8
-%assign VGA_PURPLE				0x9
-%assign VGA_LGT_GREEN			0xA
-%assign VGA_CYAN				0xB
-%assign VGA_LGT_RED				0xC
-%assign VGA_PINK				0xD
-%assign VGA_YELLOW				0xE
-%assign VGA_WHITE				0xF
+
+%assign enum_idx 0x0
+
+enum_set \
+	VGA_BLACK, VGA_BLUE, VGA_GREEN, VGA_TEAL, \
+	VGA_RED, VGA_MAGENTA, VGA_ORANGE, VGA_LGT_GRAY, \
+	VGA_DRK_GRAY, VGA_PURPLE, VGA_LGT_GREEN, VGA_CYAN, \
+	VGA_LGT_RED, VGA_PINK, VGA_YELLOW, VGA_WHITE
+
 %define VGA_CLR(fgclr, bgclr)	%hex((fgclr) | (bgclr) << 4)
-%assign VGA_DEFAULT				VGA_CLR(VGA_DRK_GRAY, VGA_BLACK)
-%assign VGA_BUF					0xb8000
-%assign VGA_BUF_END				VGA_BUF + 2*TERM_SIZE
+%define VGA_CLR_FILL(color)		VGA_CLR(color, color)
 %define VGA_POS(row, col)		%hex((TERM_COLS*(row) + (col)) % TERM_SIZE)
+%assign VGA_BUF					0xb8000
 %define VGA_ADDR(row, col)		%hex(VGA_BUF + 2*VGA_POS(row, col))
+%assign VGA_DEFAULT				VGA_CLR(VGA_DRK_GRAY, VGA_BLACK)
+%assign VGA_BUF_END				VGA_BUF + 2*TERM_SIZE
 
 %define BYTES2WORD(b0, b1) (b0 | b1 << 8)
 %define BYTES2DWORD(b0, b1, b2, b3) (b0 | b1 << 8 | b2 << 16 | b3 << 24)
@@ -153,12 +174,75 @@ org KERNEL_START
 
 %define VGA_WORD(clr, s)  (BYTES2WORD(%substr(s, 1, 1), clr))
 %define VGA_DWORD(clr, s) (BYTES2DWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr))
-%define VGA_QWORD(clr, s) (BYTES2DWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr), \
-							BYTES2DWORD(%substr(s, 3, 1), clr, %substr(s, 4, 1), clr))
+%define VGA_QWORD(clr, s) (BYTES2QWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr, \
+							%substr(s, 3, 1), clr, %substr(s, 4, 1), clr))
 
 %define DVGA_WORD(s) (VGA_WORD(VGA_DEFAULT, s))
 %define DVGA_DWORD(s) (VGA_DWORD(VGA_DEFAULT, s))
 %define DVGA_QWORD(s) (VGA_QWORD(VGA_DEFAULT, s))
+
+%define byte2char(b) %sel((b) + 1, \
+	`\x00`, `\x01`, `\x02`, `\x03`, `\x04`, `\x05`, `\x06`, `\x07`, `\x08`, `\x09`, `\x0A`, `\x0B`, \
+	`\x0C`, `\x0D`, `\x0E`, `\x0F`, `\x10`, `\x11`, `\x12`, `\x13`, `\x14`, `\x15`, `\x16`, `\x17`, \
+	`\x18`, `\x19`, `\x1A`, `\x1B`, `\x1C`, `\x1D`, `\x1E`, `\x1F`, `\x20`, `\x21`, `\x22`, `\x23`, \
+	`\x24`, `\x25`, `\x26`, `\x27`, `\x28`, `\x29`, `\x2A`, `\x2B`, `\x2C`, `\x2D`, `\x2E`, `\x2F`, \
+	`\x30`, `\x31`, `\x32`, `\x33`, `\x34`, `\x35`, `\x36`, `\x37`, `\x38`, `\x39`, `\x3A`, `\x3B`, \
+	`\x3C`, `\x3D`, `\x3E`, `\x3F`, `\x40`, `\x41`, `\x42`, `\x43`, `\x44`, `\x45`, `\x46`, `\x47`, \
+	`\x48`, `\x49`, `\x4A`, `\x4B`, `\x4C`, `\x4D`, `\x4E`, `\x4F`, `\x50`, `\x51`, `\x52`, `\x53`, \
+	`\x54`, `\x55`, `\x56`, `\x57`, `\x58`, `\x59`, `\x5A`, `\x5B`, `\x5C`, `\x5D`, `\x5E`, `\x5F`, \
+	`\x60`, `\x61`, `\x62`, `\x63`, `\x64`, `\x65`, `\x66`, `\x67`, `\x68`, `\x69`, `\x6A`, `\x6B`, \
+	`\x6C`, `\x6D`, `\x6E`, `\x6F`, `\x70`, `\x71`, `\x72`, `\x73`, `\x74`, `\x75`, `\x76`, `\x77`, \
+	`\x78`, `\x79`, `\x7A`, `\x7B`, `\x7C`, `\x7D`, `\x7E`, `\x7F`, `\x80`, `\x81`, `\x82`, `\x83`, \
+	`\x84`, `\x85`, `\x86`, `\x87`, `\x88`, `\x89`, `\x8A`, `\x8B`, `\x8C`, `\x8D`, `\x8E`, `\x8F`, \
+	`\x90`, `\x91`, `\x92`, `\x93`, `\x94`, `\x95`, `\x96`, `\x97`, `\x98`, `\x99`, `\x9A`, `\x9B`, \
+	`\x9C`, `\x9D`, `\x9E`, `\x9F`, `\xA0`, `\xA1`, `\xA2`, `\xA3`, `\xA4`, `\xA5`, `\xA6`, `\xA7`, \
+	`\xA8`, `\xA9`, `\xAA`, `\xAB`, `\xAC`, `\xAD`, `\xAE`, `\xAF`, `\xB0`, `\xB1`, `\xB2`, `\xB3`, \
+	`\xB4`, `\xB5`, `\xB6`, `\xB7`, `\xB8`, `\xB9`, `\xBA`, `\xBB`, `\xBC`, `\xBD`, `\xBE`, `\xBF`, \
+	`\xC0`, `\xC1`, `\xC2`, `\xC3`, `\xC4`, `\xC5`, `\xC6`, `\xC7`, `\xC8`, `\xC9`, `\xCA`, `\xCB`, \
+	`\xCC`, `\xCD`, `\xCE`, `\xCF`, `\xD0`, `\xD1`, `\xD2`, `\xD3`, `\xD4`, `\xD5`, `\xD6`, `\xD7`, \
+	`\xD8`, `\xD9`, `\xDA`, `\xDB`, `\xDC`, `\xDD`, `\xDE`, `\xDF`, `\xE0`, `\xE1`, `\xE2`, `\xE3`, \
+	`\xE4`, `\xE5`, `\xE6`, `\xE7`, `\xE8`, `\xE9`, `\xEA`, `\xEB`, `\xEC`, `\xED`, `\xEE`, `\xEF`, \
+	`\xF0`, `\xF1`, `\xF2`, `\xF3`, `\xF4`, `\xF5`, `\xF6`, `\xF7`, `\xF8`, `\xF9`, `\xFA`, `\xFB`, \
+	`\xFC`, `\xFD`, `\xFE`, `\xFF`)
+
+%define strmul(s, n) %sel((n) + 1, '', \
+	%sel(!%isdifi( 1),) %strcat(s), \
+	%sel(!%isdifi( 2),) %strcat(s,s), \
+	%sel(!%isdifi( 3),) %strcat(s,s,s), \
+	%sel(!%isdifi( 4),) %strcat(s,s,s,s), \
+	%sel(!%isdifi( 5),) %strcat(s,s,s,s,s), \
+	%sel(!%isdifi( 6),) %strcat(s,s,s,s,s,s), \
+	%sel(!%isdifi( 7),) %strcat(s,s,s,s,s,s,s), \
+	%sel(!%isdifi( 8),) %strcat(s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi( 9),) %strcat(s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(10),) %strcat(s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(11),) %strcat(s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(12),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(13),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(14),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(15),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(16),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(17),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(18),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(19),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(20),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(21),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(22),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(23),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(24),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(25),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(26),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(27),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(28),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(29),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(30),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(31),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
+	%sel(!%isdifi(32),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s) \
+	)
+
+%imacro zero 1
+	xor 	%1, %1
+%endm
 
 %macro io_wait 0
 	;; basically just kill a little bit of time so other `out` commands can finish.
@@ -223,9 +307,9 @@ org KERNEL_START
 
 %macro _get_isr_timerx_mod 4
 	;; _get_isr_timerx_mod mod, avar, bvar, type
-	xor 	%3, %3
+	zero	%3
 	mov 	%2, %4 [rel isr_timer]
-	cmp 	%2, %1					;; isr timer wrap value. probablly will be imm8
+	cmp 	%2, %1					;; isr timer wrap value. probably will be imm8
 	cmovae	%cond(%isidni(%2, al), ax, %2), %cond(%isidni(%3, bl), bx, %3)
 	mov 	%4 [rel isr_timer], %2	;; write back in case it was zeroed
 %endm
@@ -300,10 +384,10 @@ org KERNEL_START
 	jnc 	%%loop
 %endm
 
-%macro rdrand_nzmac 1
+%macro rdseed_mac 1
 %%loop:
-	rdrand	%1
-	jtz 	%1, %1, %%loop
+	rdseed	%1
+	jnc 	%%loop
 %endm
 
 %macro _putchar_colored 3
@@ -311,23 +395,17 @@ org KERNEL_START
 	mov		[rel VGA_ADDR(%1, %2)], %3	;; VGA text buffer
 %endm
 
-%assign enum_idx 0
-%macro enum_next 1
-	%assign %1 enum_idx
-	%assign enum_idx enum_idx + 1
-%endm
-
-%macro enum_set 1-*
-	%rep %0
-		enum_next %1
-		%rotate 1
-	%endrep
-%endm
-
 %macro inc 1-*
 	%rep %0
 		inc 	%1
 		%rotate 1
 	%endrep
+%endm
+
+%macro keymod_jce 3
+	;; test_keymods tmp_reg, comparison, label
+	mov 	%1, byte [kbd_state]
+	and 	%1, KBD_STATE_MODIFIERS
+	jce 	%1, %2, %3
 %endm
 %endif ; %ifndef KERNEL_INC

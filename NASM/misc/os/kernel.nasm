@@ -7,6 +7,7 @@ bits 64
 %include "stdlib-fntable.nasm"
 %include "idt.nasm"		;; IDT declaration
 %include "stdlib.nasm"	;; stdlib imports
+%include "snake.nasm"
 
 tss:
 	dd	0			;; 0x00: reserved
@@ -51,7 +52,7 @@ proc_keys_until_timeout:
 	call	toggle_cursor
 	jmp 	.loop
 .reset_cursor:
-	xor 	ax, ax
+	zero	ax
 	call	move_cursor
 	jmp 	.loop
 .arrow_up:
@@ -78,6 +79,12 @@ proc_keys_until_timeout:
 .ret:
 	ret
 
+syscall_handler:
+	;; RCX = RIP
+	;; R11 = RFLAGS
+	;; TODO: switch to the kernel stack
+	sysret
+
 %xdefine MSG "The Low Taper Fade Meme is **MASSIVE**! " ;; 40 characters long
 
 kernel_entry:
@@ -96,7 +103,7 @@ kernel_entry:
 	;; for AVX512, also set bits 5, 6, and 7.
 	;; 5=OPMASK (k-mask registers) 6=ZMM_Hi256, 7=Hi16_ZMM (ZMM16-ZMM31)
 	;; NOTE: bit 19 is for APX. Bits 17 and 18 are for AMX.
-	xor 	ecx, ecx
+	zero	ecx
 	xgetbv				;; XCR0
 	or  	al, 110b	;; AVX and SSE bits
 	xsetbv				;; Save back to XCR0
@@ -124,6 +131,18 @@ kernel_entry:
 	shr 	eax, 12
 	and 	byte [PT_PT0_BASE + rax*8], ~1
 	invlpg	[stack_guard_page]	;; invalidate the single page in the TLB
+
+	;; set up syscalls
+	;; NOTE: KDATA = KCODE + 8, UDATA = KDATA + 8, UDATA = KDATA + 16.
+	mov 	ecx, STAR_MSR
+	mov 	edx, GDT_KCODE | GDT_KDATA << 16
+	zero	eax		;; the EIP value isn't used in long mode
+	wrmsr
+
+	mov 	ecx, LSTAR_MSR
+	xor 	edx, edx
+	mov 	eax, syscall_handler
+	wrmsr
 .stdlib_avail:
 	;; NOTE: calling stdlib functions before this point is not defined
 	;;       since paging and AVX isn't fully set up before this.
@@ -135,10 +154,10 @@ kernel_entry:
 .init_prng:
 	;; initialize the PRNG state
 	;; xoshiro256** requires that the initial state is not all zeros.
-	rdrand_mac	rax
-	rdrand_mac	rbx
-	rdrand_mac	rcx
-	rdrand_mac	rdx
+	rdseed_mac	rax
+	rdseed_mac	rbx
+	rdseed_mac	rcx
+	rdseed_mac	rdx
 
 	mov 	rdi, rax
 	or  	rdi, rbx
@@ -213,8 +232,8 @@ kernel_entry:
 
 	;; set task priority to 0
 	mov 	ecx, X2APIC_TPR
-	xor 	eax, eax
-	xor 	edx, edx
+	zero	eax
+	zero	edx
 	wrmsr
 
 	;; TODO: figure out the address dynamically instead of using a hard-coded one.
@@ -230,7 +249,7 @@ kernel_entry:
 	cld
 	mov 	edi, esp	;; just put these right after the stack
 	mov 	ecx, 512 * 2
-	xor 	eax, eax
+	zero	eax
 	rep 	stosq
 
 	mov 	edi, QEMU_IOAPIC_BASE + 13h
@@ -252,8 +271,16 @@ kernel_entry:
 	mov 	dword [rdi + 0x00], 0x10 + 2*APIC_IRQ1_PIN + 1
 	mov 	dword [rdi + 0x10], 0x00					;; CPU core 0
 
+	;; NOTE: the 2 pages after the stack can be reused for something else now.
+
 	lidt	[idt.ptr]
-	sti 	;; enable interrupts.
+
+	;; re-enable non-maskable interrupts
+	in  	al, IOPT_CMOS
+	and 	al, 0x7F
+	out 	IOPT_CMOS, al
+
+	sti 	;; enable maskable interrupts.
 
 	;; TODO: select the master on the primary disk
 	;;       it should already be set to that, but do it anyway.
@@ -270,8 +297,10 @@ kernel_entry:
 	jce 	al, ASCII_NUMLK,	.start
 	jce 	al, ASCII_SCRLK,	.start
 
-	jce 	byte [kbd_data], KBD_DATA_CTRL, .ctrl
-	jtnz	byte [kbd_data], KBD_DATA_CTRL | KBD_DATA_ALT | KBD_DATA_WIN, .start
+	keymod_jce	ah, KBD_STATE_CTRL, .ctrl
+	keymod_jce	ah, KBD_STATE_CTRL | KBD_STATE_ALT, .ctrl_alt
+
+	jtnz	byte [kbd_state], KBD_STATE_CTRL | KBD_STATE_ALT | KBD_STATE_WIN, .start
 
 	;; test regular keys
 	jce 	al, ASCII_HOME,		.home
@@ -282,6 +311,7 @@ kernel_entry:
 	jce 	al, ASCII_F1,		.toggle_cursor
 	jts 	al, al, .start		;; release code
 
+	zero	ah
 	call	putchar
 	jmp 	.start
 .home:
@@ -297,6 +327,7 @@ kernel_entry:
 	jmp 	.start
 .arrow_down:
 	;; `add_cursor(TERM_COLS);` would be better, but just demonstrate that this works.
+
 	mov 	al, `\v`
 	call	putchar
 	jmp 	.start
@@ -319,7 +350,7 @@ kernel_entry:
 	jce 	al, 'r', .rand		;; rand
 	jce 	al, 's', .before_read_sectors
 	jce 	al, 'x', .ctrl_x
-	jce 	al, ASCII_ESC, .ctrl_esc
+	jce 	al, ASCII_F2, .ctrl_f2
 
 	jmp 	.start
 .ctrl_x:
@@ -338,11 +369,14 @@ kernel_entry:
 	mov 	dword [VGA_ADDR(0, 2)], DVGA_DWORD('IT')
 	timewait_mac8 50, 1
 	jmp 	.before_mul_loop
-.ctrl_esc:
+.ctrl_f2:
 	call	reboot
+.ctrl_alt:
+	jce 	al, 's', snake_entry
+	jmp 	.start
 .before_read_sectors:
 	sub 	esp, 512	;; allocate space for the sectors to be read into.
-	xor 	r8d, r8d	;; sector_idx = 0;
+	zero	r8d			;; sector_idx = 0;
 	call	cls
 	call	hide_cursor
 
@@ -367,7 +401,7 @@ kernel_entry:
 .loop@words:
 	lodsb	;; al = *src++
 
-	xor 	ah, ah
+	zero	ah
 	call	print_u8hex
 
 	dec 	ebp
@@ -375,7 +409,7 @@ kernel_entry:
 
 	timewait_mac8	6, 0
 
-	xor 	eax, eax
+	zero	eax
 	call	move_cursor
 
 	inc 	r8b
@@ -409,13 +443,13 @@ kernel_entry:
 
 	;; fallthrough
 .before_mul_loop:
-	xor 	ebp, ebp
+	zero	ebp
 
 	mov 	rax, rbp
-	xor 	bl, bl
+	zero	bl
 	call	print_u64hex
 
-	xor 	ax, ax
+	zero	ax
 	call	move_cursor
 
 	mov 	dword [VGA_ADDR(2,  0)], DVGA_DWORD('KE')
@@ -472,7 +506,7 @@ kernel_entry:
 	;; conditionally change from a conditional jump to unconditional
 	mov 	byte [.rand@loop@jump], al
 	setnz	al
-	xor 	ah, ah
+	zero	ah
 	mov 	word [rel cursor_pos], VGA_POS(24, 78)
 	call	_print_u8hex
 	mov 	word [rel cursor_pos], 0
@@ -568,7 +602,7 @@ kernel_entry:
 	mov 	ecx, %strlen(MSG)
 .ltf@print_msg_1:
 	dec 	ecx
-	mov 	al, byte [msg + ecx]
+	mov 	al, byte [ltf_msg + ecx]
 	mov 	word [esi + 2*ecx], ax
 	jtnz	ecx, ecx, .ltf@print_msg_1
 
@@ -579,12 +613,12 @@ kernel_entry:
 
 	;; print the same thing again but in different colors
 	mov 	esi, VGA_BUF
-	mov 	ah, VGA_CLR(VGA_CYAN, VGA_DRK_BLUE)
+	mov 	ah, VGA_CLR(VGA_CYAN, VGA_BLUE)
 .ltf@fill_screen_2:
 	mov 	ecx, %strlen(MSG)
 .ltf@print_msg_2:
 	dec 	ecx
-	mov 	al, byte [msg + ecx]
+	mov 	al, byte [ltf_msg + ecx]
 	mov 	word [esi + 2*ecx], ax
 	jtnz	ecx, ecx, .ltf@print_msg_2
 
@@ -594,7 +628,7 @@ kernel_entry:
 	call	proc_keys_until_timeout
 	jmp 	.ltf@mainloop
 
-msg: db MSG
+ltf_msg: db MSG
 
 align 512	;; align to sector boundary
 kernel_end:

@@ -213,9 +213,11 @@ start32: ;; protected mode entrypoint
 	or  	al, 1 << 5			;; set the PAE-bit (bit 5)
 	mov 	cr4, eax
 
-	mov 	ecx, 0xC0000080		;; EFER MSR
+	;; set the NXE bit (bit 11), long mode bit (bit 8), and system call extensions bit (bit 0)
+	;; the kernel shouldn't have to touch the EFER MSR now.
+	mov 	ecx, 0xC0000080			;; EFER MSR
 	rdmsr
-	bts 	eax, 8				;; set the LM-bit (bit 8)
+	or  	eax, 1 << 11 | 1 << 8 | 1 << 0
 	wrmsr
 
 	mov 	eax, cr0
@@ -249,11 +251,6 @@ start64:
 	mov 	ecx, KERNEL_SIZE >> 3	;; KERNEL_SIZE / 8
 	rep 	movsq	;; move the kernel 8 bytes at a time. 512 is a multiple of 8
 
-	;; re-enable non-maskable interrupts
-	in  	al, IOPT_CMOS
-	and 	al, 0x7F
-	out 	IOPT_CMOS, al
-
 	jmp 	qword [KERNEL_ADDR_2S]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; data stuff ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -283,18 +280,20 @@ gdt:
 	db		10010010b
 	db		11001111b
 	db		0
-; ring 3 segments
-.ucode_ofs: equ $ - gdt
-	dd		0xFFFF
-	db		0
-	db		11111010b
-	db		10101111b ;; already set to the long mode flags
-	db		0
+;; ring 3 segments
+;; user data has to come first because of how the sysret arithmetic works.
+;; this is a retarded design choice on the part of AMD
 .udata_ofs: equ $ - gdt
 	dd		0xFFFF
 	db		0
 	db		11110010b
 	db		11001111b
+	db		0
+.ucode_ofs: equ $ - gdt
+	dd		0xFFFF
+	db		0
+	db		11111010b
+	db		10101111b ;; already set to the long mode flags
 	db		0
 ;; this takes up 2 GDT slots. idk if this works.
 .tss_ofs: equ $ - gdt

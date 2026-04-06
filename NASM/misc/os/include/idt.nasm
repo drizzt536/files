@@ -1,6 +1,8 @@
 %ifndef IDT_INC
 %define IDT_INC
 
+%include "kernel.inc"
+
 ;; this should get included into kernel.nasm
 
 ;; https://wiki.osdev.org/Interrupt_Descriptor_Table
@@ -300,7 +302,7 @@ keyring_extended_scancode_map:
 		;; preserving registers doesn't matter anymore because the kernel panic doesn't
 		;; return either way.
 		cli
-		mov 	ax, VGA_CLR(VGA_WHITE, VGA_DRK_BLUE) << 8 | ' '
+		mov 	ax, VGA_CLR(VGA_WHITE, VGA_BLUE) << 8 | ' '
 		call	fill_scr
 		call	hide_cursor
 
@@ -377,8 +379,8 @@ keyring_extended_scancode_map:
 		inc 	dword [rel isr_timer]
 
 		mov 	ecx, X2APIC_EOI
-		xor 	eax, eax
-		xor 	edx, edx
+		zero	eax
+		zero	edx
 		wrmsr
 
 		pop 	rdx
@@ -400,7 +402,7 @@ keyring_extended_scancode_map:
 
 		jce 	al, 0xE1, .pause_break_byte1 ;; if it starts with 0xE1, then it is definitely a pause break
 
-		xor 	cl, cl							; esc = KEYRING_ESC_NONE;
+		zero	cl								; esc = KEYRING_ESC_NONE;
 		mov 	dl, KEYRING_ESC_EXT
 		cmp 	al, 0xE0						; if (al == 0xE0) {
 		cmove	ecx, edx						;     esc = true;
@@ -472,8 +474,8 @@ keyring_extended_scancode_map:
 		;; fallthrough
 	.keypress_exit:
 		mov 	ecx, X2APIC_EOI
-		xor 	eax, eax
-		xor 	edx, edx
+		zero	eax
+		zero	edx
 		wrmsr
 
 		pop 	rdx
@@ -522,7 +524,7 @@ idt:
 	dw idt_hfn_%[idt_idx]_ofs & 0xFFFF					;; offset[15:0]
 	dw GDT_KCODE										;; selector: kernel code segment
 	;; reserved bits = 0.
-	%if idt_idx == INT_#DF || idt_idx == INT_#PF
+	%if idt_idx == INT_#DF || idt_idx == INT_#PF || idt_idx == INT_#MC
 		;; use IST1
 		db 1
 	%else
@@ -533,7 +535,8 @@ idt:
 	dw (idt_hfn_%[idt_idx]_ofs >> 16) & 0xFFFF			;; offset[31:16]
 	dd idt_hfn_%[idt_idx]_ofs >> 32						;; offset[63:32]
 	dd 0												;; reserved
-%assign idt_idx idt_idx + 1
+
+	%assign idt_idx idt_idx + 1
 %endrep
 .ptr:
 	dw $ - idt - 1

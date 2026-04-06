@@ -6,16 +6,16 @@
 ;; NOTE: _memscan is not safe unless you know 100% that the byte appears at least once.
 
 %pragma ignore NOTE: likely to be removed
-cstrlen: ; char *, u64 cstrlen(const char *str);
+cstrlen: ; string, u64 cstrlen(const string str);
 	;; returns a pointer to the end of a string
-	xor 	bl, bl		;; search for null byte
+	zero	bl			;; search for null byte
 
 %pragma ignore NOTE: unsafe unless character is guaranteed to exist
 _memscan: ; void *, u64 _memscan(const void *ptr, u8 c);
 	;; basically `memchr`, but without the length end condition.
 	cld 				;; forwards
 	mov 	rdi, rax
-	xor 	ecx, ecx	;; start with index 0
+	zero	ecx			;; start with index 0
 	xchg	al, bl		;; `mov al, bl`, but preserve the pointer lower byte
 	repne	scasb		;; sets rcx to be the index of te null byte
 	not 	rcx			;; rcx = -rcx - 1
@@ -66,8 +66,8 @@ _memscan: ; void *, u64 _memscan(const void *ptr, u8 c);
 %endm
 
 %ifdifi
-char *strncpy(char *dst, char *src, u64 maxlen) {
-	return (char *) memmove(dst - 8, src - 8, strnlen(src, maxlen) + 8);
+string strncpy(string dst, string src, u64 maxlen) {
+	return (string) memmove(dst - 8, src - 8, strnlen(src, maxlen) + 8);
 }
 %endif
 
@@ -81,8 +81,8 @@ strncpy:
 	jmp 	memmove
 
 %ifdifi
-char *strcpy(char *dst, char *src) {
-	return (char *) memmove(dst - 8, src - 8, strlen(src) + 8);
+string strcpy(string dst, string src) {
+	return (string) memmove(dst - 8, src - 8, strlen(src) + 8);
 }
 %endif
 
@@ -135,7 +135,7 @@ memset: ; void *memset(void *ptr, u8 value, u64 num);
 	ret
 
 %ifdifi
-i8 strcmp(char *a, char *b) {
+i8 strcmp(string a, string b) {
 	const u64
 		alen = *(u64 *)(a - 8),
 		blen = *(u64 *)(b - 8);
@@ -186,14 +186,14 @@ strcmp: ; i8 strcmp(string a, string b);
 	jb  	.less			; if (strlen(a) < strlen(b)) return -1;
 	ja  	.greater		; if (strlen(a) > strlen(b)) return +1;
 
-	xor 	al, al			; return 0;
+	zero	al				; return 0;
 	ret
 .less:
-	xor 	al, al
+	zero	al
 	dec 	al
 	ret
 .greater:
-	xor 	al, al
+	zero	al
 	inc 	al
 	ret
 
@@ -215,14 +215,14 @@ memcmp: ; i8 memcmp(u8 *a, u8 *b, u64 len);
 	inc 	rax, rbx		;     a++, b++;
 	loop	.loop			; } while (--len != 0);
 .equal:
-	xor 	al, al
+	zero	al
 	ret
 .less:
-	xor 	al, al
+	zero	al
 	dec 	al
 	ret
 .greater:
-	xor 	al, al
+	zero	al
 	inc 	al
 	ret
 
@@ -240,19 +240,19 @@ streq: ; u8 streq(string a, string b);
 	inc 	rax, rbx		;     a++, b++;
 	loop	.loop			; } while (--len != 0);
 .eq:
-	xor 	al, al
+	zero	al
 	ret
 .ne:
-	xor 	al, al
+	zero	al
 	inc 	al
 	ret
 .greater:
-	xor 	al, al
+	zero	al
 	inc 	al
 	ret
 
 %ifdifi
-char *strrev(char *s) {
+string strrev(string s) {
 	u64 a = 0;
 	u64 b = strlen(s);
 
@@ -269,10 +269,10 @@ char *strrev(char *s) {
 }
 %endif
 
-strrev: ; char *strrev(char *s);
+strrev: ; string strrev(string s);
 	;; rbx =  left index
 	;; rcx = right index
-	xor 	ebx, ebx
+	zero	ebx
 	strlen	rcx, rax
 .loop:
 	jca 	rbx, rcx, .done
@@ -284,6 +284,97 @@ strrev: ; char *strrev(char *s);
 	jmp 	.loop
 .done:
 	ret
+
+%ifdifi
+vstring strtok(string str, vstring tok, string delims) {
+	tok.n = tok.p + tok.n + 1;
+
+	if (tok.p == NULL)
+		tok.n = str;
+
+	tok.p = tok.n
+	tok.n = 0;
+
+	const u64 slen = strlen(str);
+	const u64 dlen = strlen(delims);
+
+	// slen -= tok.p - str;
+	slen += str;
+	slen -= tok.p;
+
+	for (; tok.n < slen; tok.n++) {
+		for (u64 j = 0; j < dlen; j++) {
+			char tmp = tok.p[tok.n];
+
+			if (tmp == delims[j])
+				return tok;
+		}
+	}
+
+	if (tok.n != 0)
+		return tok;
+
+	// empty
+	return (vstring) {.n = 0, .p = NULL};
+}
+%endif
+
+strtok: ; vstring strtok(string str, vstring tok, string delims);
+	push	rbp
+	lea 	rbx, [rcx + rbx + 1]	; tok.n = tok.p + tok.n + 1;	// skip the token and delim
+
+	test	rcx, rcx				; if (tok.p == NULL)
+	cmovz	rbx, rax				;     tok.n = str;
+
+	mov 	rcx, rbx				; tok.p = tok.n;
+	zero	ebx						; tok.n = 0;
+
+	strlen	rdi, rax				; u64 slen = strlen(str);
+	strlen	rsi, rdx				; u64 dlen = strlen(delims);
+
+	;; make slen relative to tok.p	; // slen -= tok.p - str;
+	add 	rdi, rax				; slen += str;
+	sub 	rdi, rcx				; slen -= tok.p;
+
+	;; rax = j
+	;; rbx = tok.n
+	;; rcx = tok.p
+	;; rdx = delims
+	;; rdi = slen
+	;; rsi = dlen
+	;; bpl = tmp
+
+.str_iter:							; while (tok.n < slen) {
+	jcae	rbx, rdi, .empty
+
+	zero	eax						;     u64 j = 0;
+.delim_iter:						;     while (j < dlen) {
+	jcae	rax, rsi, .delim_iter@done
+
+	mov 	bpl, byte [rcx + rbx]	;         char tmp = tok.p[tok.n];
+	jce 	bpl, byte [rdx + rax], .ret	;     if (tmp == delims[j]) goto ret;
+
+	inc 	rax						;         j++;
+	jmp 	.delim_iter				;     }
+.delim_iter@done:
+	inc 	rbx						;     tok.n++;
+	jmp 	.str_iter				; }
+
+.empty:
+	jtnz 	rbx, rbx, .ret			; if (tok.n != 0) return tok;
+
+	;; NOTE: if you pass this back into strtok, it will find the first token again.
+	pop 	rbp						; return (vstring) {
+	zero	eax						;     .n = 0,
+	zero	ebx						;     .p = NULL
+	ret								; };
+.ret:
+	pop 	rbp
+	mov 	rax, rbx
+	mov 	rbx, rcx
+	ret								; return tok;
+
+
 
 ;; TODO: stricmp, strnicmp, strchr, strrchr, strstr, strrstr, strcat, strncat,
 ;;      strdup, strndup, strcspn?, strspn?, strpbrk?, strtok, strtoupper, strtolower

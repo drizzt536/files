@@ -13,7 +13,7 @@
 get_keycode: ; u8 get_keycode(void);
 	movzx	ebx, byte [rel keyring_read]
 _get_keycode: ; u8 _get_keycode(void _, u32 keyring_read);
-	xor 	al, al
+	zero	al
 	jce 	bl, byte [rel keyring_write], .ret
 
 	mov 	al, byte [keyring + ebx]
@@ -48,11 +48,11 @@ keyring_has_keycode: ; bool keyring_has_keycode(u8 ah /* keycode */);
 	jce 	al, ah, .ret_true
 	jmp 	.loop
 .ret_false:
-	xor 	al, al
+	zero	al
 	ret
 .ret_true:
 	;; `mov al, 1`, but update ZF
-	xor 	al, al
+	zero	al
 	inc 	al
 	ret
 
@@ -76,7 +76,7 @@ enum_next	KC_5
 enum_next	KC_6
 enum_next	KC_7
 enum_next	KC_8
-enum_next	KC_9	;; 0x0A
+enum_next	KC_9
 enum_next	KC_0
 enum_next	KC_MINUS
 enum_next	KC_EQUALS
@@ -162,30 +162,33 @@ enum_next	KC_MEDIA_VOLUP
 
 %assign KC_SYSRQ KC_PRTSC
 
-%assign KBD_DATA_CTRL_BIT	0	;; lCtrl or rCtrl
-%assign KBD_DATA_ALT_BIT	1	;; lAlt or rAlt
-%assign KBD_DATA_SHFT_BIT	2	;; lShift or rShift
-%assign KBD_DATA_WIN_BIT	3	;; lGUI or rGUI (windows key)
-%assign KBD_DATA_INS_BIT	4	;; insert
-%assign KBD_DATA_NMLK_BIT	5	;; num lock
-%assign KBD_DATA_SCLK_BIT	6	;; scroll lock
+%assign KBD_STATE_CTRL_BIT	0	;; lCtrl, rCtrl
+%assign KBD_STATE_ALT_BIT	1	;; lAlt, rAlt
+%assign KBD_STATE_SHFT_BIT	2	;; lShift, rShift, caps lock
+%assign KBD_STATE_WIN_BIT	3	;; lGUI, rGUI (windows key)
+%assign KBD_STATE_INS_BIT	4	;; insert
+%assign KBD_STATE_NMLK_BIT	5	;; num lock
+%assign KBD_STATE_SCLK_BIT	6	;; scroll lock
 ;; bit 7 is unused
 
-%assign KBD_DATA_CTRL		1 << KBD_DATA_CTRL_BIT
-%assign KBD_DATA_ALT		1 << KBD_DATA_ALT_BIT
-%assign KBD_DATA_SHFT		1 << KBD_DATA_SHFT_BIT
-%assign KBD_DATA_WIN		1 << KBD_DATA_WIN_BIT
-%assign KBD_DATA_INS		1 << KBD_DATA_INS_BIT
-%assign KBD_DATA_NMLK		1 << KBD_DATA_NMLK_BIT
-%assign KBD_DATA_SCLK		1 << KBD_DATA_SCLK_BIT
+%assign KBD_STATE_CTRL		1 << KBD_STATE_CTRL_BIT
+%assign KBD_STATE_ALT		1 << KBD_STATE_ALT_BIT
+%assign KBD_STATE_SHFT		1 << KBD_STATE_SHFT_BIT
+%assign KBD_STATE_WIN		1 << KBD_STATE_WIN_BIT
+%assign KBD_STATE_INS		1 << KBD_STATE_INS_BIT
+%assign KBD_STATE_NMLK		1 << KBD_STATE_NMLK_BIT
+%assign KBD_STATE_SCLK		1 << KBD_STATE_SCLK_BIT
 
-%assign ASCII_BEL	`\x07`	;;  7
-%assign ASCII_BS	`\b`	;;  8
-%assign ASCII_TAB	`\t`	;;  9
-%assign ASCII_LF	`\n`	;; 10
-%assign ASCII_VT	`\v`	;; 11
-%assign ASCII_FF	`\f`	;; 12
-%assign ASCII_CR	`\r`	;; 13
+%assign KBD_STATE_TOGGLES	KBD_STATE_INS | KBD_STATE_NMLK | KBD_STATE_SCLK
+%assign KBD_STATE_MODIFIERS	KBD_STATE_WIN | KBD_STATE_CTRL | KBD_STATE_ALT | KBD_STATE_SHFT
+
+%assign ASCII_BEL	`\x07`	;;   7
+%assign ASCII_BS	`\b`	;;   8
+%assign ASCII_TAB	`\t`	;;   9
+%assign ASCII_LF	`\n`	;;  10
+%assign ASCII_VT	`\v`	;;  11
+%assign ASCII_FF	`\f`	;;  12
+%assign ASCII_CR	`\r`	;;  13
 %assign ASCII_DEL	`\x7F`	;; 127
 
 ;; not actually ASCII. non-printable codes
@@ -234,10 +237,8 @@ enum_next	ASCII_SCRLK				;; scroll lock
 
 %assign ASCII_SYSRQ ASCII_PRTSC
 
-;; TODO: consider removing insert, numlock, and scroll lock from the state bits.
-
 %pragma ignore variable
-kbd_data: db 0
+kbd_state: db 0
 
 %pragma ignore variable
 keycode_to_ascii_noshift_table: db `\0 1234567890-=\b\tqwertyuiop[]/*asdfghjkl;'\`+\\zxcvbnm,.\n`
@@ -275,30 +276,30 @@ keycode_to_ascii: ; u8, u8 keycode_to_ascii(u8 keycode);
 	ret
 .release:
 	;; return 0 for release keycodes
-	xor 	al, al
+	zero	al
 	ret
 .state_toggle:
 	;; these toggle bit 7 and also the bit they are supposed to flip
 	and 	al, ~(1 << 7)
-	xor 	byte [kbd_data], al
+	xor 	byte [kbd_state], al
 	or  	al, 1 << 7
 	ret
 .state_set:
 	and 	al, ~(1 << 7)
-	or  	byte [kbd_data], al
+	or  	byte [kbd_state], al
 	or  	al, 1 << 7
 	ret
 .state_clear:
 	mov 	al, byte [keycode_to_non_printable_table + eax - (1 << 7) - 0x36]
 	not 	al
 	and 	al, ~(1 << 7)
-	and 	byte [kbd_data], al
+	and 	byte [kbd_state], al
 	or  	al, 1 << 7
 	ret
 .ascii:
 	mov 	ebx, keycode_to_ascii_noshift_table
 	mov 	ecx, keycode_to_ascii_shifted_table
-	test	byte [kbd_data], KBD_DATA_SHFT
+	test	byte [kbd_state], KBD_STATE_SHFT
 	cmovnz	ebx, ecx
 	mov 	al, byte [ebx + eax]
 	test	al, al

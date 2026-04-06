@@ -8,8 +8,9 @@
 ;; clobbers rax, rbx, rcx, rdi
 cls: ; void cls(void);
 	;; clear the screen.
-	xor 	eax, eax
+	zero	ax
 	call	move_cursor
+	mov 	byte [print_str_color], VGA_DEFAULT
 	mov 	al, ' '
 fill_scr_def: ; void fill_scr_def(u8 charcode);
 	;; print using the default console color
@@ -222,6 +223,7 @@ putchar: ; err, u16 putchar(u16 ax);
 	mov 	byte [ecx + 1], ah
 	jmp 	inc_cursor
 .control:
+	jtz 	al, al, .null	;; don't print anything for null characters
 	jce 	al, `\n`, .newline
 	jce 	al, `\b`, .backspace
 	jce 	al, `\r`, .carriage_return
@@ -264,14 +266,41 @@ putchar: ; err, u16 putchar(u16 ax);
 	or  	al, 0b11
 	out 	IOPT_SYSCTRLB, al
 	timewait_mac8	4, 1
-	in  	al, IOPT_SYSCTRLB
+	in  	al, IOPT_SYSCTRLB		;; disable speaker
 	and 	al, ~0b11
 	out 	IOPT_SYSCTRLB, al
+.null:
 	ret
 .vtab:
 	;; go down one line without returning to the start of the line.
 	mov 	ax, TERM_COLS
 	jmp 	add_cursor
 
-; print_str:
+%pragma ignore variable
+print_str_color: db VGA_DEFAULT
+
+print_str: ; void print_str(string str);
+	cld					;; forwards
+	strlen	rdi, rax	;; rdi = strlen(str);
+	mov 	rsi, rax	;; rsi = str;
+	test	rdi, rdi
+.loop:
+	jz  	.ret
+	lodsb
+	jce 	al, `\e`, .esc
+
+	mov 	ah, byte [print_str_color]
+	call	putchar
+	dec 	rdi
+	jmp 	.loop
+.esc:
+	dec 	rdi
+	jz  	.ret
+
+	lodsb
+	mov 	byte [print_str_color], al
+	dec 	rdi
+	jmp 	.loop
+.ret:
+	ret
 %endif ; %ifndef STD_PRINT_NASM

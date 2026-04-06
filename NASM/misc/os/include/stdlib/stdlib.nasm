@@ -90,7 +90,7 @@ rand_fill: ; void rand_fill(u64 length, u8 *buffer);
 	;; write the full 8 bytes, but then just overwrite the last part in the main loop.
 	mov 	qword [rdi], rax
 
-	xor 	eax, eax
+	zero	eax
 	mov 	al, cl
 	and 	al, 7
 	add 	rbx, rax	; ptr += length % 8;
@@ -105,7 +105,7 @@ rand_fill: ; void rand_fill(u64 length, u8 *buffer);
 	mov 	rdi, rbx	;; restore
 	ret
 .unaligned_short:
-	xor 	edx, edx
+	zero	edx
 	mov 	dl, cl
 	and 	dl, 7
 	jmp 	[.unaligned_short@jump_table + 8*(edx - 1)]
@@ -214,7 +214,7 @@ disk_read:
 	inb 	IOPT_ATA_PIO1_STAT
 	jtnz	al, ATA_PIO_STAT_ERR, .exit_dirty
 
-	xor 	eax, eax	;; no errors
+	zero	eax			;; no errors
 	mov 	rdi, rcx	;; restore
 	ret
 .exit_dirty:
@@ -289,7 +289,7 @@ disk_write:
 	inb 	IOPT_ATA_PIO1_STAT
 	jtnz	al, ATA_PIO_STAT_ERR, .exit_dirty
 
-	xor 	eax, eax	;; no errors
+	zero	eax			;; no errors
 	mov 	rsi, rcx	;; restore
 	ret
 .exit_dirty:

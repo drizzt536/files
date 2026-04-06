@@ -100,7 +100,7 @@ add_cursor: ; err, u16 add_cursor(u16 ofs);
 inc_cursor: ; err, u16 inc_cursor(void);
 	mov 	ax, word [rel cursor_pos]
 	inc 	ax				; pos++;
-	xor 	ebx, ebx
+	zero	ebx
 	cmp 	ax, TERM_SIZE	; if (pos == TERM_SIZE)
 	cmove	eax, ebx		;     pos = 0;
 
@@ -125,6 +125,6 @@ move_cursor: ; err, u16 move_cursor(u16 pos);
 	outb	dx, bh
 .exit:
 	mov 	word [rel cursor_pos], bx
-	xor 	eax, eax	;; no errors
+	zero	eax		;; no errors
 	ret
 %endif ; %ifndef STD_CURS_NASM
