@@ -28,7 +28,7 @@ the `sync` functions only sync rows/digits. they do not sync decode mode or led 
 
 Since the library uses direct port access and uses the Arduino API, it will only work on Arduino MCUs that use ports, so basically only the 8-bit AVR MCUs.
 
-If initialization fails, it will disable interrupts and flicker the on-board LED at 6.7Hz (or just trap if there is no on-board LED). This happens if the pins aren't on the same port, not all of the pins exist, or in daisy chaining implementations, it will fail if the number of devices is 0 or more than 8.
+If initialization fails, it will disable interrupts and flicker the on-board LED at 6.7Hz (or just trap if there is no on-board LED). This happens if the pins aren't on the same port, not all of the pins exist, or in daisy chaining implementations, it will fail if the number of devices is 0 or more than `MAX7219_MAXDEVICES`.
 
 for the namespace versions, the pinsets are controlled through the `MAX7219_DIN`, `MAX7219_CS`, and `MAX7219_CLK` macros which must be defined before including the library. The library undefines them when it is done. They default to 2, 3, and 4, respectively. The class versions still use the macros, but instead of controlling the pinsets directly, they control the defaults, so if `init` is called without passing the pins, it uses the macros for them.
 

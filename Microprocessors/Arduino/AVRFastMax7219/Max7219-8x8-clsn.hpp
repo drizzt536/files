@@ -375,7 +375,7 @@ public:
 		if (__builtin_expect(!ndevices || ndevices > MAX7219_MAXDEVICES || port_out == NOT_A_PORT || clk_port_id != digitalPinToPort(DIN) || clk_port_id != digitalPinToPort(CS), 0)) {
 			cli();
 		#ifdef LED_BUILTIN
-			// th should not happen. give some kind of data to the user to show
+			// this should not happen. give some kind of data to the user to show
 			// something bad happened.
 
 			// NOTE: on the Mega 2560, Nano, and the Uno Rev3, these are all port B,
