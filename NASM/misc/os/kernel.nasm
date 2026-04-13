@@ -37,6 +37,7 @@ usermode_jump:
 	mov 	rcx, rax
 	pushfq
 	pop 	r11
+	;; clear the arithmetic flags, but leave all the other flags the same as in the kernel.
 	and 	r11, ~(1 << 0 | 1 << 2 | 1 << 4 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11)
 	sysret
 

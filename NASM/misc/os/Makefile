@@ -47,16 +47,16 @@ $(DISK_IMG): kernel.bin boot.bin
 	disklastidx=$$(awk "BEGIN {print $$(stat -c %s disk.bin)/512 + $(FS_SIZE) - 1}"); \
 	dd if=/dev/zero of=disk.bin seek=$$disklastidx count=1 bs=1b
 
-include/stdlib-fntable.nasm include/stdlib-header.inc &: gen-fntable.ps1 $(filter-out include/stdlib-fntable.nasm,$(wildcard include/stdlib/*.nasm))
+include/stdlib/stdlib-fntable.nasm include/stdlib/stdlib-header.inc &: gen-fntable.ps1 $(filter-out include/stdlib/stdlib-fntable.nasm,$(wildcard include/stdlib/*.nasm))
 	@echo pwsh -noprofile -nologo -f $< -i ./include/stdlib/stdlib.nasm -o ./include/stdlib-fntable.nasm -h ./include/stdlib-header.inc
 	@printf "    loading"
-	@pwsh -noprofile -nologo -f $< -i ./include/stdlib/stdlib.nasm -o ./include/stdlib-fntable.nasm -h ./include/stdlib-header.inc
+	@pwsh -noprofile -nologo -f $< -i ./include/stdlib/stdlib.nasm -o ./include/stdlib/stdlib-fntable.nasm -h ./include/stdlib/stdlib-header.inc
 
-kernel.bin: kernel.nasm include/stdlib-fntable.nasm $(wildcard ./include/* ./include/*/*)
-	nasm -fbin -Iinclude -Iinclude/stdlib kernel.nasm -o kernel.bin
+kernel.bin: kernel.nasm include/stdlib/stdlib-fntable.nasm $(wildcard ./include/* ./include/*/*)
+	nasm -fbin -Iinclude -Iinclude/preproc -Iinclude/stdlib kernel.nasm -o kernel.bin
 
 boot.bin: boot.nasm kernel.bin
-	nasm -fbin -Iinclude boot.nasm -o boot.bin -DKERNEL_SECTORS=$$(awk "BEGIN {print $$(stat -c %s kernel.bin) / 512}")
+	nasm -fbin -Iinclude/preproc boot.nasm -o boot.bin -DKERNEL_SECTORS=$$(awk "BEGIN {print $$(stat -c %s kernel.bin) / 512}")
 
 #################################### PHONY COMMANDS ####################################
 

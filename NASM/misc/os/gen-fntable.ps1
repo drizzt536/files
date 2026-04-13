@@ -14,7 +14,7 @@ param (
 write-host -noNewline "`r`e[0K    running"
 # preprocess only. all the includes are in the same folder.
 # remove instruction lines, sub-label lines, %line lines, and blank lines
-[Collections.ArrayList] $lines = nasm -I./include -I./include/stdlib -e $infile | where {
+[Collections.ArrayList] $lines = nasm -Iinclude -Iinclude/preproc -Iinclude/stdlib -e $infile | where {
 	$_ -notmatch '^( |\.|%line|$)' -and $_ -notmatch "^\s*\b(res|d)[bwdq]\b"
 }
 [Collections.ArrayList] $notelines = @()

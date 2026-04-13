@@ -62,7 +62,7 @@ life_entry:
 	zero	ax
 	call	move_cursor
 	mov 	byte [puts_color], VGA_DEFAULT
-	mov 	r15w, 11		;; start off at 1.9Hz
+	mov 	r15w, 21 - 11		;; start off at speed 11 (1.9Hz)
 .reset:
 	;; NOTE: don't use `cls` so as not to lose the cursor position
 	mov 	ax, VGA_DEFAULT << 8 | ' '

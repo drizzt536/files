@@ -2,8 +2,8 @@
 
 # dynamically created files
 /flash-date
-/include/stdlib-fntable.nasm
-/include/stdlib-header.inc
+/include/stdlib/stdlib-fntable.nasm
+/include/stdlib/stdlib-header.inc
 
 # preliminary designs for stuff that doesn't exist yet and will likely change
 /docs/prelim/
