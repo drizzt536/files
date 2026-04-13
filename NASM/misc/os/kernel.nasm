@@ -1,13 +1,19 @@
 default abs
 bits 64
 
+%ifdef KERNEL.NASM
+	%fatal kernel.nasm should not be used below the top level
+%endif
+
+%define KERNEL.NASM
+
 ;; TODO: use USB HID keyboard stuff instead of a legacy PS/2 keyboard
 
-%include "kernel.inc"
+%include "kernel.inc"	;; preprocesor-only stuff
 %include "stdlib-fntable.nasm"
 %include "idt.nasm"		;; IDT declaration
 %include "stdlib.nasm"	;; stdlib imports
-%include "snake.nasm"
+%include "games.nasm"
 
 tss:
 	dd	0			;; 0x00: reserved
@@ -26,6 +32,14 @@ tss:
 	dw	0			;; 0x64: reserved
 	dw	TSS_SIZE	;; 0x66: IOPM offset. set to outside the TSS so all ports are restricted
 
+;; TODO: figure out if this is actually even correct
+usermode_jump:
+	mov 	rcx, rax
+	pushfq
+	pop 	r11
+	and 	r11, ~(1 << 0 | 1 << 2 | 1 << 4 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11)
+	sysret
+
 ;; process keys until the ISR timer gets to or above the wrap value
 proc_keys_until_timeout:
 .loop:
@@ -35,15 +49,18 @@ proc_keys_until_timeout:
 	call	get_keycode
 	jz  	.loop
 
-	jtnz	al, 1 << 7, .loop		;; skip the release keycodes
-	jce 	al, 29h, .toggle_cursor	;; backtick
-	jce 	al, 39h, .reset_cursor	;; escape
-	jce 	al, 4Ah, .arrow_up
-	jce 	al, 4Bh, .arrow_right
-	jce 	al, 4Ch, .arrow_down
-	jce 	al, 4Dh, .arrow_left
-	jce 	al, 3Bh, .f1
-	jce 	al, 3Ch, .f2
+	jtnz	al, 1 << 7,			.loop		;; skip the release keycodes
+	jce 	al, KC_DELETE,		kernel_reset
+	jce 	al, KC_BACKTICK,	.toggle_cursor
+	jce 	al, KC_ESC,			.reset_cursor
+	jce 	al, KC_UP,			.arrow_up
+	jce 	al, KC_RIGHT,		.arrow_right
+	jce 	al, KC_DOWN,		.arrow_down
+	jce 	al, KC_LEFT,		.arrow_left
+	jce 	al, KC_F1,			.stack_overflow
+	jce 	al, KC_F2,			.unmapped_page
+
+	;; fallthrough
 .log_keycode:
 	mov 	ah, VGA_DEFAULT
 	call	print_u8hex
@@ -70,10 +87,10 @@ proc_keys_until_timeout:
 	mov 	ax, -1
 	call	add_cursor
 	jmp 	.loop
-.f1:
+.stack_overflow:
 	;; kernel panic: stack overflow
 	mov 	al, byte [stack_guard_page]
-.f2:
+.unmapped_page:
 	;; kernel panic: unmapped page
 	mov 	al, byte [-1]
 .ret:
@@ -88,9 +105,6 @@ syscall_handler:
 %xdefine MSG "The Low Taper Fade Meme is **MASSIVE**! " ;; 40 characters long
 
 kernel_entry:
-	;; put the stack in the 64 KiB after the kernel
-	mov 	esp, stack_base
-
 	;; remove kernel_entry from the function table because it is no longer needed.
 	mov 	rax, STDLIB_FNTABLE_SIZE
 	mov 	qword [stdlib_fntable.size], rax
@@ -143,14 +157,6 @@ kernel_entry:
 	xor 	edx, edx
 	mov 	eax, syscall_handler
 	wrmsr
-.stdlib_avail:
-	;; NOTE: calling stdlib functions before this point is not defined
-	;;       since paging and AVX isn't fully set up before this.
-	;; NOTE: stdlib functions that require interrupts still won't work yet.
-	call	cls				;; set to the default colors
-
-	mov 	al, CURS_UNDERLINE
-	call	set_cursor
 .init_prng:
 	;; initialize the PRNG state
 	;; xoshiro256** requires that the initial state is not all zeros.
@@ -169,7 +175,7 @@ kernel_entry:
 	mov 	[pr_rand_state.1], rbx
 	mov 	[pr_rand_state.2], rcx
 	mov 	[pr_rand_state.3], rdx
-
+.tss:
 	;; set up the TSS memory section
 	mov 	eax, TSS_BASE	;; dst = TSS_BASE
 	mov 	rbx, tss		;; src = tss
@@ -179,12 +185,12 @@ kernel_entry:
 	;; load the TSS section
 	mov 	ax, GDT_TSS
 	ltr 	ax
-
+.pit:
 	;; set up the PIT timer.
 	outb	IOPT_PIT, 0x36					;; channel 0, lobyte/hibyte, mode 3
 	outb 	IOPT_PIT_D1, PIT_DIVISOR & 0xFF	;; low byte
 	outb	IOPT_PIT_D1, PIT_DIVISOR >> 8	;; high byte
-
+.interrupts:
 	;; remap PIC1 from 08h-0fh to 20h-27h and PIC2 from 70h-77h to 28h-2fh
 	;; 0x11. starts the initialization sequence (in cascade mode)
 	outb	IOPT_PIC1, PIC_ICW1_INIT | PIC_ICW1_ICW4
@@ -247,7 +253,7 @@ kernel_entry:
 	;; PML4[0], PDPT[3], PD[502], PT[0]
 	;; 2 pages need to be generated, a new PD and a new PT.
 	cld
-	mov 	edi, esp	;; just put these right after the stack
+	mov 	edi, stack_base	;; just put these right after the stack
 	mov 	ecx, 512 * 2
 	zero	eax
 	rep 	stosq
@@ -277,13 +283,16 @@ kernel_entry:
 
 	;; re-enable non-maskable interrupts
 	in  	al, IOPT_CMOS
-	and 	al, 0x7F
+	and 	al, ~(1 << 7)
 	out 	IOPT_CMOS, al
 
-	sti 	;; enable maskable interrupts.
+	sti		;; enable maskable interrupts.
 
 	;; TODO: select the master on the primary disk
 	;;       it should already be set to that, but do it anyway.
+
+	;; zero all the registers (except esp), and reset to a known state
+	jmp 	kernel_reset
 .start:
 	call	next_keycode
 	call	keycode_to_ascii
@@ -372,7 +381,7 @@ kernel_entry:
 .ctrl_f2:
 	call	reboot
 .ctrl_alt:
-	jce 	al, 's', snake_entry
+	jce 	al, 'g', games_entry
 	jmp 	.start
 .before_read_sectors:
 	sub 	esp, 512	;; allocate space for the sectors to be read into.
@@ -495,7 +504,7 @@ kernel_entry:
 	mov 	dword [VGA_ADDR(6, 17)], DVGA_DWORD('od')
 	mov 	byte  [VGA_ADDR(6, 19)], 'e'
 
-	mov 	ah, KC_BACKSPACE
+	mov 	al, KC_BACKSPACE
 	call	keyring_has_keycode
 
 	;; change the random buffer loop to be infinite if backspace was pressed.

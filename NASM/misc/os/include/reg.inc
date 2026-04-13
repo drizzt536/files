@@ -1,5 +1,5 @@
-%ifndef REG_INC
-%define REG_INC
+%ifndef REG.INC
+%define REG.INC
 
 ;; NOTE: for 0-7, these are not the actual encoding order. But mostly I don't care.
 ;;       also, the q suffix ones don't actually exist outside of this.
@@ -87,4 +87,4 @@
 %idefine r30q	r30
 %idefine r31q	r31
 
-%endif ; %ifndef REG_INC
+%endif ; %ifndef REG.INC

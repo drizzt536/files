@@ -7,11 +7,9 @@
 #>
 param (
 	[Parameter(Mandatory=$true)] [string] $infile,
-	[Parameter(Mandatory=$true)] [string] $outfile
+	[Parameter(Mandatory=$true)] [string] $outfile,
+	[Parameter(Mandatory=$true)] [Alias("h")] [string] $headerfile
 )
-
-# TODO: figure out some kind of syntax to declare the existence of macros in the standard library
-# TODO: perhaps also make syntax to make stdlib extern variables?
 
 write-host -noNewline "`r`e[0K    running"
 # preprocess only. all the includes are in the same folder.
@@ -39,7 +37,7 @@ $table_size = 0
 for ([int] $i = 0; $i -lt $lines.count; $i++) {
 	$line = $lines[$i]
 
-	if ($line -match '^\[\s*pragma\s+ignore\s+variable\s*\]$') {
+	if ($line -match '^\[\s*pragma\s+ignore\s+(?:variable|internal)\s*\]$') {
 		# skip this line and the next one
 		$lines.removeAt($i)
 		$lines.removeAt($i--)
@@ -56,6 +54,9 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 		$lines.removeAt($i--)
 	}
 }
+
+
+[Collections.ArrayList] $header = @()
 
 $table_size++ # including the 0 index element
 
@@ -82,7 +83,12 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 	}
 	elseif ($line -match '^(\w+):$') {
 		$fn = $matches[1]
-		$lines[$i] = "`tdq $fn" + " "*($maxlen - $fn.length) + ";; " + " "*($idx_pad - "$fn_idx".length) + "$fn_idx"
+		${name padding} = " "*($maxlen - $fn.length)
+		${ord padding}  = " "*($idx_pad - "$fn_idx".length)
+		$padding = "${name padding}${ord padding}"
+		$lines[$i] = "`tdq $fn${name padding};; ${ord padding}$fn_idx"
+
+		[void] $header.add("%assign STDLIB_ORD_$($fn.toupper())$padding $fn_idx")
 
 		if ($notelines.count -ne 0) {
 			$lines[$i] += " *($($notelines -join ", "))"
@@ -105,19 +111,40 @@ for ([int] $i = 0; $i -lt $lines.count; $i++) {
 
 $fn = "kernel_entry"
 
+${name padding} = " "*($maxlen - $fn.length)
+${ord padding}  = " "*($idx_pad - 1)
+
 @(
-	"%ifndef STDLIB_FNTABLE_NASM",
-	"%define STDLIB_FNTABLE_NASM",
+	"%ifndef STDLIB_FNTABLE.NASM",
+	"%define STDLIB_FNTABLE.NASM",
+	"",
+	"%include `"stdlib-header.inc`"",
+	"%assign STDLIB_FNTABLE_SIZE $fn_idx"
 	"",
 	"stdlib_fntable:",
 	".size:",
-	("`tdq $fn" + " "*($maxlen - $fn.length) + ";; " + " "*($idx_pad - 1) + "0 *(for the bootloader, set to the table size in the kernel)"),
+	("`tdq $fn${name padding};; ${ord padding}0 *(for the bootloader, set to the table size in the kernel)"),
 	$lines,
-	"",
-	"%assign STDLIB_FNTABLE_SIZE $fn_idx"
 	""
-	"%endif ; %ifndef STDLIB_FNTABLE_NASM"
+	"%endif ; %ifndef STDLIB_FNTABLE.NASM"
 ) > $outfile
 
-write-host "`r`e[0K    done"
+$padding = " "*($maxlen + $idx_pad - 5)
+
+@(
+	"%ifndef STDLIB_HEADER.INC",
+	"%define STDLIB_HEADER.INC",
+	"",
+	"%assign STDLIB_ORD_NULL$padding 0", # ordinal 0 is the length field.
+	$header,
+	"",
+	"%define STDLIB_ORD(fn) STDLIB_ORD_%tok(strtoupper(%str(fn)))",
+	"%macro stdlib_ucall 1"
+	"	call	qword [stdlib_fntable + 8*STDLIB_ORD(%1)]",
+	"%endm",
+	"",
+	"%endif ; %ifndef STDLIB_HEADER.INC"
+) > $headerfile
+
+write-host "`r`e[K    done"
 exit 0

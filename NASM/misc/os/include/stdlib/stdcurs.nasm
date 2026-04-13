@@ -1,5 +1,5 @@
-%ifndef STD_CURS_NASM
-%define STD_CURS_NASM
+%ifndef STDCURS.NASM
+%define STDCURS.NASM
 
 %pragma ignore file stdcurs.nasm
 
@@ -16,9 +16,9 @@ cursor_type: db 0
 
 %pragma ignore variable
 cursor_pos:
-	.lo	db 0
-	.hi	db 0
-		dw 0 ;; just so you can load as a DWORD and have it work properly.
+	.lo:	db 0
+	.hi:	db 0
+			dw 0 ;; just so you can load as a DWORD and have it work properly.
 
 toggle_cursor: ; void toggle_cursor(void);
 	;; VGA control port and cursor start register
@@ -47,7 +47,7 @@ show_cursor: ; u4 show_cursor(void);
 	ret					;; return height & 0xf;
 
 ;; TODO: perhaps validate the cursor value. I don't think bits 6 or 7 and maybe 4 do anything
-set_cursor: ; u4 show_cursor(u8 height);
+set_cursor: ; u4 set_cursor(u8 height);
 	mov 	byte [rel cursor_type], al
 	mov 	bl, al
 
@@ -61,16 +61,15 @@ set_cursor: ; u4 show_cursor(u8 height);
 ;; actually update it. Basically, the point is so dx isn't clobbered.
 ;; returns the new cursor position that it just wrote to the internal structure.
 _add_cursor: ; u16 _add_cursor(u16 ofs);
-	mov 	bx, word [rel cursor_pos]
-	add 	ax, bx					; pos += ofs;
-	js  	.loop_neg				; if (pos > 0)
+	add 	ax, word [rel cursor_pos]	; pos += ofs;
+	js  	.loop_neg					; if (pos > 0)
 .loop_pos:
-	jcb 	ax, TERM_SIZE, .exit	;     while (pos >= TERM_SIZE)
+	jcb 	ax, TERM_SIZE, .exit		;     while (pos >= TERM_SIZE)
 
-	sub 	ax, TERM_SIZE			;         pos -= TERM_SIZE;
+	sub 	ax, TERM_SIZE				;         pos -= TERM_SIZE;
 	jmp 	.loop_pos
-.loop_neg:							; else
-	add 	ax, TERM_SIZE			;     while ((pos += TERM_SIZE) < 0);
+.loop_neg:								; else
+	add 	ax, TERM_SIZE				;     while ((pos += TERM_SIZE) < 0);
 	js  	.loop_neg
 .exit:
 	mov 	word [rel cursor_pos], ax
@@ -84,8 +83,7 @@ _add_cursor: ; u16 _add_cursor(u16 ofs);
 ;; clobbers: rax, rbx, dx
 ;; all three of these return the new cursor position in bx.
 add_cursor: ; err, u16 add_cursor(u16 ofs);
-	mov 	bx, word [rel cursor_pos]
-	add 	ax, bx						; pos += ofs;
+	add 	ax, word [rel cursor_pos]	; pos += ofs;
 	js  	.loop_neg					; if (pos > 0)
 .loop_pos:
 	jcb 	ax, TERM_SIZE, move_cursor	;     while (pos >= TERM_SIZE)
@@ -127,4 +125,15 @@ move_cursor: ; err, u16 move_cursor(u16 pos);
 	mov 	word [rel cursor_pos], bx
 	zero	eax		;; no errors
 	ret
-%endif ; %ifndef STD_CURS_NASM
+
+%macro move_cursor_2d 0
+	; err, u16 move_cursor_2d(u16 row, u16 col);
+
+	;; NOTE: if row:col isn't already in ax:bx, don't use this.
+	;;       mostly this is just to show roughly how to call with the row col pair
+	imul	ax, 80
+	add 	ax, bx
+	call	move_cursor
+%endm
+
+%endif ; %ifndef STDCURS.NASM

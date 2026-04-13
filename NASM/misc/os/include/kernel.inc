@@ -1,5 +1,5 @@
-%ifndef KERNEL_INC
-%define KERNEL_INC
+%ifndef KERNEL.INC
+%define KERNEL.INC
 
 %assign KERNEL_START	0x100000 ;; 1 MiB
 org KERNEL_START
@@ -159,13 +159,20 @@ enum_set \
 	VGA_DRK_GRAY, VGA_PURPLE, VGA_LGT_GREEN, VGA_CYAN, \
 	VGA_LGT_RED, VGA_PINK, VGA_YELLOW, VGA_WHITE
 
+;; the orange one might be brown. idk
+
 %define VGA_CLR(fgclr, bgclr)	%hex((fgclr) | (bgclr) << 4)
 %define VGA_CLR_FILL(color)		VGA_CLR(color, color)
-%define VGA_POS(row, col)		%hex((TERM_COLS*(row) + (col)) % TERM_SIZE)
-%assign VGA_BUF					0xb8000
-%define VGA_ADDR(row, col)		%hex(VGA_BUF + 2*VGA_POS(row, col))
 %assign VGA_DEFAULT				VGA_CLR(VGA_DRK_GRAY, VGA_BLACK)
-%assign VGA_BUF_END				VGA_BUF + 2*TERM_SIZE
+%assign VGA_HIGHLIGHT			VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)	;; default text highlight
+%assign VGA_ALERT				VGA_CLR(VGA_WHITE, VGA_BLUE)
+
+%assign VGA_BUF					0xb8000
+%assign VGA_BUF_SIZE			2*TERM_SIZE
+%assign VGA_BUF_END				VGA_BUF + VGA_BUF_SIZE
+
+%define VGA_POS(row, col)		%hex((TERM_COLS*(row) + (col)) % TERM_SIZE)
+%define VGA_ADDR(row, col)		%hex(VGA_BUF + 2*VGA_POS(row, col))
 
 %define BYTES2WORD(b0, b1) (b0 | b1 << 8)
 %define BYTES2DWORD(b0, b1, b2, b3) (b0 | b1 << 8 | b2 << 16 | b3 << 24)
@@ -181,29 +188,43 @@ enum_set \
 %define DVGA_DWORD(s) (VGA_DWORD(VGA_DEFAULT, s))
 %define DVGA_QWORD(s) (VGA_QWORD(VGA_DEFAULT, s))
 
-%define byte2char(b) %sel((b) + 1, \
-	`\x00`, `\x01`, `\x02`, `\x03`, `\x04`, `\x05`, `\x06`, `\x07`, `\x08`, `\x09`, `\x0A`, `\x0B`, \
-	`\x0C`, `\x0D`, `\x0E`, `\x0F`, `\x10`, `\x11`, `\x12`, `\x13`, `\x14`, `\x15`, `\x16`, `\x17`, \
-	`\x18`, `\x19`, `\x1A`, `\x1B`, `\x1C`, `\x1D`, `\x1E`, `\x1F`, `\x20`, `\x21`, `\x22`, `\x23`, \
-	`\x24`, `\x25`, `\x26`, `\x27`, `\x28`, `\x29`, `\x2A`, `\x2B`, `\x2C`, `\x2D`, `\x2E`, `\x2F`, \
-	`\x30`, `\x31`, `\x32`, `\x33`, `\x34`, `\x35`, `\x36`, `\x37`, `\x38`, `\x39`, `\x3A`, `\x3B`, \
-	`\x3C`, `\x3D`, `\x3E`, `\x3F`, `\x40`, `\x41`, `\x42`, `\x43`, `\x44`, `\x45`, `\x46`, `\x47`, \
-	`\x48`, `\x49`, `\x4A`, `\x4B`, `\x4C`, `\x4D`, `\x4E`, `\x4F`, `\x50`, `\x51`, `\x52`, `\x53`, \
-	`\x54`, `\x55`, `\x56`, `\x57`, `\x58`, `\x59`, `\x5A`, `\x5B`, `\x5C`, `\x5D`, `\x5E`, `\x5F`, \
-	`\x60`, `\x61`, `\x62`, `\x63`, `\x64`, `\x65`, `\x66`, `\x67`, `\x68`, `\x69`, `\x6A`, `\x6B`, \
-	`\x6C`, `\x6D`, `\x6E`, `\x6F`, `\x70`, `\x71`, `\x72`, `\x73`, `\x74`, `\x75`, `\x76`, `\x77`, \
-	`\x78`, `\x79`, `\x7A`, `\x7B`, `\x7C`, `\x7D`, `\x7E`, `\x7F`, `\x80`, `\x81`, `\x82`, `\x83`, \
-	`\x84`, `\x85`, `\x86`, `\x87`, `\x88`, `\x89`, `\x8A`, `\x8B`, `\x8C`, `\x8D`, `\x8E`, `\x8F`, \
-	`\x90`, `\x91`, `\x92`, `\x93`, `\x94`, `\x95`, `\x96`, `\x97`, `\x98`, `\x99`, `\x9A`, `\x9B`, \
-	`\x9C`, `\x9D`, `\x9E`, `\x9F`, `\xA0`, `\xA1`, `\xA2`, `\xA3`, `\xA4`, `\xA5`, `\xA6`, `\xA7`, \
-	`\xA8`, `\xA9`, `\xAA`, `\xAB`, `\xAC`, `\xAD`, `\xAE`, `\xAF`, `\xB0`, `\xB1`, `\xB2`, `\xB3`, \
-	`\xB4`, `\xB5`, `\xB6`, `\xB7`, `\xB8`, `\xB9`, `\xBA`, `\xBB`, `\xBC`, `\xBD`, `\xBE`, `\xBF`, \
-	`\xC0`, `\xC1`, `\xC2`, `\xC3`, `\xC4`, `\xC5`, `\xC6`, `\xC7`, `\xC8`, `\xC9`, `\xCA`, `\xCB`, \
-	`\xCC`, `\xCD`, `\xCE`, `\xCF`, `\xD0`, `\xD1`, `\xD2`, `\xD3`, `\xD4`, `\xD5`, `\xD6`, `\xD7`, \
-	`\xD8`, `\xD9`, `\xDA`, `\xDB`, `\xDC`, `\xDD`, `\xDE`, `\xDF`, `\xE0`, `\xE1`, `\xE2`, `\xE3`, \
-	`\xE4`, `\xE5`, `\xE6`, `\xE7`, `\xE8`, `\xE9`, `\xEA`, `\xEB`, `\xEC`, `\xED`, `\xEE`, `\xEF`, \
-	`\xF0`, `\xF1`, `\xF2`, `\xF3`, `\xF4`, `\xF5`, `\xF6`, `\xF7`, `\xF8`, `\xF9`, `\xFA`, `\xFB`, \
-	`\xFC`, `\xFD`, `\xFE`, `\xFF`)
+%define _str2chars2(s) %sel(1 + %strlen(s), '', {%substr(s,1,1)}, {%substr(s,1,1),%substr(s,2,1)})
+
+%define _str2chars4(s) %cond(%strlen(s) <= 2, {_str2chars2(%substr(s, 1, 2))}, \
+	{_str2chars2(%substr(s, 1, 2)),_str2chars2(%substr(s, 2 + 1))})
+
+%define _str2chars8(s) %cond(%strlen(s) <= 4, {_str2chars4(%substr(s, 1, 4))}, \
+	{_str2chars4(%substr(s, 1, 4)),_str2chars4(%substr(s, 4 + 1))})
+
+%define _str2chars16(s) %cond(%strlen(s) <= 8, {_str2chars8(%substr(s, 1, 8))}, \
+	{_str2chars8(%substr(s, 1, 8)),_str2chars8(%substr(s, 8 + 1))})
+
+%define _str2chars32(s) %cond(%strlen(s) <= 16, {_str2chars16(%substr(s, 1, 16))}, \
+	{_str2chars16(%substr(s, 1, 16)),_str2chars16(%substr(s, 16 + 1))})
+
+%define _str2chars64(s) %cond(%strlen(s) <= 32, {_str2chars32(%substr(s, 1, 32))}, \
+	{_str2chars32(%substr(s, 1, 32)),_str2chars32(%substr(s, 32 + 1))})
+
+%define _str2chars128(s) %cond(%strlen(s) <= 64, {_str2chars64(%substr(s, 1, 64))}, \
+	{_str2chars64(%substr(s, 1, 64)),_str2chars64(%substr(s, 64 + 1))})
+
+%define _str2chars256(s) %cond(%strlen(s) <= 128, {_str2chars128(%substr(s, 1, 128))}, \
+	{_str2chars128(%substr(s, 1, 128)),_str2chars128(%substr(s, 128 + 1))})
+
+%define _str2chars512(s) %cond(%strlen(s) <= 256, {_str2chars256(%substr(s, 1, 256))}, \
+	{_str2chars256(%substr(s, 1, 256)),_str2chars256(%substr(s, 256 + 1))})
+
+%define _str2chars1024(s) %cond(%strlen(s) <= 512, {_str2chars512(%substr(s, 1, 512))}, \
+	{_str2chars512(%substr(s, 1, 512)),_str2chars512(%substr(s, 512 + 1))})
+
+%define _mapstrcat(args+) %strcat(%tok(%strcat(args)))
+%define _charstoupperstr(chars+) _mapstrcat(%map(chartoupper, chars))
+
+;; 1024 is super slow, so only increase this as required
+%define str2chars(s) _str2chars64(s)
+
+%define chartoupper(c) %cond(c == '_' || ('0' <= c && c <= '9'), c, %chr(c & ~32))
+%define strtoupper(s) _charstoupperstr(str2chars(s))
 
 %define strmul(s, n) %sel((n) + 1, '', \
 	%sel(!%isdifi( 1),) %strcat(s), \
@@ -238,10 +259,17 @@ enum_set \
 	%sel(!%isdifi(30),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
 	%sel(!%isdifi(31),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s), \
 	%sel(!%isdifi(32),) %strcat(s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s) \
-	)
+)
 
-%imacro zero 1
-	xor 	%1, %1
+%macro zero 1
+	%if 0 < %findi(%1, rax, rbx, rcx, rdx, rdi, rsi, rsp, rbp)
+		xor 	e%tok(%substr(%1, 2)), e%tok(%substr(%1, 2))
+	%elif 0 < %findi(%1,r8, r10, r12, r14, r16, r18, r20, r22, r24, r26, r28, r30, \
+						r9, r11, r13, r15, r17, r19, r21, r23, r25, r27, r29, r31)
+		xor 	%1%[d], %1%[d]
+	%else
+		xor 	%1, %1
+	%endif
 %endm
 
 %macro io_wait 0
@@ -255,7 +283,7 @@ enum_set \
 	;; wait_mac clobber, cycles
 	mov 	%1, %2
 %%loop:
-	%if %isidni(%1, ecx) || %isidni(%1, rcx)
+	%if %findi(%1, ecx, rcx) > 0
 		loop	%%loop
 	%else
 		dec 	%1
@@ -265,16 +293,16 @@ enum_set \
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+%macro reset_isr_timer 0
+	mov 	dword [rel isr_timer], 0
+%endm
+
 ;; NOTE: this is for all of the timewait_macN functions.
 
 ;; the first argument is the number of ticks before reset
 ;; if %2 is true, then it waits that many ticks starting from when it runs,
 ;; and if %2 is false, then it waits until the next period ends.
 ;; like if you use 4 spaces vs a tab type of difference.
-
-%macro reset_isr_timer 0
-	mov 	dword [rel isr_timer], 0
-%endm
 
 %macro _timewait_macx 4
 	;; e.g. `_timewait_macx 21, 1, al, byte`.
@@ -408,4 +436,4 @@ enum_set \
 	and 	%1, KBD_STATE_MODIFIERS
 	jce 	%1, %2, %3
 %endm
-%endif ; %ifndef KERNEL_INC
+%endif ; %ifndef KERNEL.INC

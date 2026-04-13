@@ -1,5 +1,5 @@
-%ifndef SNAKE_NASM
-%define SNAKE_NASM
+%ifndef SNAKE.NASM
+%define SNAKE.NASM
 
 %define snake_ring_base			stack_base
 %assign ring_buf_size			896	;; this can be anything, so long as it is >= 874.
@@ -50,7 +50,7 @@ snake_redraw:
 
 	sub 	esp, 16
 
-	mov 	byte [print_str_color], VGA_CLR_FILL(VGA_ORANGE)
+	mov 	byte [puts_color], VGA_CLR_FILL(VGA_ORANGE)
 
 	mov 	rax, strmul(' ', 8)
 	mov 	qword [rsp + 8], rax
@@ -59,7 +59,7 @@ snake_redraw:
 	mov 	qword [rsp], 8
 .border_top:
 	lea 	eax, [esp + 8]
-	call	print_str
+	call	puts
 	dec 	r13b
 	jnz 	.border_top
 
@@ -70,7 +70,7 @@ snake_redraw:
 	mov 	qword [rsp], 8
 .border_bottom:
 	lea 	eax, [esp + 8]
-	call	print_str
+	call	puts
 	dec 	r13b
 	jnz 	.border_bottom
 
@@ -163,40 +163,42 @@ snake_speed_menu:
 	neg 	r15b
 	imul	ecx, r15d, TERM_COLS
 
-	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
-	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
+	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_HIGHLIGHT
+	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_HIGHLIGHT
 .spinloop:
 	call	next_keycode
-	jce 	al, KC_ENTER, .done
-	jce 	al, KC_UP, .up
-	jce 	al, KC_DOWN, .down
-	jce 	al, KC_ESC, .escape
+	jce 	al, KC_ENTER,	.done
+	jce 	al, KC_UP,		.up
+	jce 	al, KC_DOWN,	.down
+	jce 	al, KC_ESC,		.escape
 
 	jmp 	.spinloop
 .escape:
 	mov 	r15b, r13b
 	jmp 	snake_entry.recall
 .up:
-	cmp 	ecx, 1*TERM_COLS
-	je  	.spinloop
-
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_DEFAULT
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_DEFAULT
 	sub 	ecx, TERM_COLS
 
-	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
-	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
+	mov 	ebx, 10*TERM_COLS
+	test	ecx, ecx
+	cmovz	ecx, ebx
+
+	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_HIGHLIGHT
+	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_HIGHLIGHT
 	jmp 	.spinloop
 .down:
-	cmp 	ecx, 10*TERM_COLS
-	je  	.spinloop
-
 	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_DEFAULT
 	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_DEFAULT
 	add 	ecx, TERM_COLS
 
-	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
-	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)
+	mov 	ebx, 1*TERM_COLS
+	cmp 	ecx, 10*TERM_COLS
+	cmova	ecx, ebx
+
+	mov 	byte [VGA_BUF + 2*(ecx + 1) + 1], VGA_HIGHLIGHT
+	mov 	byte [VGA_BUF + 2*(ecx + 2) + 1], VGA_HIGHLIGHT
 	jmp 	.spinloop
 .done:
 	shr 	ecx, 4
@@ -447,7 +449,7 @@ snake_entry:
 .paused:
 	mov 	ax, VGA_POS(12, 34)
 	call	move_cursor
-	mov 	byte [print_str_color], VGA_CLR(VGA_WHITE, VGA_BLUE)
+	mov 	byte [puts_color], VGA_ALERT
 
 	sub 	esp, 18
 	mov 	qword [rsp], 10
@@ -457,20 +459,20 @@ snake_entry:
 	mov 	qword [rsp + 10], rax
 
 	lea 	eax, [esp + 8]
-	call	print_str
+	call	puts
 	add 	esp, 18
 
-	mov 	dword [VGA_ADDR(11, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 36)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 38)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 40)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 42)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(11, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 36)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 38)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 40)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 42)], VGA_DWORD(VGA_ALERT, '  ')
 
-	mov 	dword [VGA_ADDR(13, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 36)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 38)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 40)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 42)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(13, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 36)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 38)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 40)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 42)], VGA_DWORD(VGA_ALERT, '  ')
 .paused@loop:
 	call	next_keycode
 	mov 	r13w, r14w
@@ -489,7 +491,7 @@ snake_entry:
 
 	mov 	ax, VGA_POS(12, 36)
 	call	move_cursor
-	mov 	byte [print_str_color], VGA_CLR(VGA_WHITE, VGA_BLUE)
+	mov 	byte [puts_color], VGA_ALERT
 
 	sub 	esp, 16
 	mov 	qword [rsp], 8
@@ -497,25 +499,25 @@ snake_entry:
 	mov 	qword [rsp + 8], rax
 
 	lea 	eax, [esp + 8]
-	call	print_str
+	call	puts
 	add 	esp, 16
 
-	mov 	dword [VGA_ADDR(12, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(12, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(12, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(12, 44)], VGA_DWORD(VGA_ALERT, '  ')
 
-	mov 	dword [VGA_ADDR(11, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 36)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 38)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 40)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 42)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(11, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 36)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 38)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 40)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 42)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 44)], VGA_DWORD(VGA_ALERT, '  ')
 
-	mov 	dword [VGA_ADDR(13, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 36)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 38)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 40)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 42)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(13, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 36)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 38)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 40)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 42)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 44)], VGA_DWORD(VGA_ALERT, '  ')
 .game_over@loop:
 	call	next_keycode
 	jce 	al, KC_ENTER, .recall
@@ -527,7 +529,7 @@ snake_entry:
 
 	mov 	ax, VGA_POS(12, 36)
 	call	move_cursor
-	mov 	byte [print_str_color], VGA_CLR(VGA_WHITE, VGA_BLUE)
+	mov 	byte [puts_color], VGA_ALERT
 
 	sub 	esp, 16
 	mov 	qword [rsp], 8
@@ -535,25 +537,25 @@ snake_entry:
 	mov 	qword [rsp + 8], rax
 
 	lea 	eax, [esp + 8]
-	call	print_str
+	call	puts_color
 	add 	esp, 16
 
-	mov 	dword [VGA_ADDR(12, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(12, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(12, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(12, 44)], VGA_DWORD(VGA_ALERT, '  ')
 
-	mov 	dword [VGA_ADDR(11, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 36)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 38)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 40)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 42)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(11, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(11, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 36)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 38)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 40)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 42)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(11, 44)], VGA_DWORD(VGA_ALERT, '  ')
 
-	mov 	dword [VGA_ADDR(13, 34)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 36)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 38)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 40)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 42)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
-	mov 	dword [VGA_ADDR(13, 44)], VGA_DWORD(VGA_CLR(VGA_WHITE, VGA_BLUE), '  ')
+	mov 	dword [VGA_ADDR(13, 34)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 36)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 38)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 40)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 42)], VGA_DWORD(VGA_ALERT, '  ')
+	mov 	dword [VGA_ADDR(13, 44)], VGA_DWORD(VGA_ALERT, '  ')
 	jmp 	.game_over@loop
 .goto_start:
 	sub 	esp, 512
@@ -578,10 +580,6 @@ snake_entry:
 	call	disk_write	; disk_write(u64 sector, u16 cnt, u16 *mem);
 	add 	esp, 512
 
-	call	cls
-	call	show_cursor
-	clear_keyring
-	mov 	byte [kbd_state], 0	;; clear keyboard state
-	jmp 	kernel_entry.start
+	jmp 	kernel_reset
 
-%endif ; %ifndef SNAKE_NASM
+%endif ; %ifndef SNAKE.NASM

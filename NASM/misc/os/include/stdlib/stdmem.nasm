@@ -1,5 +1,5 @@
-%ifndef STD_MEM_NASM
-%define STD_MEM_NASM
+%ifndef STDMEM.NASM
+%define STDMEM.NASM
 
 %pragma ignore file stdmem.nasm
 
@@ -11,7 +11,7 @@ cstrlen: ; string, u64 cstrlen(const string str);
 	zero	bl			;; search for null byte
 
 %pragma ignore NOTE: unsafe unless character is guaranteed to exist
-_memscan: ; void *, u64 _memscan(const void *ptr, u8 c);
+_memscan: ; u8 *, u64 _memscan(const u8 *ptr, u8 c);
 	;; basically `memchr`, but without the length end condition.
 	cld 				;; forwards
 	mov 	rdi, rax
@@ -71,7 +71,7 @@ string strncpy(string dst, string src, u64 maxlen) {
 }
 %endif
 
-strncpy:
+strncpy: ; string strncpy(string dst, string src, u64 maxlen);
 	mov 	rdx, rcx
 	strnlen	rcx, rbx, rdx
 
@@ -86,7 +86,7 @@ string strcpy(string dst, string src) {
 }
 %endif
 
-strcpy:
+strcpy: ; string strcpy(string dst, string src);
 	strlen	rcx, rbx
 
 	sub 	rax, 8	; dst -= 8;
@@ -104,12 +104,12 @@ strcpy:
 	;; instead of forcing the divisibility, you can also do the rest separately.
 	;; the difference only matters in the first place if the data is longer than like 100 bytes
 
-memmove: ; void *memmove(u8 *dst, u8 *src, u64 count);
+memmove: ; u8 *memmove(u8 *dst, u8 *src, u64 count);
 	jca 	rax, rbx, memcpy.backwards	; if (dst > src) goto backwards;
 
 	;; fallthrough
 %pragma ignore NOTE: forwards copy
-memcpy:
+memcpy: ; u8 *memcpy(u8 *dst, u8 *src, u64 count);
 .forwards: ; unused label. for clarity
 	;; iterate forwards. move to lower memory
 	cld 				;; forwards move
@@ -125,7 +125,7 @@ memcpy:
 	rep 	movsb
 	ret
 
-memset: ; void *memset(void *ptr, u8 value, u64 num);
+memset: ; u8 *memset(u8 *ptr, u8 value, u64 num);
 	cld 				;; clear direction for forwards move
 	mov 	rdi, rax	;; destination
 	xchg	rax, rbx	;; `mov al, bl`, but preserve ptr
@@ -374,8 +374,6 @@ strtok: ; vstring strtok(string str, vstring tok, string delims);
 	mov 	rbx, rcx
 	ret								; return tok;
 
-
-
 ;; TODO: stricmp, strnicmp, strchr, strrchr, strstr, strrstr, strcat, strncat,
 ;;      strdup, strndup, strcspn?, strspn?, strpbrk?, strtok, strtoupper, strtolower
-%endif ; %ifndef STD_MEM_NASM
+%endif ; %ifndef STDMEM.NASM

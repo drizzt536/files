@@ -1,5 +1,5 @@
-%ifndef JTEST_INC
-%define JTEST_INC
+%ifndef JTEST.INC
+%define JTEST.INC
 
 %macro jtest 4
 	;; e.g. jtest eax, ebx, lt, .exit for a test and jlt
@@ -127,4 +127,4 @@
 	jtest	%1, %2, nle, %3
 %endm
 
-%endif ; %ifndef JTEST_INC
+%endif ; %ifndef JTEST.INC

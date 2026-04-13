@@ -1,5 +1,5 @@
-%ifndef STDKBD_NASM
-%define STDKBD_NASM
+%ifndef STDKBD.NASM
+%define STDKBD.NASM
 
 %pragma ignore file stdkbd.nasm
 
@@ -35,6 +35,8 @@ _next_keycode: ; u8 next_keycode(void _, u32 keyring_read);
 .loop:
 	;; flush pending interrupts
 	sti
+	;; TODO: consider replacing these nops with io_wait so it checks at minimum every 30ns?
+	nop
 	nop
 	cli
 
@@ -46,8 +48,9 @@ _next_keycode: ; u8 next_keycode(void _, u32 keyring_read);
 	ret
 
 ;; clobbers: ax, rbx
-keyring_has_keycode: ; bool keyring_has_keycode(u8 ah /* keycode */);
+keyring_has_keycode: ; bool keyring_has_keycode(u8 keycode);
 	cli
+	mov 	ah, al
 	movzx	ebx, byte [rel keyring_read]
 .loop:
 	jce 	bl, byte [rel keyring_write], .ret_false
@@ -69,7 +72,16 @@ keyring_has_keycode: ; bool keyring_has_keycode(u8 ah /* keycode */);
 	ret
 
 %macro clear_keyring 0
+	cli
 	mov 	word [rel keyring_rw_word], 0
+	sti
+%endm
+
+%macro kbd_reset 0
+	cli
+	mov 	word [rel keyring_rw_word], 0
+	mov 	byte [kbd_state], 0
+	sti
 %endm
 
 ;; see ./doc/ISR-scancode-flattening.txt or ./docs/keycode-to-ASCII.txt for more on the KC namespace
@@ -258,8 +270,7 @@ keycode_to_ascii_noshift_table: db `\0 1234567890-=\b\tqwertyuiop[]/*asdfghjkl;'
 %pragma ignore variable
 keycode_to_ascii_shifted_table: db `\0 !@#$%^&*()_+\b\tQWERTYUIOP{}?*ASDFGHJKL:"~+|ZXCVBNM<>\n`
 
-
-;; 0x36 => 0x84
+;; NOTE: 0x36 => 0x84
 %pragma ignore variable
 keycode_to_non_printable_table:
 	db %hs2b("84818280839192939495969798999AA0C0889B9C898A8B8C8586878D8E908F9D9E9FA1A2A3A4A5")
@@ -270,11 +281,11 @@ keycode_to_non_printable_table:
 keycode_to_ascii: ; u8, u8 keycode_to_ascii(u8 keycode);
 	movzx	eax, al
 
-	jce 	al, 0xB7, .state_clear	;; ctrl release
-	jce 	al, 0xB8, .state_clear	;; alt release
-	jce 	al, 0xC7, .state_clear	;; windows release
-	jcae 	al, 1 << 7, .release	;; no other release codes do anything
-	jcb 	al, 0x36, .ascii
+	jce 	al, 0xB7,	.state_clear	;; ctrl release
+	jce 	al, 0xB8,	.state_clear	;; alt release
+	jce 	al, 0xC7,	.state_clear	;; windows release
+	jcae 	al, 1 << 7, .release		;; no other release codes do anything
+	jcb 	al, 0x36,	.ascii
 
 	mov 	al, byte [keycode_to_non_printable_table + eax - 0x36]
 	jce 	al, ASCII_CTRL,		.state_toggle
@@ -316,4 +327,4 @@ keycode_to_ascii: ; u8, u8 keycode_to_ascii(u8 keycode);
 	mov 	al, byte [ebx + eax]
 	test	al, al
 	ret
-%endif ; %ifndef STDKBD_NASM
+%endif ; %ifndef STDKBD.NASM

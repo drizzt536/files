@@ -1,5 +1,5 @@
-%ifndef IO_PORTS_INC
-%define IO_PORTS_INC
+%ifndef IO_PORTS.INC
+%define IO_PORTS.INC
 ; things without explicit sources are likely sourced from the OSDev Wiki
 ; src 1: IBM Personal System/2 Hardware Interface Technical Reference
 ; src 2: IBM Personal System/2 Hardware Interface Technical Reference - Video Subsystems
@@ -95,4 +95,4 @@
 
 ;; 14, 42, 45, 56, 59, 63, 65-74, 77-78, 82, 87-88, 94, 107, 109, 111, 127
 ;; 102-key keyboards will not be supported.
-%endif ; %ifndef IO_PORTS_INC
+%endif ; %ifndef IO_PORTS.INC

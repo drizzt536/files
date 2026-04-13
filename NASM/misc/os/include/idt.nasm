@@ -1,5 +1,5 @@
-%ifndef IDT_INC
-%define IDT_INC
+%ifndef IDT.NASM
+%define IDT.NASM
 
 %include "kernel.inc"
 
@@ -14,11 +14,11 @@
 %assign KEYRING_ESC_PB1		2
 %assign KEYRING_ESC_PB2		3
 
-keyring_escape	db KEYRING_ESC_NONE		;; written and read only in the ISR
+keyring_escape:	db KEYRING_ESC_NONE		;; written and read only in the ISR
 keyring_rw_word:						;; label for read/write, regardless of which is first
-keyring_write	db 0					;; written in the ISR, read in the kernel
-keyring_read	db 0					;; read in the ISR, written in the kernel
-keyring			times 256 db 0			;; written in the ISR, read in the kernel
+keyring_write:	db 0					;; written in the ISR, read in the kernel
+keyring_read:	db 0					;; read in the ISR, written in the kernel
+keyring:		times 256 db 0			;; written in the ISR, read in the kernel
 
 ;; NOTE: the internal clock speed is 1193182Hz, with a variable divisor from 1 to 65536.
 ;;       the default divisor is 65536
@@ -46,7 +46,7 @@ idt_hfn_default:
 	mov 	esi, idt_hfn_default_msg
 	mov 	ecx, %strlen(IDT_HFN_DEFAULT_MSG)
 	mov 	edi, VGA_BUF
-	mov 	ah, VGA_DEFAULT
+	mov 	ah, VGA_ALERT
 .loop:
 	;; This is basically print_u8hex, but inlined with simpler and with some stuff removed.
 	lodsb	;; al = [esi]
@@ -301,7 +301,7 @@ keyring_extended_scancode_map:
 		;; preserving registers doesn't matter anymore because the kernel panic doesn't
 		;; return either way.
 		cli
-		mov 	ax, VGA_CLR(VGA_WHITE, VGA_BLUE) << 8 | ' '
+		mov 	ax, VGA_ALERT << 8 | ' '
 		call	fill_scr
 		call	hide_cursor
 
@@ -542,4 +542,4 @@ idt:
 	dq idt
 
 %undef idt_idx
-%endif ; %ifndef IDT_INC
+%endif ; %ifndef IDT.NASM

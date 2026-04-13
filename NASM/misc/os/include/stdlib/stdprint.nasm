@@ -1,5 +1,5 @@
-%ifndef STD_PRINT_NASM
-%define STD_PRINT_NASM
+%ifndef STDPRINT.NASM
+%define STDPRINT.NASM
 
 %include "stdcurs.nasm"
 
@@ -10,7 +10,7 @@ cls: ; void cls(void);
 	;; clear the screen.
 	zero	ax
 	call	move_cursor
-	mov 	byte [print_str_color], VGA_DEFAULT
+	mov 	byte [puts_color], VGA_DEFAULT
 	mov 	al, ' '
 fill_scr_def: ; void fill_scr_def(u8 charcode);
 	;; print using the default console color
@@ -33,8 +33,8 @@ fill_scr: ; void fill_scr(u16 vga_char);
 
 ;; clobbers: rax, rbx, cl, rdi
 ;; NOTE: ax = color << 8 | value
-;; returns an error code and the new cursor position
-_print_u8hex: ; err, u16 print_u8hex(u16 ax);
+;; returns an error code and the new cursor position? I don't think it actually does this anymore.
+_print_u8hex: ; void? _print_u8hex(u16 vga_char);
 	mov 	edi, dword [rel cursor_pos]
 	lea 	edi, [VGA_BUF + 2*edi]
 	;; print in big endian, so upper nibble first
@@ -76,12 +76,12 @@ _print_u8hex: ; err, u16 print_u8hex(u16 ax);
 	ret
 
 ;; clobbers: rax, rbx, cl, dx, rdi
-print_u8hex:
+print_u8hex: ; err, u16 print_u8hex(u16 vga_char);
 	call	_print_u8hex
 	mov 	ax, 2
 	jmp 	add_cursor
 
-;; clobbers: rax, rbx, cx, dl, rdi
+;; clobbers: rax, rbx, cx, dx, rdi
 print_u16hex: ; err, u16 print_u16hex(u16 x, u8 color);
 	mov 	ch, bl	;; print_u8hex doesn't touch ch.
 	mov 	dl, al	;; save the lower 8 bits for after the call
@@ -212,7 +212,7 @@ putchar_nl_table:
 %undef i
 
 ;; clobbers: rax, rbx, rcx, dx
-putchar: ; err, u16 putchar(u16 ax);
+putchar: ; err, u16 putchar(u16 vga_char);
 	mov 	ecx, dword [rel cursor_pos]
 	jcb 	al, ' ', .control
 .print:
@@ -223,14 +223,14 @@ putchar: ; err, u16 putchar(u16 ax);
 	mov 	byte [ecx + 1], ah
 	jmp 	inc_cursor
 .control:
-	jtz 	al, al, .null	;; don't print anything for null characters
-	jce 	al, `\n`, .newline
-	jce 	al, `\b`, .backspace
-	jce 	al, `\r`, .carriage_return
-	jce 	al, `\t`, .tab
-	jce 	al, `\x07`, .bell
-	jce 	al, `\f`, cls
-	jce 	al, `\v`, .vtab
+	jtz 	al, al,		.null	;; don't print anything for null characters
+	jce 	al, `\n`,	.newline
+	jce 	al, `\b`,	.backspace
+	jce 	al, `\r`,	.carriage_return
+	jce 	al, `\t`,	.tab
+	jce 	al, `\x07`,	.bell
+	jce 	al, `\f`,	.formfeed
+	jce 	al, `\v`,	.vtab
 	;; fall back to just printing it normally.
 	jmp 	.print
 .carriage_return:
@@ -271,15 +271,21 @@ putchar: ; err, u16 putchar(u16 ax);
 	out 	IOPT_SYSCTRLB, al
 .null:
 	ret
+.formfeed:
+	push	rdi
+	call	cls
+	pop 	rdi
+	ret
 .vtab:
 	;; go down one line without returning to the start of the line.
 	mov 	ax, TERM_COLS
 	jmp 	add_cursor
 
 %pragma ignore variable
-print_str_color: db VGA_DEFAULT
+puts_color: db VGA_DEFAULT
 
-print_str: ; void print_str(string str);
+;; clobbers: rax, rbx, rcx, dx, rdi, rsi
+puts: ; void puts(string str);
 	cld					;; forwards
 	strlen	rdi, rax	;; rdi = strlen(str);
 	mov 	rsi, rax	;; rsi = str;
@@ -289,7 +295,7 @@ print_str: ; void print_str(string str);
 	lodsb
 	jce 	al, `\e`, .esc
 
-	mov 	ah, byte [print_str_color]
+	mov 	ah, byte [puts_color]
 	call	putchar
 	dec 	rdi
 	jmp 	.loop
@@ -298,9 +304,11 @@ print_str: ; void print_str(string str);
 	jz  	.ret
 
 	lodsb
-	mov 	byte [print_str_color], al
+	mov 	byte [puts_color], al
 	dec 	rdi
 	jmp 	.loop
 .ret:
 	ret
-%endif ; %ifndef STD_PRINT_NASM
+
+;; TODO: add `putsv` to print a string view
+%endif ; %ifndef STDPRINT.NASM

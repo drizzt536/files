@@ -1,5 +1,5 @@
-%ifndef JCMP_INC
-%define JCMP_INC
+%ifndef JCMP.INC
+%define JCMP.INC
 
 %macro jcmp 4
 	;; e.g. jcmp eax, ebx, lt, .exit for a compare and jlt
@@ -127,4 +127,4 @@
 	jcmp	%1, %2, nle, %3
 %endm
 
-%endif ; %ifndef JCMP_INC
+%endif ; %ifndef JCMP.INC
