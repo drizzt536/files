@@ -1,5 +1,5 @@
-%ifndef SNAKE.NASM
-%define SNAKE.NASM
+%ifndef GAMES@SNAKE.NASM
+%define GAMES@SNAKE.NASM
 
 %define snake_ring_base			stack_base
 %assign ring_buf_size			896	;; this can be anything, so long as it is >= 874.
@@ -29,16 +29,14 @@ snake_place_apple:
 	mov 	ecx, VGA_BUF + 2*TERM_COLS + 1
 .scan:
 	add 	ebx, 4
-	cmp 	byte [ebx - 4], VGA_CLR_FILL(VGA_BLACK)
-	jne 	.scan	;; the cell isn't empty
+	jcne 	byte [ebx - 4], VGA_CLR_FILL(VGA_BLACK), .scan	;; the cell isn't empty
 
 	;; wrap around if it reaches the end
 	cmp 	ebx, VGA_BUF_END - 2*TERM_COLS + 4	;; skip the bottom border row
 	cmovae	ebx, ecx
 
 	inc 	eax
-	cmp 	eax, ebp
-	jne 	.scan
+	jcne 	eax, ebp, .scan
 	lea 	ebp, [ebx - 5]
 	ret
 
@@ -101,8 +99,7 @@ snake_redraw:
 	cmp 	eax, ring_buf_size
 	cmove	eax, r13d
 
-	cmp 	eax, r11d
-	jne  	.snake@loop
+	jcne 	eax, r11d, .snake@loop
 .snake@head:
 	movzx	ebx, word [r9 + 2*r11]
 	mov 	dword [VGA_BUF + ebx], VGA_DWORD(VGA_CLR_FILL(VGA_YELLOW), '  ')
@@ -118,6 +115,29 @@ snake_redraw:
 	mov 	ax, r12w
 	mov 	bl, VGA_CLR(VGA_WHITE, VGA_ORANGE)
 	jmp 	print_u16hex
+
+%xdefine SNAKE_HELP_MSG %strcat(                  \
+	`\fKeybinds:\n`,                              \
+	`  UP, RIGHT, DOWN, LEFT: move snake\n`,      \
+	`  W, A, S, D: move snake\n`,                 \
+	`  ESC: save scores to disk and exit game\n`, \
+	`  P: pause/unpause\n`,                       \
+	`  F1: show keybinds\n`,                      \
+	`  F2: open speed select menu\n`,             \
+	`  ENTER (on end screen): restart`            \
+)
+
+snake_help_msg:
+.len: dq %strlen(SNAKE_HELP_MSG)
+.ptr: db SNAKE_HELP_MSG
+
+snake_help:
+	mov 	eax, snake_help_msg.ptr
+	call	puts
+
+	keywait_mac
+	call	cls
+	jmp 	snake_entry.recall
 
 snake_speed_menu:
 	clear_keyring
@@ -320,7 +340,8 @@ snake_entry:
 	cmove	r8w, bx
 	je  	.pre_mainloop
 
-	jce 	al, KC_F1, snake_speed_menu
+	jce 	al, KC_F1, snake_help
+	jce 	al, KC_F2, snake_speed_menu
 	jce 	al, KC_ESC, .goto_start
 
 	jmp 	.wait_for_start
@@ -371,8 +392,7 @@ snake_entry:
 
 	jce 	al, KC_P, .paused
 .validate_key:
-	test	r12d, r12d		;; if (snake size == 1)
-	jz  	.check_timer	;;     allow 180 degree rotations
+	jtz 	r12d, r12d, .check_timer	;; if (snake size == 1) allow 180 degree rotations;
 	add 	r8w, r14w
 	cmovz	r8w, r13w		;; 180 degree rotations are invalid
 	jz  	.check_timer
@@ -411,13 +431,11 @@ snake_entry:
 	;; fallthrough
 .redraw:
 	movzx	eax, word [r9 + 2*r11]
-	cmp 	byte [VGA_BUF + eax + 1], VGA_CLR_FILL(VGA_YELLOW)
-	jne 	.redraw@for_real_this_time
+	jcne 	byte [VGA_BUF + eax + 1], VGA_CLR_FILL(VGA_YELLOW), .redraw@for_real_this_time
 	;; the head is about to enter a cell that currently contains the snake
 
 
-	cmp 	eax, r13d					;; it just ate the apple
-	je  	.redraw@for_real_this_time
+	jce 	eax, r13d, .redraw@for_real_this_time ;; it just ate the apple
 	movzx	ebx, word [r9 + 2*r10]
 	jcne 	eax, ebx, .game_over_self	;; the head touched a cell in the snake that isn't the tail
 
@@ -522,7 +540,8 @@ snake_entry:
 	call	next_keycode
 	jce 	al, KC_ENTER, .recall
 	jce 	al, KC_ESC, .goto_start
-	jce 	al, KC_F1, snake_speed_menu
+	jce 	al, KC_F1, snake_help
+	jce 	al, KC_F2, snake_speed_menu
 	jmp 	.game_over@loop
 .victory:
 	mov 	word [snake_high_score_base + 2*r15], r12w	;; max score, so unconditionally set high score
@@ -581,5 +600,4 @@ snake_entry:
 	add 	esp, 512
 
 	jmp 	kernel_reset
-
-%endif ; %ifndef SNAKE.NASM
+%endif ; %ifndef GAMES@SNAKE.NASM

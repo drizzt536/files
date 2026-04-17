@@ -90,7 +90,7 @@ clean:
 	rm -f kernel.bin boot.bin 2>/dev/null
 
 distclean: clean
-	rm -f $(DISK_IMG) include/stdlib-fntable.nasm include/stdlib-header.inc 2>/dev/null
+	rm -f $(DISK_IMG) include/stdlib/stdlib-fntable.nasm include/stdlib/stdlib-header.inc 2>/dev/null
 
 # As of right now, you have to figure out the drive index yourself. Basically, the issue
 # is that the drive will likely not be formatted, which means it won't show up with a drive

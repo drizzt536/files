@@ -189,10 +189,8 @@ keyring_scancode_map:
 		db 0xC8
 	%elif i == 0xD8
 		db 0xC9
-	%elif (i | 80h) == 0x80 || (i | 80h) == 0xD5 || (i | 80h) == 0xD6 || \
-			0xD9 <= (i | 80h) && (i | 80h) <= 0xFF
+	%elif ncontains(i | 80h, 0x80, 0xD5, 0xD6) || ninrange(i | 80h, 0xD9, 0xFF)
 		;; these scancodes don't exist. just map them all to 0.
-
 		db 0
 	%else
 		db %hex(i)
@@ -272,7 +270,7 @@ keyring_extended_scancode_map:
 	idt_hfn_%[idt_idx]_ofs: equ KERNEL_START + ($ - $$)
 	idt_hfn_%[idt_idx]:
 
-	%if idt_idx == INT_#PF
+	%if   idt_idx == INT_#PF
 		;; page fault
 		%ifdifi
 			error code (top value on the stack, QWORD)
@@ -305,66 +303,50 @@ keyring_extended_scancode_map:
 		call	fill_scr
 		call	hide_cursor
 
-		mov 	byte [VGA_BUF + 2*0], 'K'
-		mov 	byte [VGA_BUF + 2*1], 'E'
-		mov 	byte [VGA_BUF + 2*2], 'R'
-		mov 	byte [VGA_BUF + 2*3], 'N'
-		mov 	byte [VGA_BUF + 2*4], 'E'
-		mov 	byte [VGA_BUF + 2*5], 'L'
-		mov 	byte [VGA_BUF + 2*6], ' '
-		mov 	byte [VGA_BUF + 2*7], 'P'
-		mov 	byte [VGA_BUF + 2*8], 'A'
-		mov 	byte [VGA_BUF + 2*9], 'N'
-		mov 	byte [VGA_BUF + 2*10], 'I'
-		mov 	byte [VGA_BUF + 2*11], 'C'
+		mmoviq	[VGA_ADDR(0, 0)], rax, VGA_QWORD(VGA_ALERT, 'KERN')
+		mov 	dword [VGA_ADDR(0,  4)], VGA_DWORD(VGA_ALERT, 'EL')
+		mmoviq	[VGA_ADDR(0, 7)], rax, VGA_QWORD(VGA_ALERT, 'PANI')
+		mov 	dword [VGA_ADDR(0, 11)], VGA_DWORD(VGA_ALERT, 'C:')
 
 		mov 	rax, cr2
 		and 	rax, ~4095
 
 		mov 	ebx, stack_guard_page
-		cmp 	rax, rbx
+		jcne 	rax, rbx, .kernel_panic@generic
 
-		jne 	.kernel_panic@generic
 		;; fallthrough
 	.kernel_panic@stack_overflow:
-		mov 	byte [VGA_BUF + 2*12], ':'
-		mov 	byte [VGA_BUF + 2*13], ' '
-		mov 	byte [VGA_BUF + 2*14], 'S'
-		mov 	byte [VGA_BUF + 2*15], 'T'
-		mov 	byte [VGA_BUF + 2*16], 'A'
-		mov 	byte [VGA_BUF + 2*17], 'C'
-		mov 	byte [VGA_BUF + 2*18], 'K'
-		mov 	byte [VGA_BUF + 2*19], ' '
-		mov 	byte [VGA_BUF + 2*20], 'O'
-		mov 	byte [VGA_BUF + 2*21], 'V'
-		mov 	byte [VGA_BUF + 2*22], 'E'
-		mov 	byte [VGA_BUF + 2*23], 'R'
-		mov 	byte [VGA_BUF + 2*24], 'F'
-		mov 	byte [VGA_BUF + 2*25], 'L'
-		mov 	byte [VGA_BUF + 2*26], 'O'
-		mov 	byte [VGA_BUF + 2*27], 'W'
+		mmoviq	[VGA_ADDR(0, 14)], rax, VGA_QWORD(VGA_ALERT, 'STAC')
+		mov 	byte  [VGA_ADDR(0, 18)], 'K'
+		mmoviq	[VGA_ADDR(0, 20)], rax, VGA_QWORD(VGA_ALERT, 'OVER')
+		mmoviq	[VGA_ADDR(0, 24)], rax, VGA_QWORD(VGA_ALERT, 'FLOW')
 
 		jmp 	halt
 	.kernel_panic@generic:
-		mov 	byte [VGA_BUF + 2*12], ':'
-		mov 	byte [VGA_BUF + 2*13], ' '
-		mov 	byte [VGA_BUF + 2*14], 'U'
-		mov 	byte [VGA_BUF + 2*15], 'N'
-		mov 	byte [VGA_BUF + 2*16], 'M'
-		mov 	byte [VGA_BUF + 2*17], 'A'
-		mov 	byte [VGA_BUF + 2*18], 'P'
-		mov 	byte [VGA_BUF + 2*19], 'P'
-		mov 	byte [VGA_BUF + 2*20], 'E'
-		mov 	byte [VGA_BUF + 2*21], 'D'
-		mov 	byte [VGA_BUF + 2*22], ' '
-		mov 	byte [VGA_BUF + 2*23], 'R'
-		mov 	byte [VGA_BUF + 2*24], 'E'
-		mov 	byte [VGA_BUF + 2*25], 'G'
-		mov 	byte [VGA_BUF + 2*26], 'I'
-		mov 	byte [VGA_BUF + 2*27], 'O'
-		mov 	byte [VGA_BUF + 2*28], 'N'
+		mmoviq	[VGA_ADDR(0, 14)], rax, VGA_QWORD(VGA_ALERT, 'UNMA')
+		mmoviq	[VGA_ADDR(0, 18)], rax, VGA_QWORD(VGA_ALERT, 'PPED')
+		mmoviq	[VGA_ADDR(0, 23)], rax, VGA_QWORD(VGA_ALERT, 'PAGE')
 
-		;; TODO: print the faulting address.
+		mmoviq	[VGA_ADDR(2, 0)], rax, VGA_QWORD(VGA_ALERT, 'ADDR')
+		mmoviq	[VGA_ADDR(2, 4)], rax, VGA_QWORD(VGA_ALERT, 'ESS:')
+		mov 	dword [VGA_ADDR(2, 9)], VGA_DWORD(VGA_ALERT, '0x')
+
+		push	rbx
+		push	rcx
+		push	rdx
+		push	rdi
+
+		mov 	ax, VGA_POS(2, 11)
+		call	move_cursor
+
+		mov 	rax, cr2
+		mov 	bl, VGA_ALERT
+		call	print_u64hex
+
+		pop 	rdi
+		pop 	rdx
+		pop 	rcx
+		pop 	rbx
 
 		;; fallthrough
 		jmp 	halt
@@ -488,8 +470,7 @@ keyring_extended_scancode_map:
 		;; generic default interrupt handler.
 
 		;; skip the error code in ISRs that have it
-		%if idt_idx == INT_#DF || idt_idx == INT_#TS || idt_idx == INT_#NP || idt_idx == INT_#SS || \
-			idt_idx == INT_#GP || idt_idx == INT_#AC || idt_idx == INT_#CP
+		%if ncontains(idt_idx, INT_#DF, INT_#TS, INT_#NP, INT_#SS, INT_#GP, INT_#AC, INT_#CP)
 			add 	rsp, 8
 		%endif
 
@@ -523,7 +504,7 @@ idt:
 	dw idt_hfn_%[idt_idx]_ofs & 0xFFFF					;; offset[15:0]
 	dw GDT_KCODE										;; selector: kernel code segment
 	;; reserved bits = 0.
-	%if idt_idx == INT_#DF || idt_idx == INT_#PF || idt_idx == INT_#MC
+	%if ncontains(idt_idx, INT_#DF, INT_#PF, INT_#MC)
 		;; use IST1
 		db 1
 	%else

@@ -40,10 +40,7 @@ not_implemented: ; void not_implemented(void);
 	mov 	dword [VGA_ADDR(0, 12)], VGA_DWORD(VGA_ALERT, 'TE')
 	mov 	word  [VGA_ADDR(0, 14)], VGA_WORD(VGA_ALERT, 'D')
 	;; wait for a non-release keycode and then reset
-.wait:
-	call	next_keycode
-	test	al, al
-	js  	.wait
+	keywait_mac
 
 	jmp 	kernel_reset.after_cls
 

@@ -1,32 +1,37 @@
-%ifndef GAMES.NASM
-%define GAMES.NASM
+%ifndef GAME_MENU.NASM
+%define GAME_MENU.NASM
 
-%include "snake.nasm"
-%include "life.nasm"
+%include "games/snake.nasm"
+%include "games/life.nasm"
+%include "games/vrand.nasm"
 
 ;; for now, assume there is only one page (<= 24 games)
 
-game_name_strings:
-.snake@len:		dq 5
+game_names:
+.snake@len:		dq  5
 .snake@ptr:		db "Snake"
 .life@len:		dq 21
 .life@ptr:		db "Conway's Game of Life"
+.vrand@len:		dq  5
+.vrand@ptr:		db "VRAND"
+.array:
+	.array@1:	dq .snake@ptr
+	.array@2:	dq .life@ptr
+	.array@3:	dq .vrand@ptr
 
-game_names:
-.1: dq game_name_strings.snake@ptr
-.2: dq game_name_strings.life@ptr
 
 games:
-.1:	dq snake_entry
-.2:	dq life_entry
-.count: equ ($ - games) / 8
+	.1:		dq snake_entry
+	.2:		dq life_entry
+	.3:		dq vrand_entry
+	.count:	equ ($ - games) / 8
 
 %macro gamelist_println 0
 	imul	ax, r8w, 80
 	add 	ax, 2
 	call	move_cursor
 
-	mov 	rax, qword [game_names + 8*(r8d - 1)]
+	mov 	rax, qword [game_names.array + 8*(r8d - 1)]
 	call	puts
 %endm
 
@@ -35,7 +40,7 @@ games:
 	jmp 	qword [games + 8*(r8d - 1)]
 %endm
 
-games_entry:
+game_select_entry:
 	call	cls
 	call	hide_cursor
 	clear_keyring
@@ -115,4 +120,4 @@ games_entry:
 .escape:
 	jmp 	kernel_reset
 
-%endif ; %ifndef GAMES.NASM
+%endif ; %ifndef GAME_MENU.NASM

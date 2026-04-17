@@ -136,6 +136,141 @@ enum_next	INT_KBD
 %assign INT_#XF INT_#XM
 %assign INT_SPURIOUS	APIC_SPURIOUS_ISR
 
+%assign enum_idx 0
+
+enum_next	FLG_BIT_CF		;; carry flag
+enum_next	FLG_BIT_RES1	;; ralways 1
+enum_next	FLG_BIT_PF		;; parity flag
+enum_next	FLG_BIT_RES2	;; reserved
+enum_next	FLG_BIT_AF		;; auxilary carry flag
+enum_next	FLG_BIT_RES3	;; reserved
+enum_next	FLG_BIT_ZF		;; zero flag
+enum_next	FLG_BIT_SF		;; sign flag
+enum_next	FLG_BIT_TF		;; trap flag
+enum_next	FLG_BIT_IF		;; interrupt flag
+enum_next	FLG_BIT_DF		;; direction flag
+enum_next	FLG_BIT_OF		;; overflow flag
+enum_next	FLG_BIT_IOPL1	;; I/O privilege level bit 1
+enum_next	FLG_BIT_IOPL2	;; I/O privilege level bit 2
+enum_next	FLG_BIT_NT		;; nested task flag
+enum_next	FLG_BIT_RES4	;; always 0
+enum_next	FLG_BIT_RF		;; resume flag
+enum_next	FLG_BIT_VM		;; virtual 8086 mode flag
+enum_next	FLG_BIT_AC		;; alignment check
+enum_next	FLG_BIT_VIF		;; virtual interrupt flag
+enum_next	FLG_BIT_VIP		;; virtual interrupt pending
+enum_next	FLG_BIT_ID		;; able to use CPUID instruction
+enum_next	FLG_BIT_RES5	;; reserved
+enum_next	FLG_BIT_RES6	;; reserved
+enum_next	FLG_BIT_RES7	;; reserved
+enum_next	FLG_BIT_RES8	;; reserved
+enum_next	FLG_BIT_RES9	;; reserved
+enum_next	FLG_BIT_RES10	;; reserved
+enum_next	FLG_BIT_RES11	;; reserved
+enum_next	FLG_BIT_RES12	;; reserved
+enum_next	FLG_BIT_RES13	;; reserved
+enum_next	FLG_BIT_RES14	;; reserved
+enum_next	FLG_BIT_RES15	;; reserved
+enum_next	FLG_BIT_RES16	;; reserved
+enum_next	FLG_BIT_RES17	;; reserved
+enum_next	FLG_BIT_RES18	;; reserved
+enum_next	FLG_BIT_RES19	;; reserved
+enum_next	FLG_BIT_RES20	;; reserved
+enum_next	FLG_BIT_RES21	;; reserved
+enum_next	FLG_BIT_RES22	;; reserved
+enum_next	FLG_BIT_RES23	;; reserved
+enum_next	FLG_BIT_RES24	;; reserved
+enum_next	FLG_BIT_RES25	;; reserved
+enum_next	FLG_BIT_RES26	;; reserved
+enum_next	FLG_BIT_RES27	;; reserved
+enum_next	FLG_BIT_RES28	;; reserved
+enum_next	FLG_BIT_RES29	;; reserved
+enum_next	FLG_BIT_RES30	;; reserved
+enum_next	FLG_BIT_RES31	;; reserved
+enum_next	FLG_BIT_RES32	;; reserved
+enum_next	FLG_BIT_RES33	;; reserved
+enum_next	FLG_BIT_RES34	;; reserved
+enum_next	FLG_BIT_RES35	;; reserved
+enum_next	FLG_BIT_RES36	;; reserved
+enum_next	FLG_BIT_RES37	;; reserved
+enum_next	FLG_BIT_RES38	;; reserved
+enum_next	FLG_BIT_RES39	;; reserved
+enum_next	FLG_BIT_RES40	;; reserved
+enum_next	FLG_BIT_RES41	;; reserved
+enum_next	FLG_BIT_RES42	;; reserved
+enum_next	FLG_BIT_RES43	;; reserved
+enum_next	FLG_BIT_RES44	;; reserved
+enum_next	FLG_BIT_RES45	;; reserved
+enum_next	FLG_BIT_RES46	;; reserved
+
+%assign FLG_CF		1 << FLG_BIT_CF
+%assign FLG_RES1	1 << FLG_BIT_RES1
+%assign FLG_PF		1 << FLG_BIT_PF
+%assign FLG_RES2	1 << FLG_BIT_RES2
+%assign FLG_AF		1 << FLG_BIT_AF
+%assign FLG_RES3	1 << FLG_BIT_RES3
+%assign FLG_ZF		1 << FLG_BIT_ZF
+%assign FLG_SF		1 << FLG_BIT_SF
+%assign FLG_TF		1 << FLG_BIT_TF
+%assign FLG_IF		1 << FLG_BIT_IF
+%assign FLG_DF		1 << FLG_BIT_DF
+%assign FLG_OF		1 << FLG_BIT_OF
+%assign FLG_IOPL1	1 << FLG_BIT_IOPL1
+%assign FLG_IOPL2	1 << FLG_BIT_IOPL2
+%assign FLG_NT		1 << FLG_BIT_NT
+%assign FLG_RES4	1 << FLG_BIT_RES4
+%assign FLG_RF		1 << FLG_BIT_RF
+%assign FLG_VM		1 << FLG_BIT_VM
+%assign FLG_AC		1 << FLG_BIT_AC
+%assign FLG_VIF		1 << FLG_BIT_VIF
+%assign FLG_VIP		1 << FLG_BIT_VIP
+%assign FLG_ID		1 << FLG_BIT_ID
+%assign FLG_RES5	1 << FLG_BIT_RES5
+%assign FLG_RES6	1 << FLG_BIT_RES6
+%assign FLG_RES7	1 << FLG_BIT_RES7
+%assign FLG_RES8	1 << FLG_BIT_RES8
+%assign FLG_RES9	1 << FLG_BIT_RES9
+%assign FLG_RES10	1 << FLG_BIT_RES10
+%assign FLG_RES11	1 << FLG_BIT_RES11
+%assign FLG_RES12	1 << FLG_BIT_RES12
+%assign FLG_RES13	1 << FLG_BIT_RES13
+%assign FLG_RES14	1 << FLG_BIT_RES14
+%assign FLG_RES15	1 << FLG_BIT_RES15
+%assign FLG_RES16	1 << FLG_BIT_RES16
+%assign FLG_RES17	1 << FLG_BIT_RES17
+%assign FLG_RES18	1 << FLG_BIT_RES18
+%assign FLG_RES19	1 << FLG_BIT_RES19
+%assign FLG_RES20	1 << FLG_BIT_RES20
+%assign FLG_RES21	1 << FLG_BIT_RES21
+%assign FLG_RES22	1 << FLG_BIT_RES22
+%assign FLG_RES23	1 << FLG_BIT_RES23
+%assign FLG_RES24	1 << FLG_BIT_RES24
+%assign FLG_RES25	1 << FLG_BIT_RES25
+%assign FLG_RES26	1 << FLG_BIT_RES26
+%assign FLG_RES27	1 << FLG_BIT_RES27
+%assign FLG_RES28	1 << FLG_BIT_RES28
+%assign FLG_RES29	1 << FLG_BIT_RES29
+%assign FLG_RES30	1 << FLG_BIT_RES30
+%assign FLG_RES31	1 << FLG_BIT_RES31
+%assign FLG_RES32	1 << FLG_BIT_RES32
+%assign FLG_RES33	1 << FLG_BIT_RES33
+%assign FLG_RES34	1 << FLG_BIT_RES34
+%assign FLG_RES35	1 << FLG_BIT_RES35
+%assign FLG_RES36	1 << FLG_BIT_RES36
+%assign FLG_RES37	1 << FLG_BIT_RES37
+%assign FLG_RES38	1 << FLG_BIT_RES38
+%assign FLG_RES39	1 << FLG_BIT_RES39
+%assign FLG_RES40	1 << FLG_BIT_RES40
+%assign FLG_RES41	1 << FLG_BIT_RES41
+%assign FLG_RES42	1 << FLG_BIT_RES42
+%assign FLG_RES43	1 << FLG_BIT_RES43
+%assign FLG_RES44	1 << FLG_BIT_RES44
+%assign FLG_RES45	1 << FLG_BIT_RES45
+%assign FLG_RES46	1 << FLG_BIT_RES46
+
+%assign FLG_ARITH	FLG_CF | FLG_PF | FLG_AF | FLG_ZF | FLG_SF | FLG_OF
+%assign FLG_COM		FLG_ARITH | FLG_DF	;; common flags
+
 %assign TERM_ROWS		25
 %assign TERM_COLS		80
 %assign TERM_SIZE		TERM_ROWS * TERM_COLS
@@ -161,7 +296,7 @@ enum_set \
 
 ;; the orange one might be brown. idk
 
-%define VGA_CLR(fgclr, bgclr)	%hex((fgclr) | (bgclr) << 4)
+%define VGA_CLR(=fgclr, =bgclr)	%hex(fgclr | bgclr << 4)
 %define VGA_CLR_FILL(color)		VGA_CLR(color, color)
 %assign VGA_DEFAULT				VGA_CLR(VGA_DRK_GRAY, VGA_BLACK)
 %assign VGA_HIGHLIGHT			VGA_CLR(VGA_WHITE, VGA_DRK_GRAY)	;; default text highlight
@@ -171,17 +306,17 @@ enum_set \
 %assign VGA_BUF_SIZE			2*TERM_SIZE
 %assign VGA_BUF_END				VGA_BUF + VGA_BUF_SIZE
 
-%define VGA_POS(row, col)		%hex((TERM_COLS*(row) + (col)) % TERM_SIZE)
-%define VGA_ADDR(row, col)		%hex(VGA_BUF + 2*VGA_POS(row, col))
+%define VGA_POS(=row, =col)		%hex((TERM_COLS*row + col) % TERM_SIZE)
+%define VGA_ADDR(=row, =col)		%hex(VGA_BUF + 2*VGA_POS(row, col))
 
-%define BYTES2WORD(b0, b1) (b0 | b1 << 8)
-%define BYTES2DWORD(b0, b1, b2, b3) (b0 | b1 << 8 | b2 << 16 | b3 << 24)
-%define BYTES2QWORD(b0, b1, b2, b3, b4, b5, b6, b7) \
+%define BYTES2WORD(=b0, =b1) (b0 | b1 << 8)
+%define BYTES2DWORD(=b0, =b1, =b2, =b3) (b0 | b1 << 8 | b2 << 16 | b3 << 24)
+%define BYTES2QWORD(=b0, =b1, =b2, =b3, =b4, =b5, =b6, =b7) \
 	(BYTES2DWORD(b0, b1, b2, b3) | BYTES2DWORD(b4, b5, b6, b7) << 32)
 
-%define VGA_WORD(clr, s)  (BYTES2WORD(%substr(s, 1, 1), clr))
-%define VGA_DWORD(clr, s) (BYTES2DWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr))
-%define VGA_QWORD(clr, s) (BYTES2QWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr, \
+%define VGA_WORD(=clr, s)  (BYTES2WORD(%substr(s, 1, 1), clr))
+%define VGA_DWORD(=clr, s) (BYTES2DWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr))
+%define VGA_QWORD(=clr, s) (BYTES2QWORD(%substr(s, 1, 1), clr, %substr(s, 2, 1), clr, \
 							%substr(s, 3, 1), clr, %substr(s, 4, 1), clr))
 
 %define DVGA_WORD(s) (VGA_WORD(VGA_DEFAULT, s))
@@ -223,8 +358,20 @@ enum_set \
 ;; 1024 is super slow, so only increase this as required
 %define str2chars(s) _str2chars64(s)
 
-%define chartoupper(c) %cond(c == '_' || ('0' <= c && c <= '9'), c, %chr(c & ~32))
+%define chartoupper(c) %cond(c == '_' || ninrange(c, '0', '9'), c, %chr(c & ~32))
 %define strtoupper(s) _charstoupperstr(str2chars(s))
+
+%define eval_fn(=x) x		;; you can only pass user-defined macros to %map
+
+%define contains(args+)  %eval(%find( args) > 0)
+%define icontains(args+) %eval(%findi(args) > 0)
+%define ncontains(args+) %eval(%find(%map(eval_fn, args)) > 0)	;; numeric contains
+
+%define ninrange(=x, =min, =max) (min <= x && x <= max)	;; numeric contains
+
+%define nocontains(args+)  %eval(%find( args) == 0)
+%define noicontains(args+) %eval(%findi(args) == 0)
+%define noncontains(args+) %eval(%find(%map(eval_fn, args)) == 0)
 
 %define strmul(s, n) %sel((n) + 1, '', \
 	%sel(!%isdifi( 1),) %strcat(s), \
@@ -262,9 +409,9 @@ enum_set \
 )
 
 %macro zero 1
-	%if 0 < %findi(%1, rax, rbx, rcx, rdx, rdi, rsi, rsp, rbp)
+	%if icontains(%1, rax, rbx, rcx, rdx, rdi, rsi, rsp, rbp)
 		xor 	e%tok(%substr(%1, 2)), e%tok(%substr(%1, 2))
-	%elif 0 < %findi(%1,r8, r10, r12, r14, r16, r18, r20, r22, r24, r26, r28, r30, \
+	%elif icontains(%1,r8, r10, r12, r14, r16, r18, r20, r22, r24, r26, r28, r30, \
 						r9, r11, r13, r15, r17, r19, r21, r23, r25, r27, r29, r31)
 		xor 	%1%[d], %1%[d]
 	%else
@@ -289,6 +436,14 @@ enum_set \
 		dec 	%1
 		jtnz	%1, %1, %%loop
 	%endif
+%endm
+
+%macro keywait_mac 0
+	movzx	ebx, byte [rel keyring_read]
+%%loop:
+	call	next_keycode
+	lea 	ebx, [ebx + 1]	;; `inc bl` without touching flags
+	jts 	al, al, %%loop	;; ignore release keycodes
 %endm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -430,10 +585,25 @@ enum_set \
 	%endrep
 %endm
 
-%macro keymod_jce 3
-	;; test_keymods tmp_reg, comparison, label
+%macro keymod_jcmp 4
+	;; test_keymods tmp_reg, comparison, condition, label
 	mov 	%1, byte [kbd_state]
 	and 	%1, KBD_STATE_MODIFIERS
-	jce 	%1, %2, %3
+	jcmp 	%1, %2, %3, %4
+%endm
+
+%macro keymod_jce 3
+	keymod_jcmp %1, %2, e, %3
+%endm
+
+%macro keymod_jcne 3
+	keymod_jcmp %1, %2, ne, %3
+%endm
+
+%macro mmoviq 3
+	;; mem move immediate quadword
+	; mmoviq [addr], clobber reg, imm64 value
+	mov 	%2, %3
+	mov 	qword %1, %2
 %endm
 %endif ; %ifndef KERNEL.INC

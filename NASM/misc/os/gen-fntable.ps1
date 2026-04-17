@@ -119,7 +119,7 @@ ${ord padding}  = " "*($idx_pad - 1)
 	"%define STDLIB_FNTABLE.NASM",
 	"",
 	"%include `"stdlib-header.inc`"",
-	"%assign STDLIB_FNTABLE_SIZE $fn_idx"
+	"%assign STDLIB_FNTABLE_SIZE $fn_idx",
 	"",
 	"stdlib_fntable:",
 	".size:",
@@ -138,9 +138,16 @@ $padding = " "*($maxlen + $idx_pad - 5)
 	"%assign STDLIB_ORD_NULL$padding 0", # ordinal 0 is the length field.
 	$header,
 	"",
+	"%define STDLIB_ORDMAX %eval(STDLIB_FNTABLE_SIZE - 1)",
+	"",
 	"%define STDLIB_ORD(fn) STDLIB_ORD_%tok(strtoupper(%str(fn)))",
+	"",
+	"%macro stdlib_ucall_reg 1",
+	"	call	qword [stdlib_fntable + 8*%1]",
+	"%endm",
+	"",
 	"%macro stdlib_ucall 1"
-	"	call	qword [stdlib_fntable + 8*STDLIB_ORD(%1)]",
+	"	stdlib_ucall_reg STDLIB_ORD(%1)",
 	"%endm",
 	"",
 	"%endif ; %ifndef STDLIB_HEADER.INC"

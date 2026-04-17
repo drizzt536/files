@@ -28,8 +28,17 @@ StackMin-L64 ABI (little-endian 64-bit):
 	fp return vals  : xmm0-xmm5  (ymm0-ymm5) (same as arguments)
 ```
 
+<!--
+TODO: figure out a concrete distunction for when non fp data gets put in xmm/ymm/zmm registers for arguments.
+for instance, the key for AES-256 is likely nicer to have in xmm2:xmm1 than in rdx:rcx:rbx:rax
+-->
+
  - rsp is reserved for the stack pointer.
  - rbp is not reserved for the stack base pointer, but it optionally can be used as such anyway.
+ - `SYSCALL` clobbers `r11`, so it has to be saved before syscalls. this can either be done by wrapping
+   the syscall in `push r11` and `pop r11`, or by pushing and popping once at the start of the function
+   (better if it does more than one syscall).
+ - syscall GP arguments are in rbx, rdx, rdi, rsi, r8, and r9.
  - NOTE: r16-r31 only exist in CPUs with the APX instruction set, so they are spread out,
    rather than having r8-r13 be the rest of the volatile arguments.
  - arguments beyond the first 6 should be passed on the stack in reverse order:

@@ -13,10 +13,11 @@ bits 64
 %include "stdlib-fntable.nasm"
 %include "idt.nasm"		;; IDT declaration
 %include "stdlib.nasm"	;; stdlib imports
-%include "games.nasm"
+%include "game-select.nasm"
 
 tss:
 	dd	0			;; 0x00: reserved
+.rsp0_ofs: equ $ - tss ;; kernel stack pointer for user mode interrupts
 	dq	stack_base	;; 0x04: RSP0
 	dq	0			;; 0x0C: RSP1. unused
 	dq	0			;; 0x14: RSP2. unused
@@ -32,14 +33,112 @@ tss:
 	dw	0			;; 0x64: reserved
 	dw	TSS_SIZE	;; 0x66: IOPM offset. set to outside the TSS so all ports are restricted
 
-;; TODO: figure out if this is actually even correct
-usermode_jump:
-	mov 	rcx, rax
+;; jump into user mode.
+usermode_jump: ; void usermode_jump(void *user_address, u64 arg1, u64 arg2);
+	mov 	r3, r2
+.save:
+	push	r7
+	push	r8
+	push	r9
+	push	r10
+	push	r11
+	push	r12
+	push	r13
+	push	r14
+	push	r15
+%ifdef APX
+	;; 16-21 are volatile
+	push	r22
+	push	r23
+	push	r24
+	push	r25
+	push	r26
+	push	r27
+	push	r28
+	push	r29
+	push	r30
+	push	r31
+%endif
+
 	pushfq
 	pop 	r11
-	;; clear the arithmetic flags, but leave all the other flags the same as in the kernel.
-	and 	r11, ~(1 << 0 | 1 << 2 | 1 << 4 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11)
+	;; clear the common flags, but leave all the other flags the same as in the kernel.
+	and 	r11, ~FLG_COM
+	mov 	qword [TSS_BASE + tss.rsp0_ofs], rsp
+.clear:
+	;; TODO: switch to the user stack
+;	zero	r0	;; user code address
+;	zero	r1	;; arg1
+	mov 	r2d, usermode_entry
+;	zero	r3	;; arg2
+	zero	r4
+	zero	r5
+	zero	r7
+	zero	r8
+	zero	r9
+	zero	r10
+;	zero	r11	;; flags
+	zero	r12
+	zero	r13
+	zero	r14
+	zero	r15
+%ifdef APX
+	zero	r16
+	zero	r17
+	zero	r18
+	zero	r19
+	zero	r20
+	zero	r21
+	zero	r22
+	zero	r23
+	zero	r24
+	zero	r25
+	zero	r26
+	zero	r27
+	zero	r28
+	zero	r29
+	zero	r30
+	zero	r31
+%endif
+.call:
 	sysret
+
+	;; TODO: switch back to the kernel stack
+.recall:
+%ifdef APX
+	pop 	r31
+	pop 	r30
+	pop 	r29
+	pop 	r28
+	pop 	r27
+	pop 	r26
+	pop 	r25
+	pop 	r24
+	pop 	r23
+	pop 	r22
+	;; 16-21 are volatile
+%endif
+	pop 	r15
+	pop 	r14
+	pop 	r13
+	pop 	r12
+	pop 	r11
+	pop 	r10
+	pop 	r9
+	pop 	r8
+	pop 	r7
+	ret
+
+; void usermode_entry(void *user_address, u64 arg1, u64 _, u64 arg1);
+usermode_entry:
+	zero	r11
+	mov 	r2, r3
+	call	r0
+
+	;; TODO: do the registers and call the exit handler
+	zero	rax
+	syscall
+
 
 ;; process keys until the ISR timer gets to or above the wrap value
 proc_keys_until_timeout:
@@ -93,14 +192,42 @@ proc_keys_until_timeout:
 	mov 	al, byte [stack_guard_page]
 .unmapped_page:
 	;; kernel panic: unmapped page
-	mov 	al, byte [-1]
+	call	next_rand
+
+	;; convert to canonical address
+	shl 	rax, 16
+	sar 	rax, 16
+
+	mov 	al, byte [rax]
+	jmp 	.unmapped_page	;; in case it doesn't fault the first try
 .ret:
 	ret
 
 syscall_handler:
+	;; TODO: switch to the kernel stack
+
+	jtz 	rax, rax, usermode_jump.recall
+
+	push	r10
+	push	rcx
+	mov 	r10, rax
+
+	mov 	rax, rbx	;; arg1 = rbx
+	mov 	rbx, rdx	;; arg2 = rdx
+	mov 	rcx, rdi	;; arg3 = rdi
+	mov 	rdx, rsi	;; arg4 = rsi
+	mov 	rdi, r8		;; arg5 = r8
+	mov 	rsi, r9		;; arg6 = r9
+
+	jca 	r10, STDLIB_ORDMAX, usermode_jump.recall
+
+	;; TODO: make sure the value it passed is a valid ordinal
+	stdlib_ucall_reg	r10
 	;; RCX = RIP
 	;; R11 = RFLAGS
-	;; TODO: switch to the kernel stack
+	pop 	rcx
+
+	;; TODO: switch back to the user stack
 	sysret
 
 %xdefine MSG "The Low Taper Fade Meme is **MASSIVE**! " ;; 40 characters long
@@ -307,8 +434,8 @@ kernel_entry:
 	jce 	al, ASCII_NUMLK,	.start
 	jce 	al, ASCII_SCRLK,	.start
 
-	keymod_jce	ah, KBD_STATE_CTRL, .ctrl
-	keymod_jce	ah, KBD_STATE_CTRL | KBD_STATE_ALT, .ctrl_alt
+	keymod_jce	bl, KBD_STATE_CTRL, .ctrl
+	keymod_jce	bl, KBD_STATE_CTRL | KBD_STATE_ALT, .ctrl_alt
 
 	jtnz	byte [kbd_state], KBD_STATE_CTRL | KBD_STATE_ALT | KBD_STATE_WIN, .start
 
@@ -357,7 +484,6 @@ kernel_entry:
 	jce 	al, 'b', .ctrl_b	;; bell
 	jce 	al, 'l', .ltf		;; LTF
 	jce 	al, 'm', .ctrl_m	;; multiply
-	jce 	al, 'r', .rand		;; rand
 	jce 	al, 's', .before_read_sectors
 	jce 	al, 'x', .ctrl_x
 	jce 	al, ASCII_F2, .ctrl_f2
@@ -382,7 +508,7 @@ kernel_entry:
 .ctrl_f2:
 	call	reboot
 .ctrl_alt:
-	jce 	al, 'g', games_entry
+	jce 	al, 'g', game_select_entry
 	jmp 	.start
 .before_read_sectors:
 	sub 	esp, 512	;; allocate space for the sectors to be read into.
@@ -505,17 +631,7 @@ kernel_entry:
 	mov 	dword [VGA_ADDR(6, 17)], DVGA_DWORD('od')
 	mov 	byte  [VGA_ADDR(6, 19)], 'e'
 
-	mov 	al, KC_BACKSPACE
-	call	keyring_has_keycode
-
-	;; change the random buffer loop to be infinite if backspace was pressed.
-	mov 	al, 0x75	;; `jmp short` byte 1 is 0x75
-	mov 	bl, 0xEB	;; `jnz short` byte 1 is 0xEB
-	cmovnz	ax, bx		;; u8 b = keyring_has_keycode(KC_BACKSPACE) ? 0xEB : 0x75;
-
 	;; conditionally change from a conditional jump to unconditional
-	mov 	byte [.rand@loop@jump], al
-	setnz	al
 	zero	ah
 	mov 	word [rel cursor_pos], VGA_POS(24, 78)
 	call	_print_u8hex
@@ -537,7 +653,7 @@ kernel_entry:
 	jce 	al, KC_7,		.mul7
 	jce 	al, KC_8,		.mul8
 	jce 	al, KC_9,		.mul9
-	jce 	al, KC_ENTER,	.rand			;; enter => exit
+	jce 	al, KC_ENTER,	.ltf			;; enter => exit
 	jce 	al, KC_INSERT,	.mul_set_rand	;; insert => randomize the value
 
 	movzx	eax, al
@@ -583,21 +699,6 @@ kernel_entry:
 .mul9:
 	imul	rbp, rbp, 9
 	jmp 	.mul_loop@print
-.rand:
-	reset_isr_timer
-	mov 	bpl, 32
-.rand@loop:
-	mov 	eax, 2*TERM_SIZE
-	mov 	ebx, VGA_BUF
-	call	rand_fill
-
-	timewait_mac8	1, 0
-	dec 	bpl
-.rand@loop@jump:
-	jnz  	.rand@loop
-
-	timewait_mac8	7, 0
-	;; fallthrough
 .ltf:
 	call	cls
 	timewait_mac8	7, 0

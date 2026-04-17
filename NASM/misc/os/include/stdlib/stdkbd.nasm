@@ -78,10 +78,8 @@ keyring_has_keycode: ; bool keyring_has_keycode(u8 keycode);
 %endm
 
 %macro kbd_reset 0
-	cli
-	mov 	word [rel keyring_rw_word], 0
+	clear_keyring
 	mov 	byte [kbd_state], 0
-	sti
 %endm
 
 ;; see ./doc/ISR-scancode-flattening.txt or ./docs/keycode-to-ASCII.txt for more on the KC namespace
