@@ -11,10 +11,11 @@
 
     # NASM 3.00rc15: 35bd26e17ab7bc04b95cbdfa4b746f3bf916100e
 
-# TODO: add %pathsearch() and %depend() preproc functions: 0843052f058e5f23716f01c6d93d62beb02e46dd
-# TODO: add %iffile, %isfile(), and %realpath(): 0c533873f0024ad120b7960a58798a3b308a544e
+# TODO: I think `[list ...]` is a valid directive that doesn't currently get highlighted.
+# TODO: add %iffile and %isfile(): 0c533873f0024ad120b7960a58798a3b308a544e
   # see the doc/preproc.src diff for the documentation on these
-  # TODO: and also add whatever these things are, from tokens.dat:
+
+# TODO: and also add whatever these things are, from tokens.dat:
   # this stuff appears in test/ccmp.asm.
   # % TOKEN_PREFIX, PPS_NF, TFLAG_BRC, P_*
   # nf
@@ -36,13 +37,10 @@
   # probably use the following locations to find the instruction list:
     # https://github.com/netwide-assembler/nasm/tree/master/travis/test/*.asm
     # https://github.com/netwide-assembler/nasm/blob/master/x86/insns.dat
-# TODO: add %null/%note/%warning/%error/%fatal preproc functions: d5bd136ced2133a586b5995f2643dcc9952b0d24
+# TODO: add %note/%warning/%error/%fatal preproc functions: d5bd136ced2133a586b5995f2643dcc9952b0d24
   # or perhaps don't add them?: 7276cfde994e657b83126bab901ba67f216bda6d
 # TODO: add %ifdirective preproc directive: 31a160759d93a574c9863538d6109a23cf94873d
-# TODO: add __?NASM_HAS_IFDIRECTIVE?__: 4cf4333ba21069e60877467714c66271beca5dd2
-# TODO: add __?DEFAULT?__ macro: 4ccdf7e6fe41eb5ab55077c3803573a430fa9501
 # TODO: change the if-endif matching. %ifASDF still matches an %endif: 1f1f3266d60281c81fd87b3bdea6eb90aeb54000
-# TODO: register index 16-31 (APX instruction set)
 
 # TODO: everywhere that has identifers, allow macro indirection in it.
 
@@ -114,7 +112,6 @@ contexts:
     - include: comments
 
   main:
-    - include: line-continuation
     - include: comments
     - include: prefixes
     - include: decorators
@@ -131,6 +128,7 @@ contexts:
     - include: structs
     - include: preprocessor
     - include: labels
+    - include: line-continuation
 
   line-continuation:
     - match: (\\)$\n?
@@ -721,9 +719,9 @@ contexts:
 
     - match: '{{stt_b}}(?:__NASMDEFSEG|_GLOBAL_OFFSET_TABLE_){{end_b}}'
       scope: support.constant.nasm
-    - match: '{{stt_b}}__(\??)NASM_(?:MAJOR|(?:SUB)?MINOR|SNAPSHOT|VER(?:SION_ID)?|PATCHLEVEL)\1__{{end_b}}'
+    - match: '{{stt_b}}__(\??)NASM_(?:MAJOR|(?:SUB)?MINOR|SNAPSHOT|VER(?:SION_ID)?|PATCHLEVEL|LIMITS|HAS_IFDIRECTIVE)\1__{{end_b}}'
       scope: support.constant.nasm
-    - match: '{{stt_b}}__(\??)(?:FILE|LINE|SECT|BITS|(?:OUTPUT|DEBUG)_FORMAT|PTR|FLOAT(?:_ROUND|_DAZ)?|(?:UTC_)?(?:DATE|TIME)(?:_NUM)?|POSIX_TIME|(?:(?:USE|ALIGN)_[A-Z]+)|SECTALIGN_ALIGN_UPDATES_SECTION|ALIGNMODE)\1__{{end_b}}'
+    - match: '{{stt_b}}__(\??)(?:DEFAULT|FILE|LINE|SECT|BITS|(?:OUTPUT|DEBUG)_FORMAT|PTR|FLOAT(?:_ROUND|_DAZ)?|(?:UTC_)?(?:DATE|TIME)(?:_NUM)?|POSIX_TIME|(?:(?:USE|ALIGN)_[A-Z]+)|SECTALIGN_ALIGN_UPDATES_SECTION|ALIGNMODE)\1__{{end_b}}'
       scope: support.constant.nasm
     - match: '{{stt_b}}(?:Inf|[QS]?NaN){{end_b}}'
       scope: support.constant.fp.nasm
@@ -1036,7 +1034,7 @@ contexts:
       # if the first thing is a valid directive, it should highlight as such.
       # For simplicity, always allow things like `%elif`, `%endrep`, etc.,
       # but don't pop the context, because that is too hard.
-    - match: (?i)(%)(isn?difi)\s*(\()
+    - match: (?i)(%)(isn?difi|null)\s*(\()
       # %ifdifi, and by extension %isdifi, ignores its argument and returns 0.
       # %ifndifi does the same thing.
       captures:
@@ -1051,7 +1049,7 @@ contexts:
         - match: \)
           scope: meta.brackets.nasm punctuation.macro.arguments.brackets.end.nasm
           pop: true
-    - match: (?i)(%)(abs|cond|count|eval|hex|map|num|sel|is{{valid_condition}}|str(?:cat|len)?|substr|tok|pathsearch|realpath|depend|findi?|chr|ord|hs2b|b2hs)\s*(\()
+    - match: (?i)(%)(abs|cond|count|eval|hex|env|map|num|sel(?:bits)?|is{{valid_condition}}|str(?:cat|len)?|substr|tok|pathsearch|realpath|limit|depend|findi?|chr|ord|hs2b|b2hs)\s*(\()
       captures:
         1: punctuation.definition.keyword.preprocessor.nasm
         2: support.function.preprocessor.nasm
@@ -1258,12 +1256,11 @@ contexts:
         2: meta.preprocessor.nasm keyword.control.import.preprocessor.nasm
       push: preprocessor-single-line-macro-definition
     - match: (?i)^\s*(%)(use){{end_b}}
-      # TODO: update highlighting for `%use`. i.e. `%use masm`
       captures:
         1: punctuation.definition.keyword.preprocessor.nasm
         2: meta.preprocessor.nasm keyword.control.import.preprocessor.nasm
       push:
-        - match: (['"`]?)(?:altreg|fp|ifunc|masm|smartalign)\1[^\S\n]*(?=$)
+        - match: (['"`]?)(?:altreg|fp|ifunc|masm|smartalign|vtern)\1[^\S\n]*(?=$)
           scope: support.constant.macro.nasm
           # scope: support.function.nasm
         - include: line-continuation
@@ -1669,16 +1666,16 @@ contexts:
   reg8:
     - include: reg_al
     - include: reg_cl
-    - match: (?i){{stt_b}}(?:[bd]l|[a-d]h){{end_b}}
+    - match: (?i){{stt_b}}(?:[bd]l|(?:[a-d]|r[0-3])h){{end_b}}
       scope: constant.language.reg8.classic.nasm
     - match: (?i){{stt_b}}[bs]pl{{end_b}}
       scope: constant.language.reg8.pointer.nasm
     - match: (?i){{stt_b}}[ds]il{{end_b}}
       scope: constant.language.reg8.index.nasm
-    - match: (?i){{stt_b}}r(?:8|9|1[0-5])b{{end_b}}
+    - match: (?i){{stt_b}}r(?:[89]|[12]\d|3[01])b{{end_b}}
       scope: constant.language.reg8.numbered.nasm
     # altreg
-    - match: (?i){{stt_b}}r(?:8|9|1[0-5])l{{end_b}}
+    - match: (?i){{stt_b}}r(?:[89]|[12]\d|3[01])l{{end_b}}
       scope: constant.language.reg8.numbered.altreg.nasm
     - match: (?i){{stt_b}}r[23][bl]{{end_b}}
       scope: constant.language.reg8.classic.altreg.nasm
@@ -1712,7 +1709,7 @@ contexts:
       scope: constant.language.reg16.pointer.nasm
     - match: (?i){{stt_b}}[ds]i{{end_b}}
       scope: constant.language.reg16.index.nasm
-    - match: (?i){{stt_b}}r(?:8|9|1[0-5])w{{end_b}}
+    - match: (?i){{stt_b}}r(?:[89]|[12]\d|3[01])w{{end_b}}
       scope: constant.language.reg16.numbered.nasm
     # altreg
     - match: (?i){{stt_b}}r3w{{end_b}}
@@ -1744,7 +1741,7 @@ contexts:
       scope: constant.language.reg32na.nasm constant.language.reg32.pointer.nasm
     - match: (?i){{stt_b}}e[ds]i{{end_b}}
       scope: constant.language.reg32na.nasm constant.language.reg32.index.nasm
-    - match: (?i){{stt_b}}r(?:8|9|1[0-5])d{{end_b}}
+    - match: (?i){{stt_b}}r(?:[89]|[12]\d|3[01])d{{end_b}}
       scope: constant.language.reg32na.nasm constant.language.reg32.numbered.nasm
     # altreg
     - match: (?i){{stt_b}}r3d{{end_b}}
@@ -1778,7 +1775,7 @@ contexts:
       scope: constant.language.reg64.pointer.nasm
     - match: (?i){{stt_b}}r[ds]i{{end_b}}
       scope: constant.language.reg64.index.nasm
-    - match: (?i){{stt_b}}r(?:8|9|1[0-5]){{end_b}}
+    - match: (?i){{stt_b}}r(?:[89]|[12]\d|3[01]){{end_b}}
       scope: constant.language.reg64.numbered.nasm
     # altreg
     - match: (?i){{stt_b}}r[23]{{end_b}}
