@@ -133,7 +133,8 @@ int main(int argc, const char **argv) {
 	}
 
 	// reserve enough terminal lines on the screen. (scroll down then back up)
-	printf("\e[%uB\e[%uA", x_len + 1, x_len + 1);
+	// also turn off the cursor
+	printf("\e[?25l\e[%uB\e[%uA", x_len + 1, x_len + 1);
 
 
 	// print out the starting numbers
@@ -191,6 +192,8 @@ int main(int argc, const char **argv) {
 		iteration++;
 		msleep(wait_ms);
 	}
+
+	printf("\e[?25h");
 
 	return 0;
 }
