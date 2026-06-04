@@ -89,11 +89,11 @@
 	if passed, it prints the help text and exits.
 #>
 param (
-	[string] $infile     = "",
-	[bool]   $upload     = $false,
-	[bool]   $silent     = $false,
-	[bool]   $dryrun     = $false,
-	[bool]   $strict     = $false,
+	[string] $infile = "",
+	[bool]   $upload = $false,
+	[bool]   $silent = $false,
+	[bool]   $dryrun = $false,
+	[bool]   $strict = $false,
 	[switch] $help
 )
 
@@ -104,6 +104,8 @@ if ($help.isPresent -or $infile -eq "--help") {
 
 # this has been `sketch.yaml` since arduino-cli v0.30.0
 [string] $configfile = "sketch.yaml"
+
+write-host "arduino-build.ps1: $(pwd)"
 
 # TODO: change "stop" to "fatal" and add a second one that take an argument.
 # TODO: add something to change `compiler.optimization_flags` build param

@@ -316,7 +316,7 @@ foreach ($name in $namedColorMap.keys) {
 	}
 }
 
-if (-not (get-typedata -typeName Text.StringBuilder).members.indexOf) {
+if ((get-typedata -typeName Text.StringBuilder).members.indexOf -eq $null) {
 	update-typedata -typeName Text.StringBuilder -memberType ScriptMethod -memberName indexOf -value {
 		param ([string] $str, [uint] $stt = 0)
 
@@ -344,7 +344,7 @@ if (-not (get-typedata -typeName Text.StringBuilder).members.indexOf) {
 	}
 }
 
-if (-not (get-typedata -typeName Text.StringBuilder).members.chunkCount) {
+if ((get-typedata -typeName Text.StringBuilder).members.chunkCount -eq $null) {
 	update-typedata -typeName Text.StringBuilder -memberType ScriptMethod -memberName chunkCount -value {
 		$count = 0
 		$chunks = $this.getChunks()
@@ -1296,6 +1296,7 @@ function invert-image-colors(
 }
 
 # TODO: make this take a [Text.StringBuilder] instead of [string] for the file content.
+# TODO: make this not break everything for files with embedded images.
 <#
 .synopsis
 	It condenses and optimizes the paths descriptors for <path> tags.

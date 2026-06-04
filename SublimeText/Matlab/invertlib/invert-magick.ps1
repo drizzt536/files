@@ -131,6 +131,10 @@ $allExtensions = -split [string[]] $validFormats.values `
 $infile  = [IO.Path]::Combine((pwd).path, $infile)
 $outfile = [IO.Path]::Combine((pwd).path, $outfile)
 
+if (!(gcm magick -type app -ea ignore)) {
+	throw "Required program ImageMagick ``magick`` was not found."
+}
+
 $format = magick identify $infile
 
 $containsMultipleImages = $format.count -gt 1
@@ -171,10 +175,6 @@ if ($outExt -notin $allExtensions) {
 $indent = $indTyp * $indLvl
 ${indent+1} = $indent + $indTyp*1
 ${indent+2} = $indent + $indTyp*2 # unused
-
-if (!(gcm magick -type app -ea ignore)) {
-	throw "Required program ImageMagick ``magick`` was not found."
-}
 
 if ($logging -cne "none") { write-host "${indent}inverting colors on `"$infile`"" }
 magick $infile         `

@@ -1,17 +1,16 @@
 from sublime import Region
 from sublime_plugin import TextCommand
 
-# TODO: fix this for if there is more than one cursor
-
 class TransposeLeft(TextCommand):
 	def run(self, edit):
+		view = self.view
+
 		# transpose right, and then move all the cursors back two characters
-		self.view.run_command("transpose")
+		# NOTE: if at least one cursor is highlighted, then after this command, they all will be
+		view.run_command("transpose")
 
-		for region in self.view.selection:
-			# ignore highlighted regions
-			if region.a != region.b:
-				continue
+		# ignore highlighted regions
+		new_regions = [r if r.a != r.b else Region(r.a - 2) for r in view.selection]
 
-			self.view.selection.clear()
-			self.view.selection.add(Region(region.a - 2))
+		view.selection.clear()
+		view.selection.add_all(new_regions)

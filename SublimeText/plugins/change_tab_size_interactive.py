@@ -21,4 +21,4 @@ class ChangeTabSizeInteractive(TextCommand):
 			n = int( ''.join(keymap.get(c, c) for c in n.lower()) )
 			self.view.settings().set("tab_size", n)
 		except ValueError:
-			self.view.window().status_message("Invalid input: integer required")
+			self.view.window().status_message("ERROR: invalid tab size")

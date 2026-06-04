@@ -15,7 +15,9 @@ class PrintSequence(TextCommand):
 		and `n` will be substituted with the number of cursors active at the time of the command.
 		"""
 
-		ncursors = len(self.view.selection)
+		view = self.view
+
+		ncursors = len(view.selection)
 
 		if isinstance(start, str):
 			import re
@@ -39,7 +41,7 @@ class PrintSequence(TextCommand):
 				start = int(groups[0]) + (-1 if groups[1] == "-" else 1)*ncursors
 
 			else:
-				self.view.window().status_message(f"ERROR: invalid start string given: \"{start}\"")
+				view.window().status_message(f"ERROR: invalid start string given: \"{start}\"")
 				return
 
 		if isinstance(start, float) | isinstance(incr, float):
@@ -49,11 +51,11 @@ class PrintSequence(TextCommand):
 
 		# iterate backwards to not mess up the cursor indices.
 		for i in range(ncursors - 1, -1, -1):
-			sel = self.view.selection[i]
+			sel = view.selection[i]
 
 			if sel.a != sel.b:
-				self.view.erase(edit, sel)
+				view.erase(edit, sel)
 
-			self.view.insert(edit, min(sel.a, sel.b), str(start + (ncursors - 1 - i if bw else i)*incr))
+			view.insert(edit, min(sel.a, sel.b), str(start + (ncursors - 1 - i if bw else i)*incr))
 
 

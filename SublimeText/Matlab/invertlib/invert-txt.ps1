@@ -163,7 +163,6 @@ ${charmap - consola.ttf[0] 1438}  = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJlt}{xY[F
 ${charmap - consola.ttf[0] 1469}  = ' `.''-:,_"^~;><!=*\/+r?|cL)(Tv7iszJlt}{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
 ${charmap - consola.ttf[0] 1485}  = ' `.''-:,_"^~;><!=*\/+r?|cL)(Tv7iszJlt}{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
 ${charmap - consola.ttf[0] 1489}  = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJl}t{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
-
 ${charmap - consola.ttf[0] 1493}  = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJlt}{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
 ${charmap - consola.ttf[0] 1500}  = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJlt}{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
 ${charmap - consola.ttf[0] 2000}  = ' `.''-:,_"^~;><!=*/\+r?|cL)(Tv7iszJlt}{xY[F]unfC1I3jo25eaySkVhEPZwK4UX69bdqpmAHG#ROD%8WBM$N0Qg&@'
@@ -239,7 +238,7 @@ try {
 			#      it should really be doing tab stops.
 			$newbyte = [byte] $charmap[-1]
 
-			for ($i = 0; $i -lt $tabLength; $i++) {
+			for ($i = 1; $i -lt $tabLength; $i++) {
 				$ofs.writebyte($newbyte)
 			}
 		}

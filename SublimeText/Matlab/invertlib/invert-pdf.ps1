@@ -51,8 +51,8 @@
 .parameter keepIntermediateFiles
 	if true, intermediate files will be kept, which amounts to:
 		- tmp-%d.ext (PNG/JPG/WEBP) files for SVG embedded raster images.
-		- page-%d.tmp.svg
-		- page-%d.tmp.pdf
+		- page-%0*d.tmp.svg
+		- page-%0*d.tmp.pdf
 		- text.tmp.pdf (usually a hardlink or symlink unless both are unsupported)
 		- out.tmp.pdf
 		- pdfdata.tmp.txt
@@ -221,7 +221,7 @@ try {
 
 	$pdfDataLines = [Collections.ArrayList] (cat pdfdata.tmp.txt)
 	$line = 0
-	$lineNos = $pdfDataLines | foreach {
+	$pdfDataLines | foreach {
 		if ($_ -match "InfoKey: (Producer|Creator)") { $line - 1 }
 		$line++
 	} | sort -descending | foreach {
@@ -233,10 +233,12 @@ try {
 	$pdfDataLines > pdfdata.tmp.txt
 
 	[uint32] $pages = ($pdfDataLines | sls NumberOfPages) -split " " | select -last 1
+	$pagesLength = $pages.toString().length
 
 	if ($logging -cne "none") { write-host "${indent}converting PDF pages to SVG with $dpi dpi (step $step/$totalSteps)" }
 	$startTime = [DateTime]::Now
 	for ($i = 1; $i -le $pages; $i++) {
+		$istr = $i.tostring().padleft($pagesLength, '0')
 		if ($logging -ceq "overwrite") {
 			write-host "`r${indent+1}converting page $i/$pages" -noNewline
 		}
@@ -244,7 +246,7 @@ try {
 			write-host "${indent+1}converting page $i/$pages"
 		}
 
-		pdftocairo -svg -r $dpi -f $i -l $i $optimizedInput page-$i.tmp.svg *> $null
+		pdftocairo -svg -r $dpi -f $i -l $i $optimizedInput "page-$istr.tmp.svg" *> $null
 	}
 	$step++
 
@@ -262,16 +264,17 @@ try {
 
 	$startTime = [DateTime]::Now
 	for ($i = 1; $i -le $pages; $i++) {
+		$istr = $i.tostring().padleft($pagesLength, '0')
 		if ($logging -cne "none") { write-host "${indent+1}page $i/$pages" }
 
-		& ${invert-svg.ps1}           `
-			-infile   page-$i.tmp.svg `
-			-outfile  page-$i.tmp.svg `
-			-indLvl   $($indlvl+2)    `
-			-indTyp   $indTyp         `
-			-logging  $logging        `
-			-bgcolor  "#fff"          `
-			-optimize $optimize       `
+		& ${invert-svg.ps1}              `
+			-infile   page-$istr.tmp.svg `
+			-outfile  page-$istr.tmp.svg `
+			-indLvl   $($indlvl+2)       `
+			-indTyp   $indTyp            `
+			-logging  $logging           `
+			-bgcolor  "#fff"             `
+			-optimize $false             `
 			-keep     $keepIntermediateFiles
 	}
 
@@ -303,6 +306,7 @@ try {
 	if ($logging -cne "none") { write-host "${indent}converting SVG pages to PDF (step $step/$totalSteps)" }
 	$startTime = [DateTime]::Now
 	for ($i = 1; $i -le $pages; $i++) {
+		$istr = $i.tostring().padleft($pagesLength, '0')
 		if ($logging -ceq "overwrite") {
 			write-host "`r${indent+1}converting page $i/$pages" -noNewline
 		}
@@ -311,11 +315,11 @@ try {
 		}
 
 		if (gcm inkscape -type app -ea ignore) {
-			inkscape page-$i.tmp.svg --export-type pdf *> $null
+			inkscape page-$istr.tmp.svg --export-type pdf *> $null
 		}
 		else { # elseif isn't required since it checks for existence of one of them before.
 			# assume that GTK2/3 is installed and properly set up.
-			cairosvg page-$i.tmp.svg -o page-$i.tmp.pdf *> $null
+			cairosvg page-$istr.tmp.svg -o page-$istr.tmp.pdf *> $null
 		}
 	}
 	$step++
@@ -381,7 +385,7 @@ try {
 				write-host "${indent+1}qpdf optimizing"
 			}
 
-			# NOTE: some of these argumetns aren't required.
+			# NOTE: some of these arguments aren't required.
 			qpdf $optimizedTmpFile --force-version=1.7 --coalesce-contents `
 				--remove-unreferenced-resources=yes --object-streams=generate `
 				--compress-streams=y --stream-data=compress --recompress-flate `

@@ -10,9 +10,9 @@
 		// ...
 
 	// page up and page down stuff
-	{ "keys": ["alt+up"], "command": "move", "args": {"by": "pages", "forward": false } },
-	{ "keys": ["alt+down"], "command": "move", "args": {"by": "pages", "forward": true } },
-	{ "keys": ["alt+shift+up"], "command": "move", "args": {"by": "pages", "forward": false, "extend": true} },
+	{ "keys": ["alt+up"        ], "command": "move", "args": {"by": "pages", "forward": false } },
+	{ "keys": ["alt+down"      ], "command": "move", "args": {"by": "pages", "forward": true } },
+	{ "keys": ["alt+shift+up"  ], "command": "move", "args": {"by": "pages", "forward": false, "extend": true} },
 	{ "keys": ["alt+shift+down"], "command": "move", "args": {"by": "pages", "forward": true, "extend": true} },
 
 	{ "keys": ["ctrl+alt+shift+up"   ], "command": "move_last_cursor", "args": {"by": "l", "forward": false} },
@@ -23,37 +23,52 @@
 	{ "keys": ["f1"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
 
 	{ "keys": ["shift+backspace"], "command": "right_delete" },
-	{ "keys": ["ctrl+u"], "command": "upper_case" },
-	{ "keys": ["ctrl+shift+u"], "command": "lower_case" },
-	{ "keys": ["ctrl+alt+["], "command": "fold_all" },
-	{ "keys": ["ctrl+alt+]"], "command": "unfold_all" },
-	{ "keys": ["ctrl+alt+u"], "command": "swap_case" },
-	{ "keys": ["ctrl+tab"], "command": "next_view" },
+	{ "keys": ["ctrl+u"         ], "command": "upper_case" },
+	{ "keys": ["ctrl+shift+u"   ], "command": "lower_case" },
+	{ "keys": ["ctrl+alt+["     ], "command": "fold_all" },
+	{ "keys": ["ctrl+alt+]"     ], "command": "unfold_all" },
+	{ "keys": ["ctrl+alt+u"     ], "command": "swap_case" },
+	{ "keys": ["ctrl+tab"       ], "command": "next_view" },
 
 	{ "keys": ["ctrl+shift+tab"], "command": "prev_view" },
-	{ "keys": ["ctrl+shift+f"], "command": "show_panel", "args": {"panel": "replace", "reverse": false} },
-	{ "keys": ["ctrl+alt+f"], "command": "show_panel", "args": {"panel": "find_in_files"} },
-	{ "keys": ["ctrl+alt+s"], "command": "select_all" },
+	{ "keys": ["ctrl+shift+f"  ], "command": "show_panel", "args": {"panel": "replace", "reverse": false} },
+	{ "keys": ["ctrl+alt+f"    ], "command": "show_panel", "args": {"panel": "find_in_files"} },
+	{ "keys": ["ctrl+alt+s"    ], "command": "select_all" },
 
-	{ "keys": ["ctrl+i"], "command": "print_sequence" },
-	{ "keys": ["ctrl+shift+i"], "command": "print_sequence", "args":     {"start": 0, "incr": 1, "bw": false} },
-	{ "keys": ["ctrl+alt+i"], "command": "print_sequence", "args":       {"start": 1, "incr": 1, "bw": true} },
-	{ "keys": ["ctrl+alt+shift+i"], "command": "print_sequence", "args": {"start": 0, "incr": 1, "bw": true} },
+	/*
+	S controls minimum   (no S => 1, S => 0)
+	C controls jump      (no C => 2, C => 1)
+	A controls direction (no A => 0, A => 1) (0 is fw, 1 is bw)
 
-	{ "keys": ["alt+i"], "command": "print_sequence", "args":            {"start": 1, "incr": 2, "bw": false} },
-	{ "keys": ["alt+shift+i"], "command": "print_sequence", "args":      {"start": 2, "incr": 2, "bw": false} },
+	    : 1 2 0 * not real
+	S   : 0 2 0 * not real
+	 C  : 1 1 0
+	SC  : 0 1 0
+	  A : 1 2 1
+	S A : 0 2 1
 
-	{ "keys": ["ctrl+alt+d"], "command": "find_under_expand_skip" },
+	 CA : 1 1 1
+	SCA : 0 1 1
+	*/
+	// shift+i can't be made
+	{ "keys": ["ctrl+i"          ], "command": "print_sequence", "args": {"start": 1, "incr": 1, "bw": 0} },
+	{ "keys": ["ctrl+shift+i"    ], "command": "print_sequence", "args": {"start": 0, "incr": 1, "bw": 0} },
+	{ "keys": ["alt+i"           ], "command": "print_sequence", "args": {"start": 1, "incr": 2, "bw": 1} },
+	{ "keys": ["alt+shift+i"     ], "command": "print_sequence", "args": {"start": 0, "incr": 2, "bw": 1} },
+	{ "keys": ["ctrl+alt+i"      ], "command": "print_sequence", "args": {"start": 1, "incr": 1, "bw": 1} },
+	{ "keys": ["ctrl+alt+shift+i"], "command": "print_sequence", "args": {"start": 0, "incr": 1, "bw": 1} },
+
+	{ "keys": ["ctrl+alt+d"  ], "command": "find_under_expand_skip" },
 	{ "keys": ["ctrl+shift+d"], "command": "show_overlay", "args": {"overlay": "goto", "text": ":"} },
-	{ "keys": ["alt+d"], "command": "find_next" },
-	{ "keys": ["alt+shift+d"], "command": "find_prev" },
-	{ "keys": ["ctrl+insert"], "command": "toggle_overwrite" },
+	{ "keys": ["alt+d"       ], "command": "find_next" },
+	{ "keys": ["alt+shift+d" ], "command": "find_prev" },
+	{ "keys": ["ctrl+insert" ], "command": "toggle_overwrite" },
 
-	{ "keys": ["alt+x", "alt+a"          ], "command": "focus_side_bar" }, // use ENTER or C-<N> to exit the side bar
-	{ "keys": ["alt+x", "alt+s"          ], "command": "toggle_side_bar" },
-	{ "keys": ["alt+x", "alt+t"          ], "command": "title_case" },
-	{ "keys": ["alt+x", "alt+e"          ], "command": "command_repeated_interactive" },
-	{ "keys": ["alt+x", "ctrl+alt+down"  ], "command": "spawn_below_last_cursor" },
+	{ "keys": ["alt+x", "alt+a"        ], "command": "focus_side_bar" }, // use ENTER or C-<N> to exit the side bar
+	{ "keys": ["alt+x", "alt+s"        ], "command": "toggle_side_bar" },
+	{ "keys": ["alt+x", "alt+t"        ], "command": "title_case" },
+	{ "keys": ["alt+x", "alt+e"        ], "command": "command_repeated_interactive" },
+	{ "keys": ["alt+x", "ctrl+alt+down"], "command": "spawn_below_last_cursor" },
 
 	// these next 8 might get removed. idk if I like them.
 	{ "keys": ["alt+x", "alt+up"         ], "command": "move_repeated_interactive", "args": {"by": "l", "forward": false} },
@@ -95,7 +110,8 @@
 	// transpose, but move the cursor left instead of right
 	{"keys": ["alt+t"], "command": "transpose_left"},
 
-	{ "keys": ["alt+q"], "command": "show_panel", "args": {"panel": "console", "toggle": true} },
+	{ "keys": ["alt+q"      ], "command": "show_panel", "args": {"panel": "console", "toggle": true} },
+	{ "keys": ["ctrl+alt+q" ], "command": "deselect_and_center" },
 	{ "keys": ["alt+shift+q"], "command": "wrap_lines" },
 
 	{ "keys": ["alt+b"], "command": "cancel_build" },
