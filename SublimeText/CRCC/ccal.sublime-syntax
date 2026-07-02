@@ -1,0 +1,86 @@
+%YAML 1.2
+---
+
+name: CRCC Assembly Langauge
+scope: source.ccal
+extends: Packages/CRCC/ccpl.sublime-syntax
+file_extensions: ccal
+
+contexts:
+  main:
+    - meta_append: true
+
+    # instructions operands
+    - match: (@)(in|out|tmp|imm|regb)(\[)
+      captures:
+        1: entity.name.function.ccal
+        2: support.function.ccal
+        3: meta.brackets.ccal
+      push: runtime_arg
+
+    - match: (@)(reg)(\[)
+      captures:
+        1: entity.name.function.ccal
+        2: support.function.ccal
+        3: meta.brackets.ccal
+      push: reg_arg
+
+    # instruction mnemonics
+    - match: (@)(mov|mvz|add|sub|and|xor|orr|sh[lr]|ldb|stb|jiz|jmp|ret)(?!@)\b
+      captures:
+        1: entity.name.function.ccal
+        2: keyword.operator.word.ccal
+
+    - match: (@)(deflabel|function)(\[)
+      captures:
+        1: entity.name.function.ccal
+        2: keyword.operator.word.ccal
+        3: meta.brackets.ccal
+      push: decl_arg
+
+    - match: (@)(label)(\[)
+      captures:
+        1: entity.name.function.ccal
+        2: support.function.ccal
+        3: meta.brackets.ccal
+      push: decl_arg
+
+    - match: (@)(raw)(\[)(.+?)(\])
+      captures:
+        1: entity.name.function.ccal
+        2: keyword.operator.word.ccal
+        3: meta.brackets.ccal
+        4: string.unquoted.ccal
+        5: meta.brackets.ccal
+
+  _runtime_arg:
+    - include: arg
+    - include: variable
+
+    - match: \d+
+      scope: constant.numeric.ccl
+
+  runtime_arg:
+    - include: _runtime_arg
+
+    - match: .
+      scope: invalid.illegal.ccl
+
+  decl_arg:
+    - include: arg
+    - include: variable
+
+    - match: \w+
+      scope: entity.name.tag.ccl
+
+    - match: .
+      scope: invalid.illegal.ccl
+
+  reg_arg:
+    - include: _runtime_arg
+
+    - match: (?<=\[)sp(?=\])
+      scope: constant.numeric.ccl
+
+    - match: .
+      scope: invalid.illegal.ccl

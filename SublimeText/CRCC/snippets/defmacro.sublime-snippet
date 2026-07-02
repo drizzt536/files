@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[
+%${1}defmacro[${2:name}][${3:argc}]
+	$0
+%endmacro
+]]></content>
+	<tabTrigger>defmacro</tabTrigger>
+</snippet>

@@ -1,0 +1,259 @@
+%YAML 1.2
+---
+
+name: CRCC Preprocessor Language
+scope: source.ccpl
+file_extensions: ccpl
+
+contexts:
+  main:
+
+    - include: variable
+    - include: comment
+
+    - match: (%)(raw)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: raw_block
+
+    - match: (%)(unset)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: pp_arg
+
+    - match: (%)(log|fatal|include)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: pp_arg_longest
+
+    - match: (%)(set(?:eval)?|macro)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [pp_arg_longest, bracket, pp_arg_nolist]
+
+    - match: (%)(pop|shift|undefmacro|setcap)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [pp_arg_nolist, pp_arg_nolist]
+
+    - match: (%)(len)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [pp_arg, pp_arg_nolist]
+
+    - match: (%)(repl)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [pp_arg, pp_arg, pp_arg, pp_arg_nolist]
+
+    - match: (%)(index|substr)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [pp_arg, pp_arg, pp_arg_nolist]
+
+    - match: (%)(if\d*)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [if_body, if_then, pp_arg, pp_arg, pp_arg_nolist]
+
+    - match: (%)(loop\d*)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+      push: loop_body
+
+    - match: (%)(foreach\d*)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [foreach_body, foreach_do, pp_arg, pp_arg_nolist]
+
+    - match: (%)(x?defmacro)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [macro_body, macro_as, pp_arg_nolist, pp_arg_nolist]
+
+    - match: (%)((?:break|continue|exit(?:macro)?)\d*)\b
+      # I don't feel like figuring out how to make these only valid in loops
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+
+  comment:
+    - match: \s*(?<!\\)\|.*$
+      # also match the whitespace before the comment so downstream highlighters don't capture it.
+      scope: comment.line.ccpl
+
+  illegal-comment:
+    - match: \s*(?<!\\)\|.*$
+      # same match regex as for `comment`.
+      scope: invalid.illegal.ccpl
+      pop: true
+
+  arg:
+    - include: illegal-comment
+    - match: \]|$
+      scope: meta.brackets.ccpl
+      pop: true
+
+  arg_longest:
+    - include: illegal-comment
+
+    - match: \](?=\s*(?:\|.*)?$)
+      scope: meta.brackets.ccpl
+      pop: true
+
+    - match: \]
+      scope: string.unquoted.ccpl
+
+  pp_arg:
+    - include: arg
+    - include: variable
+
+    - match: (?<=\])\[
+      scope: meta.brackets.ccpl
+
+    - match: \,
+      scope: punctuation.separator.ccpl
+
+    - match: '[^\]]'
+      scope: string.unquoted.ccpl
+
+  bracket:
+    - match: \[
+      scope: meta.brackets.ccpl
+      pop: true
+
+    - match: .
+      scope: invalid.illegal.ccpl
+
+  pp_arg_longest:
+    - include: arg_longest
+    - include: variable
+
+    - match: \,
+      scope: punctuation.separator.ccpl
+
+    - match: '[^\]]'
+      scope: string.unquoted.ccpl
+
+  pp_arg_nolist:
+    - include: nolist
+    - include: pp_arg
+
+  nolist:
+    - match: \,
+      scope: invalid.illegal.ccpl
+
+  raw_block:
+    - include: arg_longest
+
+    - match: '[^\]]+'
+      scope: string.unquoted.ccpl
+
+  variable:
+    - match: (?<!\\)(\$)(\w+)
+      captures:
+        1: punctuation.definition.variable.begin.ccpl
+        2: variable.other.ccpl
+
+    - match: (?<!\\)(#)(\d+)
+      captures:
+        1: punctuation.definition.variable.begin.ccpl
+        2: variable.other.ccpl
+
+  novariable:
+    - match: '[#$]'
+      scope: string.unquoted.ccpl
+
+  if_then:
+    - include: comment
+
+    - match: then\b|$
+      scope: keyword.operator.word.ccpl
+      pop: true
+
+    - match: \S
+      scope: invalid.illegal.ccpl
+  if_body:
+    - match: (%)(else\d*)\b
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+      set: else_body
+
+    - include: else_body
+  else_body:
+    - match: (%)(endif\d*)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+      pop: true
+
+    - include: main
+
+  loop_body:
+    - match: (%)(endloop\d*)\b
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+      pop: true
+
+    - include: main
+
+  foreach_do:
+    - include: comment
+
+    - match: do\b|$
+      scope: keyword.operator.word.ccpl
+      pop: true
+
+    - match: \S
+      scope: invalid.illegal.ccpl
+  foreach_body:
+    - match: (%)(endfor\d*)\b
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+      pop: true
+
+    - include: main
+
+  macro_as:
+    - include: comment
+
+    - match: as\b|$
+      scope: keyword.operator.word.ccpl
+      pop: true
+
+    - match: \S
+      scope: invalid.illegal.ccpl
+  macro_body:
+    - match: (%)(endmacro\d*)\b
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+      pop: true
+
+    - include: main

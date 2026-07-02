@@ -1,0 +1,50 @@
+%YAML 1.2
+---
+name: CRCC Input Language
+scope: source.ccil
+file_extensions: ccil
+
+contexts:
+  main:
+    - match: ''
+      push: scope:source.toml
+      with_prototype:
+        - include: ccpl-block-interceptor
+        - include: scope:source.ccpl
+
+  ccpl-block-interceptor:
+    - match: (%)(if\d*)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push:
+        - scope:source.ccpl#if_then
+        - scope:source.ccpl#pp_arg
+        - scope:source.ccpl#pp_arg
+        - scope:source.ccpl#pp_arg_nolist
+
+    - match: (%)(foreach\d*)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push:
+        - scope:source.ccpl#foreach_do
+        - scope:source.ccpl#pp_arg
+        - scope:source.ccpl#pp_arg_nolist
+
+    - match: (%)(x?defmacro)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push:
+        - scope:source.ccpl#macro_as
+        - scope:source.ccpl#pp_arg_nolist
+        - scope:source.ccpl#pp_arg_nolist
+
+    - match: (%)((else|endif|endloop|endfor|loop)\d*|endmacro)\b
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl

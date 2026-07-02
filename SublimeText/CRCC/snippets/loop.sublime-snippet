@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[
+%loop$1
+	$0
+%endloop$1
+]]></content>
+	<tabTrigger>loop</tabTrigger>
+</snippet>

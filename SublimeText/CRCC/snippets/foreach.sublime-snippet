@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[
+%foreach$1[${2:var}][${3:\$list}]
+	$0
+%endfor$1
+]]></content>
+	<tabTrigger>foreach</tabTrigger>
+</snippet>

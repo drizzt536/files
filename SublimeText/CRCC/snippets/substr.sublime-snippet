@@ -1,0 +1,4 @@
+<snippet>
+	<content><![CDATA[%substr[${1:vout}][${2:\$start},${3:\$stop}${4:,\$step}][${5:\$expr}]]]></content>
+	<tabTrigger>substr</tabTrigger>
+</snippet>

@@ -1,0 +1,10 @@
+<snippet>
+	<content><![CDATA[
+%if$1[${2:eq}][${3:\$a}][${4:\$b}]
+	$0
+%else$1
+
+%endif$1
+]]></content>
+	<tabTrigger>ifelse</tabTrigger>
+</snippet>

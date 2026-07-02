@@ -1,0 +1,4 @@
+<snippet>
+	<content><![CDATA[%repl[${1:vout}][${2:\$vin}][${3:\$tgt}][${4:\$repl}]]]></content>
+	<tabTrigger>repl</tabTrigger>
+</snippet>

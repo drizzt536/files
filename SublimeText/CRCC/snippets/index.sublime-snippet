@@ -1,0 +1,4 @@
+<snippet>
+	<content><![CDATA[%index[${1:vout}][${2:\$idx}][${3:\$list}]]]></content>
+	<tabTrigger>index</tabTrigger>
+</snippet>
