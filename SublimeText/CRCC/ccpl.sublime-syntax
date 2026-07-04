@@ -25,7 +25,14 @@ contexts:
         3: meta.brackets.ccpl
       push: pp_arg
 
-    - match: (%)(log|fatal|include)(\[)
+    - match: (%)(sleep)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: pp_arg_nolist
+
+    - match: (%)(e?logn?|fatal|include)(\[)
       captures:
         1: entity.name.function.ccpl
         2: keyword.operator.word.ccpl
@@ -66,6 +73,13 @@ contexts:
         2: keyword.operator.word.ccpl
         3: meta.brackets.ccpl
       push: [pp_arg, pp_arg, pp_arg_nolist]
+
+    - match: (%)(readline)(\[)
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+        3: meta.brackets.ccpl
+      push: [pp_arg_longest, bracket, pp_arg_nolist, pp_arg_nolist]
 
     - match: (%)(if\d*)(\[)
       captures:
@@ -173,15 +187,19 @@ contexts:
       scope: string.unquoted.ccpl
 
   variable:
-    - match: (?<!\\)(\$)(\w+)
+    - match: (?<!\\)(\$)(\w+|(\{)\w+(\}))
       captures:
         1: punctuation.definition.variable.begin.ccpl
         2: variable.other.ccpl
+        3: meta.brackets.ccpl
+        4: meta.brackets.ccpl
 
-    - match: (?<!\\)(#)(\d+)
+    - match: (?<!\\)(#)(\w+|(\{)\w+(\}))
       captures:
         1: punctuation.definition.variable.begin.ccpl
         2: variable.other.ccpl
+        3: meta.brackets.ccpl
+        4: meta.brackets.ccpl
 
   novariable:
     - match: '[#$]'
