@@ -4,5 +4,6 @@
 	$0
 %endmacro
 ]]></content>
+	<scope>source.ccpl, source.ccal, source.ccil</scope>
 	<tabTrigger>defmacro</tabTrigger>
 </snippet>

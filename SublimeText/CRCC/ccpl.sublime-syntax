@@ -3,7 +3,7 @@
 
 name: CRCC Preprocessor Language
 scope: source.ccpl
-file_extensions: ccpl
+file_extensions: [ccpl]
 
 contexts:
   main:

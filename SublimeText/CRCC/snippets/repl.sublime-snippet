@@ -1,4 +1,5 @@
 <snippet>
 	<content><![CDATA[%repl[${1:vout}][${2:\$vin}][${3:\$tgt}][${4:\$repl}]]]></content>
+	<scope>source.ccpl, source.ccal, source.ccil</scope>
 	<tabTrigger>repl</tabTrigger>
 </snippet>

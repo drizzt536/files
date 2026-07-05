@@ -4,5 +4,6 @@
 	$0
 %endif$1
 ]]></content>
+	<scope>source.ccpl, source.ccal, source.ccil</scope>
 	<tabTrigger>if</tabTrigger>
 </snippet>

@@ -2,7 +2,7 @@
 ---
 name: CRCC Input Language
 scope: source.ccil
-file_extensions: ccil
+file_extensions: [ccil]
 
 contexts:
   main:

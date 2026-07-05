@@ -1,4 +1,5 @@
 <snippet>
 	<content><![CDATA[%index[${1:vout}][${2:\$idx}][${3:\$list}]]]></content>
+	<scope>source.ccpl, source.ccal, source.ccil</scope>
 	<tabTrigger>index</tabTrigger>
 </snippet>

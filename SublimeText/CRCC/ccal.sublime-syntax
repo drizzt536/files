@@ -4,7 +4,7 @@
 name: CRCC Assembly Langauge
 scope: source.ccal
 extends: Packages/CRCC/ccpl.sublime-syntax
-file_extensions: ccal
+file_extensions: [ccal]
 
 contexts:
   main:

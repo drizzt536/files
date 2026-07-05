@@ -1,0 +1,5 @@
+<snippet>
+	<content><![CDATA[%readline[${1:vout}][${2:\$line}][${5:\$file}]]]></content>
+	<scope>source.ccpl, source.ccal, source.ccil</scope>
+	<tabTrigger>readline</tabTrigger>
+</snippet>
