@@ -1,5 +1,5 @@
-// applications that say `"duplicate"` are just there to make it easier to find applications in the object.
-// key : value  ==>  game-name : price
+// applications that say `"duplicate"` are just there to make it easier to find stuff in the object.
+// key : value  ==>  game name : price
 // "TODO: early access" is a note for me to check if the price changes after early access ends
 
 {
@@ -483,6 +483,7 @@
 	, "Opera GX - The First Browser for Gamers": "free"
 	, "Opera GX": "duplicate"
 	, "Orcs Must Die! 3": 29.99
+	, "OTXO": 14.99
 	, "Outliver: Tribulation": 7.99
 	, "Overclocked Combo Pack": "free"
 	, "Fortnite Overclocked Combo Pack": "duplicate"
@@ -602,6 +603,7 @@
 	, "SMITE": 0
 	, "Snakebird Complete": 14.99
 	, "Solitairica": 9.99
+	, "Sol Cesto": 13.99
 	, "Songs of Silence": 29.99
 	, "Sonic Mania": 19.99
 	, "Space Punks": 0

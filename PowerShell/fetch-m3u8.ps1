@@ -117,7 +117,7 @@ function Get-ChromeUserAgent {
 		$isMacOS ? "Macintosh; Intel Mac OS X 10_15_7" :
 			"X11; Linux x86_64"
 
-	$chromeVersion = "141.0.0.0"
+	$chromeVersion = "151.0.0.0"
 	$webkitVersion = "537.36"
 
 	return "Mozilla/5.0 ($osInfo) AppleWebKit/$webkitVersion" +

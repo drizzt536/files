@@ -1,50 +1,54 @@
 ## Program Versions
 
-- 7zip: 26.00
-- Arduino CLI: 1.4.1 (e39419312, 2026-01-19)
-- Brave: 1.88.136 (Chromium: 146.0.7680.164)
-- C/C++/GAS/Fortran: MinGW-w64 GCC 15.2.0
-- Chocolatey: 2.7.0
-- Deno: 2.7.7
-- dotnet: 8.0.419
+- 7zip: 26.02
+- Arduino CLI: 1.5.1 (01f3d4f2b, 2026-06-05)
+- Arduino IDE: 2.3.10
+- Brave: 1.93.129 (Chromium: 151.0.7922.71)
+- C/C++/GAS/Fortran: MinGW-w64 GCC 16.1.0
+- Chocolatey: 2.7.3
+- Deno: 2.9.4
+- dotnet: 8.0.423
 - Emacs: 30.1.0
-- FFmpeg: 8.1
-- Go: 1.26.1
-- Git: 2.53.0.windows.2
-- Ghidra: 12.0.4
-- Ghostscript: 10.07.0
+- FFmpeg: 9.0
+- Ghidra: 12.1.2
+- Ghostscript: 10.07.1
+- Git: 2.55.0.windows.3
+- Go: 1.26.5
+- Graphviz: 15.1.0 (20260618.0150)
 - GTK Runtime: 3.24.31
-- Graphviz: 14.1.4 (20260321.0153)
 - Haskell GHC: 9.8.2
-- Inkscape: 1.4.3 (0d15f75, 2025-12-25)
+- ImageMagick: 7.1.2-25 Q16-HDRI 04a04ea:20260604
+- Inkscape: 1.4.4 (dcaf3e7, 2026-05-05)
 - Intel FPGA Lite: 24.1std.0
-- ImageMagick: 7.1.2-18 Q16-HDRI d4e4b2b:20260322
 - Java: OpenJDK 25 2025-09-16
-- LaTeX: MiKTeX-pdfTeX 4.21 (MiKTeX 25.3)
-- MatLab: R2025b Update 4
-- MinGW-w64 devkit: 2.6.0
-- MongoDB: 8.2.6
-- NASM: 3.01 (Oct 10, 2025)
-- NodeJS: 25.8.2
-- OpenSSL: 3.6.1 (Jan 27, 2026)
+- LaTeX: MiKTeX-pdfTeX 4.27 (MiKTeX 26.5)
+- MatLab: R2026a Update 4
+- MinGW-w64 devkit: 2.9.0
+- MongoDB: 8.3.7
+- MSYS2: 3.6.10-2
+- NASM: 3.02 (Jun 28, 2026)
+- NodeJS: 26.6.0
+- OpenSSL: 4.0.1 (June 9, 2026)
 - pdftk: 2.02
-- PowerShell: 7.6.0
-- Python: 3.13.11 & 3.14.3
-	- IPython: 9.11.0
-	- numpy: 2.4.3
-	- scipy: 1.17.1
+- PowerShell: 7.6.4
+- PuTTY: 0.84
+- Python: 3.13.14 & 3.14.6
+	- IPython: 9.15.0
+	- numpy: 2.5.1
+	- scipy: 1.18.0
 	- sympy: 1.14.0
-- QEMU: 10.2.91 (v11.0.0-rc1-12118-gdc60f95ca8)
+- QEMU: 11.0.92 (v11.1.0-rc2-12128-gc65ddfcd01)
 - qpdf: 12.3.2
 - Roslyn: 4.6.0-3.23259.8 (c3cc1d0c) (Visual Studio version)
-- Ruby: 3.4.9 (2026-03-11 revision 76cca827ab)
-- Rust: 1.94.0 (4a4ef493e 2026-03-02)
-- RustDesk: 1.4.6 (2026-03-05)
-- SumatraPDF: 3.5.2
+- Ruby: 3.4.10 (2026-06-30 revision 2b0b7728dc)
+- Rust: 1.97.1 (8bab26f4f 2026-07-14)
+- RustDesk: 1.4.9 (2026-07-06)
 - Sublime Text: UNREGISTERED. Stable Channel, Build 4200
+- SumatraPDF: 3.5.2
+- Tesseract: 5.5.3.20260724
 - TI Connect CE: 6.0.1.344
-- VirtualBox: 7.2.6
-- Windows Terminal: 1.24.10621.0
-- Wireshark: 4.6.4
-- Wolfram Language Engine: 14.3.0
-- WolframScript: 1.13.0 (file version 1.3.30900.8618)
+- VirtualBox: 7.2.14
+- Windows Terminal: 1.24.11911.0
+- Wireshark: 4.6.7
+- Wolfram Language Engine: 15.0.0
+- WolframScript: 1.14.0 (file version 1.4.30915.5978)
