@@ -2,7 +2,7 @@
 
 <#
 .synopsis
-	Download video from m3u8 file and combine using FFmpeg.
+	Download video segments from m3u8 file and combine using FFmpeg.
 	- By default, combines as mp4.
 	- Cross-platform.
 .description
@@ -12,12 +12,14 @@
 	Requires FFmpeg. Any version from like the last decade will work.
 	pipeline input is prioritized over regular input.
 .example
-	fetch-m3u8.ps1 "https://www.example.com/index.m3u8" -o video.mp4 -remote
+	fetch-m3u8.ps1 -remote "https://www.example.com/index.m3u8" -o video.mp4
 #>
 
 param (
-	[string] $infile = "./index.m3u8",
-	[string] $outfile = "./output.mp4",
+	[string] $infile               = "./index.m3u8",
+	[string] [Alias("o")] $outfile = "./output.mp4",
+	[string] $origin               = "",
+	[string] $referer              = "",
 
 	[switch] $alwaysWriteSegments,
 	[switch] $bypassLengthCap,
@@ -27,6 +29,7 @@ param (
 	[switch] $leaveSegmented,
 	[switch] $remoteInput,
 	[switch] $silent,
+	[switch] $_debug,
 
 	[Parameter(ValueFromPipeline=$true)] $input
 )
@@ -42,12 +45,12 @@ if ($infile -eq "--help") {
 }
 
 if ($infile -eq $outfile) {
-	[Console]::Error.WriteLine("`e[31minfile == outfile. this is likely a mistake.`e[0m")
+	[Console]::Error.WriteLine("`e[31minfile == outfile. this is likely a mistake.`e[m")
 	exit 13
 }
 
 if ($input.count -gt 2) {
-	[Console]::Error.WriteLine("`e[31More than 2 pipeline arguments were given. Only input and output filenames are allowed.`e[0m")
+	[Console]::Error.WriteLine("`e[31mMore than 2 pipeline arguments were given. Only input and output filenames are allowed.`e[m")
 	exit 12
 }
 
@@ -60,28 +63,33 @@ if ($input.count -gt 0) {
 	}
 }
 
+
 $helpTextOptions = @'
 Options:
     The -input and -output options can be provided positionally instead of named.
     They can also be passed via the pipeline, i.e. `"infile", "outfile" | fetch-m3u8.ps1`.
     If both are provided, the pipeline value is used.
 
-    -i, -in, -infile PATH               specify path to the m3u8 file. default "./index.m3u8"
-    -o, -out, -outfile PATH             specify output video file for FFmpeg. default "output.mp4"
-                                        the extension determines the format, as it does for FFmpeg
-    -a, -alwaysWriteSegments            redownload segment files that are already downloaded
-    -b, -bypass, -bypassLengthCap       allow downloading files estimated to be larger than 4gb
-    -c, -clean                          clean intermediate files if they are there. do nothing else
-                                        removed files: segments.txt, segments/*.ts, input file
-    -h, -help                           print this help text and exit
-    -?                                  print the help as given from `Get-Help`. Not recommended.
-    -k, -keep, -keepIntermediateFiles   do not delete input file, segments folder, or segments.txt
-    -l, -leaveSegmented                 do not combine the segments with FFmpeg. Replace the input
-                                        file's urls to the downloaded segment files. implies `-keep`
-    -r, -remote, -remoteInput           the input file is a remote file to be downloaded before use
-    -s, -silent                         do not print anything. fatal errors still print to stderr.
-                                        These messages contain extra information (url, http status. etc.)
+    -i, -in, -infile URI          specify path to the m3u8 file. default "./index.m3u8"
+    -o, -out, -outfile PATH       specify output video file for FFmpeg. default "output.mp4"
+                                  the extension determines the format, as it does for FFmpeg
+    -origin URI                   specify the origin to give in the request headers. implies `-r`
+                                  triggers Sec-Fetch-(Dest|Mode|Site) to be added.
+    -referer URI                  specify the referer to give in the request headers. implies `-r`
+    -a, -alwaysWriteSegments      redownload segment files that are already downloaded
+    -b, -bypassLengthCap          allow downloading files estimated to be larger than 4gb
+    -c, -clean                    clean intermediate files if they are there. do nothing else
+                                  removed files: segments.txt, segments/*.ts, input file
+    -h, -help                     print this help text and exit
+    -?                            print the help as given from `Get-Help`. Not recommended.
+    -k, -keepIntermediateFiles    do not delete input file, segments folder, or segments.txt
+    -l, -leaveSegmented           do not combine the segments with FFmpeg. Replace the input
+                                  file's urls to the downloaded segment files. implies `-keep`
+    -r, -remote, -remoteInput     the input file is a remote file to be downloaded before use
+    -s, -silent                   do not print anything. fatal errors still print to stderr.
+                                  These messages contain extra information (url, http status. etc.)
 '@
+
 $helpTextErrorCodes = @'
 Exit codes:
      0 - Success
@@ -105,6 +113,7 @@ function clean {
 	if (test-path -type container segments) { rm -r segments }
 	if (($clean -or $remoteInput) -and (test-path -type leaf $inFile)) { rm $inFile }
 }
+
 function Get-ChromeUserAgent {
 	# these values might not ever need to be updated. it will just be increasingly
 	# likely over time that the server won't believe it, and block the request.
@@ -113,10 +122,8 @@ function Get-ChromeUserAgent {
 	# the value given by [Microsoft.PowerShell.Commands.PSUserAgent]::Chrome
 	# says Webkit 534.6, which was from like 2010.
 
-	$osInfo = $isWindows ? "Windows NT 10.0; Win64; x64" :
-		$isMacOS ? "Macintosh; Intel Mac OS X 10_15_7" :
-			"X11; Linux x86_64"
-
+	# just lie and always say it is on Windows
+	$osInfo        = "Windows NT 10.0; Win64; x64"
 	$chromeVersion = "151.0.0.0"
 	$webkitVersion = "537.36"
 
@@ -129,50 +136,123 @@ function Get-ChromeUserAgent {
 $userAgent = Get-ChromeUserAgent
 $chromeMajor = [regex]::match($userAgent, "(?<=Chrome/)\d+").value
 $requestHeaders = @{
-	# TODO: maybe add a referrer or origin to the request headers?
 	"Dnt" = 1;
 	"Priority" = "u=0, i";
 	"Sec-Ch-Ua-Mobile" = "?0";
 	"Sec-Ch-Ua-Platform" = "`"$(
-		$isWindows ? "Windows" :
-		$isMacOS ? "MacOS" :
-			"Linux"
+		<#$isWindows ? "Windows" : $isMacOS ? "MacOS" : "Linux"#>
+		"Windows"
 	)`"";
 	"Sec-Ch-Ua" = $(
-		"`"Chromium`";v=`"$chromeMajor`", " +
+		"`"Not.A/Brand`";v=`"99`", " +
 		"`"Brave`";v=`"$chromeMajor`", " +
-		"`"Not.A/Brand`";v=`"99`""
+		"`"Chromium`";v=`"$chromeMajor`""
 	);
 	"Upgrade-Insecure-Requests" = 1;
+	"Accept-Language" = "en-US,en;q=0.5";
+	"Sec-Gpc" = 1
+}
+
+if ([Environment]::version.major -ge 11) {
+	# zstd doesn't exist until .NET 11. As of right now, PowerShell 7.7.0 prereleases 2 and 3 are the only
+	# versions of PowerShell that use .NET 11. They both work with this, so I will assume this is fine.
+	$requestHeaders += @{"Accept-Encoding" = "gzip, deflate, br, zstd"}
+}
+
+if ($origin) {
+	$remoteInput = $true
+
+	$targetUri = [Uri] $infile
+	$originUri = [Uri] $origin
+
+	if ($targetUri.scheme -eq $originUri.scheme -and $targetUri.host -eq $originUri.host -and $targetUri.port -eq $originUri.port) {
+		$fetchSite = "same-origin"
+	}
+	else {
+		$multiPartTlds = @("co.uk", "org.uk", "co.jp", "co.nz", "com.au", "co.za", "com.br")
+
+		$targetParts       = $targetUri.host -split '\.'
+		$targetLastTwo     = $targetParts[-2..-1] -join '.'
+		$targetRegistrable = $multiPartTlds -contains $targetLastTwo -and $targetParts.count -ge 3 ?
+			$targetParts[-3..-1] -join '.' :
+			$targetLastTwo
+
+		$originParts       = $originUri.Host -split '\.'
+		$originLastTwo     = $originParts[-2..-1] -join '.'
+		$originRegistrable = $multiPartTlds -contains $originLastTwo -and $originParts.count -ge 3 ?
+			$originParts[-3..-1] -join '.' :
+			$originLastTwo
+
+		$fetchSite = $targetRegistrable -eq $originRegistrable ? "same-site" : "cross-site"
+	}
+
+	$requestHeaders += @{
+		"Origin"         = $origin;
+		"Sec-Fetch-Dest" = "empty";
+		"Sec-Fetch-Mode" = "cors";
+		"Sec-Fetch-Site" = $fetchSite
+	}
+}
+
+if ($referer) {
+	$remoteInput = $true
+	$requestHeaders += @{"Referer" = $referer}
 }
 
 [IO.Directory]::SetCurrentDirectory((pwd)) # for the outfile in curl.
+
+function format-headers {
+	param ($headers, [byte] $maxlen = 60)
+
+	$lines = foreach ($entry in $headers.getEnumerator()) {
+		$key   = $entry.Key
+		$first = @($entry.Value)[0]
+		$val   = "$first"
+
+		if ($val.Length -gt $maxlen) {
+			$val = $val.substring(0, $maxlen) + "..."
+		}
+
+		$val = $val -replace '"', '\"'
+
+		"  `"$key`": `"$val`""
+	}
+
+	"{`n" + ($lines -join ",`n") + "`n}"
+}
 
 function fncurl {
 	# internal function. not actually `curl`.
 	# all commands for this function are valid for real `curl`, but not vice versa.
 	# returns 0 on success, http status code on error
 
+	# TODO: consider not switching 200 to 415, since some sites have content type obfuscation nonsense.
 	# NOTE: sometimes it lies about what the response code was, but it should be approximately correct.
 	#       like it says 415 (UnsupportedMediaType) instead of 200 (OK) if the content type doesn't match,
 	#       and it says 429 (TooManyRequests) instead of 500 (InternalServerError) and stuff, since the end
 	#       result is the same: stop trying, it is not working.
 
 	param (
-		[Parameter(Position=0, Mandatory=$true)] [string] $inFile,
+		[string] $inFile,
 		[string] $outFile,
-		[switch] $head
+		[switch] $head,
+		[bool] $debug
 	)
 
 	if (-not ($head -xor $PSBoundParameters.ContainsKey("outFile"))) {
 		throw "Options -out and -head are mutually exclusive, but one must be given."
 	}
 
-	# only matters on
+	# NOTE: add stuff here
 	$contentType = switch ([IO.Path]::GetExtension($outFile)) {
 		".m3u8" {"application/x-mpegURL,application/vnd.apple.mpegurl"}
-		".ts" {"video/MP2T"}
+		".ts" {"video/MP2T,video/mp4,image/png"}
 		default {"*/*"}
+	}
+
+	if ($debug) {
+		write-host "`n/////////////////////////////"
+		write-host "head=$head, contentType=$contentType"
 	}
 
 	$extraHeaders = $head ? @{} : @{"Accept" = $contentType}
@@ -181,16 +261,26 @@ function fncurl {
 	# 5 tries
 	for ([int] $try = 1; $try -le 5; $try++) {
 		# the loop only ever re-executes when something like 429 or 505 comes up.
+		if ($debug) {
+			write-host "try=$try`nrequest headers: $(format-headers ($requestHeaders + $extraHeaders))"
+		}
 
 		$response = invoke-webrequest `
 			-URI $inFile `
 			-method $($head ? "HEAD" : "GET") `
-			-skipHTTPErrorCheck <# requires PowerShell 7 #> `
+			-skipHTTPErrorCheck    <# requires PowerShell 7 #> `
 			-maximumRedirection 15 <# default is 5 #> `
-			-maximumRetryCount 0 <# do not retry #> `
+			-maximumRetryCount 0   <# do not retry #> `
 			-userAgent $userAgent `
 			-HttpVersion $($httpVersions[0]) `
 			-headers $($requestHeaders + $extraHeaders)
+
+		if ($debug) {
+			write-host "outFile: $outFile"
+			write-host "inFile: $inFile"
+			write-host "response headers: $(format-headers $response.headers)"
+			write-host "content type: $($response.headers["Content-Type"])"
+		}
 
 		if ($response.statusCode -in 200, 203) {
 			if ($head) {
@@ -267,12 +357,12 @@ if ($isWindows -and -not $remoteInput) {
 }
 
 if ($inFile[-1] -eq "/") {
-	[Console]::Error.WriteLine("`e[31$($remoteInput ? 'remote' : 'local') input file ends in ``/```e[0m")
+	[Console]::Error.WriteLine("`e[31m$($remoteInput ? 'remote' : 'local') input file ends in ``/```e[m")
 	exit 1
 }
 
 if ($remoteInput) {
-	$curlData = fncurl $inFile -o index.m3u8
+	$curlData = fncurl $inFile -o index.m3u8 -debug $_debug
 
 	# write-host "DEBUG: `$lastExitCode = $lastExitCode"
 	# write-host "DEBUG: status code = $([string] [Net.HttpStatusCode] $lastExitCode)"
@@ -285,15 +375,15 @@ if ($remoteInput) {
 	))"
 
 	if ($lastExitCode -in 404, 410) {
-		[Console]::Error.WriteLine("`e[31remote input file does not exist. $httpStatus`e[0m")
+		[Console]::Error.WriteLine("`e[31mremote input file does not exist. $httpStatus`e[m")
 		exit 2
 	}
 	if ($lastExitCode -eq 429) {
-		[Console]::Error.WriteLine("`e[31remote input file could not be accessed. $httpStatus. Retry after $curlData seconds.`e[0m")
+		[Console]::Error.WriteLine("`e[31mremote input file could not be accessed. $httpStatus. Retry after $curlData seconds.`e[m")
 		exit 3
 	}
 	if ($lastExitCode -ne 200) {
-		[Console]::Error.WriteLine("`e[31remote input file could not be accessed. $httpStatus`e[0m")
+		[Console]::Error.WriteLine("`e[31mremote input file could not be accessed. $httpStatus`e[m")
 		exit 3
 	}
 
@@ -307,7 +397,7 @@ if ($remoteInput) {
 }
 else {
 	if (-not (test-path $inFile -type leaf)) {
-		[Console]::Error.WriteLine("`e[31local input file does not exist`e[0m")
+		[Console]::Error.WriteLine("`e[31mlocal input file does not exist`e[m")
 		exit 2
 	}
 
@@ -326,7 +416,7 @@ $urls = cat $infile | where { -not [regex]::isMatch($_, '^#|^$') } | foreach {
 	if ([regex]::isMatch($url, "^file:///?")) {
 		# local absolute path with `file` protocol
 		if ($remoteInput) {
-			[Console]::Error.WriteLine("`e[31remote input files cannot use local segment files.`e[0m")
+			[Console]::Error.WriteLine("`e[31mremote input files cannot use local segment files.`e[m")
 			exit 4
 		}
 
@@ -341,12 +431,12 @@ $urls = cat $infile | where { -not [regex]::isMatch($_, '^#|^$') } | foreach {
 	if ([regex]::isMatch($url, "^[a-zA-Z]:/")) {
 		# local absolute path (Windows only).
 		if ($remoteInput) {
-			[Console]::Error.WriteLine("`e[31remote input files cannot use local segment files.`e[0m")
+			[Console]::Error.WriteLine("`e[31mremote input files cannot use local segment files.`e[m")
 			exit 4
 		}
 
 		if (-not $isWindows) {
-			[Console]::Error.WriteLine("`e[31local Windows-style absolute paths can only be used on Windows.`e[0m")
+			[Console]::Error.WriteLine("`e[31mlocal Windows-style absolute paths can only be used on Windows.`e[m")
 			exit 5
 		}
 
@@ -368,30 +458,40 @@ $urls = cat $infile | where { -not [regex]::isMatch($_, '^#|^$') } | foreach {
 }
 
 if ($urls.count -eq 0) {
-	[Console]::Error.WriteLine("`e[31No URLs were found in the input file.`e[0m")
+	[Console]::Error.WriteLine("`e[31mNo URLs were found in the input file.`e[m")
 	exit 6
 }
 
-$curlData = fncurl $($urls[0]) -head
+if ($_debug) {
+	write-host "total segment files: $($urls.count)"
+	write-host "prefetching segment 1: $($urls[0])"
+}
+
+$curlData = fncurl $($urls[0]) -head -debug $_debug
+$httpStatus = "HTTP Status: $lastExitCode$([regex]::Replace(
+	([string] [Net.HttpStatusCode] $lastExitCode),
+	"([A-Z])",
+	' $1'
+))"
 if ($lastExitCode -eq 429) {
 	# NOTE: in the case that `curl -head` has 429 as the exit code, it returns the retry time and not the data length.
 	# not a different status code becuase this is essentially the same as a GET method failing.
 
-	[Console]::Error.WriteLine("`e[31segment file preflight request returned HTTP 429 Too Many Requests. Retry after $curlData seconds.`e[0m")
+	[Console]::Error.WriteLine("`e[31msegment file preflight request returned HTTP 429 Too Many Requests. Retry after $curlData seconds.`e[m")
 	exit 8
 }
 if ($lastExitCode -in 404, 410) {
-	[Console]::Error.WriteLine("`e[31first segment file does not exist during preflight request. $httpStatus`e[0m")
+	[Console]::Error.WriteLine("`e[31mfirst segment file does not exist during preflight request. $httpStatus`e[m")
 	exit 7
 }
 if ($lastExitCode -ne 200) {
-	[Console]::Error.WriteLine("`e[31first segment file could not be accessed during preflight request. $httpStatus`e[0m")
+	[Console]::Error.WriteLine("`e[31mfirst segment file could not be accessed during preflight request. $httpStatus`e[m")
 	exit 8
 }
 
 $firstSegmentContentLength = $curlData
 if (-not $bypassLengthCap -and $firstSegmentContentLength * $urls.count -gt 4gb) {
-	[Console]::Error.WriteLine("`e[31the segments are estimated to total more than 4gb. terminating program. use `-bypassLengthCap` to continue anyway.`e[0m")
+	[Console]::Error.WriteLine("`e[31mthe segments are estimated to total more than 4gb. terminating program. use `-bypassLengthCap` to continue anyway.`e[m")
 	exit 9
 }
 
@@ -455,7 +555,7 @@ foreach ($url in $urls) {
 		}
 	}
 
-	$curlData = fncurl $url -o $segfile
+	$curlData = fncurl $url -o $segfile -debug $_debug
 
 	$httpStatus = "HTTP Status: $lastExitCode$([regex]::Replace(
 		([string] [Net.HttpStatusCode] $lastExitCode),
@@ -464,17 +564,17 @@ foreach ($url in $urls) {
 	))"
 
 	if ($lastExitCode -in 404, 410) {
-		[Console]::Error.WriteLine("`e[31segment file $i does not exist. $httpStatus.`n    $url`e[0m")
+		[Console]::Error.WriteLine("`e[31msegment file $i does not exist. $httpStatus.`n    $url`e[m")
 		exit 7
 	}
 
 	if ($lastExitCode -eq 429) {
-		[Console]::Error.WriteLine("`e[31segment file $i could not be accessed. $httpStatus. Retry after $curlData seconds.`e[0m")
+		[Console]::Error.WriteLine("`e[31msegment file $i could not be accessed. $httpStatus. Retry after $curlData seconds.`e[m")
 		exit 8
 	}
 
 	if ($lastExitCode -ne 200) {
-		[Console]::Error.WriteLine("`e[31segment file $i could not be accessed. $httpStatus.`n    $url`e[0m")
+		[Console]::Error.WriteLine("`e[31msegment file $i could not be accessed. $httpStatus.`n    $url`e[m")
 		exit 8
 	}
 
@@ -513,7 +613,7 @@ if (-not (gcm ffmpeg -ea ignore)) {
 	# the required options are so old that it can basically be assumed that all ffmpeg version have it.
 	# this check happens here and not earlier because ffmpeg isn't required if `-leaveSegmented` is passed.
 	# use `ffmpeg -y -safe 0 -f concat -i segments.txt -c copy output.mp4 -loglevel info` to combine.
-	[Console]::Error.WriteLine("`e[31FFmpeg could not be found or is not installed. files are left segmented.`e[0m")
+	[Console]::Error.WriteLine("`e[31mFFmpeg could not be found or is not installed. files are left segmented.`e[m")
 	exit 10
 }
 
@@ -522,7 +622,7 @@ ffmpeg -y -safe 0 -f concat -i segments.txt -c copy `
 
 if ($lastExitCode -ne 0) {
 	# don't delete intermediate files if FFmpeg failed.
-	[Console]::Error.WriteLine("`e[31FFmpeg failed: exit code $lastExitCode`e[0m")
+	[Console]::Error.WriteLine("`e[31mFFmpeg failed: exit code $lastExitCode`e[m")
 	exit 11
 }
 
