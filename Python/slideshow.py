@@ -194,12 +194,10 @@ def get_image_paths(root: str | list[str] = "./", wildcards: list[str] = None) -
 
 	if osname == "nt":
 		if isinstance(root, str):
-			if root[0:2] == "~/":
-				root = f"C:/Users/{username}/{root[2:]}"
+			root = path.expanduser(root)
 		else:
 			for i, v in enumerate(root):
-				if v[0:2] == "~/":
-					root[i] = f"C:/Users/{username}/{v[2:]}"
+				root[i] = path.expanduser(v)
 
 	def ls(directory: str = "./", /) -> list[str]:
 		"returns os.listdir() but with the absolute paths"

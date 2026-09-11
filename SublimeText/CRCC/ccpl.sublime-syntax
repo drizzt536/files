@@ -108,7 +108,13 @@ contexts:
         3: meta.brackets.ccpl
       push: [macro_body, macro_as, pp_arg_nolist, pp_arg_nolist]
 
-    - match: (%)((?:break|continue|exit(?:macro)?)\d*)\b
+    - match: (%)((?:break|continue)\d*)\b
+      # I don't feel like figuring out how to make these only valid in loops
+      captures:
+        1: entity.name.function.ccpl
+        2: keyword.operator.word.ccpl
+
+    - match: (%)(exit(?:macro)?)\b
       # I don't feel like figuring out how to make these only valid in loops
       captures:
         1: entity.name.function.ccpl

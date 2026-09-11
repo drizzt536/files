@@ -13,14 +13,14 @@
 	streq:						; bool streq(uint8_t *a, uint8_t *b) {
 		cmp 	arg1, arg2		;     if (a == b)
 		je  	.true			;         return true;
-	.loop:						; do {
-		mov 	al, byte [arg1]	; // NOTE: al's opcodes are shorter than r8b's.
-		cmp 	al, byte [arg2]	; // NOTE: `cmp reg, mem` works, but `cmp mem, mem` doesn't.
-		jne 	.false			;     if (*a != *b) return false;
-		inc 	arg1			; // argument registers are always volatile, so this is fine
-		inc 	arg2			;     b++;
+	.loop:						;     do {
+		mov 	al, byte [arg1]	;; al's opcodes are shorter than r8b's.
+		cmp 	al, byte [arg2]	;; `cmp reg, mem` works, but `cmp mem, mem` doesn't.
+		jne 	.false			;         if (*a != *b) return false;
+		inc 	arg1			;         // argument registers are always volatile, so this is fine
+		inc 	arg2			;         b++;
 		test	al, al
-		jnz 	.loop			; } while (*a++);
+		jnz 	.loop			;     } while (*a++);
 	.true:
 		xor 	%cond(__?BITS?__ == 64, {eax, eax}, {rx, rx})
 		ret

@@ -1,4 +1,4 @@
-LDFLAGS := -s -O --as-needed --gc-sections --relax --exclude-all-symbols \
+LDFLAGS := -s -Ofast --as-needed --gc-sections --relax --exclude-all-symbols \
 		--no-export-dynamic --disable-long-section-names --no-seh \
 		--nxcompat --dynamicbase --high-entropy-va \
 		--fatal-warnings --warn-common --warn-constructors
@@ -16,7 +16,7 @@ adler32.exe: adler32.nasm
 
 adler32.dll: adler32.nasm
 	nasm -fwin64 -Werror $< -o adler32.o.tmp -DLL $(NASMFLAGS)
-	ld adler32.o.tmp -lucrtbase -shared -s --gc-sections -O -o $@
+	ld adler32.o.tmp -lucrtbase -shared -s --gc-sections -Ofast -o $@
 
 adler32.o: adler32.nasm
 	nasm -fwin64 -Werror adler32.nasm -o adler32.o -DSTATIC $(NASMFLAGS)

@@ -4,9 +4,9 @@
 .synopsis
 	Download video segments from m3u8 file and combine using FFmpeg.
 	- By default, combines as mp4.
-	- Cross-platform.
+	- Cross-platform (I think?).
 .description
-	prefer -help to -? or Get-Help.
+	prefer -help to -? or Get-Help. it is more helpful.
 .notes
 	Requires PowerShell 7.
 	Requires FFmpeg. Any version from like the last decade will work.
@@ -17,9 +17,10 @@
 
 param (
 	[string] $infile               = "./index.m3u8",
-	[string] [Alias("o")] $outfile = "./output.mp4",
+	[string] [Alias("o")] $outfile = "./out.mp4",
 	[string] $origin               = "",
 	[string] $referer              = "",
+	[string] $hashRename           = "",
 
 	[switch] $alwaysWriteSegments,
 	[switch] $bypassLengthCap,
@@ -29,12 +30,15 @@ param (
 	[switch] $leaveSegmented,
 	[switch] $remoteInput,
 	[switch] $silent,
-	[switch] $_debug,
+	[switch] [Alias("verb")] $verbose_,
 
 	[Parameter(ValueFromPipeline=$true)] $input
 )
 
-# TODO: allow multiple inputs/outputs/batch processing.
+# TODO: add a validation function on $hashRename. It can be SHA1, SHA256, SHA384, SHA512, or MD5.
+#       idk if `ValidateSet()` uses `-in` or `-cin`. `-in` is what I want.
+
+# TODO: consider allowing multiple inputs/outputs/batch processing.
 	# change the `segments` folder and `segments.txt` file to use the
 	# base name of the input file. Or maybe just do `segments-$index`.
 	# for now make them process sequentially, but add `-parallel` or
@@ -154,8 +158,10 @@ $requestHeaders = @{
 }
 
 if ([Environment]::version.major -ge 11) {
-	# zstd doesn't exist until .NET 11. As of right now, PowerShell 7.7.0 prereleases 2 and 3 are the only
-	# versions of PowerShell that use .NET 11. They both work with this, so I will assume this is fine.
+	# zstd support doesn't exist until .NET 11. As of right now, PowerShell 7.7.0 prereleases
+	# 2 and 3 are the only versions of PowerShell that use .NET 11. They both work with this,
+	# so I will assume this is fine.
+	# NOTE: this could also just be completely useless. idk if 7.7.0 adds zstd by default.
 	$requestHeaders += @{"Accept-Encoding" = "gzip, deflate, br, zstd"}
 }
 
@@ -221,6 +227,8 @@ function format-headers {
 	"{`n" + ($lines -join ",`n") + "`n}"
 }
 
+$fncurl_calls = 0
+
 function fncurl {
 	# internal function. not actually `curl`.
 	# all commands for this function are valid for real `curl`, but not vice versa.
@@ -239,19 +247,21 @@ function fncurl {
 		[bool] $debug
 	)
 
-	if (-not ($head -xor $PSBoundParameters.ContainsKey("outFile"))) {
-		throw "Options -out and -head are mutually exclusive, but one must be given."
+	if (-not ($head -xor $PSBoundParameters.containsKey("outFile"))) {
+		throw "options ``-out`` and `-head`` are mutually exclusive, but one must be given."
 	}
 
-	# NOTE: add stuff here
+	# NOTE: add stuff here if the content types fail
+	# I think I tried just doing "*/*" for everything, but that didn't work if I remember right.
 	$contentType = switch ([IO.Path]::GetExtension($outFile)) {
-		".m3u8" {"application/x-mpegURL,application/vnd.apple.mpegurl"}
-		".ts" {"video/MP2T,video/mp4,image/png"}
+		".m3u8" {"application/x-mpegURL,application/vnd.apple.mpegurl,text/plain"}
+		".ts" {"video/MP2T,video/mp4,image/png,text/plain"}
 		default {"*/*"}
 	}
 
 	if ($debug) {
-		write-host "`n/////////////////////////////"
+		write-host "`n////////////////////////////////////////////////////////////"
+		write-host "fncurl call $((++$script:fncurl_calls))"
 		write-host "head=$head, contentType=$contentType"
 	}
 
@@ -259,10 +269,14 @@ function fncurl {
 	$httpVersions = 1.1, 2.0, 3.0, 1.0
 
 	# 5 tries
-	for ([int] $try = 1; $try -le 5; $try++) {
+	for ([byte] $try = 1; $try -le 5; $try++) {
 		# the loop only ever re-executes when something like 429 or 505 comes up.
 		if ($debug) {
-			write-host "try=$try`nrequest headers: $(format-headers ($requestHeaders + $extraHeaders))"
+			if ($try -gt 1) {
+				write-host -nonewline "`e[38;2;180;100;0m"
+			}
+
+			write-host "try=$try`e[m`nrequest headers: $(format-headers ($requestHeaders + $extraHeaders))"
 		}
 
 		$response = invoke-webrequest `
@@ -284,23 +298,29 @@ function fncurl {
 
 		if ($response.statusCode -in 200, 203) {
 			if ($head) {
-				$script:lastExitCode = 200
+				$script:httpCode = 200
 				return $response.headers["Content-Length"]
 			}
 
 			if ($response.headers["Content-Type"] -notin ($contentType -split ",")) {
-				return $script:lastExitCode = 415
+				return $script:httpCode = 415
 			}
 
-			[IO.File]::WriteAllBytes($outFile, $response.content)
-			return $script:lastExitCode = 200
+			# some fuckass websites send their stuff as `text/plain` for whatever the fuck reason
+			# (probably obfuscation tbh), so I have to extract out the byte stream just in case.
+			$bytes = [IO.BinaryReader]::new($response.rawContentStream).readbytes(
+				$response.rawContentStream.length
+			)
+
+			[IO.File]::WriteAllBytes($outFile, $bytes)
+			return $script:httpCode = 200
 		}
 		if ($response.statusCode -eq 505) {
 			# 505 HTTP Version Not Supported
 			$httpVersions = $httpVersions | select -skip 1
 
 			if ($httpVersions.count -eq 0) {
-				return $script:lastExitCode = 505
+				return $script:httpCode = 505
 			}
 		}
 
@@ -317,7 +337,7 @@ function fncurl {
 				# since $timeout > 6.459s, there must have been a retry-after header.
 				# but only stop if $timeout -gt 10 to allow for reasonable values.
 				# encode 429 and the retry length into a uint64.
-				$script:lastExitCode = 429
+				$script:httpCode = 429
 				return $retryAfter
 			}
 
@@ -325,7 +345,7 @@ function fncurl {
 		}
 
 		# miscellaneous status code
-		return $script:lastExitCode = $response.statusCode # $($head ? -1 : $response.statusCode)
+		return $script:httpCode = $response.statusCode # $($head ? -1 : $response.statusCode)
 	}
 }
 
@@ -362,27 +382,27 @@ if ($inFile[-1] -eq "/") {
 }
 
 if ($remoteInput) {
-	$curlData = fncurl $inFile -o index.m3u8 -debug $_debug
+	$curlData = fncurl $inFile -o index.m3u8 -debug $verbose_
 
-	# write-host "DEBUG: `$lastExitCode = $lastExitCode"
-	# write-host "DEBUG: status code = $([string] [Net.HttpStatusCode] $lastExitCode)"
+	# write-host "DEBUG: `$httpCode = $httpCode"
+	# write-host "DEBUG: status code = $([string] [Net.HttpStatusCode] $httpCode)"
 
 	# transform stuff like "HttpVersionNotSupported" to " Http Version Not Supported"
-	$httpStatus = "HTTP Status: $lastExitCode$([regex]::Replace(
-		([string] [Net.HttpStatusCode] $lastExitCode),
+	$httpStatus = "HTTP Status: $httpCode$([regex]::Replace(
+		([string] [Net.HttpStatusCode] $httpCode),
 		"([A-Z])",
 		' $1'
 	))"
 
-	if ($lastExitCode -in 404, 410) {
+	if ($httpCode -in 404, 410) {
 		[Console]::Error.WriteLine("`e[31mremote input file does not exist. $httpStatus`e[m")
 		exit 2
 	}
-	if ($lastExitCode -eq 429) {
+	if ($httpCode -eq 429) {
 		[Console]::Error.WriteLine("`e[31mremote input file could not be accessed. $httpStatus. Retry after $curlData seconds.`e[m")
 		exit 3
 	}
-	if ($lastExitCode -ne 200) {
+	if ($httpCode -ne 200) {
 		[Console]::Error.WriteLine("`e[31mremote input file could not be accessed. $httpStatus`e[m")
 		exit 3
 	}
@@ -407,8 +427,9 @@ else {
 	}
 }
 
-# `$relativeDir` includes the `/` at the end. and is normalized to have no backslashes.
+# parse and normalize the urls
 
+# `$relativeDir` includes the `/` at the end. and is normalized to have no backslashes.
 #                   | egrep -v "^#|^$"
 $urls = cat $infile | where { -not [regex]::isMatch($_, '^#|^$') } | foreach {
 	$url = $_
@@ -462,29 +483,29 @@ if ($urls.count -eq 0) {
 	exit 6
 }
 
-if ($_debug) {
+if ($verbose_) {
 	write-host "total segment files: $($urls.count)"
 	write-host "prefetching segment 1: $($urls[0])"
 }
 
-$curlData = fncurl $($urls[0]) -head -debug $_debug
-$httpStatus = "HTTP Status: $lastExitCode$([regex]::Replace(
-	([string] [Net.HttpStatusCode] $lastExitCode),
+$curlData = fncurl $($urls[0]) -head -debug $verbose_
+$httpStatus = "HTTP Status: $httpCode$([regex]::Replace(
+	([string] [Net.HttpStatusCode] $httpCode),
 	"([A-Z])",
 	' $1'
 ))"
-if ($lastExitCode -eq 429) {
+if ($httpCode -eq 429) {
 	# NOTE: in the case that `curl -head` has 429 as the exit code, it returns the retry time and not the data length.
 	# not a different status code becuase this is essentially the same as a GET method failing.
 
 	[Console]::Error.WriteLine("`e[31msegment file preflight request returned HTTP 429 Too Many Requests. Retry after $curlData seconds.`e[m")
 	exit 8
 }
-if ($lastExitCode -in 404, 410) {
+if ($httpCode -in 404, 410) {
 	[Console]::Error.WriteLine("`e[31mfirst segment file does not exist during preflight request. $httpStatus`e[m")
 	exit 7
 }
-if ($lastExitCode -ne 200) {
+if ($httpCode -ne 200) {
 	[Console]::Error.WriteLine("`e[31mfirst segment file could not be accessed during preflight request. $httpStatus`e[m")
 	exit 8
 }
@@ -505,6 +526,8 @@ if (-not (test-path -type container segments)) {
 	[void] (new-item -type dir segments) # suppress output with [void]
 }
 
+# download loop
+
 $i = 0
 $padSize = "$($urls.count)".length
 $startTime = [DateTime]::Now
@@ -513,7 +536,7 @@ $startTime = [DateTime]::Now
 #        this is so the output files will always be in the right order locally.
 #     2. The server will probably start rate limiting or rejecting the requests.
 #        since it will likely be making the requests much faster.
-#     3. It will be much harder to display an accurate progress bar.
+#     3. It will be harder to display an accurate progress bar.
 #        It will probably be harder to calculate the percentage/time remaining.
 #        the index variable might not be accurate due to data races.
 foreach ($url in $urls) {
@@ -555,25 +578,25 @@ foreach ($url in $urls) {
 		}
 	}
 
-	$curlData = fncurl $url -o $segfile -debug $_debug
+	$curlData = fncurl $url -o $segfile -debug $verbose_
 
-	$httpStatus = "HTTP Status: $lastExitCode$([regex]::Replace(
-		([string] [Net.HttpStatusCode] $lastExitCode),
+	$httpStatus = "HTTP Status: $httpCode$([regex]::Replace(
+		([string] [Net.HttpStatusCode] $httpCode),
 		"([A-Z])",
 		' $1'
 	))"
 
-	if ($lastExitCode -in 404, 410) {
+	if ($httpCode -in 404, 410) {
 		[Console]::Error.WriteLine("`e[31msegment file $i does not exist. $httpStatus.`n    $url`e[m")
 		exit 7
 	}
 
-	if ($lastExitCode -eq 429) {
+	if ($httpCode -eq 429) {
 		[Console]::Error.WriteLine("`e[31msegment file $i could not be accessed. $httpStatus. Retry after $curlData seconds.`e[m")
 		exit 8
 	}
 
-	if ($lastExitCode -ne 200) {
+	if ($httpCode -ne 200) {
 		[Console]::Error.WriteLine("`e[31msegment file $i could not be accessed. $httpStatus.`n    $url`e[m")
 		exit 8
 	}
@@ -584,6 +607,7 @@ foreach ($url in $urls) {
 }
 
 if (-not $silent) {
+	write-progress "Downloading video segments" -completed
 	write-host "downloads finished.`ncombining segments"
 }
 
@@ -595,6 +619,7 @@ if (test-path segments.txt) {
 ls ./segments/*.ts | foreach { "file './segments/$($_.name)'" } | out-file segments.txt
 
 if ($leaveSegmented) {
+	# I don't remember what this is supposed  to do
 	$lines = cat $inFile
 
 	$urls = ls ./segments/*.ts | foreach { "./segments/$($_.name)" }
@@ -620,14 +645,28 @@ if (-not (gcm ffmpeg -ea ignore)) {
 ffmpeg -y -safe 0 -f concat -i segments.txt -c copy `
 	$outfile -loglevel $($silent ? "quiet" : "info")
 
-if ($lastExitCode -ne 0) {
+write-host ""
+
+if ($hashRename -ne "") {
+	write-host "renaming with algorithm $($hashRename.toUpper())"
+	${new outfile} = (get-filehash -alg $hashRename $outfile).hash.tolower()
+	rename-item $outfile "${new outfile}$([IO.Path]::GetExtension($outfile))"
+}
+
+if (-not $?) {
 	# don't delete intermediate files if FFmpeg failed.
-	[Console]::Error.WriteLine("`e[31mFFmpeg failed: exit code $lastExitCode`e[m")
+	# sometimes the first one doesn't show up for some reason, so just print two similar messages.
+	[Console]::Error.WriteLine("`e[31mFFmpeg failed with nonzero exit code: $lastExitCode`e[m")
+	[Console]::Error.WriteLine("`e[31mskipping cleaning due to nonzero FFmpeg exitcode`e[m")
 	exit 11
 }
 
 if (-not $keepIntermediateFiles) {
+	write-host "cleaning"
 	clean
+}
+else {
+	write-host "skipping cleaning"
 }
 
 # for some reason, exiting via EOF doesn't change $lastExitCode to 0.

@@ -4,3 +4,5 @@ programs under `./libasm/` contains stuff (not full programs) that doesn't use l
 programs under `./api+crt/` use both the Windows API and Lib C functions.
 
 the programs are all compileable with `assemble FILENAME --infer`
+
+programms under `./misc/` are just stuff that don't fit into any of those categories.

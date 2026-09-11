@@ -4,13 +4,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef uint8_t   u8;
+typedef int32_t  i32;
+typedef uint32_t u32;
+
 #ifdef _WIN32
-	void Sleep(uint32_t ms); // <windows.h>
+	void Sleep(u32 ms); // <windows.h>
 #else
-	int usleep(uint32_t usec); // <unistd.h>
+	i32 usleep(u32 usec); // <unistd.h>
 #endif
 
-static inline __attribute__((always_inline)) void msleep(unsigned ms) {
+static inline __attribute__((always_inline, gnu_inline)) void msleep(u32 ms) {
 	// cross-platform? sleep function
 	#ifdef _WIN32
 		Sleep(ms);
@@ -19,11 +23,9 @@ static inline __attribute__((always_inline)) void msleep(unsigned ms) {
 	#endif
 }
 
-typedef uint8_t u8;
-typedef uint32_t u32;
-
 int main(int argc, const char **argv) {
 	argc--; argv++;
+
 	if (argc == 0) {
 		eputs("no values were given.");
 		return 1;
@@ -35,7 +37,7 @@ int main(int argc, const char **argv) {
 		argc = 32;
 	}*/
 
-	int wait_ms = 500;
+	u32 wait_ms = 500;
 
 	if (**argv == '-') {
 		// check for switches as the first argument
@@ -66,14 +68,9 @@ int main(int argc, const char **argv) {
 
 			char *str_end;
 
-			wait_ms = (int) strtol(argv[0], &str_end, 10);
+			wait_ms = (u32) strtol(argv[0], &str_end, 10);
 			if (*str_end != '\0') {
 				eputs("Option `-w` passed with a non-numeric value.");
-				return 1;
-			}
-
-			if (wait_ms < 0) {
-				eputs("Option `-w` passed with a negative value.");
 				return 1;
 			}
 
@@ -126,7 +123,6 @@ int main(int argc, const char **argv) {
 		}
 	}
 
-
 	if (x_len == 0) {
 		eputs("no numeric values were given.");
 		return 1;
@@ -136,11 +132,10 @@ int main(int argc, const char **argv) {
 	// also turn off the cursor
 	printf("\e[?25l\e[%uB\e[%uA", x_len + 1, x_len + 1);
 
-
 	// print out the starting numbers
-	printf("iteration: 0\e[0K\n");
+	printf("iteration: 0\e[K\n");
 	for (u8 i = 0; i < x_len; i++)
-		printf("\r%*lg : %.16lf\e[0K\n", longest_orign_len, orign_lst[i], curnt_lst[i]);
+		printf("\r%*lg : %.16lf\e[K\n", longest_orign_len, orign_lst[i], curnt_lst[i]);
 
 	msleep(wait_ms);
 
@@ -157,11 +152,11 @@ int main(int argc, const char **argv) {
 
 			if (done_lst[i]) {
 				// skip its line if it is done.
-				printf("\e[1B");
+				printf("\eD");
 				continue;
 			}
 
-			printf("\r%*lg : %.16lf\e[0K", longest_orign_len, orign_lst[i], curnt_lst[i]);
+			printf("\r%*lg : %.16lf\e[K", longest_orign_len, orign_lst[i], curnt_lst[i]);
 			double x = curnt_lst[i];
 
 			if (x == 0) {
