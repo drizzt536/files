@@ -55,16 +55,16 @@ namespace Max7219::SevenSegment {
 			W_PORT(port_out, bit_din, operand &   1); W_HIGH(port_out, bit_clk); W_LOW(port_out, bit_clk);
 		#else
 			for (u8 i = 8; i --> 0 ;) {
-				W_PORT(port_out, bit_din, operand & 128);
-				operand <<= 1;
+				W_PORT(port_out, bit_din, opcode & 128);
+				opcode <<= 1;
 
 				W_HIGH(port_out, bit_clk);
 				W_LOW(port_out, bit_clk);
 			}
 
 			for (u8 i = 8; i --> 0 ;) {
-				W_PORT(port_out, bit_din, opcode & 128);
-				opcode <<= 1;
+				W_PORT(port_out, bit_din, operand & 128);
+				operand <<= 1;
 
 				W_HIGH(port_out, bit_clk);
 				W_LOW(port_out, bit_clk);
