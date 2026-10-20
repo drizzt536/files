@@ -7,7 +7,6 @@ file_extensions: [ccpl]
 
 contexts:
   main:
-
     - include: variable
     - include: comment
 
@@ -53,7 +52,7 @@ contexts:
         3: meta.brackets.ccpl
       push: [pp_arg_nolist, pp_arg_nolist]
 
-    - match: (%)(len)(\[)
+    - match: (%)(len|set(?:range|rand)|shuffle)(\[)
       captures:
         1: entity.name.function.ccpl
         2: keyword.operator.word.ccpl
